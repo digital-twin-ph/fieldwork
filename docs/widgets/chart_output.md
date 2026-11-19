@@ -224,3 +224,12 @@ panels for May to July 2023, with the June smoke days shaded.
 **Snow's South London water supply study, 1854** draws the 32 registration sub-districts as bars of
 deaths per 1,000 people, from the rate's own chart, so the figure carries the vintage caveat with
 it.
+
+## History
+
+### 2026-11-19 · The source line ends at its source (0.23.1)
+
+A chart's default source line read "Source: … · See N3 & evidence for method.", and the pointer, an instruction for
+someone in the application, was printed in every figure and draft. The default is now "Source: …" and nothing more. A
+source line written in Configure is printed as written. Found by the target outputs audit
+([audit](../audits/target-outputs-audit.md)).

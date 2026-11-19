@@ -230,3 +230,11 @@ The South London example: *Were deaths more common with one water supply than th
 house supplied by each water company?*
 
 The MERS-CoV example: *Death by sex, a two-by-two*.
+
+## History
+
+### 2026-11-19 · What to do is the application's, not the draft's (0.8.2)
+
+With no study design connected, the table says its measures are named by their arithmetic, in the application and in a
+draft. What to do about it, connecting a study design, is said in the application only. Found by the target outputs
+audit ([audit](../audits/target-outputs-audit.md)).

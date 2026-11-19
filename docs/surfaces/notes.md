@@ -202,8 +202,8 @@ chooses the kind:
 | Situation report, WHO style | WHO situation reports | Report number, data as of, highlights, situation in numbers, background, epidemiological update, risk assessment, preparedness and response, recommendations, data notes, references |
 | Situation report, OCHA style | UN OCHA situation reports | Report number, as of, highlights, key figures, situation overview, response, gaps and challenges, notes on the data, references, contacts |
 | Surveillance report, ECDC style | ECDC annual epidemiological reports | Reporting period, key facts, introduction, methods, epidemiology, discussion, public health implications, references |
-| Surveillance summary, MMWR style | CDC MMWR surveillance summaries | Period covered, summary, introduction, methods, results, discussion, limitations, public health action, references |
-| Report, MMWR style | CDC MMWR full reports | A summary box of three questions (what is already known, what this adds, implications for practice), abstract, introduction, methods, results, discussion, limitations, public health implications, references |
+| Surveillance summary | CDC's surveillance summaries | Period covered, summary, introduction, methods, results, discussion, limitations, public health action, references |
+| Full report, with a three-question summary | CDC's full reports | A summary box of three questions (what is already known, what this adds, implications for practice), abstract, introduction, methods, results, discussion, limitations, public health implications, references |
 
 Each format is filled from the same notes. The parts you write, such as highlights or recommendations, are written in
 place with **Write**; until then the part shows what it is for and how long it runs, and prints nothing. **What you write
@@ -219,6 +219,24 @@ part one format has and another does not is named on screen, not lost.
 The format and each figure's place are kept with the project, a figure's place separately for each format, so it can
 be half width in the situation report and full width in the publication. The controls do not print. **Print or save as PDF** prints
 the document alone. A worked example that ships with Fieldwork shows its document as it was set, with no controls.
+
+**What a draft attaches rather than prints:**
+
+- **A table too long to print whole**, more than 50 rows such as a line list, is attached as a CSV file. A line in its
+  place names it: *Table S1. Each case with its chain, 162 rows: attached as S1-each-case-with-its-chain.csv.*
+- **In the two situation reports, the surveillance summary and the full report**, equations and the tables an input
+  reads go to an annex file, `annex.html`, and one line at the end of the draft says what it holds. The publication and
+  the ECDC-style report keep their equations printed.
+- **Rows fetched from elsewhere are never attached.** Where a workflow's table was fetched, as NYC's is from Zenodo,
+  the line says where it came from and no file is written.
+
+**Download the attached files** gives the annex and the CSV files in one zip. The PDF comes from **Print or save as
+PDF**; a browser cannot put it in the zip.
+
+**In print**, a heading over a part you have not written does not print, a table wraps rather than being cut at the
+margin, and the date under the title says *Drafted*: it is the day the draft was made, not the date of the data.
+Findings about the data, such as columns with no stated meaning, are stated once under the methods or data notes, not
+as the study's limitations.
 
 ## What it will not do
 

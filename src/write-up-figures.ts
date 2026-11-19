@@ -123,7 +123,9 @@ export function tableFigure(table:DataTable|undefined,label:string|undefined,
   const over=view.rows.length-drawn.length;
   return `<figure class="notes-figure" data-figure="table">`
     +`<table><thead><tr>`
-    +view.columns.map(name=>`<th>${esc(name)}${view.headings?.[name]?`<span class="meaning">: ${esc(view.headings[name]!)}</span>`:''}</th>`).join('')
+    // A NUMBER'S HEADING STANDS OVER IT (2026-11-19: "85" sat under "Dead" in MERS's table, headings left and numbers right).
+    +view.columns.map(name=>`<th${drawn.length&&drawn.every(row=>typeof row[name]==='number'||row[name]===null||row[name]===undefined)
+      &&drawn.some(row=>typeof row[name]==='number')?' class="figure-number"':''}>${esc(name)}${view.headings?.[name]?`<span class="meaning">: ${esc(view.headings[name]!)}</span>`:''}</th>`).join('')
     +`</tr></thead><tbody>`
     +drawn.map(row=>`<tr>`+view.columns.map(name=>cell(row[name],esc)).join('')+`</tr>`).join('')
     +`</tbody></table>`
@@ -213,3 +215,16 @@ export function figureFor(nodeId:string,run:RunArtifacts|undefined,esc:Escape):s
   // relate, a group, a selection -- reaches a reader at all. `run.tables` holds those.
   return chartFigure(output?.chart,esc);
 }
+
+/** A TABLE AS CSV, its columns spelled as the table holds them and an unknown cell left empty, never written as zero.
+ *  For the files attached to a draft (experiment 202, 2026-11-19), where a table too long to print goes. */
+export function tableCsv(table:DataTable):string{
+  const view=tableViewOf(table,'');
+  const field=(value:unknown)=>{
+    if(value===null||value===undefined)return '';
+    const text=String(value);
+    return /[",\r\n]/.test(text)?`"${text.replace(/"/g,'""')}"`:text;};
+  return [view.columns.map(field).join(','),...view.rows.map(row=>view.columns.map(name=>field(row[name])).join(','))].join('\r\n')+'\r\n';
+}
+/** How many rows a table holds, as its view counts them. */
+export const tableRowCount=(table:DataTable):number=>tableViewOf(table,'').rows.length;

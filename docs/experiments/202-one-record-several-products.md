@@ -638,3 +638,41 @@ lengths help, given that most slots declare lengths in paragraphs or bullets, wh
 
 **Validation:** `tests/plan.test.mjs` (5) and `tests/plan.browser.mjs` (1), Chromium.
 
+
+## The target outputs audit, and what it changes, 2026-11-19
+
+The audit ([target outputs audit](../audits/target-outputs-audit.md)) printed South London as a publication (22 pages),
+MERS as a WHO-style sit rep (29 pages) and NYC as the MMWR-style report (9 pages), and found each the run record laid
+end to end. The practitioner's answers, 2026-11-19:
+
+| Question | Answer |
+| --- | --- |
+| A line list in a product | *"Line list should be an attached CSV?"*: yes, an attached file, not a printed table |
+| Equations and source tables in a sit rep or MMWR-style report | *"MMWR - Annex file"*, and the sit reps the same |
+| How the attached files are delivered | one zip |
+| The MMWR name | *"take any reference to MMWR or MMWR in headings out. We do not want to confuse people."* |
+
+**The design (written before the code).**
+
+| Part | What it is |
+| --- | --- |
+| An attached table | A table too long to print whole (more rows than a figure draws, 50) is not printed: a line in its place names it, its rows and its file, `S1-<name>.csv`. In every format, the publication included |
+| The annex file | In the four report formats, every display formula and every source table goes to `annex.html`, beside the attached tables; the body keeps one line saying so. The publication keeps its printed Appendix |
+| Rows not handed on | A table in a workflow whose input was fetched from elsewhere (a `remote` table, as NYC's from Zenodo) is never attached: the line names where it was fetched from. The project does not carry those rows, so its products do not either |
+| The zip | **Download the attached files** gives `annex.html` and the CSVs in one zip. **Not established:** a browser cannot put its own printed PDF into a zip; the PDF stays the print dialog's |
+| The formats' names | "Report, MMWR style" becomes *Full report, with a three-question summary*; "Surveillance summary, MMWR style" becomes *Surveillance summary*; the kicker "Morbidity and Mortality Weekly Report" becomes *Report*. The colophon still cites the paper each follows, journal included, since that is a reference and not a heading |
+
+| Distinction | Enforced as |
+| --- | --- |
+| Rows a project does not carry are not handed on by its products | **hard stop**: a table from a workflow with a fetched input is never written to the zip |
+| A table printed is a table a reader can use whole | **run-time check**: a table over the ceiling becomes an attached file, never a clipped print |
+
+**Also in this pass, from the audit's shared defects:** tables wrap in print instead of being clipped; a heading whose
+part holds only a prompt does not print; the date under the title says *Drafted*; data-quality findings are gathered
+once under the data notes, not printed as the study's Limitations (experiment 164's note still reaches the product);
+interface pointers ("See N3 & evidence for method.", "The step shows all of them.", "Connect a study design…") leave
+the figures; sources print once; a numeric column's heading aligns with its numbers. **Left for the next pass:** a
+chart's two titles (the one drawn is the person's own, the caption is the step's, so dropping the drawn one would keep
+the weaker), captions the steps write (row counts before a pivot, "keyed by", wrong chart descriptions), map keys listing what is not drawn, fine print inside figures,
+and the data notes' length in a sit rep. The audit's "basemap credited but not drawn" was the capture's: browser tests
+answer every tile with a blank one.

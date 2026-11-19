@@ -182,6 +182,7 @@
       "id": "sitrep-who",
       "label": "Situation report, WHO style",
       "kicker": "Situation report",
+      "annexFile": true,
       "follows": "WHO situation reports: COVID-19 Situation Report 92 (2020); Mpox multi-country external situation report 65 (2026)",
       "masthead": [
         {
@@ -290,6 +291,7 @@
       "id": "sitrep-ocha",
       "label": "Situation report, OCHA style",
       "kicker": "Situation report",
+      "annexFile": true,
       "follows": "UN OCHA situation reports: Recent Developments in Northwest Syria, Situation Report No. 23 (2020); OCHA's Digital Situation Report minimums",
       "masthead": [
         {
@@ -461,9 +463,10 @@
     },
     {
       "id": "surveillance-mmwr",
-      "label": "Surveillance summary, MMWR style",
+      "label": "Surveillance summary",
       "kicker": "Surveillance summary",
-      "follows": "CDC MMWR Surveillance Summaries, and the MMWR author guide for them",
+      "annexFile": true,
+      "follows": "the surveillance summaries of CDC's weekly series, and the author guide for them",
       "masthead": [
         {
           "role": "period",
@@ -537,9 +540,10 @@
     },
     {
       "id": "mmwr-report",
-      "label": "Report, MMWR style",
-      "kicker": "Morbidity and Mortality Weekly Report",
-      "follows": "CDC MMWR full reports: McArdle CE et al., Asthma-associated emergency department visits during the Canadian wildfire smoke episodes, United States, April to August 2023 (MMWR 2023;72(34):926-32)",
+      "label": "Full report, with a three-question summary",
+      "kicker": "Report",
+      "annexFile": true,
+      "follows": "the full reports of CDC's weekly series, as in McArdle CE et al., Asthma-associated emergency department visits during the Canadian wildfire smoke episodes, United States, April to August 2023 (MMWR 2023;72(34):926-32)",
       "masthead": [],
       "sections": [
         {

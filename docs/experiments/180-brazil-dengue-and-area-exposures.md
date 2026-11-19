@@ -1,6 +1,6 @@
 # 180 · Brazil dengue, and satellite exposures over areas
 
-_Created 2026-11-06 · Updated 2026-11-06_
+_Created 2026-11-06 · Updated 2026-11-18_
 
 **Status:** tried. The data are checked and the outcome half is built: two workflows in the example repository, played
 back in Chromium. The satellite half is not designed yet.

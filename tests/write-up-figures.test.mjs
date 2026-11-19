@@ -36,9 +36,18 @@ test('A TABLE IS DRAWN AS A TABLE, which is the whole of what was missing',()=>{
   const html=tableFigure(TABLE,'Died or survived',esc);
   assert.match(html,/<figure class="notes-figure" data-figure="table">/);
   assert.match(html,/<th>water_supply<\/th>/);
-  assert.match(html,/<th>people<\/th>/);
+  // A column of numbers is headed over its numbers (2026-11-19).
+  assert.match(html,/<th class="figure-number">people<\/th>/);
   assert.match(html,/<td>Southwark &amp; Vauxhall only<\/td>/);
   assert.match(html,/<td class="figure-number">844<\/td>/);
+});
+test('a table as CSV keeps its columns as spelled, quotes what needs it, and leaves an unknown cell empty',async()=>{
+  const {tableCsv,tableRowCount}=await import('../build/write-up-figures.js');
+  const csv=tableCsv(TABLE);
+  assert.equal(csv.split('\r\n')[0],'water_supply,people');
+  assert.ok(csv.endsWith('\r\n'));
+  assert.equal(csv.trim().split('\r\n').length,tableRowCount(TABLE)+1);
+  assert.match(csv,/\n[^,\r\n]+,\r\n/,'an unknown value is an empty field');
 });
 
 test('an empty cell is drawn as unknown and not as zero',()=>{

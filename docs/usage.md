@@ -1,6 +1,6 @@
 # Using Fieldwork
 
-_Created 2026-10-08 · Updated 2026-11-14_
+_Created 2026-10-08 · Updated 2026-11-18_
 
 The practitioner detail that used to live in the README. The
 [README](../README.md) keeps the overview, the published links and the current
@@ -210,7 +210,7 @@ Retrieval needs a network; running the workflow afterwards does not. The facilit
 
 One thing to keep in mind when reading the result: these are the facilities the source records, not the facilities that exist. OpenStreetMap coverage is uneven and states no completeness, so an absence on the map is not evidence of absence on the ground, and no comparison against an official facility register has been made.
 
-**Credentials** opens a separate, session-only credential manager. Choose **Create empty collection**, add named API keys and their allowed HTTPS origin, then **Download encrypted credentials** with a long passphrase. Keep the `.fwcredentials` file on your computer. To reuse it, select the file and unlock it. Keys are excluded from project exports and browser persistence; reload, manual Lock or 15 minutes of inactivity clears the session. Editing downloads a new file rather than overwriting the original. No current input node consumes these keys. The facility source that needed one, healthsites.io, was excluded because it sends no cross-origin header and a browser cannot read its response; see [69](experiments/69-healthsites-acquisition.md). See the [credential-file design and security boundary](experiments/30-local-credential-files.md).
+**Credentials** opens a separate, session-only credential manager. Choose **Create empty collection**, add named API keys and their allowed HTTPS origin, then **Download encrypted credentials** with a long passphrase. Keep the `.fwcredentials` file on your computer. To reuse it, select the file and unlock it. Keys are excluded from project exports and browser persistence; reload, manual Lock or 15 minutes of inactivity clears the session. Editing downloads a new file rather than overwriting the original. Map reads two kinds of key from them: a CARTO key entered for `https://basemaps.cartocdn.com`, and an Esri key entered for `https://static-map-tiles-api.arcgis.com`. While the credentials are unlocked, an interactive map offers that provider's basemaps; a figure draws OpenStreetMap in their place. **An Esri key is yours, under your own ArcGIS Location Platform agreement with Esri**, and that agreement, not Fieldwork, says what you may do with what its basemaps show; see [222](experiments/222-basemaps-on-the-persons-own-key.md). See the [credential-file design and security boundary](experiments/30-local-credential-files.md).
 
 Select any node and choose **Manage references** to attach a PDF or URL, identify its author/year and passage, and explain how it supports the data, method or assumption. **Save reference** persists the citation; uploaded PDFs remain local and are available offline. **Export** includes referenced PDFs in a portable workflow bundle; **Run receipt** includes a snapshot of references, file hashes and provenance for the run. URL contents are not downloaded. Limits are 5 MB per PDF and 10 MB total per workflow. See the [evidence-reference design experiment](experiments/13-node-evidence-references.md).
 

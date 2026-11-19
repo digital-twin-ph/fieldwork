@@ -296,7 +296,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.23.0",
+      "currentVersion": "0.23.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -457,6 +457,11 @@
           "version": "0.23.0",
           "path": "widgets/releases/chart_output/0.23.0.json",
           "sha256": "3e64dfc94d46efe0131a986340f2bd95e8c244650c3f21427f072c9ad97074f9"
+        },
+        {
+          "version": "0.23.1",
+          "path": "widgets/releases/chart_output/0.23.1.json",
+          "sha256": "76369d65d94f7771dd77c4d27128d7a9d23ad06b011ef892942bb47e2f0b3e46"
         }
       ]
     },
@@ -954,7 +959,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.36.0",
+      "currentVersion": "0.36.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1245,6 +1250,11 @@
           "version": "0.36.0",
           "path": "widgets/releases/map_output/0.36.0.json",
           "sha256": "2880d2348c81a7be6cc1e0c7c15295447ce2ecfb691c4c1f0774a7b0c5c124b3"
+        },
+        {
+          "version": "0.36.1",
+          "path": "widgets/releases/map_output/0.36.1.json",
+          "sha256": "c07c5d375b4defdfd9b84d6920efeae49b805c06e000b81a9ce3cc24095bd387"
         }
       ]
     },
@@ -2546,7 +2556,7 @@
     {
       "id": "urn:fieldwork:widget:two_by_two",
       "nodeType": "two_by_two",
-      "currentVersion": "0.8.1",
+      "currentVersion": "0.8.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -2602,6 +2612,11 @@
           "version": "0.8.1",
           "path": "widgets/releases/two_by_two/0.8.1.json",
           "sha256": "29a37d59a50ba839dc506b07e0252feb32a2346874466b8a2a1603b34ee523bb"
+        },
+        {
+          "version": "0.8.2",
+          "path": "widgets/releases/two_by_two/0.8.2.json",
+          "sha256": "711c0f2dd738267b69907f1dcc8596053d2208b77864afc5179ace7902e044af"
         }
       ]
     },

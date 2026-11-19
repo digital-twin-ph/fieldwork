@@ -61,7 +61,7 @@ export const chartOrientation=(params:{orientation?:'horizontal'|'vertical'}):'h
 export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:string,sourceLabel?:string){
   if(params.sourceNote?.trim())return params.sourceNote.trim();
   const named=sourceLabel?.trim()||sourceId;
-  return `Source: ${named||'connected workflow result'} · See N3 & evidence for method.`;
+  return `Source: ${named||'connected workflow result'}.`;
 }
 
 /** A deliberately small, offline Vega-Lite profile over already computed bins.

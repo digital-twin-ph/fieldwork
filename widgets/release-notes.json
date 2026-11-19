@@ -153,12 +153,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.23.0",
-   "released": "2026-11-15",
+   "version": "0.23.1",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "minor",
-     "description": "One panel per column: several number columns of one table, each its own panel and scale along the category column, chosen in Configure; and a dashed line at a stated value in any of them, with its label. A polygon layer on its records port offers its columns from the last run."
+     "kind": "patch",
+     "description": "A chart's default source line is \"Source: <the step it reads>.\", without \"See N3 & evidence for method.\", which was an instruction to the application's reader printed in every figure and draft (target outputs audit, 2026-11-19)."
     }
    ],
    "breaking": false,
@@ -427,20 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.36.0",
-   "released": "2026-11-18",
+   "version": "0.36.1",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Basemaps on the person's own key (the practitioner, 2026-11-18: \"Let's use Carto and Esri\"): CARTO Positron, Voyager and Dark Matter, and Esri satellite imagery, streets and outdoor, offered on the interactive map while the credentials hold that provider's key. A project keeps the choice by name, never the key; locked, the map shows OpenStreetMap and says why. A static figure draws OpenStreetMap in their place until each provider's terms on exported images are read."
-    },
-    {
-     "kind": "minor",
-     "description": "Marks are named over a basemap too (the practitioner, 2026-11-18, of Oswego: \"Why doesn't the point have a label - church where supper was held?\"): up to five marks, from their records' names, outlined to read over the tiles."
-    },
-    {
      "kind": "patch",
-     "description": "A figure whose basemap tiles were not drawn no longer credits their provider in its sources line."
+     "description": "A map's default source line names its inputs and CRS and ends there: \"See N3 & evidence for method.\" was an instruction to the application's reader, printed in every figure and draft (target outputs audit, 2026-11-19). A method the step states is still printed."
     }
    ],
    "breaking": false,
@@ -994,12 +986,12 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.8.1",
-   "released": "2026-11-15",
+   "version": "0.8.2",
+   "released": "2026-11-19",
    "changes": [
     {
      "kind": "patch",
-     "description": "Several exposures: each cell column says what it holds beside its letter (a: exposed cases, b: exposed controls or non-cases, c: unexposed cases, d: unexposed controls; a+b, c+d, left out), the letters kept as the column names; an exposure that cannot be read takes the readable rows' layout, so a case-control table with an empty column still spreads one row per exposure."
+     "description": "With no study design connected, the table still says its measures are named by their arithmetic; what to do about it (\"Connect a study design to say what they measure.\") is said in the application and not printed in a draft (target outputs audit, 2026-11-19)."
     }
    ],
    "breaking": false,

@@ -3,6 +3,34 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.150.0 — In development
+
+- **A draft attaches what it cannot print**: a table of more than 50 rows, such as a line list, is attached as a CSV
+  file, with a line in its place naming it, its rows and its file. **Download the attached files** gives them in one
+  zip. MERS as a WHO-style sit rep goes from 29 printed pages to 20.
+- **The sit reps, the surveillance summary and the full report have an annex file**: their equations and the tables
+  an input reads go to `annex.html` in the zip, and one line in the draft says what it holds. The publication and the
+  ECDC-style report keep theirs printed.
+- **Rows fetched from elsewhere are never attached**: where a workflow's table was fetched, as NYC's is from Zenodo,
+  the draft names where it came from and writes no file.
+- **No format is named after MMWR**: "Report, MMWR style" is now *Full report, with a three-question summary*, its
+  kicker *Report*; "Surveillance summary, MMWR style" is *Surveillance summary*. The colophon still cites the paper
+  each follows.
+- **Nothing printed empty or cut off**: a heading over a part not yet written does not print, tables wrap at the
+  margin, table text is dark on white, and a number's heading stands over its numbers. The date under the title says
+  *Drafted*.
+- **Findings about the data are not the study's limitations**: columns with no stated meaning and unresolved data
+  quality findings are stated once, under Methods or the data notes. A format with data notes names its sources there
+  and not again under references.
+- **No instructions in figures**: a map's and a chart's default source line no longer ends "See N3 & evidence for
+  method."; a two-by-two's "Connect a study design…" stays in the application. Map 0.36.1, Chart 0.23.1, Two-by-two
+  table 0.8.2.
+- **The target outputs audit** (`docs/audits/target-outputs-audit.md`) compares South London as a publication, MERS
+  as a sit rep and NYC as a full report with the documents they follow. Its basemap finding was withdrawn: the
+  drafts were printed with the browser tests' blank tiles.
+- **The Credentials manual says an Esri key is used under your own agreement with Esri**, and Map is named as what
+  reads CARTO and Esri keys.
+
 ## 0.149.0 — 2026-11-19
 
 - **NDVI and EVI from MODIS, over areas and at points**: Sample a raster reads the 16-day, 250 m vegetation indices on

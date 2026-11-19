@@ -659,3 +659,10 @@ both. Synthetic coordinates, not MERS's hospitals.
 
 That an inset is better than framing the map on the hospitals alone, or than an interactive map, for a reader of this
 figure. That a reader reads the inset's scale bar rather than assuming the main map's.
+
+### 2026-11-19 · The source line ends at its source (0.36.1)
+
+A map's default source line ended "See N3 & evidence for method." where the step stated no method of its own, and the
+pointer, an instruction for someone in the application, was printed in every figure and draft. It now names the inputs
+and the CRS and stops; a method the step states is still printed. Found by the target outputs audit
+([audit](../audits/target-outputs-audit.md)).

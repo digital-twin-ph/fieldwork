@@ -27,6 +27,8 @@ export interface FormatSection {heading:string; roles:string[]; box?:boolean; pr
   /** A prompt per role, where a section holds several the person writes, as MMWR's Summary box does. */
   prompts?:Record<string,[string,string,string]>}
 export interface ReportFormat {id:string; label:string; kicker:string; follows:string;
+  /** Equations and source tables go to an annex file beside the draft, not into its pages (2026-11-19). */
+  annexFile?:boolean;
   masthead:{role:string;prompt:[string,string,string]}[]; sections:FormatSection[]}
 export const ROLES=reportFormats.roles as unknown as Record<string,RoleDeclaration>;
 export const FORMATS=reportFormats.formats as unknown as ReportFormat[];
@@ -63,11 +65,24 @@ export interface PublicationInput {
   written?:Readonly<Record<string,string>>;
   /** Whether this project can keep what is written: false for a worked example that ships with Fieldwork. */
   writable?:boolean;
+  /** The rows behind a table's note, where the caller has them: how many, whether the step reads its input as a source,
+   *  the rows as CSV, and where they were fetched from when the project does not carry them. */
+  tableOf?:(note:Note)=>AttachableTable|undefined;
 }
+export interface AttachableTable {rows:number; source?:boolean; csv:()=>string; fetchedFrom?:string}
+/** A TABLE TOO LONG TO PRINT WHOLE is attached instead: the rows a figure draws, as `write-up-figures.ts` caps them. */
+export const ATTACH_OVER=50;
+/** What goes beside the draft: a table's rows as CSV, or the line saying why they are not handed on. */
+export interface Attachment {file:string; label:string; rows:number; csv?:()=>string; fetchedFrom?:string}
+export interface PublicationParts {html:string; attachments:Attachment[];
+  /** The annex file's body, as markup still to be typeset, where the format sends its equations there. */
+  annex?:string}
+/** A STEP'S FINDING ABOUT ITS DATA, not the study's limitation (2026-11-19): stated once under the data notes. */
+const isDataQuality=(note:Note)=>/:(meaning|quality)$/.test(note.id||'');
 
 const bodyOf=(note:Note)=>note.kind==='quoted'?note.quote:note.text;
 const fnOf=(note:Note)=>('fn' in note&&note.fn)||'';
-const isLimitation=(note:Note)=>fnOf(note)==='limitation';
+const isLimitation=(note:Note)=>fnOf(note)==='limitation'&&!isDataQuality(note);
 
 /** The parts the person writes, each with what it is for and its length. Shown only where nothing has been written. */
 export const PROMPTS={
@@ -105,9 +120,17 @@ export function withoutHeading(figure:string):string{
     .replace(/<text data-figure-heading[^>]*>[\s\S]*?<\/text>/g,'');
 }
 
-export function publicationMarkup(input:PublicationInput,esc:Escape):string{
+export function publicationMarkup(input:PublicationInput,esc:Escape):string{return publicationParts(input,esc).html;}
+/** A file name from a caption's title: lower case, words joined by hyphens, short. */
+const slug=(text:string)=>text.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40).replace(/-+$/,'')||'table';
+/** A part that holds only prompts: its heading does not print, since the prompt does not. */
+const onlyPrompts=(html:string)=>!html.replace(/<div class="pub-prompt[^"]*"[^>]*>(?:(?!<div)[\s\S])*?<\/div>/g,'').trim();
+export function publicationParts(input:PublicationInput,esc:Escape):PublicationParts{
   const written=input.written??{};
   const kind:ProductKind=input.kind??'publication';
+  const format=kind==='publication'?undefined:FORMATS.find(f=>f.id===kind)??FORMATS[0]!;
+  const toAnnex=!!format?.annexFile;
+  const attachments:Attachment[]=[];
   const control=(key:string,verb:string)=>input.writable
     ?`<button class="button small pub-write" data-pub-write="${key}">${verb}</button>`:'';
   // WRITTEN, SHOWN AS WRITTEN; UNWRITTEN, A PROMPT. Fieldwork drafts none of it.
@@ -168,7 +191,7 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
     const tex=/data-tex="([^"]*)"/.exec(math)?.[1];
     if(tex===undefined)return _;
     equations.push({tex,from});
-    return `<p class="pub-eqref">(Equation A${equations.length}, in the Appendix.)</p>`;
+    return `<p class="pub-eqref">(Equation A${equations.length}, in the ${toAnnex?'annex file':format?'Annex':'Appendix'}.)</p>`;
   });
   const prose=(note:Note)=>{
     const text=bodyOf(note);
@@ -205,6 +228,16 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
       const kind=/data-figure="([a-z-]+)"/.exec(figure)?.[1];
       if(kind==='map')figure=withoutHeading(figure);
       const caption=lifted(prose(note),label).replace(/^<p>/,'').replace(/<\/p>$/,'');
+      // TOO LONG TO PRINT, OR A SOURCE IN A FORMAT WITH AN ANNEX FILE: attached, and a line in its place.
+      const rows=kind==='table'?input.tableOf?.(note):undefined;
+      if(rows&&(rows.rows>ATTACH_OVER||(toAnnex&&rows.source))){
+        const n=attachments.length+1,title=/<strong>([^<]*)<\/strong>/.exec(caption)?.[1]?.replace(/\.$/,'')||'Table';
+        const file=`S${n}-${slug(title)}.csv`,count=`${rows.rows.toLocaleString('en-US')} row${rows.rows===1?'':'s'}`;
+        attachments.push({file,label:title,rows:rows.rows,...rows.fetchedFrom?{fetchedFrom:rows.fetchedFrom}:{csv:rows.csv}});
+        return `<p class="pub-attached"><strong>Table S${n}.</strong> ${esc(title)}, ${count}: `
+          +(rows.fetchedFrom?`not attached. Its rows were fetched from ${esc(rows.fetchedFrom)} and are not handed on with this draft.`
+            :`attached as ${esc(file)}.`)+`</p>`;
+      }
       if(kind==='table'||kind==='two-by-two'){tables++;
         return placed(note,`<p class="pub-caption"><strong>Table ${tables}.</strong> ${caption}</p>${figure}`,'div','pub-table');}
       figures++;
@@ -215,10 +248,16 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
   const part=(section:WriteUpPart,keep:(note:Note)=>boolean=note=>!isLimitation(note))=>
     merged(notesOfPart(input.notes,section).filter(note=>keep(note)&&!isClaimed(note)));
   const limitations=merged(input.notes.filter(note=>isLimitation(note)&&!isClaimed(note)));
-  const introduction=part('Introduction'),methods=part('Methods'),results=part('Results'),discussion=part('Discussion');
+  const quality=[...new Set(input.notes.filter(isDataQuality).map(bodyOf).filter(t=>t&&t!==UNWRITTEN))];
+  const qualityHtml=quality.length?`<div class="pub-note pub-data-quality"><p><strong>Data quality.</strong> ${quality.map(esc).join(' ')}</p></div>`:'';
+  const introduction=part('Introduction'),methods=part('Methods',note=>!isLimitation(note)&&!isDataQuality(note)),
+    results=part('Results'),discussion=part('Discussion');
+  const date=`<p class="pub-date">Drafted ${esc(input.date)}</p>`;
+  // A HEADING OVER A PART THAT HOLDS ONLY PROMPTS is marked, so it prints no more than its prompt does.
+  const heading=(tag:'h2'|'h3',text:string,inner:string)=>
+    `<${tag}${onlyPrompts(inner)?' class="pub-unwritten"':''}>${text}</${tag}>`;
 
-  if(kind!=='publication'){
-    const format=FORMATS.find(f=>f.id===kind)??FORMATS[0]!;
+  if(format){
     // A WRITTEN ROLE: its text where written, the format's prompt for it where not.
     const writtenRole=(role:string,ask:readonly [string,string,string]|undefined,cls='')=>{
       const key=roleKey(role),text=written[key]?.trim(),[label,length,what]=ask??[ROLES[role]?.label??role,'',''];
@@ -226,43 +265,58 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
       return `<div class="pub-prompt${cls}" data-pub-part="${key}"><p class="pub-prompt-label">${esc(label)}${length?` <span>· ${esc(length)}</span>`:''}</p>`
         +`<p>${esc(what)}</p>${control(key,'Write')}</div>`;};
     // FROM THE RECORD: each role's notes rendered once, Methods first so its sources are known by the time references are.
-    const methodsHtml=rendered(methods);
+    const methodsHtml=rendered(methods)+qualityHtml;
     const fromRecord:Record<string,()=>string>={
       background:()=>rendered(introduction),situation:()=>rendered(results),methods:()=>methodsHtml,
       interpretation:()=>rendered(discussion),limitations:()=>rendered(limitations),
-      references:()=>(sources.length?`<ul class="pub-sources">${sources.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'')
+      // THE SOURCES ONCE: a format that prints its data notes has said them there.
+      references:()=>(sources.length&&!format.sections.some(x=>x.roles.includes('methods'))?`<ul class="pub-sources">${sources.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'')
         +(cited.length?`<ol class="pub-references">${cited.map(e=>`<li>${esc(e.text)}</li>`).join('')}</ol>`:'')};
-    const hasRecord:Record<string,boolean>={background:introduction.length>0,situation:results.length>0,methods:methods.length>0,
+    const hasRecord:Record<string,boolean>={background:introduction.length>0,situation:results.length>0,methods:methods.length+quality.length>0,
       interpretation:discussion.length>0,limitations:limitations.length>0,references:sources.length+cited.length>0};
     const roleBody=(role:string,section?:FormatSection)=>ROLES[role]?.source==='written'
       ?writtenRole(role,section?.prompts?.[role]??section?.prompt,section?.prompts?.[role]?' pub-qa':''):(fromRecord[role]?.()??'');
     const head=`<p class="pub-kicker">${esc(format.kicker)}</p>`
       +`<h1 data-pub-part="${roleKey('title')}">${esc(written[roleKey('title')]?.trim()||input.title)}</h1>`+control(roleKey('title'),'Edit title')
       +(input.authors.length?`<p class="pub-authors">${input.authors.map(esc).join(', ')}</p>`:'')
-      +`<p class="pub-date">${esc(input.date)}</p>`
+      +date
       +format.masthead.map(m=>writtenRole(m.role,m.prompt,' pub-masthead')).join('');
     const body=format.sections.map(section=>{
       const inner=section.roles.map(role=>roleBody(role,section)).join('');
       if(!inner)return '';
-      return `<h2>${esc(section.heading)}</h2>`+(section.box?`<div class="pub-keyfigures">${inner}</div>`:inner);
+      return heading('h2',esc(section.heading),inner)+(section.box?`<div class="pub-keyfigures${onlyPrompts(inner)?' pub-unwritten':''}">${inner}</div>`:inner);
     }).join('');
     // WHAT THIS FORMAT DOES NOT CARRY, named rather than lost: a role holding text or notes that no heading here maps.
     const used=new Set(['title',...format.masthead.map(m=>m.role),...format.sections.flatMap(x=>x.roles)]);
     const left=Object.entries(ROLES).filter(([role,decl])=>!used.has(role)
       &&(decl.source==='written'?!!written[roleKey(role)]?.trim():!!hasRecord[role])).map(([,decl])=>decl.label);
     const leftover=left.length?`<aside class="pub-leftover"><p>Not in this format, kept for the others: ${left.map(esc).join('; ')}.</p></aside>`:'';
-    const annex=equations.length?`<h2>Annex: equations</h2>`+equations.map((e,at)=>
+    const equationList=equations.map((e,at)=>
       `<div class="pub-equation"><p><strong>Equation A${at+1}.</strong>${e.from?` ${esc(e.from)}`:''}</p>`
-      +`<p class="prose-display"><span class="prose-math is-display" data-tex="${e.tex}">$$${e.tex}$$</span></p></div>`).join(''):'';
+      +`<p class="prose-display"><span class="prose-math is-display" data-tex="${e.tex}">$$${e.tex}$$</span></p></div>`).join('');
+    // THE ANNEX FILE (2026-11-19): what it holds is said in one line here; its equations are there, not in these pages.
+    const inAnnex=[equations.length?`equation${equations.length===1?' A1':`s A1 to A${equations.length}`}`:'',
+      attachments.length?`table${attachments.length===1?' S1':`s S1 to S${attachments.length}`}`:''].filter(Boolean);
+    const annex=toAnnex?(inAnnex.length?`<p class="pub-annex-note">In the annex file, annex.html, with this draft’s attached files: ${inAnnex.join(' and ')}.</p>`:'')
+      :equations.length?`<h2>Annex: equations</h2>`+equationList:'';
     const follows=`<p class="pub-follows">Laid out as ${esc(format.label)}, after ${esc(format.follows)}.</p>`;
-    return numbered(`<article class="publication-page pub-kind-${esc(kind)}" lang="en">${head}${body}${annex}${follows}${leftover}</article>`);
+    const annexFile=toAnnex&&inAnnex.length?`<article class="publication-page pub-annex" lang="en"><p class="pub-kicker">Annex</p>`
+      +`<h1>${esc(written[roleKey('title')]?.trim()||input.title)}</h1>${date}`
+      +(equations.length?`<h2>Equations</h2>${equationList}`:'')
+      +(attachments.length?`<h2>Attached tables</h2><ul class="pub-sources">${attachments.map((a,at)=>`<li><strong>Table S${at+1}.</strong> ${esc(a.label)}, `
+        +`${a.rows.toLocaleString('en-US')} rows: ${a.fetchedFrom?`not attached; fetched from ${esc(a.fetchedFrom)}`:esc(a.file)}.</li>`).join('')}</ul>`:'')
+      +`</article>`:undefined;
+    return {html:numbered(`<article class="publication-page pub-kind-${esc(kind)}" lang="en">${head}${body}${annex}${follows}${leftover}</article>`),
+      attachments,...annexFile?{annex:annexFile}:{}};
   }
   const front=`<h1 data-pub-part="title">${esc(written.title?.trim()||input.title)}</h1>`+control('title','Edit title')
     +(input.authors.length?`<p class="pub-authors">${input.authors.map(esc).join(', ')}</p>`:'')
-    +`<p class="pub-date">${esc(input.date)}</p>`+prompt('affiliations');
-  const abstract=`<h2>Abstract</h2>`+prompt('background',true)+prompt('methods',true)+prompt('results',true)+prompt('conclusions',true);
-  const intro=`<h2>1. Introduction</h2>`+(introduction.length?rendered(introduction):prompt('Introduction'));
-  const method=`<h2>2. Methods</h2>`+rendered(methods);
+    +date+prompt('affiliations');
+  const abstractBody=prompt('background',true)+prompt('methods',true)+prompt('results',true)+prompt('conclusions',true);
+  const abstract=heading('h2','Abstract',abstractBody)+abstractBody;
+  const introBody=introduction.length?rendered(introduction):prompt('Introduction');
+  const intro=heading('h2','1. Introduction',introBody)+introBody;
+  const method=`<h2>2. Methods</h2>`+rendered(methods)+qualityHtml;
   // RESULTS IN THE OBJECTIVES' ORDER (Stage B): under each objective, the notes that answer it, then the Results of the
   // workflow that answers it; what answers none comes first. With no objectives, Results as the record has it.
   const objectives=objectivesOf(input.notes);
@@ -280,16 +334,17 @@ export function publicationMarkup(input:PublicationInput,esc:Escape):string{
           +`<p>What the analysis found for this objective. Write it as a note in Results that answers objective ${o.n}.</p></div>`);
     }).join('')
     :rendered(results));
-  const discuss=`<h2>4. Discussion</h2>`+(discussion.length?rendered(discussion):prompt('Discussion'))
-    +(limitations.length?`<h3>Limitations</h3>`+rendered(limitations):'')
-    +`<h3>Conclusions</h3>`+prompt('closing');
-  const data=`<h2>Data availability</h2>`+prompt('data')
-    +(sources.length?`<ul class="pub-sources">${sources.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`:'');
+  const discussBody=discussion.length?rendered(discussion):prompt('Discussion');
+  const limitationsHtml=limitations.length?`<h3>Limitations</h3>`+rendered(limitations):'',closing=prompt('closing');
+  const discuss=heading('h2','4. Discussion',discussBody+limitationsHtml+closing)+discussBody+limitationsHtml
+    +heading('h3','Conclusions',closing)+closing;
+  const dataBody=prompt('data')+(sources.length?`<ul class="pub-sources">${sources.map(s=>`<li>${esc(s)}</li>`).join('')}</ul>`:'');
+  const data=heading('h2','Data availability',dataBody)+dataBody;
   const refs=`<h2>References</h2>`+(cited.length?`<ol class="pub-references">${cited.map(e=>`<li>${esc(e.text)}</li>`).join('')}</ol>`
     :'<p>No works are cited yet.</p>');
   const appendix=equations.length?`<h2>Appendix: equations</h2>`+equations.map((e,at)=>
     `<div class="pub-equation"><p><strong>Equation A${at+1}.</strong>${e.from?` ${esc(e.from)}`:''}</p>`
     +`<p class="prose-display"><span class="prose-math is-display" data-tex="${e.tex}">$$${e.tex}$$</span></p></div>`).join(''):'';
   // Each part laid out in reading order; the counters above run in that order too.
-  return numbered(`<article class="publication-page" lang="en">${front}${abstract}${intro}${method}${result}${discuss}${data}${refs}${appendix}</article>`);
+  return {html:numbered(`<article class="publication-page" lang="en">${front}${abstract}${intro}${method}${result}${discuss}${data}${refs}${appendix}</article>`),attachments};
 }

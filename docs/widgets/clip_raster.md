@@ -1,6 +1,6 @@
 # Clip raster
 
-_Created 2026-11-19 · Updated 2026-11-19_
+_Created 2026-11-18 · Updated 2026-11-18_
 
 **A raster cut to a boundary, cell by cell.** The population living inside a district rather than in its bounding box.
 

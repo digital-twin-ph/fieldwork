@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-const {publicationMarkup,roleKey,layoutKey,readLayout,FORMATS,ROLES,promptFor}=await import('../build/publication.js');
+const {publicationMarkup,publicationParts,roleKey,layoutKey,readLayout,FORMATS,ROLES,promptFor,ATTACH_OVER}=await import('../build/publication.js');
 const {inWriteUp,LEFT_OUT}=await import('../build/notes.js');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -88,7 +88,7 @@ const base={title:'Measles in Hagelloch, 1861',authors:[],date:'15 November 2026
   sourceOf:n=>from[n.nodeId],
   figureOf:n=>n.nodeId==='map'&&n.id.endsWith('description')?'<figure class="notes-figure" data-figure="map"><svg></svg></figure>':undefined,
   references:[{kind:'method',text:'Kulldorff M. 2005.',citedBy:['Cluster']}]};
-const h2s=html=>[...html.matchAll(/<h2>([^<]*)<\/h2>/g)].map(m=>m[1]);
+const h2s=html=>[...html.matchAll(/<h2(?: class="pub-unwritten")?>([^<]*)<\/h2>/g)].map(m=>m[1]);
 test('every format maps only roles that are declared, and names the reports it follows',()=>{
   assert.ok(FORMATS.length>=4);
   for(const f of FORMATS){
@@ -99,7 +99,7 @@ test('every format maps only roles that are declared, and names the reports it f
 test('each format lays out the same notes under its own headings, in its own order',()=>{
   const who=publicationMarkup({...base,kind:'sitrep-who'},esc),ecdc=publicationMarkup({...base,kind:'surveillance-ecdc'},esc);
   assert.deepEqual(h2s(who),['Highlights','Situation in numbers','Background','Epidemiological update','Risk assessment',
-    'Preparedness and response','Recommendations','Data notes','Resources and references','Annex: equations']);
+    'Preparedness and response','Recommendations','Data notes','Resources and references']);
   assert.deepEqual(h2s(ecdc),['Key facts','Introduction','Methods','Epidemiology','Discussion','Public health implications','References','Annex: equations']);
   for(const html of [who,ecdc]){
     assert.equal(html.split('Cases were counted by day.').length-1,1,'a note once');
@@ -153,11 +153,67 @@ test('a figure left out of one format is gone from it, kept in the others, and c
   assert.match(publicationMarkup({...base,kind:'sitrep-who',written,writable:true},esc),/class="pub-left-out" data-pub-note="map:description"/);
   assert.match(publicationMarkup({...base,written},esc),/data-figure="map"/,'the publication keeps it');
 });
-test('an MMWR-style report opens on its Summary box of three questions, each answered by the person',()=>{
+test('a full report opens on its Summary box of three questions, each answered by the person',()=>{
   const written={[roleKey('addedHere')]:'Visits doubled on 7 June.'};
   const html=publicationMarkup({...base,kind:'mmwr-report',written},esc);
   assert.deepEqual(h2s(html).slice(0,3),['Summary','Abstract','Introduction']);
   assert.match(html,/<h2>Summary<\/h2><div class="pub-keyfigures"><div class="pub-prompt pub-qa" data-pub-part="role:alreadyKnown"><p class="pub-prompt-label">What is already known about this topic\?/);
   assert.match(html,/<p class="pub-question">What is added by this report\?<\/p><p>Visits doubled on 7 June\.<\/p>/);
-  assert.match(html,/Morbidity and Mortality Weekly Report/);
+  // NOT TAKEN FOR THE SERIES IT FOLLOWS (the practitioner, 2026-11-19): no heading, kicker or label names it.
+  assert.match(html,/<p class="pub-kicker">Report<\/p>/);
+  for(const f of FORMATS)for(const text of [f.label,f.kicker,...f.sections.map(x=>x.heading)])assert.doesNotMatch(text,/MMWR|Morbidity and Mortality/,f.id);
+});
+// THE TARGET OUTPUTS AUDIT, 2026-11-19 (experiment 202): what a draft attaches rather than prints, and what it does not print.
+const long={kind:'machined',id:'list:description',section:'Results',text:'**Line list.** 162 rows.',nodeId:'list'};
+const fetched={kind:'machined',id:'raw:description',section:'Results',text:'**Daily counts.** 3,653 rows.',nodeId:'raw'};
+const quality=[{kind:'machined',id:'src:meaning',section:'Methods',fn:'limitation',text:'Line list: 8 of 8 kept columns have no stated meaning.',nodeId:'src'},
+  {kind:'machined',id:'src2:meaning',section:'Methods',fn:'limitation',text:'Line list: 8 of 8 kept columns have no stated meaning.',nodeId:'src2'}];
+const tableFigure='<figure class="notes-figure" data-figure="table"><table><tr><td>row</td></tr></table></figure>';
+const attaching={...base,notes:[...base.notes,long,fetched,...quality],
+  figureOf:n=>n.nodeId==='list'||n.nodeId==='raw'?tableFigure:base.figureOf(n),
+  tableOf:n=>n.nodeId==='list'?{rows:162,csv:()=>'id\r\n1\r\n'}:n.nodeId==='raw'?{rows:3653,csv:()=>'never',fetchedFrom:'zenodo.org'}:undefined};
+test('a table too long to print is attached as CSV in every format, and one fetched from elsewhere is named, never attached',()=>{
+  assert.equal(ATTACH_OVER,50);
+  for(const kind of ['publication','sitrep-who','surveillance-ecdc']){
+    const {html,attachments}=publicationParts({...attaching,kind},esc);
+    assert.doesNotMatch(html,/<td>row<\/td>/,kind);
+    assert.match(html,/<strong>Table S1\.<\/strong> Line list, 162 rows: attached as S1-line-list\.csv\./,kind);
+    assert.match(html,/<strong>Table S2\.<\/strong> Daily counts, 3,653 rows: not attached\. Its rows were fetched from zenodo\.org/,kind);
+    assert.deepEqual(attachments.map(a=>[a.file,!!a.csv,a.fetchedFrom]),[['S1-line-list.csv',true,undefined],['S2-daily-counts.csv',false,'zenodo.org']]);
+  }
+});
+test('a sit rep and a full report send their equations to an annex file; the publication and the ECDC report keep theirs printed',()=>{
+  const who=publicationParts({...attaching,kind:'sitrep-who'},esc),report=publicationParts({...attaching,kind:'mmwr-report'},esc);
+  for(const part of [who,report]){
+    assert.doesNotMatch(part.html,/Annex: equations|prose-display/);
+    assert.match(part.html,/\(Equation A1, in the annex file\.\)/);
+    assert.match(part.html,/In the annex file, annex\.html, with this draft’s attached files: equation A1 and tables S1 to S2\./);
+    assert.match(part.annex,/<h2>Equations<\/h2>[\s\S]*data-tex=/);
+    assert.match(part.annex,/Table S2\.<\/strong> Daily counts, 3,653 rows: not attached; fetched from zenodo\.org/);
+  }
+  assert.equal(publicationParts({...attaching,kind:'surveillance-ecdc'},esc).annex,undefined);
+  assert.match(publicationMarkup({...attaching,kind:'surveillance-ecdc'},esc),/\(Equation A1, in the Annex\.\)[\s\S]*Annex: equations/);
+  assert.match(publicationMarkup(attaching,esc),/\(Equation A1, in the Appendix\.\)[\s\S]*Appendix: equations/);
+});
+test('data quality findings are stated once under the methods, not as the study\'s limitations',()=>{
+  for(const kind of ['publication','sitrep-who','mmwr-report']){
+    const html=publicationMarkup({...attaching,kind},esc);
+    assert.equal(html.split('8 of 8 kept columns have no stated meaning').length-1,1,kind);
+    assert.match(html,/<strong>Data quality\.<\/strong> Line list: 8 of 8/,kind);
+  }
+  const pub=publicationMarkup(attaching,esc);
+  assert.ok(pub.indexOf('Data quality.')<pub.indexOf('3. Results'),'under Methods');
+  assert.doesNotMatch(pub.slice(pub.indexOf('<h3>Limitations</h3>')),/Data quality\./);
+});
+test('a heading over a part that holds only prompts is marked, so it does not print; the date says it is the draft\'s',()=>{
+  const pub=publicationMarkup(base,esc),who=publicationMarkup({...base,kind:'sitrep-who'},esc);
+  assert.match(pub,/<h2 class="pub-unwritten">Abstract<\/h2>/);
+  assert.match(pub,/<h2>1\. Introduction<\/h2>/,'written, so printed');
+  assert.match(who,/<h2 class="pub-unwritten">Highlights<\/h2>/);
+  assert.match(who,/<h2 class="pub-unwritten">Situation in numbers<\/h2><div class="pub-keyfigures pub-unwritten">/);
+  for(const html of [pub,who])assert.match(html,/<p class="pub-date">Drafted 15 November 2026<\/p>/);
+});
+test('a format that prints its data notes names its sources there, not a second time under references',()=>{
+  const who=publicationMarkup({...base,kind:'sitrep-who'},esc);
+  assert.equal(who.split('Hagelloch line list: 188 cases.').length-1,1);
 });

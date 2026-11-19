@@ -79,7 +79,7 @@ function categoricalKey(polygons:{layerName?:string;featuresNamed?:boolean;featu
 
 export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,workflow:Workflow):MapPresentation{
   const upstream=workflow.edges.filter(e=>e.to===node.id).map(e=>workflow.nodes.find(n=>n.id===e.from)?.params.label||e.from);
-  const sourceNote=node.params.mapSourceNote?.trim()||`Sources: ${upstream.join(', ')||'connected workflow inputs'} · CRS84. ${output.polygons?.method||output.method||'See N3 & evidence for method.'}`;
+  const sourceNote=node.params.mapSourceNote?.trim()||`Sources: ${upstream.join(', ')||'connected workflow inputs'} · CRS84. ${output.polygons?.method||output.method||''}`.trim();
   // Colours come from FIGURE_ROLE, so the same meaning carries the same hue here, in the plot and
   // in a chart placed beside it. They were eight unrelated hex literals until 2026-10-13.
   const R=FIGURE_ROLE;

@@ -61,9 +61,10 @@ Both are kept outside every repository. This is a reading, not legal advice.
 | **Figures and exports** | Output only *"for visualization purposes and only within Customer Applications"*, and never *"redistribute[d] … to third parties"*, §3.1(d)(1) and (3) | **Unresolved.** A figure in a published report leaves the application and reaches third parties. Figures keep OpenStreetMap |
 | Open licences | No Esri output in anything licensed to be *"Redistributable to third parties at no charge"*, §3.1(a) | **Esri tiles, and images made from them, never go into a repository, an example, a fixture or a Zenodo deposit** |
 
-**Decision, recommended and not yet confirmed by the practitioner:** Esri stays on the interactive map only, until Esri
-confirms in writing that published figures are allowed. **Open:** whether the Credentials manual says that a person
-using Esri is bound by their own Location Platform agreement; and CARTO's terms on figures, not yet read.
+**Decided by the practitioner, 2026-11-19** (*"Yes to ESRI. No ESRI in figures for now."*): Esri stays on the
+interactive map only, until Esri confirms in writing that published figures are allowed; and the Credentials manual
+says that a person using Esri is bound by their own Location Platform agreement (`docs/usage.md`, *Credentials*).
+**Open:** CARTO's terms on figures, not yet read.
 
 ## What it does not establish
 

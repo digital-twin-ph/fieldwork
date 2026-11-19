@@ -109,8 +109,9 @@ export function twoByTwoEstimatesMarkup(result:TwoByTwoResult|RateTwoByTwoResult
 }
 
 /** Said wherever the measures carry neutral names, so the names read as a state and not a style. */
-export const NO_DESIGN='No study design is connected, so these measures are named by their '
-  +'arithmetic. Connect a study design to say what they measure.';
+export const NO_DESIGN='No study design is connected, so these measures are named by their arithmetic.';
+/** What to do about it, which only the application needs: a draft does not print it (2026-11-19). */
+export const NO_DESIGN_ACTION='Connect a study design to say what they measure.';
 
 /** The instrument whole: the table, then the estimates, then whatever the computation warned
  *  about. The warnings are drawn rather than dropped because the one that matters most here --
@@ -143,7 +144,7 @@ export function twoByTwoMarkup(result:TwoByTwoResult|RateTwoByTwoResult,esc:Esca
     +(isRateLayout(result)?rateTableMarkup(result,esc):twoByTwoTableMarkup(result,esc))
     +reported
     +(left.length?`<p class="tbt-warning muted">Not reported: ${esc(left.join(', '))}.</p>`:'')
-    +(result.reading?.design===null&&!isRateLayout(result)?`<p class="tbt-warning muted" data-no-design>${esc(NO_DESIGN)}</p>`:'')
+    +(result.reading?.design===null&&!isRateLayout(result)?`<p class="tbt-warning muted" data-no-design>${esc(NO_DESIGN)} <span class="ui-only">${esc(NO_DESIGN_ACTION)}</span></p>`:'')
     +warnings
     +`</div>`;
 }

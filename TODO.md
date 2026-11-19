@@ -1544,7 +1544,7 @@ workflow (experiment 180):
   `municipio`, with `period_start` as the frames, and a map that steps through the 8-day periods. A workflow in the
   example, played back live.
 - **Vegetation has a reader** (0.149.0, 2026-11-18): MODIS NDVI and EVI from `modis-13Q1-061`, 250 m, 16-day. Default
-  rule: pixel reliability 0 or 1, from the file's own legend; **the practitioner's to confirm.** Not yet in the Brazil
+  rule: pixel reliability 0 or 1, from the file's own legend; kept by the practitioner, 2026-11-19 (*"Current for NDVI"*). Not yet in the Brazil
   example's workflows.
 
 ### Comprehensibility: five known problems, actionable now (2026-11-07)
@@ -1754,6 +1754,15 @@ lives; ask before downloading.
 2. **Hillshade and slope** computed with terrio's `dem` (experiment 221 checked slope on a known plane).
 3. **Ground below the 2100 projection**, as cells of the DEM against the projected level.
 
+### The target outputs, after their audit (2026-11-19)
+
+The [target outputs audit](docs/audits/target-outputs-audit.md) printed South London as a publication, MERS as a sit rep
+and NYC as the full report. **Done in 0.150.0:** attached tables and the annex file, MMWR's name out of the formats,
+the shared print defects. **Next pass:** a chart's two titles; captions the steps write (row counts before a pivot,
+"keyed by", wrong chart descriptions); map keys listing what is not drawn; fine print inside figures; the data notes'
+length in a sit rep. **With experiment 202's design:** Methods stated once per analysis (gap 4), citations and
+cross-references in the text (gap 10), a table of the source's printed values beside the run's (gap 13).
+
 ### An infographic output, after publication, sit rep and surveillance summary (asked 2026-11-18)
 
 The practitioner: *"Infographic will be for later. Let's refine publication, sit rep and surveillance summary first."*
@@ -1763,7 +1772,8 @@ From Kenya's sitrep infographic (structure only, never its design): key-figure t
 
 CARTO and Esri basemaps draw on the interactive map only; a figure draws OpenStreetMap in their place. Esri's terms
 were read on 2026-11-18 and leave figures unresolved: output only within the application, never redistributed
-(experiment 222). Esri stays interactive unless Esri confirms in writing. CARTO's terms are still to read.
+(experiment 222). Esri stays interactive unless Esri confirms in writing (decided 2026-11-19), and the Credentials
+manual says an Esri key is used under the person's own agreement with Esri. CARTO's terms are still to read.
 
 ### Fieldwork in other languages: localisation, not a model (asked 2026-11-15)
 

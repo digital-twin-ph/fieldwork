@@ -122,13 +122,14 @@ import {partsTable,partsTableMarkup} from './map-parts-table.js';
 import {TARGETS,projectOutline,outlineMarkup,slotsForNote} from './outline.js';
 import {planView,planMarkup,openPlanDialog,withPart,markedComplete,unmarked,type Plan} from './plan.js';
 import {auditTarget,openAuditDialog} from './notes-audit.js';
-import {publicationMarkup,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput} from './publication.js';
+import {publicationParts,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput,type AttachableTable} from './publication.js';
 import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
 import {boxInside,composeInset,insetWidth,focusDiameter,FOCUS_LIMIT,type Corner} from './map-inset.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
-import {figureFor,describedNode} from './write-up-figures.js';
+import {figureFor,describedNode,tableCsv,tableRowCount} from './write-up-figures.js';
+import {zipSync,strToU8} from 'fflate';
 import {referenceList} from './references.js';
 import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNote,
   type WriteUp,type WriteUpEntry} from './write-up.js';
@@ -8294,6 +8295,19 @@ function renderNotesView(){
     const held=heldFor(key);
     return figureFor(id,held?{...held.run,mapSvg:mapSvgOf(held),chartSvg:chartSvgOf(held)}:undefined,esc)||undefined;
   };
+  // THE ROWS BEHIND A TABLE'S NOTE, for a draft that attaches what it cannot print (experiment 202, 2026-11-19). A workflow
+  // whose table was fetched from elsewhere names where, and its rows are never handed on: the project does not carry them.
+  const tableOf=(note:Note):AttachableTable|undefined=>{
+    const id='nodeId' in note&&note.nodeId?note.nodeId:undefined;
+    if(!id||note.kind!=='machined'||!describedNode(note.id))return undefined;
+    const held=heldFor('workflowKey' in note&&note.workflowKey?note.workflowKey:storageKey(workflow));
+    const table=held?.run.tables?.[id];
+    if(table?.kind!=='data-table'||(table as {twoByTwo?:unknown}).twoByTwo)return undefined;
+    const remote=held!.workflow.nodes.map(n=>n.type==='table_input'?(n as WorkflowNode<'table_input'>).params.remote?.url:undefined).find(Boolean);
+    let host:string|undefined;try{host=remote?new URL(remote).hostname:undefined;}catch{host=remote;}
+    return {rows:tableRowCount(table),source:held!.workflow.nodes.find(n=>n.id===id)?.type==='table_input',
+      csv:()=>tableCsv(table),...host?{fetchedFrom:host}:{}};
+  };
   // THE WORKS THIS PROJECT CITES, assembled from the entries rather than stored beside them.
   const references=referenceList(entries.map(e=>
     ({workflowName:e.workflowName,machined:e.machined,derived:e.derived})),(project?.notes||[]) as Note[]);
@@ -8361,7 +8375,7 @@ function renderNotesView(){
     title:project?.name||workflow.name,
     authors:(project?.authors||[]).map(a=>a.name||a.login),
     date:new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'}),
-    notes:[...(project?.notes||[]),...derived,...machined],sourceOf,figureOf,references,
+    notes:[...(project?.notes||[]),...derived,...machined],sourceOf,figureOf,references,tableOf,
     // READ AS STORED NOW, not as when Notes was drawn: a kind or a layout set since then is kept, and must be what opens.
     written:(project&&readProjects().find(p=>p.id===project.id)?.publication)||project?.publication,writable:!!project&&!keptHere(project)},
     // KEPT WITH THE PROJECT, as its notes are; a shipped example has nowhere to keep it, and is offered no Write.
@@ -8429,15 +8443,17 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
   // DRAFT AS: the project's targets first, then the other formats, kept apart.
   const chosen=PRODUCT_KINDS.filter(k=>input.targets?.includes(k.kind)),others=PRODUCT_KINDS.filter(k=>!input.targets?.includes(k.kind));
   const option=(k:typeof PRODUCT_KINDS[number])=>`<option value="${k.kind}"${k.kind===kind?' selected':''}>${esc(k.label)}</option>`;
-  const draw=()=>{const top=view!.scrollTop;
+  const draw=()=>{const top=view!.scrollTop;parts=publicationParts({...input,kind},esc);
     view!.innerHTML=`<div class="publication-bar"><button class="button" data-publication-back>Back to Notes</button>`
       +`<label class="pub-kind">Draft as <select data-publication-kind>`
         +(chosen.length?`<optgroup label="Writing towards">${chosen.map(option).join('')}</optgroup><optgroup label="Other formats">${others.map(option).join('')}</optgroup>`
           :PRODUCT_KINDS.map(option).join(''))+`</select></label>`
       +(lastAudit?`<button class="button" data-publication-audit>Notes audit</button>`:'')
+      +(parts.attachments.length||parts.annex?`<button class="button" data-publication-files>Download the attached files</button>`:'')
       +`<button class="button primary" data-publication-print>Print or save as PDF</button></div>`
-      +publicationMarkup({...input,kind},esc);
+      +parts.html;
     view!.scrollTop=top;void typeset(view!);};
+  let parts=publicationParts({...input,kind},esc);
   // A FIGURE'S WIDTH AND PLACE, and the kind, set where they are shown.
   view.onchange=event=>{
     const target=event.target as HTMLElement;
@@ -8483,6 +8499,7 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
     }
     if(target.closest('[data-publication-back]'))close();
     else if(target.closest('[data-publication-print]'))window.print();
+    else if(target.closest('[data-publication-files]'))void downloadAttached(parts,input.title,kind);
     else if(target.closest('[data-publication-audit]')&&lastAudit)
       openAuditDialog(lastAudit.targets.some(t=>t.id===kind)?lastAudit.targets:[...lastAudit.targets,{id:kind,label:PRODUCT_KINDS.find(k=>k.kind===kind)?.label??kind}],kind,lastAudit.of,esc);
   };
@@ -8494,6 +8511,33 @@ function openPublication(input:PublicationInput,keep:(key:string,text:string)=>R
   view.onkeydown=event=>{if(event.key!=='Escape')return;if((event.target as HTMLElement).closest('.pub-editor'))draw();else close();};
   view.querySelector<HTMLButtonElement>('[data-publication-back]')!.focus();
   void typeset(view);
+}
+/** THE DRAFT'S ATTACHED FILES IN ONE ZIP (experiment 202, 2026-11-19): the annex, its equations typeset as the draft shows
+ *  them, and each attached table as CSV. A table whose rows were fetched from elsewhere is named in the annex and not
+ *  written. The printed PDF is the print dialog's and cannot be put in here. */
+async function downloadAttached(parts:import('./publication.js').PublicationParts,title:string,kind:ProductKind){
+  const files:Record<string,Uint8Array>={};
+  const listed=parts.attachments.map((a,at)=>`<li><strong>Table S${at+1}.</strong> ${esc(a.label)}, ${a.rows.toLocaleString('en-US')} rows: `
+    +(a.fetchedFrom?`not attached; fetched from ${esc(a.fetchedFrom)}`:esc(a.file))+`.</li>`).join('');
+  let body=parts.annex;
+  if(!body)body=`<article class="publication-page pub-annex" lang="en"><p class="pub-kicker">Attached files</p><h1>${esc(title)}</h1>`
+    +`<ul class="pub-sources">${listed}</ul></article>`;
+  const holder=document.createElement('div');holder.hidden=true;holder.innerHTML=body;document.body.append(holder);
+  try{await typeset(holder);}catch{/* the TeX stays as written */}
+  const html=`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">`
+    +`<title>${esc(title)}: annex</title><style>body{font:16px/1.5 Georgia,serif;max-width:46rem;margin:2rem auto;padding:0 1rem;color:#1a1a1a;background:#fff}`
+    +`.pub-kicker{text-transform:uppercase;letter-spacing:.06em;font:600 14px system-ui,sans-serif}.pub-equation{margin:1rem 0}`
+    +`.prose-display{overflow-x:auto}</style></head><body>${holder.innerHTML}</body></html>`;
+  holder.remove();
+  files['annex.html']=strToU8(html);
+  for(const a of parts.attachments)if(a.csv&&!a.fetchedFrom)files[a.file]=strToU8(a.csv());
+  const zip=zipSync(files,{level:6});
+  const url=URL.createObjectURL(new Blob([zip as BlobPart],{type:'application/zip'}));
+  const link=document.createElement('a');link.href=url;
+  link.download=`${title.replace(/[^\w.-]+/g,'-').replace(/^-|-$/g,'')||'draft'}-${kind}-attached.zip`;
+  document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const written=Object.keys(files).length-1;
+  toast(`Attached files downloaded: the annex${written?` and ${written} table${written===1?'':'s'} as CSV`:''}.`);
 }
 /** OPEN A NOTE, AND LET THE TWO EDITABLE KINDS BE WRITTEN.
  *

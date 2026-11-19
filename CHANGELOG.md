@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.149.0 — In development
+## 0.149.0 — 2026-11-19
 
 - **NDVI and EVI from MODIS, over areas and at points**: Sample a raster reads the 16-day, 250 m vegetation indices on
   Planetary Computer, as it reads land surface temperature. The default keeps cells whose pixel reliability is good or

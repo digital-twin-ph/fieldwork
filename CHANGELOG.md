@@ -13,6 +13,8 @@ shown in a local build is not a claim that it has been published.
 - **CI's template test** asks for the population example's workflows only where that example is checked out.
 - **The Credentials manual says where GitHub's Resource owner is, and what goes wrong without it**: it starts as your
   own name, and left so, the project's repository never appears when choosing it ("No repositories found").
+- **The Credentials manual has a section for an organization's owner**: approving a member's token, what to check
+  before approving, and how to revoke one later.
 - **The Credentials dialog's manual is a button you can't miss**: "Read the manual for Credentials", with a book's
   mark, bold and outlined, where a line of plain text was.
 

@@ -1,6 +1,6 @@
 # Credentials
 
-_Created 2026-11-17 · Updated 2026-11-18_
+_Created 2026-11-17 · Updated 2026-11-19_
 
 ## What it does
 
@@ -39,6 +39,11 @@ it open. The button says how many keys are unlocked. **Start a new collection** 
 
 ## Make a GitHub token for one repository
 
+> **The step people miss: Resource owner.** At the top of GitHub's token form, **Resource owner** starts as your own
+> name. For a shared project it must be the **organization that owns the repository**, `digital-twin-ph` for
+> `digital-twin-ph/project-test-collaboration`. Left as your name, the repository never appears when you choose it,
+> and GitHub says only "No repositories found". Change it first (step 5).
+
 On GitHub, signed in as yourself:
 
 1. Your picture, top right, then **Settings**.
@@ -59,8 +64,24 @@ On GitHub, signed in as yourself:
    GitHub adds **Metadata: Read-only** by itself.
 9. **Generate token**. Copy it at once: GitHub shows it only this time.
 
-If the owner is an organization, an owner of that organization may have to approve the token before it works. GitHub
-shows the token as pending until then.
+If the owner is an organization, an owner of that organization may have to approve the token before it works (next
+section). GitHub shows the token as pending until then, and emails you when it is approved or denied.
+
+## For an organization's owner: approve a member's token
+
+A project shared through an organization's repository works for a member only once their token is approved, where the
+organization asks for approval. Tokens made by the organization's own owners need none.
+
+1. On GitHub, the organization's page (for example `github.com/digital-twin-ph`), then **Settings**.
+2. In the left column, under **Personal access tokens**, **Pending requests**.
+3. Open the member's request. Check **which repository** it asks for (only the project's) and **which permissions**
+   (**Contents** and **Discussions**, read and write; never **Workflows**).
+4. **Approve**, or **Deny** with a reason, which GitHub sends to the member.
+
+GitHub emails the organization's owners once a day while any request waits. To take a token's access away later:
+**Personal access tokens**, **Active tokens**, then **Revoke**. Steps from GitHub's own pages, read 2026-11-19:
+*Managing requests for personal access tokens in your organization* and *Reviewing and revoking personal access tokens
+in your organization* (docs.github.com).
 
 ## Fill in the form for a GitHub token
 

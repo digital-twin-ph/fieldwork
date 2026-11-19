@@ -29,7 +29,11 @@ test('a cleanup URL drops the stored datasets and keeps the workflows',async({pa
   expect(before).toBeGreaterThan(1);
 
   await page.goto('/?forget-datasets');
-  await expect(page).toHaveURL(/\/$|index\.html$/,{timeout:30000});
+  // GONE FROM THE ADDRESS, AND STARTED AGAIN (2026-11-19). It waited to catch the moment the address was "/", but the
+  // application then opens its default example and rewrites it to "?example=hagelloch"; with four test files running at
+  // once the page got there first, and the gate failed on a race, not on the cleanup.
+  await expect(page).not.toHaveURL(/forget-datasets/,{timeout:30000});
+  await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
   const after=await page.evaluate(async()=>({
     legacy:localStorage.getItem('fieldwork-datasets-v1'),
     keys:Object.keys(localStorage).filter(k=>k.startsWith('fieldwork')).length,

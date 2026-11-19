@@ -114,8 +114,13 @@ outside any gate, at 0.151.2 in development:
 
 **Decided: the gate runs 4 at a time** (`scripts/gate.sh`, `FIELDWORK_WORKERS`, default 4; `playwright.config.mjs`
 keeps 1 for a run by hand unless set). The limit was found, not chosen: past 4 the cores are saturated, it is slower,
-and a test starts to fail beside the others. **Not established:** whether 5 or 6 is faster still; whether
-`recovery-urls` fails at 8 for a reason that could also strike at 4 under other load.
+and a test starts to fail beside the others. **Not established:** whether 5 or 6 is faster still.
+
+**The first gate at 4 (gate 221) failed on `recovery-urls`**, the test that had failed at 8: its browser tests took
+13.2 minutes, 551 passed. The cause was a race in the test, not load on the application: after the cleanup address,
+the page goes to "/", and the application then opens its default example and rewrites the address; the test waited
+to catch "/", which a busier machine passes by. It now checks that the cleanup address is gone and the application has
+started again: 16 of 16 at 4 workers, Chromium and WebKit. Running in parallel did not cause the fault; it exposed one.
 
 ## For the practitioner to decide
 

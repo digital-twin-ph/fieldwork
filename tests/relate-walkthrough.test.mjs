@@ -41,11 +41,14 @@ test('each case the example was made for is said: a fold, a gap, a key twice, a 
   assert.equal(fuzzy.steps.at(-1).result.length,5);
   const exact=relateWalkthrough({normalisation:'exact',spelling:false,several:false,decision:'drop',label:''});
   assert.match(exact.steps.map(s=>s.text).join('\n'),/Compared exactly, St\. Ann is not St Ann\. You chose to drop unmatched rows/);
-  // A STOP ENDS IT, with nothing passed on (2026-11-19: "Did not record Epsilon in the result").
+  // EVERY ROW CHECKED, THEN IT STOPS, in its own words (2026-11-19: "Should it continue with Epsilon as relate continues
+  // until all rows are checked?"). Each problem is marked where it is; the step's message names Epsilon.
   const last=exact.steps.at(-1);
-  assert.match(last.text,/^Epsilon is found 2 times, and you chose to stop and say which key: the step stops here, naming Epsilon, and passes nothing on, not even the rows above\. Had you chosen Keep one row per match, Epsilon would become 2 rows/);
+  assert.match(last.text,/^Every row checked, the step stops and passes nothing on\. In its own words: The second table gives "Epsilon" more than one "supplier"/);
   assert.ok(last.stopped&&last.final&&!last.result);
-  assert.doesNotMatch(exact.steps.map(s=>s.text).join('\n'),/Zeta/,'nothing after the stop');
+  assert.match(exact.steps.map(s=>s.text).join('\n'),/Epsilon is found 2 times, and you chose to stop and say which key: so the step will stop once every row is checked/);
+  assert.match(exact.steps.map(s=>s.text).join('\n'),/Zeta (is|are) in Water supply by district only/,'the rows after a problem are still checked');
+  assert.ok(exact.steps.slice(exact.steps.findIndex(s=>s.willStop),-1).every(s=>s.willStop),'once a problem is found, no table will come out');
 });
 
 test('every step is headed as made up, says where it is, and marks its rows in words and a shape',()=>{
@@ -56,8 +59,11 @@ test('every step is headed as made up, says where it is, and marks its rows in w
     assert.match(html,new RegExp(`Step ${at+1} of ${walk.steps.length}\\.`));
     assert.match(html,/aria-live="polite"/);
   });
-  const html=walkthroughMarkup(walk,walk.steps.length-1,esc);
-  assert.match(html,/<tr class="walk-stopped" data-walk-state="stopped">[\s\S]*?<td class="walk-word"><span aria-hidden="true">■<\/span> stops here<\/td>/);
-  assert.match(html,/No table: the step stops here, so nothing is passed on to the next step\./);
+  // The row that will stop the step is marked where it is; from then on no table will come out; the last step says it stopped.
+  const marked=walk.steps.findIndex(s=>s.marks.some(m=>m.state==='stopped'));
+  const html=walkthroughMarkup(walk,marked,esc);
+  assert.match(html,/<tr class="walk-stopped" data-walk-state="stopped">[\s\S]*?<td class="walk-word"><span aria-hidden="true">■<\/span> will stop the step<\/td>/);
+  assert.match(html,/No table will come out: the step will stop once every row is checked\./);
+  assert.match(walkthroughMarkup(walk,walk.steps.length-1,esc),/No table: the step stops here, so nothing is passed on to the next step\./);
   assert.doesNotMatch(html.slice(html.indexOf('walk-result')),/<td>Alpha<\/td>/,'the rows before the stop are not shown as a result');
 });

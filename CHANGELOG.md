@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.151.2 — In development
+
+- **Relate's walkthrough checks every row before it stops**, as Relate does, marks each problem where it is, and ends on
+  Relate's own words: with nothing decided, it names Epsilon's two rows, not Delta. It had stopped at the first problem.
+- **CI's template test** asks for the population example's workflows only where that example is checked out.
+
 ## 0.151.1 — 2026-11-19
 
 - **A template of a workflow holding a raster can be made again**: making one stopped with "Invalid retained raster

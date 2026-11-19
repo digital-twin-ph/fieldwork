@@ -147,3 +147,16 @@ stopped row was also dark text on a strong orange, where the theme's tint was so
 says *No table: the step stops here, so nothing is passed on to the next step.* Row tints are fixed and light, and the
 text keeps its ink. With the dialog as it opens, nothing decided about unmatched rows, Relate's example now ends at
 Delta in four steps. Checked in `tests/relate-walkthrough.test.mjs` and `tests/relate-walkthrough.browser.mjs`.
+
+## Corrected the same day: every row is checked, then it stops
+
+The practitioner, at Delta, the walkthrough's new last step: *"Should it continue with Epsilon as relate continues
+until all rows are checked?"* It should. Relate reads the whole table and then stops with what it found, and the
+message it stops with names **Epsilon's two rows**, not Delta, though Delta comes first: a second table that matches a
+key twice is the first thing it refuses. Ending at the first problem told a reader the wrong reason.
+
+**Now:** every row is checked as the step checks it; each problem is marked where it is (*will stop the step*); from
+the first one on, the result says *No table will come out*; and the last step quotes the step's own message. The rule,
+for every walkthrough: **a walkthrough follows the order the step works in, not the order a reader would guess.**
+Checked in `tests/relate-walkthrough.test.mjs` (the rows after a problem are still checked; the last step is Relate's
+own words) and `tests/relate-walkthrough.browser.mjs`.

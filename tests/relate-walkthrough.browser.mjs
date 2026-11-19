@@ -21,12 +21,12 @@ test('Show me how it works steps through a made-up join with the dialog\'s own c
   await dialog.locator('#relate-show-me').click();
   const walk=page.locator('#table-walkthrough');
   await expect(walk.locator('.walk-made-up')).toHaveText('Made-up example');
-  await expect(walk.locator('.walk-say')).toContainText('Step 1 of 4.');
+  await expect(walk.locator('.walk-say')).toContainText('Step 1 of 7.');
   await expect(walk.locator('.walk-say')).toContainText('compared folding punctuation and case, as you have chosen');
   await expect(walk.locator('[data-walk-back]')).toBeDisabled();
-  for(let i=0;i<3;i++)await walk.locator('[data-walk-step]').click();
-  // As the dialog stands, nothing decided about unmatched rows: it stops at Delta, and no table comes out.
-  await expect(walk.locator('.walk-say')).toContainText('the step stops here and passes nothing on');
+  for(let i=0;i<6;i++)await walk.locator('[data-walk-step]').click();
+  // As the dialog stands: every row checked, then it stops in its own words, and no table comes out.
+  await expect(walk.locator('.walk-say')).toContainText('Every row checked, the step stops and passes nothing on');
   await expect(walk.locator('.walk-result')).toContainText('No table: the step stops here');
   await expect(walk.locator('[data-walk-step]')).toBeDisabled();
   await walk.locator('[data-walk-close]').click();

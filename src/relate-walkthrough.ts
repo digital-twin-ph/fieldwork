@@ -42,8 +42,10 @@ export function relateWalkthrough(settings:RelateWalkSettings):Walkthrough&{expe
   const steps:WalkStep[]=[{text:`A made-up example. Each row of ${LEFT_LABEL} looks for its district in ${RIGHT_LABEL}, `
     +`compared ${compare}, as you have chosen, and brings its supplier across.`,marks:[]}];
   const expected:ExpectedRow[]=[];let stops=false;
-  // A STOP ENDS IT (2026-11-19). The practitioner, at Epsilon: *"Did not record Epsilon in the result."* The step makes no
-  // table at all when it stops, so the example stops there too, with nothing passed on, and says what the other choice does.
+  // EVERY ROW IS CHECKED, AS THE STEP CHECKS THEM, THEN IT STOPS (2026-11-19). The practitioner, at Epsilon: *"Did not record
+  // Epsilon in the result."*, and then: *"Should it continue with Epsilon as relate continues until all rows are checked?"*
+  // Relate reads the whole table and stops with what it found, naming Epsilon's two rows first even though Delta comes
+  // earlier; so each problem is marked where it is, the result says no table will come out, and the last step is its words.
   for(const [i,row] of RELATE_LEFT.rows.entries()){
     const name=row.key.district!,key=normaliseName(name,fold);
     const found=RELATE_RIGHT.rows.map((r,j)=>({r,j})).filter(({r})=>normaliseName(r.key.district!,fold)===key);
@@ -66,11 +68,10 @@ export function relateWalkthrough(settings:RelateWalkSettings):Walkthrough&{expe
         for(const {r} of found)expected.push({district:name,supplier:r.key.supplier!});
       }else{
         stops=true;
-        steps.push({text:`${name} is found ${found.length} times, and you chose to stop and say which key: the step stops here, `
-          +`naming ${name}, and passes nothing on, not even the rows above. Had you chosen Keep one row per match, ${name} `
-          +`would become ${found.length} rows, one for each supplier.`,final:true,stopped:true,
-          marks:[{...lookup,state:'stopped',word:'stops here'},...found.map(({j})=>({table:1,row:j,state:'several' as const,word:'also matches'}))]});
-        break;
+        steps.push({text:`${name} is found ${found.length} times, and you chose to stop and say which key: so the step will stop `
+          +`once every row is checked, and pass nothing on. Had you chosen Keep one row per match, ${name} would become `
+          +`${found.length} rows, one for each supplier.`,willStop:true,
+          marks:[{...lookup,state:'stopped',word:'will stop the step'},...found.map(({j})=>({table:1,row:j,state:'several' as const,word:'also matches'}))]});
       }
     }else{
       const near=RELATE_RIGHT.rows.findIndex(r=>normaliseName(r.key.district!,'fuzzy')===normaliseName(name,'fuzzy'));
@@ -85,23 +86,22 @@ export function relateWalkthrough(settings:RelateWalkSettings):Walkthrough&{expe
         expected.push({district:name,supplier:EXAMPLE_KEEP_LABEL});
       }else{
         stops=true;
-        steps.push({text:`${why}. You have not yet said what happens to unmatched rows, so the step stops here and passes `
-          +`nothing on, not even the rows above. Under Decisions, choose to drop them or to keep them under a name you give.`,
-          final:true,stopped:true,marks:[{...lookup,state:'stopped',word:'stops here'}]});
-        break;
+        steps.push({text:`${why}. You have not yet said what happens to unmatched rows, so the step will stop once every row is `
+          +`checked, and pass nothing on. Under Decisions, choose to drop them or to keep them under a name you give.`,
+          willStop:true,marks:[{...lookup,state:'stopped',word:'will stop the step'}]});
       }
     }
   }
-  if(stops)return {title:'Relate a column from another table, on a made-up example',tables:[left,right],
-    resultColumns:['district','cases','supplier'],steps,expected:null};
   const unused=RELATE_RIGHT.rows.map((r,j)=>({r,j})).filter(({r})=>!RELATE_LEFT.rows.some(l=>normaliseName(l.key.district!,fold)===normaliseName(r.key.district!,fold)));
   if(unused.length)steps.push({text:`${unused.map(({r})=>r.key.district).join(' and ')} ${unused.length===1?'is':'are'} in ${RIGHT_LABEL} only. `
     +`Nothing in the first table asks for ${unused.length===1?'it, so it brings':'them, so they bring'} nothing and ${unused.length===1?'adds':'add'} no row.`,
     marks:unused.map(({j})=>({table:1,row:j,state:'unused' as const,word:'not asked for'}))});
   // THE LAST STEP IS THE STEP'S OWN: the table relateTable makes from these rows, or its words where it would stop.
   const outcome=walkOutcome(settings);
+  // Once a problem that stops the step is found, every later step says no table will come out.
+  if(stops)for(const step of steps.slice(steps.findIndex(x=>x.willStop)))step.willStop=true;
   steps.push('refusal' in outcome
-    ?{text:`With these choices the step stops: ${outcome.refusal}`,marks:[],final:true}
+    ?{text:`Every row checked, the step stops and passes nothing on. In its own words: ${outcome.refusal}`,marks:[],final:true,stopped:true}
     :{text:`The result: ${outcome.rows.length} rows, each with its supplier. This is the table the next step would read.`,marks:[],final:true,
       result:outcome.rows.map(r=>[r.district,r.cases,r.supplier])});
   return {title:'Relate a column from another table, on a made-up example',tables:[left,right],

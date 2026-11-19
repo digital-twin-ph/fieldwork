@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.151.0 — In development
+## 0.151.0 — 2026-11-19
 
 - **Show me how it works**: Relate, Append rows, Select rows and Total within groups each step through a made-up example
   from their Configure… dialog, with the choices made there before they are applied. Back, Step and Play; it never

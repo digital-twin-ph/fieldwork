@@ -712,12 +712,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.12.2",
-   "released": "2026-11-14",
+   "version": "0.13.0",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Before a run, the column it brings is offered downstream under the name it is written as, and with the label unmatched rows carry: a count brought as \"secondary_cases\" was offered as \"rows\"."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: a join of two made-up tables stepped through with the dialog's choices before they are applied, its last step the table this step makes from the same rows (experiment 223)."
     }
    ],
    "breaking": false,

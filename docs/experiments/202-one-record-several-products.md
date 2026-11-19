@@ -1,6 +1,6 @@
 # 202 · One record, several products
 
-_Created 2026-11-10 · Updated 2026-11-18_
+_Created 2026-11-10 · Updated 2026-11-19_
 
 **Status:** tried. A design for the Notes tab, built on [141](141-organising-snows-notes.md). Reordered 2026-11-14: the
 publication render first. Stages A and B are built (0.128.0, 0.129.0), and the planning note (0.143.0, 2026-11-18).

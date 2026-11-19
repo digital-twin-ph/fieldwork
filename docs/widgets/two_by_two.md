@@ -1,6 +1,6 @@
 # Two-by-two table
 
-_Created 2026-10-26 · Updated 2026-11-15_
+_Created 2026-10-26 · Updated 2026-11-19_
 
 **The analysis under the table.** It takes four counts — two groups by two outcomes — and reports
 the risk in each group, the risk ratio, the odds ratio and the risk difference, each naming the

@@ -5,6 +5,8 @@ import type {DataTable} from './data-table.js';
 import type {ParamsByType} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
 import {dataTableMarkup,wideFrame,wireTablePages,type ColumnRoles} from './data-table-ui.js';
+import {openWalkthrough} from './table-walkthrough.js';
+import {relateWalkthrough} from './relate-walkthrough.js';
 import type {Escape} from './types.js';
 
 /** DECIDING A JOIN, with the consequence in front of you.
@@ -227,6 +229,8 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       // SETTINGS.
       const settings=`<p class="description">Brings a column from <strong>${esc(view.rightLabel)}</strong> onto the rows of `
         +`<strong>${esc(view.leftLabel)}</strong>, matching a column of each.</p>`
+        // SHOWN ON A MADE-UP EXAMPLE (experiment 223), with the choices made below, before they are applied.
+        +'<p><button class="button" id="relate-show-me">Show me how it works</button></p>'
         +select('relate-on','Matched on, in the first table',here,draft.on,'Connect both tables first')
         +select('relate-right-on','The same, in the second table',there,rightOn,'Connect both tables first')
         +(draft.on&&shared.length>1
@@ -373,6 +377,9 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
     },
     wire:(root,draft,redraw)=>{
       if(shown)wireTablePages(root.querySelector<HTMLElement>('.relate-preview'),shown.table,esc,shown.options);
+      const showMe=root.querySelector<HTMLButtonElement>('#relate-show-me');
+      if(showMe)showMe.onclick=()=>openWalkthrough(relateWalkthrough({normalisation:draft.normalisation,spelling:draft.spelling,
+        several:draft.several,decision:draft.decision,label:draft.label}),esc,showMe);
       const on=(id:string,fn:(el:HTMLSelectElement)=>void)=>{const el=root.querySelector<HTMLSelectElement>(`#${id}`);if(el)el.onchange=()=>{fn(el);redraw();};};
       on('relate-on',el=>{draft.on=el.value;draft.alsoOn=draft.alsoOn.filter(c=>c!==el.value);});
       on('relate-right-on',el=>{draft.rightOn=el.value===draft.on?'':el.value;});

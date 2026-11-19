@@ -242,3 +242,13 @@ the measure of what the refusal prevents.
 
 What it does not reach: Snow's two tables spell every sub-district identically, so a name
 differing by punctuation or case — the case you will actually meet — is never exercised.
+
+## History
+
+### 2026-11-19 · Shown on a made-up example (0.13.0)
+
+**Show me how it works**, in Configure…, steps through a join of two made-up tables, with the choices made in the
+dialog and not yet applied: a plain match, a name with a full stop in one table and not the other, a name the second
+table does not have, a name it has twice, and a name only the second table has. Back, Step and Play; nothing moves
+where reduced motion is asked for. Its last step is the table this step makes from the same rows, or the words it
+stops with. Experiment [223](../experiments/223-a-table-step-shown-on-a-small-example.md).

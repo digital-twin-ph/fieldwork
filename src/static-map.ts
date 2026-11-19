@@ -20,7 +20,12 @@ import {markLabel,LABEL_CEILING} from './point-layers.js';
 export function staticMapFrame(output:DisplayValue,box?:readonly [number,number,number,number]){
   const boundary=output.boundary!,polygons=boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
   const outline=polygons.flat(2),points=box?[[box[0],box[1]],[box[2],box[3]]]:[...outline,...output.rows.filter(r=>r.coordinates!).map(r=>r.coordinates!),...(output.centers||[]).filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
-  const xs=points.map(p=>p![0]!),ys=points.map(p=>p![1]!),xmin=Math.min(...xs),xmax=Math.max(...xs),ymin=Math.min(...ys),ymax=Math.max(...ys),cos=Math.cos((ymin+ymax)/2*Math.PI/180);
+  // A LOOP, NEVER Math.min(...xs) (2026-11-19). The practitioner's DR Congo at the first level, 26 provinces and 194,009
+  // vertices, drew a blank map: spreading that many numbers into one call threw "Maximum call stack size exceeded", which
+  // the map swallowed. study-area.ts has warned of exactly this since 2026-10-18; this frame had not heeded it.
+  let xmin=Infinity,xmax=-Infinity,ymin=Infinity,ymax=-Infinity;
+  for(const p of points){const x=p![0]!,y=p![1]!;if(x<xmin)xmin=x;if(x>xmax)xmax=x;if(y<ymin)ymin=y;if(y>ymax)ymax=y;}
+  const cos=Math.cos((ymin+ymax)/2*Math.PI/180);
   const frame=plotFrame([xmin,ymin,xmax,ymax],{width:720,margin:70}),scale=frame.scale;
   return {polygons,xmin,xmax,ymin,ymax,cos,scale,height:frame.height,
     bounds:[xmin,ymin,xmax,ymax] as [number,number,number,number],

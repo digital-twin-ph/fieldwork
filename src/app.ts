@@ -7161,6 +7161,13 @@ function renderMap(){
     if(!parts)return;
     parts.mark=id=>svg.querySelectorAll<SVGElement>('[data-catchment]').forEach(el=>el.classList.toggle('part-chosen',el.dataset.catchment===id));
     svg.querySelectorAll<SVGElement>('[data-catchment]').forEach(el=>{el.onclick=()=>parts.choose(el.dataset.catchment!,'map');});
+  }).catch(error=>{
+    // A MAP THAT CANNOT BE DRAWN SAYS SO WHERE IT WOULD BE (2026-11-19): DR Congo's 26 provinces threw while the frame was
+    // measured, and the map stayed blank with nothing said.
+    console.error(error);
+    const said=document.createElement('p');said.className='notice notice-warning';said.setAttribute('role','alert');
+    said.textContent=`The map could not be drawn: ${errorMessage(error)} The run's results are unaffected; the table and downloads still hold them.`;
+    svg.replaceWith(said);
   });
   svg.querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{
     el.onclick=()=>selectResult(el.dataset.place!);

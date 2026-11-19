@@ -672,3 +672,9 @@ and the CRS and stops; a method the step states is still printed. Found by the t
 On the interactive map, Hagelloch's clusters were keyed as a solid blue square and an orange one, over a red ring, blue
 rings and orange discs: the static figure's key had learnt rings on 2026-11-15 and the interactive map's had not. Both
 now read one rule. Its move out of `app.ts` follows in its own release.
+
+### 2026-11-19 · A country's outline is drawn (0.36.3)
+
+DR Congo at the first level, its 26 provinces and 194,009 vertices from geoBoundaries, drew a blank map with nothing said:
+the figure's frame was measured by passing every vertex at once to a function that takes at most about 100,000, and the
+error was swallowed. It is now measured one vertex at a time, and a map that cannot be drawn says why where it would be.

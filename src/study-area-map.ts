@@ -303,7 +303,9 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
     const pts=ring.slice(0,-1);
     const avg:Position=[pts.reduce((t,p)=>t+p[0],0)/pts.length,pts.reduce((t,p)=>t+p[1],0)/pts.length];
     if(pointInRing(avg,ring))return avg;
-    const ys=pts.map(p=>p[1]),y=(Math.min(...ys)+Math.max(...ys))/2;
+    // A loop, not a spread: a country's ring can pass the arguments a call can take (2026-11-19).
+    let lo=Infinity,hi=-Infinity;for(const p of pts){if(p[1]<lo)lo=p[1];if(p[1]>hi)hi=p[1];}
+    const y=(lo+hi)/2;
     const xs:number[]=[];
     for(let i=0,j=pts.length-1;i<pts.length;j=i++){
       const [xi,yi]=pts[i],[xj,yj]=pts[j];

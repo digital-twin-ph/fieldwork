@@ -7,6 +7,9 @@ shown in a local build is not a claim that it has been published.
 
 - **Relate's walkthrough checks every row before it stops**, as Relate does, marks each problem where it is, and ends on
   Relate's own words: with nothing decided, it names Epsilon's two rows, not Delta. It had stopped at the first problem.
+- **A country's outline is drawn on a map**: DR Congo at the first level, 26 provinces and 194,009 vertices, drew a blank
+  map, because the figure's frame passed every vertex at once to a function that takes about 100,000. A map that cannot
+  be drawn now says why where it would be. Map 0.36.3.
 - **CI's template test** asks for the population example's workflows only where that example is checked out.
 - **The Credentials dialog's manual is a button you can't miss**: "Read the manual for Credentials", with a book's
   mark, bold and outlined, where a line of plain text was.

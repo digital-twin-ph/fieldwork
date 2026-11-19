@@ -25,7 +25,8 @@
 <urn:fieldwork:widget:clip_points_to_area> a fw:WidgetDefinition; fw:nodeType "clip_points_to_area"; rdfs:label "Keep points inside the area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/clip_points_to_area.md>.
 <urn:fieldwork:widget:clip_polygons> a fw:WidgetDefinition; fw:nodeType "clip_polygons"; rdfs:label "Clip polygons".
-<urn:fieldwork:widget:clip_raster> a fw:WidgetDefinition; fw:nodeType "clip_raster"; rdfs:label "Clip raster".
+<urn:fieldwork:widget:clip_raster> a fw:WidgetDefinition; fw:nodeType "clip_raster"; rdfs:label "Clip raster";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/clip_raster.md>.
 <urn:fieldwork:widget:compare_point_sets> a fw:WidgetDefinition; fw:nodeType "compare_point_sets"; rdfs:label "Compare point sets".
 <urn:fieldwork:widget:comparison_map> a fw:WidgetDefinition; fw:nodeType "comparison_map"; rdfs:label "Comparison map".
 <urn:fieldwork:widget:coverage_check> a fw:WidgetDefinition; fw:nodeType "coverage_check"; rdfs:label "Check spatial coverage".

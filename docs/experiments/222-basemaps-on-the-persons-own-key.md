@@ -46,11 +46,30 @@ made-up key: the styles offered with a key and Esri's not without one, tiles req
 OpenStreetMap credited, the project holding the name and not the key; and, locked, OpenStreetMap with the reason.
 `tests/basemaps-per-presentation.test.mjs`: the options rule, 16 passed.
 
+## Esri's terms, read 2026-11-18
+
+The practitioner: *"Read ESRI PDF"*. Read, with their approval to download: the **ArcGIS Location Platform Agreement**
+(revised 21 November 2025, the contract that governs) and Esri's **product-specific terms** (E300, 10 November 2026).
+Both are kept outside every repository. This is a reading, not legal advice.
+
+| Question | What the terms say | For Fieldwork |
+| --- | --- | --- |
+| Each person brings their own key | Keys an application asks its users for must come from an ArcGIS Location Platform account, not ArcGIS Online (E300) | As built; the manual names Location Platform |
+| A free public application | Allowed, if it adds substantial and independent functionality | Allowed |
+| The interactive map | Allowed with attribution acknowledging Esri on the output, §3.1(d)(4) | *Powered by Esri* and the service's copyright text, as built |
+| Storing tiles | No caching or storing beyond what the caching headers allow, §3.1(d)(6) | Not stored: the service worker answers only Fieldwork's own address, and the durable tile store serves figures, which never draw a keyed basemap |
+| **Figures and exports** | Output only *"for visualization purposes and only within Customer Applications"*, and never *"redistribute[d] … to third parties"*, §3.1(d)(1) and (3) | **Unresolved.** A figure in a published report leaves the application and reaches third parties. Figures keep OpenStreetMap |
+| Open licences | No Esri output in anything licensed to be *"Redistributable to third parties at no charge"*, §3.1(a) | **Esri tiles, and images made from them, never go into a repository, an example, a fixture or a Zenodo deposit** |
+
+**Decision, recommended and not yet confirmed by the practitioner:** Esri stays on the interactive map only, until Esri
+confirms in writing that published figures are allowed. **Open:** whether the Credentials manual says that a person
+using Esri is bound by their own Location Platform agreement; and CARTO's terms on figures, not yet read.
+
 ## What it does not establish
 
 - That CARTO and Esri accept the practitioner's keys from the published site: seen only after publishing.
 - Esri's tile size and credit text with a real key; the 512-pixel tiles and the credit request are from Esri's tutorials.
-- Whether either provider allows its tiles in exported or printed figures for this use. Until read, figures keep
-  OpenStreetMap.
+- Whether CARTO allows its tiles in exported or printed figures: not read. Esri's terms were read and leave it
+  unresolved (above). Figures keep OpenStreetMap.
 - A key that locks while a map is open keeps drawing until the map is next drawn.
 - WebKit, and Edge on Windows.

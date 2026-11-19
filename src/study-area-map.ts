@@ -82,7 +82,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   const boundsDetails=$('#area-west').closest('details')!,boundsWereOpen=boundsDetails.open;
   if(context.raster)boundsDetails.open=true;
   $('#area-online').checked=!context.raster&&navigator.onLine;
-  $('#area-dialog-title').textContent=context.raster?'Preview and adjust raster clip':'Choose your study area';
+  $('#area-dialog-title').textContent=context.raster?'Draw the clip boundary':'Choose your study area';
   dialog.showModal();
   map=L.map($('#area-map'),{center:[-24.685,25.901],zoom:14,minZoom:2,maxZoom:19,worldCopyJump:false,doubleClickZoom:false,boxZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false});
   L.control.scale({imperial:false}).addTo(map);

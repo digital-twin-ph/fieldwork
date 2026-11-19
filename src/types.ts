@@ -436,7 +436,7 @@ export interface ParamsByType {
   /** RETIRED 2026-11-11 into Sample a raster, from satellite files (experiment 205). Kept so a saved workflow holding one
    *  can be migrated. */
   sample_satellite_files_at_points:{label:string; qaOperator?:'>='|'>'; layer?:string;
-    qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string; unit?:'K'|'°C'|'°F'};
+    qualityRule?:import('./satellite-areas.js').ModisQualityRule; placeColumn?:string; unit?:'K'|'°C'|'°F'};
   search_satellite_catalog:{label:string; from:string; until:string;
     /** Edges typed in the dialog, W/S/E/N, used when no Study area is connected. */
     box?:[number,number,number,number];
@@ -547,7 +547,7 @@ export interface ParamsByType {
     cellStatistics?:boolean;
     /** For satellite files (experiment 180): the quality rule at points, the layer, the rule over areas, the place column
      *  and the temperature unit, as the satellite sampler held them. */
-    qaOperator?:'>='|'>'; layer?:string; qualityRule?:'produced-2k'|'good'|'produced'; placeColumn?:string;
+    qaOperator?:'>='|'>'; layer?:string; qualityRule?:import('./satellite-areas.js').ModisQualityRule; placeColumn?:string;
     unit?:'K'|'°C'|'°F'};
   slr_extract_import:{label:string;datasetIRI:string;datasetVersion:string;baselinePeriod:string;citations:string[];basisKind:''|'workflow'|'confidence-pbox';familyValues:{withVerticalLandMotion:string;withoutVerticalLandMotion:string};sourceNote?:string};
   slr_site_assignment:{label:string};

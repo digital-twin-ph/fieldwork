@@ -205,3 +205,44 @@ test('a reading saved on this device is used, counted, and read again when asked
   await readGridFiles(items,reader,'day','produced-2k',places,open,fetcher,()=>{},third,{saved,reread:true});
   assert.equal(opened,9,'read again when asked');assert.equal(third.saved,0);
 });
+
+/** VEGETATION (MOD13Q1 and MYD13Q1, 0.149.0): the files' scale_factor is 10000, a divisor, where temperature's 0.02 is a
+ *  multiplier; the quality layer is a rank, not bits; and there is no clear-day layer. */
+test('vegetation is read by its own scale, ranks and wording: 5000 stored is NDVI 0.5; rank 2 and 3 do not pass',async()=>{
+  const {readGridFiles,gridReaderFor,gridTable,gridSentence,rulesOf,ruleOf,layerKeyOf}=await import('../build/satellite-grid-sample.js');
+  const {productFor}=await import('../build/satellite-products.js');
+  const product=productFor('vegetation','pc-modis-vi-16day'),reader=gridReaderFor(product);
+  assert.ok(reader,'vegetation has a reader');
+  assert.deepEqual(rulesOf(reader),['reliability-useful','reliability-good']);
+  assert.equal(ruleOf(reader,'produced-2k'),'reliability-useful','a temperature rule is not carried to vegetation');
+  assert.equal(layerKeyOf(reader,'day'),'ndvi','a temperature layer is not carried to vegetation');
+  const fetcher=async()=>({ok:true,json:async()=>({token:'t','msft:expiry':'2099-01-01T00:00:00Z'})});
+  // Four cells: NDVI 0.5, 0.7, 0.9 and fill; reliability 0, 1, 3 and fill.
+  const layers={'250m_16_days_NDVI':[5000,7000,9000,-3000],'250m_16_days_pixel_reliability':[0,1,3,255]};
+  const opened=[];
+  const open=async url=>{const key=Object.keys(layers).find(k=>url.includes(k));opened.push(key);
+    return {getOrigin:()=>[-1,1],getResolution:()=>[1,-1],getWidth:()=>2,getHeight:()=>2,readRasters:async()=>[layers[key]],
+      getGDALMetadata:async()=>key.endsWith('NDVI')?{units:'NDVI',scale_factor:'10000'}:{units:'rank'}};};
+  const item={id:'MOD13Q1.ok',datetime:'2024-02-02T00:00:00Z',end:'2024-02-17T23:59:59Z',platform:'terra',
+    files:Object.keys(layers).map(key=>({key,href:`https://x/MOD13Q1.ok_${key}.tif`}))};
+  // A place whose cells are the whole 2 x 2 window: a square of about 4 m around the sinusoidal origin.
+  const whole=[{id:'a',name:'A',kind:'area',boundary:{type:'Polygon',coordinates:[[[-0.00002,-0.00002],[0.00002,-0.00002],[0.00002,0.00002],[-0.00002,0.00002],[-0.00002,-0.00002]]]}}];
+  const tags={files:0,stated:0};
+  const useful=await readGridFiles([item],reader,'ndvi','reliability-useful',whole,open,fetcher,()=>{},tags);
+  assert.ok(!opened.includes(undefined),'no clear-day layer is asked for');
+  assert.deepEqual(tags,{files:1,stated:1});
+  const s=useful[0].sums;assert.deepEqual([s.cells,s.withValue,s.passing],[4,3,2]);
+  const {table,counts}=gridTable(whole,useful,reader,'ndvi','reliability-useful','municipio');
+  assert.equal(table.rows[0].value,0.6,'the mean of 0.5 and 0.7');
+  assert.equal(table.rows[0].key.clear_days,'');assert.equal(table.unit,'NDVI');
+  assert.match(table.columns.NDVI_250m.description,/not a mean of the days/);
+  const said=gridSentence({...counts,files:1},reader,'ndvi','reliability-useful',product,'area',undefined,tags);
+  assert.match(said,/16-day period/);assert.match(said,/NDVI, unitless/);assert.match(said,/divided by 10000/);
+  assert.doesNotMatch(said,/land surface temperature|8-day/);
+  const good=await readGridFiles([{...item,id:'MOD13Q1.good'}],reader,'ndvi','reliability-good',whole,open,fetcher);
+  assert.equal(good[0].sums.passing,1);
+  // A file stating temperature's multiplier is not read with it.
+  const wrong=async url=>({...(await open(url)),getGDALMetadata:async()=>({units:'NDVI',scale_factor:'0.0001'})});
+  await assert.rejects(readGridFiles([{...item,id:'MOD13Q1.scale'}],reader,'ndvi','reliability-useful',whole,wrong,fetcher),
+    /states a scale factor of 0\.0001, not 10000/);
+});

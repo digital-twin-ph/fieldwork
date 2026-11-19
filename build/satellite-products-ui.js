@@ -1,2 +1,2 @@
-import{a,b,c,d}from"./chunks/chunk-AQOOZEN2.js";import"./chunks/chunk-HKYBC3SE.js";import"./chunks/chunk-W2M27RQ7.js";import"./chunks/chunk-KVMUXFPB.js";export{a as citationMarkup,d as openProductsDialog,b as productCard,c as resultsMarkup};
+import{a,b,c,d}from"./chunks/chunk-QI25FGNL.js";import"./chunks/chunk-O3RQTXFH.js";import"./chunks/chunk-FU6LK74K.js";import"./chunks/chunk-KVMUXFPB.js";export{a as citationMarkup,d as openProductsDialog,b as productCard,c as resultsMarkup};
 //# sourceMappingURL=satellite-products-ui.js.map

@@ -195,12 +195,12 @@
    "migrationFrom": []
   },
   "clip_raster": {
-   "version": "1.1.1",
-   "released": "2026-11-12",
+   "version": "1.2.0",
+   "released": "2026-11-18",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A margin past the raster's edge is cut to the raster, never filled with cells it does not hold, where it used to stop the run."
+     "kind": "minor",
+     "description": "The standard Inspector (experiment 186): Name, Inputs, Settings with Configure… and Result. The inclusion rule, the margin and the choice between its own boundary and the study area's are set in Configure… and written only on Apply; the boundary is still drawn on the map; Result says how many cells the last run kept and how many hold a value."
     }
    ],
    "breaking": false,
@@ -750,12 +750,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.6.1",
-   "released": "2026-11-13",
+   "version": "0.7.0",
+   "released": "2026-11-18",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Two inputs on the canvas and in the Inspector, not five: Raster (a raster or satellite files) and Read at (points, a polygon layer or a study area), each named for what is connected, a second kind of place replacing the first. The five ports underneath are unchanged. The practitioner, 2026-11-13: \"Raster still shows multiple input ports\". Configure… knows a WorldPop or GRID3 raster by its file's name where its record states no units, says in words what each cell holds (\"Each cell holds an estimated number of people living in it\") and what a total is, and fills the units and the name, population (the practitioner, 2026-11-13: \"I still have no idea what the raster is giving me so I just guessed\")."
+     "kind": "minor",
+     "description": "Reads MODIS vegetation, NDVI and EVI (MOD13Q1 and MYD13Q1, 16-day, 250 m, Planetary Computer), over areas and at points, as land surface temperature is read. Each product states its own scale convention (vegetation's files say 10000, a divisor; temperature's 0.02, a multiplier), its quality rules (pixel reliability ranks, from the file's legend; default 0 and 1) and whether it counts clear days. A layer or rule from another product is not carried over. The practitioner, 2026-11-18: \"Did we build NDVI for Brazil?\""
     }
    ],
    "breaking": false,

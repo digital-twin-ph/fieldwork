@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.149.0 — In development
+
+- **NDVI and EVI from MODIS, over areas and at points**: Sample a raster reads the 16-day, 250 m vegetation indices on
+  Planetary Computer, as it reads land surface temperature. The default keeps cells whose pixel reliability is good or
+  marginal, as the file's own legend describes them; *good data only* is the alternative. Over Rio de Janeiro's 92
+  municipalities in February 2024 its NDVI follows the Brazil example's own (correlation 0.949) and runs 0.04 higher on
+  average; which is nearer the truth is not established. Sample a raster 0.7.0.
+- **The files' scale factor is read for what it means**: vegetation's files say 10000, a divisor, where temperature's
+  say 0.02, a multiplier. Each product states which, and a file that says otherwise stops the run.
+- **Clip raster has the standard Inspector**: Name, Inputs, Settings with Configure…, Result. Which cells are kept, the
+  margin and whose boundary are set in Configure… and saved on Apply; Result says how many cells the last run kept.
+  Clip raster 1.2.0, with a manual page of its own.
+- **Corrected wording**: the user guide named a Restore example button that no longer exists, and said resetting can
+  be undone; it cannot. Raster input's canvas card and the clip boundary's map named controls that had been renamed.
+
 ## 0.148.0 — 2026-11-18
 
 - **CARTO and Esri basemaps on your own key** (experiment 222). With a CARTO or Esri key in your credentials, unlocked,

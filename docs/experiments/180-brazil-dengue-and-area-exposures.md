@@ -162,6 +162,10 @@ carry their own error bands (≤ 1 K to > 3 K), which a rule could quote.
 composites; how many of a municipality's cells are clear in a given period. Land surface temperature is the ground's
 skin temperature where the sky was clear, not the air temperature a person or a mosquito is in.
 
+*2026-11-18, superseding the line above for NDVI and EVI:* read from `modis-13Q1-061` in 0.149.0, over areas and at
+points, by Sample a raster (0.7.0). The files' own tags and the comparison with the dataset's `NDVI_mean` are in
+[its manual page](../widgets/sample_raster.md).
+
 ## Admission review: satellite files over areas, 2026-11-06 (admitted, not built)
 
 The practitioner, 2026-11-06: *"I thought we already have the sample satellite files over area?"* Not yet: Sample

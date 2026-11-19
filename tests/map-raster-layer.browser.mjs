@@ -258,7 +258,7 @@ test('each raster node offers its own GeoTIFF, without running the workflow',asy
   await page.locator(`.react-flow__node[data-id="${clip.id}"]`).click();
   // Wired to the window above: an unwired clip has no grid to offer and says so rather than
   // producing an empty file, which is what the first run of this test established.
-  await page.locator('#raster-raster').selectOption(source.id);
+  await page.locator('#connect-raster').selectOption(source.id);
   await page.locator(`.react-flow__node[data-id="${clip.id}"]`).click();
   await expect(page.locator('#download-node-raster')).toBeVisible();
   const clipped=await (async()=>{

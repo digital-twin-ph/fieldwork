@@ -1440,7 +1440,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               lon:(f.geometry!.coordinates as number[])[0]!,lat:(f.geometry!.coordinates as number[])[1]!}));
           if(!places.length)throw new Error(polygons?'The areas connected have no polygons to read over.':'Connect a point layer to points, or polygons to areas: the values are read there.');
           const kind=polygons?'area' as const:'point' as const;
-          const layer=node.params.layer??'day',rule=node.params.qualityRule??gridReader.quality.default;
+          const layer=grids.layerKeyOf(gridReader,node.params.layer),rule=grids.ruleOf(gridReader,node.params.qualityRule);
           const {openImage}=await import('./terrio.js');
           const tags={files:0,stated:0,saved:0};
           const {deviceReadings}=await import('./satellite-reading-store.js');
@@ -1462,7 +1462,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         }
         const sampling=await import('./satellite-sample.js');
         const reader=sampling.readerFor(files.product);
-        if(!reader)throw new Error(`No reader is built yet for ${files.product.route.label}. Sentinel-5P NO₂ and MODIS land surface temperature on Planetary Computer have one.`);
+        if(!reader)throw new Error(`No reader is built yet for ${files.product.route.label}. Sentinel-5P NO₂, MODIS land surface temperature and MODIS vegetation on Planetary Computer have one.`);
         if(polygons)throw new Error(`${files.product.route.label} is read at points only: its files are swaths, and reading one over an area is not built. Connect points.`);
         const features=!raw?[]:'layers' in raw?raw.layers.flatMap(l=>l.features):raw.features;
         if(!features.length)throw new Error('Connect a point layer to points: the values are read at its points.');

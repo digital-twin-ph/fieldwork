@@ -1543,10 +1543,9 @@ workflow (experiment 180):
 - **Temperature, with what exists:** the sampler's table, Terra daytime, into Join a table to the study area on
   `municipio`, with `period_start` as the frames, and a map that steps through the 8-day periods. A workflow in the
   example, played back live.
-- **Vegetation needs a reader:** MODIS NDVI and EVI (`modis-13A1-061` 500 m or `modis-13Q1-061` 250 m, 16-day) on
-  Planetary Computer. Read one file's tags first, as M1 did for temperature: scale, fill, and its quality layer,
-  which is not the temperature product's. Then a route, a reader entry and a rule, with the rule the practitioner's
-  choice where the product recommends none.
+- **Vegetation has a reader** (0.149.0, 2026-11-18): MODIS NDVI and EVI from `modis-13Q1-061`, 250 m, 16-day. Default
+  rule: pixel reliability 0 or 1, from the file's own legend; **the practitioner's to confirm.** Not yet in the Brazil
+  example's workflows.
 
 ### Comprehensibility: five known problems, actionable now (2026-11-07)
 
@@ -1760,17 +1759,11 @@ lives; ask before downloading.
 The practitioner: *"Infographic will be for later. Let's refine publication, sit rep and surveillance summary first."*
 From Kenya's sitrep infographic (structure only, never its design): key-figure tiles, and one map of several events.
 
-### Clip raster's Inspector to the standard (asked 2026-11-18)
-
-Clip raster still has its own panel: Node label, inputs as selects, Pixel inclusion and margin inline. Move it to
-experiment 186's standard (Name, Inputs, Settings with Configure…, Result), as Raster input was in 0.140.0, with its
-manual and a test. Left out of 0.148.0 to publish the keyed basemaps sooner.
-
 ### Keyed basemaps in figures (found 2026-11-18, experiment 222)
 
-CARTO and Esri basemaps draw on the interactive map only; a figure draws OpenStreetMap in their place. Read each
-provider's terms on tiles in exported and printed figures (Esri's Location Platform terms are a PDF: ask first), and
-draw them into figures where allowed, with their credit.
+CARTO and Esri basemaps draw on the interactive map only; a figure draws OpenStreetMap in their place. Esri's terms
+were read on 2026-11-18 and leave figures unresolved: output only within the application, never redistributed
+(experiment 222). Esri stays interactive unless Esri confirms in writing. CARTO's terms are still to read.
 
 ### Fieldwork in other languages: localisation, not a model (asked 2026-11-15)
 

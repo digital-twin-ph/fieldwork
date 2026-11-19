@@ -73,7 +73,7 @@ import {onRunDetail} from './run-progress.js';
 import {appendLabel,appendPort,appendTableCount} from './append-rows.js';
 /** Regression's strata as a list, as `strataOf` in regression.ts reads them; kept here so the Inspector does not load the model's kernel. */
 const strataOf=(strata:string|string[]|undefined):string[]=>(Array.isArray(strata)?strata:strata?[strata]:[]).map(c=>c.trim()).filter(Boolean);
-import {GRID_KEYS,gridReaderFor,clearGridCache} from './satellite-grid-sample.js';
+import {GRID_KEYS,gridReaderFor,clearGridCache,layerKeyOf,ruleOf,rulesOf,layerPhrase,reportUnit} from './satellite-grid-sample.js';
 import {clearFileCache} from './satellite-sample-reader.js';
 import {treeSvg} from './transmission-tree.js';
 import {savedReadingsSummary,forgetSavedReadings} from './satellite-reading-store.js';
@@ -1176,7 +1176,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -1707,7 +1707,7 @@ function render(){
   if(!workflow.nodes.length)$('#workflow-state').textContent='Add Study area to begin';
   renderN3();
 }
-function describeNode(n:WorkflowNode,status?:string):NodeDescription{const d=describe(n,status);if(n.type==='isochrone'){d.subtitle=(n.params.thresholds?.length?n.params.thresholds.join(', '):n.params.minutes)+' min / '+n.params.speedMPerMin+' m per min';d.detail=n.params.direction+' / '+n.params.bufferM+' m corridor';}if(n.type==='mean_center'){d.subtitle='Unweighted center of point locations';d.detail='UTM zone '+n.params.zone+(n.params.hemisphere==='north'?'N':'S')+' → CRS84';}if(n.type==='compare_point_sets'){d.subtitle='Original + moved + two centers + pumps';d.detail=`UTM zone ${n.params.zone}${n.params.hemisphere==='north'?'N':'S'} · metres`;}if(n.type==='comparison_map'){d.subtitle='Side-by-side maps · shared extent';d.detail='Private evaluation view';}if(n.type==='buffer_area')d.detail=n.params.distanceM+' m acquisition buffer';if(['map_output','table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){d.subtitle='Display polygon geometry and existing summaries';d.detail='Creates a Results tab';}if(n.type==='map_output'&&n.params.inputMode==='raster'){d.subtitle='Native raster cells and clipping boundary';d.detail='GeoTIFF download';}if(n.type==='table_input'){d.subtitle=n.params.keys.length?`${n.params.keys.length} key columns -> ${n.params.valueField}`:'Choose key and value columns';d.detail=n.params.data.rows.length?`${n.params.data.rowCount} rows`:'Import a long-format CSV';}if(n.type==='reproject'){d.subtitle=`CRS84 degrees \u2192 EPSG:${n.params.hemisphere==='south'?32700+n.params.zone:32600+n.params.zone} metres`;d.detail='Projects connected points';}if(n.type==='raster_input')d.detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare GeoTIFF input';if(n.type==='study_area'&&n.params.source==='drawn'){d.subtitle=n.params.geometry?`${n.params.selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometryVertices(n.params.geometry)} vertices`:'Choose a boundary on the map';d.detail=n.params.geometry?'GeoJSON → N3 · CRS84':'Not configured';}if(n.type==='measure_area'){d.subtitle='Study area → study area + area';d.detail=`${AREA_UNITS[n.params.unit].symbol} · spherical calculation`;}return d;}
+function describeNode(n:WorkflowNode,status?:string):NodeDescription{const d=describe(n,status);if(n.type==='isochrone'){d.subtitle=(n.params.thresholds?.length?n.params.thresholds.join(', '):n.params.minutes)+' min / '+n.params.speedMPerMin+' m per min';d.detail=n.params.direction+' / '+n.params.bufferM+' m corridor';}if(n.type==='mean_center'){d.subtitle='Unweighted center of point locations';d.detail='UTM zone '+n.params.zone+(n.params.hemisphere==='north'?'N':'S')+' → CRS84';}if(n.type==='compare_point_sets'){d.subtitle='Original + moved + two centers + pumps';d.detail=`UTM zone ${n.params.zone}${n.params.hemisphere==='north'?'N':'S'} · metres`;}if(n.type==='comparison_map'){d.subtitle='Side-by-side maps · shared extent';d.detail='Private evaluation view';}if(n.type==='buffer_area')d.detail=n.params.distanceM+' m acquisition buffer';if(['map_output','table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){d.subtitle='Display polygon geometry and existing summaries';d.detail='Creates a Results tab';}if(n.type==='map_output'&&n.params.inputMode==='raster'){d.subtitle='Native raster cells and clipping boundary';d.detail='GeoTIFF download';}if(n.type==='table_input'){d.subtitle=n.params.keys.length?`${n.params.keys.length} key columns -> ${n.params.valueField}`:'Choose key and value columns';d.detail=n.params.data.rows.length?`${n.params.data.rowCount} rows`:'Import a long-format CSV';}if(n.type==='reproject'){d.subtitle=`CRS84 degrees \u2192 EPSG:${n.params.hemisphere==='south'?32700+n.params.zone:32600+n.params.zone} metres`;d.detail='Projects connected points';}if(n.type==='raster_input')d.detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Choose a GeoTIFF in Configure\u2026';if(n.type==='study_area'&&n.params.source==='drawn'){d.subtitle=n.params.geometry?`${n.params.selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometryVertices(n.params.geometry)} vertices`:'Choose a boundary on the map';d.detail=n.params.geometry?'GeoJSON → N3 · CRS84':'Not configured';}if(n.type==='measure_area'){d.subtitle='Study area → study area + area';d.detail=`${AREA_UNITS[n.params.unit].symbol} · spherical calculation`;}return d;}
 function runEvidenceText(){return result?result.receipts.map(receiptText).join('\n\n')+(result.provenanceN3?'\n\n# WORKFLOW, WIDGET AND REFERENCE PROVENANCE (recorded metadata, not rule premises)\n'+result.provenanceN3:''):'';}
 // A DECLARATION NODE STATES FACTS AND INFERS NOTHING, which is a third kind and not a rule with
 // an empty conclusion list. Added 2026-10-31 with `study_design`: without it a declaration fell
@@ -2258,9 +2258,10 @@ function satelliteSampleSentence(n:WorkflowNode<'sample_raster'>):string{
   const p=n.params,product=samplerProduct(n),grid=product?gridReaderFor(product):null;
   if(!product)return 'Reads each satellite file the search kept, at points or over areas. Connect the files first.';
   if(grid){
-    const layer=grid.layers[p.layer??'day'],rule=(p.qualityRule??grid.quality.default) as ModisQualityRule;
+    const layer=grid.layers[layerKeyOf(grid,p.layer)]!,rule=ruleOf(grid,p.qualityRule);
     const areas=workflow.edges.some(e=>e.to===n.id&&(e.port==='areas'||e.port==='area'));
-    return `Reads ${layer?.label??'the'} land surface temperature ${areas?'over each area':'at each point'}, in ${grid.unit==='K'?(p.unit??'°C'):grid.unit}, `
+    const unit=reportUnit(grid,p.unit,layer);
+    return `Reads ${layerPhrase(layer)} ${areas?'over each area':'at each point'}, ${unit===layer.label?'unitless':`in ${unit}`}, `
       +`keeping cells that pass: ${MODIS_RULES[rule]}. The place column is ${p.placeColumn?.trim()||(areas?'area':'point_id')}.`;
   }
   return `Reads ${product.route.label} at the pixel nearest each point, keeping values with qa_value ${p.qaOperator??'>='} the product's threshold.`;
@@ -2273,7 +2274,7 @@ function openSatelliteSampleConfig(nodeId:string){
   const product=samplerProduct(node),grid=product?gridReaderFor(product):null;
   const areas=workflow.edges.some(e=>e.to===nodeId&&(e.port==='areas'||e.port==='area'));
   type Draft={layer:string;qualityRule:ModisQualityRule|'';unit:'K'|'°C'|'°F';placeColumn:string;qaOperator:'>='|'>';reread:boolean;forget:boolean};
-  const draft:Draft={layer:p.layer??'day',qualityRule:(p.qualityRule??grid?.quality.default??'') as ModisQualityRule|'',
+  const draft:Draft={layer:grid?layerKeyOf(grid,p.layer):p.layer??'',qualityRule:grid?ruleOf(grid,p.qualityRule):'',
     unit:p.unit??'°C',placeColumn:p.placeColumn??'',qaOperator:p.qaOperator??'>=',reread:false,forget:false};
   let saved:{count:number;bytes:number}|null=null;
   openConfigDialog<Draft>({
@@ -2283,8 +2284,8 @@ function openSatelliteSampleConfig(nodeId:string){
         ?`<div class="field"><label class="field-label" for="satellite-layer">Layer</label><select id="satellite-layer">`
           +Object.entries(grid.layers).map(([k,l])=>`<option value="${esc(k)}"${k===d.layer?' selected':''}>${esc(l.label)}</option>`).join('')+'</select></div>'
           +`<div class="field"><label class="field-label" for="satellite-quality-rule">Quality rule</label><select id="satellite-quality-rule">`
-          +(Object.entries(MODIS_RULES) as [ModisQualityRule,string][]).map(([k,text])=>`<option value="${k}"${k===d.qualityRule?' selected':''}>${esc(text)}</option>`).join('')
-          +'</select><small>The product documents its quality bits and recommends no rule. The rule is stated on every row.</small></div>'
+          +rulesOf(grid).map(k=>`<option value="${k}"${k===d.qualityRule?' selected':''}>${esc(MODIS_RULES[k])}</option>`).join('')
+          +`</select><small>${grid.quality.rules?'The ranks and their meanings are the file\u2019s own legend.':'The product documents its quality bits and recommends no rule.'} The rule is stated on every row.</small></div>`
           +(grid.unit==='K'?`<div class="field"><label class="field-label" for="satellite-unit">Report temperature in</label><select id="satellite-unit">`
             +`<option value="°C"${d.unit==='°C'?' selected':''}>degrees Celsius (K − 273.15)</option>`
             +`<option value="°F"${d.unit==='°F'?' selected':''}>degrees Fahrenheit (K × 9/5 − 459.67)</option>`
@@ -2783,6 +2784,45 @@ function openChartConfig(nodeId:string){
       if(params.markedDates){params.markedDates=params.markedDates.filter(m=>/^\d{4}-\d{2}-\d{2}$/.test(m.date));if(!params.markedDates.length)delete params.markedDates;}
       change(w=>{getNode(w,nodeId,'chart_output').params=params;});
     },
+  },esc);
+}
+
+/** WHAT CLIP RASTER KEEPS, in one sentence. */
+function clipSentence(n:WorkflowNode<'clip_raster'>):string{
+  const p=n.params,margin=p.marginPixels||0;
+  return `Keeps the cells ${p.method==='all-touched'?'the boundary touches':'whose centre is inside the boundary'}`
+    +(margin?`, and ${margin} cell${margin===1?'':'s'} beyond it`:'')+', at the raster\u2019s own resolution; cells outside become no data. '
+    +(p.cutline?'The boundary is its own, saved here: changing the study area does not change it.':'The boundary is the connected study area\u2019s.');
+}
+
+/** CLIP RASTER'S CONFIGURATION DIALOG (experiment 186): which cells are kept, the margin, and whose boundary. */
+function openClipConfig(nodeId:string){
+  const node=getNode(workflow,nodeId,'clip_raster');
+  type Draft={method:'all-touched'|'cell-center';marginPixels:number;studyArea:boolean};
+  const valid=(m:number)=>Number.isFinite(m)&&m>=0&&m<=1;
+  openConfigDialog<Draft>({
+    id:'clip-config',widget:'Clip raster',step:node.params.label||TYPES.clip_raster.title,
+    draft:{method:node.params.method,marginPixels:node.params.marginPixels||0,studyArea:!node.params.cutline},
+    sections:draft=>({...(valid(draft.marginPixels)?{}:{blocked:true,message:{tone:'refusal' as const,text:'The margin is a number of cells from 0 to 1.'}}),
+      settings:`<div class="field"><label class="field-label" for="clip-method">Keep a cell when</label><select id="clip-method">`
+        +`<option value="all-touched"${draft.method==='all-touched'?' selected':''}>the boundary covers any part of it (all touched)</option>`
+        +`<option value="cell-center"${draft.method==='cell-center'?' selected':''}>its centre is inside the boundary</option></select>`
+        +'<small>All touched matches GDAL except where a boundary corner lies exactly on a cell border.</small></div>'
+        +`<div class="field"><label class="field-label" for="clip-margin">Margin beyond the boundary, in cells (0 to 1)</label>`
+        +`<input id="clip-margin" type="number" min="0" max="1" step="0.25" value="${Number.isFinite(draft.marginPixels)?draft.marginPixels:''}">`
+        +'<small>A margin needs the raster to reach that far past the boundary. Cells with no data are never filled.</small></div>'
+        +(node.params.cutline?`<div class="field"><span class="field-label">Boundary</span><p class="description">Its own, drawn on the map: `
+          +geometryBounds(node.params.cutline.geometry).map((v,i)=>`${['west','south','east','north'][i]} ${v.toFixed(4)}\u00b0`).join(', ')+'.</p>'
+          +`<label class="check"><input type="checkbox" id="reset-clip-boundary"${draft.studyArea?' checked':''}> Use the study area\u2019s boundary instead</label></div>`
+          :'<div class="field"><span class="field-label">Boundary</span><p class="description">The connected study area\u2019s. Draw the boundary on the map to give this step its own.</p></div>'),
+      preview:`<p class="muted">${esc(clipSentence({...node,params:{...node.params,method:draft.method,marginPixels:draft.marginPixels,...(draft.studyArea?{cutline:undefined}:{})}}))}</p>`}),
+    wire:(root,draft,redraw)=>{
+      root.querySelector<HTMLSelectElement>('#clip-method')?.addEventListener('change',e=>{draft.method=(e.target as HTMLSelectElement).value as Draft['method'];redraw();});
+      root.querySelector<HTMLInputElement>('#clip-margin')?.addEventListener('change',e=>{const v=(e.target as HTMLInputElement).value;draft.marginPixels=v===''?NaN:Number(v);redraw();});
+      root.querySelector<HTMLInputElement>('#reset-clip-boundary')?.addEventListener('change',e=>{draft.studyArea=(e.target as HTMLInputElement).checked;redraw();});
+    },
+    apply:draft=>{change(w=>{const t=getNode(w,nodeId,'clip_raster');t.params.method=draft.method;t.params.marginPixels=draft.marginPixels;
+      if(draft.studyArea)delete t.params.cutline;},{requirePersistence:true});},
   },esc);
 }
 
@@ -4742,8 +4782,22 @@ function renderInspector(){
     if(standardRaster){
       content+=standardSection('Name',labelForm('raster-label','Name',n.params.label||'Raster input'));
       content+=standardSection('Inputs',standardInputs(n,{area:'Study area, around which a window is kept'}));
-    }else content+=labelForm('clip-raster-label','Node label',n.params.label||'Clip raster');
-    if(!standardRaster)content+=nodeInputs(n).map(([port,type])=>`<div class="field"><label class="field-label" for="raster-${port}">${port==='area'?'Study area':'Raster input'}</label><select id="raster-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)===type).map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select></div>`).join('');
+    }else{
+      // CLIP RASTER ON THE STANDARD INSPECTOR (experiment 186, 0.149.0): its method, margin and boundary in Configure…,
+      // the boundary drawn on the map beside it, and what the last run kept.
+      content+=standardSection('Name',labelForm('clip-raster-label','Name',n.params.label||'Clip raster'));
+      content+=standardSection('Inputs',standardInputs(n,{raster:'Raster to clip',area:'Study area, whose boundary is copied as the cutline'}));
+      content+=standardSection('Settings',`<p class="standard-sentence">${esc(clipSentence(n as WorkflowNode<'clip_raster'>))}</p>`
+        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button>'
+        +'<button id="preview-raster-clip" class="button">Draw the boundary on the map\u2026</button></div>');
+      const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message,facts=result?.receipts?.find(r=>r.nodeId===n.id)?.facts??'';
+      const count=(p:string)=>{const m=new RegExp(`fw:${p} (\\d+)`).exec(facts);return m?Number(m[1]):undefined;};
+      const inside=count('insideCellCount'),valid=count('validCellCount');
+      content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+        :inside!==undefined?`${inside.toLocaleString('en')} cell${inside===1?'':'s'} kept inside the boundary, ${(valid??0).toLocaleString('en')} of them with a value. Cells outside are no data.`
+        :result?'Run to clip the raster.':'Not run yet.')}</p>`
+        +'<div class="inspector-actions"><button id="download-node-raster" class="button">Download GeoTIFF</button><button id="add-raster-map" class="button">Add raster map</button></div>');
+    }
     // WHICH POPULATION RASTER COVERS THIS STUDY AREA, before asking for a file nobody has yet.
     // The same shape as the street network widget's published extracts: this application works
     // out the file and the browser fetches it, because data.worldpop.org sends no CORS header
@@ -4768,8 +4822,7 @@ function renderInspector(){
        const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
        content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
          :asset?`Holds ${asset.metadata.width} × ${asset.metadata.height} cells of ${asset.source.filename}.`:'Nothing kept yet: choose a GeoTIFF in Configure\u2026')}</p>`
-         +(asset?'<div data-raster-presence></div>':''));}}else content+='<section class="source-card" data-clip-parameters><span class="inspector-section">Processing parameters</span><div class="detail-row"><span>Cutline</span><strong>Separate clip boundary</strong></div><div class="detail-row"><span>Inclusion rule</span><strong>Configured below</strong></div><div class="detail-row"><span>Resolution</span><strong>Native pixels</strong></div><div class="detail-row"><span>Outside polygon</span><strong>NoData</strong></div><p>Start with a copy of Study area, then save adjustments on this operation. Study area remains unchanged. Map displays the result.</p></section><button id="preview-raster-clip" class="button primary">Preview and adjust</button><button id="add-raster-map" class="button">Add raster map</button>';
-    if(n.type==='clip_raster'){content+='<div class="field"><label class="field-label" for="clip-method">Pixel inclusion</label><select id="clip-method"><option value="all-touched" '+(n.params.method==='all-touched'?'selected':'')+'>All touched</option><option value="cell-center" '+(n.params.method==='cell-center'?'selected':'')+'>Cell center inside</option></select><label class="field-label" for="clip-margin">Outer margin (native pixels, 0-1)</label><input id="clip-margin" type="number" min="0" max="1" step="0.25" value="'+(n.params.marginPixels||0)+'"><small>All touched includes a cell when the boundary covers part of its area or crosses it, so a boundary running exactly along a cell border does not pull in the cell outside it. This matches GDAL except where a boundary vertex lies exactly on a cell border. For an outward margin, prepare the GeoTIFF with one pixel of extra source coverage; a margin is a grid distance with no GDAL equivalent. NoData is never filled.</small></div>';content+='<p class="description">'+(n.params.cutline?'Saved clip boundary; independent of Study area edits.':'Boundary will be initialized from the connected Study area.')+'</p><button id="reset-clip-boundary" class="button small" '+(!n.params.cutline?'disabled':'')+'>Use Study area boundary</button>';if(n.params.cutline)content+='<div class="source-card"><span class="inspector-section">Clip extent (degrees)</span>'+geometryBounds(n.params.cutline.geometry).map((value,i)=>'<div class="detail-row"><span>'+['West','South','East','North'][i]+'</span><strong>'+value.toFixed(6)+'</strong></div>').join('')+'</div>';content+='<button id="download-node-raster" class="button">Download GeoTIFF</button><p class="description">The masked grid at native resolution. Cells outside the boundary are NoData, not absent.</p>';}
+         +(asset?'<div data-raster-presence></div>':''));}}
   }else if(n.type==='study_area'){
     // THE STANDARD INSPECTOR (experiment 186): the name; no inputs; one sentence, the country and the map, which is this
     // step's dialog; and what it holds -- the shape, what the boundary repair removed, and every extent it has had.
@@ -5930,7 +5983,7 @@ function renderInspector(){
     };
     let baseline=JSON.stringify(workflow);
     const keptAsset=getNode(workflow,n.id,'raster_input').params.asset;
-    const open=(kept?:Parameters<typeof openRasterEditor>[6])=>openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen Prepare GeoTIFF input.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},keptAsset,
+    const open=(kept?:Parameters<typeof openRasterEditor>[6])=>openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Open Configure\u2026 again.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},keptAsset,
       {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName)??ghsRecordFor(name),kept);
     if(!keptAsset){open();return;}
     void (async()=>{
@@ -5957,7 +6010,7 @@ function renderInspector(){
       host.innerHTML=`<p class="standard-result standard-result-warning" data-raster-not-here>Not on this device yet: read it again in Configure\u2026</p>`;
     });}
   optionalElement('#preview-raster-clip')?.addEventListener('click',async e=>{
-    const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Loading raster preview…';
+    const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'',baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Loading raster preview…';
     try{
       const clip=getNode(workflow,n.id,'clip_raster'),{boundary:studyBoundary}=previewArea(workflow,n.id),boundary=clip.params.cutline?.geometry||studyBoundary;
       const polygon=boundary.type==='MultiPolygon'&&boundary.coordinates.length===1?{type:'Polygon' as const,coordinates:boundary.coordinates[0]}:boundary;
@@ -5971,11 +6024,9 @@ function renderInspector(){
         if(!params.geometry)throw new Error('Define a clipping boundary.');
         return change(w=>{const target=getNode(w,n.id,'clip_raster');target.params.cutline={geometry:params.geometry!,selectionMode:params.selectionMode};target.params.label=params.label;target.params.method=options.method||clip.params.method;target.params.marginPixels=options.marginPixels||0;},{requirePersistence:true});
       },{raster,clip:true,clipOptions:clip.params,refusal:saveFailureMessage});
-    }catch(error){toast(errorMessage(error),{tone:'failure'});}finally{button.disabled=false;button.textContent='Preview and adjust';}
+    }catch(error){toast(errorMessage(error),{tone:'failure'});}finally{button.disabled=false;button.textContent=label;}
   });
-  document.querySelector<HTMLSelectElement>('#clip-method')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'clip_raster').params.method=control(e).value as 'cell-center'|'all-touched';},{requirePersistence:true}));
-  document.querySelector<HTMLInputElement>('#clip-margin')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'clip_raster').params.marginPixels=control(e).value===''?NaN:Number(control(e).value);},{requirePersistence:true}));
-  optionalElement('#reset-clip-boundary')?.addEventListener('click',()=>change(w=>{delete getNode(w,n.id,'clip_raster').params.cutline;},{requirePersistence:true}));
+  if(n.type==='clip_raster')optionalElement('#configure-step')?.addEventListener('click',()=>openClipConfig(n.id));
   optionalElement('#study-area-label-form')?.addEventListener('submit',e=>{e.preventDefault();const input=$('#study-area-label'),label=input.value.trim();if(!label){input.setCustomValidity('Enter a label for the study area.');input.reportValidity();return;}change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=label);});
   optionalElement('#study-area-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
   // The same gesture for every other widget. The field already saves on change, so this is the

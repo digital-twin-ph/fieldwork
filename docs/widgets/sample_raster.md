@@ -102,7 +102,7 @@ point per overpass, plus one row per point for each day with no overpass.
 Connect a polygon layer to **areas** instead of points: municipalities from **Join a table to the study area**, or a
 **Polygon layer**. Or connect a **Study area** to **area**: its units, such as municipalities picked from an
 administrative boundary, are read as they are. One kind of place per node. This works for gridded products, which today means **MODIS land surface temperature** (8-day,
-1 km). Sentinel-5P is still read at points only.
+1 km) and **MODIS vegetation**, NDVI and EVI (16-day, 250 m). Sentinel-5P is still read at points only.
 
 Each area is read by the cells whose centre is inside it, the rule **Clip raster** uses. A municipality made of
 several parts, such as one with islands, is one area. Where an area spans two of MODIS's tiles, both are read and
@@ -111,13 +111,13 @@ added before the mean is taken.
 | Column | What it holds |
 | --- | --- |
 | the place column | the area's name; call it as the table you will relate it to does, such as `municipio` |
-| `period_start`, `period_end` | the 8-day period the file covers |
+| `period_start`, `period_end` | the period the file covers: 8 days for temperature, 16 for vegetation |
 | `platform` | `terra` (mid-morning pass) or `aqua` (early afternoon), never pooled |
-| `layer` | daytime or night-time |
+| `layer` | daytime or night-time; NDVI or EVI |
 | `cells`, `cells_with_value`, `cells_passing` | how many cells the area holds, how many had a value, and how many passed the quality rule: **the mean rests on the last** |
 | `value_min`, `value_max` | the range of the passing cells, in the unit chosen |
-| `clear_days` | how many of the 8 days were clear, on average, behind the passing cells |
-| `LST_Day_1km` or `LST_Night_1km` | the mean of the passing cells, in the unit chosen |
+| `clear_days` | how many of the 8 days were clear, on average, behind the passing cells; empty for vegetation, which gives no such count |
+| `LST_Day_1km`, `LST_Night_1km`, `NDVI_250m` or `EVI_250m` | the mean of the passing cells, in the unit chosen; NDVI and EVI have none |
 | `gap` | `no cell in the area`, `no retrieval` or `below quality threshold` |
 
 **The unit.** The files state kelvin. **Report temperature in** offers degrees Celsius (K − 273.15), the default,
@@ -127,6 +127,12 @@ A file that states another unit stops the run and is named.
 
 **The quality rule for MODIS.** Its documents explain its quality bits and recommend no rule. The default keeps
 cells the product made, of good or other quality, whose average temperature error is 2 K or less. *Good quality only* and *everything produced* are the alternatives.
+
+**Vegetation** is read by its pixel reliability, whose meanings are in each file: 0, good data, *"use with
+confidence"*; 1, marginal, *"useful, but look at other QA information"*; 2, snow or ice; 3, cloudy. The default keeps 0
+and 1; *good data only* is the alternative. Each value is a 16-day composite, the best view of each cell in those
+days, not a mean of them. The files give the scale as 10000, a divisor, where temperature's files give 0.02, a
+multiplier; each is read as its own files state it.
 
 **Read the counts.** Over Rio de Janeiro in February 2024 each 8-day value rested on about two clear days, and one
 week's value for Rio de Janeiro city came from 26 of its 1,400 cells. A mean is reported wherever any cell passed;
@@ -185,8 +191,8 @@ or above 0.75".
   swath and wider at its edges. A pixel is not the value at the point.
 - **It will not turn a column into a concentration.** NO₂ here is a tropospheric column, molecules in the air above the
   pixel, not a surface concentration a monitor measures.
-- **It will not read other products yet.** Sentinel-5P NO₂ (at points) and MODIS land surface temperature (at points
-  or over areas), both on Planetary Computer, have readers. Ozone and aerosols say so when connected.
+- **It will not read other products yet.** Sentinel-5P NO₂ (at points), MODIS land surface temperature and MODIS
+  vegetation (at points or over areas), all on Planetary Computer, have readers. Ozone and aerosols say so when connected.
 - **It will not weight by population or by how much of a cell lies in an area.** A cell counts whole, or not.
 
 ### What it costs
@@ -203,6 +209,14 @@ a different HDF5 reader, and recomputes every point's pixel by comparing every c
 table row by row for both quality rules. It agrees. Against 0.2.0 it found a point near the edge of one of the file's
 chunks read from the pixel across the edge from the nearest one: fixed in 0.2.1. The file is synthetic, so this says
 nothing about a real orbit's content.
+
+**Vegetation, against the dataset, 2026-11-18.** NDVI over Rio de Janeiro's 92 municipalities from the six Terra and Aqua
+periods touching February 2024 (12 files, 13 s in Node), compared with the Brazil example's own `NDVI_mean` for
+February. Default rule: all 552 rows had a value; correlation across municipalities 0.949; Fieldwork higher by 0.04 on
+average, from −0.02 to +0.14 (Nilópolis 0.57 against 0.43). Good data only: 10 rows with none passing, correlation
+0.924. **Not established:** which is nearer the truth. The dataset does not say which satellite, which periods or
+which cells make its month, or whether it applied a quality rule; its `NDVI_mean` is never missing, which a satellite
+index rarely is.
 
 ### Where it comes from
 
@@ -227,3 +241,14 @@ The NYC example, *Did the satellite see the city's NO₂?*: Sentinel-5P NO₂ at
 
 The sea-level example: the ground's height at each facility, and the geoid and the sea surface at the gauge. Brazil
 dengue and New York ozone read satellite files with it.
+
+## History
+
+### 2026-11-18 · Vegetation (0.7.0)
+
+MODIS NDVI and EVI (MOD13Q1 and MYD13Q1,
+16-day, 250 m) are now read over areas and at points, as temperature is. One file's own tags were read first. Two
+findings: the files' `scale_factor` is 10000, a divisor, where temperature's 0.02 is a multiplier, so each product
+states which it is rather than the reader guessing; and pixel reliability is stored unsigned with fill 255, where LP
+DAAC's table says int8 with fill −1. The quality rules a step offers are now its product's own, and a layer or rule
+from another product is not carried over when the files change.

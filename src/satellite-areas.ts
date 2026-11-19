@@ -54,13 +54,20 @@ export function cellsIn(projected:Boundary,grid:Grid):{window:[number,number,num
 /** WHICH CELLS COUNT, for MODIS land surface temperature. Its documents give the QC bits and no rule (M1), so each rule
  *  says which bits it reads. The practitioner, 2026-11-06, chose the default: produced, with an average LST error of
  *  2 K or less. */
-export type ModisQualityRule='produced-2k'|'good'|'produced';
+/** VEGETATION (MOD13Q1 and MYD13Q1, 0.149.0) reads its pixel reliability layer, a rank whose legend, in the file's own
+ *  tags, says what each value means: 0 *"Good data - Use with confidence"*, 1 *"Marginal data - Useful, but look at
+ *  other QA information"*, 2 snow or ice, 3 cloudy; 255 is fill. A rule says which ranks it keeps. */
+export type ModisQualityRule='produced-2k'|'good'|'produced'|'reliability-good'|'reliability-useful';
 export const MODIS_RULES:Record<ModisQualityRule,string>={
   'produced-2k':'LST produced (QC bits 0-1 = 00 or 01) with an average LST error of 2 K or less (bits 6-7 = 00 or 01)',
   good:'LST produced, good quality (QC bits 0-1 = 00)',
   produced:'LST produced (QC bits 0-1 = 00 or 01), whatever its error',
+  'reliability-good':'pixel reliability 0, good data: "use with confidence"',
+  'reliability-useful':'pixel reliability 0 or 1, good or marginal data: marginal is "useful, but look at other QA information"',
 };
 export function modisPasses(qc:number,rule:ModisQualityRule):boolean{
+  if(rule==='reliability-good')return qc===0;
+  if(rule==='reliability-useful')return qc===0||qc===1;
   const mandatory=qc&0b11,error=(qc>>6)&0b11;
   if(rule==='good')return mandatory===0;
   if(rule==='produced')return mandatory<=1;

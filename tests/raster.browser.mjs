@@ -18,13 +18,16 @@ const rasterWorkflow=()=>({schema:'fieldwork/workflow/1',name:'Raster clipping',
     {id:'input-clip',from:'raster-input',to:'raster-clip',port:'raster'},{id:'clip-map',from:'raster-clip',to:'raster-map',port:'raster'}]});
 import {openWorkflow} from './open-workflow.mjs';
 const real=process.env.FIELDWORK_WORLDPOP_FILE;
+/** Clip raster's inclusion rule, set where it is set: its Configure… dialog (experiment 186, 0.149.0). */
+async function clipMethod(page,method){await page.locator('#configure-step').click();await page.locator('#clip-config #clip-method').selectOption(method);await page.locator('#clip-config #config-apply').click();}
+
 test('all-touched margin is adjustable, saved on Clip raster and masked at display edges',async({page})=>{
  await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'raster.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(rasterWorkflow()))});
  await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="raster-input"]').click();
  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
  const metadata={width:60,height:60,origin:[25.88,-24.67],resolution:[.001,-.001]},values=Array.from({length:3600},(_,i)=>i%23===0?null:i/10);
  await page.locator('#prepare-raster').click();await page.locator('#raster-padding').selectOption('1');await page.locator('#raster-file').setInputFiles({name:'padded.tif',mimeType:'image/tiff',buffer:Buffer.from(encodeRaster({metadata,values}))});await expect(page.locator('#raster-dialog #config-apply')).toBeEnabled();await page.locator('#raster-dialog #config-apply').click();
- await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="raster-clip"]').click();await expect(page.locator('#clip-method')).toHaveValue('all-touched');const area=(await saved()).nodes.find(n=>n.type==='study_area');
+ await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="raster-clip"]').click();await expect(page.locator('.standard-sentence')).toContainText('the boundary touches');const area=(await saved()).nodes.find(n=>n.type==='study_area');
  await page.locator('#preview-raster-clip').click();await page.locator('#clip-preview-margin').fill('1.1');await expect(page.locator('#area-apply')).toBeDisabled();await expect(page.locator('#area-feedback')).toHaveAttribute('role','alert');await page.locator('#clip-preview-margin').fill('0.5');await expect(page.locator('#area-apply')).toBeEnabled();await page.locator('#area-cancel').click();assert.equal((await saved()).nodes.find(n=>n.type==='clip_raster').params.marginPixels,0);
  await page.locator('#preview-raster-clip').click();await page.locator('#clip-preview-margin').fill('0.5');const predicted=await page.locator('#raster-preview-status').textContent();await page.locator('#area-apply').click();await expect(page.locator('#area-dialog')).not.toBeVisible();assert.deepEqual((await saved()).nodes.find(n=>n.type==='study_area'),area);
   await page.locator('[data-view="results"]').click();
@@ -46,7 +49,7 @@ test('clip preview adjusts boundary parameters before running and preserves draf
  await page.locator('[data-add="raster_input"]').click();await page.locator('#prepare-raster').click();await page.locator('#raster-file').setInputFiles({name:'preview.tif',mimeType:'image/tiff',buffer:Buffer.from(encodeRaster({metadata,values}))});await expect(page.locator('#raster-dialog #config-apply')).toBeEnabled();await page.locator('#raster-dialog #config-apply').click();await expect(page.locator('#raster-dialog')).toHaveCount(0);
  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))),source=(await saved()).nodes.find(n=>n.type==='raster_input');
   await page.locator('[data-view="workflow"]').click();
- await page.locator('[data-add="clip_raster"]').click();await page.locator('#clip-method').selectOption('cell-center');await page.locator('#raster-raster').selectOption(source.id);let baseline=await saved();
+ await page.locator('[data-add="clip_raster"]').click();await clipMethod(page,'cell-center');await page.locator('#connect-raster').selectOption(source.id);let baseline=await saved();
  await page.locator('#preview-raster-clip').click();await expect(page.locator('#area-dialog')).toBeVisible();await expect(page.locator('.raster-preview-image')).toBeVisible();await expect(page.locator('#area-online')).not.toBeChecked();await expect(page.locator('#raster-preview-status')).toContainText('centers inside');await expect(page.locator('#area-apply')).toBeEnabled();
  await expect(page.locator('.raster-preview-image')).toHaveJSProperty('complete',true);await page.screenshot({path:'test-results/raster-preview-polygon.png'});
  await page.locator('#raster-preview-opacity').fill('30');await expect(page.locator('.raster-preview-image')).toHaveCSS('opacity','0.3');assert.deepEqual(await saved(),baseline);
@@ -65,7 +68,7 @@ test('clip preview adjusts boundary parameters before running and preserves draf
  await page.locator('[data-view="rules"]').click();const evidence=page.waitForEvent('download');await page.locator('#download-evidence').click();const receipt=JSON.parse(await readFile(await (await evidence).path(),'utf8')),grid=receipt.outputs.find(o=>o.raster).raster;assert.deepEqual([grid.metadata.width,grid.metadata.height,grid.mask.inside,grid.mask.valid,grid.mask.outside],predicted);assert.deepEqual(grid.boundary,edited.nodes.find(n=>n.type==='clip_raster').params.cutline.geometry);
  await page.reload();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});assert.deepEqual((await saved()).nodes.find(n=>n.type==='clip_raster').params.cutline,edited.nodes.find(n=>n.type==='clip_raster').params.cutline);
   await page.locator('[data-view="workflow"]').click();
- await page.locator('#fit-button').click();await page.locator('.react-flow__node[data-id^="clip_raster-"]').click();await expect(page.locator('[data-clip-parameters]')).toBeVisible();await page.locator('#reset-clip-boundary').click();assert.equal((await saved()).nodes.find(n=>n.type==='clip_raster').params.cutline,undefined);await page.locator('#undo-button').click();assert.deepEqual((await saved()).nodes.find(n=>n.type==='clip_raster').params.cutline,edited.nodes.find(n=>n.type==='clip_raster').params.cutline);assert.deepEqual((await saved()).nodes.find(n=>n.type==='study_area'),baseline.nodes.find(n=>n.type==='study_area'));
+ await page.locator('#fit-button').click();await page.locator('.react-flow__node[data-id^="clip_raster-"]').click();await page.locator('#configure-step').click();await page.locator('#clip-config #reset-clip-boundary').check();await page.locator('#clip-config #config-apply').click();assert.equal((await saved()).nodes.find(n=>n.type==='clip_raster').params.cutline,undefined);await page.locator('#undo-button').click();assert.deepEqual((await saved()).nodes.find(n=>n.type==='clip_raster').params.cutline,edited.nodes.find(n=>n.type==='clip_raster').params.cutline);assert.deepEqual((await saved()).nodes.find(n=>n.type==='study_area'),baseline.nodes.find(n=>n.type==='study_area'));
 });
 async function exercise(page,file){
  const w=oldNalediWorkflow();w.name='Old Naledi raster clipping';w.nodes=w.nodes.filter(n=>n.type==='study_area');w.edges=[];delete w.outputId;
@@ -74,7 +77,7 @@ async function exercise(page,file){
  await page.locator('[data-add="raster_input"]').click();await page.locator('#prepare-raster').click();await page.locator('#raster-file').setInputFiles(file);await expect(page.locator('#raster-dialog #config-apply')).toBeEnabled();if(typeof file==='string'){await page.locator('#raster-worldpop').click();await expect(page.locator('#raster-source-identifier')).toHaveValue('10.5258/SOTON/WP00839');}else{await page.locator('#raster-source-sourceURL').fill('https://example.org/raster');await page.locator('#raster-source-citation').fill('Synthetic raster citation');await page.locator('#raster-source-units').fill('test units');}await page.locator('#raster-dialog #config-apply').click();await expect(page.locator('#raster-dialog')).toHaveCount(0);
  const saved=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))),source=saved.nodes.find(n=>n.type==='raster_input');assert.equal(saved.manifest.inventory.assets.length,1);await page.locator('#prepare-raster').click();await expect(page.locator('#raster-source-citation')).toHaveValue(source.params.asset.provenance.citation);await page.locator('#raster-source-notes').fill('Reviewed source attribution; clipping is a derived product.');await page.screenshot({path:'test-results/raster-source-metadata-editor.png'});await page.locator('#raster-dialog #config-apply').click();await expect(page.locator('#raster-dialog')).toHaveCount(0);
   await page.locator('[data-view="workflow"]').click();
- await page.locator('[data-add="clip_raster"]').click();await page.locator('#clip-method').selectOption('cell-center');await page.locator('#raster-raster').selectOption(source.id);await page.locator('#add-raster-map').click();
+ await page.locator('[data-add="clip_raster"]').click();await clipMethod(page,'cell-center');await page.locator('#connect-raster').selectOption(source.id);await page.locator('#add-raster-map').click();
   await page.locator('[data-view="results"]').click();
  await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});await expect(page.locator('#map image')).toHaveCount(1);await expect(page.locator('#result-metrics')).toContainText('Cell-center polygon mask');
  const download=page.waitForEvent('download');await page.locator('#raster-download').click();const derivative=await readFile(await (await download).path());assert.ok(derivative.length>100);const tiff=await fromArrayBuffer(derivative.buffer.slice(derivative.byteOffset,derivative.byteOffset+derivative.byteLength)),image=await tiff.getImage(),description=JSON.parse(String(await image.getFileDirectory().loadValue('ImageDescription')).replace(/\x00+$/,''));assert.equal(description.source.citation,source.params.asset.provenance.citation);assert.equal(description.source.notes,'Reviewed source attribution; clipping is a derived product.');assert.equal(description.retainedInputSHA256,source.params.asset.sha256);await tiff.close();
@@ -139,8 +142,8 @@ test('a Map with no stored input mode draws a raster wired to it',async({page})=
  await page.locator('#raster-dialog #config-apply').click();await expect(page.locator('#raster-dialog')).toHaveCount(0);
  const source=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))).nodes.find(n=>n.type==='raster_input');
  await page.locator('[data-view="workflow"]').click();
- await page.locator('[data-add="clip_raster"]').click();await page.locator('#clip-method').selectOption('cell-center');
- await page.locator('#raster-raster').selectOption(source.id);
+ await page.locator('[data-add="clip_raster"]').click();await clipMethod(page,'cell-center');
+ await page.locator('#connect-raster').selectOption(source.id);
  const clip=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1'))).nodes.find(n=>n.type==='clip_raster');
  // The palette's Map, not the Clip raster node's `Add raster map` button: this one carries no
  // inputMode, which is the condition the regression needed.
@@ -172,4 +175,33 @@ test('a raster wired straight to a Map says how many of its cells hold a value',
  const cells=Number(w0)*Number(h0),n=Number(valid.replaceAll(',',''));
  // Every 23rd cell of the source is no data, so a window of this size holds some.
  expect(n).toBeGreaterThan(0);expect(n).toBeLessThan(cells);
+});
+
+// CLIP RASTER ON THE STANDARD INSPECTOR (experiment 186, 0.149.0): Name, Inputs, Settings with Configure…, Result; and
+// nothing reaches the step until Apply.
+test('Clip raster\'s Inspector is the standard one, and its settings change only on Apply',async({page})=>{
+ await page.goto('/?example=blank');await page.locator('#workflow-file').setInputFiles({name:'raster.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(rasterWorkflow()))});
+ await page.locator('[data-view="workflow"]').click();await page.locator('.react-flow__node[data-id="raster-clip"]').click();
+ const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='raster-clip').params);
+ for(const name of ['name','inputs','settings','result'])await expect(page.locator(`#inspector-content [data-standard-section="${name}"]`)).toHaveCount(1);
+ await expect(page.locator('#connect-raster')).toHaveValue('raster-input');await expect(page.locator('#connect-area')).toHaveValue('area');
+ await expect(page.locator('.standard-sentence')).toContainText('its own, saved here');
+ await expect(page.locator('.standard-result')).toContainText('Not run yet');
+ // Cancel leaves the step as it was.
+ await page.locator('#configure-step').click();const dialog=page.locator('#clip-config');
+ await dialog.locator('#clip-margin').fill('0.5');await dialog.locator('#clip-margin').dispatchEvent('change');
+ await expect(dialog).toContainText('and 0.5 cells beyond it');
+ await dialog.locator('#config-cancel').click();if(await page.locator('#clip-config').count())await page.getByRole('button',{name:/discard/i}).click();
+ expect((await saved()).marginPixels).toBe(0);
+ // A margin out of range cannot be applied, and says why.
+ await page.locator('#configure-step').click();
+ await dialog.locator('#clip-margin').fill('2');await dialog.locator('#clip-margin').dispatchEvent('change');
+ await expect(dialog.locator('#config-apply')).toBeDisabled();await expect(dialog).toContainText('from 0 to 1');
+ // Apply writes the method, the margin and the boundary choice together.
+ await dialog.locator('#clip-margin').fill('0.25');await dialog.locator('#clip-margin').dispatchEvent('change');
+ await dialog.locator('#clip-method').selectOption('cell-center');await dialog.locator('#reset-clip-boundary').check();
+ await dialog.locator('#config-apply').click();await expect(dialog).toHaveCount(0);
+ const p=await saved();expect(p.method).toBe('cell-center');expect(p.marginPixels).toBe(0.25);expect(p.cutline).toBeUndefined();
+ await expect(page.locator('.standard-sentence')).toContainText('whose centre is inside the boundary');
+ await expect(page.locator('.standard-sentence')).toContainText('the connected study area');
 });

@@ -15,9 +15,29 @@ import fieldwork from '../examples/eo/routes-fieldwork.json';
 import {sinusoidal,projectBoundary,cellsIn,sumWindow,addSums,emptySums,modisPasses,MODIS_RULES,
   type AreaSums,type Grid,type ModisQualityRule} from './satellite-areas.js';
 
-export interface GridLayer {label:string; variable:string; column:string; quality:string; clear:string}
-export interface GridReader {format:'modis-cog'; readOn:string; layers:Record<string,GridLayer>; scale:number; fill:number;
-  unit:string; projection:'modis-sinusoidal'; quality:{default:ModisQualityRule; note:string}; token:string}
+/** One layer a product offers. `clear` is the layer counting clear days, where the product has one (temperature does,
+ *  vegetation does not); `unit` is the layer's own where it differs from the product's (NDVI and EVI); `measures`
+ *  completes the column's description: what the value is, and what it is not. */
+export interface GridLayer {label:string; variable:string; column:string; quality:string; clear?:string; unit?:string;
+  measures?:string}
+/** `scale` multiplies a stored value into the unit. `statedScale` is what the files' own `scale_factor` tag says where
+ *  that is not `scale`: vegetation's files say 10000, a divisor, and temperature's say 0.02, a multiplier. The same tag
+ *  means opposite things in two products of one instrument (0.149.0), so the reader states which, rather than guess. */
+export interface GridReader {format:'modis-cog'; readOn:string; layers:Record<string,GridLayer>; scale:number; statedScale?:number;
+  fill:number; unit:string; projection:'modis-sinusoidal'; period?:string;
+  quality:{default:ModisQualityRule; rules?:ModisQualityRule[]; note:string}; token:string}
+/** The quality rules a reader offers: its own list, or temperature's three. */
+export const rulesOf=(reader:GridReader):ModisQualityRule[]=>reader.quality.rules??['produced-2k','good','produced'];
+const unitOf=(reader:GridReader,layer:GridLayer)=>layer.unit??reader.unit;
+/** The layer a step reads: the one it names, or the product's first, so a step moved to another product reads something
+ *  that product has. */
+export const layerKeyOf=(reader:GridReader,asked:string|undefined):string=>
+  asked&&reader.layers[asked]?asked:Object.keys(reader.layers)[0]!;
+/** The quality rule a step reads by: the one it names where this product offers it, else the product's default. */
+export const ruleOf=(reader:GridReader,asked:ModisQualityRule|undefined):ModisQualityRule=>
+  asked&&rulesOf(reader).includes(asked)?asked:reader.quality.default;
+/** WHAT A LAYER IS, in a phrase: "Daytime land surface temperature", or the layer's own label where it says what it is. */
+export const layerPhrase=(layer:GridLayer):string=>layer.measures?layer.label:`${layer.label} land surface temperature`;
 
 const READERS=(fieldwork as unknown as {readers:Record<string,{format?:string}|string>}).readers;
 export const gridReaderFor=(product:SatelliteProduct):GridReader|null=>{
@@ -122,16 +142,17 @@ export async function readGridFiles(items:readonly CatalogItem[],reader:GridRead
     token??=await tokenFor(reader.token,fetcher);
     const href=(variable:string)=>{const f=item.files.find(x=>x.key===variable);
       if(!f)throw new Error(`Item ${item.id} has no ${variable} file.`);return `${f.href}${f.href.includes('?')?'&':'?'}${token}`;};
-    const [value,qc,clear]=await Promise.all([open(href(layer.variable)),open(href(layer.quality)),open(href(layer.clear))]);
+    const [value,qc,clear]=await Promise.all([open(href(layer.variable)),open(href(layer.quality)),layer.clear?open(href(layer.clear)):null]);
     // THE FILE'S OWN UNIT AND SCALE, read from every file. A file stating another stops the run, naming it, rather than
     // being converted on an assumption; a file stating none is counted and said.
     const md=await value.getGDALMetadata?.().catch(()=>null)??null;
     let stated=false;
     if(md&&(md.units!==undefined||md.scale_factor!==undefined)){
-      if(md.units!==undefined&&md.units!==reader.unit)
-        throw Object.assign(new Error(`${item.id} states its unit as "${md.units}", not ${reader.unit}. Nothing was converted; this product's reader expects ${reader.unit}.`),{final:true});
-      if(md.scale_factor!==undefined&&Math.abs(Number(md.scale_factor)-reader.scale)>1e-9)
-        throw Object.assign(new Error(`${item.id} states a scale factor of ${md.scale_factor}, not ${reader.scale}. Nothing was read with the wrong one.`),{final:true});
+      const unit=unitOf(reader,layer),scale=reader.statedScale??reader.scale;
+      if(md.units!==undefined&&md.units!==unit)
+        throw Object.assign(new Error(`${item.id} states its unit as "${md.units}", not ${unit}. Nothing was converted; this product's reader expects ${unit}.`),{final:true});
+      if(md.scale_factor!==undefined&&Math.abs(Number(md.scale_factor)-scale)>1e-9)
+        throw Object.assign(new Error(`${item.id} states a scale factor of ${md.scale_factor}, not ${scale}. Nothing was read with the wrong one.`),{final:true});
       stated=true;
     }
     const grid:Grid={origin:value.getOrigin().slice(0,2) as [number,number],resolution:value.getResolution().slice(0,2) as [number,number],
@@ -148,15 +169,15 @@ export async function readGridFiles(items:readonly CatalogItem[],reader:GridRead
     if(present.length){
       const U=[Math.min(...present.map(c=>c.window[0])),Math.min(...present.map(c=>c.window[1])),
         Math.max(...present.map(c=>c.window[2])),Math.max(...present.map(c=>c.window[3]))];
-      const read=(image:Awaited<ReturnType<Open>>)=>image.readRasters({window:U});
+      const read=(image:Awaited<ReturnType<Open>>|null)=>image?image.readRasters({window:U}):Promise.resolve([null]);
       const [[V],[Q],[C]]=await Promise.all([read(value),read(qc),read(clear)]);
       const UW=U[2]!-U[0]!;
       cells.forEach((c,index)=>{
         if(!c)return;
         const [c0,r0,c1,r1]=c.window,w=c1-c0,n=w*(r1-r0),v=new Array<number>(n),q=new Array<number>(n),k=new Array<number>(n);
         for(let r=r0;r<r1;r++)for(let col=c0;col<c1;col++){
-          const src=(r-U[1]!)*UW+(col-U[0]!),dst=(r-r0)*w+(col-c0);v[dst]=V![src]!;q[dst]=Q![src]!;k[dst]=C![src]!;}
-        sums[index]=sumWindow(c.mask,v,q,k,reader.fill,x=>modisPasses(x,rule));
+          const src=(r-U[1]!)*UW+(col-U[0]!),dst=(r-r0)*w+(col-c0);v[dst]=V![src]!;q[dst]=Q![src]!;if(C)k[dst]=C[src]!;}
+        sums[index]=sumWindow(c.mask,v,q,C?k:null,reader.fill,x=>modisPasses(x,rule));
       });
     }
     return {stated,period,end,platform,sums};
@@ -214,7 +235,8 @@ export interface GridCounts {files:number; places:number; periods:number; rows:n
  *  by exact formulas. The practitioner, 2026-11-06, chose Celsius by default and asked for Fahrenheit beside kelvin,
  *  each stated on the result and in the receipt. A product whose unit is not K is reported as the file states it. */
 export type ReportUnit='K'|'°C'|'°F';
-export const reportUnit=(reader:GridReader,asked:ReportUnit|undefined):string=>reader.unit==='K'?(asked??'°C'):reader.unit;
+export const reportUnit=(reader:GridReader,asked:ReportUnit|undefined,layer?:GridLayer):string=>
+  reader.unit==='K'?(asked??'°C'):layer?unitOf(reader,layer):reader.unit;
 const CONVERSIONS:Record<string,{apply:(k:number)=>number;says:string}>={
   '°C':{apply:k=>k-273.15,says:'°C = K − 273.15'},
   '°F':{apply:k=>k*9/5-459.67,says:'°F = K × 9/5 − 459.67'},
@@ -227,7 +249,7 @@ const shown=(raw:number|null,reader:GridReader,unit:string)=>raw===null?'':Strin
  *  the file states it; how many cells it rests on, and how many clear days, are on the same row. */
 export function gridTable(places:readonly Place[],readings:readonly PlaceReading[],reader:GridReader,layerKey:string,
   rule:ModisQualityRule,areaColumn='area',asked?:ReportUnit):{table:DataTable;counts:GridCounts}{
-  const layer=reader.layers[layerKey]!,name=new Map(places.map(p=>[p.id,p.name])),unit=reportUnit(reader,asked);
+  const layer=reader.layers[layerKey]!,name=new Map(places.map(p=>[p.id,p.name])),unit=reportUnit(reader,asked,layer);
   const counts:GridCounts={files:0,places:places.length,periods:new Set(readings.map(r=>r.period)).size,rows:0,passing:0,
     belowQuality:0,noRetrieval:0,noCell:0};
   const sorted=[...readings].sort((a,b)=>a.period.localeCompare(b.period)||a.platform.localeCompare(b.platform)
@@ -248,11 +270,14 @@ export function gridTable(places:readonly Place[],readings:readonly PlaceReading
   const table:DataTable={kind:'data-table',keys,valueField:layer.column,unit,
     primaryKey:[areaColumn,'period_start','platform'],
     columns:{
-      [layer.column]:{unit,description:`${layer.label} land surface temperature${conversionSays(reader,unit)?`, in ${unit} (the file states ${reader.unit}; ${conversionSays(reader,unit)})`:''}: the mean of the cells whose centre is in the area and that passed the quality rule (${MODIS_RULES[rule]}). The ground's skin where the sky was clear, not the air.`,origin:'file',confirmed:true},
+      [layer.column]:{unit,description:layer.measures
+        ?`${layer.label}: the mean of the cells whose centre is in the area and that passed the quality rule (${MODIS_RULES[rule]}). ${layer.measures}`
+        :`${layer.label} land surface temperature${conversionSays(reader,unit)?`, in ${unit} (the file states ${reader.unit}; ${conversionSays(reader,unit)})`:''}: the mean of the cells whose centre is in the area and that passed the quality rule (${MODIS_RULES[rule]}). The ground's skin where the sky was clear, not the air.`,origin:'file',confirmed:true},
       cells:{description:'Cells of the file whose centre is inside or on the area.',origin:'file',confirmed:true},
       cells_with_value:{description:'Of those, cells with a retrieved value.',origin:'file',confirmed:true},
       cells_passing:{description:'Of those, cells that passed the quality rule: the mean rests on these.',origin:'file',confirmed:true},
-      clear_days:{description:'Mean number of clear days, of the eight, behind the passing cells: each 8-day value is the mean of its clear days only.',origin:'file',confirmed:true},
+      clear_days:{description:layer.clear?'Mean number of clear days, of the eight, behind the passing cells: each 8-day value is the mean of its clear days only.'
+        :'Empty: this product gives no count of clear days.',origin:'file',confirmed:true},
       gap:{description:'Where there is no value: no cell in the area, no retrieval (cloud or other), or below the quality threshold.',origin:'file',confirmed:true},
     },
     rows,rowCount:rows.length,missingValueCount:rows.filter(r=>r.value==null).length};
@@ -263,16 +288,17 @@ const plural=(n:number,one:string,many=one+'s')=>`${n.toLocaleString('en-US')} $
 
 export function gridSentence(c:GridCounts,reader:GridReader,layerKey:string,rule:ModisQualityRule,product:SatelliteProduct,
   kind:'area'|'point',asked?:ReportUnit,tags?:TagCheck):string{
-  const layer=reader.layers[layerKey]!,unit=reportUnit(reader,asked);
+  const layer=reader.layers[layerKey]!,unit=reportUnit(reader,asked,layer),stated=unitOf(reader,layer),scale=reader.statedScale??reader.scale;
   return `Read ${plural(c.files,'file')} of ${product.route.label} at ${plural(c.places,kind==='area'?'area':'point')} over `
-    +`${plural(c.periods,'8-day period')}: ${plural(c.rows,'row')}, one per ${kind} per period per satellite, Terra and Aqua kept apart. `
+    +`${plural(c.periods,`${reader.period??'8-day'} period`)}: ${plural(c.rows,'row')}, one per ${kind} per period per satellite, Terra and Aqua kept apart. `
     +`${c.passing} hold a mean of passing cells; ${c.belowQuality} have values none of which passed, ${c.noRetrieval} no retrieval, `
-    +`${c.noCell} no cell in the ${kind==='area'?'area':'grid'}. ${layer.label} land surface temperature in ${unit}`
+    +`${c.noCell} no cell in the ${kind==='area'?'area':'grid'}. ${layerPhrase(layer)}${unit===layer.label?', unitless':` in ${unit}`}`
     +`${conversionSays(reader,unit)?` (the file states ${reader.unit}; ${conversionSays(reader,unit)})`:''}, `
     +`${kind==='area'?'over the cells whose centre is in the area':'in the cell containing the point'}, quality rule: ${MODIS_RULES[rule]}. `
-    +`Land surface temperature is the ground's, not the air's. Nothing was filled.`
-    +(tags?(tags.stated===tags.files?` Every file stated its unit as ${reader.unit} and its scale factor as ${reader.scale}, and was read by them.`
-      :` ${tags.files-tags.stated} of ${tags.files} files stated no unit or scale factor; the product's, ${reader.unit} and ${reader.scale}, were used for them.`):'')
+    +(layer.measures?'':`Land surface temperature is the ground's, not the air's. `)+'Nothing was filled.'
+    +(reader.statedScale?` Each stored value was divided by ${reader.statedScale}, the files' scale factor, which for this product is a divisor.`:'')
+    +(tags?(tags.stated===tags.files?` Every file stated its unit as ${stated} and its scale factor as ${scale}, and was read by them.`
+      :` ${tags.files-tags.stated} of ${tags.files} files stated no unit or scale factor; the product's, ${stated} and ${scale}, were used for them.`):'')
     +(tags?.saved?` ${tags.saved===tags.files?'Every file was':`${tags.saved} of ${tags.files} files were`} taken from readings saved on this device from an earlier run, the same file read the same way at the same places${tags.saved===tags.files?'':'; the rest were read now'}.`:'');
 }
 
@@ -281,7 +307,7 @@ export const CELL_CONVENTIONS={area:'cells whose centre is inside or on the area
 
 export function gridFacts(entity:string,c:GridCounts,reader:GridReader,layerKey:string,rule:ModisQualityRule,
   product:SatelliteProduct,kind:'area'|'point',asked?:ReportUnit,saved=0):string{
-  const q=(v:string)=>JSON.stringify(v),layer=reader.layers[layerKey]!,n=(v:number)=>`"${v}"^^xsd:integer`,unit=reportUnit(reader,asked);
+  const q=(v:string)=>JSON.stringify(v),layer=reader.layers[layerKey]!,n=(v:number)=>`"${v}"^^xsd:integer`,unit=reportUnit(reader,asked,layer);
   return `@prefix fw: <urn:fieldwork:>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
     +`${entity} a fw:SatelliteAreaSample;\n`
     +`  fw:sampledRoute ${q(product.route.id)};\n  fw:sampledVariable ${q(layer.variable)};\n`

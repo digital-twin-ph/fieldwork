@@ -134,14 +134,18 @@ export async function openIdentityFile(file:string,passphrase:string):Promise<Op
 
 /** A CHANGED PROFILE, SEALED AGAIN: the same key, a new salt. The opened key cannot be read back out of the session,
  *  so a change needs the file and its passphrase again, and gives a new file to keep in place of the old. */
-export async function updateIdentityFile(file:string,passphrase:string,change:{avatar?:AvatarChoice|null;affiliations?:Affiliation[]}):Promise<{file:string;identity:OpenIdentity}>{
+export async function updateIdentityFile(file:string,passphrase:string,change:{avatar?:AvatarChoice|null;affiliations?:Affiliation[];orcid?:string|null}):Promise<{file:string;identity:OpenIdentity}>{
   const {inner,iterations}=await unseal(file,passphrase);
   for(const a of change.affiliations??[])if(a.ror&&!validRor(a.ror))throw new Error(`${a.ror} is not a ROR ID: its checksum does not match.`);
-  const {avatar:_was,affiliations:_had,...rest}=inner.profile;void _was;
+  // AN ORCID iD ADDED LATER (2026-11-19): a colleague made his file without one, and making a new file would make a new key.
+  // Left out of the change it is kept; empty or null removes it.
+  const orcid=change.orcid===undefined?inner.profile.orcid:(change.orcid??'').trim()||undefined;
+  if(orcid&&!validOrcid(orcid))throw new Error(`${orcid} is not an ORCID iD: its check digit does not match.`);
+  const {avatar:_was,affiliations:_had,orcid:_orcid,...rest}=inner.profile;void _was;void _orcid;
   const affiliations=change.affiliations?readAffiliations(change.affiliations):readAffiliations(_had);
   // An avatar left out of the change is kept; null removes it.
   const avatar=change.avatar===undefined?_was:change.avatar;
-  const profile:IdentityProfile={...rest,...(affiliations.length?{affiliations}:{}),...(avatar&&isAvatarChoice(avatar)?{avatar}:{})};
+  const profile:IdentityProfile={...rest,...(orcid?{orcid}:{}),...(affiliations.length?{affiliations}:{}),...(avatar&&isAvatarChoice(avatar)?{avatar}:{})};
   const next={profile,key:inner.key};
   return {file:await seal(next,passphrase,iterations),identity:await openFrom(profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey)};
 }

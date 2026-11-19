@@ -155,6 +155,16 @@ test('an identity made here signs a note, the signature checks, and storage keep
   await expect(dialog.locator('#identity-create-part')).toBeHidden();
   await expect(dialog.locator('.avatar-chooser:visible')).toHaveCount(0);
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
+  // AN ORCID iD CHANGED LATER, the key kept (2026-11-19): it is shown filled in, and a new file is saved.
+  await dialog.locator('#identity-avatar-part summary').click();
+  await expect(dialog.locator('#identity-change-orcid')).toHaveValue('0000-0002-1825-0097');
+  await dialog.locator('#identity-change-orcid').fill('0000-0001-5109-3700');
+  await dialog.locator('#identity-change-file').setInputFiles({name:'FWID-Ada-Lovelace.fwid',mimeType:'application/json',buffer:Buffer.from(file)});
+  await dialog.locator('#identity-change-passphrase').fill(PASS);
+  const changing=page.waitForEvent('download');
+  await dialog.locator('#identity-change').click();
+  await changing;
+  await expect(dialog.locator('#identity-status')).toContainText('ORCID 0000-0001-5109-3700');
 
   // OPEN THROUGH A RELOAD (the practitioner, 2026-11-16: stay unlocked, and lock after 10 minutes).
   await page.reload();

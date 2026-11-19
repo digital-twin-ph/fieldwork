@@ -142,3 +142,15 @@ test('affiliations go into the file, and changing them keeps the avatar; a bad R
   assert.deepEqual(identity.profile.avatar,{icon:'pump',colour:'teal'});
   await assert.rejects(()=>id.createIdentityFile({name:'Ada',affiliations:[{name:'X',ror:'03vek6s53'}]},PASS,FAST),/checksum/);
 });
+test('an ORCID iD added to an identity file later keeps the key; a wrong one is refused; empty removes it',async()=>{
+  // A colleague made his file without an ORCID iD (2026-11-19); making a new file would have made a new key.
+  const {file,identity}=await id.createIdentityFile({name:'Ada',affiliations:[{name:'Clinic'}]},PASS,FAST);
+  assert.equal(identity.profile.orcid,undefined);
+  const added=await id.updateIdentityFile(file,PASS,{orcid:'0000-0002-1825-0097'});
+  assert.equal(added.identity.publicKey,identity.publicKey,'the same key');
+  assert.equal((await id.openIdentityFile(added.file,PASS)).profile.orcid,'0000-0002-1825-0097');
+  assert.deepEqual(added.identity.profile.affiliations,[{name:'Clinic'}],'what was not changed is kept');
+  assert.equal((await id.updateIdentityFile(added.file,PASS,{avatar:null})).identity.profile.orcid,'0000-0002-1825-0097','left out, kept');
+  await assert.rejects(()=>id.updateIdentityFile(file,PASS,{orcid:'0000-0002-1825-0098'}),/check digit/);
+  assert.equal((await id.updateIdentityFile(added.file,PASS,{orcid:''})).identity.profile.orcid,undefined);
+});

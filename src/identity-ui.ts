@@ -124,10 +124,12 @@ key</strong>. Only the public key leaves Fieldwork; it cannot be used to sign in
 <li>Set <strong>Key type</strong> to <strong>Signing Key</strong>, paste the key, and press <strong>Add SSH key</strong>.</li>
 <li>Then check: <button type="button" class="button small" id="identity-ssh-check">Check the link</button></li></ol>
 <p id="identity-ssh-result" class="field-check" role="status" aria-live="polite"></p></details>
-<details id="identity-avatar-part" hidden><summary>Change your avatar or affiliations</summary>
-<p>Both are kept in your identity file, so changing them saves a new file to keep in place of the old one. Choose the
-file and enter its passphrase.</p>
+<details id="identity-avatar-part" hidden><summary>Change your avatar, ORCID iD or affiliations</summary>
+<p>They are kept in your identity file, so changing them saves a new file to keep in place of the old one. Your key
+stays the same. Choose the file and enter its passphrase.</p>
 <div id="identity-change-avatar"></div>
+<label class="field-label" for="identity-change-orcid">ORCID iD (optional), such as 0000-0002-1825-0097</label>
+<input id="identity-change-orcid" maxlength="19" autocomplete="off">
 <div id="identity-change-affiliations"></div>
 <label class="field-label" for="identity-change-file">Identity file (.fwid)</label><input id="identity-change-file" type="file" accept=".fwid,application/json">
 <label class="field-label" for="identity-change-passphrase">Passphrase</label><input id="identity-change-passphrase" type="password" autocomplete="off">
@@ -253,7 +255,8 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         ($('#identity-github-part') as HTMLDetailsElement).open=!linked;}
       if(open&&!$('#identity-change-avatar').innerHTML){$('#identity-change-avatar').innerHTML=chooserMarkup('change',open.profile.avatar,esc);
         wireChooser($('#identity-change-avatar'),'change',esc);
-        affiliationEditor($('#identity-change-affiliations'),'change',open.profile.affiliations??[],esc);}
+        affiliationEditor($('#identity-change-affiliations'),'change',open.profile.affiliations??[],esc);
+        ($('#identity-change-orcid') as HTMLInputElement).value=open.profile.orcid??'';}
     };
     if(!$('#identity-new-avatar').innerHTML){$('#identity-new-avatar').innerHTML=chooserMarkup('new',undefined,esc);wireChooser($('#identity-new-avatar'),'new',esc);}
     if(!$('#identity-new-affiliations').innerHTML)affiliationEditor($('#identity-new-affiliations'),'new',[],esc);
@@ -308,7 +311,8 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
       if(!file){fail('Choose your identity file first.');return;}
       try{
         const {file:next,identity}=await updateIdentityFile(await file.text(),($('#identity-change-passphrase') as HTMLInputElement).value,
-          {avatar:chosenIn($('#identity-change-avatar'),'change')??null,affiliations:readAffiliationEditor($('#identity-change-affiliations'))});
+          {avatar:chosenIn($('#identity-change-avatar'),'change')??null,affiliations:readAffiliationEditor($('#identity-change-affiliations')),
+           orcid:($('#identity-change-orcid') as HTMLInputElement).value});
         if(open&&identity.publicKey!==open.publicKey){fail('That file is another identity, not the one open here.');return;}
         const a=document.createElement('a');
         a.href=URL.createObjectURL(new Blob([next],{type:'application/json'}));a.download=identityFileName(identity.profile.name);a.click();

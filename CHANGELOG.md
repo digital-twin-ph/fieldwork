@@ -11,6 +11,7 @@ shown in a local build is not a claim that it has been published.
   map, because the figure's frame passed every vertex at once to a function that takes about 100,000. A map that cannot
   be drawn now says why where it would be. Map 0.36.3.
 - **CI's template test** asks for the population example's workflows only where that example is checked out.
+- **The release gate runs four browser test files at once**: about 21 minutes instead of 45, measured (gating audit).
 - **The Credentials manual says where GitHub's Resource owner is, and what goes wrong without it**: it starts as your
   own name, and left so, the project's repository never appears when choosing it ("No repositories found").
 - **The Credentials manual has a section for an organization's owner**: approving a member's token, what to check

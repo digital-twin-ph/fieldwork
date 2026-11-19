@@ -12,6 +12,10 @@ port="${FIELDWORK_TEST_PORT:-4184}"
 # on Chromium anyway not Safari". WebKit stays in CI's verify job, which runs both on every push. Name both to
 # gate both: FIELDWORK_BROWSERS=chromium,webkit scripts/gate.sh
 browsers="${FIELDWORK_BROWSERS:-chromium}"
+# FOUR BROWSER TEST FILES AT ONCE, measured 2026-11-19 on this 14-core machine (docs/audits/gating-audit.md): the Chromium
+# suite in 13.1 minutes at 4 workers against 46.6 at one, with no test failing for running beside another; at 8 it took
+# 14.4 minutes and one test failed. Set FIELDWORK_WORKERS to change it.
+workers="${FIELDWORK_WORKERS:-4}"
 # Resolve in THIS tree: a bare "HEAD" inside the worktree would mean the worktree's own head,
 # which is whatever the last gate left there.
 sha=$(git -C "$here" rev-parse "${1:-HEAD}")
@@ -30,4 +34,4 @@ fi
 
 echo "Gating $(git -C "$here" log --oneline -1 "$sha") in $tree on port $port, browsers: $browsers"
 cd "$tree"
-FIELDWORK_TEST_PORT="$port" FIELDWORK_BROWSERS="$browsers" npm run check
+FIELDWORK_TEST_PORT="$port" FIELDWORK_BROWSERS="$browsers" FIELDWORK_WORKERS="$workers" npm run check

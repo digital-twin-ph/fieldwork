@@ -100,6 +100,23 @@ writes.
   stops listing `app.ts`. No refactoring campaign of its own. Measured from 2026-11-19: `app.ts` 11,024 lines, of which
   `renderInspector` 2,172; 34 of 72 widgets list `app.ts`.
 
+## Measured: browser tests in parallel, 2026-11-19
+
+The practitioner: speeding up the gate is a priority. Nothing recorded why the browser tests ran one at a time on a
+14-core machine with 36 GB, so the number of files run at once was measured on the full Chromium suite (557 tests),
+outside any gate, at 0.151.2 in development:
+
+| Workers | Time | Passed | Failed | Load |
+| --- | --- | --- | --- | --- |
+| 1 (gate 220) | 46.6 min | 551 | 0 | |
+| **4** | **13.1 min** | 551 | 1, a release note not yet regenerated, fails alone too | about 13 on 14 cores |
+| 8 | 14.4 min | 551 | 1, `recovery-urls`, which passes at 1 and 4 | |
+
+**Decided: the gate runs 4 at a time** (`scripts/gate.sh`, `FIELDWORK_WORKERS`, default 4; `playwright.config.mjs`
+keeps 1 for a run by hand unless set). The limit was found, not chosen: past 4 the cores are saturated, it is slower,
+and a test starts to fail beside the others. **Not established:** whether 5 or 6 is faster still; whether
+`recovery-urls` fails at 8 for a reason that could also strike at 4 under other load.
+
 ## For the practitioner to decide
 
 - Whether to answer Sentinel-5P and geoBoundaries from recorded copies in the gate, with a separate daily live check.

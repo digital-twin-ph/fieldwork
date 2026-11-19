@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.151.1 — In development
+## 0.151.1 — 2026-11-19
 
 - **A template of a workflow holding a raster can be made again**: making one stopped with "Invalid retained raster
   asset or metadata", so the population example's workflows could not be taken as templates for another country. A

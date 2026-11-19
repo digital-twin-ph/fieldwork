@@ -38,7 +38,7 @@ test('a NO2 product, the five boroughs, and the overpasses of 7 June 2023, each 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="search"]').click();
   await expect(page.locator('#inspector-content')).toContainText('Not searched yet');
-  await page.locator('#catalog-search-open').click();
+  await page.locator('#configure-step').click();
   const dialog=page.locator('#satellite-catalog-dialog');
   await expect(dialog).toContainText('Sentinel-5P · TROPOMI NO₂ (Planetary Computer)');
   await expect(dialog).toContainText('Study area extent: W -74.2');
@@ -79,7 +79,7 @@ test('with no Study area, the area is typed in the dialog, checked as typed, dra
   await page.goto('/?example=blank');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="search"]').click();
-  await page.locator('#catalog-search-open').click();
+  await page.locator('#configure-step').click();
   const dialog=page.locator('#satellite-catalog-dialog');
   const search=dialog.locator('#cat-search');
   await expect(dialog.locator('.satellite-box [role="status"]')).toContainText('Type all four edges');

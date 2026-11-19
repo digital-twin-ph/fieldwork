@@ -16,6 +16,8 @@ export interface WalkStep {
   /** Rows this step adds to the result. On the final step, the whole result as the step itself made it. */
   result?:string[][];
   final?:boolean;
+  /** The step stops here: no table is made, so the result shows none, not the rows before it. */
+  stopped?:boolean;
 }
 export interface Walkthrough {title:string; tables:WalkTable[]; resultColumns:string[]; steps:WalkStep[]}
 
@@ -34,6 +36,10 @@ export function walkthroughMarkup(walk:Walkthrough,at:number,esc:Escape):string{
   const final=walk.steps.slice(0,at+1).reverse().find(s=>s.final&&s.result);
   const so:{row:string[];fresh:boolean}[]=final?final.result!.map(row=>({row,fresh:at===walk.steps.indexOf(final)}))
     :walk.steps.slice(0,at+1).flatMap((s,si)=>(s.result??[]).map(row=>({row,fresh:si===at})));
+  if(step.stopped)return `<p class="walk-made-up">Made-up example</p><div class="walk-tables">${walk.tables.map(tableHtml).join('')}`
+    +`<figure class="walk-table walk-result"><figcaption>The result</figcaption><p class="walk-none"><span aria-hidden="true">■</span> `
+    +`No table: the step stops here, so nothing is passed on to the next step.</p></figure></div>`
+    +`<p class="walk-say" aria-live="polite"><span class="walk-count">Step ${at+1} of ${walk.steps.length}.</span> ${esc(step.text)}</p>`;
   const result=`<figure class="walk-table walk-result"><figcaption>The result${final?'':' so far'}</figcaption><table><thead><tr>`
     +walk.resultColumns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')+'</tr></thead><tbody>'
     +(so.length?so.map(({row,fresh})=>`<tr${fresh?' class="walk-fresh"':''}>${row.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')

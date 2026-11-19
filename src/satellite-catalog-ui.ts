@@ -11,7 +11,10 @@
 import type {Escape} from './types.js';
 import {SIGN_IN_WORDS,type SatelliteProduct} from './satellite-products.js';
 import {citationMarkup} from './satellite-products-ui.js';
-import {defaultKept,searchCatalog,searchSentence,typedBox,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
+import {bboxOf,defaultKept,searchCatalog,searchSentence,typedBox,type BBox,type CatalogItem,type CatalogSearch} from './satellite-catalog.js';
+import {productFor} from './satellite-products.js';
+import type {OwnInspector} from './inspector-kit.js';
+import type {WorkflowNode} from './types.js';
 import {gridReaderFor} from './satellite-grid-sample.js';
 import {readerFor} from './satellite-sample.js';
 
@@ -151,3 +154,44 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
   dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   dialog.showModal();
 }
+
+/** SEARCH A SATELLITE CATALOG'S INSPECTOR, the standard one (experiment 186), held here rather than in app.ts
+ *  (2026-11-19: touched for the month-at-a-time search, so moved, as every touched widget is). Name, the two inputs,
+ *  one sentence and Configure…, which opens the search dialog adapted from JLT's STAC Browser, and what was found. */
+const upstreamOf=(n:WorkflowNode<'search_satellite_catalog'>,workflow:ReturnType<Parameters<OwnInspector<'search_satellite_catalog'>['wire']>[1]['workflow']>,port:string)=>{
+  const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
+export const searchCatalogInspector:OwnInspector<'search_satellite_catalog'>={
+  markup:(n,kit)=>{
+    const {esc}=kit,p=n.params,search=p.search,kept=p.kept??(search?defaultKept(search.items):[]);
+    const finder=upstreamOf(n,kit.workflow(),'product');
+    const product=finder?.type==='find_satellite_products'&&finder.params.topic&&finder.params.route?productFor(finder.params.topic,finder.params.route):null;
+    const sentence=!product?'Connect Find satellite products, which says what to search for.'
+      :search?`Searches ${product.route.collection} from ${search.from} to ${search.until}, over ${search.areaFrom==='typed extent'?'the typed extent':'the study area'}. Reads catalog records only: no file is downloaded.`
+      :`Searches ${product.route.collection} over the study area, or edges you type, between two dates. Reads catalog records only: no file is downloaded.`;
+    return kit.section('Name',kit.name('catalog-label',p.label||'Search a satellite catalog'))
+      +kit.section('Inputs',kit.inputs(n,{product:'The product to search for',area:'The area to search, its extent'}))
+      +kit.section('Settings',`<p class="standard-sentence">${esc(sentence)}</p>`
+        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>')
+      +kit.section('Result',search
+        ?`<div class="detail-row"><span>Area</span><strong>${esc(search.areaFrom??'study area')}: W ${search.bbox[0]}, S ${search.bbox[1]}, E ${search.bbox[2]}, N ${search.bbox[3]}</strong></div>`
+          +`<div class="detail-row"><span>Dates</span><strong>${esc(search.from)} to ${esc(search.until)}</strong></div>`
+          +`<div class="detail-row"><span>Items</span><strong>${search.items.length} found, ${kept.length} kept</strong></div>`
+          +(search.truncated?'<p class="notice notice-warning">The search stopped at its limit; narrow the dates for the rest.</p>':'')
+        :'<p class="notice">Not searched yet.</p>');
+  },
+  wire:(n,kit,root)=>{
+    const button=root.querySelector<HTMLButtonElement>('#configure-step');
+    if(!button)return;
+    button.addEventListener('click',()=>{
+      const workflow=kit.workflow(),node=workflow.nodes.find((x):x is WorkflowNode<'search_satellite_catalog'>=>x.id===n.id&&x.type==='search_satellite_catalog');
+      if(!node)return;
+      const finder=upstreamOf(node,workflow,'product'),area=upstreamOf(node,workflow,'area');
+      const product=finder?.type==='find_satellite_products'&&finder.params.topic&&finder.params.route?productFor(finder.params.topic,finder.params.route):null;
+      const geometry=area?.type==='study_area'?(area.params as {geometry?:{type:string;coordinates:unknown}}).geometry:undefined;
+      const p=node.params;
+      openSatelliteCatalogDialog(product,bboxOf(geometry as Parameters<typeof bboxOf>[0]),{from:p.from,until:p.until,box:p.box,search:p.search,kept:p.kept},kit.esc,next=>{
+        kit.change(w=>{const target=w.nodes.find(x=>x.id===n.id);if(target?.type==='search_satellite_catalog')Object.assign(target.params,next);});
+      });
+    });
+  },
+};

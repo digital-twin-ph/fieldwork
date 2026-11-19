@@ -13,7 +13,7 @@ import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
 import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,basemapKey,keyedProvider,PROVIDER_NAMES,type BasemapChoice} from './basemaps.js';
-import {RING_RED,RING_BLUE,layerSymbol,markPath,markRadius,polygonShading,shadedValues,classRanges,categoricalSteps,FIGURE_ROLE} from './presentation.js';
+import {groupedKey,RING_RED,RING_BLUE,layerSymbol,markPath,markRadius,polygonShading,shadedValues,classRanges,categoricalSteps,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
 import {rasterImage} from './raster-image.js';
@@ -741,10 +741,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const legend=new L.Control({position:timeline||(frameNames.length&&classed)?'bottomright':'bottomleft'});
     legend.onAdd=()=>{
       const box=L.DomUtil.create('div','map-class-legend');
-      box.innerHTML=grouped.labels.map((label,i)=>`<p><i style="display:inline-block;width:12px;height:12px;`
-        +`background:${grouped.colours[i]}"></i> ${esc(label)}</p>`).join('')
-        +(p.features.some(f=>!f.category?.trim())?`<p><i style="display:inline-block;width:12px;height:12px;`
-          +`background:${FIGURE_ROLE.unknown}"></i> No class</p>`:'');
+      // THE FIGURE'S KEY, entry for entry: a ring keyed as a ring, never a filled square over an outline (2026-11-19).
+      box.innerHTML=(groupedKey(p.features)??[]).map(item=>`<p><i data-key-hollow="${item.hollow?'true':'false'}" style="display:inline-block;width:12px;height:12px;box-sizing:border-box;`
+        +(item.hollow?`border:3px solid ${item.color};border-radius:50%;background:transparent`:`background:${item.color}`)+`"></i> ${esc(item.label)}</p>`).join('');
       L.DomEvent.disableClickPropagation(box);
       return box;
     };

@@ -107,3 +107,30 @@ test('cleared material keeps the shape its readers expect',()=>{
   assert.equal(made.nodes[0].params.maxNodes,9000);
   assert.equal(made.nodes[1].params.geometry,null);
 });
+
+// A RASTER'S KEPT WINDOW GOES WHOLE (2026-11-19). The practitioner, making a template of the population example's Botswana
+// workflow to try it on DR Congo: "could not be made: Invalid retained raster asset or metadata". Emptying the window's one
+// list, its position, kept a raster with no place on the ground. Every workflow of every example checked out beside this
+// repository that holds a raster is made into a template here, and the template must be one the application opens.
+test('a template of every example workflow holding a raster can be made and opened, with no raster in it',async()=>{
+  const {existsSync,readFileSync,readdirSync}=await import('node:fs');
+  const {gunzipSync}=await import('node:zlib');
+  const {validateWorkflow}=await import('../build/core.js');
+  const root=new URL('../../',import.meta.url);
+  const bundles=readdirSync(root).filter(d=>d.startsWith('example-')).map(d=>new URL(`${d}/fieldwork-project.json.gz`,root)).filter(existsSync);
+  let checked=0;
+  for(const bundle of bundles){
+    const {workflows}=JSON.parse(gunzipSync(readFileSync(bundle)).toString('utf8'));
+    for(const entry of workflows){
+      const source=entry.document??entry;
+      if(!source.nodes?.some(n=>n.params?.asset))continue;
+      const {workflow:made,cleared}=templateFrom(validateWorkflow(structuredClone(source)),{name:`${source.name} · template`,workflowKey:'p/template'});
+      const opened=validateWorkflow(structuredClone(made));
+      assert.ok(opened.nodes.every(n=>!n.params.asset),`${source.name}: no raster travels`);
+      assert.ok(cleared.some(c=>c.keys.includes('asset')),`${source.name}: the raster is named as cleared`);
+      checked++;
+    }
+  }
+  if(!bundles.length)return;
+  assert.ok(checked>=2,`at least the population example's two workflows, found ${checked}`);
+});

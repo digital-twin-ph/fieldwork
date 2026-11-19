@@ -28,13 +28,24 @@ test('each case the example was made for is said: a fold, a gap, a key twice, a 
   const fuzzy=relateWalkthrough({normalisation:'fuzzy',spelling:false,several:true,decision:'keep',label:'Not known'});
   const text=fuzzy.steps.map(s=>s.text).join('\n');
   assert.match(text,/St\. Ann and St Ann are the same district once punctuation is folded: matched/);
-  assert.match(text,/Delta stays, its supplier written as "Not known", your words/);
+  assert.match(text,/You chose to keep unmatched rows under a name you give; in this example that name is "Not known", so Delta stays/);
+  // THE PERSON'S NAME IS FOR THEIR DATA (2026-11-19): Hagelloch's "no infector recorded" is not written into the made-up suppliers,
+  // and a name that is one of the example's own values does not stop it.
+  for(const label of ['no infector recorded','North Water']){
+    const walk=relateWalkthrough({normalisation:'fuzzy',spelling:false,several:true,decision:'keep',label});
+    assert.ok(!walk.steps.some(s=>s.text.includes(label)&&!s.text.includes('North Water is brought')),label);
+    assert.ok(walk.steps.at(-1).result.some(r=>r[2]==='Not known'),label);
+  }
   assert.match(text,/Epsilon is found 2 times\. You chose one row per match, so it becomes 2 rows/);
   assert.match(text,/Zeta is in Water supply by district only\. Nothing in the first table asks for it/);
   assert.equal(fuzzy.steps.at(-1).result.length,5);
   const exact=relateWalkthrough({normalisation:'exact',spelling:false,several:false,decision:'drop',label:''});
   assert.match(exact.steps.map(s=>s.text).join('\n'),/Compared exactly, St\. Ann is not St Ann\. You chose to drop unmatched rows/);
-  assert.match(exact.steps.at(-1).text,/^With these choices the step stops: The second table gives "Epsilon" more than one "supplier"/);
+  // A STOP ENDS IT, with nothing passed on (2026-11-19: "Did not record Epsilon in the result").
+  const last=exact.steps.at(-1);
+  assert.match(last.text,/^Epsilon is found 2 times, and you chose to stop and say which key: the step stops here, naming Epsilon, and passes nothing on, not even the rows above\. Had you chosen Keep one row per match, Epsilon would become 2 rows/);
+  assert.ok(last.stopped&&last.final&&!last.result);
+  assert.doesNotMatch(exact.steps.map(s=>s.text).join('\n'),/Zeta/,'nothing after the stop');
 });
 
 test('every step is headed as made up, says where it is, and marks its rows in words and a shape',()=>{
@@ -45,6 +56,8 @@ test('every step is headed as made up, says where it is, and marks its rows in w
     assert.match(html,new RegExp(`Step ${at+1} of ${walk.steps.length}\\.`));
     assert.match(html,/aria-live="polite"/);
   });
-  const html=walkthroughMarkup(walk,4,esc);
+  const html=walkthroughMarkup(walk,walk.steps.length-1,esc);
   assert.match(html,/<tr class="walk-stopped" data-walk-state="stopped">[\s\S]*?<td class="walk-word"><span aria-hidden="true">■<\/span> stops here<\/td>/);
+  assert.match(html,/No table: the step stops here, so nothing is passed on to the next step\./);
+  assert.doesNotMatch(html.slice(html.indexOf('walk-result')),/<td>Alpha<\/td>/,'the rows before the stop are not shown as a result');
 });

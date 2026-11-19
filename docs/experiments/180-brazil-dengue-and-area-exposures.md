@@ -425,6 +425,21 @@ Not changed; a retry and a named file are a proposal.
 
 **The figure for these ratios** is [181](181-lag-response-figure.md): a lag–response plot, built in 0.39.0.
 
+## The published example held a test's made-up satellite files, found 2026-11-19
+
+The practitioner, running the published example: *"Error on sampling raster for Brazil dengue example"*, with the run
+stopped on `MOD11A2.p644.fixture … answered 404`. From example commit 1d1b1dc (2026-11-07) to 886af0d, the example's
+project carried the satellite search its from-scratch test makes up when Planetary Computer is stubbed: 23,184
+mentions of `fixture`. Every export since was saved from a stubbed run (`BRAZIL_EXPORT` without
+`BRAZIL_SATELLITE_LIVE`), so the Search step opened as done, and Sample a raster asked for files that never existed.
+Every gate passed for those twelve days, because the gate's own run reads the stub. It is a result about the method,
+not only the data: a test that stubs a service cannot also be the source of what is published.
+
+**Done (0.151.1):** the project re-exported from a live run; an export without the live flag stops the test before it
+starts, in the Brazil, NYC and Nigeria from-scratch tests; and `tests/examples-carry-no-test-fixtures.test.mjs` fails
+on any example checked out beside Fieldwork that holds a stub's address or name. The gate's account is in the
+[gating audit](../audits/gating-audit.md).
+
 ## What this does not establish
 
 Any design. Whether InfoDengue's data may be redistributed; how the Zenodo file's exposures were computed, or

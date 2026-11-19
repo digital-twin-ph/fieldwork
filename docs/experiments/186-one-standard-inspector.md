@@ -103,7 +103,8 @@ appear in them.
 | relate_table | 5 | standard | **yes** |
 | rate | 4 | standard | **yes**, 0.4.0 (2026-11-09) |
 | regression | 4 | standard | **yes**, 0.6.0 (2026-11-12) |
-| derive_value, find_satellite_products, search_satellite_catalog, sample_satellite_files_at_points | 4 each | standard | no |
+| derive_value, find_satellite_products, sample_satellite_files_at_points | 4 each | standard | no |
+| search_satellite_catalog | 4 | standard | **yes**, 0.5.0 (2026-11-19), its Inspector in its own module, out of app.ts |
 | stack_polygons, map_image_input, append_rows | 2 each | standard | no |
 | case_series | 1 | standard | **yes**, 0.3.0 (2026-11-12) |
 | apply_ruleset | 1 | standard | **yes**, 0.8.0 (2026-11-08) |

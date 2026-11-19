@@ -107,6 +107,8 @@ const joinAndMap=async(page,from,area,title)=>{
 };
 
 test('five questions about 774 LGAs, each its own short workflow',async({page})=>{test.skip(!!skip,skip);
+  // AN EXPORT IS ONLY EVER OF A LIVE RUN (2026-11-19): the Brazil example was published holding a test's made-up files.
+  if(process.env.NIGERIA_EXPORT&&!process.env.NIGERIA_REAL_TILES)throw new Error('NIGERIA_EXPORT saves the project for the example repository, so set NIGERIA_REAL_TILES too: an export of a stubbed run publishes the stub.');
   test.setTimeout(process.env.NIGERIA_REAL_TILES?1_200_000:480_000);
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');

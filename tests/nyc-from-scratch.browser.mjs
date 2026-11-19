@@ -22,6 +22,9 @@ const skip=!existsSync(MANUAL)?'example-2025-nyc-ozone is not checked out beside
   :process.env.NYC_REAL||(local&&existsSync(local))?false:'Set NYC_PKG to a local copy of the Zenodo package, or NYC_REAL=1.';
 
 test('two questions about child asthma visits in New York City, built by following the manual',async({page})=>{test.skip(!!skip,skip);
+  // AN EXPORT IS ONLY EVER OF A LIVE RUN (2026-11-19). The Brazil example was published for twelve days holding this test's
+  // made-up satellite files, because an export was saved from a run whose services were stubbed.
+  if(process.env.NYC_EXPORT&&!process.env.SATELLITE_LIVE)throw new Error('NYC_EXPORT saves the project for the example repository, so set SATELLITE_LIVE too: an export of a stubbed run publishes the stub.');
   // LIVE, the satellite workflow reads fourteen real files, about 170 MB; from the machine this was built on, a browser
   // read that storage at 35-55 s per MB (experiment 179). Hours, not minutes.
   const live=!!process.env.SATELLITE_LIVE;
@@ -57,7 +60,8 @@ test('two questions about child asthma visits in New York City, built by followi
   for(const workflow of manual.workflows){
     // Only the satellite workflow gets hours: given to every step, a stalled boundary download in the fifth waited for
     // hours instead of failing (found 2026-11-05).
-    const reads=live&&workflow.steps.some(s=>s.add==='sample_satellite_files_at_points');
+    // Sample a raster reads the files since 0.94.0 (found 2026-11-19 on Brazil's first live export since).
+    const reads=live&&workflow.steps.some(s=>['sample_satellite_files_at_points','sample_raster'].includes(s.add));
     await performManual(page,workflow,{repo:REPO,...reads?{runTimeout:5*3600_000}:{}});
     await page.screenshot({path:`test-results/nyc-${manual.workflows.indexOf(workflow)+1}.png`});
     await page.locator('[data-view="workflow"]').click();await page.locator('#tidy-button').click();

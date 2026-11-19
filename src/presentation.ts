@@ -536,3 +536,18 @@ export function polygonShading(features:readonly {id?:string;value?:number|null;
  *  of the sheet map", then "Ok then red and blue rings"): a one-place cluster's outline, red for the most likely and blue
  *  for the rest, both standing out on a black-and-white sheet. */
 export const RING_RED='#d7191c',RING_BLUE='#2166ac';
+/** THE KEY OF A LAYER SHADED BY CLASS, one entry per mark drawn: a class drawn only as rings keyed as a ring, a ring
+ *  among filled ones keyed beside them, and no class named last (2026-11-15). The figure's key and the interactive map's
+ *  both read it (2026-11-19: the interactive map keyed Hagelloch's clusters as two filled squares over a red ring, blue
+ *  rings and orange discs). Null where the layer is not shaded by class. */
+export function groupedKey(features:readonly {category?:string;value?:number;frames?:Record<string,number|null>;ring?:boolean|'secondary'}[]):
+  {label:string;color:string;hollow?:boolean}[]|null{
+  const {grouped}=polygonShading(features as Parameters<typeof polygonShading>[0]);
+  if(!grouped)return null;
+  const of=(label:string)=>features.filter(f=>f.category?.trim()===label);
+  return [...grouped.labels.map((label,i)=>{const these=of(label);
+      return these.length&&these.every(f=>f.ring)?{label,color:these.every(f=>f.ring==='secondary')?RING_BLUE:RING_RED,hollow:true}:{label,color:grouped.colours[i]!};}),
+    ...grouped.labels.filter(label=>{const these=of(label);return these.some(f=>f.ring==='secondary')&&!these.every(f=>f.ring);})
+      .map(label=>({label:`${label} at one place, a blue ring`,color:RING_BLUE,hollow:true})),
+    ...(features.some(f=>!f.category?.trim())?[{label:'No class',color:FIGURE_ROLE.unknown}]:[])];
+}

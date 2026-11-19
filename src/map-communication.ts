@@ -6,7 +6,7 @@ import type {WorkflowNode,Workflow} from './types.js';
 import {basemapAvailable,basemapOf,keyedProvider} from './basemaps.js';
 import {attributionsFor,provenanceOf} from './input-provenance.js';
 import type {LayerShape} from './presentation.js';
-import {RING_RED,RING_BLUE,polygonShading,shadedValues,classRanges,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
+import {groupedKey,RING_RED,RING_BLUE,polygonShading,shadedValues,classRanges,markPath,resolveLayerSymbol,SPATIAL_RELATION_FILL,FIGURE_PALETTE_NAME,FIGURE_PALETTE_AUTHORITY,MARK_VOCABULARY,FIGURE_ROLE,FIGURE_TYPE,FIGURE_PALETTE,scaleBarSvg,northArrowSvg,metresPerPixel,classifyValues,categoricalSteps} from './presentation.js';
 import {applyDesignRules,figureDesign,designRuleFacts,designRuleDeclarations,designChoiceFacts} from './map-conformance.js';
 
 export interface MapPresentation {title:string; subtitle:string; sourceNote:string; legend:boolean; items:{label:string;color:string;shape?:LayerShape;hollow?:boolean;line?:boolean}[]; presentation:'plot'|'interactive'; basemap:import('./types.js').BasemapChoice;
@@ -28,14 +28,8 @@ function classedItems(polygons:{valueName?:string;features:{value?:number;catego
   // classified carries both, and until 2026-11-02 this keyed Nigeria's priority map by zero-dose
   // ranges over polygons shaded by rule class.
   const {grouped,classed}=polygonShading(polygons.features);
-  // A CLASS DRAWN ONLY AS RINGS is keyed as a ring (2026-11-15): a filled swatch over outlines would key a mark not drawn.
-  if(grouped)return [...grouped.labels.map((label,i)=>{const of=polygons.features.filter(f=>f.category?.trim()===label);
-      return of.length&&of.every(f=>f.ring)?{label,color:of.every(f=>f.ring==='secondary')?RING_BLUE:RING_RED,hollow:true}:{label,color:grouped.colours[i]!};}),
-    // A RING AMONG FILLED ONES, keyed as what it is, so a blue outline is not left unexplained.
-    ...grouped.labels.filter(label=>{const of=polygons.features.filter(f=>f.category?.trim()===label);
-        return of.some(f=>f.ring==='secondary')&&!of.every(f=>f.ring);})
-      .map(label=>({label:`${label} at one place, a blue ring`,color:RING_BLUE,hollow:true})),
-    ...(polygons.features.some(f=>!f.category?.trim())?[{label:'No class',color:FIGURE_ROLE.unknown}]:[])];
+  // A CLASS DRAWN ONLY AS RINGS is keyed as a ring, and a ring among filled ones beside them: the rule both maps share.
+  if(grouped)return groupedKey(polygons.features);
   if(!classed)return null;
   const ranges=classRanges(shadedValues(polygons.features),classed.breaks);
   // WHAT THE NUMBERS ARE, on the first class, where the layer says (2026-11-13: Botswana's districts read "31005 to 61001").

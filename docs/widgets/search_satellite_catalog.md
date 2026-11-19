@@ -72,3 +72,16 @@ Browser](https://github.com/jltobias/JupyterLite-STAC-Browser) (MIT, commit `945
 ## Where it is used
 
 The NYC example, *Did the satellite see the city's NO₂?* (1 to 14 June 2023).
+
+## History
+
+### 2026-11-19 · A month at a time, and the standard Inspector (0.5.0)
+
+Planetary Computer answered the first page of a year of MODIS over Rio de Janeiro state in a second, and the second page
+with a timeout after 15 seconds and no cross-origin header, so a browser could say only that it could not reach the
+catalog. A search longer than a month is now made a month at a time, each month fitting one page: the year's 180 items
+in 12 requests and about five seconds. An item spanning two months is kept once. A request that fails is tried twice
+more, after a pause; one the catalog refuses is not.
+
+Moved to the standard Inspector (experiment 186): Name, Inputs, one sentence and Configure…, which opens the search, and
+what was found. Its code moved out of `app.ts` into its own module, as every touched widget's now does.

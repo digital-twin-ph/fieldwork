@@ -556,6 +556,10 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    5.94:1 light, 4.77:1 dark. WCAG 1.4.3 exempts disabled controls from the text threshold --
    exempt from the requirement is not an argument for unreadable. */
 .button.primary:disabled{opacity:1;background:var(--button-disabled);color:var(--button-disabled-ink);border-color:var(--button-disabled);box-shadow:none}
+/* A PRIMARY BUTTON CHANGES STATE AT ONCE (2026-11-19). Its text turned white the moment it was enabled while its background
+   faded up from the disabled grey-green over 0.15 s: for that moment white sat on #dde5e1, contrast 1.28. CI's accessibility
+   scan on WebKit caught the Run button there twice (0.149.0, 0.151.0). Only the shadow animates now. */
+.button.primary{transition:box-shadow .15s}
 /* The unit a numeric field is measured in, beside the box its value is typed into. A bare
    literal takes the field's unit and nothing can check it, so showing it is the only defence
    there is. 2026-10-15. */
@@ -1435,8 +1439,11 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 #table-walkthrough th,#table-walkthrough td{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
 #table-walkthrough tr{transition:background-color .3s ease,outline-color .3s ease}
 #table-walkthrough tr[data-walk-state]{outline:3px solid var(--accent,#176b59);outline-offset:-3px}
-#table-walkthrough tr.walk-matched,#table-walkthrough tr.walk-kept,#table-walkthrough tr.walk-several{background:var(--success-1,rgba(23,107,89,.12))}
-#table-walkthrough tr.walk-unmatched,#table-walkthrough tr.walk-stopped{background:var(--danger-1,rgba(180,40,40,.12));outline-style:dashed}
+/* LIGHT TINTS, THE TEXT KEEPS ITS INK (2026-11-19: a stopped row read dark on a strong orange, where a theme's tint was solid). */
+#table-walkthrough tr.walk-matched,#table-walkthrough tr.walk-kept,#table-walkthrough tr.walk-several{background:rgba(23,107,89,.12);color:inherit}
+#table-walkthrough tr.walk-unmatched,#table-walkthrough tr.walk-stopped{background:rgba(180,40,40,.10);color:inherit;outline-style:dashed}
+#table-walkthrough tr[data-walk-state] td{color:inherit;opacity:1}
+#table-walkthrough .walk-none{font-weight:700;border:2px dashed currentColor;padding:8px 10px;margin:0}
 #table-walkthrough tr.walk-unused{opacity:.75;outline-style:dotted}
 #table-walkthrough .walk-word{font-weight:700;white-space:nowrap}
 #table-walkthrough .walk-result{border-left:3px solid var(--line);padding-left:12px}

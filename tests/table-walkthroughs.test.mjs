@@ -24,6 +24,10 @@ test('Append rows: the stacked rows are the ones the steps added, with or withou
   assert.deepEqual(named.resultColumns,['district','sex','week','cases']);
   assert.match(named.steps[1].text,/their sex is left empty: not asked, which is not the same as none/);
   assert.deepEqual(named.steps.at(-1).result[0],['Alpha','','Week 1','4']);
+  // The person's own column name and labels are about their tables, not these (2026-11-19).
+  const theirs=W.appendWalkthrough({nameSource:true,sourceColumn:'year',labels:['2023','2024']});
+  assert.deepEqual(theirs.resultColumns,['district','sex','week','cases']);
+  assert.ok(!theirs.steps.some(s=>/2023|2024|year/.test(s.text)));
 });
 
 test('Select rows: each way of choosing keeps the rows the steps said, an empty cell included or not as the step does',()=>{

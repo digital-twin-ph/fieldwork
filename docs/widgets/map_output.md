@@ -666,3 +666,9 @@ A map's default source line ended "See N3 & evidence for method." where the step
 pointer, an instruction for someone in the application, was printed in every figure and draft. It now names the inputs
 and the CRS and stops; a method the step states is still printed. Found by the target outputs audit
 ([audit](../audits/target-outputs-audit.md)).
+
+### 2026-11-19 · The interactive map's key is the figure's (0.36.2)
+
+On the interactive map, Hagelloch's clusters were keyed as a solid blue square and an orange one, over a red ring, blue
+rings and orange discs: the static figure's key had learnt rings on 2026-11-15 and the interactive map's had not. Both
+now read one rule. Its move out of `app.ts` follows in its own release.

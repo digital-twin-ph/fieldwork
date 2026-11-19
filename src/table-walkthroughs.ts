@@ -26,8 +26,11 @@ const finalStep=(outcome:{rows:string[][]}|{refusal:string},what:string):WalkSte
 export const APPEND_FIRST=made(['district'],'cases',[[{district:'Alpha'},4],[{district:'Beta'},2]]);
 export const APPEND_SECOND=made(['district','sex'],'cases',[[{district:'Alpha',sex:'F'},1],[{district:'Gamma',sex:'M'},3]]);
 export interface AppendWalkSettings {nameSource:boolean; sourceColumn:string; labels:string[]}
+/** THE EXAMPLE'S OWN NAMES for the column saying where each row came from, and its labels (2026-11-19): the person's are
+ *  about their own tables, and on these made-up ones they would mean nothing. The choice to name the source is followed. */
+export const EXAMPLE_SOURCE={column:'week',labels:['Week 1','Week 2']} as const;
 export function appendOutcome(s:AppendWalkSettings){
-  const params=s.nameSource?{nameSource:true,...(s.sourceColumn.trim()?{sourceColumn:s.sourceColumn.trim()}:{}),labels:s.labels}:{};
+  const params=s.nameSource?{nameSource:true,sourceColumn:EXAMPLE_SOURCE.column,labels:[...EXAMPLE_SOURCE.labels]}:{};
   let columns=['district','sex','cases'];
   try{const {table}=appendTables([APPEND_FIRST,APPEND_SECOND],params);columns=[...table.keys,table.valueField];
     return {columns,outcome:outcomeOf(()=>table,columns)};}
@@ -36,12 +39,12 @@ export function appendOutcome(s:AppendWalkSettings){
 export function appendWalkthrough(s:AppendWalkSettings):Walk{
   const {columns,outcome}=appendOutcome(s);
   const source=columns.find(c=>!['district','sex','cases'].includes(c));
-  const label=(i:number)=>s.labels[i]?.trim()||(i===0?'first':'second');
+  const label=(i:number)=>EXAMPLE_SOURCE.labels[i]!;
   const row=(district:string,sex:string,cases:number|null,i:number)=>columns.map(c=>c==='district'?district:c==='sex'?sex:c==='cases'?cell(cases):label(i));
   const first=APPEND_FIRST.rows.map(r=>row(r.key.district!,'',r.value,0)),second=APPEND_SECOND.rows.map(r=>row(r.key.district!,r.key.sex!,r.value,1));
   const steps:WalkStep[]=[
     {text:'A made-up example. The rows of Cases, week 1 are put first and the rows of Cases, week 2 under them; columns are '
-      +'lined up by their names.'+(source?` You chose to say where each row came from, in a column named ${source}.`:''),marks:[]},
+      +'lined up by their names.'+(source?` You chose to say where each row came from; in this example the column is named ${source}.`:''),marks:[]},
     {text:'Week 1’s two rows go first. Week 1 has no sex column, so their sex is left empty: not asked, which is not the same as none.'
       +(source?` Each is labelled "${label(0)}".`:''),
       marks:APPEND_FIRST.rows.map((_,row)=>({table:0,row,state:'kept' as const,word:'added, sex empty'})),result:first},

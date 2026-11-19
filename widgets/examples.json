@@ -396,7 +396,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "b6e87d063361a509183d0e59783e38c8122a17a0",
+      "commit": "7625f3bd5d3e0631f803918fa89e77ab1544ceb2",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -447,8 +447,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "4c13437213059baa26bbb45bd9adb49125a9505a1c44e2bcf43dcf403cae8f77",
-          "bytes": 46688
+          "sha256": "8cb33a5c577c8a1afc240b2689011fd8427dd95f96cdd8906e9921110ec6a632",
+          "bytes": 46924
         }
       ],
       "workflowCount": 6
@@ -457,7 +457,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "85e866003f7ab1aef7f67136820938f932b88be3",
+      "commit": "d282b9b2e0f01b77a8b957bd8bdac84896d61e91",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -492,8 +492,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "b4972b070a63492266483d9651a02b2b8943afc88c098ca2c48dad3061ed36b0",
-          "bytes": 1698674
+          "sha256": "c9334ac0ff10a6392ea84170316c25a8e473b4ba089020398b604dbcde6f9fd8",
+          "bytes": 1793745
         },
         {
           "path": "data/dengue-rj-2010-2025.csv",
@@ -532,8 +532,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "b1865ceb36eadc862235bda757e39b391f6cdd17c236581980dd5c45e3034161",
-          "bytes": 87214
+          "sha256": "ab1240541bfe95dafff761a5c0aa0d2224a91accca5c02713e8454a1f4250948",
+          "bytes": 87922
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",

@@ -252,3 +252,7 @@ dialog and not yet applied: a plain match, a name with a full stop in one table 
 table does not have, a name it has twice, and a name only the second table has. Back, Step and Play; nothing moves
 where reduced motion is asked for. Its last step is the table this step makes from the same rows, or the words it
 stops with. Experiment [223](../experiments/223-a-table-step-shown-on-a-small-example.md).
+
+### 2026-11-19 · The example's own names (0.13.1)
+
+Show me how it works follows the choice to keep unmatched rows and writes the example's own name, "Not known", not the person's, which is about their data. Found in use on Hagelloch's *Each case's infector* step.

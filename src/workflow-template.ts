@@ -76,6 +76,10 @@ export interface TemplateReport {
  *  record wants. */
 function emptyOfSameShape(key:string,held:unknown):{known:true;value:unknown}|{known:false}{
   if(key==='geometry')return {known:true,value:null};
+  // A RASTER'S KEPT WINDOW GOES WHOLE (2026-11-19). It is a record with one list in it, the window's position, and emptying
+  // that list kept a raster with no place on the ground, which the template's own check refused: a template of any
+  // workflow holding a raster, the population example's among them, could not be made. A new Raster input has no asset.
+  if(key==='asset')return {known:false};
   if(Array.isArray(held))return {known:true,value:[]};
   if(held&&typeof held==='object'){
     const record=held as Record<string,unknown>;

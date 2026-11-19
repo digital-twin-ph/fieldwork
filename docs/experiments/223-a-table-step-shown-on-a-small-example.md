@@ -120,3 +120,30 @@ me how it works**; the first setting is still where focus starts, and the button
 ways, Total within groups under all six summaries with and without empty cells left out, each against the step's own
 function) and `tests/table-walkthroughs.browser.mjs` (3), with the existing Relate, Select and grouping dialog tests:
 26 passed on Chromium and WebKit.
+
+## Found in use: the person's own name in a made-up table, 2026-11-19
+
+The practitioner, opening Relate's walkthrough from Hagelloch's *Each case's infector* step: *"This one seems to be
+wrong."* The step keeps unmatched rows under the name "no infector recorded", and the walkthrough, following the dialog,
+wrote that name into the made-up example's **supplier** column. The design said the walkthrough follows the dialog's
+choices; a name is not a choice of method but words about the person's own data, and in another table they mean
+nothing. A name equal to one of the example's own values ("North Water") would have stopped it outright.
+
+**Changed:** the choice to keep unmatched rows is followed, and the example writes its own name, "Not known", saying
+so. The distinction the design missed: **a choice of method follows the dialog; words about the person's data stay
+with their data.** Append rows had the same fault, writing the person's source-column name and labels onto the made-up
+weeks; it now follows the choice to name the source and uses its own, *week*, *Week 1* and *Week 2*. Select rows and
+Total within groups follow only choices of method. Checked in `tests/relate-walkthrough.test.mjs` with "no infector
+recorded" and "North Water", and in `tests/table-walkthroughs.test.mjs` with a column *year* labelled 2023 and 2024.
+
+## Found in use: a stop that went on, 2026-11-19
+
+The practitioner, at Epsilon with *Stop, and say which key*: *"This step seems to be wrong. Did not record Epsilon in
+the result."* The walkthrough said the step stops, and then went on: "The result so far" kept three rows, and Zeta came
+after. The step itself makes no table when it stops, so the example told a reader that a partial table comes out. The
+stopped row was also dark text on a strong orange, where the theme's tint was solid.
+
+**Changed:** a stop ends the walkthrough. Its last step says what the other choice would have done, and the result
+says *No table: the step stops here, so nothing is passed on to the next step.* Row tints are fixed and light, and the
+text keeps its ink. With the dialog as it opens, nothing decided about unmatched rows, Relate's example now ends at
+Delta in four steps. Checked in `tests/relate-walkthrough.test.mjs` and `tests/relate-walkthrough.browser.mjs`.

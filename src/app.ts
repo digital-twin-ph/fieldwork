@@ -65,7 +65,7 @@ const FACILITY_REGISTERS=facilityRegistersJson.registers as RegisterEntry[];
 import {relateShape,decisionMatches,relateAtShifts,shiftColumnName} from './relate-table.js';
 import {findingsSummary,wideDataTable,declaredWide} from './data-table.js';
 import {authoredSubjects} from './authored-application.js';
-import {openSatelliteCatalogDialog} from './satellite-catalog-ui.js';
+import {searchCatalogInspector} from './satellite-catalog-ui.js';
 import {bboxOf,defaultKept} from './satellite-catalog.js';
 import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
 import {productFor} from './satellite-products.js';
@@ -129,6 +129,7 @@ import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
 import {figureFor,describedNode,tableCsv,tableRowCount} from './write-up-figures.js';
+import type {InspectorKit} from './inspector-kit.js';
 import {zipSync,strToU8} from 'fflate';
 import {referenceList} from './references.js';
 import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNote,
@@ -1177,7 +1178,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -4898,17 +4899,8 @@ function renderInspector(){
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
       :said??'Run the workflow to read the files. A file read before on this device, the same way at the same places, is not read again.')}</p>`);
   }else if(n.type==='search_satellite_catalog'){
-    // WHERE THE FILES ARE: searched in a dialog adapted from JLT's STAC Browser. Experiment 179.
-    const p=n.params,search=p.search,kept=p.kept??(search?defaultKept(search.items):[]);
-    content+=labelForm('catalog-label','Node label',p.label||'Search a satellite catalog')
-      +'<p class="description">Finds the files of the chosen product over an area and dates. Connect a Study area, or type the area\'s edges in the dialog. Reads catalog records only: no file is downloaded.</p>'
-      +`<button class="button primary" id="catalog-search-open">${search?'Search again…':'Search the catalog…'}</button>`
-      +(search?`<div class="detail-row"><span>Area</span><strong>${esc(search.areaFrom??'study area')}: W ${search.bbox[0]}, S ${search.bbox[1]}, E ${search.bbox[2]}, N ${search.bbox[3]}</strong></div>`
-        +`<div class="detail-row"><span>Dates</span><strong>${esc(search.from)} to ${esc(search.until)}</strong></div>`
-        +`<div class="detail-row"><span>Items</span><strong>${search.items.length} found, ${kept.length} kept</strong></div>`
-        +(search.truncated?'<p class="notice notice-warning">The search stopped at its limit; narrow the dates for the rest.</p>':'')
-        :'<p class="notice">Not searched yet.</p>')
-      +'';
+    // ITS OWN MODULE'S INSPECTOR (2026-11-19): the first widget moved out of app.ts when touched.
+    content+=searchCatalogInspector.markup(n,inspectorKit());
   }else if(n.type==='find_satellite_products'){
     // WHICH SATELLITES MEASURE A VARIABLE: the choice is made in a dialog adapted from JLT's EO Satellite Guide, and
     // summarised here with what Fieldwork has read about it. Experiment 179.
@@ -5147,17 +5139,7 @@ function renderInspector(){
       change(w=>{getNode(w,n.id,'study_design').params=next;});
     },()=>designChecklist(workflow,n.id));
   });
-  optionalElement('#catalog-search-open')?.addEventListener('click',()=>{
-    const node=getNode(workflow,n.id,'search_satellite_catalog');
-    const upstream=(port:string)=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
-    const finder=upstream('product'),area=upstream('area');
-    const product=finder?.type==='find_satellite_products'&&finder.params.topic&&finder.params.route
-      ?productFor(finder.params.topic,finder.params.route):null;
-    const geometry=area?.type==='study_area'?(area.params as {geometry?:{type:string;coordinates:unknown}}).geometry:undefined;
-    openSatelliteCatalogDialog(product,bboxOf(geometry),{from:node.params.from,until:node.params.until,box:node.params.box,search:node.params.search,kept:node.params.kept},esc,next=>{
-      change(w=>{Object.assign(getNode(w,n.id,'search_satellite_catalog').params,next);});
-    });
-  });
+  if(n.type==='search_satellite_catalog')searchCatalogInspector.wire(n,inspectorKit(),document);
   optionalElement('#satellite-find')?.addEventListener('click',()=>{
     const node=getNode(workflow,n.id,'find_satellite_products');
     openProductsDialog({question:node.params.question??node.params.topic,route:node.params.route},esc,choice=>{
@@ -7496,6 +7478,12 @@ const PORT_LABELS:Record<string,string>={area:'Study area',points:'Points',polyg
   movedCenter:'Moved mean center',comparison:'Comparison',ground:'Ground',context:'Context points',centers:'Centers',
   catalog:'Catalog search',product:'Satellite product',files:'Satellite files'};
 /** ONE SECTION OF A STANDARD INSPECTOR, headed the same way in every widget (experiment 186). */
+/** WHAT A WIDGET'S OWN INSPECTOR IS GIVEN (inspector-kit.ts): the standard sections, read access to the workflow, and
+ *  `change`, the one way to edit it. */
+function inspectorKit():InspectorKit{
+  return {esc,section:standardSection,name:(id,value)=>labelForm(id,'Name',value),inputs:standardInputs,
+    workflow:()=>workflow,change:edit=>change(edit)};
+}
 function standardSection(name:string,body:string):string{
   return `<section class="standard-section" data-standard-section="${esc(name.toLowerCase())}">`
     +`<h3 class="inspector-section">${esc(name)}</h3>${body}</section>`;

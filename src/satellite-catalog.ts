@@ -130,21 +130,54 @@ const toItem=(raw:Record<string,unknown>,keep?:(key:string,file:{href:string;typ
 
 /** One search: the product's collection, over the box and dates, paging to the end. `keep` names the files a reader
  *  reads; the others are not stored, and the search says how many each item offered. */
+/** A SEARCH LONGER THAN A MONTH, A MONTH AT A TIME (2026-11-19). Planetary Computer answered the first page of a year of
+ *  MODIS over Rio de Janeiro state in a second and the second page with a 504 after 15 s, with no cross-origin header, so
+ *  the browser said only that it could not reach the catalog; a month at a time fits one page and each answered in under
+ *  one second. An item spanning two months is found in both and kept once. */
+export function searchWindows(from:string,until:string):[string,string][]{
+  if(!from||!until||Date.parse(until)-Date.parse(from)<=31*86_400_000)return [[from,until]];
+  const windows:[string,string][]=[];
+  let start=from;
+  while(start<=until){
+    const [y,m]=start.split('-').map(Number) as [number,number];
+    const monthEnd=new Date(Date.UTC(y,m,0)).toISOString().slice(0,10);
+    const end=monthEnd<until?monthEnd:until;
+    windows.push([start,end]);
+    start=new Date(Date.UTC(y,m,1)).toISOString().slice(0,10);
+  }
+  return windows;
+}
+/** A REQUEST TRIED AGAIN, twice, after a pause, where the catalog failed rather than refused: a timeout, a dropped
+ *  connection or a 5xx. A 4xx is the request's fault and is not retried. */
+export const RETRY_PAUSES_MS=[1500,4000];
+async function fetchJSONRetrying(url:string,fetcher:typeof fetch,pauses:readonly number[]=RETRY_PAUSES_MS):Promise<unknown>{
+  for(let attempt=0;;attempt++){
+    try{return await fetchJSON(url,fetcher);}
+    catch(error){
+      const said=error instanceof Error?error.message:String(error);
+      if(attempt>=pauses.length||/HTTP 4\d\d/.test(said))throw error;
+      await new Promise(resolve=>setTimeout(resolve,pauses[attempt]));
+    }
+  }
+}
 export async function searchCatalog(product:SatelliteProduct,bbox:BBox,from:string,until:string,
-  fetcher:typeof fetch=fetch,keep?:(key:string,file:{href:string;type:string|null})=>boolean):Promise<CatalogSearch>{
-  const datetime=dateRange(from,until);
-  if(!datetime)throw new Error('Choose the dates to search: a catalog search over all time is too large to read.');
+  fetcher:typeof fetch=fetch,keep?:(key:string,file:{href:string;type:string|null})=>boolean,
+  pauses:readonly number[]=RETRY_PAUSES_MS):Promise<CatalogSearch>{
+  if(!dateRange(from,until))throw new Error('Choose the dates to search: a catalog search over all time is too large to read.');
+  let returned=0,requests=0,offered=0;const items:CatalogItem[]=[];const keptKeys=new Set<string>();const seen=new Set<string>();
+  for(const [start,end] of searchWindows(from,until)){
   const url=new URL(`${product.route.endpoint.replace(/\/$/,'')}/collections/${encodeURIComponent(product.route.collection)}/items`);
   url.searchParams.set('bbox',bbox.map(v=>+v.toFixed(5)).join(','));
-  url.searchParams.set('datetime',datetime);
+  url.searchParams.set('datetime',dateRange(start,end)!);
   url.searchParams.set('limit','100');
-  let next:string|null=url.href,returned=0,requests=0,offered=0;const items:CatalogItem[]=[];const keptKeys=new Set<string>();
+  let next:string|null=url.href;
   while(next){
-    const page=await fetchJSON(next,fetcher) as {type?:string;features?:Record<string,unknown>[];links?:{rel:string;href:string;method?:string}[]};
+    const page=await fetchJSONRetrying(next,fetcher,pauses) as {type?:string;features?:Record<string,unknown>[];links?:{rel:string;href:string;method?:string}[]};
     requests++;
     if(page?.type!=='FeatureCollection'||!Array.isArray(page.features))
       throw new Error('Search response is not a GeoJSON FeatureCollection.');
     for(const raw of page.features){
+      if(typeof raw.id==='string'){if(seen.has(raw.id))continue;seen.add(raw.id);}
       returned++;
       if(product.route.productType&&productTypeOf(raw)!==product.route.productType)continue;
       if(!items.length)offered=Object.values((raw.assets??{}) as Record<string,{href?:unknown}>).filter(a=>typeof a?.href==='string').length;
@@ -152,6 +185,7 @@ export async function searchCatalog(product:SatelliteProduct,bbox:BBox,from:stri
     }
     const link=page.links?.find(l=>l.rel==='next'&&(l.method??'GET').toUpperCase()==='GET');
     next=link?.href??null;
+  }
   }
   return {catalog:product.route.endpoint,collection:product.route.collection,productType:product.route.productType??null,
     bbox,from,until,returned,items,truncated:false,requests,searchedAt:new Date().toISOString(),

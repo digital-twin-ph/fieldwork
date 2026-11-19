@@ -1,6 +1,6 @@
 # Append rows
 
-_Created 2026-11-03 · Updated 2026-11-14_
+_Created 2026-11-03 · Updated 2026-11-19_
 
 **A summary step.** It stacks the rows of two or more tables, one after another, as pandas `concat` does.
 
@@ -78,3 +78,7 @@ An estimate's interval, declared by Regression, survives the stacking when every
 **Show me how it works**, in Configure…, steps through two made-up tables stacked, one lacking a column the other has, so its rows are empty there, not zero, and a district appearing once from each; with rows naming their table if you have chosen that. Back, Step and Play; nothing moves where reduced motion
 is asked for. Its last step is the table this step makes from the same rows. Experiment
 [223](../experiments/223-a-table-step-shown-on-a-small-example.md).
+
+### 2026-11-19 · The example's own names (0.3.1)
+
+Show me how it works follows the choice to name each row's table and uses the example's own column and labels, not the person's. Found in use on Hagelloch's *Each case's infector* step.

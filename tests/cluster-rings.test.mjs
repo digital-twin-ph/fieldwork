@@ -21,3 +21,16 @@ test('a secondary cluster at one house is a blue ring',()=>{
   const svg=polygonSvg({...layer,features:[{...layer.features[0],id:'cluster-2',category:'Secondary cluster',ring:'secondary'},layer.features[1]]},esc);
   assert.match(svg.match(/<path data-catchment="cluster-2"[^>]*>/)[0],/stroke="#2166ac"/);
 });
+
+// THE INTERACTIVE MAP'S KEY IS THE FIGURE'S (2026-11-19). The practitioner, on Hagelloch's clusters drawn on the interactive
+// map: "I think the legend here is stale". It keyed a solid blue square and an orange one over a red ring, blue rings and
+// orange discs. Both maps now read one rule, `groupedKey`, and this is the mix that map held.
+test('the key names each mark as drawn: the most likely cluster a red ring, secondary ones both discs and blue rings',async()=>{
+  const {groupedKey,RING_RED,RING_BLUE}=await import('../build/presentation.js');
+  const key=groupedKey([{category:'Most likely cluster',ring:true},{category:'Secondary cluster'},{category:'Secondary cluster'},
+    {category:'Secondary cluster',ring:'secondary'},{category:'Secondary cluster',ring:'secondary'}]);
+  assert.deepEqual(key.map(k=>[k.label,!!k.hollow]),[['Most likely cluster',true],['Secondary cluster',false],
+    ['Secondary cluster at one place, a blue ring',true]]);
+  assert.equal(key[0].color,RING_RED);assert.equal(key[2].color,RING_BLUE);
+  assert.notEqual(key[1].color,RING_BLUE,'the discs keep their own hue');
+});

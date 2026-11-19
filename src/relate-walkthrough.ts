@@ -21,6 +21,10 @@ export const RELATE_RIGHT=table(['district','supplier'],'houses',[
   [{district:'Epsilon',supplier:'North Water'},60],[{district:'Epsilon',supplier:'South Water'},75],
   [{district:'Zeta',supplier:'South Water'},80]]);
 const LEFT_LABEL='Cases by district',RIGHT_LABEL='Water supply by district';
+/** THE EXAMPLE'S OWN NAME FOR ROWS KEPT UNMATCHED (2026-11-19). The person's name is for their data: Hagelloch's "no infector
+ *  recorded" written into a made-up supplier column read as nonsense (the practitioner: "This one seems to be wrong"), and a
+ *  name equal to a made-up value would have stopped the example. The choice to keep is followed; the name is the example's. */
+export const EXAMPLE_KEEP_LABEL='Not known';
 
 /** What the dialog has chosen that changes what this example does. */
 export interface RelateWalkSettings {normalisation:'exact'|'fuzzy'; spelling:boolean; several:boolean;
@@ -38,7 +42,9 @@ export function relateWalkthrough(settings:RelateWalkSettings):Walkthrough&{expe
   const steps:WalkStep[]=[{text:`A made-up example. Each row of ${LEFT_LABEL} looks for its district in ${RIGHT_LABEL}, `
     +`compared ${compare}, as you have chosen, and brings its supplier across.`,marks:[]}];
   const expected:ExpectedRow[]=[];let stops=false;
-  RELATE_LEFT.rows.forEach((row,i)=>{
+  // A STOP ENDS IT (2026-11-19). The practitioner, at Epsilon: *"Did not record Epsilon in the result."* The step makes no
+  // table at all when it stops, so the example stops there too, with nothing passed on, and says what the other choice does.
+  for(const [i,row] of RELATE_LEFT.rows.entries()){
     const name=row.key.district!,key=normaliseName(name,fold);
     const found=RELATE_RIGHT.rows.map((r,j)=>({r,j})).filter(({r})=>normaliseName(r.key.district!,fold)===key);
     const lookup={table:0,row:i,state:'looking' as const,word:'looking'};
@@ -60,9 +66,11 @@ export function relateWalkthrough(settings:RelateWalkSettings):Walkthrough&{expe
         for(const {r} of found)expected.push({district:name,supplier:r.key.supplier!});
       }else{
         stops=true;
-        steps.push({text:`${name} is found ${found.length} times, and the step cannot choose between them: it stops and names `
-          +`${name}. To go on, choose Keep one row per match.`,
+        steps.push({text:`${name} is found ${found.length} times, and you chose to stop and say which key: the step stops here, `
+          +`naming ${name}, and passes nothing on, not even the rows above. Had you chosen Keep one row per match, ${name} `
+          +`would become ${found.length} rows, one for each supplier.`,final:true,stopped:true,
           marks:[{...lookup,state:'stopped',word:'stops here'},...found.map(({j})=>({table:1,row:j,state:'several' as const,word:'also matches'}))]});
+        break;
       }
     }else{
       const near=RELATE_RIGHT.rows.findIndex(r=>normaliseName(r.key.district!,'fuzzy')===normaliseName(name,'fuzzy'));
@@ -70,17 +78,22 @@ export function relateWalkthrough(settings:RelateWalkSettings):Walkthrough&{expe
       if(settings.decision==='drop'){
         steps.push({text:`${why}. You chose to drop unmatched rows, so ${name} and its ${row.value} case${row.value===1?'':'s'} leave the result.`,
           marks:[{...lookup,state:'unmatched',word:'dropped'}]});
-      }else if(settings.decision==='keep'&&settings.label.trim()){
-        steps.push({text:`${why}. You chose to keep unmatched rows, so ${name} stays, its supplier written as "${settings.label.trim()}", your words.`,
-          marks:[{...lookup,state:'kept',word:'kept'}],result:[[name,String(row.value),settings.label.trim()]]});
-        expected.push({district:name,supplier:settings.label.trim()});
+      }else if(settings.decision==='keep'){
+        steps.push({text:`${why}. You chose to keep unmatched rows under a name you give; in this example that name is `
+          +`"${EXAMPLE_KEEP_LABEL}", so ${name} stays, its supplier written as "${EXAMPLE_KEEP_LABEL}".`,
+          marks:[{...lookup,state:'kept',word:'kept'}],result:[[name,String(row.value),EXAMPLE_KEEP_LABEL]]});
+        expected.push({district:name,supplier:EXAMPLE_KEEP_LABEL});
       }else{
         stops=true;
-        steps.push({text:`${why}. You have not yet said what happens to unmatched rows, so the step stops and asks, under `
-          +`Decisions: drop them, or keep them under a name you give.`,marks:[{...lookup,state:'stopped',word:'no match'}]});
+        steps.push({text:`${why}. You have not yet said what happens to unmatched rows, so the step stops here and passes `
+          +`nothing on, not even the rows above. Under Decisions, choose to drop them or to keep them under a name you give.`,
+          final:true,stopped:true,marks:[{...lookup,state:'stopped',word:'stops here'}]});
+        break;
       }
     }
-  });
+  }
+  if(stops)return {title:'Relate a column from another table, on a made-up example',tables:[left,right],
+    resultColumns:['district','cases','supplier'],steps,expected:null};
   const unused=RELATE_RIGHT.rows.map((r,j)=>({r,j})).filter(({r})=>!RELATE_LEFT.rows.some(l=>normaliseName(l.key.district!,fold)===normaliseName(r.key.district!,fold)));
   if(unused.length)steps.push({text:`${unused.map(({r})=>r.key.district).join(' and ')} ${unused.length===1?'is':'are'} in ${RIGHT_LABEL} only. `
     +`Nothing in the first table asks for ${unused.length===1?'it, so it brings':'them, so they bring'} nothing and ${unused.length===1?'adds':'add'} no row.`,
@@ -103,7 +116,7 @@ export function walkOutcome(settings:RelateWalkSettings):{rows:{district:string;
     if(settings.decision){
       const shape=relateShape(RELATE_LEFT,RELATE_RIGHT,request);
       request.unmatched={decision:settings.decision,signature:shape.signature,
-        ...(settings.decision==='keep'?{label:settings.label}:{})};
+        ...(settings.decision==='keep'?{label:EXAMPLE_KEEP_LABEL}:{})};
     }
     const {table:out}=relateTable(RELATE_LEFT,RELATE_RIGHT,request);
     return {rows:out.rows.map(r=>({district:r.key.district??'',cases:r.value===null?'':String(r.value),supplier:r.key.supplier??''}))};

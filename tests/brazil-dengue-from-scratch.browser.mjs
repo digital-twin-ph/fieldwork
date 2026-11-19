@@ -17,6 +17,9 @@ const MANUAL=new URL('manual.json',REPO);
 const skip=existsSync(MANUAL)?false:'example-2024-brazil-dengue is not checked out beside this repository.';
 
 test('dengue in Rio de Janeiro state, 2024, built by following the manual',async({page})=>{test.skip(!!skip,skip);
+  // AN EXPORT IS ONLY EVER OF A LIVE RUN (2026-11-19). The Brazil example was published for twelve days holding this test's
+  // made-up satellite files, because an export was saved from a run whose services were stubbed.
+  if(process.env.BRAZIL_EXPORT&&!process.env.BRAZIL_SATELLITE_LIVE)throw new Error('BRAZIL_EXPORT saves the project for the example repository, so set BRAZIL_SATELLITE_LIVE too: an export of a stubbed run publishes the stub.');
   // Sixteen years in the fifth workflow (experiment 182): about 2,900 satellite files and seven models of 77,000 rows.
   test.setTimeout(process.env.BRAZIL_SATELLITE_LIVE?7200_000:1800_000);
   await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/example-2024-brazil-dengue\//,route=>{
@@ -67,7 +70,9 @@ test('dengue in Rio de Janeiro state, 2024, built by following the manual',async
   const built=[];
   for(const [index,workflow] of manual.workflows.entries()){
     // A YEAR OF REAL MODIS FILES takes minutes, not seconds: only that workflow's run gets the long wait, when live.
-    const reads=process.env.BRAZIL_SATELLITE_LIVE&&workflow.steps.some(x=>x.add==='sample_satellite_files_at_points');
+    // Sample a raster since 0.94.0, which reads the files now; the old widget's name alone gave every live read 2 minutes
+    // (found 2026-11-19, the first live export since).
+    const reads=process.env.BRAZIL_SATELLITE_LIVE&&workflow.steps.some(x=>['sample_satellite_files_at_points','sample_raster'].includes(x.add));
     built.push(await performManual(page,workflow,reads?{runTimeout:3000_000}:undefined));
     await page.screenshot({path:`test-results/brazil-${index+1}.png`});
     await page.locator('[data-view="workflow"]').click();await page.locator('#tidy-button').click();

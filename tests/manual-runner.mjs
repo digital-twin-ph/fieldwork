@@ -184,6 +184,9 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
       continue;
     }
     if('see' in step){
+      // WAITING FOR WHAT A SERVICE ANSWERS (2026-11-19): a search of a live catalog takes seconds, and closing its dialog
+      // before the files are listed loses the search. A made-up catalog answered at once, so no manual had to wait.
+      if(step.appears)await expect(page.locator(step.appears).first(),`${where}: ${step.see}`).toBeVisible({timeout:step.timeout??180_000});
       // What a dialog says, such as a refusal, is checked where it is said.
       if(step.check)await expect(page.locator(step.within??'main').first(),where).toContainText(step.check);
       continue;

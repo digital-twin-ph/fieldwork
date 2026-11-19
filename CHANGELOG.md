@@ -3,6 +3,34 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.151.1 — In development
+
+- **A template of a workflow holding a raster can be made again**: making one stopped with "Invalid retained raster
+  asset or metadata", so the population example's workflows could not be taken as templates for another country. A
+  template now leaves the raster out, as a new Raster input starts.
+- **The Brazil example reads real satellite files**: since 2026-11-07 its project carried the made-up satellite search
+  a test uses, so its temperature workflows stopped on a file that does not exist. It is re-exported from a live run.
+  An example can no longer be exported from a stubbed run, and a test fails if any example holds a stub's file.
+- **A satellite search of more than a month no longer fails on the catalog's second page**: Planetary Computer timed
+  out on it, and the search said only that the catalog could not be reached. It now searches a month at a time, keeps
+  each item once and tries a failed request twice more: a year of MODIS over Rio de Janeiro state in 12 requests and
+  five seconds. Search a satellite catalog 0.5.0, on the standard Inspector, its code out of `app.ts`, the first widget
+  moved so.
+- **The interactive map's key names what is drawn**: rings are keyed as rings, as the figure's key already did; it showed
+  filled squares over a red ring, blue rings and orange discs on Hagelloch's clusters. Map 0.36.2.
+- **Show me how it works keeps your words with your data**: Relate's walkthrough wrote the name you give unmatched rows
+  (Hagelloch's "no infector recorded") into its made-up supplier column, and Append rows wrote your source labels onto
+  its made-up weeks. Both follow your choice and use names of their own. Relate 0.13.1, Append rows 0.3.1.
+- **A walkthrough ends where the step stops**: Relate's went on after a stop and kept "the result so far", though the
+  step passes nothing on when it stops. It now ends there, says no table comes out, and says what the other choice would
+  do. A stopped row is readable: a light tint, the text dark.
+- **The Run button is never unreadable**: for a moment after it was enabled, its text turned white before its
+  background had darkened. Primary buttons now change state at once.
+- **The Brazil and NYC examples are pinned to their new commits**: Brazil's project re-exported from a live run (37.7
+  minutes, real MODIS files), and both manuals wait for the satellite search to answer.
+- **The gating audit** (`docs/audits/gating-audit.md`): what the release gate caught over 37 gates, why choosing tests
+  by the files changed would save about 5 minutes in 38, and what would remove most red gates instead.
+
 ## 0.151.0 — 2026-11-19
 
 - **Show me how it works**: Relate, Append rows, Select rows and Total within groups each step through a made-up example

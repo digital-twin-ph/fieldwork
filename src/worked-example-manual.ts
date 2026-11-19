@@ -34,7 +34,7 @@ export type ManualStep=
    *  (a point's id, or `row N`), the column, and the value to type. */
   | {edit:string; record:string; column:string; value:string}
   | {run:true}
-  | {see:string; check?:string}
+  | {see:string; check?:string; appears?:string; timeout?:number}
   | {note:string};
 
 /** The tab a step happens in, when it is not the canvas. Named as the tab reads. */

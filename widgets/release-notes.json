@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.36.1",
+   "version": "0.36.2",
    "released": "2026-11-19",
    "changes": [
     {
      "kind": "patch",
-     "description": "A map's default source line names its inputs and CRS and ends there: \"See N3 & evidence for method.\" was an instruction to the application's reader, printed in every figure and draft (target outputs audit, 2026-11-19). A method the step states is still printed."
+     "description": "The interactive map's key is the figure's: a class drawn only as rings is keyed as a ring, and a ring among filled marks is keyed beside them. It keyed Hagelloch's clusters as two filled squares over a red ring, blue rings and orange discs."
     }
    ],
    "breaking": false,
@@ -712,12 +712,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.13.0",
+   "version": "0.13.1",
    "released": "2026-11-19",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: a join of two made-up tables stepped through with the dialog's choices before they are applied, its last step the table this step makes from the same rows (experiment 223)."
+     "kind": "patch",
+     "description": "Show me how it works follows the choice to keep unmatched rows and writes the example's own name, \"Not known\", not the person's, which is about their data."
     }
    ],
    "breaking": false,
@@ -754,12 +754,12 @@
    "migrationFrom": []
   },
   "append_rows": {
-   "version": "0.3.0",
+   "version": "0.3.1",
    "released": "2026-11-19",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: two made-up tables stacked, one lacking a column the other has, so its rows are empty there, not zero, and a district appearing once from each; with rows naming their table if you have chosen that; its last step the table this step makes from the same rows (experiment 223)."
+     "kind": "patch",
+     "description": "Show me how it works follows the choice to name each row's table and uses the example's own column and labels, not the person's."
     }
    ],
    "breaking": false,
@@ -1047,12 +1047,12 @@
    "migrationFrom": []
   },
   "search_satellite_catalog": {
-   "version": "0.4.0",
-   "released": "2026-11-06",
+   "version": "0.5.0",
+   "released": "2026-11-19",
    "changes": [
     {
      "kind": "minor",
-     "description": "Reads every page of a search, with no 500-item bound, and keeps only the files the product's reader reads, saying how many each item offered."
+     "description": "A search longer than a month is made a month at a time and each item kept once; a failed request is tried twice more. The standard Inspector, held in satellite-catalog-ui.ts, not app.ts."
     }
    ],
    "breaking": false,

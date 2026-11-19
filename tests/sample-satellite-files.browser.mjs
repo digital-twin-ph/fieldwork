@@ -29,7 +29,7 @@ test('the NO2 value at two NYC monitors on 7 June 2023, with its quality and the
   await page.goto('/?example=blank');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="search"]').click();
-  await page.locator('#catalog-search-open').click();
+  await page.locator('#configure-step').click();
   const dialog=page.locator('#satellite-catalog-dialog');
   await dialog.locator('#cat-search').click();
   await expect(dialog.locator('.satellite-items li').first()).toBeVisible({timeout:60000});

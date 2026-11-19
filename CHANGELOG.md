@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.148.0 — In development
+## 0.148.0 — 2026-11-18
 
 - **CARTO and Esri basemaps on your own key** (experiment 222). With a CARTO or Esri key in your credentials, unlocked,
   an interactive map offers CARTO Positron, Voyager and Dark Matter, or Esri satellite imagery, streets and outdoor.

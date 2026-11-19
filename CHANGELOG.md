@@ -15,6 +15,9 @@ shown in a local build is not a claim that it has been published.
   Methodist Church* over its tiles.
 - **A figure whose basemap was not drawn no longer credits it** in its sources line.
 - **The first raster read on a device says the raster engine is being fetched**, about 6 MB, once.
+- **From a template… is grouped by project**, the open project's workflows first, so a workflow's project is plain.
+- **The library's "Your data stays here" panel is gone**, with its Restore example button, which restored without
+  asking. Reset example, in the bar above, asks first.
 
 ## 0.147.0 — 2026-11-18
 

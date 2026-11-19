@@ -7577,7 +7577,9 @@ $('#reset-example').onclick=async()=>{
 };
 $('#undo-button').onclick=()=>{if(busy||!history.length)return;future.push(structuredClone(workflow));workflow=history.pop()!;dirty=true;statuses={};save();render();};
 $('#redo-button').onclick=()=>{if(busy||!future.length)return;history.push(structuredClone(workflow));workflow=future.pop()!;dirty=true;statuses={};save();render();};
-$('#reset-button').onclick=()=>{change(w=>{const key=exampleKey(w);replaceWorkflow(w,template(key));selected=key.startsWith('snow-')?'catchments':workflow.nodes[0]?.id;});renderLibrary();flow?.fit();};
+// THE LIBRARY'S OWN "Restore example" AND ITS SLOGAN ARE GONE (the practitioner, 2026-11-18: "What's the use of this 'Your
+// data stays here' and the text below, looks stale"): the slogan was commentary and no longer true of basemaps, shared
+// projects or remote files, and the button restored without asking. Reset example, in the bar, asks first.
 $('#workflow-select').onchange=e=>loadExample(control(e).value);
 /** Switching project opens one of its workflows, because a project is not a thing you can look at
  *  on the canvas -- the canvas holds a question, and a project holds the questions. The first one
@@ -7767,12 +7769,21 @@ function renderProjectOptions(){
   // method is worth reusing across projects as well as inside one -- the next province is a new
   // question, and sometimes a new investigation. A workflow with no widgets is not offered: there
   // would be nothing to fill.
+  // GROUPED BY PROJECT, THIS ONE FIRST (the practitioner, 2026-11-18, of MERS's picker listing Soho and Hagelloch: "This
+  // list should only use workflows from the current project", then "Or there has to be way to know which project a workflow
+  // belongs to because that list is overwhelming", and chose the grouping). A workflow in no project is under its own heading.
   const template=$('#workflow-template');
-  const candidates=Object.entries(saved)
+  const copyable=Object.entries(saved)
     .filter(([k,w])=>k!==key&&((w as {nodes?:unknown[]}).nodes?.length||0)>0)
     .map(([k,w])=>[k,(w as {name?:string}).name||workflowTitle(k)] as const);
-  template.innerHTML=`<option value="">＋ From a template…</option>`
-    +candidates.map(([k,label])=>optionFor(k,label)).join('');
+  const owners=[...(current?[current]:[]),...allProjects().filter(p=>p.id!==current?.id)];
+  const placed=new Set<string>();
+  const groups=owners.map(p=>{const inIt=copyable.filter(([k])=>p.workflows.includes(k)&&!placed.has(k));inIt.forEach(([k])=>placed.add(k));
+    return group(p.id===current?.id?`This project: ${p.name}`:p.name,inIt.map(([k,label])=>optionFor(k,label)).join(''));});
+  const loose=copyable.filter(([k])=>!placed.has(k));
+  const candidates=copyable;
+  template.innerHTML=`<option value="">＋ From a template…</option>`+groups.join('')
+    +group('No project',loose.map(([k,label])=>optionFor(k,label)).join(''));
   template.hidden=!candidates.length;
   template.disabled=busy;
 
@@ -8006,7 +8017,7 @@ function markNames(result:Output,project:(c:[number,number])=>[number,number]):s
     const name=String((r as {name?:unknown}).name??'').trim();
     if(!name||x<0||x>850)return '';
     const anchor=x>640?'end':'start',dx=x>640?-10:10;
-    return `<text data-mark-name x="${x+dx}" y="${y+5}" text-anchor="${anchor}" font-size="14" font-weight="600" fill="#1f2a24" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${esc(name)}</text>`;}).join(''):'';
+    return `<text data-mark-name="" x="${x+dx}" y="${y+5}" text-anchor="${anchor}" font-size="14" font-weight="600" fill="#1f2a24" stroke="#ffffff" stroke-width="4" stroke-linejoin="round" paint-order="stroke">${esc(name)}</text>`;}).join(''):'';
 }
 function bareMapCues(project:(c:[number,number])=>[number,number],bounds:[number,number,number,number]):string{
   const lat=(bounds[1]+bounds[3])/2,lon=(bounds[0]+bounds[2])/2;
@@ -8016,10 +8027,10 @@ function bareMapCues(project:(c:[number,number])=>[number,number],bounds:[number
   const perKm=Math.abs(x1-x0);let bar='';
   if(perKm>0&&Number.isFinite(perKm)){
     const target=170/perKm,km=[0.1,0.2,0.5,1,2,5,10,20,50,100,200,500,1000].filter(v=>v<=target).pop()??0.1,len=km*perKm;
-    bar=`<g data-bare-scale><path d="M20,${foot-23}V${foot-19}H${20+len}V${foot-23}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`
+    bar=`<g data-bare-scale=""><path d="M20,${foot-23}V${foot-19}H${20+len}V${foot-23}" fill="none" stroke="#1f2a24" stroke-width="1.5"/>`
       +`<text x="20" y="${foot-29}" font-size="14" fill="#1f2a24">${km<1?`${km*1000} m`:`${km} km`}</text></g>`;
   }
-  return bar+`<text data-bare-note x="830" y="${foot-10}" text-anchor="end" font-size="14" fill="#3d3d3d">Basemap not shown</text>`;
+  return bar+`<text data-bare-note="" x="830" y="${foot-10}" text-anchor="end" font-size="14" fill="#3d3d3d">Basemap not shown</text>`;
 }
 /** A map's features for placing an inset: the boundary's rings and the marks, projected as the large frame draws them. */
 function insetFeatures(boundary:Boundary|undefined,rows:readonly {coordinates?:unknown}[],project:(c:[number,number])=>[number,number]):import('./map-inset.js').Features{

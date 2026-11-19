@@ -1,6 +1,6 @@
 # 222 · Basemaps on the person's own key
 
-_Created 2026-11-19 · Updated 2026-11-19_
+_Created 2026-11-18 · Updated 2026-11-18_
 
 **Status:** tried. Built in 0.148.0 (Map 0.36.0); seen with real keys only once published, because the practitioner's
 keys are locked to Fieldwork's address.

@@ -33,7 +33,7 @@ const run=async()=>{await page.locator('#run-button').click();await done();await
   await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tablist',{name:'Workflow outputs'}).getByRole('tab')).toHaveCount(3);
   await context.setOffline(false);
-  await page.locator('#reset-button').click();await run();
+  page.once('dialog',d=>d.accept());await page.locator('#reset-example').click();await run();
   await expect(page.getByRole('tablist',{name:'Workflow outputs'}).getByRole('tab')).toHaveCount(4);
   await mkdir('test-results',{recursive:true});
   await page.screenshot({path:'test-results/output-tabs-desktop.png',fullPage:true});

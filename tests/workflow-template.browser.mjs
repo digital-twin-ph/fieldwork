@@ -24,6 +24,11 @@ test('a workflow can be taken as a template, and the original is untouched',asyn
   await expect(picker).toBeVisible();
   // Every workflow on this device that has something to copy, plus the placeholder.
   await expect(picker.locator('option')).not.toHaveCount(1);
+  // GROUPED BY PROJECT, THIS ONE FIRST (the practitioner, 2026-11-18: "there has to be way to know which project a
+  // workflow belongs to"): the project's own workflow is under "This project", ahead of any other group.
+  const groups=await picker.locator('optgroup').evaluateAll(g=>g.map(x=>x.label));
+  expect(groups[0]).toBe('This project: Facilities and Networks');
+  await expect(picker.locator('optgroup').first().locator(`option[value="${before.workflowKey}"]`)).toHaveCount(1);
   await picker.selectOption(before.workflowKey);
 
   // The same widgets and wiring, in the empty canvas that was waiting for them. Until 2026-10-21

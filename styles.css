@@ -677,6 +677,13 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
   border:1px solid var(--line-soft-2);background:var(--surface-raised-1);border-radius:6px}
 .learn-block .learn-link:hover,.learn-block .learn-link:focus-visible{border-color:var(--green);color:var(--green)}
 .learn-block .learn-link span{font-size:14px}
+/* A DIALOG'S MANUAL, MADE TO BE CLICKED (2026-11-19: "Make the Manual for this dialog invite a click - perhaps make it a
+   very conspicuous button?"). It read as a line of text. A button with a book's mark, bold, outlined and filled pale, so it
+   stands out without reading as the dialog's own action. */
+.manual-button{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:700;padding:10px 16px;
+  border:2px solid var(--green);background:var(--accent-wash,rgba(23,107,89,.08));color:var(--green);border-radius:8px}
+.manual-button:hover,.manual-button:focus-visible{background:var(--green);color:var(--accent-contrast,#fff)}
+.manual-button span{font-size:18px}
 
 /* The extracts that cover this study area: a link each, because the download is the browser's
    own -- Geofabrik serves no CORS header and this application never sees the bytes. */

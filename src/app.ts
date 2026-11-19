@@ -9764,6 +9764,21 @@ function renderStorageStatus(){
 
 
 /** THE REPOSITORY'S FILES FOR ONE PROJECT: what Export as repository zips and Save to the repository commits. */
+/** WHO IS ON THIS DEVICE, for the shared project: the identity file's login if one is open, else the login GitHub
+ *  confirmed for the unlocked token. Null when neither is known. */
+function deviceLogin():string|null{return openIdentity()?.profile.login||currentIdentity(localStorage)?.login||null;}
+/** SAID AFTER A SAVE, never a refusal (2026-11-19): the commit already carries the GitHub login; this asks the person to
+ *  say who they are in the project, which their name, ORCID iD and signature need. */
+function unsaidNotice(project:Project):string{
+  const login=deviceLogin();
+  const said=login&&(project.members??[]).some(m=>m.login.toLowerCase()===login.toLowerCase()&&m.signature);
+  if(said)return '';
+  return `<br>${login?`Saved as ${esc(login)}. `:''}This project does not yet say who you are. `
+    +`<button type="button" class="text-button" data-goto-people>Under People</button>, choose your project role and press This is me, then save again.`;
+}
+function wireSharedManual(box:HTMLElement){
+  box.querySelector<HTMLButtonElement>('[data-shared-manual]')?.addEventListener('click',()=>openManual('surface:shared-projects','Shared through GitHub',esc));
+}
 async function projectRepositoryFileMap(project:Project):Promise<Map<string,string>>{
     const saved=readSavedWorkflows();
     const held=project.workflows.filter(key=>Object.hasOwn(saved,key));
@@ -10262,11 +10277,12 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
   sharedSignature=signature;
   const repository=repositoryOf(project);
   if(!repository){
-    box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`
+    box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`+`<p><button type="button" class="button manual-button" data-shared-manual><span aria-hidden="true">\u25a4</span> Read the manual for Shared through GitHub</button></p>`
       +`<p class="muted">Not shared. To share it, make a repository from the project template, and a token for it in Credentials.</p>`
       +`<div id="share-recent"></div><label class="field-label" for="share-name">Repository</label><input id="share-name" maxlength="200" autocomplete="off" spellcheck="false">`
       +`<label class="field-label" for="share-credential">GitHub token</label><select id="share-credential">${credentialOptions()}</select>`
       +`<button id="share-send" class="button" type="button">Share through this repository</button><p id="share-result" class="repo-check-result" aria-live="polite"></p>`;
+    wireSharedManual(box);
     const pick=$('#share-credential') as HTMLSelectElement;pick.addEventListener('focus',()=>{pick.innerHTML=credentialOptions(pick.value);});
     drawRecentRepositories($('#share-recent'),$('#share-name') as HTMLInputElement,pick);
     ($('#share-send') as HTMLButtonElement).onclick=async()=>{
@@ -10286,7 +10302,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
     return;
   }
   const r=project.repository!;
-  box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`
+  box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`+`<p><button type="button" class="button manual-button" data-shared-manual><span aria-hidden="true">\u25a4</span> Read the manual for Shared through GitHub</button></p>`
     +`<p>Shared with <a href="https://github.com/${esc(repository)}" target="_blank" rel="noopener">${esc(repository)}</a>.`
     +` ${r.syncedAt?`Last read or saved here ${esc(new Date(r.syncedAt).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}))}.`:'Not yet saved to it.'}</p>`
     +`<ul id="shared-state" class="repo-check-result" aria-live="polite"></ul>`
@@ -10304,6 +10320,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
     +`<label class="field-label" for="shared-post-body">Message</label><textarea id="shared-post-body" rows="4" spellcheck="true"></textarea>`
     +`<button id="shared-post-send" class="button" type="submit">Post to Discussions</button><p id="shared-post-result" class="repo-check-result" aria-live="polite"></p></form>`
     +`<p><button id="shared-stop" class="button small" type="button">Stop sharing on this device</button></p>`;
+  wireSharedManual(box);
   const pick=$('#shared-credential') as HTMLSelectElement,out=$('#shared-result'),state=$('#shared-state');
   pick.addEventListener('focus',()=>{pick.innerHTML=credentialOptions(pick.value||r.credential);});
   pick.onchange=()=>{if(pick.value)updateRepository(project.id,{credential:pick.value});};
@@ -10349,7 +10366,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
   let collaborators:{login:string;role:string}[]|null=null,peopleNote='Press Check GitHub to see who has access.';
   const renderPeople=async()=>{
     const current=readProjects().find(p=>p.id===project.id);if(!current)return;
-    const members=current.members??[];const me=openIdentity();
+    const members=current.members??[];const me=openIdentity();const myLogin=deviceLogin();
     const logins=[...new Set([...(collaborators??[]).map(c=>c.login),...members.map(m=>m.login)])];
     const rows:string[]=[];
     for(const login of logins){
@@ -10364,10 +10381,10 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
       const shortfall=member&&collaborators?roleShortfall(member.role,known):null;
       const options=`<option value="">Not in the project</option>`+PROJECT_ROLES.map(r=>`<option value="${r}"${member?.role===r?' selected':''}>${PROJECT_ROLE_LABEL[r]}</option>`).join('');
       const proposal=!member&&known?` <span class="muted">(${PROJECT_ROLE_LABEL[proposedProjectRole(known)]} would fit)</span>`:'';
-      const mine=me?.profile.login&&me.profile.login.toLowerCase()===login.toLowerCase();
+      const mine=myLogin&&myLogin.toLowerCase()===login.toLowerCase();
       rows.push(`<li><strong>${esc(login)}</strong> <span class="muted">on GitHub: ${esc(repo??'no access listed')}</span><br>${who}`
         +`<br><label class="field-label" for="member-${esc(login)}">Project role</label><select id="member-${esc(login)}" data-member="${esc(login)}">${options}</select>${proposal}`
-        +(mine&&member?` <button class="button small" type="button" data-member-me="${esc(login)}">This is me</button>`:'')
+        +(mine?` <button class="button small" type="button" data-member-me="${esc(login)}">This is me</button><span class="field-check" data-member-me-says="${esc(login)}" aria-live="polite"></span>`:'')
         +(shortfall?`<br><span class="is-no"><strong>No.</strong> ${esc(shortfall)}</span>`:'')+'</li>');
     }
     $('#shared-people').innerHTML=(peopleNote?`<p class="muted">${esc(peopleNote)}</p>`:'')
@@ -10382,8 +10399,13 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
         const {members:_m,...without}=p;return members.length?{...without,members}:without as Project;}));
       void refresh(false);});
     $('#shared-people').querySelectorAll<HTMLButtonElement>('[data-member-me]').forEach(button=>button.onclick=async()=>{
-      const identity=signingIdentity();if(!identity)return;
       const login=button.dataset.memberMe!;
+      const says=$('#shared-people').querySelector<HTMLElement>(`[data-member-me-says="${CSS.escape(login)}"]`)!;
+      const current=readProjects().find(p=>p.id===project.id);
+      if(!current?.members?.some(m=>m.login.toLowerCase()===login.toLowerCase())){
+        says.textContent=' Choose your project role first.';$('#shared-people').querySelector<HTMLSelectElement>(`[data-member="${CSS.escape(login)}"]`)?.focus();return;}
+      const identity=signingIdentity();
+      if(!identity){says.textContent=' Open your identity file, then press This is me again.';$('#identity-button').click();return;}
       const statement={login,name:identity.profile.name,...(identity.profile.orcid?{orcid:identity.profile.orcid}:{}),
         ...(identity.profile.affiliations?.length?{affiliations:identity.profile.affiliations}:{})};
       const signed=await signStatement(identity,memberStatement(statement));
@@ -10421,7 +10443,10 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
       updateRepository(project.id,{commit:done.sha,files:sent,remote:sent,syncedAt:new Date().toISOString(),credential:pick.value||current.repository?.credential});
       ($('#shared-message') as HTMLInputElement).value='';
       renderProjectDetails();
-      $('#shared-result').innerHTML=`<strong>Saved.</strong> ${esc(describeChanges(changed))} in one commit: <a href="${esc(done.url)}" target="_blank" rel="noopener">open it on GitHub</a>.`;}
+      $('#shared-result').innerHTML=`<strong>Saved.</strong> ${esc(describeChanges(changed))} in one commit: <a href="${esc(done.url)}" target="_blank" rel="noopener">open it on GitHub</a>.`
+        +unsaidNotice(readProjects().find(p=>p.id===project.id)??current);
+      $('#shared-result').querySelector<HTMLButtonElement>('[data-goto-people]')?.addEventListener('click',()=>{
+        const people=$('#shared-people');people.scrollIntoView({block:'start'});people.querySelector<HTMLElement>('select,button')?.focus();});}
     catch(e){out.innerHTML=`<strong>No.</strong> ${esc(errorMessage(e))}`;}};
   // GET THE LATEST MERGES (2026-11-16): what is only here is kept, what changed on GitHub comes in, and a workflow
   // changed on both is the person's choice (`mergeLatest`). Before, it replaced everything here after one confirm.

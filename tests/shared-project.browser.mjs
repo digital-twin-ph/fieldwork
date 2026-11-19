@@ -111,6 +111,8 @@ test('a project shared, saved as one commit, refused after someone else saves, g
   // SAVE: one commit, the device's keys left out of the workflow file.
   await page.locator('#shared-message').fill('First save');await page.locator('#shared-save').click();
   await expect(page.locator('#shared-result')).toContainText('Saved.');
+  // NOT REFUSED, SAID: the save went through, and the person is asked to say who they are.
+  await expect(page.locator('#shared-result')).toContainText('This project does not yet say who you are.');
   assert.equal(github.commits.length,1);
   const files=github.filesAt(github.refs.main);
   assert.ok(files['workflows/attack-rate-by-food.json'],Object.keys(files).join(', '));
@@ -180,6 +182,24 @@ test('a project shared, saved as one commit, refused after someone else saves, g
   await page.locator('#shared-post-send').click();
   await expect(page.locator('#shared-post-result')).toContainText('Posted.');
   assert.deepEqual(github.posted,{r:'R1',c:'C2',t:'Case definition',b:'Use the 1940 one.'});
+
+  // THIS IS ME, on the row of the login the token confirmed (as unlocking a credentials file records it): it asks for a
+  // role first, then opens the identity file.
+  await page.evaluate(()=>localStorage.setItem('fieldwork/identity/1',JSON.stringify({login:'lead-me',basis:'attested',at:'2026-11-19T12:00:00Z'})));
+  await page.locator('#shared-check').click();
+  const mine=page.locator('[data-member-me="lead-me"]');
+  await expect(mine).toBeVisible();
+  await expect(page.locator('[data-member-me="jlt"]')).toHaveCount(0);
+  await mine.click();
+  await expect(page.locator('[data-member-me-says="lead-me"]')).toContainText('Choose your project role first.');
+  await page.locator('[data-member="lead-me"]').selectOption('lead-author');
+  await page.locator('[data-member-me="lead-me"]').click();
+  await expect(page.locator('#identity-dialog')).toBeVisible();
+  await page.keyboard.press('Escape');
+  // THE MANUAL, from the panel.
+  await page.locator('#project-shared [data-shared-manual]').click();
+  await expect(page.locator('#manual-dialog')).toContainText('Say who you are');
+  await page.locator('#manual-close').click();
 
   // OPEN FROM GITHUB, under Or bring one in: refused while this device already holds it. REMEMBERED: the repository
   // used when sharing is offered here, and choosing it fills the field.

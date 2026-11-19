@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.152.0 — In development
+
+- **A save to GitHub reminds you to say who you are, and is never refused for it.** After saving, if the project does
+  not name you yet, the answer says so and points to People. GitHub already records who saved; the project's own
+  record of you is your name, ORCID iD and affiliation, signed with your identity file.
+- **This is me is on your row under People** whenever Fieldwork knows your GitHub login. It was hidden until you had
+  chosen a role and opened your identity file; now it asks for the role, then opens the identity file.
+- **Shared through GitHub has a manual**, from a button at the top of the section: sharing, saving, getting the
+  latest, saying who you are, roles and discussions.
+- **A slide deck on browser-based applications** is in `docs/presentations/`, the source of the published deck.
+
 ## 0.151.2 — 2026-11-19
 
 - **Relate's walkthrough checks every row before it stops**, as Relate does, marks each problem where it is, and ends on

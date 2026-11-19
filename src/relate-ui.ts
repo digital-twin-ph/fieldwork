@@ -230,7 +230,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       const settings=`<p class="description">Brings a column from <strong>${esc(view.rightLabel)}</strong> onto the rows of `
         +`<strong>${esc(view.leftLabel)}</strong>, matching a column of each.</p>`
         // SHOWN ON A MADE-UP EXAMPLE (experiment 223), with the choices made below, before they are applied.
-        +'<p><button class="button" id="relate-show-me">Show me how it works</button></p>'
+        +'<p><button class="button" id="relate-show-me" data-show-me>Show me how it works</button></p>'
         +select('relate-on','Matched on, in the first table',here,draft.on,'Connect both tables first')
         +select('relate-right-on','The same, in the second table',there,rightOn,'Connect both tables first')
         +(draft.on&&shared.length>1

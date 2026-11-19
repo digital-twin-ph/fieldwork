@@ -5,6 +5,8 @@
  *  Inspector, so a manual names the same control in its new place. */
 import type {DataTable} from './data-table.js';
 import type {ParamsByType,Escape} from './types.js';
+import {openWalkthrough} from './table-walkthrough.js';
+import {selectWalkthrough} from './table-walkthroughs.js';
 import {openConfigDialog} from './config-dialog.js';
 import {dataTableMarkup,wireTablePages} from './data-table-ui.js';
 import {selectRows,selectRange,orderOf,rangeSentence,type SelectResult} from './select-rows.js';
@@ -76,6 +78,8 @@ export function openSelectConfig(view:SelectConfigView,esc:Escape):void{
 
       let settings=`<p class="description">Keeps only the rows of <strong>${esc(view.sourceLabel)}</strong> whose chosen `
         +'column holds the values you name, in the order you name them.</p>'
+        // SHOWN ON A MADE-UP EXAMPLE (experiment 223), with the way of choosing picked below.
+        +'<p><button class="button" id="select-show-me" data-show-me>Show me how it works</button></p>'
         +`<div class="field"><label class="field-label" for="select-key">Key column to choose by</label>`
         +`<select id="select-key"${columns.length?'':' disabled'}>`
         +(columns.length?(draft.keyColumn&&columns.includes(draft.keyColumn)?'':'<option value="">Choose a column…</option>')
@@ -139,6 +143,8 @@ export function openSelectConfig(view:SelectConfigView,esc:Escape):void{
     },
     wire:(root,draft,redraw)=>{
       if(shown)wireTablePages(root.querySelector<HTMLElement>('.relate-preview'),shown.table,esc,shown.options);
+      const showMe=root.querySelector<HTMLButtonElement>('#select-show-me');
+      if(showMe)showMe.onclick=()=>openWalkthrough(selectWalkthrough(draft.mode),esc,showMe);
       root.querySelector<HTMLSelectElement>('#select-key')?.addEventListener('change',e=>{
         const column=(e.target as HTMLSelectElement).value;
         if(column!==draft.keyColumn){draft.keyColumn=column;draft.values=[];draft.range={from:'',to:''};

@@ -371,12 +371,12 @@
    "migrationFrom": []
   },
   "group_table": {
-   "version": "0.5.0",
-   "released": "2026-11-15",
+   "version": "0.6.0",
+   "released": "2026-11-19",
    "changes": [
     {
      "kind": "minor",
-     "description": "Keeping every column is allowed when a column is chosen to total: each row is its own group and the chosen column becomes the value the table hands on. Without a chosen column it is still refused, because nothing would change."
+     "description": "Show me how it works, in Configure…: five made-up rows gathered into two regions under the summary you have chosen; a group with an empty cell has an unknown total unless empty cells are left out, and a count of rows counts the empty one; its last step the table this step makes from the same rows (experiment 223)."
     }
    ],
    "breaking": false,
@@ -754,24 +754,24 @@
    "migrationFrom": []
   },
   "append_rows": {
-   "version": "0.2.2",
-   "released": "2026-11-14",
+   "version": "0.3.0",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "patch",
-     "description": "On the standard Inspector and dialog (experiment 186), changed the same day and so moved, as every widget touched is: the Inspector says in one sentence what is stacked; the tables, the source column and its labels, whether they are numbers, and a new key are set in Configure…, with the stacked table as the preview, and nothing changes until Apply."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: two made-up tables stacked, one lacking a column the other has, so its rows are empty there, not zero, and a district appearing once from each; with rows naming their table if you have chosen that; its last step the table this step makes from the same rows (experiment 223)."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "select_rows": {
-   "version": "0.4.1",
-   "released": "2026-11-08",
+   "version": "0.5.0",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "patch",
-     "description": "The preview of the rows kept turns its pages: Next rows did nothing in the configuration dialog."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: a made-up table checked row by row under the way of choosing you have picked: values to keep, values to leave out, or a range; a row with an empty cell is set aside by keeping values and kept by leaving one out, as this step does; its last step the table this step makes from the same rows (experiment 223)."
     }
    ],
    "breaking": false,

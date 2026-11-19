@@ -5,6 +5,8 @@
 import type {DataTable} from './data-table.js';
 import type {Escape,ParamsByType} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
+import {openWalkthrough} from './table-walkthrough.js';
+import {appendWalkthrough} from './table-walkthroughs.js';
 import {dataTableMarkup,wireTablePages} from './data-table-ui.js';
 import {appendTables,appendSentence,appendTableCount,appendLabel} from './append-rows.js';
 
@@ -55,6 +57,8 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
       const name=(i:number)=>d.count===2?(i===0?'the first table':'the second table'):`table ${i+1}`;
       const settings='<p class="description">Stacks the tables’ rows in order, lining columns up by name. All must measure '
         +'the same thing in the same unit.</p>'
+        // SHOWN ON A MADE-UP EXAMPLE (experiment 223), with the choices made below, before they are applied.
+        +'<p><button class="button" id="append-show-me" data-show-me>Show me how it works</button></p>'
         +`<div class="inspector-actions"><button type="button" id="append-add-table" class="button small">＋ Add a table</button>`
         +`<button type="button" id="append-remove-table" class="button small"${d.count<=2?' disabled':''}>Remove the last table</button></div>`
         +`<p class="muted">${d.count} tables, one input each${view.sources.some(Boolean)?`: ${view.sources.slice(0,d.count).map((s,i)=>esc(s||`${name(i)}, not connected`)).join('; ')}`:''}.</p>`
@@ -84,6 +88,8 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
     },
     wire:(root,d,redraw)=>{
       if(shown)wireTablePages(root.querySelector<HTMLElement>('.append-preview'),shown,esc,{pageSize:12});
+      const showMe=root.querySelector<HTMLButtonElement>('#append-show-me');
+      if(showMe)showMe.onclick=()=>openWalkthrough(appendWalkthrough({nameSource:d.nameSource,sourceColumn:d.sourceColumn,labels:d.labels}),esc,showMe);
       const on=(id:string,f:(el:HTMLInputElement)=>void,ev='change')=>root.querySelector<HTMLInputElement>(id)?.addEventListener(ev,e=>{f(e.target as HTMLInputElement);redraw();});
       on('#append-add-table',()=>{d.count++;d.labels.push('');},'click');
       on('#append-remove-table',()=>{if(d.count>2){d.count--;d.labels=d.labels.slice(0,d.count);}},'click');

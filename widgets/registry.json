@@ -791,7 +791,7 @@
     {
       "id": "urn:fieldwork:widget:group_table",
       "nodeType": "group_table",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -837,6 +837,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/group_table/0.5.0.json",
           "sha256": "1646ea4b6a2f54e6c44b773f71a074f9f852005b0a70f5c1b8314b5cd90ed143"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/group_table/0.6.0.json",
+          "sha256": "d0fce07ccdf21e52c1bd04b8bb9810facdd2fe0f8b4218c2c6afd2f2f2dd1ef4"
         }
       ]
     },
@@ -2023,7 +2028,7 @@
     {
       "id": "urn:fieldwork:widget:append_rows",
       "nodeType": "append_rows",
-      "currentVersion": "0.2.2",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2044,13 +2049,18 @@
           "version": "0.2.2",
           "path": "widgets/releases/append_rows/0.2.2.json",
           "sha256": "102f4552ad26ce55c6f6a8d5f4d24e2d5bb9f322933ed748762ea08b67fc4659"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/append_rows/0.3.0.json",
+          "sha256": "85f1c2aca8ca5aca99a69181366655f64b634b3d7b88daa106994b1d258ef65a"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:select_rows",
       "nodeType": "select_rows",
-      "currentVersion": "0.4.1",
+      "currentVersion": "0.5.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2081,6 +2091,11 @@
           "version": "0.4.1",
           "path": "widgets/releases/select_rows/0.4.1.json",
           "sha256": "4cdf9e2f405ba7fd2737fe584ea857f4fb7e696ce2ff3ac9283c7adf843502ea"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/select_rows/0.5.0.json",
+          "sha256": "7747c6fb2f01c4de76795466b4d109cc9847d5bd68367ca951e45bff6bd71c83"
         }
       ]
     },

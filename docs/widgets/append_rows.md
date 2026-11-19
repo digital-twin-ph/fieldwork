@@ -70,3 +70,11 @@ An estimate's interval, declared by Regression, survives the stacking when every
   complaint if their value column has one name.
 - Find a primary key repeated across the tables.
 - Read a label as a number unless you say the labels are numbers.
+
+## History
+
+### 2026-11-19 · Shown on a made-up example (0.3.0)
+
+**Show me how it works**, in Configure…, steps through two made-up tables stacked, one lacking a column the other has, so its rows are empty there, not zero, and a district appearing once from each; with rows naming their table if you have chosen that. Back, Step and Play; nothing moves where reduced motion
+is asked for. Its last step is the table this step makes from the same rows. Experiment
+[223](../experiments/223-a-table-step-shown-on-a-small-example.md).

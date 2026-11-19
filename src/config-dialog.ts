@@ -146,5 +146,6 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
   dialog.addEventListener('cancel',event=>{event.preventDefault();requestClose();});
   dialog.showModal();
   // OPENS ON THE FIRST SETTING, not on ×: a keyboard user starts where the work is.
-  dialog.querySelector<HTMLElement>('[data-config-section="settings"] :is(select,input,textarea,button):not([disabled])')?.focus();
+  // THE FIRST SETTING, not Show me how it works (experiment 223), which explains the settings and is not one of them.
+  dialog.querySelector<HTMLElement>('[data-config-section="settings"] :is(select,input,textarea,button):not([disabled]):not([data-show-me])')?.focus();
 }

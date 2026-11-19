@@ -132,3 +132,11 @@ emptied cell. Every number agrees exactly, in CPython and in the browser kernel.
 
 What no check can verify is the protection that matters most here: summing is the only operation
 offered, because this step cannot tell a count from a rate.
+
+## History
+
+### 2026-11-19 · Shown on a made-up example (0.6.0)
+
+**Show me how it works**, in Configure…, steps through five made-up rows gathered into two regions under the summary you have chosen; a group with an empty cell has an unknown total unless empty cells are left out, and a count of rows counts the empty one. Back, Step and Play; nothing moves where reduced motion
+is asked for. Its last step is the table this step makes from the same rows. Experiment
+[223](../experiments/223-a-table-step-shown-on-a-small-example.md).

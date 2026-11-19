@@ -2,7 +2,7 @@
 
 _Created 2026-11-19 · Updated 2026-11-19_
 
-**Status:** tried. Built for Relate (2026-11-19); Append rows, Select rows, Total within groups and Derive a value to follow.
+**Status:** tried. Built for Relate, Append rows, Select rows and Total within groups (2026-11-19).
 
 ## The question
 
@@ -95,3 +95,28 @@ tables are connected and have run. Before that, the example can only say that th
 every step headed *Made-up example*, numbered and marked in words) and `tests/relate-walkthrough.browser.mjs` (1: from
 Configure…, stepped to the end, Back, the dialog's own choice followed, focus returned, nothing applied), Chromium and
 WebKit.
+
+## Built for Append rows, Select rows and Total within groups, 2026-11-19
+
+`src/table-walkthroughs.ts`, on the same player. **Derive a value is not among them:** it was retired into Apply ruleset
+on 2026-11-07 (experiment 188). The registry still lists it with a table in and a table out, which is how it reached
+the list above; the list is corrected here, not rewritten.
+
+| Widget | The made-up example | Follows from the dialog |
+| --- | --- | --- |
+| Append rows | *Cases, week 1* (district, cases; 2 rows) and *Cases, week 2* (district, sex, cases; 2 rows) | Whether rows say which table they came from, the column's name and the labels |
+| Select rows | *Cases by district*, 5 rows, one with no region and one with no week | The way of choosing: values to keep (North and East), values to leave out (North), or a range (weeks 2 to 4) |
+| Total within groups | *Cases by district*, 5 rows in two regions, one case count empty | The summary (all six) and whether empty cells are left out |
+
+Each shows what is easy to get wrong: a column one table lacks is empty, not zero, and Alpha appears twice after
+stacking; an empty region is set aside by keeping values but kept by leaving one out, as the step does; a group with an
+empty cell has an unknown total unless empty cells are left out, and a count of rows counts the empty one.
+
+**Found while building:** the Configure… dialog puts focus on the first control in its settings, which became **Show
+me how it works**; the first setting is still where focus starts, and the button is marked to be passed over
+(`data-show-me`). Found by Relate's existing dialog test.
+
+**Validation:** `tests/table-walkthroughs.test.mjs` (3: Append with and without a source column, Select under all three
+ways, Total within groups under all six summaries with and without empty cells left out, each against the step's own
+function) and `tests/table-walkthroughs.browser.mjs` (3), with the existing Relate, Select and grouping dialog tests:
+26 passed on Chromium and WebKit.

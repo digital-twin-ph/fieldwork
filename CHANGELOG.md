@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.151.0 — In development
+
+- **Show me how it works**: Relate, Append rows, Select rows and Total within groups each step through a made-up example
+  from their Configure… dialog, with the choices made there before they are applied. Back, Step and Play; it never
+  starts by itself, and nothing moves where reduced motion is asked for. Rows are marked in words and by shape, never
+  by colour alone. The last step is the table the step itself makes from the same rows, or the words it stops with
+  (experiment 223). Relate 0.13.0, Append rows 0.3.0, Select rows by value 0.5.0, Total within groups 0.6.0.
+- **Each example shows what is easy to get wrong**: a district spelled with a full stop in one table and not the
+  other; a key the second table lacks, or has twice; a column one table lacks, empty and not zero; an empty cell kept
+  by leaving a value out but set aside by keeping values; a group whose total is unknown because one cell is empty.
+
 ## 0.150.0 — 2026-11-19
 
 - **A draft attaches what it cannot print**: a table of more than 50 rows, such as a line list, is attached as a CSV

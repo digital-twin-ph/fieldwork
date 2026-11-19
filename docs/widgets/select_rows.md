@@ -85,3 +85,11 @@ That a selection is an honest one. Keeping a subset of categories is exactly how
 misleads, and this widget cannot tell a partition from a cherry-pick: it will drop the rows that
 disagree with you as readily as the ones that double-count. The evidence records which values were
 kept and how many rows went, so the choice is at least visible to a reader.
+
+## History
+
+### 2026-11-19 · Shown on a made-up example (0.5.0)
+
+**Show me how it works**, in Configure…, steps through a made-up table checked row by row under the way of choosing you have picked: values to keep, values to leave out, or a range; a row with an empty cell is set aside by keeping values and kept by leaving one out, as this step does. Back, Step and Play; nothing moves where reduced motion
+is asked for. Its last step is the table this step makes from the same rows. Experiment
+[223](../experiments/223-a-table-step-shown-on-a-small-example.md).

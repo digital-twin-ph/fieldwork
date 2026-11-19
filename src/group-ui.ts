@@ -4,6 +4,8 @@
  *  the same control in its new place. */
 import type {DataTable} from './data-table.js';
 import type {ParamsByType,Escape} from './types.js';
+import {openWalkthrough} from './table-walkthrough.js';
+import {groupWalkthrough} from './table-walkthroughs.js';
 import {openConfigDialog} from './config-dialog.js';
 import {dataTableMarkup,wireTablePages} from './data-table-ui.js';
 import {AGGREGATES,groupTable,type Aggregate} from './group-table.js';
@@ -56,6 +58,8 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
       const adds=draft.aggregate==='sum'||draft.aggregate==='count';
       let settings=`<p class="description">Turns the rows of <strong>${esc(view.sourceLabel)}</strong> that agree on the `
         +'columns you keep into one row each. The columns you do not keep are gone from the result.</p>'
+        // SHOWN ON A MADE-UP EXAMPLE (experiment 223), with the summary and empty-cell choice made below.
+        +'<p><button class="button" id="group-show-me" data-show-me>Show me how it works</button></p>'
         +(view.columns.length
           ?`<fieldset id="group-keep" class="field"><legend class="field-label">Key columns to keep</legend>`
             +view.columns.map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}" data-group-by="${esc(c)}"${draft.by.includes(c)?' checked':''}> ${esc(c)}</label>`).join('')
@@ -105,6 +109,8 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
     },
     wire:(root,draft,redraw)=>{
       if(shown)wireTablePages(root.querySelector<HTMLElement>('.group-preview'),shown,esc,{pageSize:12});
+      const showMe=root.querySelector<HTMLButtonElement>('#group-show-me');
+      if(showMe)showMe.onclick=()=>openWalkthrough(groupWalkthrough({aggregate:draft.aggregate,excludeMissing:draft.excludeMissing}),esc,showMe);
       if(shown&&view.table)wireTablePages(root.querySelector<HTMLElement>('.group-before'),view.table,esc,{pageSize:6});
       // THE KEPT COLUMNS ARE A LIST IN ORDER, and EVERY BOX IS READ ON ANY CHANGE, so several ticked at once -- as a
       // manual's step does -- are all kept: the order already kept, then any newly ticked in the order shown.

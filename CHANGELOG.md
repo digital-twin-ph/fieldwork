@@ -12,6 +12,10 @@ shown in a local build is not a claim that it has been published.
   chosen a role and opened your identity file; now it asks for the role, then opens the identity file.
 - **Shared through GitHub has a manual**, from a button at the top of the section: sharing, saving, getting the
   latest, saying who you are, roles and discussions.
+- **Rwanda can be a study area**: it was refused with "Interior rings must not contain one another", because two holes
+  in its outline meet and the check read a corner on one's edge as inside it. Study area 0.9.4.
+- **An ORCID iD can be added to an identity file later**, under Identity's *Change your avatar, ORCID iD or
+  affiliations*, keeping the same key. It could be given only when the file was made, and a new file means a new key.
 - **A slide deck on browser-based applications** is in `docs/presentations/`, the source of the published deck.
 
 ## 0.151.2 — 2026-11-19

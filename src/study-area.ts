@@ -198,6 +198,11 @@ function checkRing(ring:unknown,what:string):Position[]{
   }
   return ring as Position[];
 }
+/** Whether a point lies on a ring's edge (ends included). */
+function ringTouches(ring:Position[],p:Position):boolean{
+  for(let i=0;i<ring.length-1;i++)if(on(ring[i],ring[i+1],p))return true;
+  return false;
+}
 const ringArea=(ring:Position[],west:number,south:number)=>{
   const pts=ring.slice(0,-1);
   return Math.abs(pts.reduce((sum,p,i)=>sum+(p[0]-west)*(ring[i+1][1]-south)-(ring[i+1][0]-west)*(p[1]-south),0))/2;
@@ -227,11 +232,21 @@ export function validateDrawnGeometry(raw:unknown):Boundary{
   // Interior rings are admitted because real jurisdictions have them: 22 of 189 DRC ADM2 units
   // carry an enclave, and no vertex budget reaches those. Having established that no two rings
   // cross, one vertex decides where a whole ring lies.
+  // THE PROBE IS A VERTEX OFF THE OTHER RING (2026-11-19), as for parts below: ray casting counts a point on a ring as
+  // inside it, and two holes that touch, or a hole touching the outline, share vertices. Rwanda was refused with
+  // "Interior rings must not contain one another" for holes that met. If every vertex is on the other ring, the two
+  // trace the same line and containment is not what is wrong with them.
+  const offRing=(ring:Position[],of:Position[])=>of.find(vertex=>!ringTouches(ring,vertex));
   for(const rings of parts){
     const outer=rings[0];
     for(let h=1;h<rings.length;h++){
-      if(!encloses(outer,rings[h][0]))throw new Error('An interior ring must lie inside the boundary.');
-      for(let k=1;k<rings.length;k++)if(k!==h&&encloses(rings[k],rings[h][0]))throw new Error('Interior rings must not contain one another.');
+      const inside=offRing(outer,rings[h]);
+      if(inside&&!encloses(outer,inside))throw new Error('An interior ring must lie inside the boundary.');
+      for(let k=1;k<rings.length;k++){
+        if(k===h)continue;
+        const probe=offRing(rings[k],rings[h]);
+        if(probe&&encloses(rings[k],probe))throw new Error('Interior rings must not contain one another.');
+      }
     }
     // A PART WITH NO AREA AT ALL is refused; a very small one is not (2026-11-13): Rwanda's Ngoma district carries, beside
     // itself, a triangle of about 1 m\u00b2 in geoBoundaries, and the whole district was refused for it. Too small is
@@ -248,10 +263,7 @@ export function validateDrawnGeometry(raw:unknown):Boundary{
   // merely meet. The probe is taken from the first vertex that is NOT on the other part's
   // outline; if every vertex is, the two parts trace the same line and containment is not what
   // is wrong with them.
-  const onRing=(ring:Position[],p:Position)=>{
-    for(let i=0;i<ring.length-1;i++)if(on(ring[i],ring[i+1],p))return true;
-    return false;
-  };
+  const onRing=ringTouches;
   for(let a=0;a<parts.length;a++)for(let b=0;b<parts.length;b++){
     if(a===b)continue;
     // Nor on its holes (2026-11-12): Gwangju's and Daegu's vertices lie on the edge of the hole South Jeolla and North

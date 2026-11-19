@@ -230,3 +230,15 @@ test('a district with a very small extra part is accepted, and kept as the sourc
   assert.equal(kept.coordinates.length,2);
   assert.throws(()=>validateDrawnGeometry({type:'Polygon',coordinates:[sliver]}),/too small/,'an area of 1 m² alone is still too small');
 });
+
+test('two interior rings that touch are admitted; one inside another is still refused',()=>{
+  // Rwanda (geoBoundaries) was refused on 2026-11-19 with "Interior rings must not contain one another": the probe was a
+  // hole's first vertex, which lay on the other hole, and a point on a ring reads as inside it.
+  const outer=[[0,0],[5,0],[5,5],[0,5],[0,0]];
+  const a=[[1,1],[1,2],[2,2],[2,1],[1,1]];
+  // The second hole meets the first's left edge at its own first vertex (1,1.5): on that edge, ray casting reads inside.
+  const touching=[[1,1.5],[0.5,1.2],[0.5,1.8],[1,1.5]];
+  assert.doesNotThrow(()=>validateDrawnGeometry({type:'Polygon',coordinates:[outer,a,touching]}));
+  const big=[[1,1],[1,4],[4,4],[4,1],[1,1]],small=[[2,2],[2,3],[3,3],[3,2],[2,2]];
+  assert.throws(()=>validateDrawnGeometry({type:'Polygon',coordinates:[outer,big,small]}),/contain one another|cross|overlap/i);
+});

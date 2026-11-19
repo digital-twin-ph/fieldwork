@@ -71,6 +71,11 @@ with your identity file so others can check it is you.
 Until you do, your row says "Has not said who they are yet", and each save reminds you. A save is never refused for
 it.
 
+Your row shows what your identity file holds. To add your ORCID iD or an affiliation with its ROR ID, press
+**Identity**, open **Change your avatar, ORCID iD or affiliations**, fill them in, choose your identity file, enter its
+passphrase and press **Save the new file**. Keep the new file in place of the old one: your key is the same. Then press
+**This is me** again and save to the repository.
+
 ### Give a co-author a project role
 
 On their row under **People**, choose a **Project role**. The role is saved with the project. Inviting them to the

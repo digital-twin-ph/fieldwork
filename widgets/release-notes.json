@@ -852,12 +852,12 @@
    ]
   },
   "study_area": {
-   "version": "0.9.3",
-   "released": "2026-11-13",
+   "version": "0.9.4",
+   "released": "2026-11-19",
    "changes": [
     {
      "kind": "patch",
-     "description": "A part with no area at all is refused; a very small one is not, and the whole area must still have size: Rwanda's Ngoma district, beside a triangle of about 1 m² in geoBoundaries, was refused."
+     "description": "Two holes that touch are no longer read as one inside the other: the check took a hole's first corner, which can lie on the other hole's edge, and a point on an edge can read as inside. Rwanda was refused with \"Interior rings must not contain one another\". The check now takes a corner off the other hole, as it already did for neighbouring units."
     }
    ],
    "breaking": false,

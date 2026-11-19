@@ -105,6 +105,15 @@ refuses shapes whose interiors overlap, and rings that cross or run along each o
 **Measles in Hagelloch, 1861** uses the village. The four **1854 Cholera Outbreak in
 London** workflows each use their own Soho extent, which is why three of them differ.
 
+## History
+
+### 2026-11-19 · Holes that touch are accepted (0.9.4)
+
+Rwanda, chosen by a colleague as a study area, was refused with "Interior rings must not contain one another". Two holes
+in an outline can meet, and the check asked whether one hole was inside the other from a single corner that lay on the
+other's edge, where a point can read as inside. It now asks from a corner that is not on the other hole. A hole inside
+another hole is still refused.
+
 ---
 
 *How this widget is built, and the decisions behind it: [docs/widget-specs/study_area.md](../widget-specs/study_area.md).*

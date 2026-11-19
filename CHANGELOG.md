@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.150.0 — In development
+## 0.150.0 — 2026-11-19
 
 - **A draft attaches what it cannot print**: a table of more than 50 rows, such as a line list, is attached as a CSV
   file, with a line in its place naming it, its rows and its file. **Download the attached files** gives them in one

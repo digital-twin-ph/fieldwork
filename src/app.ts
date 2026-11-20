@@ -6811,7 +6811,18 @@ async function run(){if(busy)return;
     :`A run of ${snapshot.name||'another workflow'} finished in ${elapsedText(lastRunMs)}, after this `
       +`canvas had already moved on. Its results belong to that workflow, so they were not kept. `
       +`Open it again and run it to see them.`,
-    stillOurs?(issues?{tone:'warning'}:undefined):{tone:'notice'});}catch(e){toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure'});runFailed=true;console.error(e);}
+    stillOurs?(issues?{tone:'warning'}:undefined):{tone:'notice'});}catch(e){
+    // A STREAMED RASTER'S FILE, chosen from the message itself (2026-11-20): the file is checked, then the run starts again.
+    const needed=e as {name?:string;asset?:import('./raster.js').RasterAsset;remembered?:boolean};
+    const asset=needed?.name==='StreamedFileNeeded'?needed.asset:undefined;
+    toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure',...(asset?{action:{
+      label:needed.remembered?`Allow reading ${asset.source.filename}`:`Choose ${asset.source.filename}\u2026`,
+      run:()=>{void (async()=>{
+        try{const {fileAgainByClick}=await import('./raster-workflow.js');
+          await fileAgainByClick(asset,text=>toast(text,{tone:'notice'}));
+          toast(`${asset.source.filename} is read again; running the workflow.`,{tone:'notice'});void run();}
+        catch(error){toast(errorMessage(error),{tone:'failure'});}})();}}}:{})});
+    runFailed=true;console.error(e);}
   finally{
     busy=false;
     // A FINISHED RUN DOES NOT MOVE THE PRACTITIONER. The first version of the tab switched to

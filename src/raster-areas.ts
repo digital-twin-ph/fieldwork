@@ -93,7 +93,7 @@ export async function streamedAreaTotals(features:readonly AreaFeature[],grid:Ra
   if(asset.source.metadata.crs!=='EPSG:4326')throw new Error('Sample a raster needs an EPSG:4326 raster; this prototype implements no datum shift.');
   const {streamedSource}=await import('./raster-workflow.js'),{openStripReader}=await import('./raster.js'),{streamedTotals}=await import('./raster-stream.js');
   const placed=features.filter(f=>f.geometry);
-  const reader=await openStripReader(streamedSource(asset));
+  const reader=await openStripReader(await streamedSource(asset));
   try{
     const totals=await streamedTotals(placed.map(f=>f.geometry!),asset.source.metadata,asset.window,reader.read,
       {median:!!params.cellStatistics,...(progress?{progress}:{})});

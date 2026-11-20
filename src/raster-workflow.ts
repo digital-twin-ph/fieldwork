@@ -26,13 +26,60 @@ export async function chooseStreamedFile(asset:RasterAsset,file:File,say?:(text:
     throw new Error(`That is not the file this raster was read from: ${asset.source.filename}, ${asset.source.bytes.toLocaleString('en')} bytes, was expected.`);
   sessionFiles.set(asset.source.sha256!,file);
 }
-/** Where a streamed raster's full cells are read from at a run: its address, or the file chosen this session. */
-export function streamedSource(asset:RasterAsset):string|File{
+/** A RUN THAT NEEDS ITS SOURCE FILE AGAIN, said as itself so the stop message can offer to choose it (2026-11-20). */
+export class StreamedFileNeeded extends Error{
+  constructor(readonly asset:RasterAsset,readonly remembered:boolean){
+    super(remembered
+      ?`Allow Fieldwork to read ${asset.source.filename} again: this raster is too large to keep on the device, so each run reads it from the file.`
+      :`Choose ${asset.source.filename} again: this raster is too large to keep on the device, so each run reads it from the file, `
+        +'and this browser keeps no file between sessions.');
+    this.name='StreamedFileNeeded';
+  }
+}
+/** A REMEMBERED FILE IS CHECKED BY ITS SIZE AND MODIFICATION TIME against those recorded when its digest was taken: reading
+ *  12.3 GB again for its digest is a minute each session. A file chosen afresh is checked by its digest, as before. */
+const sameFile=(asset:RasterAsset,file:File)=>file.size===asset.source.bytes&&(!asset.source.lastModified||file.lastModified===asset.source.lastModified);
+/** Where a streamed raster's full cells are read from at a run: its address, the file chosen this session, or the file
+ *  this device remembers, where the browser still allows reading it. */
+export async function streamedSource(asset:RasterAsset):Promise<string|File>{
   if(asset.source.url)return asset.source.url;
-  const file=asset.source.sha256?sessionFiles.get(asset.source.sha256):undefined;
+  const digest=asset.source.sha256;
+  const file=digest?sessionFiles.get(digest):undefined;
   if(file)return file;
-  throw new Error(`Choose ${asset.source.filename} again in Raster input: this raster is too large to keep on the device, so each run `
-    +'reads it from the file, and a browser keeps no file between sessions.');
+  const {rememberedHandle}=await import('./file-handles.js');
+  const handle=digest?await rememberedHandle(digest):undefined;
+  if(handle&&digest){
+    try{
+      if((await handle.queryPermission?.({mode:'read'}))==='granted'){
+        const again=await handle.getFile();
+        if(sameFile(asset,again)){sessionFiles.set(digest,again);return again;}
+      }
+    }catch{/* moved or gone: chosen again below */}
+  }
+  throw new StreamedFileNeeded(asset,!!handle);
+}
+/** THE FILE AGAIN, FROM A CLICK: the remembered one, once allowed, or one chosen now and checked by digest, then remembered
+ *  where the browser can. Called from the stop message's button, which is the click the browser asks for. */
+export async function fileAgainByClick(asset:RasterAsset,say?:(text:string)=>void):Promise<void>{
+  const digest=asset.source.sha256;if(!digest)throw new Error('This raster has no recorded digest to check a file against.');
+  const {rememberedHandle,rememberHandle,handlePicker}=await import('./file-handles.js');
+  const handle=await rememberedHandle(digest);
+  if(handle?.requestPermission&&(await handle.requestPermission({mode:'read'}))==='granted'){
+    const again=await handle.getFile();
+    if(sameFile(asset,again)){sessionFiles.set(digest,again);return;}
+  }
+  const picker=handlePicker();
+  if(picker){
+    const [chosen]=await picker({types:[{description:'GeoTIFF',accept:{'image/tiff':['.tif','.tiff']}}]});
+    if(!chosen)throw new Error('No file was chosen.');
+    await chooseStreamedFile(asset,await chosen.getFile(),say);
+    await rememberHandle(digest,chosen);
+    return;
+  }
+  const input=document.createElement('input');input.type='file';input.accept='.tif,.tiff,image/tiff';
+  const file=await new Promise<File|undefined>(resolve=>{input.onchange=()=>resolve(input.files?.[0]);input.click();});
+  if(!file)throw new Error('No file was chosen.');
+  await chooseStreamedFile(asset,file,say);
 }
 export const rereadable=(asset:RasterAsset):boolean=>!!asset.source.url||/^[a-f0-9]{64}$/.test(asset.source.sha256??'');
 /** READ THE KEPT WINDOW AGAIN, from its address or from the file chosen, and refuse it unless it is the window kept. */

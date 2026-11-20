@@ -2941,7 +2941,7 @@ export async function streamedAtPoints(points:PointInput|import("./types.js").Po
   const wanted=new Set<number>();
   for(const f of features){const c=f.geometry?.coordinates as [number,number]|undefined;if(!c)continue;
     const cell=cellAt(metadata,c);if(cell)wanted.add(cell[1]*width+cell[0]);}
-  const cells=new Map<number,number>(),reader=await openStripReader(streamedSource(asset));
+  const cells=new Map<number,number>(),reader=await openStripReader(await streamedSource(asset));
   try{for(const at of wanted){const col=at%width,row=Math.floor(at/width);
     const raw=await reader.read([x0+col,y0+row,x0+col+1,y0+row+1]);cells.set(at,rasterValues(raw,m)[0]!);}}
   finally{reader.free();}

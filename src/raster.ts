@@ -47,7 +47,11 @@ export interface RasterMetadata {width:number;height:number;bands:number;bounds:
   /** The source's registration where its values sit at grid nodes, as a geoid grid's do. `origin` and `bounds` are
    *  then the cell corners around those nodes, half a cell out, and the window kept is written as area cells. */
   sourceRegistration?:'PixelIsPoint';noData:number|string|null;bits:number;sampleFormat:number;compression:number;blockWidth:number;blockHeight:number;bytesPerPixel:number;geoKeys:Record<string,unknown>;gdal:Record<string,unknown>|null;band:Record<string,unknown>|null;description:string}
-export interface RasterAsset {sha256:string;bytes:number;mediaType:'image/tiff';filename:string;provenance?:import('./raster-provenance.js').RasterProvenance;metadata:RasterMetadata;source:{filename:string;bytes:number;lastModified:number;metadata:RasterMetadata;
+export interface RasterAsset {
+  /** A WINDOW PAST WHAT A TAB HOLDS (2026-11-19): what is kept is a copy reduced by `factor` in each direction, summed
+   *  (a count) or averaged (a value); `window` is still the full window in the source, which Sample raster reads in strips. */
+  streamed?:{factor:number;how:'sum'|'mean'};
+  sha256:string;bytes:number;mediaType:'image/tiff';filename:string;provenance?:import('./raster-provenance.js').RasterProvenance;metadata:RasterMetadata;source:{filename:string;bytes:number;lastModified:number;metadata:RasterMetadata;
   /** Where it was read from, when it was read at a URL rather than chosen from this device. */
   url?:string;
   /** THE SOURCE FILE'S DIGEST, for a GeoTIFF chosen from this device (experiment 209): the file is checked against it
@@ -95,7 +99,7 @@ export async function inspectRaster(blob:RasterSource):Promise<RasterMetadata>{
   const result:RasterMetadata={width,height,bands:1,bounds:bounds as Bounds,origin:[origin[0]!,origin[1]!],resolution:[resolution[0],resolution[1]],crs:'EPSG:4326',rasterType:'PixelIsArea',...(point?{sourceRegistration:'PixelIsPoint' as const}:{}),noData:nodata===null?null:Number.isFinite(nodata)?nodata:'NaN',bits:h.bitsPerSample,sampleFormat:h.sampleFormat,compression:h.compression,blockWidth:h.blockWidth,blockHeight:h.blockHeight,bytesPerPixel:h.bytesPerPixel,geoKeys:JSON.parse(JSON.stringify(keys)),gdal:h.gdalMetadata(),band:h.gdalMetadata(0),description:h.description};
   check(JSON.stringify(result).length<=65536,'Raster metadata exceeds the 64 KB prototype limit.');return result;
 }
-export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPixels=0):[number,number,number,number]{
+export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPixels=0,limits=true):[number,number,number,number]{
   check(Number.isFinite(paddingPixels)&&paddingPixels>=0&&paddingPixels<=1.000000002,'Raster padding must be between 0 and 1 pixel.');
   const b=geometryBounds(boundary),px=paddingPixels*metadata.resolution[0],py=paddingPixels*-metadata.resolution[1];
   const [west,south,east,north]=[b[0]-px,b[1]-py,b[2]+px,b[3]+py],[left,bottom,right,top]=metadata.bounds,tolerance=1e-9;
@@ -106,9 +110,66 @@ export function rasterWindow(metadata:RasterMetadata,boundary:Boundary,paddingPi
   check(east>left&&west<right&&north>bottom&&south<top,'The study area and this raster do not overlap: check that the file covers the area.');
   const [x,y]=metadata.origin,[dx,dy]=metadata.resolution;
   const window:[number,number,number,number]=[Math.max(0,Math.floor((west-x)/dx)),Math.max(0,Math.floor((north-y)/dy)),Math.min(metadata.width,Math.ceil((east-x)/dx)),Math.min(metadata.height,Math.ceil((south-y)/dy))];
-  const width=window[2]-window[0],height=window[3]-window[1];check(width>0&&height>0,'Study area does not intersect any raster cells.');check(width*height<=MAX_RASTER_CELLS,`This window is ${(width*height).toLocaleString('en')} cells, past the ${MAX_RASTER_CELLS.toLocaleString('en')} a step keeps. Use a smaller study area.`);
+  const width=window[2]-window[0],height=window[3]-window[1];check(width>0&&height>0,'Study area does not intersect any raster cells.');if(limits)check(width*height<=MAX_RASTER_CELLS,`This window is ${(width*height).toLocaleString('en')} cells, past the ${MAX_RASTER_CELLS.toLocaleString('en')} a step keeps. Use a smaller study area.`);
   const blocksX=Math.floor((window[2]-1)/metadata.blockWidth)-Math.floor(window[0]/metadata.blockWidth)+1,blocksY=Math.floor((window[3]-1)/metadata.blockHeight)-Math.floor(window[1]/metadata.blockHeight)+1;
-  check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=MAX_DECODE_BYTES,`The parts of this raster under the study area come to more than ${(MAX_DECODE_BYTES/1e9).toFixed(1)} GB to decode. Use a smaller study area.`);return window;
+  if(limits)check(blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel<=MAX_DECODE_BYTES,`The parts of this raster under the study area come to more than ${(MAX_DECODE_BYTES/1e9).toFixed(1)} GB to decode. Use a smaller study area.`);return window;
+}
+/** WHETHER A WINDOW IS PAST WHAT A TAB HOLDS AT ONCE: its cells past MAX_RASTER_CELLS, or its blocks past MAX_DECODE_BYTES.
+ *  Such a window is streamed (src/raster-stream.ts): a reduced copy is kept, and the full cells read again in strips. */
+export function overWindowLimit(metadata:RasterMetadata,window:readonly [number,number,number,number]):boolean{
+  const width=window[2]-window[0],height=window[3]-window[1];
+  const blocksX=Math.floor((window[2]-1)/metadata.blockWidth)-Math.floor(window[0]/metadata.blockWidth)+1,blocksY=Math.floor((window[3]-1)/metadata.blockHeight)-Math.floor(window[1]/metadata.blockHeight)+1;
+  return width*height>MAX_RASTER_CELLS||blocksX*blocksY*metadata.blockWidth*metadata.blockHeight*metadata.bytesPerPixel>MAX_DECODE_BYTES;
+}
+/** A STREAMED RASTER'S KEPT COPY, about this many cells: DR Congo's 519 million at 100 m, in blocks of 10 by 10. */
+export const REDUCED_CELLS=5_300_000;
+export const reductionFactor=(width:number,height:number)=>Math.max(2,Math.ceil(Math.sqrt(width*height/REDUCED_CELLS)));
+/** A SOURCE READ A STRIP AT A TIME by terrio, a remote one retried as `readRasterWindow` retries. */
+export async function openStripReader(blob:RasterSource,retryMs=RETRY_MS):Promise<{read:(window:[number,number,number,number])=>Promise<ArrayLike<number>>;free:()=>void}>{
+  let dataset:TerrioDataset=await openRaster(blob),stale=false;
+  const remote=typeof blob==='string';
+  return {read:async window=>{
+      for(let attempt=1;;attempt++){
+        try{
+          if(stale){try{dataset.free();}catch{/* already gone */}dataset=await openRaster(blob);stale=false;}
+          return await readCells(dataset,window);
+        }catch(error){
+          if(!remote||attempt>=RETRIES)throw error;
+          stale=true;await new Promise(resolve=>setTimeout(resolve,retryMs*2**(attempt-1)));
+        }
+      }},
+    free:()=>{try{dataset.free();}catch{/* already gone */}}};
+}
+/** A WINDOW REDUCED BY `factor` IN EACH DIRECTION, read in strips: each cell of the copy the sum of a block's cells with a
+ *  value (a count) or their mean (a value), NaN where none has one. */
+export async function reduceWindow(blob:RasterSource,metadata:RasterMetadata,window:[number,number,number,number],factor:number,
+    how:'sum'|'mean',onProgress?:(rows:number,of:number)=>void):Promise<{metadata:RasterMetadata;values:RasterValues}>{
+  const width=window[2]-window[0],height=window[3]-window[1],rw=Math.ceil(width/factor),rh=Math.ceil(height/factor);
+  const sums=new Float64Array(rw*rh),counts=new Uint32Array(rw*rh);
+  const noData=typeof metadata.noData==='number'?metadata.noData:metadata.noData===null?undefined:Number(metadata.noData);
+  const strip=factor*Math.max(1,Math.floor(64e6/(Math.max(1,width)*8*factor)));
+  const reader=await openStripReader(blob);
+  try{
+    for(let top=0;top<height;top+=strip){
+      const rows=Math.min(strip,height-top);
+      const raw=await reader.read([window[0],window[1]+top,window[2],window[1]+top+rows]);
+      for(let r=0;r<rows;r++){
+        const base=Math.floor((top+r)/factor)*rw,at=r*width;
+        for(let c=0;c<width;c++){
+          const v=raw[at+c]!;
+          if(!Number.isFinite(v)||v===noData)continue;
+          const b=base+Math.floor(c/factor);sums[b]+=v;counts[b]!++;
+        }
+      }
+      onProgress?.(top+rows,height);
+    }
+  }finally{reader.free();}
+  const values=emptyValues(rw*rh,metadata);
+  for(let i=0;i<values.length;i++)values[i]=counts[i]?(how==='sum'?sums[i]!:sums[i]!/counts[i]!):NaN;
+  const origin:[number,number]=[metadata.origin[0]+window[0]*metadata.resolution[0],metadata.origin[1]+window[1]*metadata.resolution[1]];
+  const resolution:[number,number]=[metadata.resolution[0]*factor,metadata.resolution[1]*factor];
+  return {metadata:{...metadata,width:rw,height:rh,origin,resolution,
+    bounds:[origin[0],origin[1]+rh*resolution[1],origin[0]+rw*resolution[0],origin[1]]},values};
 }
 /** HOW FAR A STUDY AREA REACHES PAST THE RASTER, per edge, in degrees and roughly in kilometres; empty where it does not. */
 export function rasterOverhang(metadata:RasterMetadata,boundary:Boundary):{edge:'west'|'east'|'south'|'north';degrees:number;km:number}[]{

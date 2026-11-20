@@ -102,12 +102,27 @@ does not overlap the raster at all is refused.
   this device.
 - **It will not read classic NetCDF-3**, a satellite swath, or a grid on another projection. A NetCDF-3 file can be
   converted with `nccopy -k nc4`. **A NetCDF file at a URL** is not read yet: keep it on this laptop and choose it.
-- **It will not keep more than 518.9 million cells**, nor a window of more than 2.1 GB. DR Congo whole at 100 m fits.
-  A smaller study area keeps fewer.
+- **It will not keep more than 518.9 million cells**, nor a window of more than 2.1 GB. Past either, the raster is
+  **streamed**: what is kept, and drawn on a map, is a copy in blocks (10 by 10 cells for a country at 100 m), each block
+  summed for a count such as people and averaged for a value such as elevation. Sample a raster reads the full cells
+  from the source at each run, a strip at a time. Read from an address, that works on any device; read from a file on
+  this computer, the file is chosen again in each new session, and checked against the file first chosen. A NetCDF
+  file is not streamed yet.
 
 ## Where it is used
 
 The sea-level example (EGM2008, the mean sea surface and DeltaDTM around Manila).
+
+## History
+
+### 2026-11-19 · A window too large to keep is streamed (0.13.0)
+
+GHS-POP over DR Congo was refused: about 519 million cells of 8 bytes, 4.2 GB, past the 2.1 GB a tab decodes at once
+(the practitioner, running the population rasters example). WorldPop's 4-byte cells fit; GHS-POP's did not. Chosen
+over holding GHS-POP's cells in 4 bytes, which would have changed its values in the eighth figure (*"Start
+streaming"*). A window past either limit is now kept as a copy in blocks and read from its source in strips by Sample
+a raster. Checked on a small GeoTIFF read by terrio (`tests/raster-stream.test.mjs`): the blocks equal their cells'
+sums and means. **Not yet measured on DR Congo itself**, which needs GHS-POP's file.
 
 ---
 

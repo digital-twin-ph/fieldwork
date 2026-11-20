@@ -10,11 +10,30 @@ export function validateRasterAsset(asset:RasterAsset):void{
   validateRasterProvenance(asset?.provenance);const m=asset?.metadata;
   if(!asset||asset.mediaType!=='image/tiff'||!/^[a-f0-9]{64}$/.test(asset.sha256)||!Number.isSafeInteger(asset.bytes)||asset.bytes<8||asset.bytes>rasterFileByteLimit()||typeof asset.filename!=='string'||asset.filename.length>200||!m||!Number.isSafeInteger(m.width)||!Number.isSafeInteger(m.height)||m.width<1||m.height<1||m.width*m.height>MAX_RASTER_CELLS||m.crs!=='EPSG:4326'||m.rasterType!=='PixelIsArea'||!Array.isArray(m.origin)||m.origin.length!==2||!m.origin.every(Number.isFinite)||!Array.isArray(m.resolution)||m.resolution.length!==2||!(m.resolution[0]>0&&m.resolution[1]<0)||!Array.isArray(m.bounds)||m.bounds.length!==4||!m.bounds.every(Number.isFinite)||!asset.source||typeof asset.source.filename!=='string'||!Number.isSafeInteger(asset.source.bytes)||!Array.isArray(asset.window)||asset.window.length!==4||!asset.window.every(Number.isSafeInteger)||JSON.stringify(asset).length>200000)throw new Error('Invalid retained raster asset or metadata.');
   const derived=[m.origin[0],m.origin[1]+m.height*m.resolution[1],m.origin[0]+m.width*m.resolution[0],m.origin[1]];
-  if(!m.resolution.every(Number.isFinite)||m.bands!==1||m.bounds.some((v,i)=>Math.abs(v-derived[i])>1e-9)||![m.blockWidth,m.blockHeight,m.bytesPerPixel].every(v=>Number.isSafeInteger(v)&&v>0)||(asset.source.url?asset.source.bytes<0||!/^https?:\/\/\S{1,2000}$/.test(asset.source.url):asset.source.bytes<8)||asset.source.filename.length>255||(asset.source.sha256!==undefined&&!/^[a-f0-9]{64}$/.test(asset.source.sha256))||!Number.isFinite(asset.source.lastModified)||!asset.source.metadata||asset.window[0]<0||asset.window[1]<0||asset.window[2]-asset.window[0]!==m.width||asset.window[3]-asset.window[1]!==m.height)throw new Error('Raster bounds, dimensions or source window are inconsistent.');
+  if(!m.resolution.every(Number.isFinite)||m.bands!==1||m.bounds.some((v,i)=>Math.abs(v-derived[i])>1e-9)||![m.blockWidth,m.blockHeight,m.bytesPerPixel].every(v=>Number.isSafeInteger(v)&&v>0)||(asset.source.url?asset.source.bytes<0||!/^https?:\/\/\S{1,2000}$/.test(asset.source.url):asset.source.bytes<8)||asset.source.filename.length>255||(asset.source.sha256!==undefined&&!/^[a-f0-9]{64}$/.test(asset.source.sha256))||!Number.isFinite(asset.source.lastModified)||!asset.source.metadata||asset.window[0]<0||asset.window[1]<0||Math.ceil((asset.window[2]-asset.window[0])/(asset.streamed?.factor??1))!==m.width||Math.ceil((asset.window[3]-asset.window[1])/(asset.streamed?.factor??1))!==m.height||(asset.streamed!==undefined&&(!Number.isSafeInteger(asset.streamed.factor)||asset.streamed.factor<2||!['sum','mean'].includes(asset.streamed.how))))throw new Error('Raster bounds, dimensions or source window are inconsistent.');
 }
 /** A WINDOW THAT CAN BE READ AGAIN (experiment 209): from the address it was read at, or from a GeoTIFF whose digest was
  *  kept. Such a window travels as its source, window and digest, not its bytes, because a country's window from each of
  *  three sources is hundreds of megabytes; on another device it is read again and refused if it differs. */
+/** FILES CHOSEN THIS SESSION, by digest (2026-11-19): a streamed raster read from a file on this device is read again from it
+ *  at each run, and a browser keeps no file between sessions, so after a reload it is chosen again in Raster input. */
+export const sessionFiles=new Map<string,File>();
+/** THE SOURCE FILE CHOSEN AGAIN for a streamed raster whose kept copy is on this device: checked against the file first
+ *  chosen, then held for this session's runs. */
+export async function chooseStreamedFile(asset:RasterAsset,file:File,say?:(text:string)=>void):Promise<void>{
+  const {fileDigest}=await import('./sha256-stream.js');
+  if(file.size!==asset.source.bytes||await fileDigest(file,(read,of)=>say?.(`Checking ${file.name}: ${Math.round(100*read/of)}% read…`))!==asset.source.sha256)
+    throw new Error(`That is not the file this raster was read from: ${asset.source.filename}, ${asset.source.bytes.toLocaleString('en')} bytes, was expected.`);
+  sessionFiles.set(asset.source.sha256!,file);
+}
+/** Where a streamed raster's full cells are read from at a run: its address, or the file chosen this session. */
+export function streamedSource(asset:RasterAsset):string|File{
+  if(asset.source.url)return asset.source.url;
+  const file=asset.source.sha256?sessionFiles.get(asset.source.sha256):undefined;
+  if(file)return file;
+  throw new Error(`Choose ${asset.source.filename} again in Raster input: this raster is too large to keep on the device, so each run `
+    +'reads it from the file, and a browser keeps no file between sessions.');
+}
 export const rereadable=(asset:RasterAsset):boolean=>!!asset.source.url||/^[a-f0-9]{64}$/.test(asset.source.sha256??'');
 /** READ THE KEPT WINDOW AGAIN, from its address or from the file chosen, and refuse it unless it is the window kept. */
 export async function rereadWindow(asset:RasterAsset,file?:File,say?:(text:string)=>void):Promise<Uint8Array<ArrayBuffer>>{
@@ -29,7 +48,12 @@ export async function rereadWindow(asset:RasterAsset,file?:File,say?:(text:strin
     from=file;
   }else if(asset.source.url)from=asset.source.url;
   else throw new Error(`Choose ${asset.source.filename} on this device to read the window again.`);
-  const metadata=await inspectRaster(from),data=await readRasterWindow(from,metadata,asset.window),bytes=encodeRaster(data);
+  // A STREAMED RASTER'S KEPT COPY is made again the way it was made: reduced in blocks from the full window.
+  const {reduceWindow}=await import('./raster.js');
+  const metadata=await inspectRaster(from),bytes=encodeRaster(asset.streamed
+    ?await reduceWindow(from,metadata,asset.window,asset.streamed.factor,asset.streamed.how,(rows,of)=>say?.(`Reading the window again: ${Math.round(100*rows/of)}%…`))
+    :await readRasterWindow(from,metadata,asset.window));
+  if(file&&asset.streamed&&asset.source.sha256)sessionFiles.set(asset.source.sha256,file);
   if(bytes.length!==asset.bytes||await contentHash(bytes)!==asset.sha256)
     throw new Error('The window read again is not the window that was kept: the source has changed since. Nothing was kept.');
   return bytes;
@@ -71,7 +95,10 @@ export function rasterReceipt(node:WorkflowNode<'raster_input'|'clip_raster'>,gr
   const overhang=rasterOverhang(grid.metadata,area.boundary);
   const beyond=overhang.length?issueFacts(activity,source,`urn:fieldwork:run:${runId}:raster:${node.id}`,
     [{kind:'AreaBeyondRaster',says:overhangSentence(overhang)}]):'';
-  const all=facts+beyond;
+  // A STREAMED RASTER, SAID (2026-11-19): what is kept and drawn is reduced; Sample raster reads the full cells.
+  const streamed=grid.asset.streamed&&!sourceId?`${activity} fw:keptReduction "blocks of ${grid.asset.streamed.factor} by ${grid.asset.streamed.factor} cells, `
+    +`${grid.asset.streamed.how==='sum'?'each summed':'each averaged'}; the full window too large to keep, read from its source in strips by Sample a raster".\n`:'';
+  const all=facts+beyond+streamed;
   return {nodeId:node.id,kind:'computation',facts:all,input:all,rules:'',conclusions:[],method:grid.mask?`Mask native cells using ${grid.mask.method} inclusion and an outer margin of ${grid.mask.marginPixels||0} native pixels. Map hides pixel portions outside this footprint; stored values are unchanged. No resampling, population total or fractional-cell weighting.`:'Use a locally retained native-resolution GeoTIFF window. Original file descriptors and extracted source metadata accompany the raster asset.'};
 }
 export {clipRaster};

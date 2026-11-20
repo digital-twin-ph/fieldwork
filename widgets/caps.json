@@ -488,6 +488,18 @@
       "evidence": "Chosen; no record says why 8. Since 2026-11-19 it is the one number every point port follows.",
       "refuses": "A ninth point layer on a map, a table or Deduplicate points. Points from more sources can be stacked with Append rows first.",
       "liftTest": "A map that needs a ninth layer kept separate in its key."
+    },
+    {
+      "id": "reduced-cells",
+      "constant": "REDUCED_CELLS",
+      "iri": "urn:fieldwork:cap:reduced-cells",
+      "value": 5300000,
+      "unit": "cells in a streamed raster's kept copy",
+      "kind": "artefact",
+      "basis": "derived",
+      "evidence": "Derived 2026-11-19 so that GHS-POP or WorldPop over DR Congo at 100 m, about 519 million cells, is kept in blocks of 10 by 10 (about 5.2 million cells), a copy the size of a province's window, which a tab holds and Map draws. The full window is read from its source by Sample a raster.",
+      "refuses": "Nothing. It sets how coarse the kept and drawn copy of a streamed raster is; totals are read at full resolution.",
+      "liftTest": "Not a cap to lift: whether a 1 km copy of a country is fine enough to look at is a practitioner observation."
     }
   ],
   "kindVocabulary": {

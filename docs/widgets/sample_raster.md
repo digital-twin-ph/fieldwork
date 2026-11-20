@@ -252,3 +252,15 @@ findings: the files' `scale_factor` is 10000, a divisor, where temperature's 0.0
 states which it is rather than the reader guessing; and pixel reliability is stored unsigned with fill 255, where LP
 DAAC's table says int8 with fill −1. The quality rules a step offers are now its product's own, and a layer or rule
 from another product is not carried over when the files change.
+
+### 2026-11-19 · A streamed raster read at full resolution (0.8.0)
+
+A raster too large to keep (Raster input, History: streamed) is read here from its source a strip of rows at a time,
+added up in the Rust kernel (`kernel/src/zonal.rs`) by the same rule, a cell counted when its centre is inside or on
+the area. Each area's median is found exactly by reading again: a histogram finds the bins holding the middle ranks,
+and their values are collected and sorted; where the middle rank falls on a run of one value, such as zeros, nothing
+need be collected. At points, only the points' cells are read. Checked against totals held in memory, on an offset
+window with no data, zeros, a hole and an area reaching past the window: every total, count, mean, median and
+deviation equal (`tests/raster-stream.test.mjs`). **Not yet measured on DR Congo**: how long a country takes, read
+from a file or by range from an address.
+

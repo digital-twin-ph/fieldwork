@@ -1339,6 +1339,10 @@ The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it
 
 ### GHS-POP over DR Congo is refused: 8-byte cells (found 2026-11-19; streaming decided the same day)
 
+**Built 2026-11-19, not yet measured:** Raster input 0.13.0 keeps a reduced copy past the limit; Sample a raster 0.8.0
+reads the full window in strips (kernel/src/zonal.rs), equal to the in-memory totals on a small raster. Left: run GHS-POP
+over DR Congo through it and time it, by range from the JRC and from a local file (asks first: the file is GBs).
+
 The population rasters example over DR Congo: GHS-POP's window is about 519 million cells of 8 bytes, 4.2 GB, past
 the 2.1 GB a tab decodes (`raster-decode-bytes`). WorldPop's, 4 bytes a cell, fits. Options put to the practitioner:
 hold GHS-POP's cells as 4-byte numbers, stated (7 significant figures a cell; totals still summed in 8 bytes);

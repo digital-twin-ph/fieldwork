@@ -67,10 +67,12 @@ export function totalOver(geometry:Boundary,grid:Pick<RasterGrid,'metadata'|'val
  *  rasterstats give by default), smallest and largest, how many are above zero and their share, and the total over the
  *  area's size on the sphere, as Calculate area gives it. Per cell, as a mean is: a latitude-longitude grid's cells are not
  *  equal in area. */
-function zonalStatistics(geometry:Boundary,t:ReturnType<typeof totalOver>){
+type AreaSums=Omit<ReturnType<typeof totalOver>,'values'>&{values?:Float64Array;median?:number|null};
+function zonalStatistics(geometry:Boundary,t:AreaSums){
   const n=t.cells,mean=n?t.total/n:null;
   const sorted=t.values?Float64Array.from(t.values).sort():new Float64Array(0);
-  const median=n?(n%2?sorted[(n-1)/2]!:(sorted[n/2-1]!+sorted[n/2]!)/2):null;
+  // A STREAMED RASTER'S MEDIAN comes found (src/raster-stream.ts), its values never held at once.
+  const median=t.median!==undefined?t.median:n?(n%2?sorted[(n-1)/2]!:(sorted[n/2-1]!+sorted[n/2]!)/2):null;
   const sd=n&&mean!==null?Math.sqrt(Math.max(0,t.squares/n-mean*mean)):null;
   const km2=calculateArea(geometry,'km2').value;
   return {cell_mean:mean,cell_median:median,cell_sd:sd,cell_min:t.min,cell_max:t.max,
@@ -80,10 +82,29 @@ function zonalStatistics(geometry:Boundary,t:ReturnType<typeof totalOver>){
 /** Every area's total, as polygons carrying it, so they can be mapped and related like any other polygon layer. */
 export function areaTotals(features:readonly AreaFeature[],grid:RasterGrid,params:WorkflowNode<'sample_raster'>['params']){
   if(grid.metadata.crs!=='EPSG:4326')throw new Error('Sample a raster needs an EPSG:4326 raster; this prototype implements no datum shift.');
+  const placed=features.filter(f=>f.geometry);
+  return areaTotalsFrom(placed,placed.map(f=>totalOver(f.geometry!,grid,!!params.cellStatistics)),params);
+}
+/** A STREAMED RASTER TOTALLED OVER AREAS (2026-11-19): its full cells read from the source in strips, by the same rule. */
+export async function streamedAreaTotals(features:readonly AreaFeature[],grid:RasterGrid,params:WorkflowNode<'sample_raster'>['params'],
+    progress?:(pass:number,rows:number,of:number)=>void){
+  const asset=grid.asset;
+  if(!asset?.streamed)throw new Error('This raster is not streamed.');
+  if(asset.source.metadata.crs!=='EPSG:4326')throw new Error('Sample a raster needs an EPSG:4326 raster; this prototype implements no datum shift.');
+  const {streamedSource}=await import('./raster-workflow.js'),{openStripReader}=await import('./raster.js'),{streamedTotals}=await import('./raster-stream.js');
+  const placed=features.filter(f=>f.geometry);
+  const reader=await openStripReader(streamedSource(asset));
+  try{
+    const totals=await streamedTotals(placed.map(f=>f.geometry!),asset.source.metadata,asset.window,reader.read,
+      {median:!!params.cellStatistics,...(progress?{progress}:{})});
+    return areaTotalsFrom(placed,totals,params);
+  }finally{reader.free();}
+}
+function areaTotalsFrom(features:readonly AreaFeature[],totals:readonly AreaSums[],params:WorkflowNode<'sample_raster'>['params']){
   const column=params.attribute?.trim()||'total';
   const counts:AreaTotalCounts={areas:0,cells:0,noData:0,outside:0,empty:0};
-  const out=features.filter(f=>f.geometry).map(f=>{
-    const t=totalOver(f.geometry!,grid,!!params.cellStatistics);
+  const out=features.map((f,i)=>{
+    const t=totals[i]!;
     counts.areas++;counts.cells+=t.cells;counts.noData+=t.noData;counts.outside+=t.outside;if(!t.cells)counts.empty++;
     const total=t.cells?t.total:null;
     return {id:String(f.id),name:f.name??String(f.id),geometry:f.geometry!,

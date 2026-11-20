@@ -5,7 +5,10 @@ import type {Boundary,Position} from './types.js';
 import type {RasterAsset,RasterGrid,RasterMetadata} from './raster.js';
 import {rasterImage,rasterImageFactor,scaleKeySvg,scaleWords} from './raster-image.js';
 export {rasterImage} from './raster-image.js';
-import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster,savedWindowCells,rasterOverhang,overhangSentence,rasterFileByteLimit,MAX_RASTER_CELLS} from './raster.js';
+import {inspectRaster,rasterWindow,readRasterWindow,encodeRaster,savedWindowCells,rasterOverhang,overhangSentence,rasterFileByteLimit,MAX_RASTER_CELLS,overWindowLimit,reductionFactor,reduceWindow} from './raster.js';
+import {sessionFiles} from './raster-workflow.js';
+import {rasterUnitsOf} from './raster-units.js';
+import {rasterMeasure} from './raster-panels.js';
 import {contentHash} from './project-files.js';
 import {isNetcdf,inspectNetcdf,readNetcdfWindow,type NetcdfGrid} from './netcdf-raster.js';
 import {storePDFs} from './evidence-storage.js';
@@ -50,10 +53,14 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       const chosenName=file?file.name:url?nameOf(url):'';
       const presetShown=(file?file.name:existing&&!url?existing.source.filename:'')===WORLDPOP_BOTSWANA_FILENAME;
       const away=existing&&kept&&!kept.onDevice&&!picked();
+      // A STREAMED RASTER READ FROM A FILE: its copy is here, but each run reads the file, which a browser keeps only per session.
+      const needsFile=!!(existing?.streamed&&kept?.onDevice&&!existing.source.url&&existing.source.sha256&&!sessionFiles.has(existing.source.sha256)&&!picked());
       const where=existing?(existing.source.url?new URL(existing.source.url).hostname:existing.source.filename):'';
-      const keptCard=rereadDone&&!picked()?card('The kept window','<p class="notice" data-raster-reread-done>Read again and checked: it is the window that was kept.</p>')
-        :!away?'':card('The kept window',kept!.rereadable
-        ?`<p class="notice" data-raster-missing>The window is not on this device yet: the project carries where it came from, not its cells. Read it again from ${esc(where)}; it is checked against the window that was kept.</p>`
+      const keptCard=rereadDone&&!picked()?card(existing?.streamed?'The source file':'The kept window',existing?.streamed&&kept?.onDevice?'<p class="notice" data-raster-reread-done>Checked: it is the file first chosen. Each run this session reads it.</p>':'<p class="notice" data-raster-reread-done>Read again and checked: it is the window that was kept.</p>')
+        :!away&&!needsFile?'':card(needsFile?'The source file':'The kept window',kept!.rereadable
+        ?(needsFile?`<p class="notice" data-raster-streamed-file>This raster is too large to keep on the device, so each run reads it from ${esc(where)}. `
+            +'A browser keeps no file between sessions: choose it again for this session. It is checked against the file first chosen.</p>'
+          :`<p class="notice" data-raster-missing>The window is not on this device yet: the project carries where it came from, not its cells. Read it again from ${esc(where)}; it is checked against the window that was kept.</p>`)
           +(existing!.source.url?'<div class="inspector-actions"><button type="button" id="raster-reread" class="button primary">Read the window again</button></div>'
             :`<div class="field"><label class="field-label" for="raster-reread-file">The same file again: ${esc(existing!.source.filename)} (${existing!.source.bytes.toLocaleString('en')} bytes)</label><input id="raster-reread-file" type="file" accept=".tif,.tiff,image/tiff"></div>`)
           +`<p id="raster-reread-status" class="description" role="status">${esc(rereadSaid)}</p>`
@@ -155,6 +162,29 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       if(!picked()&&existing){if(!onSave({...structuredClone(existing),provenance}))throw new Error('Source metadata could not be saved. Retry Apply.');return true;}
       const from=file??url;if(!from||!metadata)throw new Error('Choose a supported raster file.');
       say('Reading the selected window…');
+      // PAST WHAT A TAB HOLDS, STREAMED (2026-11-19): a copy reduced in blocks is kept, and Sample raster reads the full cells
+      // from the source in strips at each run. A NetCDF grid is not streamed yet, and is refused as before.
+      const full=rasterWindow(metadata,boundary,Number(d.padding),false);
+      if(!(file&&netcdf)&&overWindowLimit(metadata,full)){
+        const {terrio,terrioLoaded}=await import('./terrio.js');
+        if(!terrioLoaded()){say('Fetching Fieldwork\u2019s raster engine, about 6 MB, once for this device…');await terrio();}
+        const width=full[2]-full[0],height=full[3]-full[1],factor=reductionFactor(width,height);
+        const probe={provenance,source:{filename:file?file.name:nameOf(url!),bytes:0,lastModified:0,metadata}} as unknown as RasterAsset;
+        const how=rasterMeasure(rasterUnitsOf(probe)?.units).kind==='count'?'sum' as const:'mean' as const;
+        const reduced=await reduceWindow(from,metadata,full,factor,how,(rows,of)=>say(`This window is ${(width*height).toLocaleString('en')} cells, `
+          +`more than a tab holds at once. Keeping a copy in blocks of ${factor} by ${factor} (${how==='sum'?'each block summed':'each block averaged'}): `
+          +`${Math.round(100*rows/of)}% of ${of.toLocaleString('en')} rows read…`,rows/of));
+        const bytes=encodeRaster(reduced);
+        const chosen=file,sourceDigest=chosen?await fileDigest(chosen,(read,of)=>say(`Checking ${chosen.name}: ${Math.round(100*read/of)}% of ${(of/1e9).toFixed(1)} GB read…`,read/of)):undefined;
+        if(chosen&&sourceDigest)sessionFiles.set(sourceDigest,chosen);
+        const retained=await inspectRaster(bytes.buffer),asset:RasterAsset={provenance,filename:'raster-window.tif',mediaType:'image/tiff',bytes:bytes.length,
+          sha256:await contentHash(bytes),metadata:retained,streamed:{factor,how},
+          source:file?{filename:file.name,bytes:file.size,lastModified:file.lastModified,metadata,...(sourceDigest?{sha256:sourceDigest}:{})}
+            :{filename:nameOf(url!),bytes:urlBytes??0,lastModified:0,metadata,url:url!},window:full};
+        await storePDFs(new Map([[asset.sha256,bytes]]),new Map([[asset.sha256,{...asset,asset}]]));
+        if(!onSave(asset))throw new Error('Raster metadata could not be saved. Your previous project is unchanged; retry Apply.');
+        return true;
+      }
       const window=rasterWindow(metadata,boundary,Number(d.padding));
       // THE ENGINE'S FIRST FETCH, SAID (experiment 221): 6 MB the first time a raster is read on this device, then kept.
       if(!(file&&netcdf)){const {terrio,terrioLoaded}=await import('./terrio.js');

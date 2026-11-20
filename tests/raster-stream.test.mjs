@@ -34,3 +34,54 @@ for(const [label,options] of [['strips of 5 rows',{stripBytes:5*W*8}],['one stri
     assert.ok(got[2].outside>0,'the area past the window has cells outside');
     assert.equal(got[3].median,7);
   });
+
+// THE STREAMED PATH ON A REAL GEOTIFF, read by terrio: the reduced copy, the area totals and the points.
+import {writeGeoTiff,inspectRaster,reduceWindow,readRasterWindow} from '../build/raster.js';
+import {sessionFiles} from '../build/raster-workflow.js';
+import {areaTotals,streamedAreaTotals} from '../build/raster-areas.js';
+import {streamedAtPoints} from '../build/core.js';
+import {sampleRaster} from '../build/sample-raster.js';
+
+const TW=63,TH=47,cells=new Float32Array(TW*TH).map((_,i)=>i%13===0?0:i%29===0?NaN:((i*31)%17)/2);
+const tiff=new File([writeGeoTiff(cells,TW,TH,[20,-2],[0.01,-0.01],'test')],'stream-test.tif');
+const tiffWindow=[2,3,61,44];
+
+test('a window reduced in blocks: each block the sum or the mean of its cells with a value',async()=>{
+  const m=await inspectRaster(tiff);
+  for(const how of ['sum','mean']){
+    const r=await reduceWindow(tiff,m,tiffWindow,4,how);
+    const w=tiffWindow[2]-tiffWindow[0],h=tiffWindow[3]-tiffWindow[1];
+    assert.equal(r.metadata.width,Math.ceil(w/4));assert.equal(r.metadata.height,Math.ceil(h/4));
+    assert.deepEqual(r.metadata.resolution,[0.04,-0.04]);
+    for(const [br,bc] of [[0,0],[3,5],[r.metadata.height-1,r.metadata.width-1]]){
+      let s=0,n=0;
+      for(let y=br*4;y<Math.min(h,br*4+4);y++)for(let x=bc*4;x<Math.min(w,bc*4+4);x++){
+        const v=cells[(y+tiffWindow[1])*TW+(x+tiffWindow[0])];if(Number.isFinite(v)){s+=v;n++;}}
+      const got=r.values[br*r.metadata.width+bc];
+      if(!n)assert.ok(Number.isNaN(got));else assert.ok(Math.abs(got-(how==='sum'?s:s/n))<1e-4,`${how} block ${br},${bc}`);
+    }
+  }
+});
+
+test('a streamed raster totalled over areas and read at points gives what the whole window gives',async()=>{
+  const m=await inspectRaster(tiff),sha='a'.repeat(64);sessionFiles.set(sha,tiff);
+  const full=await readRasterWindow(tiff,m,tiffWindow);
+  const reduced=await reduceWindow(tiff,m,tiffWindow,4,'sum');
+  const asset={streamed:{factor:4,how:'sum'},window:tiffWindow,source:{filename:'stream-test.tif',bytes:tiff.size,lastModified:0,metadata:m,sha256:sha}};
+  const streamed={metadata:reduced.metadata,values:reduced.values,asset};
+  const at=(c,r)=>[full.metadata.origin[0]+c*0.01,full.metadata.origin[1]-r*0.01];
+  const ring=(c0,r0,c1,r1)=>[at(c0,r0),at(c1,r0),at(c1,r1),at(c0,r1),at(c0,r0)];
+  const features=[{id:'a',name:'A',geometry:{type:'Polygon',coordinates:[ring(1.5,2.2,30.7,20.1)]}},
+    {id:'b',name:'B',geometry:{type:'Polygon',coordinates:[ring(-4,10,70,52)]}}];
+  const params={label:'t',over:'areas',cellStatistics:true};
+  const want=areaTotals(features,{...full,asset:{}},params),got=await streamedAreaTotals(features,streamed,params);
+  assert.equal(got.sentence,want.sentence);
+  got.value.features.forEach((f,i)=>{for(const [k,v] of Object.entries(want.value.features[i].properties)){
+    if(typeof v==='number'&&!Number.isInteger(v))assert.ok(Math.abs(f.properties[k]-v)<=1e-9*Math.max(1,Math.abs(v)),`${f.id} ${k}`);
+    else assert.equal(f.properties[k],v,`${f.id} ${k}`);}});
+  const points={type:'FeatureCollection',features:[[3,4],[10.5,9.5],[40,30],[80,80]].map(([c,r],i)=>({type:'Feature',id:`p${i}`,properties:{name:`p${i}`},
+    geometry:{type:'Point',coordinates:at(c,r)}}))};
+  const pointParams={label:'s',attribute:'value'};
+  const wantAt=sampleRaster(points,{...full,asset:{}},pointParams),gotAt=sampleRaster(points,await streamedAtPoints(points,streamed),pointParams);
+  assert.deepEqual(gotAt.value.features.map(f=>f.properties.value),wantAt.value.features.map(f=>f.properties.value));
+});

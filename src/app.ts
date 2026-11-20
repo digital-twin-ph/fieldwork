@@ -5479,9 +5479,13 @@ function renderInspector(){
       {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName)??ghsRecordFor(name),kept);
     if(!keptAsset){open();return;}
     void (async()=>{
-      const {rereadable,rereadWindow}=await import('./raster-workflow.js');
-      open({onDevice:!!await readPDF(keptAsset.sha256),rereadable:rereadable(keptAsset),
-        reread:async(file,say)=>{const bytes=await rereadWindow(keptAsset,file,say);
+      const {rereadable,rereadWindow,chooseStreamedFile}=await import('./raster-workflow.js');
+      const onDevice=!!await readPDF(keptAsset.sha256);
+      open({onDevice,rereadable:rereadable(keptAsset),
+        reread:async(file,say)=>{
+          // A STREAMED RASTER'S COPY ON THIS DEVICE: only its source file is wanted, checked and held for this session.
+          if(keptAsset.streamed&&onDevice&&file){await chooseStreamedFile(keptAsset,file,say);renderInspector();return;}
+          const bytes=await rereadWindow(keptAsset,file,say);
           await storePDFs(new Map([[keptAsset.sha256,bytes]]),new Map([[keptAsset.sha256,{...keptAsset,asset:keptAsset}]]));renderInspector();},
         download:async()=>{downloadRaster(await rasterOfNode(workflow,n.id));}});
     })();

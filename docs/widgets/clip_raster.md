@@ -60,3 +60,9 @@ Moved to the Inspector every touched widget takes (experiment 186): Name, Inputs
 The inclusion rule and the margin had been edited directly in the panel and saved on each change; they are now in
 Configure… with the choice of boundary, and saved together on Apply. The panel's description of its processing
 parameters was removed, and Result now reports the cells kept.
+
+### 2026-11-19 · A streamed raster is not clipped (1.2.1)
+
+A raster too large to keep is streamed (Raster input, History), and a clip of it would be as large. Clip raster says
+so and points to Sample a raster, which reads a streamed raster over areas or at points.
+

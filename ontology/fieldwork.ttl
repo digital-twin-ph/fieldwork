@@ -1340,6 +1340,9 @@ fw:pixelSizeY a owl:DatatypeProperty.
 fw:rasterMaskMethod a owl:DatatypeProperty;
   rdfs:label "Raster mask method";
   rdfs:comment "The author-selected inclusion method: cell-center, all-touched, or bounding-window for an unmasked acquisition. The name alone does not fix the rule; fw:rasterMaskConvention identifies which rule the run applied.".
+fw:keptReduction a owl:DatatypeProperty;
+  rdfs:label "Kept reduction";
+  rdfs:comment "For a raster window too large to keep (2026-11-19): how the copy kept and drawn was reduced, in blocks of cells summed or averaged. The full window is read from its source in strips by Sample a raster, so its totals are at full resolution.".
 fw:rasterMaskConvention a owl:DatatypeProperty;
   rdfs:label "Raster mask convention";
   rdfs:comment "Identifies the exact inclusion rule a run applied, so receipts produced under different rules are not mistaken for each other. \"native-window/1\" retains a bounding window without masking. \"cell-centre/1\" includes a cell when its centre lies inside or on the cutline. \"positive-area/1\" includes a cell when the cutline covers part of its area or crosses its interior, which aligns with GDAL ALL_TOUCHED except where a cutline vertex lies exactly on a cell border. Receipts exported before 2026-10-08 carry no convention and were produced by an earlier, more inclusive all-touched rule.".
@@ -1959,6 +1962,15 @@ fw:capValueInForce a owl:DatatypeProperty;
   fw:capRefuses "Point data of more than 250,000 records, from a file, pins, generated points or reprojection; a map or table given more than that.";
   fw:capLiftTest "Measure 500,000 points the same way. A table of more than 250,000 rows cannot be made, so the file route is the one to try; the interactive map has its own, lower limit.".
 
+<urn:fieldwork:cap:reduced-cells> a fw:Cap;
+  rdfs:label "reduced-cells";
+  fw:capKind "artefact";
+  fw:capValue 5300000;
+  fw:capUnit "cells in a streamed raster's kept copy";
+  fw:capBasis "derived";
+  fw:capEvidence "Derived 2026-11-19 so that GHS-POP or WorldPop over DR Congo at 100 m, about 519 million cells, is kept in blocks of 10 by 10 (about 5.2 million cells), a copy the size of a province's window, which a tab holds and Map draws. The full window is read from its source by Sample a raster.";
+  fw:capRefuses "Nothing. It sets how coarse the kept and drawn copy of a streamed raster is; totals are read at full resolution.";
+  fw:capLiftTest "Not a cap to lift: whether a 1 km copy of a country is fine enough to look at is a practitioner observation.".
 <urn:fieldwork:cap:interactive-marks> a fw:Cap;
   rdfs:label "interactive-marks";
   fw:capKind "artefact";

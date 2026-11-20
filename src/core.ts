@@ -1488,7 +1488,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(!inputs.raster)throw new Error('Connect a prepared Raster input or Clip raster to Sample a raster.');
         // OVER AREAS (experiment 205): each area's cells totalled, no data counted apart, the share outside the raster said.
         if(node.params.over==='areas'){
-          const {areaTotals,areaTotalsReceipt}=await import('./raster-areas.js');
+          const {areaTotals,streamedAreaTotals,areaTotalsReceipt}=await import('./raster-areas.js');
           const study=(inputs as unknown as {area?:{units?:{id:string;name:string}[];boundary?:import('./types.js').Boundary}}).area;
           const layer=(inputs as unknown as {areas?:{features?:{id:string|number;name?:string;geometry?:import('./types.js').Boundary|null}[]}}).areas;
           if(study&&layer)throw new Error('Connect a polygon layer or a study area to areas, not both.');
@@ -1496,13 +1496,20 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             :study?.boundary?[{id:'area',name:'Study area',geometry:study.boundary}]:undefined;
           const features=layer?.features??fromStudy;
           if(!features?.length)throw new Error('Connect a polygon layer or a study area to areas: the raster is totalled over each.');
-          const totals=areaTotals(features,inputs.raster,node.params);
+          // A STREAMED RASTER (2026-11-19) is read from its source in strips, its kept copy being reduced.
+          let totals;
+          if(inputs.raster.asset?.streamed){
+            const {runDetail}=await import('./run-progress.js');
+            try{totals=await streamedAreaTotals(features,inputs.raster,node.params,(pass,rows,of)=>runDetail({nodeId:node.id,
+              label:node.params.label||'Sample a raster',done:rows,of,what:pass===1?'rows read':`rows read again (pass ${pass}, for the median)`}));}
+            finally{runDetail(null);}
+          }else totals=areaTotals(features,inputs.raster,node.params);
           value=totals.value as unknown as DisplayValue;
           receipts.push(areaTotalsReceipt(node,totals.counts,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));
           break;
         }
         if(!inputs.points)throw new Error('Connect points or areas to Sample a raster: the raster is read at the points or totalled over the areas.');
-        const sampled=sampleRaster(inputs.points,inputs.raster,node.params);value=sampled.value;
+        const sampled=sampleRaster(inputs.points,inputs.raster.asset?.streamed?await streamedAtPoints(inputs.points,inputs.raster):inputs.raster,node.params);value=sampled.value;
         receipts.push(sampleReceipt(node,inputs.raster,sampled.counts,runId,{
           points:workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,
           raster:workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from}));break;
@@ -1556,7 +1563,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           workflow.edges.find(e=>e.to===node.id&&(e.port==='area'||e.port==='polygons'))!.from));
         break;}
       case 'raster_input':{if(!node.params.asset)throw new Error('Prepare the raster window before running.');const grid=await loadRaster(node.params.asset,inputs.area);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId));break;}
-      case 'clip_raster':{const grid=clipRaster(inputs.raster,node.params.cutline?.geometry||inputs.area.boundary,node.params);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));break;}
+      case 'clip_raster':{if(inputs.raster?.asset?.streamed)throw new Error('This raster is too large to keep whole, so it is streamed, and a clip of it '
+          +'would be as large. Connect it to Sample a raster instead, which reads it over areas or at points.');
+        const grid=clipRaster(inputs.raster,node.params.cutline?.geometry||inputs.area.boundary,node.params);value=grid;receipts.push(rasterReceipt(node,grid,inputs.area,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from));break;}
       case 'places':case 'centers':value={...node.params.data,spatialReference:structuredClone(node.params.spatialReference)};break;
       case 'point_input':{
         // Repairs are applied to a COPY, here, on the way out. What this node holds is what the
@@ -2917,4 +2926,26 @@ function migrateSatelliteSampler(w:Workflow):void{
     return {...n,type:'sample_raster',params:{attribute:'value',valueUnit:'',...(n.params as object),source:'satellite-files'},
       sourceMigration:{fromType:'sample_satellite_files_at_points',version:'1'}} as WorkflowNode;
   }) as typeof w.nodes;
+}
+
+/** A STREAMED RASTER READ AT POINTS (2026-11-19): only the cells under the points are read from the source, and Sample a
+ *  raster is given the full window with those cells in it. */
+export async function streamedAtPoints(points:PointInput|import("./types.js").PointCollection,grid:import('./raster.js').RasterGrid):Promise<import('./raster.js').RasterGrid>{
+  const asset=grid.asset!,m=asset.source.metadata,[x0,y0,x1,y1]=asset.window,width=x1-x0,height=y1-y0;
+  const {streamedSource}=await import('./raster-workflow.js'),{openStripReader,rasterValues}=await import('./raster.js');
+  const features='layers' in points?points.layers.flatMap(l=>l.features):points.features;
+  const origin:[number,number]=[m.origin[0]+x0*m.resolution[0],m.origin[1]+y0*m.resolution[1]];
+  const metadata={...m,width,height,origin,bounds:[origin[0],origin[1]+height*m.resolution[1],origin[0]+width*m.resolution[0],origin[1]] as [number,number,number,number]};
+  // THE CELL AS SAMPLE A RASTER FINDS IT, from the window's own origin, so a point on a cell's edge falls the same way.
+  const {cellAt}=await import('./sample-raster.js');
+  const wanted=new Set<number>();
+  for(const f of features){const c=f.geometry?.coordinates as [number,number]|undefined;if(!c)continue;
+    const cell=cellAt(metadata,c);if(cell)wanted.add(cell[1]*width+cell[0]);}
+  const cells=new Map<number,number>(),reader=await openStripReader(streamedSource(asset));
+  try{for(const at of wanted){const col=at%width,row=Math.floor(at/width);
+    const raw=await reader.read([x0+col,y0+row,x0+col+1,y0+row+1]);cells.set(at,rasterValues(raw,m)[0]!);}}
+  finally{reader.free();}
+  const values=new Proxy({length:width*height} as unknown as import('./raster.js').RasterValues,{get:(target,key)=>
+    typeof key==='string'&&/^\d+$/.test(key)?cells.get(Number(key))??NaN:(target as unknown as Record<string|symbol,unknown>)[key]});
+  return {...grid,metadata,values};
 }

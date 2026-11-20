@@ -492,7 +492,7 @@
     {
       "id": "urn:fieldwork:widget:clip_raster",
       "nodeType": "clip_raster",
-      "currentVersion": "1.2.0",
+      "currentVersion": "1.2.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -538,6 +538,11 @@
           "version": "1.2.0",
           "path": "widgets/releases/clip_raster/1.2.0.json",
           "sha256": "5041ad28767f8aa12273903d627c3e8c751cc6edac908a8a01c9fbb74b8cf24c"
+        },
+        {
+          "version": "1.2.1",
+          "path": "widgets/releases/clip_raster/1.2.1.json",
+          "sha256": "6036c8ae10cf6663411517a566fea63187e7dfedb562ebe8454c3fd57660bcf7"
         }
       ]
     },
@@ -1647,7 +1652,7 @@
     {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
-      "currentVersion": "0.12.3",
+      "currentVersion": "0.13.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1748,6 +1753,11 @@
           "version": "0.12.3",
           "path": "widgets/releases/raster_input/0.12.3.json",
           "sha256": "dfe8172f545df761b5ee35626b4b9ce76c26faa2d2e0f1187d09439854bf388b"
+        },
+        {
+          "version": "0.13.0",
+          "path": "widgets/releases/raster_input/0.13.0.json",
+          "sha256": "56d52c7b5e0a3af30e46be2f843129c8000b409ab78064dfdd64902cd17d3292"
         }
       ]
     },
@@ -2001,7 +2011,7 @@
     {
       "id": "urn:fieldwork:widget:sample_raster",
       "nodeType": "sample_raster",
-      "currentVersion": "0.7.0",
+      "currentVersion": "0.8.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2052,6 +2062,11 @@
           "version": "0.7.0",
           "path": "widgets/releases/sample_raster/0.7.0.json",
           "sha256": "33495304fcfdde1f7f52d4dc43463e0a25757124a74079042bd8e9fe5a87b30e"
+        },
+        {
+          "version": "0.8.0",
+          "path": "widgets/releases/sample_raster/0.8.0.json",
+          "sha256": "6b211358d4f75debe1ccd1e3f5089617f38308425fb239660c974202adff0615"
         }
       ]
     },

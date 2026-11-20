@@ -174,6 +174,11 @@ the 1984 units (KIVU, SHABA) match none of them. The counts as printed are linke
 The heading no longer repeats the widget's name when the step still has it: "Tabular data", not "Tabular data ·
 Tabular data".
 
+A step reopened and given another table starts from that table's defaults. The key and value columns it was saved
+with were carried over by name, so a column that had been a key could not be taken as a value. A step keeps its
+choices for its own table: the same address, or a file chosen again. A refused read no longer shows the last table
+read beside the refusal.
+
 ### 2026-11-19 · A large table no longer stalls the dialog (0.11.1)
 
 Importing 250,000 rows of points to measure maps, ticking four key columns took over an hour (Chromium, development

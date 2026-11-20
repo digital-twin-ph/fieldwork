@@ -498,7 +498,12 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       const melts=!!imported.source_table;
       q<HTMLElement>('#table-convert-row').hidden=!melts&&!frame.hasSource;
       q<HTMLElement>('#table-convert-says').hidden=!melts&&!frame.hasSource;
-    }catch(e){status.textContent='This table has not been imported.';fail(e);}
+    }catch(e){
+      // A REFUSED READ SHOWS NO TABLE (2026-11-20): the last read's "After" stayed beside the refusal, so a table appeared
+      // importable that was not. "Before" shows the choices as they now stand.
+      afterPane.innerHTML='<p class="notice">Nothing to import while the message below stands.</p>';reconcile.innerHTML='';
+      try{renderBefore(chosenKeys(),wide?chosenValues():[valueSelect.value].filter(Boolean));}catch{beforePane.innerHTML='';}
+      status.textContent='This table has not been imported.';fail(e);}
   }
 
   /** A column cannot be both the subject and a variable of it. Enforced in `wideDataTable` as a
@@ -550,7 +555,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       keyNames=headers.length>MANY_COLUMNS||valueAt<0?[]:headers.filter((_,i)=>i!==valueAt);
       valueSelect.value=valueAt<0?'':headers[valueAt]!;
     }
-    const held=existing?.wide;
+    const held=own?.wide;
     for(const box of keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))
       box.checked=held&&wide?held.keys.includes(box.value.trim()):keyNames.includes(box.value.trim());
     for(const box of valuesBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]')){
@@ -575,6 +580,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   }
   shapeSelect.onchange=applyShape;
   shapeAccept.onclick=()=>{shapeSelect.value='long';applyShape();};
+  /** The saved step's choices, while the table read is the one it was saved with; otherwise undefined. */
+  let own:TableReopen|undefined;
   let remote:RemoteTableSource|undefined,archive:Uint8Array<ArrayBuffer>|undefined,archiveSha256:string|undefined;
   const urlInput=q<HTMLInputElement>('#table-url'),entrySelect=q<HTMLSelectElement>('#table-entry');
   // THE ADDRESS IT IS PUBLISHED AT, shown when the step is reopened (2026-11-14: NYC's Zenodo table read as if it had none).
@@ -666,6 +673,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   const load=async(chosen:File|undefined,fetched:boolean)=>{
     if(!fetched)remote=undefined;
     const request=++serial;file=chosen;parsed=undefined;keysBox.hidden=true;valueSelect.disabled=true;
+    // THE STEP'S OWN CHOICES APPLY TO ITS OWN TABLE ONLY (2026-11-20). DR Congo's census step, reopened and given the
+    // provinces table, ticked "total" as a key because the printed table's step had, so it could not be a value. A
+    // step reading from an address keeps its choices for that address; a step reading a file, for the file chosen again.
+    own=existing&&(existing.remote?.url?fetched&&remote?.url===existing.remote.url&&remote?.entry===existing.remote.entry:!fetched)?existing:undefined;
     keysBox.innerHTML='<legend>Key columns</legend><p class="muted" id="table-keys-says"></p>';
     valuesBox.innerHTML='<legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p>';
     valuesBox.hidden=true;shapeAlert.hidden=true;
@@ -701,12 +712,12 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       const guessValue=guessValueColumn(parsed.headers,parsed.rows);
       keysBox.innerHTML+=parsed.headers.map((header,i)=>{
         const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
-        const preselect=existing?existing.keys.includes(header.trim()):guessValue>=0&&i!==guessValue;
+        const preselect=own?own.keys.includes(header.trim()):guessValue>=0&&i!==guessValue;
         return `<label><input type="checkbox" value="${escaped}" ${preselect?'checked':''}> ${escaped}</label>`;}).join('');
       keysBox.hidden=false;
       valueSelect.innerHTML='<option value="">Choose the value column</option>'+parsed.headers.map((header,i)=>{
         const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
-        const chosen=existing?header.trim()===existing.valueField:i===guessValue;
+        const chosen=own?header.trim()===own.valueField:i===guessValue;
         return `<option value="${escaped}" ${chosen?'selected':''}>${escaped}</option>`;}).join('');
       valueSelect.disabled=false;
       // THE VALUE COLUMNS, for the wide reader. Preselected as everything that is not a chosen
@@ -714,7 +725,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       // named in the markup either way, so the selection is a decision and not a leftover.
       valuesBox.innerHTML+=parsed.headers.map(header=>{
         const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
-        const held=existing?.wide?.valueFields;
+        const held=own?.wide?.valueFields;
         const preselect=held?held.includes(header.trim()):!keysBox.querySelector<HTMLInputElement>(`input[value="${CSS.escape(escaped)}"]`)?.checked;
         return `<label><input type="checkbox" value="${escaped}" ${preselect?'checked':''}> ${escaped}</label>`;}).join('');
       // A column cannot be both the subject and a variable of it, so taking one as a key drops it

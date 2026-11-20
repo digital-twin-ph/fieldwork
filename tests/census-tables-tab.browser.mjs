@@ -84,3 +84,33 @@ test('where the printed units are not today\'s, the tab offers the table summed 
   await expect(item.getByRole('link',{name:'the counts as printed'})).toHaveAttribute('href',`${catalogue.repository}/blob/${catalogue.commit}/COD/counts.csv`);
   await expect(page.locator('[data-census]')).toHaveCount(catalogue.countries.length);
 });
+
+/** A STEP'S CHOICES BELONG TO ITS OWN TABLE (2026-11-20): a DR Congo step reopened and given another table kept the
+ *  first table's key columns by name, so "total" was a key and could not be taken as a value. Another table now starts
+ *  from the defaults, and a refused read shows no table beside the refusal. */
+test('a reopened step given another census table starts from that table\'s defaults',async({page})=>{test.skip(!!skip,skip);
+  const errors=collectPageErrors(page);
+  await answer(page);
+  await open(page);
+  await page.locator('#table-tab-census').click();
+  await page.locator('[data-census="RWA"]').click();
+  await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
+  // Saved with "total" as a key, as the DR Congo step had it.
+  await page.locator('#table-keys input[value="total"]').check();
+  await expect(page.locator('#table-values input[value="total"]')).toBeDisabled();
+  // A refused read shows no table beside the refusal.
+  for(const box of await page.locator('#table-values input[type=checkbox]:enabled').all())await box.uncheck();
+  await expect(page.locator('#table-error')).toContainText('Choose at least one column holding a value');
+  await expect(page.locator('#table-after')).toContainText('Nothing to import while the message below stands');
+  await page.locator('#table-values input[value="men"]').check();
+  await page.locator('#table-save').click();
+  await expect(page.locator('#table-save')).toBeHidden();
+  // Reopened and given DR Congo's table: its own defaults, "total" a value.
+  await page.locator('#configure-step').click();
+  await page.locator('#table-tab-census').click();
+  await page.locator('[data-census="COD"]').click();
+  await expect(page.locator('#table-values input[value="total"]')).toBeEnabled({timeout:60000});
+  await expect(page.locator('#table-values input[value="total"]')).toBeChecked();
+  await expect(page.locator('#table-keys input[value="total"]')).not.toBeChecked();
+  expect(errors).toEqual([]);
+});

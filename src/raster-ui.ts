@@ -1,7 +1,9 @@
 import {fileDigest} from './sha256-stream.js';
 import {RASTER_SOURCE_FIELDS,validateRasterProvenance,WORLDPOP_BOTSWANA,WORLDPOP_BOTSWANA_FILENAME} from './raster-provenance.js';
 import type {RasterProvenance} from './raster-provenance.js';
-import type {Boundary,Position} from './types.js';
+import type {Boundary,Position,Workflow,WorkflowNode} from './types.js';
+import type {OwnInspector,StepKit} from './inspector-kit.js';
+import {geometryBounds} from './study-area.js';
 import type {RasterAsset,RasterGrid,RasterMetadata} from './raster.js';
 import {rasterImage,rasterImageFactor,scaleKeySvg,scaleWords} from './raster-image.js';
 export {rasterImage} from './raster-image.js';
@@ -249,3 +251,109 @@ export function rasterSvg(grid:RasterGrid,overlay='',shade?:import('./raster-pan
   return `${key}${background}<image ${grid.mask?`mask="url(#${maskId})"`:''} href="${rasterImage(grid,undefined,shade)}" x="${x}" y="${y}" width="${width}" height="${height}" preserveAspectRatio="none" style="image-rendering:pixelated"/><path d="${path}" fill="none" stroke="#193d33" stroke-width="1.4"/>${overlay}<text x="15" y="18" font-size="14">${rasterImageFactor(m)>1?`Raster cells, each pixel the mean of ${rasterImageFactor(m)} × ${rasterImageFactor(m)}`:'Native raster cells'} · ${grid.mask?`${grid.mask.method} · margin ${margin} px · outside footprint = transparent`:'unmasked input window'} · ${shade?'clear inside = nothing to shade':'gray inside = NoData'}</text>${keyBelow}`;
 }
 export function downloadRaster(grid:RasterGrid):void{const url=URL.createObjectURL(new Blob([encodeRaster(grid)],{type:'image/tiff'})),link=document.createElement('a');link.href=url;link.download=grid.mask?'fieldwork-clipped.tif':'fieldwork-raster-window.tif';link.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
+
+export function clipSentence(n:WorkflowNode<'clip_raster'>):string{
+  const p=n.params,margin=p.marginPixels||0;
+  return `Keeps the cells ${p.method==='all-touched'?'the boundary touches':'whose centre is inside the boundary'}`
+    +(margin?`, and ${margin} cell${margin===1?'':'s'} beyond it`:'')+', at the raster\u2019s own resolution; cells outside become no data. '
+    +(p.cutline?'The boundary is its own, saved here: changing the study area does not change it.':'The boundary is the connected study area\u2019s.');
+}
+
+/** CLIP RASTER'S CONFIGURATION DIALOG (experiment 186): which cells are kept, the margin, and whose boundary. */
+function openClipConfig(kit:RasterKit,nodeId:string){
+  const esc=kit.esc,found=kit.workflow().nodes.find(x=>x.id===nodeId);
+  if(found?.type!=='clip_raster')return;
+  const node=found;
+  type Draft={method:'all-touched'|'cell-center';marginPixels:number;studyArea:boolean};
+  const valid=(m:number)=>Number.isFinite(m)&&m>=0&&m<=1;
+  openConfigDialog<Draft>({
+    id:'clip-config',widget:'Clip raster',step:node.params.label||kit.title('clip_raster'),
+    draft:{method:node.params.method,marginPixels:node.params.marginPixels||0,studyArea:!node.params.cutline},
+    sections:draft=>({...(valid(draft.marginPixels)?{}:{blocked:true,message:{tone:'refusal' as const,text:'The margin is a number of cells from 0 to 1.'}}),
+      settings:`<div class="field"><label class="field-label" for="clip-method">Keep a cell when</label><select id="clip-method">`
+        +`<option value="all-touched"${draft.method==='all-touched'?' selected':''}>the boundary covers any part of it (all touched)</option>`
+        +`<option value="cell-center"${draft.method==='cell-center'?' selected':''}>its centre is inside the boundary</option></select>`
+        +'<small>All touched matches GDAL except where a boundary corner lies exactly on a cell border.</small></div>'
+        +`<div class="field"><label class="field-label" for="clip-margin">Margin beyond the boundary, in cells (0 to 1)</label>`
+        +`<input id="clip-margin" type="number" min="0" max="1" step="0.25" value="${Number.isFinite(draft.marginPixels)?draft.marginPixels:''}">`
+        +'<small>A margin needs the raster to reach that far past the boundary. Cells with no data are never filled.</small></div>'
+        +(node.params.cutline?`<div class="field"><span class="field-label">Boundary</span><p class="description">Its own, drawn on the map: `
+          +geometryBounds(node.params.cutline.geometry).map((v,i)=>`${['west','south','east','north'][i]} ${v.toFixed(4)}\u00b0`).join(', ')+'.</p>'
+          +`<label class="check"><input type="checkbox" id="reset-clip-boundary"${draft.studyArea?' checked':''}> Use the study area\u2019s boundary instead</label></div>`
+          :'<div class="field"><span class="field-label">Boundary</span><p class="description">The connected study area\u2019s. Draw the boundary on the map to give this step its own.</p></div>'),
+      preview:`<p class="muted">${esc(clipSentence({...node,params:{...node.params,method:draft.method,marginPixels:draft.marginPixels,...(draft.studyArea?{cutline:undefined}:{})}}))}</p>`}),
+    wire:(root,draft,redraw)=>{
+      root.querySelector<HTMLSelectElement>('#clip-method')?.addEventListener('change',e=>{draft.method=(e.target as HTMLSelectElement).value as Draft['method'];redraw();});
+      root.querySelector<HTMLInputElement>('#clip-margin')?.addEventListener('change',e=>{const v=(e.target as HTMLInputElement).value;draft.marginPixels=v===''?NaN:Number(v);redraw();});
+      root.querySelector<HTMLInputElement>('#reset-clip-boundary')?.addEventListener('change',e=>{draft.studyArea=(e.target as HTMLInputElement).checked;redraw();});
+    },
+    apply:draft=>kit.keepChange(w=>{const t=w.nodes.find(x=>x.id===nodeId);if(t?.type!=='clip_raster')return;t.params.method=draft.method;t.params.marginPixels=draft.marginPixels;
+      if(draft.studyArea)delete t.params.cutline;}),
+  },esc);
+}
+
+/** WHAT A RASTER INPUT HOLDS, in one sentence: the file, where from, the window and the cells' registration. */
+export function rasterSentence(n:WorkflowNode<'raster_input'>):string{
+  const a=n.params.asset;
+  if(!a)return 'Keeps the window of a GeoTIFF around the study area, from a file on this device or at a URL. Nothing is kept yet.';
+  const from=a.source.url?`read in parts from ${(()=>{try{return new URL(a.source.url).hostname;}catch{return a.source.url;}})()}`:'from a file on this device';
+  return `Keeps ${a.metadata.width} × ${a.metadata.height} cells of ${a.source.filename}, ${from}, around the study area`
+    +`${a.source.metadata.sourceRegistration?'; its values sit at grid nodes and are read as the cells around them':''}.`;
+}
+
+/** WHAT RASTER INPUT'S AND CLIP RASTER'S INSPECTORS ARE GIVEN (2026-11-20, moved out of app.ts when Raster input learned
+ *  to stream a window past what a tab holds, and Clip raster's receipt to name its boundary by digest). Reading a file,
+ *  drawing a preview and finding the study area stay in app.ts, with what they read; the kit runs them. */
+export interface RasterKit extends StepKit {
+  facts:(nodeId:string)=>string|undefined;
+  ran:()=>boolean;
+  /** A change the project must keep. */
+  keepChange:(edit:(w:Workflow)=>void)=>void;
+  prepare:(n:WorkflowNode<'raster_input'>)=>void;
+  previewClip:(n:WorkflowNode<'clip_raster'>,e:Event)=>void;
+  downloadClipped:(n:WorkflowNode<'clip_raster'>,e:Event)=>void;
+  addMap:(n:WorkflowNode)=>void;
+  /** Whether a kept window's bytes are on this device, said in `host`. */
+  presence:(n:WorkflowNode<'raster_input'>,host:HTMLElement)=>void;
+}
+/** RASTER INPUT ON THE STANDARD INSPECTOR (experiments 186, 198): name, inputs, one sentence with Configure…, and what it
+ *  holds. CLIP RASTER ON IT (experiment 186, 0.149.0): its method, margin and boundary in Configure…, the boundary drawn
+ *  on the map beside it, and what the last run kept. The country WorldPop is offered for is read from the study area, in
+ *  Configure… (2026-11-10). */
+export const rasterInspector:OwnInspector<'raster_input'|'clip_raster'>={
+  markup:(n,kit)=>{const k=kit as RasterKit,esc=kit.esc,why=k.unfinished(n.id);
+    if(n.type==='raster_input'){const node=n as WorkflowNode<'raster_input'>,asset=node.params.asset;
+      return kit.section('Name',kit.name('raster-label',node.params.label||'Raster input'))
+        +kit.section('Inputs',kit.inputs(n,{area:'Study area, around which a window is kept'}))
+        +kit.section('Settings',`<p class="standard-sentence">${esc(rasterSentence(node))}</p>`
+          +'<div class="inspector-actions"><button id="prepare-raster" class="button primary">Configure…</button></div>')
+        +kit.section('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+          :asset?`Holds ${asset.metadata.width} × ${asset.metadata.height} cells of ${asset.source.filename}.`:'Nothing kept yet: choose a GeoTIFF in Configure…')}</p>`
+          +(asset?'<div data-raster-presence></div>':''));
+    }
+    const node=n as WorkflowNode<'clip_raster'>,facts=k.facts(n.id)??'';
+    const count=(name:string)=>{const m=new RegExp(`fw:${name} (\\d+)`).exec(facts);return m?Number(m[1]):undefined;};
+    const inside=count('insideCellCount'),valid=count('validCellCount');
+    return kit.section('Name',kit.name('clip-raster-label',node.params.label||'Clip raster'))
+      +kit.section('Inputs',kit.inputs(n,{raster:'Raster to clip',area:'Study area, whose boundary is copied as the cutline'}))
+      +kit.section('Settings',`<p class="standard-sentence">${esc(clipSentence(node))}</p>`
+        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button>'
+        +'<button id="preview-raster-clip" class="button">Draw the boundary on the map…</button></div>')
+      +kit.section('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+        :inside!==undefined?`${inside.toLocaleString('en')} cell${inside===1?'':'s'} kept inside the boundary, ${(valid??0).toLocaleString('en')} of them with a value. Cells outside are no data.`
+        :k.ran()?'Run to clip the raster.':'Not run yet.')}</p>`
+        +'<div class="inspector-actions"><button id="download-node-raster" class="button">Download GeoTIFF</button><button id="add-raster-map" class="button">Add raster map</button></div>');},
+  wire:(n,kit,root)=>{const k=kit as RasterKit;
+    if(n.type==='raster_input'){const node=n as WorkflowNode<'raster_input'>;
+      root.querySelector('#prepare-raster')?.addEventListener('click',()=>k.prepare(node));
+      // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).
+      const host=root.querySelector<HTMLElement>('[data-raster-presence]');if(host)k.presence(node,host);
+      return;}
+    const node=n as WorkflowNode<'clip_raster'>;
+    root.querySelector('#configure-step')?.addEventListener('click',()=>openClipConfig(k,n.id));
+    root.querySelector('#preview-raster-clip')?.addEventListener('click',e=>k.previewClip(node,e));
+    // Clip raster's own download, of the masked grid; Raster input's is in its dialog (186, 2026-11-17).
+    root.querySelector('#download-node-raster')?.addEventListener('click',e=>k.downloadClipped(node,e));
+    root.querySelector('#add-raster-map')?.addEventListener('click',()=>k.addMap(n));
+  },
+};

@@ -165,7 +165,7 @@ import {chartOrientation,chartRenderer} from './chart-vega.js';
 import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
 import {chartVegaSpec,renderVegaChart,renderVegaTree,disposeVegaChart} from './chart-vega.js';
-import {openRasterEditor,rasterSvg,rasterFrame,downloadRaster} from './raster-ui.js';
+import {openRasterEditor,rasterSvg,rasterFrame,downloadRaster,rasterInspector,type RasterKit} from './raster-ui.js';
 import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI,useTileStore} from './basemap-tiles.js';
 import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
@@ -2739,54 +2739,9 @@ function openChartConfig(nodeId:string){
 }
 
 /** WHAT CLIP RASTER KEEPS, in one sentence. */
-function clipSentence(n:WorkflowNode<'clip_raster'>):string{
-  const p=n.params,margin=p.marginPixels||0;
-  return `Keeps the cells ${p.method==='all-touched'?'the boundary touches':'whose centre is inside the boundary'}`
-    +(margin?`, and ${margin} cell${margin===1?'':'s'} beyond it`:'')+', at the raster\u2019s own resolution; cells outside become no data. '
-    +(p.cutline?'The boundary is its own, saved here: changing the study area does not change it.':'The boundary is the connected study area\u2019s.');
-}
-
-/** CLIP RASTER'S CONFIGURATION DIALOG (experiment 186): which cells are kept, the margin, and whose boundary. */
-function openClipConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'clip_raster');
-  type Draft={method:'all-touched'|'cell-center';marginPixels:number;studyArea:boolean};
-  const valid=(m:number)=>Number.isFinite(m)&&m>=0&&m<=1;
-  openConfigDialog<Draft>({
-    id:'clip-config',widget:'Clip raster',step:node.params.label||TYPES.clip_raster.title,
-    draft:{method:node.params.method,marginPixels:node.params.marginPixels||0,studyArea:!node.params.cutline},
-    sections:draft=>({...(valid(draft.marginPixels)?{}:{blocked:true,message:{tone:'refusal' as const,text:'The margin is a number of cells from 0 to 1.'}}),
-      settings:`<div class="field"><label class="field-label" for="clip-method">Keep a cell when</label><select id="clip-method">`
-        +`<option value="all-touched"${draft.method==='all-touched'?' selected':''}>the boundary covers any part of it (all touched)</option>`
-        +`<option value="cell-center"${draft.method==='cell-center'?' selected':''}>its centre is inside the boundary</option></select>`
-        +'<small>All touched matches GDAL except where a boundary corner lies exactly on a cell border.</small></div>'
-        +`<div class="field"><label class="field-label" for="clip-margin">Margin beyond the boundary, in cells (0 to 1)</label>`
-        +`<input id="clip-margin" type="number" min="0" max="1" step="0.25" value="${Number.isFinite(draft.marginPixels)?draft.marginPixels:''}">`
-        +'<small>A margin needs the raster to reach that far past the boundary. Cells with no data are never filled.</small></div>'
-        +(node.params.cutline?`<div class="field"><span class="field-label">Boundary</span><p class="description">Its own, drawn on the map: `
-          +geometryBounds(node.params.cutline.geometry).map((v,i)=>`${['west','south','east','north'][i]} ${v.toFixed(4)}\u00b0`).join(', ')+'.</p>'
-          +`<label class="check"><input type="checkbox" id="reset-clip-boundary"${draft.studyArea?' checked':''}> Use the study area\u2019s boundary instead</label></div>`
-          :'<div class="field"><span class="field-label">Boundary</span><p class="description">The connected study area\u2019s. Draw the boundary on the map to give this step its own.</p></div>'),
-      preview:`<p class="muted">${esc(clipSentence({...node,params:{...node.params,method:draft.method,marginPixels:draft.marginPixels,...(draft.studyArea?{cutline:undefined}:{})}}))}</p>`}),
-    wire:(root,draft,redraw)=>{
-      root.querySelector<HTMLSelectElement>('#clip-method')?.addEventListener('change',e=>{draft.method=(e.target as HTMLSelectElement).value as Draft['method'];redraw();});
-      root.querySelector<HTMLInputElement>('#clip-margin')?.addEventListener('change',e=>{const v=(e.target as HTMLInputElement).value;draft.marginPixels=v===''?NaN:Number(v);redraw();});
-      root.querySelector<HTMLInputElement>('#reset-clip-boundary')?.addEventListener('change',e=>{draft.studyArea=(e.target as HTMLInputElement).checked;redraw();});
-    },
-    apply:draft=>{change(w=>{const t=getNode(w,nodeId,'clip_raster');t.params.method=draft.method;t.params.marginPixels=draft.marginPixels;
-      if(draft.studyArea)delete t.params.cutline;},{requirePersistence:true});},
-  },esc);
-}
 
 /** WHAT SAMPLE RASTER WRITES, in one sentence. */
 
-/** WHAT A RASTER INPUT HOLDS, in one sentence: the file, where from, the window and the cells' registration. */
-function rasterSentence(n:WorkflowNode<'raster_input'>):string{
-  const a=n.params.asset;
-  if(!a)return 'Keeps the window of a GeoTIFF around the study area, from a file on this device or at a URL. Nothing is kept yet.';
-  const from=a.source.url?`read in parts from ${(()=>{try{return new URL(a.source.url).hostname;}catch{return a.source.url;}})()}`:'from a file on this device';
-  return `Keeps ${a.metadata.width} × ${a.metadata.height} cells of ${a.source.filename}, ${from}, around the study area`
-    +`${a.source.metadata.sourceRegistration?'; its values sit at grid nodes and are read as the cells around them':''}.`;
-}
 
 /** WHAT A TABLE OUTPUT SHOWS, in one sentence, from what is wired. */
 function tableOutputSentence(n:WorkflowNode<'table_output'>,mode:ReturnType<typeof shownMode>):string{
@@ -4102,58 +4057,7 @@ function renderInspector(){
   }else if(n.type==='sample_raster'){
     content+=sampleInspector.markup(n,sampleKit());
   }else if(n.type==='raster_input'||n.type==='clip_raster'){
-    // ONE SHAPE, AND THIS WIDGET WAS STILL OUTSIDE IT. The practitioner, 2026-10-23: *"Note that
-    // raster widget still does not have custom node label field."* labelForm exists precisely so
-    // the gesture is learned once -- its own comment records a fourth widget that had none at
-    // all when it was written -- and these two were not given it. Two nodes of the same kind on
-    // one canvas could not be told apart except by their ports.
-    // RASTER INPUT ON THE STANDARD INSPECTOR (experiments 186, 198): name, inputs, one sentence with Configure… and the
-    // population links, and what it holds. Touched to read a GeoTIFF at a URL. Clip raster keeps its own panel.
-    const standardRaster=n.type==='raster_input';
-    if(standardRaster){
-      content+=standardSection('Name',labelForm('raster-label','Name',n.params.label||'Raster input'));
-      content+=standardSection('Inputs',standardInputs(n,{area:'Study area, around which a window is kept'}));
-    }else{
-      // CLIP RASTER ON THE STANDARD INSPECTOR (experiment 186, 0.149.0): its method, margin and boundary in Configure…,
-      // the boundary drawn on the map beside it, and what the last run kept.
-      content+=standardSection('Name',labelForm('clip-raster-label','Name',n.params.label||'Clip raster'));
-      content+=standardSection('Inputs',standardInputs(n,{raster:'Raster to clip',area:'Study area, whose boundary is copied as the cutline'}));
-      content+=standardSection('Settings',`<p class="standard-sentence">${esc(clipSentence(n as WorkflowNode<'clip_raster'>))}</p>`
-        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button>'
-        +'<button id="preview-raster-clip" class="button">Draw the boundary on the map\u2026</button></div>');
-      const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message,facts=result?.receipts?.find(r=>r.nodeId===n.id)?.facts??'';
-      const count=(p:string)=>{const m=new RegExp(`fw:${p} (\\d+)`).exec(facts);return m?Number(m[1]):undefined;};
-      const inside=count('insideCellCount'),valid=count('validCellCount');
-      content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-        :inside!==undefined?`${inside.toLocaleString('en')} cell${inside===1?'':'s'} kept inside the boundary, ${(valid??0).toLocaleString('en')} of them with a value. Cells outside are no data.`
-        :result?'Run to clip the raster.':'Not run yet.')}</p>`
-        +'<div class="inspector-actions"><button id="download-node-raster" class="button">Download GeoTIFF</button><button id="add-raster-map" class="button">Add raster map</button></div>');
-    }
-    // WHICH POPULATION RASTER COVERS THIS STUDY AREA, before asking for a file nobody has yet.
-    // The same shape as the street network widget's published extracts: this application works
-    // out the file and the browser fetches it, because data.worldpop.org sends no CORS header
-    // and ignores a Range request. Offered only where the study area STATES its country --
-    // a boundary acquired from geoBoundaries carries COD-ADM2-... -- because a population
-    // denominator attributed to the wrong country is worse than no denominator, and a province
-    // on a border is exactly where a guess from coordinates would be wrong and invisible.
-    if(n.type==='raster_input'){
-      const settingsFrom=content.length;
-      const area=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);
-      const stated=upstreamCountry(workflow,n.id);void area;
-      // A STUDY AREA SOMEBODY DREW STATES NO COUNTRY, and WorldPop is keyed by country. Offering
-      // nothing in that case was correct and useless: the practitioner, 2026-10-23, looking at a
-      // drawn Gaborone area, *"Can we make raster input read from Worldpop?"* It already did, for
-      // an acquired boundary only. So the country is asked for here as it is in Find health
-      // facilities -- defaulted from the area where the area states one, chosen from a list where
-      // it does not. Two widgets that need a country now behave the same way.
-      void stated;
-      content+='<div class="inspector-actions"><button id="prepare-raster" class="button primary">Configure\u2026</button></div>';
-      {const asset=n.params.asset,settings=content.slice(settingsFrom);
-       content=content.slice(0,settingsFrom)+standardSection('Settings',`<p class="standard-sentence">${esc(rasterSentence(n))}</p>`+settings);
-       const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-       content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-         :asset?`Holds ${asset.metadata.width} × ${asset.metadata.height} cells of ${asset.source.filename}.`:'Nothing kept yet: choose a GeoTIFF in Configure\u2026')}</p>`
-         +(asset?'<div data-raster-presence></div>':''));}}
+    content+=rasterInspector.markup(n as never,rasterKit());
   }else if(n.type==='study_area'){
     // THE STANDARD INSPECTOR (experiment 186): the name; no inputs; one sentence, the country and the map, which is this
     // step's dialog; and what it holds -- the shape, what the boundary repair removed, and every extent it has had.
@@ -5121,152 +5025,9 @@ function renderInspector(){
       // Deleted rather than set empty: a category exists only where one was asked for, and that
       // is what keeps a figure from becoming categorical by accident.
       if(value)params.categoryField=value;else delete params.categoryField;}));
-  optionalElement('#prepare-raster')?.addEventListener('click',()=>{
-    let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();
-    while(source?.type==='measure_area'&&!visited.has(source.id)){visited.add(source.id);source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===source!.id&&e.port==='area')?.from);}
-    let boundary:Boundary;try{boundary=previewArea(workflow,n.id).boundary;}catch(e){toast(errorMessage(e),{tone:'failure'});return;}
-    // WORLDPOP FOR THE STUDY AREA'S COUNTRY, in Configure… (the practitioner, 2026-11-10: the country was asked for again
-    // in the Inspector, after the study area). The study area states the country, once; this reads it.
-    const node=getNode(workflow,n.id,'raster_input');
-    const upstream=upstreamCountries(workflow,n.id),stated=upstream.length===1?upstream[0]!:null;
-    // WHERE THE AREA STATES NO COUNTRY, IT IS ASKED HERE, and kept on the study area (the practitioner, 2026-11-10: "This
-    // raster dialog still has Worldpop only with nowhere to actually access Worldpop"). Still said once, in the area; the
-    // dialog no longer sends the person away to say it.
-    let country=stated||node.params.populationCountry||'';
-    // WHICH SOURCE (TODO 24, 2026-11-11): WorldPop for every country, GRID3's 2025 estimates for sub-Saharan Africa. A choice
-    // of which file to download, not a setting the step keeps: the raster read records the file it was given.
-    let ghsEpoch='2020';
-    let popSource:'worldpop'|'worldpop1'|'grid3'|'ghs'=grid3RasterFor(country||null)&&!worldPopRastersForCountry(country||null,'global2').length?'grid3':'worldpop';
-    const release=()=>popSource==='worldpop1'?'global1' as const:'global2' as const;
-    const rastersNow=()=>worldPopRastersForCountry(country||null,release());
-    const thisYear=String(new Date().getFullYear());
-    let popYear=node.params.populationYear;
-    const yearNow=()=>{const r=rastersNow();return r.find(x=>x.year===popYear)?.year??r.find(x=>x.year===thisYear)?.year??r[0]?.year??'';};
-    const grid3Link=()=>{const r=grid3RasterFor(country||null);
-      if(!r)return `<p class="muted">GRID3 publishes no estimate for ${esc(countryName(country))}: its ${GRID3_COUNTRIES} countries are in sub-Saharan Africa.</p>`;
-      return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
-        +`↓ ${esc(r.iso3)} · 2025${r.bytes?` · ${(r.bytes/1e6).toFixed(1)} MB`:''}</a>`
-        +`<p class="muted">${r.bytes?`About ${esc(downloadWait(r.bytes))} at the one speed measured here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. `:''}`
-        +`Your browser downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. `
-        +`${esc(GRID3_PRODUCT)}. ${esc(GRID3_NOTE)} ${esc(GRID3_LICENCE)} Cite: ${esc(GRID3_CITATION)}. Catalogue of ${esc(GRID3_TAKEN)}.</p>`;};
-    const linkFor=(year:string)=>{const rasters=rastersNow(),r=rasters.find(x=>x.year===year)??rasters[0]!,g2=release()==='global2';
-      return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
-        +`↓ ${esc(r.iso3)} · ${esc(r.year)}${r.bytes?` · ${(r.bytes/1e6).toFixed(0)} MB`:''}</a>`
-        +`<p class="muted">${r.bytes?`About ${esc(downloadWait(r.bytes))} at the one speed measured here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. `:''}`
-        +`Keep the laptop awake: the host ignores resume requests, so an interrupted download starts again from zero. Your browser `
-        +`downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. `
-        +(g2?`Global2 ${esc(GLOBAL2.release)}. ${esc(GLOBAL2.note)} ${esc(GLOBAL2.licence)} Cite: ${esc(GLOBAL2.citation)}. <a href="${esc(GLOBAL2.listing)}" target="_blank" rel="noopener noreferrer">WorldPop’s listing</a>, as read on ${esc(GLOBAL2.takenAt)}.</p>`
-          :`Global1, unconstrained population, 100 m. ${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.</p>`);};
-    const populationHtml=()=>{
-      const rasters=rastersNow();
-      // ACROSS A BORDER (experiment 204): the area's countries are the choice, and the limit is said. One file is read.
-      const several=upstream.length>1;
-      const ask=stated?'':(several?`<p class="muted">The study area lies in ${upstream.map(c=>esc(countryName(c))).join(' and ')}. Each source `
-          +`publishes one file per country, and this step reads one: the part of the area in the other ${upstream.length>2?'countries':'country'} `
-          +`will have no population from it.</p>`:'')
-        +`<label class="field-label" for="population-country">${several?'Whose file to download':'The study area’s country'}</label>`
-        +`<select id="population-country"><option value="" ${country?'':'selected'}>Choose a country…</option>`
-        +(several?COUNTRIES.filter(c=>upstream.includes(c.iso)):COUNTRIES).map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
-        +`</select>`+(several?'':`<p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`);
-      const sourcePick=`<label class="field-label" for="population-source">Population source</label><select id="population-source">`
-        +`<option value="worldpop" ${popSource==='worldpop'?'selected':''}>WorldPop Global2 ${esc(GLOBAL2.release)} · every country, ${GLOBAL2.first}–${GLOBAL2.last}</option>`
-        +`<option value="worldpop1" ${popSource==='worldpop1'?'selected':''}>WorldPop Global1 · every country, 2000–2020</option>`
-        +`<option value="grid3" ${popSource==='grid3'?'selected':''}>GRID3 · sub-Saharan Africa, 2025</option>`
-        +`<option value="ghs" ${popSource==='ghs'?'selected':''}>GHS-POP (JRC) · every country, 1975–2030, read for the area only</option></select>`;
-      // GHS-POP NEEDS NO COUNTRY: one grid of the world, read for the study area's window by HTTP range.
-      if(popSource==='ghs')return `<h3>Population (GHS-POP)</h3>`+sourcePick
-        +`<label class="field-label" for="ghs-epoch">Year</label><select id="ghs-epoch">`
-        +GHS_EPOCHS.map(e=>`<option value="${e}" ${e===ghsEpoch?'selected':''}>${e}${GHS_PROJECTED.has(e)?' (projected)':''}</option>`).join('')+`</select>`
-        +`<p><button type="button" class="button" id="ghs-read">Read the ${ghsEpoch} window from JRC's copy</button></p>`
-        +`<p class="muted">Reads only the part of the 12 GB global grid that covers the study area, from JRC's copy on Amazon Web Services; `
-        +`nothing is downloaded first. The area read is sent to that server. ${esc(GHS_NOTE)} ${esc(GHS_LICENCE)} Cite: ${esc(GHS_CITATION)}.</p>`;
-      return `<h3>Population (${popSource==='grid3'?'GRID3':'WorldPop'})${country?` for ${esc(countryName(country))}`:''}</h3>`
-        +(stated?`<p class="muted">The country is the study area’s.</p>`:ask)+sourcePick
-        +(!country?'':popSource==='grid3'?`<div class="extract-links" id="population-link">${grid3Link()}</div>`:rasters.length
-          ?`<label class="field-label" for="population-year">Year</label><select id="population-year">`
-            +rasters.map(r=>`<option value="${r.year}" ${r.year===yearNow()?'selected':''}>${r.year}</option>`).join('')
-            +`</select><div class="extract-links" id="population-link">${linkFor(yearNow())}</div>`
-          :`<p class="muted">No WorldPop raster is listed for ${esc(countryName(country))}.</p>`);
-    };
-    const wirePopulation=(block:HTMLElement)=>{
-      const chosen=block.querySelector<HTMLSelectElement>('#population-source');
-      if(chosen)chosen.onchange=()=>{popSource=chosen.value==='grid3'?'grid3':chosen.value==='ghs'?'ghs':chosen.value==='worldpop1'?'worldpop1':'worldpop';block.innerHTML=populationHtml();wirePopulation(block);};
-      const epoch=block.querySelector<HTMLSelectElement>('#ghs-epoch');
-      if(epoch)epoch.onchange=()=>{ghsEpoch=epoch.value;block.innerHTML=populationHtml();wirePopulation(block);};
-      // The URL path does the read: the address put where a person would type it, and read as they would.
-      block.querySelector<HTMLButtonElement>('#ghs-read')?.addEventListener('click',()=>{const dialog=block.closest('dialog');
-        const field=dialog?.querySelector<HTMLInputElement>('#raster-url'),read=dialog?.querySelector<HTMLButtonElement>('#raster-url-read');
-        if(!field||!read)return;field.value=ghsUrl(ghsEpoch);field.closest('details')?.setAttribute('open','');read.click();});
-      const year=block.querySelector<HTMLSelectElement>('#population-year');
-      if(year)year.onchange=()=>{popYear=year.value;block.querySelector('#population-link')!.innerHTML=linkFor(year.value);};
-      const pick=block.querySelector<HTMLSelectElement>('#population-country');
-      if(pick)pick.onchange=()=>{
-        country=pick.value;
-        const origin=(()=>{const seen=new Set<string>(),queue=[n.id];while(queue.length){const id=queue.shift()!;if(seen.has(id))continue;seen.add(id);
-          const node=workflow.nodes.find(x=>x.id===id);if(node?.type==='study_area')return node;for(const e of workflow.edges)if(e.to===id)queue.push(e.from);}return undefined;})();
-        // Kept on the area only where it stated none: an area across a border already states its countries.
-        if(country&&origin&&!upstream.length){
-          change(w=>{const t=getNode(w,origin.id,'study_area').params as {countries?:string[];country?:string};delete t.country;t.countries=[country];});
-          // The area changed on purpose; a raster saved after it is still this dialog's to save.
-          baseline=JSON.stringify(workflow);
-        }
-        block.innerHTML=populationHtml();wirePopulation(block);
-      };
-    };
-    let baseline=JSON.stringify(workflow);
-    const keptAsset=getNode(workflow,n.id,'raster_input').params.asset;
-    const open=(kept?:Parameters<typeof openRasterEditor>[6])=>openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Open Configure\u2026 again.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},keptAsset,
-      {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName)??ghsRecordFor(name),kept);
-    if(!keptAsset){open();return;}
-    void (async()=>{
-      const {rereadable,rereadWindow,chooseStreamedFile}=await import('./raster-workflow.js');
-      // CONFIGURE… ALWAYS OPENS (2026-11-20): a kept window that cannot be read back -- DR Congo's WorldPop, kept whole at
-      // 2.1 GB -- failed this read, and the error went nowhere: no dialog, no message. Now the dialog opens and says it.
-      let onDevice=false;
-      try{onDevice=!!await readPDF(keptAsset.sha256);}
-      catch(error){toast(`The window kept for ${keptAsset.source.filename} could not be read back on this device (${errorMessage(error)}). `
-        +'Choose the file again in this dialog.',{tone:'warning'});}
-      open({onDevice,rereadable:rereadable(keptAsset),
-        reread:async(file,say)=>{
-          // A STREAMED RASTER'S COPY ON THIS DEVICE: only its source file is wanted, checked and held for this session.
-          if(keptAsset.streamed&&onDevice&&file){await chooseStreamedFile(keptAsset,file,say);renderInspector();return;}
-          const bytes=await rereadWindow(keptAsset,file,say);
-          await storePDFs(new Map([[keptAsset.sha256,bytes]]),new Map([[keptAsset.sha256,{...keptAsset,asset:keptAsset}]]));renderInspector();},
-        download:async()=>{downloadRaster(await rasterOfNode(workflow,n.id));}});
-    })().catch(error=>toast(`Raster input could not open: ${errorMessage(error)}`,{tone:'failure'}));
-  });
-  optionalElement('#add-raster-map')?.addEventListener('click',()=>change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;}));
   // Clip raster's own download, of the masked grid; Raster input's is in its dialog (186, 2026-11-17).
-  if(n.type==='clip_raster')optionalElement('#download-node-raster')?.addEventListener('click',async e=>{
-    const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'Download GeoTIFF';
-    button.disabled=true;button.textContent='Preparing\u2026';
-    try{downloadRaster(await rasterOfNode(workflow,n.id));}
-    catch(error){toast(errorMessage(error),{tone:'failure'});}
-    finally{button.disabled=false;button.textContent=label;}
-  });
   // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).
-  if(n.type==='raster_input'&&n.params.asset){const asset=n.params.asset,host=optionalElement('[data-raster-presence]');
-    const notHere=(why:string)=>{if(host?.isConnected)host.innerHTML=`<p class="standard-result standard-result-warning" data-raster-not-here>${esc(why)}</p>`;};
-    if(host)void readPDF(asset.sha256).then(held=>{if(!held)notHere('Not on this device yet: read it again in Configure\u2026');},
-      error=>notHere(`Kept, but not readable on this device (${errorMessage(error)}): choose the file again in Configure\u2026`));}
-  optionalElement('#preview-raster-clip')?.addEventListener('click',async e=>{
-    const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'',baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Loading raster preview…';
-    try{
-      const clip=getNode(workflow,n.id,'clip_raster'),{boundary:studyBoundary}=previewArea(workflow,n.id),boundary=clip.params.cutline?.geometry||studyBoundary;
-      const polygon=boundary.type==='MultiPolygon'&&boundary.coordinates.length===1?{type:'Polygon' as const,coordinates:boundary.coordinates[0]}:boundary;
-      if(polygon.type!=='Polygon'||polygon.coordinates.length!==1)throw new Error('Preview adjustment currently supports a simple polygon. Holes and multiple polygons are retained but cannot be edited here.');
-      const raster=await prepareRasterPreview(workflow,n.id);
-      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen the preview.');
-      const draft:WorkflowNode<'study_area'>={id:clip.id,type:'study_area',x:clip.x,y:clip.y,params:{source:'drawn',label:clip.params.label,geometry:structuredClone(polygon),selectionMode:clip.params.cutline?.selectionMode||'polygon'}};
-      openStudyAreaEditor(draft,(params,options={})=>{
-        if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen the preview.');
-        if(clip.params.cutline&&options.method===clip.params.method&&(options.marginPixels||0)===(clip.params.marginPixels||0)&&params.label===draft.params.label&&params.selectionMode===draft.params.selectionMode&&JSON.stringify(params.geometry)===JSON.stringify(draft.params.geometry))return true;
-        if(!params.geometry)throw new Error('Define a clipping boundary.');
-        return change(w=>{const target=getNode(w,n.id,'clip_raster');target.params.cutline={geometry:params.geometry!,selectionMode:params.selectionMode};target.params.label=params.label;target.params.method=options.method||clip.params.method;target.params.marginPixels=options.marginPixels||0;},{requirePersistence:true});
-      },{raster,clip:true,clipOptions:clip.params,refusal:saveFailureMessage});
-    }catch(error){toast(errorMessage(error),{tone:'failure'});}finally{button.disabled=false;button.textContent=label;}
-  });
-  if(n.type==='clip_raster')optionalElement('#configure-step')?.addEventListener('click',()=>openClipConfig(n.id));
+  if(n.type==='raster_input'||n.type==='clip_raster')rasterInspector.wire(n as never,rasterKit(),document);
   optionalElement('#study-area-label-form')?.addEventListener('submit',e=>{e.preventDefault();const input=$('#study-area-label'),label=input.value.trim();if(!label){input.setCustomValidity('Enter a label for the study area.');input.reportValidity();return;}change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=label);});
   optionalElement('#study-area-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
   // The same gesture for every other widget. The field already saves on change, so this is the
@@ -6746,6 +6507,154 @@ function openTableStep(nodeId:string):void{
  *  reads the table, and Configure…, which writes to this device's store. */
 function tableKit():TableKit{
   return {...stepKit(),readFrom:id=>rowsReadFrom.get(id),feeds:id=>workflow.edges.some(e=>e.from===id),configure:id=>openTableStep(id)};
+}
+function prepareRasterStep(n:WorkflowNode<'raster_input'>){
+    let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();
+    while(source?.type==='measure_area'&&!visited.has(source.id)){visited.add(source.id);source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===source!.id&&e.port==='area')?.from);}
+    let boundary:Boundary;try{boundary=previewArea(workflow,n.id).boundary;}catch(e){toast(errorMessage(e),{tone:'failure'});return;}
+    // WORLDPOP FOR THE STUDY AREA'S COUNTRY, in Configure… (the practitioner, 2026-11-10: the country was asked for again
+    // in the Inspector, after the study area). The study area states the country, once; this reads it.
+    const node=getNode(workflow,n.id,'raster_input');
+    const upstream=upstreamCountries(workflow,n.id),stated=upstream.length===1?upstream[0]!:null;
+    // WHERE THE AREA STATES NO COUNTRY, IT IS ASKED HERE, and kept on the study area (the practitioner, 2026-11-10: "This
+    // raster dialog still has Worldpop only with nowhere to actually access Worldpop"). Still said once, in the area; the
+    // dialog no longer sends the person away to say it.
+    let country=stated||node.params.populationCountry||'';
+    // WHICH SOURCE (TODO 24, 2026-11-11): WorldPop for every country, GRID3's 2025 estimates for sub-Saharan Africa. A choice
+    // of which file to download, not a setting the step keeps: the raster read records the file it was given.
+    let ghsEpoch='2020';
+    let popSource:'worldpop'|'worldpop1'|'grid3'|'ghs'=grid3RasterFor(country||null)&&!worldPopRastersForCountry(country||null,'global2').length?'grid3':'worldpop';
+    const release=()=>popSource==='worldpop1'?'global1' as const:'global2' as const;
+    const rastersNow=()=>worldPopRastersForCountry(country||null,release());
+    const thisYear=String(new Date().getFullYear());
+    let popYear=node.params.populationYear;
+    const yearNow=()=>{const r=rastersNow();return r.find(x=>x.year===popYear)?.year??r.find(x=>x.year===thisYear)?.year??r[0]?.year??'';};
+    const grid3Link=()=>{const r=grid3RasterFor(country||null);
+      if(!r)return `<p class="muted">GRID3 publishes no estimate for ${esc(countryName(country))}: its ${GRID3_COUNTRIES} countries are in sub-Saharan Africa.</p>`;
+      return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
+        +`↓ ${esc(r.iso3)} · 2025${r.bytes?` · ${(r.bytes/1e6).toFixed(1)} MB`:''}</a>`
+        +`<p class="muted">${r.bytes?`About ${esc(downloadWait(r.bytes))} at the one speed measured here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. `:''}`
+        +`Your browser downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. `
+        +`${esc(GRID3_PRODUCT)}. ${esc(GRID3_NOTE)} ${esc(GRID3_LICENCE)} Cite: ${esc(GRID3_CITATION)}. Catalogue of ${esc(GRID3_TAKEN)}.</p>`;};
+    const linkFor=(year:string)=>{const rasters=rastersNow(),r=rasters.find(x=>x.year===year)??rasters[0]!,g2=release()==='global2';
+      return `<a class="button" id="population-download" href="${esc(r.url)}" download target="_blank" rel="noopener noreferrer">`
+        +`↓ ${esc(r.iso3)} · ${esc(r.year)}${r.bytes?` · ${(r.bytes/1e6).toFixed(0)} MB`:''}</a>`
+        +`<p class="muted">${r.bytes?`About ${esc(downloadWait(r.bytes))} at the one speed measured here, ${(WORLDPOP_BYTES_PER_SECOND/1e3).toFixed(0)} kB/s. `:''}`
+        +`Keep the laptop awake: the host ignores resume requests, so an interrupted download starts again from zero. Your browser `
+        +`downloads it from data.worldpop.org, which sends no CORS header. Then choose the downloaded file below. `
+        +(g2?`Global2 ${esc(GLOBAL2.release)}. ${esc(GLOBAL2.note)} ${esc(GLOBAL2.licence)} Cite: ${esc(GLOBAL2.citation)}. <a href="${esc(GLOBAL2.listing)}" target="_blank" rel="noopener noreferrer">WorldPop’s listing</a>, as read on ${esc(GLOBAL2.takenAt)}.</p>`
+          :`Global1, unconstrained population, 100 m. ${esc(WORLDPOP_LICENCE)} Catalogue of ${esc(WORLDPOP_TAKEN)}.</p>`);};
+    const populationHtml=()=>{
+      const rasters=rastersNow();
+      // ACROSS A BORDER (experiment 204): the area's countries are the choice, and the limit is said. One file is read.
+      const several=upstream.length>1;
+      const ask=stated?'':(several?`<p class="muted">The study area lies in ${upstream.map(c=>esc(countryName(c))).join(' and ')}. Each source `
+          +`publishes one file per country, and this step reads one: the part of the area in the other ${upstream.length>2?'countries':'country'} `
+          +`will have no population from it.</p>`:'')
+        +`<label class="field-label" for="population-country">${several?'Whose file to download':'The study area’s country'}</label>`
+        +`<select id="population-country"><option value="" ${country?'':'selected'}>Choose a country…</option>`
+        +(several?COUNTRIES.filter(c=>upstream.includes(c.iso)):COUNTRIES).map(c=>`<option value="${c.iso}" ${c.iso===country?'selected':''}>${esc(c.name)} (${c.iso})</option>`).join('')
+        +`</select>`+(several?'':`<p class="muted">Kept on the study area, which states it once for every step that needs it.</p>`);
+      const sourcePick=`<label class="field-label" for="population-source">Population source</label><select id="population-source">`
+        +`<option value="worldpop" ${popSource==='worldpop'?'selected':''}>WorldPop Global2 ${esc(GLOBAL2.release)} · every country, ${GLOBAL2.first}–${GLOBAL2.last}</option>`
+        +`<option value="worldpop1" ${popSource==='worldpop1'?'selected':''}>WorldPop Global1 · every country, 2000–2020</option>`
+        +`<option value="grid3" ${popSource==='grid3'?'selected':''}>GRID3 · sub-Saharan Africa, 2025</option>`
+        +`<option value="ghs" ${popSource==='ghs'?'selected':''}>GHS-POP (JRC) · every country, 1975–2030, read for the area only</option></select>`;
+      // GHS-POP NEEDS NO COUNTRY: one grid of the world, read for the study area's window by HTTP range.
+      if(popSource==='ghs')return `<h3>Population (GHS-POP)</h3>`+sourcePick
+        +`<label class="field-label" for="ghs-epoch">Year</label><select id="ghs-epoch">`
+        +GHS_EPOCHS.map(e=>`<option value="${e}" ${e===ghsEpoch?'selected':''}>${e}${GHS_PROJECTED.has(e)?' (projected)':''}</option>`).join('')+`</select>`
+        +`<p><button type="button" class="button" id="ghs-read">Read the ${ghsEpoch} window from JRC's copy</button></p>`
+        +`<p class="muted">Reads only the part of the 12 GB global grid that covers the study area, from JRC's copy on Amazon Web Services; `
+        +`nothing is downloaded first. The area read is sent to that server. ${esc(GHS_NOTE)} ${esc(GHS_LICENCE)} Cite: ${esc(GHS_CITATION)}.</p>`;
+      return `<h3>Population (${popSource==='grid3'?'GRID3':'WorldPop'})${country?` for ${esc(countryName(country))}`:''}</h3>`
+        +(stated?`<p class="muted">The country is the study area’s.</p>`:ask)+sourcePick
+        +(!country?'':popSource==='grid3'?`<div class="extract-links" id="population-link">${grid3Link()}</div>`:rasters.length
+          ?`<label class="field-label" for="population-year">Year</label><select id="population-year">`
+            +rasters.map(r=>`<option value="${r.year}" ${r.year===yearNow()?'selected':''}>${r.year}</option>`).join('')
+            +`</select><div class="extract-links" id="population-link">${linkFor(yearNow())}</div>`
+          :`<p class="muted">No WorldPop raster is listed for ${esc(countryName(country))}.</p>`);
+    };
+    const wirePopulation=(block:HTMLElement)=>{
+      const chosen=block.querySelector<HTMLSelectElement>('#population-source');
+      if(chosen)chosen.onchange=()=>{popSource=chosen.value==='grid3'?'grid3':chosen.value==='ghs'?'ghs':chosen.value==='worldpop1'?'worldpop1':'worldpop';block.innerHTML=populationHtml();wirePopulation(block);};
+      const epoch=block.querySelector<HTMLSelectElement>('#ghs-epoch');
+      if(epoch)epoch.onchange=()=>{ghsEpoch=epoch.value;block.innerHTML=populationHtml();wirePopulation(block);};
+      // The URL path does the read: the address put where a person would type it, and read as they would.
+      block.querySelector<HTMLButtonElement>('#ghs-read')?.addEventListener('click',()=>{const dialog=block.closest('dialog');
+        const field=dialog?.querySelector<HTMLInputElement>('#raster-url'),read=dialog?.querySelector<HTMLButtonElement>('#raster-url-read');
+        if(!field||!read)return;field.value=ghsUrl(ghsEpoch);field.closest('details')?.setAttribute('open','');read.click();});
+      const year=block.querySelector<HTMLSelectElement>('#population-year');
+      if(year)year.onchange=()=>{popYear=year.value;block.querySelector('#population-link')!.innerHTML=linkFor(year.value);};
+      const pick=block.querySelector<HTMLSelectElement>('#population-country');
+      if(pick)pick.onchange=()=>{
+        country=pick.value;
+        const origin=(()=>{const seen=new Set<string>(),queue=[n.id];while(queue.length){const id=queue.shift()!;if(seen.has(id))continue;seen.add(id);
+          const node=workflow.nodes.find(x=>x.id===id);if(node?.type==='study_area')return node;for(const e of workflow.edges)if(e.to===id)queue.push(e.from);}return undefined;})();
+        // Kept on the area only where it stated none: an area across a border already states its countries.
+        if(country&&origin&&!upstream.length){
+          change(w=>{const t=getNode(w,origin.id,'study_area').params as {countries?:string[];country?:string};delete t.country;t.countries=[country];});
+          // The area changed on purpose; a raster saved after it is still this dialog's to save.
+          baseline=JSON.stringify(workflow);
+        }
+        block.innerHTML=populationHtml();wirePopulation(block);
+      };
+    };
+    let baseline=JSON.stringify(workflow);
+    const keptAsset=getNode(workflow,n.id,'raster_input').params.asset;
+    const open=(kept?:Parameters<typeof openRasterEditor>[6])=>openRasterEditor(boundary,asset=>{if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Open Configure\u2026 again.');return change(w=>{getNode(w,n.id,'raster_input').params.asset=asset;},{requirePersistence:true});},keptAsset,
+      {html:populationHtml,wire:wirePopulation},node.params.label,name=>worldPopRecordFor(name)??grid3RecordFor(name,countryName)??ghsRecordFor(name),kept);
+    if(!keptAsset){open();return;}
+    void (async()=>{
+      const {rereadable,rereadWindow,chooseStreamedFile}=await import('./raster-workflow.js');
+      // CONFIGURE… ALWAYS OPENS (2026-11-20): a kept window that cannot be read back -- DR Congo's WorldPop, kept whole at
+      // 2.1 GB -- failed this read, and the error went nowhere: no dialog, no message. Now the dialog opens and says it.
+      let onDevice=false;
+      try{onDevice=!!await readPDF(keptAsset.sha256);}
+      catch(error){toast(`The window kept for ${keptAsset.source.filename} could not be read back on this device (${errorMessage(error)}). `
+        +'Choose the file again in this dialog.',{tone:'warning'});}
+      open({onDevice,rereadable:rereadable(keptAsset),
+        reread:async(file,say)=>{
+          // A STREAMED RASTER'S COPY ON THIS DEVICE: only its source file is wanted, checked and held for this session.
+          if(keptAsset.streamed&&onDevice&&file){await chooseStreamedFile(keptAsset,file,say);renderInspector();return;}
+          const bytes=await rereadWindow(keptAsset,file,say);
+          await storePDFs(new Map([[keptAsset.sha256,bytes]]),new Map([[keptAsset.sha256,{...keptAsset,asset:keptAsset}]]));renderInspector();},
+        download:async()=>{downloadRaster(await rasterOfNode(workflow,n.id));}});
+    })().catch(error=>toast(`Raster input could not open: ${errorMessage(error)}`,{tone:'failure'}));}
+async function downloadClipped(n:WorkflowNode<'clip_raster'>,e:Event){
+    const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'Download GeoTIFF';
+    button.disabled=true;button.textContent='Preparing\u2026';
+    try{downloadRaster(await rasterOfNode(workflow,n.id));}
+    catch(error){toast(errorMessage(error),{tone:'failure'});}
+    finally{button.disabled=false;button.textContent=label;}}
+async function previewClipStep(n:WorkflowNode<'clip_raster'>,e:Event){
+    const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'',baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Loading raster preview…';
+    try{
+      const clip=getNode(workflow,n.id,'clip_raster'),{boundary:studyBoundary}=previewArea(workflow,n.id),boundary=clip.params.cutline?.geometry||studyBoundary;
+      const polygon=boundary.type==='MultiPolygon'&&boundary.coordinates.length===1?{type:'Polygon' as const,coordinates:boundary.coordinates[0]}:boundary;
+      if(polygon.type!=='Polygon'||polygon.coordinates.length!==1)throw new Error('Preview adjustment currently supports a simple polygon. Holes and multiple polygons are retained but cannot be edited here.');
+      const raster=await prepareRasterPreview(workflow,n.id);
+      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen the preview.');
+      const draft:WorkflowNode<'study_area'>={id:clip.id,type:'study_area',x:clip.x,y:clip.y,params:{source:'drawn',label:clip.params.label,geometry:structuredClone(polygon),selectionMode:clip.params.cutline?.selectionMode||'polygon'}};
+      openStudyAreaEditor(draft,(params,options={})=>{
+        if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Reopen the preview.');
+        if(clip.params.cutline&&options.method===clip.params.method&&(options.marginPixels||0)===(clip.params.marginPixels||0)&&params.label===draft.params.label&&params.selectionMode===draft.params.selectionMode&&JSON.stringify(params.geometry)===JSON.stringify(draft.params.geometry))return true;
+        if(!params.geometry)throw new Error('Define a clipping boundary.');
+        return change(w=>{const target=getNode(w,n.id,'clip_raster');target.params.cutline={geometry:params.geometry!,selectionMode:params.selectionMode};target.params.label=params.label;target.params.method=options.method||clip.params.method;target.params.marginPixels=options.marginPixels||0;},{requirePersistence:true});
+      },{raster,clip:true,clipOptions:clip.params,refusal:saveFailureMessage});
+    }catch(error){toast(errorMessage(error),{tone:'failure'});}finally{button.disabled=false;button.textContent=label;}}
+function addRasterMap(n:WorkflowNode){change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;});}
+function rasterPresence(n:WorkflowNode<'raster_input'>,host:HTMLElement){const asset=n.params.asset;if(!asset)return;
+    const notHere=(why:string)=>{if(host.isConnected)host.innerHTML=`<p class="standard-result standard-result-warning" data-raster-not-here>${esc(why)}</p>`;};
+    void readPDF(asset.sha256).then(held=>{if(!held)notHere('Not on this device yet: read it again in Configure\u2026');},
+      error=>notHere(`Kept, but not readable on this device (${errorMessage(error)}): choose the file again in Configure\u2026`));}
+/** RASTER INPUT'S AND CLIP RASTER'S KIT (raster-ui.ts): the step kit, with what the last run did, and the actions that
+ *  read files, previews and the study area, which stay here with what they read. */
+function rasterKit():RasterKit{
+  return {...stepKit(),facts:id=>result?.receipts?.find(r=>r.nodeId===id)?.facts,ran:()=>!!result,
+    keepChange:edit=>change(edit,{requirePersistence:true}),
+    prepare:n=>prepareRasterStep(n),previewClip:(n,e)=>previewClipStep(n,e),downloadClipped:(n,e)=>downloadClipped(n,e),
+    addMap:n=>addRasterMap(n),presence:(n,host)=>rasterPresence(n,host)};
 }
 function inspectorKit():InspectorKit{
   return {esc,section:standardSection,name:(id,value)=>labelForm(id,'Name',value),inputs:standardInputs,

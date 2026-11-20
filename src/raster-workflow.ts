@@ -77,7 +77,10 @@ export async function fileAgainByClick(asset:RasterAsset,say?:(text:string)=>voi
     await rememberHandle(digest,chosen);
     return;
   }
-  const input=document.createElement('input');input.type='file';input.accept='.tif,.tiff,image/tiff';
+  // This module is also typed for workers, which have no document; the picker runs only on the page.
+  type FileInput={type:string;accept:string;files:{[i:number]:File}|null;onchange:(()=>void)|null;click():void};
+  const input=(globalThis as unknown as {document:{createElement(tag:'input'):FileInput}}).document.createElement('input');
+  input.type='file';input.accept='.tif,.tiff,image/tiff';
   const file=await new Promise<File|undefined>(resolve=>{input.onchange=()=>resolve(input.files?.[0]);input.click();});
   if(!file)throw new Error('No file was chosen.');
   await chooseStreamedFile(asset,file,say);

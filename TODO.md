@@ -60,16 +60,44 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 1. Tabular data's sources as tabs (2026-11-20): Your file, From an address, Census tables, Tide gauges with its overview
    map, and DHIS2's export; manual pages for the census and tide-gauge sources; the five example manuals' fetch steps;
-   with the study area picker reading the boundaries repository, one gate.
+   with the study area picker reading the boundaries repository, one gate. **Done in 0.153.0 and 0.154.0:** the tabs, and
+   Census tables offering each country in today's units with geoBoundaries' names (DR Congo summed to its 26 provinces,
+   Rwanda and Botswana by district). **Left:** the Tide gauges tab and its overview map, DHIS2's export, the census and
+   tide-gauge source manual pages, the picker reading the boundaries repository.
 1a. Stress tests of every table operation (2026-11-20): a battery of made-up tables, each built around one gotcha (names, values, shape, keys, chains), through all 21 table steps; refusals name the step, nothing missing reads as zero, nothing hangs.
 1b. Experiment [226](docs/experiments/226-table-operations-as-challenges.md), table operations as challenges: `example-table-operations`, one challenge per workflow, Walk me through or Solve it, scored at each run.
-2. Raster streaming for GHS-POP over DR Congo: [GHS-POP over DR Congo is refused](#ghs-pop-over-dr-congo-is-refused-8-byte-cells-found-2026-11-19-streaming-decided-the-same-day).
-3. Experiment 225, WebGPU as an accelerator: [WebGPU as an accelerator](#webgpu-as-an-accelerator-never-a-requirement-225-asked-2026-11-19).
+2. **Done in 0.154.0.** Raster streaming for GHS-POP over DR Congo: [GHS-POP over DR Congo is refused](#ghs-pop-over-dr-congo-is-refused-8-byte-cells-found-2026-11-19-streaming-decided-the-same-day).
+3. Experiment 225, WebGPU as an accelerator (first finding, 2026-11-20: the slow part of an address read is the network,
+   162 MB in 2,070 tiles, not computing): [WebGPU as an accelerator](#webgpu-as-an-accelerator-never-a-requirement-225-asked-2026-11-19).
 4. The agent-based model compared with Hagelloch's recorded curve (experiment 199, option 4, chosen 2026-11-19): [item 29](#29-an-agent-based-model-in-the-browser-checked-against-starsim).
 5. The gate: recorded copies of live services, from-scratch tests on several workers, and a live-service check on GitHub ([gating audit](docs/audits/gating-audit.md), Decided 2026-11-19).
-6. Show-me-how walkthroughs for spatial steps: batch 1, Join a table to the study area and Sample a raster; then batch 2, Clip polygons, Keep points inside the area and Summarize points to polygons ([Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07)).
-7. Census tables, experiment 224: the download list for 15 countries, then a table source reading the census-tables repository ([224](docs/experiments/224-census-counts-as-a-table-source.md)).
-8. DHIS2: a test server in Docker, then a connection, its own release ([DHIS2 as a table source](#dhis2-as-a-table-source-with-a-test-server-in-docker-asked-2026-11-19-widened-2026-11-20)).
+6. Show-me-how walkthroughs for spatial steps (0.154.0 gave Area around a point, Buffer study area, Calculate area and Clip polygons theirs): batch 1, Join a table to the study area and Sample a raster; then batch 2, Keep points inside the area and Summarize points to polygons ([Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07)).
+7. Census tables, experiment 224 (the table source is built; 3 of 15 countries in): the download list for 15 countries, then a table source reading the census-tables repository ([224](docs/experiments/224-census-counts-as-a-table-source.md)).
+8. DHIS2 (the Docker test server runs; synthetic VPD data and the connection are next): a test server in Docker, then a connection, its own release ([DHIS2 as a table source](#dhis2-as-a-table-source-with-a-test-server-in-docker-asked-2026-11-19-widened-2026-11-20)).
+
+
+### Threads from 0.154.0 (2026-11-20), not yet ordered
+
+- **Private worked examples.** A worked example held in a private repository, listed only when the person's identity
+  and a credential naming that repository (fine-grained, Contents: read) are both unlocked; read at its pinned commit
+  with that credential, checked by digest, never offered for sharing or publishing. Nothing in this repository names
+  any such example. Open: where such repositories live, and who creates them.
+- **A synthetic worked example of venue covariates.** Venues generated from a stated model with known effects and
+  deliberately uneven "mapping", so a learner can check what a count model with a population offset recovers and how
+  mapping effort and population density mislead; only area totals shown, with a minimum count. Open: real boundaries
+  with made-up venues, or a made-up geography. Needs a spatial count model and residual cluster tests in a tab.
+- **Table leftovers from the DR Congo workflow:** the After preview of a long table (the rows as stored, the crosstab a
+  labelled second view); a name for the value column in a long read (DR Congo's census read long gave "total" where
+  three models gave "population"); the stray `measure` key.
+- **The rest of the Inspector move:** reading satellite files (its dialog and sentence are still in app.ts, with their
+  readers and caches), and Tabular data's save to the device's store.
+- **Coastal sea-level:** the PSMSL archive reader; the framework's ontology terms, waiting on the practitioner's choice
+  of the CF standard name for relative sea level.
+- **Boundary levels as published:** check that geoBoundaries' levels hold the units their counts suggest before relying
+  on them (for some countries the counts suggest ADM2 holds counties and ADM3 districts), and read level names such as
+  "Unknown" as not stated, as figure words now do.
+- **The gate's gap:** the population example's run end to end needs the raster downloads, so the gate checks it opens
+  from its pin, with its census and words, and no more.
 
 ## Urgent
 

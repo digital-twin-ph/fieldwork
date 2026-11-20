@@ -3,6 +3,10 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.155.0 — In development
+
+- **TODO**: the threads 0.154.0 left, and where the list's items stand after it.
+
 ## 0.154.0 — 2026-11-20
 
 - **What a workflow already states is carried, not typed again.** A DR Congo workflow copied from Botswana's met, one

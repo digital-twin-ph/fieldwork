@@ -52,7 +52,7 @@ rates a few kilometres apart.
 | Herrera-García et al. (2021), *Science*, "Mapping the global threat of land subsidence" | A global model of where subsidence is likely | Paper possibly closed; data possibly deposited | Both |
 | Cian and colleagues (2019), *Remote Sensing* (MDPI) | Sentinel-1 subsidence in Lagos | MDPI journals are open access | The citation and figures, read from its page |
 | Syvitski et al. (2009), *Nature Geoscience*, "Sinking deltas" | Delta subsidence, including the Niger | Likely closed | Any open copy |
-| Reyes et al. (2023), *Philippine Engineering Journal* 44(1) | Local factors in Philippine coastal sea level | Open | Already cited in the index (`tide-gauges/PHL/README.md`) |
+| Reyes et al. (2023), *Philippine Engineering Journal* 44(1) | Local factors in Philippine coastal sea level | Open | Already cited in the index (`coastal-sea-level/PHL/README.md`) |
 | Raucoules et al. (2013), *Remote Sensing of Environment* 139 | Manila subsidence, 1993–2010 | Closed | A HAL record exists (hal-00863850); whether it holds the full text |
 
 ## What could be added to the tide-gauge index

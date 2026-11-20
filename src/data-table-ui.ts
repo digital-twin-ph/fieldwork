@@ -63,13 +63,16 @@ const esc:Escape=(value:unknown)=>String(value??'')
 export const MANY_COLUMNS=12;
 /** THE VALUE COLUMN, GUESSED ONLY WHERE THE FILE AGREES (2026-11-20): a column named like a value -- value, amount,
  *  measure, level -- and holding numbers in the rows read. DR Congo's census has "level" (pays, region, ville), which the
- *  name alone took as its value, so Append rows later refused a census beside three population tables. Where no named
- *  column holds numbers, nothing is guessed, and the dialog asks for the column. */
+ *  name alone took as its value, so Append rows later refused a census beside three population tables. Then the last
+ *  column, where it holds numbers; otherwise nothing is guessed, and the dialog asks for the column. */
 export function guessValueColumn(headers:readonly string[],rows:readonly (readonly string[])[]):number{
   const numeric=(i:number)=>{let seen=0;
     for(const row of rows){const cell=(row[i]??'').trim();if(cell==='')continue;if(!Number.isFinite(Number(cell.replace(/,/g,''))))return false;if(++seen>=50)break;}
     return seen>0;};
-  return headers.findIndex((h,i)=>/^(value|value_m|amount|measure|level)$/i.test(h.trim())&&numeric(i));
+  const named=headers.findIndex((h,i)=>/^(value|value_m|amount|measure|level)$/i.test(h.trim())&&numeric(i));
+  if(named>=0)return named;
+  // The last column, the long file's usual place for its value, where it holds numbers.
+  return headers.length&&numeric(headers.length-1)?headers.length-1:-1;
 }
 /** How each column list refreshes its summary when it is ticked in code -- a change of shape -- rather than by a person. */
 const refreshers=new WeakMap<Element,()=>void>();
@@ -410,15 +413,15 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         const oneValue=valueFields.length===1&&!repeated;
         if(repeated||oneValue){
           if(oneValue&&!repeated){
+            // ONE VALUE COLUMN IS ADVICE TOO, NOT A REFUSAL (2026-11-20), as repeats became on 2026-11-06. DR Congo's census
+            // read wide with "total" alone, its value named "population" to stack beside three population tables, was
+            // refused here with nothing said in the step, and only "value" over three columns could be applied.
             shapeSays.textContent=`This file looks like it is already in LONG format. A wide table `
               +`has a column per variable, and only one column here is left to be a value `
-              +`(${valueFields[0]}), so reading it as wide would add a "${measureKey}" column `
-              +`holding one value and nothing else. Nothing has been changed.`;
+              +`(${valueFields[0]}), so reading it as wide adds a "${measureKey}" column `
+              +`holding one value. Read it as long, or keep it wide to name the value yourself.`;
             shapeAccept.textContent='Read it as long instead';
             shapeAlert.hidden=false;
-            status.textContent='This table has not been imported.';
-            save.disabled=true;result=undefined;
-            return;
           }
         }
         // REPEATS ARE ADVICE, NOT A REFUSAL. Repeated subjects usually mean the file is long, and the button says so.
@@ -644,6 +647,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   const remembered=(()=>{try{return localStorage.getItem(TAB_KEY);}catch{return null;}})();
   showTab(existing?.remote?.url?(existing.remote.url.startsWith(CENSUS_RAW)?'census':'remote'):existing?'file'
     :tabs.some(t=>t.dataset.tableTab===remembered)?remembered!:'file',false);
+  // A TABLE FROM AN ADDRESS REOPENS READ (2026-11-20): it opened empty until fetched again, so its columns, value name and
+  // keys could not be changed, and what showed was stale. Its copy on this device is read, checked by digest, and the
+  // settings it was saved with are put back.
+  if(existing?.remote?.url&&!existing.remote.entry)void fetchURL(false);
   entrySelect.onchange=async()=>{
     if(!archive||!entrySelect.value)return;
     try{await readFetched(archiveEntry(archive,entrySelect.value),entrySelect.value);}

@@ -162,6 +162,11 @@ test('a wide table imports, and the refusals each shape can state still hold',as
   await page.locator('#table-file').setInputFiles({name:'text.csv',mimeType:'text/csv',
     buffer:Buffer.from('psgc_code,scenario,value_m,value_b\n1380100000,ssp126,high,2\n')});
   await expect(page.locator('#table-keys')).toBeVisible();
+  // CHOSEN, NOT GUESSED (2026-11-20): a column is taken as the value by its name only where it holds numbers, so the
+  // column holding "high" is named here, which is what this check is about.
+  if(await page.locator('#table-value').isVisible())await page.locator('#table-value').selectOption('value_m');
+  for(const key of ['psgc_code','scenario'])await page.locator(`#table-keys input[value="${key}"]`).check();
+  for(const other of ['value_m','value_b'])await page.locator(`#table-keys input[value="${other}"]`).uncheck();
   await expect(page.locator('#table-error')).toBeHidden();
   await page.locator('#table-save').click();
   await expect(page.locator('[data-table-findings]')).toContainText('Data quality:');

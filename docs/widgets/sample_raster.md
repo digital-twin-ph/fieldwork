@@ -1,6 +1,6 @@
 # Sample a raster at points or over areas
 
-_Created 2026-11-09 · Updated 2026-11-18_
+_Created 2026-11-09 · Updated 2026-11-19_
 
 **A grid's value at each point, or its total over each area.** The ground's height at each clinic; the people a
 population grid places in each district; the satellite's NO₂ over each monitor, day by day.
@@ -263,7 +263,7 @@ need be collected. At points, only the points' cells are read. Checked against t
 window with no data, zeros, a hole and an area reaching past the window: every total, count, mean, median and
 deviation equal (`tests/raster-stream.test.mjs`).
 
-**Measured 2026-11-19 on DR Congo, in Node.js on the development Mac, not in a browser tab:** GHS-POP 2025 (R2023A,
+**On DR Congo, in Node.js on the development Mac, not in a browser tab:** GHS-POP 2025 (R2023A,
 3 arcseconds, the 12.3 GB global file read from disk) over GADM's 240 districts, 73,509 vertices. The window,
 22,926 by 22,607 = 518 million cells of 8 bytes, would be 4.2 GB whole. The kept copy, in blocks of 10 (2,293 by
 2,261), took 6.3 s; every district's total, cells, statistics and exact median took 20.7 s over 5 passes, the process

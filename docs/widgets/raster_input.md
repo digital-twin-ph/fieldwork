@@ -1,6 +1,6 @@
 # Raster input
 
-_Created 2026-11-09 · Updated 2026-11-17_
+_Created 2026-11-09 · Updated 2026-11-19_
 
 **A window of a GeoTIFF or NetCDF grid around the study area, kept in the project.** A population surface, a terrain model, a geoid.
 
@@ -118,9 +118,8 @@ The sea-level example (EGM2008, the mean sea surface and DeltaDTM around Manila)
 ### 2026-11-19 · A window too large to keep is streamed (0.13.0)
 
 GHS-POP over DR Congo was refused: about 519 million cells of 8 bytes, 4.2 GB, past the 2.1 GB a tab decodes at once
-(the practitioner, running the population rasters example). WorldPop's 4-byte cells fit; GHS-POP's did not. Chosen
-over holding GHS-POP's cells in 4 bytes, which would have changed its values in the eighth figure (*"Start
-streaming"*). A window past either limit is now kept as a copy in blocks and read from its source in strips by Sample
+(found running the population rasters example). WorldPop's 4-byte cells fit; GHS-POP's did not. Chosen
+over holding GHS-POP's cells in 4 bytes, which would have changed its values in the eighth figure. A window past either limit is now kept as a copy in blocks and read from its source in strips by Sample
 a raster. Checked on a small GeoTIFF read by terrio (`tests/raster-stream.test.mjs`): the blocks equal their cells'
 sums and means. On DR Congo in Node.js, the copy in blocks of 10 took 6.3 s (Sample a raster's manual, History). **Not yet
 measured in a browser tab.**

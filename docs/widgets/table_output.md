@@ -1,6 +1,6 @@
 # Table
 
-_Created 2026-10-27 · Updated 2026-11-15_
+_Created 2026-10-27 · Updated 2026-11-19_
 
 ## What it does
 

@@ -195,12 +195,12 @@
    "migrationFrom": []
   },
   "clip_raster": {
-   "version": "1.2.0",
-   "released": "2026-11-18",
+   "version": "1.2.1",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The standard Inspector (experiment 186): Name, Inputs, Settings with Configure… and Result. The inclusion rule, the margin and the choice between its own boundary and the study area's are set in Configure… and written only on Apply; the boundary is still drawn on the map; Result says how many cells the last run kept and how many hold a value."
+     "kind": "patch",
+     "description": "A streamed raster is not clipped: the step says so and points to Sample a raster."
     }
    ],
    "breaking": false,
@@ -432,7 +432,7 @@
    "changes": [
     {
      "kind": "minor",
-     "description": "A map takes up to 250,000 point records (the 2,000 combined across its layers is gone). A layer of more than 2,000 marks is one shape per style on the static figure and is drawn on the graphics card (MapLibre GL) on the interactive map, which draws up to 100,000 marks and says so past that; offline or without WebGL, as circles. The static figure counts each layer once, not once per mark. Its Inspector and Configure dialog are in src/map-ui.ts."
+     "description": "A map takes up to 250,000 point records (the 2,000 combined across its layers is gone). A layer of more than 2,000 marks is one shape per style on the static figure and is drawn on the graphics card (MapLibre GL) on the interactive map: circles with MapLibre's circle layer, to 250,000; other shapes as icons up to 100,000 and as circles past that, which the map says; offline or without WebGL, as circles. The static figure counts each layer once, not once per mark. Its Inspector and Configure dialog are in src/map-ui.ts."
     }
    ],
    "breaking": false,
@@ -624,12 +624,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.12.3",
-   "released": "2026-11-15",
+   "version": "0.13.0",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A GeoTIFF of colour bands is named as a picture and sent to Georeferenced map image, instead of being refused as not single-band."
+     "kind": "minor",
+     "description": "A window past what a tab holds (518.9 million cells or 2.1 GB of blocks) is streamed: a copy in blocks is kept and drawn, summed for a count and averaged for a value, and the full window is read from its source by Sample a raster. A file source is chosen again in each new session and checked against its digest."
     }
    ],
    "breaking": false,
@@ -736,12 +736,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.7.0",
-   "released": "2026-11-18",
+   "version": "0.8.0",
+   "released": "2026-11-19",
    "changes": [
     {
      "kind": "minor",
-     "description": "Reads MODIS vegetation, NDVI and EVI (MOD13Q1 and MYD13Q1, 16-day, 250 m, Planetary Computer), over areas and at points, as land surface temperature is read. Each product states its own scale convention (vegetation's files say 10000, a divisor; temperature's 0.02, a multiplier), its quality rules (pixel reliability ranks, from the file's legend; default 0 and 1) and whether it counts clear days. A layer or rule from another product is not carried over. The practitioner, 2026-11-18: \"Did we build NDVI for Brazil?\""
+     "description": "A streamed raster is totalled over areas from its source a strip at a time in the Rust kernel, with each area's median found exactly by further passes, and read at points cell by cell."
     }
    ],
    "breaking": false,
@@ -902,24 +902,24 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.11.0",
-   "released": "2026-11-13",
+   "version": "0.11.1",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A value can be edited by hand in Data quality, under Records (experiment 214): kept on the step as an edit with the value it replaced and when, applied to a copy of the records when they are handed on, never to the file; an empty value can be filled, and such edits are counted apart (the practitioner, 2026-11-13: \"Yes, like any edit\"). An edit whose value read is no longer there is not applied, and is reported. Edits (n) lists them, each removable. The run states each as fw:CellEdit. The practitioner, 2026-11-10: \"the ability to edit tables inline\"."
+     "kind": "patch",
+     "description": "A key column ticked on a large table no longer stalls the dialog: rows repeating a key are grouped in place, a finding names its first ten rows, and the table under the dialog shows 200 rows at a time."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.13.0",
+   "version": "0.13.1",
    "released": "2026-11-19",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A table of points takes up to 250,000 records across its point inputs; the 2,000 combined is gone."
+     "kind": "patch",
+     "description": "A table shown by subject or as a cross-tabulation shows 200 rows at a time, with Previous and Next; totals count every row."
     }
    ],
    "breaking": false,

@@ -35,6 +35,11 @@ test('a run stopped at Append rows keeps its tables, so Columns can line the cen
   const rows=await ap.locator('[data-grid-name]').evaluateAll(els=>els.map(e=>e.value));
   await ap.locator(`[data-grid-row="${rows.indexOf('name')}"][data-grid-table="1"]`).selectOption('province');
   await expect(ap).toContainText('After: the stacked table.');
+  // Started again: every choice cleared, the suggestion back, then chosen once more.
+  await ap.locator('#append-grid-reset').click();
+  await expect(ap.locator('.append-grid')).toContainText('Its "province" may be this: 4 of 4');
+  const again=await ap.locator('[data-grid-name]').evaluateAll(els=>els.map(e=>e.value));
+  await ap.locator(`[data-grid-row="${again.indexOf('name')}"][data-grid-table="1"]`).selectOption('province');
   await ap.locator('#config-apply').click();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:30000});

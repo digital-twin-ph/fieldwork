@@ -41,6 +41,7 @@ that fills it, or *none*: that table's rows are then empty there.
   DR Congo's census names its provinces `province`; the population models name theirs `name`. Stacked as they are,
   the census rows would have no `name`. Choose `province` under `name` in the census's box.
 - **Rename a stacked column** in its first box: every table's column in that row takes the new name.
+- **Line every column up by its own name again** clears every choice made here, to start over.
 - **A suggestion** appears where a table lacks a column and one of its own seems to hold the same names: how many of
   its names are in that column of the other tables is shown beside it.
 

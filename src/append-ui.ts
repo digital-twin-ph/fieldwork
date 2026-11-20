@@ -108,7 +108,10 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
       const placedAs=(i:number,column:string)=>d.stackUnder.find(m=>m.table===i&&m.column===column)?.as??column;
       const lineUp='<fieldset class="append-grid"><legend>Columns</legend>'
         +'<p class="muted">One row per column of the stacked table. For each table, the column that fills it, or none: its rows are then empty there. '
-        +'Rename a stacked column in its first box.</p><div class="table-scroll"><table><thead><tr><th scope="col">Stacked as</th>'
+        +'Rename a stacked column in its first box.</p>'
+        // START AGAIN (2026-11-20): undoing earlier choices cell by cell left DR Congo's models' names stacked elsewhere.
+        +(d.stackUnder.length?'<p><button type="button" class="button small" id="append-grid-reset">Line every column up by its own name again</button></p>':'')
+        +'<div class="table-scroll"><table><thead><tr><th scope="col">Stacked as</th>'
         +ts.map((_,i)=>`<th scope="col">${esc(names[i]||name(i))}</th>`).join('')+'</tr></thead><tbody>'
         +grid.map((row,r)=>`<tr><td><input data-grid-name="${r}" aria-label="Stacked column ${r+1}, named" maxlength="60" value="${esc(row.as)}"></td>`
           +row.cells.map((cell,i)=>{
@@ -149,6 +152,7 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
       root.querySelectorAll<HTMLSelectElement>('[data-grid-table]').forEach(el=>el.addEventListener('change',()=>{
         const row=columnGrid(ts,d.stackUnder)[Number(el.dataset.gridRow)];if(!row)return;
         d.stackUnder=placeColumn(d.stackUnder,Number(el.dataset.gridTable),row.as,el.value||null);redraw();}));
+      root.querySelector<HTMLButtonElement>('#append-grid-reset')?.addEventListener('click',()=>{d.stackUnder=[];redraw();});
       root.querySelectorAll<HTMLInputElement>('[data-grid-name]').forEach(el=>el.addEventListener('change',()=>{
         const row=columnGrid(ts,d.stackUnder)[Number(el.dataset.gridName)];if(!row)return;
         d.stackUnder=renameStacked(ts,d.stackUnder,row.as,el.value);redraw();}));

@@ -3516,7 +3516,7 @@ function tableOnPort(w:Workflow,nodeId:string,port:string):import('./data-table.
   }
   // A point layer that holds its points is a table already, before a run (experiment 200).
   if(from.type==='point_input')return pointsAsTable(from.params.data);
-  return result?.tables?.[from.id]??null;
+  return result?.tables?.[from.id]??(stoppedTables?.key===storageKey(w)?stoppedTables.tables[from.id]:undefined)??null;
 }
 /** TRANSMISSION CHAINS' SETTINGS (experiment 216), in the standard dialog: which column names each case, which names its
  *  recorded source, the value written for "no source", and the date that orders a case's children. The preview runs on
@@ -6119,7 +6119,13 @@ async function fillFetchedTables():Promise<void>{
     catch{/* the run reports the empty table in its own words */}
   }
 }
+/** THE TABLES A STOPPED RUN'S FINISHED STEPS MADE, for this workflow only, until the next run (2026-11-20): Append rows'
+ *  dialog shows its columns from them when the run stopped at Append rows. */
+// var, not let: the Inspector can draw during startup, before this line has run.
+// eslint-disable-next-line no-var
+var stoppedTables:{key:string;tables:Record<string,import('./data-table.js').DataTable>}|undefined;
 async function run(){if(busy)return;
+  stoppedTables=undefined;
   await fillFetchedTables();
   // A refusal BEFORE the run starts is still a refused run, and the canvas has to say so. It
   // returned early here without touching the state, so the workflow went on reading "Changed ·
@@ -6185,6 +6191,8 @@ async function run(){if(busy)return;
     // A STREAMED RASTER'S FILE, chosen from the message itself (2026-11-20): the file is checked, then the run starts again.
     const needed=e as {name?:string;asset?:import('./raster.js').RasterAsset;remembered?:boolean};
     const asset=needed?.name==='StreamedFileNeeded'?needed.asset:undefined;
+    const sofar=(e as {tablesSoFar?:Record<string,import('./data-table.js').DataTable>}|null)?.tablesSoFar;
+    if(sofar)stoppedTables={key:storageKey(workflow),tables:sofar};
     toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure',...(asset?{action:{
       label:needed.remembered?`Allow reading ${asset.source.filename}`:`Choose ${asset.source.filename}\u2026`,
       run:()=>{void (async()=>{

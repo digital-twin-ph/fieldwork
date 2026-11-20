@@ -1220,6 +1220,23 @@ function dataOrigin(workflow:Workflow,nodeId:string,runId:string):string{
   while(!seen.has(id)){seen.add(id);at=workflow.edges.filter(e=>e.to===id);if(at.length!==1)break;id=at[0]!.from;}
   return `<urn:fieldwork:run:${runId}:output:${id}>`;
 }
+/** THE TABLES A RUN'S STEPS MADE, from its values: kept on a finished run, and on a stopped one (2026-11-20), so a step's
+ *  dialog can show the tables reaching it although the run stopped there -- Append rows' columns, after it refused to
+ *  stack a table holding its names under another column. */
+export function tablesOfRun(workflow:Workflow,values:Map<string,unknown>):Record<string,DataTable>{
+  const tables:Record<string,DataTable>={};
+  for(const [nodeId,value] of values)
+    if((value as {kind?:string})?.kind==='data-table')tables[nodeId]=value as DataTable;
+    // A distances result is a table too, so a step reading it can preview it (experiment 197).
+    else{const n=workflow.nodes.find(x=>x.id===nodeId);if(n&&outputOf(n)==='distances')tables[nodeId]=distancesAsTable(value as never);
+      // A POINT LAYER WIRED TO A TABLE PORT is a table too (experiment 200): only where it is wired so, since every
+      // point layer as a table would hold a second copy of each.
+      else if(n&&(outputOf(n)==='points'||outputOf(n)==='polygons')&&workflow.edges.some(e=>{if(e.from!==n.id)return false;const to=workflow.nodes.find(x=>x.id===e.to);
+        return !!to&&nodeInputs(to).find(([p])=>p===e.port)?.[1]==='table';}))
+        // A POLYGON LAYER TOO (2026-11-15): a chart of a replay's p-values is offered its columns from the last run.
+        tables[nodeId]=outputOf(n)==='points'?pointsAsTable(value as never):polygonsAsTable(value as never);}
+  return tables;
+}
 export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done'|'failed')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);
   const runId=crypto.randomUUID(), receipts:Receipt[]=[];
@@ -1283,6 +1300,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       await runNode(node);
     }catch(error){
       onProgress(node.id,'failed');
+      if(error&&typeof error==='object')(error as {tablesSoFar?:Record<string,DataTable>}).tablesSoFar=tablesOfRun(workflow,values);
       throw error;
     }
   }
@@ -2821,17 +2839,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // object. A table is already bounded at MAX_TABLE_ROWS, so this is a known cost; the rest is
   // not, and a figure for "how much memory does a run hold" that depends on the workflow is not
   // one anybody can act on.
-  const tables:Record<string,DataTable>={};
-  for(const [nodeId,value] of values)
-    if((value as {kind?:string})?.kind==='data-table')tables[nodeId]=value as DataTable;
-    // A distances result is a table too, so a step reading it can preview it (experiment 197).
-    else{const n=workflow.nodes.find(x=>x.id===nodeId);if(n&&outputOf(n)==='distances')tables[nodeId]=distancesAsTable(value as never);
-      // A POINT LAYER WIRED TO A TABLE PORT is a table too (experiment 200): only where it is wired so, since every
-      // point layer as a table would hold a second copy of each.
-      else if(n&&(outputOf(n)==='points'||outputOf(n)==='polygons')&&workflow.edges.some(e=>{if(e.from!==n.id)return false;const to=workflow.nodes.find(x=>x.id===e.to);
-        return !!to&&nodeInputs(to).find(([p])=>p===e.port)?.[1]==='table';}))
-        // A POLYGON LAYER TOO (2026-11-15): a chart of a replay's p-values is offered its columns from the last run.
-        tables[nodeId]=outputOf(n)==='points'?pointsAsTable(value as never):polygonsAsTable(value as never);}
+  const tables=tablesOfRun(workflow,values);
   // A POINT LAYER'S COLUMNS, not the layer (experiment 192): a rules step after a computed one, such as Find health
   // facilities from a list, is offered the columns that step gave out. Bounded: names and kinds from 200 points.
   const pointColumns:Record<string,{attribute:string;kind:'number'|'term'}[]>={};

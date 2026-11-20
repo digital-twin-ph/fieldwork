@@ -1415,6 +1415,26 @@ server"*. In order:
 Not established: whether DHIS2's analytics API returns a district's data at a size a browser handles, which DHIS2
 versions the countries in the worked examples run, and who could whitelist Fieldwork on a country's server.
 
+**The Docker server, running 2026-11-20** (the practitioner: *"Yes to DHIS2 download"*; *"It's local ephemeral DHIS2 so you
+can set credentials"*). In `digitaltwin-ph/dhis2-test/`, beside the repositories and in none of them: `compose.yml`
+(DHIS2 `dhis2/core:2.41.11.0` and `ghcr.io/baosystems/postgis:16-3.5`, arm64; DHIS2 on `127.0.0.1:8080` only, the
+database not exposed), `db/dhis2-db-sierra-leone.sql.gz` (83,750,076 bytes, sha256 `1dc1a75e…cb61110`, from
+databases.dhis2.org/sierra-leone/2.41.11), and `setup.sh`, which replaces the demo's published admin password with a
+generated one, lists `http://localhost:4199`, `http://127.0.0.1:4199` and `http://localhost:4195` in the CORS
+allowlist (`/api/configuration/corsAllowlist`, answered 204), and makes a personal access token; passwords and token
+are in `dhis2-test/.secrets/`, never printed. **Measured:** the preflight from `http://localhost:4199` with an
+`Authorization` header is allowed, and a read with the token returns version 2.41.11 with
+`Access-Control-Allow-Origin: http://localhost:4199`. So a Fieldwork page can call this DHIS2.
+
+What the Sierra Leone database holds for vaccine-preventable diseases, counted in it: IDSR Weekly (plague, malaria,
+cholera, measles, yellow fever; 12,803 weekly values each for measles and yellow fever, December 2024 to December 2026,
+368 organisation units), monthly Morbidity new cases (measles 4,322 values, yellow fever 246, neonatal tetanus 146, AFP
+64; 2025 to 2026), and measles doses given (48,213 values, 2016 to September 2026). Its dates run to the end of 2026, so
+DHIS2 regenerates the demonstration data; it is not a country's reporting. **No case-based VPD program, and nothing for
+diphtheria or pertussis**: those would be generated here and marked synthetic, if wanted. Two traps recorded in
+`setup.sh`: Postgres answers a socket health check while it is still restoring the dump, so the check is over TCP; and
+DHIS2 answers 202 to a password change, so the new password is saved before it is set.
+
 ### From Nigeria, 2026-11-02 ([162](docs/experiments/162-polygons-are-records.md))
 
 - **Declare `MAX_TABLE_ROWS` and `MAX_LAYER_VERTICES` in `widgets/caps.json`**, with measured evidence.

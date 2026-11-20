@@ -79,14 +79,8 @@ export function geometryBytes(g:unknown):number{return JSON.stringify(g).length;
 // Edge crossing in near-linear time instead of the O(n^2) pair scan this replaces. Measured, the
 // quadratic form cost 240 ms at Shabunda's 4,395 vertices and 12.2 s at 32,000 -- so time, not
 // memory, was the real ceiling, and admitting large polygons without this would freeze the editor
-// rather than refuse. Edges go into a uniform grid of about one edge per cell and only edges
-// sharing a cell are compared. Pairs may be compared more than once when they share several
-// cells; the test is idempotent, so that costs a little work and no correctness.
-// Edge crossing in near-linear time instead of the O(n^2) pair scan this replaces. Measured, the
-// quadratic form cost 240 ms at Shabunda's 4,395 vertices and 12.2 s at 32,000 -- so time, not
-// memory, was the real ceiling, and admitting large polygons without this would freeze the editor
-// rather than refuse. Edges go into a uniform grid of about one edge per cell and only edges
-// sharing a cell are compared. Pairs may be compared more than once when they share several
+// rather than refuse. Edges go into a uniform grid of cells about two edges long, and only edges
+// sharing a cell, with boxes that meet, are compared. Pairs may be compared more than once when they share several
 // cells; the test is idempotent, so that costs a little work and no correctness.
 //
 // Rings are addressed by (part, ring) now that a study area may hold several parts. Two edges of
@@ -101,22 +95,35 @@ function crossingFault(parts:Position[][][]):string|null{
   }
   const n=edges.length;
   if(n<4)return null;
+  // EACH EDGE'S BOX, so a pair whose boxes do not meet is passed over before any arithmetic.
+  const box=new Float64Array(n*4);let length=0;
   let west=Infinity,south=Infinity,east=-Infinity,north=-Infinity;
-  for(const [a] of edges){if(a[0]<west)west=a[0];if(a[0]>east)east=a[0];if(a[1]<south)south=a[1];if(a[1]>north)north=a[1];}
-  const dim=Math.max(1,Math.min(512,Math.ceil(Math.sqrt(n))));
-  const spanX=(east-west)||1,spanY=(north-south)||1;
-  const cellOf=(x:number,y:number)=>{
-    const cx=Math.min(dim-1,Math.max(0,Math.floor((x-west)/spanX*dim)));
-    const cy=Math.min(dim-1,Math.max(0,Math.floor((y-south)/spanY*dim)));
-    return cy*dim+cx;
-  };
-  const buckets=new Map<number,number[]>();
   for(let e=0;e<n;e++){
     const [a,b]=edges[e];
-    const c0=cellOf(Math.min(a[0],b[0]),Math.min(a[1],b[1])),c1=cellOf(Math.max(a[0],b[0]),Math.max(a[1],b[1]));
-    const x0=c0%dim,y0=Math.floor(c0/dim),x1=c1%dim,y1=Math.floor(c1/dim);
+    const w=Math.min(a[0],b[0]),s=Math.min(a[1],b[1]),x=Math.max(a[0],b[0]),y=Math.max(a[1],b[1]);
+    box[e*4]=w;box[e*4+1]=s;box[e*4+2]=x;box[e*4+3]=y;
+    if(w<west)west=w;if(x>east)east=x;if(s<south)south=s;if(y>north)north=y;
+    length+=Math.hypot(b[0]-a[0],b[1]-a[1]);
+  }
+  const meet=(p:number,q:number)=>box[p*4]<=box[q*4+2]+1e-12&&box[q*4]<=box[p*4+2]+1e-12
+    &&box[p*4+1]<=box[q*4+3]+1e-12&&box[q*4+1]<=box[p*4+3]+1e-12;
+  // CELLS SIZED TO THE EDGES (2026-11-20). The grid was sqrt(n) cells a side over the whole extent, so where edges are
+  // short and dense -- a river border, a lake shore -- a thousand fell in one cell: DR Congo's 26 provinces, 194,009
+  // edges, compared 18.6 million pairs, twice, and Chrome called the page unresponsive. A cell now spans about two
+  // average edges, which compares 2.4 million. An edge crossing more than LONG_CELLS cells, a long straight border, is
+  // kept out of the grid and compared with every edge whose box meets its own.
+  const spanX=(east-west)||1,spanY=(north-south)||1;
+  const size=Math.max(2*length/n,Math.max(spanX,spanY)/4096);
+  const dimX=Math.max(1,Math.ceil(spanX/size)),dimY=Math.max(1,Math.ceil(spanY/size));
+  const column=(x:number)=>Math.min(dimX-1,Math.max(0,Math.floor((x-west)/spanX*dimX)));
+  const row=(y:number)=>Math.min(dimY-1,Math.max(0,Math.floor((y-south)/spanY*dimY)));
+  const LONG_CELLS=64;
+  const buckets=new Map<number,number[]>(),long:number[]=[];
+  for(let e=0;e<n;e++){
+    const x0=column(box[e*4]),y0=row(box[e*4+1]),x1=column(box[e*4+2]),y1=row(box[e*4+3]);
+    if((x1-x0+1)*(y1-y0+1)>LONG_CELLS){long.push(e);continue;}
     for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
-      const key=y*dim+x,at=buckets.get(key);
+      const key=y*dimX+x,at=buckets.get(key);
       if(at)at.push(e);else buckets.set(key,[e]);
     }
   }
@@ -127,16 +134,14 @@ function crossingFault(parts:Position[][][]):string|null{
     const i=indexOf[p1],j=indexOf[q1],last=ringLength[partOf[p1]][ringOf[p1]]-1;
     return Math.abs(i-j)===1||(Math.min(i,j)===0&&Math.max(i,j)===last);
   };
-  for(const list of buckets.values()){
-    for(let u=0;u<list.length;u++)for(let v=u+1;v<list.length;v++){
-      const p1=list[u],q1=list[v];
-      if(adjacent(p1,q1))continue;
+  const pair=(p1:number,q1:number):string|null=>{
+      if(!meet(p1,q1)||adjacent(p1,q1))return null;
       const [a,b]=edges[p1],[c,d]=edges[q1];
       // A PROPER CROSSING is one edge passing through another, which means the interiors meet.
       // TOUCHING is an endpoint or a collinear run lying on another edge -- a shared border.
       const crosses=cross(a,b,c)*cross(a,b,d)<0&&cross(c,d,a)*cross(c,d,b)<0;
       const touches=on(a,b,c)||on(a,b,d)||on(c,d,a)||on(c,d,b);
-      if(!crosses&&!touches)continue;
+      if(!crosses&&!touches)return null;
       // ADJACENT UNITS SHARE A BORDER, and that is what adjacent units are.
       //
       // The practitioner, 2026-10-24: *"Study area can hold adjacent units, like North Kivu and
@@ -154,18 +159,24 @@ function crossingFault(parts:Position[][][]):string|null{
       // Between parts, only a proper crossing is a fault -- interiors that overlap are not two
       // jurisdictions, they are a mistake. WITHIN a part the old rule stands unchanged: a ring
       // touching itself or another ring of the same part is a drawing fault, not a border.
-      if(partOf[p1]!==partOf[q1]){
-        if(crosses)return 'The parts of this area must not overlap each other. Parts that share a border are fine; these cross.';
-        continue;
-      }
+      if(partOf[p1]!==partOf[q1])
+        return crosses?'The parts of this area must not overlap each other. Parts that share a border are fine; these cross.':null;
       if(ringOf[p1]===ringOf[q1])return 'Polygon edges must not cross or touch each other.';
       // TWO RINGS OF ONE PART MAY MEET AT A POINT, as the OGC simple-features rule allows and shapely, GEOS and
       // PostGIS accept: a hole touching its outline at one vertex, an island meeting another at a corner. Refusing
       // that refused real municipalities -- Quatis's hole and three of Rio de Janeiro city's islands, in
       // geoBoundaries' Brazil, 2026-11-06 -- that shapely calls valid. A shared run of edge is still refused, and so
       // is a crossing.
-      if(crosses||sharesRun(a,b,c,d))return "The boundary's rings must not cross, or touch along an edge.";
+      return crosses||sharesRun(a,b,c,d)?"The boundary's rings must not cross, or touch along an edge.":null;
+  };
+  for(const list of buckets.values()){
+    for(let u=0;u<list.length;u++)for(let v=u+1;v<list.length;v++){
+      const fault=pair(list[u],list[v]);if(fault)return fault;
     }
+  }
+  for(const l of long)for(let e=0;e<n;e++){
+    if(e===l)continue;
+    const fault=pair(l,e);if(fault)return fault;
   }
   return null;
 }
@@ -198,8 +209,22 @@ function checkRing(ring:unknown,what:string):Position[]{
   }
   return ring as Position[];
 }
-/** Whether a point lies on a ring's edge (ends included). */
+/** Whether a point lies on a ring's edge (ends included).
+ *
+ *  TWO EXACT SHORTCUTS FIRST (2026-11-20): a point outside the ring's box is not on it, and a point that is one of its
+ *  vertices is. Adjacent provinces share long runs of border vertices, and each was checked against every edge of the
+ *  other province in turn: 2.5 s of applying DR Congo's 26 provinces. Only a point passing both is scanned. */
+const ringIndex=new WeakMap<Position[],{box:[number,number,number,number];vertices:Set<string>}>();
 function ringTouches(ring:Position[],p:Position):boolean{
+  let index=ringIndex.get(ring);
+  if(!index){
+    let w=Infinity,s=Infinity,e=-Infinity,n=-Infinity;const vertices=new Set<string>();
+    for(const [x,y] of ring){if(x<w)w=x;if(x>e)e=x;if(y<s)s=y;if(y>n)n=y;vertices.add(x+','+y);}
+    index={box:[w,s,e,n],vertices};ringIndex.set(ring,index);
+  }
+  const [w,s,e,n]=index.box;
+  if(p[0]<w-1e-12||p[0]>e+1e-12||p[1]<s-1e-12||p[1]>n+1e-12)return false;
+  if(index.vertices.has(p[0]+','+p[1]))return true;
   for(let i=0;i<ring.length-1;i++)if(on(ring[i],ring[i+1],p))return true;
   return false;
 }
@@ -215,7 +240,25 @@ const ringArea=(ring:Position[],west:number,south:number)=>{
  *  involved in the study area"*. Before this, choosing more than one unit collapsed them to a
  *  bounding box, which is a shape that belongs to none of them, and it did so only because there
  *  was nowhere to put the second outline. */
+/** CHECKED ONCE PER SHAPE (2026-11-20). Choosing units, Apply, and writing the area's N3 each validated the same
+ *  geometry, three passes over DR Congo's 194,009 vertices. The result is remembered by the exact text of the
+ *  coordinates, so a shape that differs in any vertex is checked again; the last few are kept. */
+const checked=new Map<string,{ok:Boundary}|{fault:string}>();
 export function validateDrawnGeometry(raw:unknown):Boundary{
+  let key:string|undefined;
+  try{if(isRecord(raw)&&Array.isArray(raw.coordinates))key=String(raw.type)+JSON.stringify(raw.coordinates);}catch{key=undefined;}
+  const known=key===undefined?undefined:checked.get(key);
+  if(known){if('fault' in known)throw new Error(known.fault);return structuredClone(known.ok);}
+  try{
+    const ok=validateOnce(raw);
+    if(key!==undefined){checked.set(key,{ok});if(checked.size>4)checked.delete(checked.keys().next().value!);}
+    return structuredClone(ok);
+  }catch(error){
+    if(key!==undefined&&error instanceof Error){checked.set(key,{fault:error.message});if(checked.size>4)checked.delete(checked.keys().next().value!);}
+    throw error;
+  }
+}
+function validateOnce(raw:unknown):Boundary{
   if(!isRecord(raw)||!Array.isArray(raw.coordinates))throw new Error('Draw or choose a polygon.');
   const multi=raw.type==='MultiPolygon';
   if(!multi&&raw.type!=='Polygon')throw new Error('Draw or choose a polygon.');

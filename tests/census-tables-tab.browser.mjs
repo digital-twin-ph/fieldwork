@@ -32,7 +32,7 @@ test('a census table is read with its data dictionary, checked against the pin, 
   await expect(page.locator('#table-census-part')).toContainText('Terms: none stated');
   await page.locator('[data-census="COD"]').click();
   await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
-  await expect(page.locator('#table-dictionary-says')).toContainText('9 variables in COD/columns.csv');
+  await expect(page.locator('#table-census-says')).toContainText('its data dictionary, COD/columns.csv, has 9 variables');
   await page.locator('#table-save').click();
   await expect(page.locator('#table-save')).toBeHidden();
   const cod=catalogue.countries.find(c=>c.iso3==='COD');

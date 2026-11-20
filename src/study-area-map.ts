@@ -47,13 +47,40 @@ import {dimensionedBox,circleAround} from './area-buffer.js';
 const HANDLE_LIMIT=400;
 /** What `newStudyArea()` names an area nobody has named. */
 const DEFAULT_AREA_LABEL='My study area';
-const PREVIEW_LINES=60;
+const PREVIEW_LINES=60,PREVIEW_LINE_CHARS=400;
+/** A PREVIEW CUT BY CHARACTERS AS WELL AS LINES (2026-11-20). WKT is written on a few very long lines, so sixty lines
+ *  of DR Congo's 26 provinces were 4,319,834 characters, and laying them out held the dialog for two seconds. */
 function preview(text:string,what:string):string{
-  const lines=text.split('\n');
-  if(lines.length<=PREVIEW_LINES)return text;
-  return lines.slice(0,PREVIEW_LINES).join('\n')
-    +`\n\u2026 ${(lines.length-PREVIEW_LINES).toLocaleString()} more lines of ${what}, `
-    +`${(text.length/1e6).toFixed(1)} MB in all. The whole of it is kept on the widget and in every export.`;
+  const out:string[]=[];let at=0,cut=false;
+  while(at<text.length&&out.length<PREVIEW_LINES){
+    const end=text.indexOf('\n',at),stop=end<0?text.length:end,line=text.slice(at,Math.min(stop,at+PREVIEW_LINE_CHARS));
+    if(stop-at>PREVIEW_LINE_CHARS){out.push(line+' \u2026');cut=true;}else out.push(line);
+    at=end<0?text.length:end+1;
+  }
+  if(!cut&&at>=text.length)return text;
+  return out.join('\n')+`\n\u2026 ${what} continue, ${(text.length/1e6).toFixed(1)} MB in all. `
+    +'The whole of it is kept on the widget and in every export.';
+}
+/** The rings of a Polygon or a MultiPolygon, as parts. */
+const partsOf=(g:Boundary):Position[][][]=>g.type==='MultiPolygon'?g.coordinates as Position[][][]:[g.coordinates as Position[][]];
+/** A few vertices of the shape, pretty-printed, and how many there are, without pretty-printing all of it. */
+function geometryPreview(g:Boundary):string{
+  const parts=partsOf(g);
+  const vertices=parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0);
+  if(vertices<=40)return JSON.stringify(g,null,2);
+  const first=parts[0]![0]!.slice(0,12);
+  const head={type:g.type,coordinates:g.type==='MultiPolygon'?[[first]]:[first]};
+  return JSON.stringify(head,null,2).split('\n').slice(0,-3).join('\n')
+    +`\n      \u2026 the first 12 of ${vertices.toLocaleString('en')} vertices in ${parts.length.toLocaleString('en')} part${parts.length===1?'':'s'}, `
+    +`${(JSON.stringify(g).length/1e6).toFixed(1)} MB in all. The whole of it is kept on the widget and in every export.`;
+}
+/** Parts, vertices and interior rings, counted for a Polygon and a MultiPolygon alike. Until 2026-11-20 a MultiPolygon's
+ *  parts were counted as interior rings and its vertices as none: DR Congo's provinces read "0 vertices · 39 interior
+ *  rings". */
+function shapeCounts(g:Boundary):{parts:number;vertices:number;holes:number}{
+  const parts=partsOf(g);
+  return {parts:parts.length,vertices:parts.reduce((n,rings)=>n+rings.reduce((m,r)=>m+r.length-1,0),0),
+    holes:parts.reduce((n,rings)=>n+rings.length-1,0)};
 }
 export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(params:DrawnParams,options?:RasterClipOptions)=>void|boolean,context:{boundary?:Boundary;point?:{coordinates:Position|null;name:string};raster?:RasterGrid;clip?:boolean;clipOptions?:RasterClipOptions;
   /** THE STUDY AREAS OF THE OTHER WORKFLOWS OF THIS PROJECT, handed in rather than looked up.
@@ -193,7 +220,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   function refresh(){
     $('#area-feedback').classList.remove('clip-preview-error');$('#area-feedback').setAttribute('role','status');if(previewStatus)previewStatus.textContent='Draw a valid boundary to preview the clip.';
     shapes.clearLayers();handles.clearLayers();
-    $('#area-geojson').textContent=geometry?preview(JSON.stringify(geometry,null,2),'coordinates'):'No geometry selected.';
+    $('#area-geojson').textContent=geometry?geometryPreview(geometry):'No geometry selected.';
     $('#area-finish').disabled=tool!=='polygon'||vertices.length<3;$('#area-undo-point').disabled=!vertices.length&&!firstCorner;
     let valid=false;
     if(geometry){
@@ -213,7 +240,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
       const shapeKey=geometry===lastShape&&name.value===lastName&&settingsKey===lastSettings;
       try{if(!shapeKey){validateDrawnGeometry(geometry);validateClip();}
         const n3=(shapeKey&&lastN3)?lastN3:studyAreaN3({id:node.id,params:currentParams()});
-        lastShape=geometry;lastName=name.value;lastSettings=settingsKey;lastN3=n3;$('#area-n3').textContent=preview(context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input,'facts and rules');$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometry.coordinates.reduce((n,r)=>n+r.length-1,0)} vertices${geometry.coordinates.length>1?` · ${geometry.coordinates.length-1} interior ring${geometry.coordinates.length>2?'s':''}`:''} · ${Math.max(1,Math.round(JSON.stringify(geometry).length/1024))} KB · longitude, latitude`;message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
+        lastShape=geometry;lastName=name.value;lastSettings=settingsKey;lastN3=n3;$('#area-n3').textContent=preview(context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input,'facts and rules');{const c=shapeCounts(geometry);$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':c.parts>1?`${c.parts.toLocaleString('en')} polygons`:'Polygon'} · ${c.vertices.toLocaleString('en')} vertices${c.holes?` · ${c.holes.toLocaleString('en')} interior ring${c.holes===1?'':'s'}`:''} · ${Math.max(1,Math.round(JSON.stringify(geometry).length/1024)).toLocaleString('en')} KB · longitude, latitude`;}message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
       catch(e){message(errorMessage(e));$('#area-feedback').classList.add('clip-preview-error');$('#area-feedback').setAttribute('role','alert');if(previewStatus)previewStatus.textContent=errorMessage(e);$('#area-n3').textContent='The draft must be valid and named before N3 is generated.';$('#area-summary').textContent='Draft needs correction';}
       // VERTEX HANDLES ARE FOR A SINGLE-PART SHAPE. A study area may now hold several parts --
       // two jurisdictions, possibly in different countries -- and dragging a vertex of one of

@@ -166,7 +166,16 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<button type="button" role="tab" id="table-tab-remote" data-table-tab="remote" aria-controls="table-remote">From an address</button>'
     +'<button type="button" role="tab" id="table-tab-census" data-table-tab="census" aria-controls="table-census-part">Census tables</button></div>'
     +'<section id="table-file-part" role="tabpanel" aria-labelledby="table-tab-file">'
-    +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta"></section>'
+    +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta">'
+    // ONLY FOR A FILE OF YOUR OWN (2026-11-20): a census table brings its dictionary, and a table from an address can be
+    // given one in Describe columns. The practitioner: "we do not need the file picker section" there.
+    // ITS DATA DICTIONARY, imported with it (the practitioner, 2026-11-13: "importable and viewable with the table input
+    // that first imports the two"). Kept by the project; what it says each column means is proposed, not applied.
+    +'<label class="field-label" for="table-dictionary-file">Its data dictionary, if it has one: CSV, Excel or Stata, one row per variable</label>'
+    +'<input id="table-dictionary-file" type="file" accept=".csv,text/csv,.xlsx,.dta"><p id="table-dictionary-says" class="muted" role="status"></p>'
+    // AN EXCEL WORKBOOK'S SHEET (the practitioner, 2026-11-08: "Yes add Excel"). Shown only for a workbook of several.
+    +'<div id="table-sheet-row" hidden><label class="field-label" for="table-sheet">Sheet</label><select id="table-sheet"></select></div>'
+    +'<p id="table-workbook" class="muted" hidden></p></section>'
     // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
     // rows: another device fetches the same file when it opens. Experiment 170.
     +'<section id="table-remote" role="tabpanel" aria-labelledby="table-tab-remote" hidden>'
@@ -175,14 +184,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<label class="field-label" for="table-entry" hidden>File inside the archive</label><select id="table-entry" hidden></select>'
     +'<p class="muted">The project keeps where it came from, not the rows, so a shared project does not republish it.</p></section>'
     // THE CENSUS TABLES, pinned at a commit of digital-twin-ph/census-tables: each country's counts and its data dictionary.
-    +'<section id="table-census-part" role="tabpanel" aria-labelledby="table-tab-census" hidden>'+censusChoices()+'</section>'
-    // ITS DATA DICTIONARY, imported with it (the practitioner, 2026-11-13: "importable and viewable with the table input
-    // that first imports the two"). Kept by the project; what it says each column means is proposed, not applied.
-    +'<label class="field-label" for="table-dictionary-file">Its data dictionary, if it has one: CSV, Excel or Stata, one row per variable</label>'
-    +'<input id="table-dictionary-file" type="file" accept=".csv,text/csv,.xlsx,.dta"><p id="table-dictionary-says" class="muted" role="status"></p>'
-    // AN EXCEL WORKBOOK'S SHEET (the practitioner, 2026-11-08: "Yes add Excel"). Shown only for a workbook of several.
-    +'<div id="table-sheet-row" hidden><label class="field-label" for="table-sheet">Sheet</label><select id="table-sheet"></select></div>'
-    +'<p id="table-workbook" class="muted" hidden></p>'
+    +'<section id="table-census-part" role="tabpanel" aria-labelledby="table-tab-census" hidden>'+censusChoices()+'<p id="table-census-says" class="muted" role="status"></p></section>'
     +'<label class="field-label" for="table-shape">Shape of the file</label><select id="table-shape">'
     +'<option value="wide">Wide \u00b7 one row per subject, a column per variable</option>'
     +'<option value="long">Long \u00b7 one row per observation, one value column</option></select>'
@@ -596,8 +598,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       await readFetched(bytes,url);
     }catch(e){status.textContent='Nothing was fetched.';fail(e);}
   };
-  const dropCensusDictionary=()=>{if(dictionaryFromCensus){dictionaryFile=undefined;dictionaryFromCensus=false;dictionarySays.textContent='';}};
-  q<HTMLButtonElement>('#table-fetch').onclick=()=>{dropCensusDictionary();void fetchURL(false);};
+  const censusSays=q<HTMLElement>('#table-census-says');
+  const dropCensusDictionary=()=>{if(dictionaryFromCensus){dictionaryFile=undefined;dictionaryFromCensus=false;censusSays.textContent='';}};
+  // A TABLE FROM AN ADDRESS CARRIES NO DICTIONARY FROM ANOTHER TAB: one chosen under Your file is for that file.
+  q<HTMLButtonElement>('#table-fetch').onclick=()=>{dropCensusDictionary();dictionaryFile=undefined;dictionaryInput.value='';dictionarySays.textContent='';void fetchURL(false);};
   // A CENSUS TABLE: its counts by address, and its data dictionary beside it, each checked against the digest pinned.
   for(const button of dialog.querySelectorAll<HTMLButtonElement>('[data-census]'))button.onclick=async()=>{
     const c=CENSUS.countries.find(x=>x.iso3===button.dataset.census);if(!c)return;
@@ -608,7 +612,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         if(got.digest!==c.columns.sha256)throw new Error(`${c.columns.path} is not the file Fieldwork pinned: its digest differs.`);
         const sheets=dictionarySheets('columns.csv',got.bytes);
         dictionaryFile={name:`${c.iso3}/columns.csv`,bytes:got.bytes,sheets};dictionaryFromCensus=true;
-        dictionarySays.textContent=`${sheets[0]?.rows.length??0} variables in ${c.iso3}/columns.csv, census-tables' data dictionary. Kept with the table; what it says is proposed for you to accept.`;
+        censusSays.textContent=`${c.country}: its data dictionary, ${c.iso3}/columns.csv, has ${sheets[0]?.rows.length??0} variables. Kept with the table; what it says is proposed for you to accept.`;
       }catch(e){fail(e);return;}
     }
     urlInput.value=CENSUS.raw+c.counts.path;

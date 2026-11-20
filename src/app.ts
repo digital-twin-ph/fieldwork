@@ -129,6 +129,7 @@ import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // across every workflow of the project, rather than the tab reading the open run alone.
 import {figureFor,describedNode,tableCsv,tableRowCount} from './write-up-figures.js';
 import type {InspectorKit,OwnInspector,StepKit} from './inspector-kit.js';
+import {sampleInspector,type SampleKit} from './sample-raster-ui.js';
 import {AREA_STEP_INSPECTORS,type AreaStepKit} from './area-steps-ui.js';
 import {zipSync,strToU8} from 'fflate';
 import {referenceList} from './references.js';
@@ -2776,98 +2777,6 @@ function openClipConfig(nodeId:string){
 }
 
 /** WHAT SAMPLE RASTER WRITES, in one sentence. */
-function sampleSentence(n:WorkflowNode<'sample_raster'>):string{
-  const p=n.params,name=p.attribute?.trim();
-  // OVER AREAS (experiment 205): each area's cells totalled.
-  if(p.over==='areas')return `Totals ${name||'total'}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} over each area: the cells whose `
-    +'centre is inside or on it, each counted whole; cells with no data add nothing and are counted apart.'
-    +(p.cellStatistics?' Also each area\u2019s cell mean, median, standard deviation, smallest and largest, cells populated, and the total per km\u00b2.':'');
-  if(!name)return 'Writes a raster\u2019s value onto each point. Name the attribute in Configure\u2026';
-  return `Writes ${name}${p.valueUnit?.trim()?`, ${p.valueUnit.trim()},`:''} onto each point: `
-    +(p.method==='bilinear'?'interpolated between the four nearest cells.':'the value of the cell containing it.');
-}
-
-/** THE RASTER ARRIVING AT A STEP: the asset a Raster input holds, found by following raster inputs up the canvas. */
-function rasterArriving(nodeId:string):import('./raster.js').RasterAsset|undefined{
-  const seen=new Set<string>();let at=nodeId;
-  for(;;){const edge=workflow.edges.find(e=>e.to===at&&e.port==='raster');if(!edge||seen.has(edge.from))return undefined;seen.add(edge.from);
-    const from=workflow.nodes.find(n=>n.id===edge.from);const asset=(from?.params as {asset?:import('./raster.js').RasterAsset}|undefined)?.asset;
-    if(asset)return asset;at=edge.from;}
-}
-/** WHAT THE RASTER SAYS ITS VALUES ARE, where it says: the source record's units, else the file's own band tag. */
-function rasterUnits(asset:import('./raster.js').RasterAsset):{units:string;from:string;name?:string}|undefined{
-  const found=rasterUnitsOf(asset);if(!found)return undefined;
-  const population=/people|person|population/i.test(found.units)||found.from!=='its source record'&&found.from!=='the file\u2019s band tag';
-  return {...found,...(population?{name:'population'}:{})};
-}
-/** WHAT ARRIVED, said first (2026-11-13). The practitioner, with a raster connected and nothing to read it at: "Shouldn't
- *  sample a raster be able to detect what data the raster offers after retrieval ... I feel lost what to do next". */
-function sampleArrivals(nodeId:string):{html:string;nothing:boolean;areas:WorkflowNode<'study_area'>[]}{
-  const asset=rasterArriving(nodeId),into=(port:string)=>workflow.edges.filter(e=>e.to===nodeId&&e.port===port)
-    .map(e=>workflow.nodes.find(n=>n.id===e.from)).filter((n):n is WorkflowNode=>!!n);
-  const named=(n:WorkflowNode)=>n.params.label||TYPES[n.type].title;
-  const at=[...into('points').map(n=>`points from ${named(n)}`),...into('areas').map(n=>`areas from ${named(n)}`),
-    ...into('area').map(n=>`the study area ${named(n)}`),...into('files').map(n=>`satellite files from ${named(n)}`)];
-  let raster='No raster is connected to Raster yet.';
-  if(asset){
-    const m=asset.source.metadata,deg=Math.abs(m.resolution[0]),metres=Math.round(deg*111320);
-    const units=rasterUnits(asset),title=asset.provenance?.title?.trim()||asset.source.filename;
-    const description=m.description&&!m.description.trim().startsWith('{')?m.description.trim().slice(0,240):'';
-    raster=`<strong>${esc(title)}</strong>: ${asset.metadata.width.toLocaleString('en')} by ${asset.metadata.height.toLocaleString('en')} cells kept, each `
-      +`${deg.toPrecision(3)}° across (about ${metres.toLocaleString('en')} m at the equator). `
-      +(units?`Its values are in <strong>${esc(units.units)}</strong>, as ${units.from} states.`:'The file does not state what its values measure.')
-      // WHAT A CELL HOLDS, AND WHAT A TOTAL IS, in words, where the units are people.
-      +(units&&/people|person/i.test(units.units)?` <strong>Each cell holds an estimated number of people living in it</strong>, so a point takes the people in its cell, and an area\u2019s total is the estimated number of people living there.`:'')
-      +(m.noData!==null?` No data is written as ${esc(String(m.noData))}.`:'')
-      +(description?` The file describes itself: “${esc(description)}”`:'');
-  }
-  const areas=workflow.nodes.filter((n):n is WorkflowNode<'study_area'>=>n.type==='study_area'&&!!(n.params as {geometry?:unknown}).geometry);
-  return {nothing:!at.length,areas,html:`<div class="standard-arrivals" data-sample-arrivals><p>${raster}</p>`
-    +`<p>${at.length?`Read at: ${esc(at.join('; '))}.`:'<strong>Nothing to read it at yet.</strong> Connect points to Points (each takes its cell’s value), polygons to Areas, or a study area to Study area (a total for each named part, or for the whole area).'}</p>`
-    +(!at.length&&areas.length?`<div class="inspector-actions">${areas.map(a=>`<button type="button" class="button" data-sample-over-area="${esc(a.id)}">Read it over ${esc(a.params.label||'the study area')}</button>`).join('')}</div>`:'')
-    +'</div>'};
-}
-
-/** SAMPLE RASTER'S CONFIGURATION DIALOG (experiment 186): the attribute, what it measures, and how a value is read. */
-function openSampleConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'sample_raster');
-  type Draft=WorkflowNode<'sample_raster'>['params'];
-  // THE SOURCE'S OWN WORDS FILL WHAT IS EMPTY, said as theirs: the units a raster states (2026-11-13).
-  const asset=rasterArriving(nodeId),stated=asset?rasterUnits(asset):undefined;
-  const start=structuredClone(node.params);
-  if(!start.valueUnit?.trim()&&stated)start.valueUnit=stated.units;
-  if(!start.attribute?.trim()&&stated?.name)start.attribute=stated.name;
-  openConfigDialog<Draft>({
-    id:'sample-config',widget:'Sample a raster at points or over areas',step:node.params.label||TYPES.sample_raster.title,draft:start,
-    sections:draft=>({...(sampleArrivals(nodeId).nothing?{message:{tone:'warning' as const,text:'Nothing is connected to read the raster at, so a run has nothing to write to. Connect points, areas or a study area, or use the button above.'}}:{}),
-      settings:sampleArrivals(nodeId).html
-      +`<p class="description">${draft.over==='areas'?'Reading over areas: each area\u2019s cells are totalled.':'Reading at points: each point takes its cell\u2019s value.'}</p>`
-      +`<div class="field"><label class="field-label" for="sample-attribute">${draft.over==='areas'?'Name of the total':'Attribute to write'}</label><input id="sample-attribute" maxlength="60" value="${esc(draft.attribute)}" ></div>`
-      +`<div class="field"><label class="field-label" for="sample-unit">What those values measure</label><input id="sample-unit" maxlength="60" value="${esc(draft.valueUnit)}">`
-      +(stated&&draft.valueUnit===stated.units?`<small data-sample-unit-from>As ${esc(stated.from)} states. Change it if it says otherwise.</small>`:'')+'</div>'
-      +(draft.over==='areas'?`<div class="field"><label class="check"><input type="checkbox" id="sample-cell-statistics"${draft.cellStatistics?' checked':''}> Also give each area\u2019s zonal statistics: its cells\u2019 mean, median, standard deviation, smallest and largest, how many are populated, and people per km\u00b2</label></div>`:'')
-      +(draft.over==='areas'?'':`<div class="field"><label class="field-label" for="sample-method">Read each value as</label><select id="sample-method">`
-      +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
-      +`<option value="bilinear"${draft.method==='bilinear'?' selected':''}>between the four nearest cells (bilinear)</option></select></div>`
-      +''),
-      preview:`<p class="muted">${esc(sampleSentence({...node,params:draft}))}</p>`}),
-    wire:(root,draft,redraw)=>{
-      root.querySelector<HTMLInputElement>('#sample-attribute')?.addEventListener('change',e=>{draft.attribute=(e.target as HTMLInputElement).value.trim();redraw();});
-      root.querySelector<HTMLInputElement>('#sample-unit')?.addEventListener('change',e=>{draft.valueUnit=(e.target as HTMLInputElement).value.trim();redraw();});
-      root.querySelector<HTMLSelectElement>('#sample-method')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;
-        if(v==='bilinear')draft.method='bilinear';else delete draft.method;redraw();});
-      // READ IT OVER A STUDY AREA: connect it, read over areas, and move a Map's or Table's points input to its polygons input.
-      root.querySelectorAll<HTMLButtonElement>('[data-sample-over-area]').forEach(button=>button.addEventListener('click',()=>{
-        const area=button.dataset.sampleOverArea!;
-        change(w=>{setConnection(w,area,nodeId,'at');
-          for(const e of w.edges)if(e.from===nodeId&&e.port==='points'&&['map_output','table_output'].includes(w.nodes.find(n=>n.id===e.to)?.type??''))e.port='polygons';});
-        draft.over='areas';redraw();}));
-      root.querySelector<HTMLInputElement>('#sample-cell-statistics')?.addEventListener('change',e=>{
-        if((e.target as HTMLInputElement).checked)draft.cellStatistics=true;else delete draft.cellStatistics;redraw();});
-    },
-    apply:draft=>{change(w=>{getNode(w,nodeId,'sample_raster').params=draft;});},
-  },esc);
-}
 
 /** WHAT A RASTER INPUT HOLDS, in one sentence: the file, where from, the window and the cells' registration. */
 function rasterSentence(n:WorkflowNode<'raster_input'>):string{
@@ -4230,34 +4139,8 @@ function renderInspector(){
       +(list&&p.registerRetrieved?`<p class="description">${esc(p.registerRetrieved.registers.map(r=>`${r.title}, ${r.licence.includes('by/4.0')?'CC BY 4.0':r.licence}`).join('; '))}</p>`:'')
       +''
       +'<div data-standard-result></div>');
-  }else if(n.type==='sample_raster'&&n.params.source!=='satellite-files'){
-    // THE STANDARD INSPECTOR (experiments 186, 198): touched to read between the four nearest cells, as a geoid is read.
-    const p=n.params;
-    content+=standardSection('Name',`<div class="field"><label class="field-label" for="sample-label">Name</label><input id="sample-label" data-sample="label" maxlength="60" value="${esc(p.label||TYPES.sample_raster.title)}"></div>`);
-    content+=standardSection('Inputs',standardInputs(n));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(sampleSentence(n))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    // THE COUNTS AS THE RECEIPT STATES THEM: the run keeps the receipt, not the point layer.
-    const facts=result?.receipts?.find(r=>r.nodeId===n.id)?.facts??'';
-    const count=(p:string)=>{const m=new RegExp(`fw:${p} "(\\d+)"`).exec(facts);return m?Number(m[1]):undefined;};
-    const counts=count('sampledCount')===undefined?undefined
-      :{sampled:count('sampledCount')!,noData:count('noDataCount')!,outside:count('outsideRasterCount')!,unlocated:count('unlocatedCount')!};
-    // Over areas (experiment 205) the receipt's method is the sentence: the areas, the cells, and what was left out.
-    const areaSentence=/fw:RasterAreaTotal/.test(facts)?result?.receipts?.find(r=>r.nodeId===n.id)?.method:undefined;
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :areaSentence?areaSentence
-      :counts?`${counts.sampled} point${counts.sampled===1?'':'s'} given a value; ${counts.noData} on no data, ${counts.outside} outside the raster, ${counts.unlocated} without a location. None is set to zero.`
-      :result?(n.params.over==='areas'?'Run to total the raster over the areas.':'Run to read the raster at the points.'):'Not run yet.')}</p>`);
-    // THE ARTEFACT IS DOWNLOADED WHERE IT IS MADE, not where it happens to be displayed.
-    // `#raster-download` sits in the Results heading and offers whatever raster the output tab
-    // on screen carries, so with a prepared window and a clipped grid in one workflow the full
-    // window was unreachable while the clipped map was displayed -- the one case where two
-    // rasters exist is the one case it could not serve. The filenames already told them apart,
-    // and neither needs a run: both come from the stored input, through the resolver the clip
-    // preview uses. The two descriptions are separate literals rather than one ternary, because
-    // the prose check reads this source and scored the ternary as a single 328-character
-    // explanation attached to the control above it.
+  }else if(n.type==='sample_raster'){
+    content+=sampleInspector.markup(n,sampleKit());
   }else if(n.type==='raster_input'||n.type==='clip_raster'){
     // ONE SHAPE, AND THIS WIDGET WAS STILL OUTSIDE IT. The practitioner, 2026-10-23: *"Note that
     // raster widget still does not have custom node label field."* labelForm exists precisely so
@@ -4372,18 +4255,6 @@ function renderInspector(){
         }
     }
     content+=standardSection('Result',held);
-  }else if(n.type==='sample_raster'){
-    // THE STANDARD INSPECTOR (experiment 186), touched 2026-11-09 when it learned to keep what it reads on this device:
-    // the name; its inputs; one sentence and Configure…, where the layer, quality rule, unit and place column are set and
-    // saved readings are read again or forgotten; and what the last run read. The controls' ids are kept, in the dialog.
-    content+=standardSection('Name',labelForm('satellite-sample-label','Name',n.params.label||'Sample a raster'));
-    content+=standardSection('Inputs',standardInputs(n,{files:'Satellite files',points:'Points',areas:'Areas, a polygon layer',area:'Or: a study area\u2019s named parts'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(satelliteSampleSentence(n))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    const said=(result?.tables?.[n.id] as {sentence?:string}|undefined)?.sentence;
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :said??'Run the workflow to read the files. A file read before on this device, the same way at the same places, is not read again.')}</p>`);
   }else if(n.type==='search_satellite_catalog'){
     // ITS OWN MODULE'S INSPECTOR (2026-11-19): the first widget moved out of app.ts when touched.
     content+=searchCatalogInspector.markup(n,inspectorKit());
@@ -4784,8 +4655,7 @@ function renderInspector(){
   // TOTAL WITHIN GROUPS' CONFIGURATION DIALOG (experiments 186 and 191): given the columns coming in and, where it
   // resolves without a run, the table, so the preview is the table the draft would make. Only Apply writes.
   if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
-  if(n.type==='sample_raster'&&n.params.source!=='satellite-files')optionalElement('#configure-step')?.addEventListener('click',()=>openSampleConfig(n.id));
-  if(n.type==='sample_raster'&&n.params.source==='satellite-files')optionalElement('#configure-step')?.addEventListener('click',()=>openSatelliteSampleConfig(n.id));
+  if(n.type==='sample_raster')sampleInspector.wire(n,sampleKit(),document);
   if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(n.id));
   if(n.type==='space_time_scan')optionalElement('#configure-step')?.addEventListener('click',()=>openScanConfig(n.id));
   if(n.type==='polygon_input')optionalElement('#configure-step')?.addEventListener('click',()=>openPolygonConfig(n.id));
@@ -6897,6 +6767,14 @@ function relateKit():RelateKit{
     relation:id=>result?.relations?.[id],shifted:id=>result?.relateShifts?.[id],
     keyColumns:(id,port)=>{const node=workflow.nodes.find(x=>x.id===id);return node?Object.keys(upstreamKeyValues(node,new Set(),port)??{}):[];},
     valueOn:(id,port)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return valueFieldOf(e&&workflow.nodes.find(m=>m.id===e.from));}};
+}
+/** SAMPLE A RASTER'S KIT (sample-raster-ui.ts): the step kit, with the receipt's facts, what the satellite reading said,
+ *  a connection made from its dialog, and the satellite files' own sentence and dialog, which stay here with their readers. */
+function sampleKit():SampleKit{
+  return {...stepKit(),facts:id=>result?.receipts?.find(r=>r.nodeId===id)?.facts,ran:()=>!!result,
+    said:id=>(result?.tables?.[id] as {sentence?:string}|undefined)?.sentence,
+    connect:(w,from,to,port)=>setConnection(w,from,to,port),
+    satelliteSentence:n=>satelliteSampleSentence(n),openSatellite:id=>openSatelliteSampleConfig(id)};
 }
 function inspectorKit():InspectorKit{
   return {esc,section:standardSection,name:(id,value)=>labelForm(id,'Name',value),inputs:standardInputs,

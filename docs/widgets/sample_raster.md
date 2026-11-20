@@ -261,6 +261,15 @@ the area. Each area's median is found exactly by reading again: a histogram find
 and their values are collected and sorted; where the middle rank falls on a run of one value, such as zeros, nothing
 need be collected. At points, only the points' cells are read. Checked against totals held in memory, on an offset
 window with no data, zeros, a hole and an area reaching past the window: every total, count, mean, median and
-deviation equal (`tests/raster-stream.test.mjs`). **Not yet measured on DR Congo**: how long a country takes, read
-from a file or by range from an address.
+deviation equal (`tests/raster-stream.test.mjs`).
+
+**Measured 2026-11-19 on DR Congo, in Node.js on the development Mac, not in a browser tab:** GHS-POP 2025 (R2023A,
+3 arcseconds, the 12.3 GB global file read from disk) over GADM's 240 districts, 73,509 vertices. The window,
+22,926 by 22,607 = 518 million cells of 8 bytes, would be 4.2 GB whole. The kept copy, in blocks of 10 (2,293 by
+2,261), took 6.3 s; every district's total, cells, statistics and exact median took 20.7 s over 5 passes, the process
+at most 1.2 GB. 109,087,372 people over 273.6 million cells; Kinshasa 13.5 million, its median cell 0. Found on the way:
+Node's `openAsBlob` reports a file over 4 GB with its size wrapped at 2^32, and reads past 4 GB come back empty; the
+first run failed for that, and was read with positioned reads. A browser's File has no such limit.
+
+**Not yet measured:** the same in a browser tab, through Raster input's dialog; and read by range from an address.
 

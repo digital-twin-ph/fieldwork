@@ -28,8 +28,8 @@ shown in a local build is not a claim that it has been published.
 - **A raster too large to keep is streamed.** GHS-POP over DR Congo, 4.2 GB of 8-byte cells, was refused. A window past
   what a tab holds now keeps a copy in blocks for maps (summed for counts, averaged for values), and Sample a raster
   reads the full cells from the source a strip at a time, added up in the Rust kernel, each area's median found
-  exactly. Checked against totals held in memory on a small raster; not yet measured on DR Congo. A file on this
-  computer is chosen again in each new session. Raster input 0.13.0, Sample a raster 0.8.0, Clip raster 1.2.1.
+  exactly. On DR Congo (measured in Node.js, not yet in a tab): the kept copy 6.3 s, 240 districts with their medians
+  20.7 s, 1.2 GB at most. A file on this computer is chosen again in each new session. Raster input 0.13.0, Sample a raster 0.8.0, Clip raster 1.2.1.
 - **Credentials and an open identity stay unlocked for 15 minutes without use**, up from 10. One setting governs both.
 - **A large table no longer stalls the Tabular data dialog.** Ticking a key column on 250,000 rows took over an hour;
   it now takes about half a second. Rows repeating a key were grouped by copying the group at every row (the same

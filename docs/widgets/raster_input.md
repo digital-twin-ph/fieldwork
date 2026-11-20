@@ -122,7 +122,8 @@ GHS-POP over DR Congo was refused: about 519 million cells of 8 bytes, 4.2 GB, p
 over holding GHS-POP's cells in 4 bytes, which would have changed its values in the eighth figure (*"Start
 streaming"*). A window past either limit is now kept as a copy in blocks and read from its source in strips by Sample
 a raster. Checked on a small GeoTIFF read by terrio (`tests/raster-stream.test.mjs`): the blocks equal their cells'
-sums and means. **Not yet measured on DR Congo itself**, which needs GHS-POP's file.
+sums and means. On DR Congo in Node.js, the copy in blocks of 10 took 6.3 s (Sample a raster's manual, History). **Not yet
+measured in a browser tab.**
 
 ---
 

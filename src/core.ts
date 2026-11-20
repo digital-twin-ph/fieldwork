@@ -103,7 +103,7 @@ import {studyAreaN3,geometryBounds,validateDrawnGeometry,validateAreaParams} fro
 import {measureArea,validateAreaUnit} from './area-measurement.js';
 import {mapOutput} from './map-output.js';
 import {tableOutput} from './table-output.js';
-import {MAX_POINT_LAYERS,pointPort,isPointPort} from './point-layers.js';
+import {MAX_POINT_LAYERS,MAX_POINT_RECORDS,pointPort,isPointPort} from './point-layers.js';
 import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
@@ -599,7 +599,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
  *  reads them takes the request, and what it reads is saved as usual. */
 export const rereadOnce=new Set<string>();
 export function validateGeoJSON(data:unknown,{attributes=false}={}):PointCollection {
-  if (!isRecord(data) || data.type !== 'FeatureCollection' || !Array.isArray(data.features) || data.features.length > 2000) throw new Error('Use a GeoJSON FeatureCollection with at most 2,000 point features.');
+  if (!isRecord(data) || data.type !== 'FeatureCollection' || !Array.isArray(data.features) || data.features.length > MAX_POINT_RECORDS) throw new Error(`Use a GeoJSON FeatureCollection with at most ${MAX_POINT_RECORDS.toLocaleString('en')} point features.`);
   const ids = new Set();
   return {type:'FeatureCollection',features:data.features.map((feature,i)=>{
     if (!isRecord(feature)||feature.type !== 'Feature') throw new Error(`Record ${i+1} is not a Feature.`);
@@ -999,7 +999,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
-    if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error('Use 1–8 point input ports.');
+    if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error(`Use 1–${MAX_POINT_LAYERS} point input ports.`);
     if(n.type==='space_time_scan')validateScanParams(n.params as never);
     // THE ARRANGEMENT AND THE POLYGON INPUTS, checked as they arrive (Map's manual, History: panels; Collect polygon layers retired).
     if((n.type==='point_input'||n.type==='table_input')&&(n.params as {edits?:unknown}).edits!==undefined&&!validEdits((n.params as {edits?:unknown}).edits))

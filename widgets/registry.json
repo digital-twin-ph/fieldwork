@@ -964,7 +964,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.36.3",
+      "currentVersion": "0.37.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1270,6 +1270,11 @@
           "version": "0.36.3",
           "path": "widgets/releases/map_output/0.36.3.json",
           "sha256": "fc8c340192982660e91648e942bd552a074fdbf7979dc91ebb5b09e28f5769cf"
+        },
+        {
+          "version": "0.37.0",
+          "path": "widgets/releases/map_output/0.37.0.json",
+          "sha256": "43ac56bed10bcfa189ca4f31d2fef8d1334265f13be3e35041de2c664526a0e1"
         }
       ]
     },
@@ -1518,7 +1523,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.10.0",
+      "currentVersion": "0.11.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1574,6 +1579,11 @@
           "version": "0.10.0",
           "path": "widgets/releases/point_input/0.10.0.json",
           "sha256": "1d5adcf26aaebd04c2dd8786df729d3f82cd5e1bdfe582cf1c2a19e503a2eee1"
+        },
+        {
+          "version": "0.11.0",
+          "path": "widgets/releases/point_input/0.11.0.json",
+          "sha256": "4d55e079aff549d68ed7bc0fe926ce50abd4b1a69a025c31cbb637ace6701e36"
         }
       ],
       "previousNodeTypes": [
@@ -1969,7 +1979,7 @@
     {
       "id": "urn:fieldwork:widget:reproject",
       "nodeType": "reproject",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1980,6 +1990,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/reproject/0.2.0.json",
           "sha256": "c593359e126a53909557f85927f1c5a1db6fef3479ca59259742dedea56b6ef2"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/reproject/0.3.0.json",
+          "sha256": "31290a73b0354327cc8c02febf2f91dc026706c3fa5afb556d2aee35842723ad"
         }
       ]
     },
@@ -2443,7 +2458,7 @@
     {
       "id": "urn:fieldwork:widget:table_output",
       "nodeType": "table_output",
-      "currentVersion": "0.12.1",
+      "currentVersion": "0.13.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2519,6 +2534,11 @@
           "version": "0.12.1",
           "path": "widgets/releases/table_output/0.12.1.json",
           "sha256": "d6702b09f0f8e543414ff93e6febfc4638f729faf5f0bfc81c119abdbc6b69c0"
+        },
+        {
+          "version": "0.13.0",
+          "path": "widgets/releases/table_output/0.13.0.json",
+          "sha256": "1f80c7cc140486d4018eeb57e8cb4c14307164089f656d953a3723083f2ef2de"
         }
       ]
     },

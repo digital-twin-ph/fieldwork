@@ -2,8 +2,8 @@
  *  One datum only. No datum shift, no resampling. See docs/experiments/40-reprojection-primitives.md. */
 import type {PointCollection,PointFeature,Position} from './types.js';
 import {metric} from './catchments.js';
+import {MAX_POINT_RECORDS as REPROJECT_MAX_RECORDS} from './point-layers.js';
 export const PROJ4_VERSION='2.19.10';
-export const REPROJECT_MAX_RECORDS=2000;
 export const ROUND_TRIP_TOLERANCE_M=0.01;
 const EASTING=[100_000,900_000] as const,NORTHING=[0,10_000_000] as const;
 type AxisOrder='easting-northing'|'longitude-latitude';

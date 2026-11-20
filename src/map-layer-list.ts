@@ -1,5 +1,5 @@
 import type {WorkflowNode} from './types.js';
-import {pointPort} from './point-layers.js';
+import {pointPort,isPointPort} from './point-layers.js';
 
 /** THE LAYERS A MAP DRAWS, as a list the practitioner owns.
  *
@@ -91,7 +91,7 @@ const KIND_BY_PORT=(port:string):LayerKind|null=>
   // `polygons`, whose members list each one; counting them again listed South London's Thames twice.
   :port==='raster'||/^raster_[2-4]$/.test(port)||port==='ground'?'RasterLayer'
   :port==='network'?'NetworkLayer'
-  :port==='points'||/^points_[2-8]$/.test(port)||port==='context'||port==='decisions'?'PointsLayer'
+  :isPointPort(port)||port==='context'||port==='decisions'?'PointsLayer'
   :null;
 
 /** The ports a map can draw, as kinds. `coverage` is a review rather than a layer and is absent

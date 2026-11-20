@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseCSV,csvPoints,syntheticPoints,geoPackageLayers,geoPackagePoints,decodeGeoPackagePoint,geoJSONDeclaredCRS} from '../build/input-data.js';
+import {MAX_POINT_RECORDS} from '../build/point-layers.js';
 import {pointRelation} from '../build/spatial-coverage.js';
 import {clipExercise} from './fixtures/workflows.mjs';
 import {bboxPolygon} from '../build/study-area.js';
@@ -28,7 +29,7 @@ test('CSV parses quoted attributes and missing coordinates, and preserves scalar
 test('synthetic generation is reproducible and has the requested outside-point count',()=>{
   const area=bboxPolygon(25.89,-24.7,25.91,-24.68),options={inside:8,outside:3,seed:17};
   const data=syntheticPoints(area,options);assert.deepEqual(data,syntheticPoints(area,options));assert.equal(data.features.filter(f=>pointRelation(f.geometry.coordinates,area)==='Outside').length,3);
-  assert.throws(()=>syntheticPoints(area,{inside:2000,outside:1,seed:1}),/2,000/);
+  assert.throws(()=>syntheticPoints(area,{inside:MAX_POINT_RECORDS,outside:1,seed:1}),new RegExp(MAX_POINT_RECORDS.toLocaleString('en')));
 });
 test('GeoPackage parser reads point geometry and attributes, rejects unsupported CRS and malformed blobs',async()=>{
   const {SQL,bytes}=await pointGeoPackage(),db=new SQL.Database(bytes);

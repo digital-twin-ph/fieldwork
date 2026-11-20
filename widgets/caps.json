@@ -16,7 +16,8 @@
     "src/evidence.ts",
     "src/data-table.ts",
     "src/chart-output.ts",
-    "src/raster-limits.ts"
+    "src/raster-limits.ts",
+    "src/point-layers.ts"
   ],
   "measuredAt": "2026-11-05",
   "caps": [
@@ -427,6 +428,66 @@
       "evidence": "Measured 2026-11-12 in a Chromium tab at its default heap: a workflow file carrying a 134 MB raster (178.9M characters) was written in 2.1 s and one of 177 MB (236.3M) in 2.8 s; one of 220 MB crashed the tab both times it was tried, as did one of 268 MB. The text is held several times over while it is written: the file in base64, the document, and its compression.",
       "refuses": "Nothing: a workflow whose files would be larger is backed up with “This workflow, encrypted”, which carries them as they are, and the message says so.",
       "liftTest": "Write the workflow file as a stream rather than one text, then measure again past 220 MB."
+    },
+    {
+      "id": "point-records",
+      "constant": "MAX_POINT_RECORDS",
+      "iri": "urn:fieldwork:cap:point-records",
+      "value": 250000,
+      "unit": "point records",
+      "kind": "discovery",
+      "basis": "measured",
+      "evidence": "Measured 2026-11-19 in Chromium on the development Mac, tests/measure-point-count.browser.mjs (MEASURE_POINTS, MEASURE_VIA=file): points spread over about a degree around Kinshasa, inside a drawn study area, run on their own to a static map, an interactive map and a table, each timed from Run to the figure on screen. At 250,000 the static map ran in 18 s and drew in 19 s, and the table ran in 10 s and drew in 5.5 s; the page answered a click within 2.5 s after each. Equal to the table limit, so a table of points that can be read can be drawn. Before, 2,000 combined across a map's point layers and on every point import, chosen.",
+      "refuses": "Point data of more than 250,000 records, from a file, pins, generated points or reprojection; a map or table given more than that.",
+      "liftTest": "Measure 500,000 points the same way. A table of more than 250,000 rows cannot be made, so the file route is the one to try; the interactive map has its own, lower limit."
+    },
+    {
+      "id": "interactive-marks",
+      "constant": "INTERACTIVE_MARKS_LIMIT",
+      "iri": "urn:fieldwork:cap:interactive-marks",
+      "value": 100000,
+      "unit": "marks",
+      "kind": "artefact",
+      "basis": "measured",
+      "evidence": "Measured 2026-11-19 in Chromium on the development Mac, tests/measure-point-count.browser.mjs (MEASURE_POINTS, MEASURE_VIA=file): points spread over about a degree around Kinshasa, inside a drawn study area, run on their own to a static map, an interactive map and a table, each timed from Run to the figure on screen. Large layers drawn by MapLibre GL: 10,000 marks in 1.5 s, 50,000 in 5.8 s, 100,000 in 11 s. At 150,000 and at 200,000 the tab crashed. Before the graphics card drew them, one Leaflet marker each: 10,000 in 21 s, 50,000 in 155 s.",
+      "refuses": "Nothing. Past it, the interactive map draws none of the large layers and says so; the static plot draws them.",
+      "liftTest": "Find what crashes the tab at 150,000 (the source's tiling at every zoom is the first suspect) and measure again."
+    },
+    {
+      "id": "merged-marks",
+      "constant": "MERGED_MARKS_FROM",
+      "iri": "urn:fieldwork:cap:merged-marks",
+      "value": 2000,
+      "unit": "marks in a layer",
+      "kind": "artefact",
+      "basis": "derived",
+      "evidence": "One marker or SVG element per mark drew 2,000 in under 2 s and 10,000 in 8 s (static) and 21 s (interactive), 2026-11-19. Over 2,000, a layer is one path per style on the static figure and one layer on the graphics card on the interactive map: 50,000 then took 2.7 s and 5.8 s.",
+      "refuses": "Nothing. Over it, a layer's marks are not each focusable or named.",
+      "liftTest": "Not a cap to lift: where one element per mark stops being worth its cost to a reader is a practitioner observation."
+    },
+    {
+      "id": "label-ceiling",
+      "constant": "LABEL_CEILING",
+      "iri": "urn:fieldwork:cap:label-ceiling",
+      "value": 24,
+      "unit": "marks named",
+      "kind": "artefact",
+      "basis": "undderived",
+      "evidence": "Chosen 2026-10-31: four intakes on the Thames want their names printed; 250 death locations do not.",
+      "refuses": "Nothing. A layer over it is drawn unnamed and Configure says why.",
+      "liftTest": "A figure whose reader needs more than 24 names on one layer."
+    },
+    {
+      "id": "point-layers",
+      "constant": "MAX_POINT_LAYERS",
+      "iri": "urn:fieldwork:cap:point-layers",
+      "value": 8,
+      "unit": "point layers per step",
+      "kind": "artefact",
+      "basis": "undderived",
+      "evidence": "Chosen; no record says why 8. Since 2026-11-19 it is the one number every point port follows.",
+      "refuses": "A ninth point layer on a map, a table or Deduplicate points. Points from more sources can be stacked with Append rows first.",
+      "liftTest": "A map that needs a ninth layer kept separate in its key."
     }
   ],
   "kindVocabulary": {

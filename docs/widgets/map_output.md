@@ -155,8 +155,13 @@ being rewritten by every run.
 - **The static plot does not draw a street network beside points.** The streets are drawn in a
   frame of their own size, so a map carrying both draws the points in the plot and says where the
   streets are. Set the presentation to interactive to see all of it in one picture.
-- **It cannot reorder layers, or choose their colours.** Draw order is fixed, and a layer's hue
-  comes from its position in the palette. The mark is the one part of the symbol you choose.
+- **A layer of more than 2,000 marks gives up its marks' names.** On the static figure its marks of one colour are one
+  shape, so a mark cannot be focused or picked in the records table. On the interactive map a click still opens a
+  mark's details.
+- **The interactive map draws at most 100,000 marks.** Past that it says so and draws none of the large layers; the
+  static plot draws up to 250,000. The interactive map's large layers are drawn by the graphics card with MapLibre,
+  which is fetched only when online. Offline, or on a computer without WebGL, they are drawn as circles in their
+  colour, and the map says so.
 - **An interactive map's basemap is not included in its export.** Its tiles come from an outside service as you
   look at the map, so it exports as a static plot. A static plot's OpenStreetMap or OpenTopoMap tiles are drawn into
   the figure and its SVG and PNG.
@@ -678,3 +683,43 @@ now read one rule. Its move out of `app.ts` follows in its own release.
 DR Congo at the first level, its 26 provinces and 194,009 vertices from geoBoundaries, drew a blank map with nothing said:
 the figure's frame was measured by passing every vertex at once to a function that takes at most about 100,000, and the
 error was swallowed. It is now measured one vertex at a time, and a map that cannot be drawn says why where it would be.
+
+### 2026-11-19 · Maps of many points (0.37.0)
+
+Asked by the practitioner: *"How can we make the map draw faster and bigger"*. A map took at most 2,000 point records
+across its layers, a number chosen and never measured. It was lifted, and a map of points read from a table was timed
+from Run to the figure on screen (Chromium, development Mac, `tests/measure-point-count.browser.mjs`):
+
+| Points | Static figure, before | after | Interactive map, before | after |
+| --- | --- | --- | --- | --- |
+| 10,000 | 7.6 s | 0.7 s | 21 s | 1.5 s |
+| 50,000 | 74 s | 2.7 s | 155 s | 5.8 s |
+| 100,000 | not finished when stopped, after several minutes | 5.8 s | not tried | 11 s |
+| 250,000 | not tried | 19 s, read from a file | not tried | the tab crashed (also at 150,000 and 200,000) |
+
+What changed:
+
+- **The static figure counted each layer again for every mark** to decide whether to name its marks: 2.5 billion steps
+  at 50,000 points. It counts once.
+- **A layer of more than 2,000 marks is one shape per style** on the static figure, labelled with how many marks it
+  holds, instead of one focusable element per mark.
+- **The interactive map draws such a layer on the graphics card** (MapLibre GL), one image per shape, colour and size.
+  A click opens the mark's details, the layer list hides it, a timeline filters it. Past 100,000 marks it does not try.
+- **The limits are measured**: 250,000 records (the table limit, which the static figure and the table reached), and
+  100,000 marks on the interactive map. Both are in `widgets/caps.json`.
+
+Found on the way: the first interactive timings were void. MapLibre 6 no longer asks for a mark's image through the
+event used, so the layer drew nothing and still reported itself drawn; the browser test that clicks a mark caught it.
+At 250,000 rows the Tabular data dialog took over an hour to tick four key columns, so 100,000 and above were read from
+a workflow file instead.
+
+#### What it does not establish
+
+That a map of 100,000 marks is read for anything but where they are dense: at that number marks cover one another,
+and a density surface may say more. WebKit and Windows were not measured.
+
+**Practitioner observation, which can come out badly:** on a map of 50,000 cases, can the practitioner say where the
+cases are densest, and does the static figure, whose marks have no names, still serve?
+
+Its Inspector and Configure dialog also moved out of `app.ts`, into `src/map-ui.ts`, with nothing a practitioner sees
+changed.

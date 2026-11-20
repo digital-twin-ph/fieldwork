@@ -1,4 +1,5 @@
-import {proportionalRadius,layerRanks,colouredClasses} from './point-layers.js';
+import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM,INTERACTIVE_MARKS_LIMIT} from './point-layers.js';
+import {GlMarks,type GlMark} from './gl-marks.js';
 /** SITES ABOVE EVERY POINT LAYER: point layers are lifted by their place in Manage layers, up to 1000 x 10,000 for a layer
  *  the list does not name, and a pump covered by a death mark could not be clicked (gate 134, 2026-11-12). */
 const SITES_ON_TOP=100_000_000;
@@ -202,7 +203,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     +(options.svgOnly
       ?`<span data-basemap-said>Basemap: ${BASEMAP_LABELS[basemap]??basemap}, as set under Basemap</span><select data-basemap hidden aria-hidden="true">${basemapOptions(basemap,'interactive')}</select>`
       :'<label>Basemap <select data-basemap aria-label="Interactive map basemap">'+basemapOptions(basemap,'interactive')+'</select></label>')
-    +'<span data-tile-status role="status">Local layers work offline</span>';
+    +'<span data-tile-status role="status">Local layers work offline</span><span data-marks-status role="status"></span>';
   const canvas=document.createElement('div');canvas.className='catchment-leaflet';canvas.setAttribute('aria-label','Interactive catchment map');
   host.append(toolbar,canvas);
   // Views can disappear immediately on tab/workspace changes. Avoid delayed zoom
@@ -285,6 +286,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   const timeline=p.timeline?.days.length?p.timeline:undefined;
   const dayParts:{day:string;layer:L.GeoJSON;group:L.FeatureGroup|L.Map}[]=[];
   const datedMarks:{date:string;marker:L.Marker;group:L.FeatureGroup}[]=[];
+  let gpu:GlMarks|undefined;
   // A NAMED LAYER IS CATEGORICAL. Every feature without a value took one hard-coded `#1f77b4`,
   // so a layer of two named reaches drew as one shape. Bands with `minutes` are a sequence and
   // keep their own treatment below; anything else is told apart by hue.
@@ -464,6 +466,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     }
     const named=layers.layerNames||{};
     let index=0;
+    // LARGE LAYERS ON THE GRAPHICS CARD (gl-marks.ts): one renderer for the whole map, started once every layer is in it.
+    gpu=new GlMarks(map,{halo:layers.markHalo!==false,pane:'fieldworkMarks',say:text=>{toolbar.querySelector('[data-marks-status]')!.textContent=text;}});
     for(const [source,rows] of bySource){
       // Spread into one shape so the fallback does not narrow `size` away: `layerSymbol`
       // derives a colour and a mark from the layer's position and has no opinion on radius.
@@ -491,6 +495,37 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         if(!found){found=L.featureGroup();groups.set(key,found);}
         return found;
       };
+      const port=layers.mapLayers?.find(entry=>entry.sourceNodeId===source)?.port;
+      if(rows.filter(row=>row.coordinates).length>MERGED_MARKS_FROM){
+        const byClass=new Map<string,GlMark[]>();
+        for(const row of rows){
+          if(!row.coordinates)continue;
+          const [lon,lat]=row.coordinates;
+          if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
+          const encoding=layers.fillEncoding||SPATIAL_RELATION_FILL;
+          const state=row.excluded?'Excluded':row.relation??row.status??'';
+          const paint=row.fill??fillClass(encoding,state);
+          const step=ramp?ramp.classOf(valueOf(row)):null;
+          const ink=paint==='absent'?'#8C8C8C':ramp?(step===null?'#a89b87':ramp.colours[step]!):(row.pinClass&&classColour.get(row.pinClass))||symbol.colour;
+          const r=largest>0?proportionalRadius((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!],largest,markRadius(symbol.size))
+            :ramp?Math.max(7,markRadius(symbol.size)):markRadius(symbol.size);
+          const key=classes.length&&row.pinClass?row.pinClass:'';
+          const held=byClass.get(key)??byClass.set(key,[]).get(key)!;
+          held.push({lon,lat,shape:symbol.shape,radius:Math.round(r*2)/2,fill:paint==='solid'?ink:null,fillOpacity:largest>0?0.55:1,
+            stroke:ramp?'#1d2f3a':ink,group:'',
+            date:timeline?String((row as {attributes?:Record<string,unknown>}).attributes?.[timeline.dateField]??'').slice(0,10):'',
+            popup:`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`});
+        }
+        for(const [className,marks] of byClass){
+          if(!marks.length)continue;
+          const id=className&&port?`${port}/${className}`:port;
+          const group=gpu.group(`${source}\u0000${className}`,marks);
+          if(id)place(id,className||named[source]||source,group);
+          else{const key=named[source]||source;overlays[Object.hasOwn(overlays,key)?`${key} \u00b7 ${esc(source)}`:key]=group;}
+          if(!hiddenPort(id||'')){group.addTo(map);all.addLayer(group);}
+        }
+        index++;continue;
+      }
       for(const row of rows){
         if(!row.coordinates)continue;
         const [lon,lat]=row.coordinates;
@@ -538,7 +573,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         const r=largest>0?proportionalRadius((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!],largest,markRadius(symbol.size))
           :ramp?Math.max(7,markRadius(symbol.size)):markRadius(symbol.size);
         const box=Math.ceil(2*(r+2.5)),centre=box/2;
-        L.marker([lat,lon],{title:row.name,zIndexOffset:lift,icon:L.divIcon({className:'catchment-point-mark',
+        const marker=L.marker([lat,lon],{title:row.name,zIndexOffset:lift,icon:L.divIcon({className:'catchment-point-mark',
           iconSize:[box,box],iconAnchor:[centre,centre],
           html:`<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" aria-hidden="true">`
             +(layers.markHalo===false?'':`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="none" `
@@ -547,15 +582,15 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
             +`stroke="${ramp?'#1d2f3a':ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`})})
           .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
             +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)
-          .addTo(groupFor(row));
-        if(timeline){const marker=groupFor(row).getLayers().at(-1) as L.Marker;
+          ;
+        groupFor(row).addLayer(marker);
+        if(timeline){
           const date=String((row as {attributes?:Record<string,unknown>}).attributes?.[timeline.dateField]??'').slice(0,10);
           if(date)datedMarks.push({date,marker,group:groupFor(row)});}
       }
       // NAMED THROUGH THE LAYER LIST, so Manage layers governs these the way it governs the
       // rest. The port is the layer's id; a class is that port plus its own name, which is the
       // id `mapLayerList` builds for a layer that arrived inside a value.
-      const port=layers.mapLayers?.find(entry=>entry.sourceNodeId===source)?.port;
       for(const [className,group] of groups){
         if(!group.getLayers().length)continue;
         const id=className&&port?`${port}/${className}`:port;
@@ -598,6 +633,12 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       if(!hiddenPort(port?`${port}/links`:'')){group.addTo(map);all.addLayer(group);}
     }
   }
+  // PAST WHAT THE INTERACTIVE MAP HAS DRAWN WITHOUT THE TAB CRASHING, it does not try: it says so, and the static plot draws them.
+  if(gpu&&gpu.size>INTERACTIVE_MARKS_LIMIT){
+    toolbar.querySelector('[data-marks-status]')!.textContent=`${gpu.size.toLocaleString('en')} marks are more than the interactive map draws `
+      +`(${INTERACTIVE_MARKS_LIMIT.toLocaleString('en')}). Set the presentation to Static plot in Configure… to see them.`;
+    canvas.dataset.marksDrawn='over-limit';
+  }else gpu?.start();
   if(layers.centers?.length){
     const group=L.featureGroup();
     for(const center of layers.centers){
@@ -659,6 +700,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     const draw=(index:number)=>{
       at=index;const day=days[at]!;
       for(const part of dayParts)show(part.layer,part.day===day);
+      gpu?.setDay(day);
       for(const mark of datedMarks){const on=mark.date<=day;if(on&&!mark.group.hasLayer(mark.marker))mark.group.addLayer(mark.marker);
         if(!on&&mark.group.hasLayer(mark.marker))mark.group.removeLayer(mark.marker);}
       (box.querySelector('[data-frame-slider]') as HTMLInputElement).value=String(at);
@@ -958,7 +1000,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       found[0]!.openPopup(bounds.isValid()?bounds.getCenter():undefined);
     });
   }
-  return ()=>{disposed=true;stopFrames();observer.disconnect();
+  return ()=>{disposed=true;stopFrames();observer.disconnect();gpu?.dispose();
     for(const event of ['fullscreenchange','webkitfullscreenchange'])document.removeEventListener(event,markFullscreen);
     // SHAPES FIRST, RENDERERS LAST (2026-11-10, CI WebKit: "undefined is not an object (evaluating 'this._ctx.save')").
     // map.remove() takes layers in no set order; a canvas renderer removed before its shapes is asked by each later one to

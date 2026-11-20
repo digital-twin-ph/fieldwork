@@ -92,6 +92,18 @@ events is something your labels and your weights have to say.
 **John Snow: where were the deaths?** loads 250 death locations and eight pumps. **Measles in Hagelloch,
 1861** loads a 188-case line list.
 
+## History
+
+### 2026-11-19 · Up to 250,000 records (0.11.0)
+
+Point data took at most 2,000 records from a file, pins, generated points or reprojection, and files of at most 5 MB:
+numbers chosen when the widget was new. It now takes 250,000 records and files of up to 40 MB, the limits measured
+for tables, and every place it reads points follows the one number. The maps and tables it feeds were measured at the
+same sizes; Map's manual has the times.
+
+**What it does not establish:** a 250,000-row CSV imported through this dialog was not timed; the measurement read the
+points from a workflow file and from a table.
+
 ---
 
 *How this widget is built, and the decisions behind it: [docs/widget-specs/point_input.md](../widget-specs/point_input.md).*

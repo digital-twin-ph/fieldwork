@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {clipExercise} from './fixtures/workflows.mjs';
 import {newMapOutput,mapOutput} from '../build/map-output.js';
 import {executeWorkflow,executionPlan,validateWorkflow,nodeInputs} from '../build/core.js';
-import {pointLayers} from '../build/point-layers.js';
+import {pointLayers,MAX_POINT_RECORDS} from '../build/point-layers.js';
 import {defaultSpatialReference} from '../build/spatial-reference.js';
 import {newAreaMeasurement} from '../build/area-measurement.js';
 
@@ -59,7 +59,11 @@ test('expandable point inputs preserve layer identity when record IDs overlap',a
   assert.throws(()=>validateWorkflow(w),/once per operation/);
   map.params.pointInputCount=9;assert.throws(()=>validateWorkflow(w),/1–8/);
   const outside=layers[0].features.find(f=>f.id==='outside');
-  assert.throws(()=>pointLayers({layers:[{sourceNodeId:'large',features:Array(2001).fill(outside)}]}),/2,000 records combined/);
+  // NO CEILING ON THE RECORDS A MAP IS GIVEN past what Point data reads (2026-11-19): 2,001 was refused here before.
+  assert.equal(pointLayers({layers:[{sourceNodeId:'large',features:Array(2001).fill(outside)}]})[0].features.length,2001);
+  assert.ok(MAX_POINT_RECORDS>2001);
+  const nine=Array.from({length:9},(_,i)=>({sourceNodeId:`s${i}`,features:[outside]}));
+  assert.throws(()=>pointLayers({layers:nine}),/at most 8 point layers/);
 });
 
 test('a map saved with a coverage check opens with the clip that replaced it',()=>{

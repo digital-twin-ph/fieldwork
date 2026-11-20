@@ -4,6 +4,9 @@ import type {Database,SqlJsStatic,SqlValue} from 'sql.js';
 import type {Boundary,Position,PointFeature,PointCollection,Scalar} from './types.js';
 import {READABLE_SOURCE_EPSG,utmFromEPSGCode} from './metric-crs.js';
 import {reprojectToCRS84} from './reproject.js';
+import {MAX_POINT_RECORDS} from './point-layers.js';
+// A point file's size on import is the table file's: a file of points a table can read, Point data can read.
+import {MAX_TABLE_FILE_BYTES as MAX_POINT_FILE_BYTES} from './data-table.js';
 export interface CSVTable {headers:string[]; rows:string[][]}
 /** Which columns hold the axes, and in which unit.
  *
@@ -31,9 +34,8 @@ export interface GeoPackageLayer {table_name:string; column_name:string; srs_id:
 import {geometryBounds} from './study-area.js';
 import {pointRelation} from './spatial-predicates.js';
 const feature=(id:string,name:string,coordinates:Position|null):PointFeature=>({type:'Feature',id,properties:{name},geometry:coordinates?{type:'Point',coordinates}:null});
-/** `maxRecords` is the caller's: points stay at 2,000, and a table passes its own ceiling, MAX_TABLE_ROWS. The
- *  NYC example's daily table is 3,653 rows, and the shared 2,000 refused it, 2026-11-03. */
-export function parseCSV(text:string,maxRecords=2000,maxChars=5_000_000):CSVTable{
+/** `maxRecords` is the caller's: points default to MAX_POINT_RECORDS, and a table passes its own ceiling, MAX_TABLE_ROWS. */
+export function parseCSV(text:string,maxRecords=MAX_POINT_RECORDS,maxChars=MAX_POINT_FILE_BYTES):CSVTable{
   if(text.length>maxChars)throw new Error(`CSV exceeds the ${maxChars/1e6} MB limit.`);
   text=text.replace(/^\uFEFF/,'');const rows:string[][]=[];let row:string[]=[],field='',quoted=false,closed=false;
   const endField=()=>{row.push(field);field='';closed=false;};
@@ -86,7 +88,7 @@ export function csvPoints(table:CSVTable,mapping:CSVMapping,report?:CSVCoordinat
   return {type:'FeatureCollection',features};
 }
 export function syntheticPoints(boundary:Boundary,{inside=20,outside=2,seed=42}={}):PointCollection{
-  if(![inside,outside,seed].every(Number.isInteger)||inside<1||outside<0||inside+outside>2000||seed<0||seed>4294967295)throw new Error('Use 1–2,000 total points and an integer seed from 0 to 4294967295.');
+  if(![inside,outside,seed].every(Number.isInteger)||inside<1||outside<0||inside+outside>MAX_POINT_RECORDS||seed<0||seed>4294967295)throw new Error(`Use 1–${MAX_POINT_RECORDS.toLocaleString('en')} total points and an integer seed from 0 to 4294967295.`);
   let state=seed>>>0;const random=()=>{state=(Math.imul(1664525,state)+1013904223)>>>0;return state/4294967296;};
   const [w,s,e,n]=geometryBounds(boundary),dx=e-w,dy=n-s,features:PointFeature[]=[];
   for(const [count,isInside] of ([[inside,true],[outside,false]] as const)){let made=0,attempts=0;while(made<count&&attempts++<100000){const a=isInside?[w,s,e,n]:[Math.max(-180,w-dx),Math.max(-85,s-dy),Math.min(180,e+dx),Math.min(85,n+dy)];const p=[a[0]+random()*(a[2]-a[0]),a[1]+random()*(a[3]-a[1])];if((pointRelation(p,boundary)==='Inside')!==isInside||(!isInside&&pointRelation(p,boundary)!=='Outside'))continue;made++;features.push(feature(`synthetic-${features.length+1}`,`Synthetic ${isInside?'inside':'outside'} ${made}`,p));}if(made<count)throw new Error('Could not sample this shape within the attempt limit. Try a less narrow boundary.');}
@@ -141,7 +143,7 @@ export function geoPackagePoints(db:Database,layer:string):PointCollection{
   const columns=records(db,`PRAGMA table_info(${quote(layer)})`),id=columns.find(c=>c.pk===1)?.name,name=columns.find(c=>['name','label'].includes(String(c.name).toLowerCase()))?.name;
   if(typeof id!=='string')throw new Error('The point layer needs a primary key.');
   const rows=records(db,`SELECT * FROM ${quote(layer)} ORDER BY ${quote(id)} LIMIT 2001`);
-  if(rows.length>2000)throw new Error('GeoPackage layer exceeds the 2,000-point prototype limit.');
+  if(rows.length>MAX_POINT_RECORDS)throw new Error(`This GeoPackage layer has ${rows.length.toLocaleString('en')} points; Point data reads at most ${MAX_POINT_RECORDS.toLocaleString('en')}.`);
   const collection:PointCollection={type:'FeatureCollection',features:rows.map(r=>{const f=feature(String(r[id]),String((typeof name==='string'?r[name]:null)??r[id]),decodeGeoPackagePoint(r[valid.column_name],valid.srs_id));const attrs=Object.entries(r).filter(([k])=>k!==valid.column_name);if(attrs.some(([,v])=>v instanceof Uint8Array))throw new Error('Binary attribute fields are not supported in this point importer.');f.properties={...Object.fromEntries(attrs) as Record<string,Scalar>,name:f.properties.name};return f;})};
   const utm=utmFromEPSGCode(valid.epsg);
   return utm?reprojectToCRS84(collection,utm.zone,utm.hemisphere).collection:collection;

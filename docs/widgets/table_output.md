@@ -96,3 +96,12 @@ added table offers a `table` port with no mode set.
 What no test establishes is whether the four renderers should be one widget at all. The split is
 inherited and is recorded as open in
 [experiment 21](../experiments/21-shared-result-outputs.md).
+
+## History
+
+### 2026-11-19 · No 2,000-record ceiling (0.13.0)
+
+A table of points refused more than 2,000 records across its point inputs. That ceiling is gone; Point data's own
+limit, 250,000, is the one that applies. A table of 250,000 points ran in 10 s and was shown in 5.5 s (Chromium,
+development Mac, `tests/measure-point-count.browser.mjs`).
+

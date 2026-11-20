@@ -1451,6 +1451,29 @@ nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has ca
 domain-bound"*, which under the domain-agnostic direction is a question rather than a settled
 exemption. Both are still classified `domain` in `widgets/classification.json`.
 
+### GHS-POP over DR Congo is refused: 8-byte cells (found 2026-11-19; streaming decided the same day)
+
+The population rasters example over DR Congo: GHS-POP's window is about 519 million cells of 8 bytes, 4.2 GB, past
+the 2.1 GB a tab decodes (`raster-decode-bytes`). WorldPop's, 4 bytes a cell, fits. Options put to the practitioner:
+hold GHS-POP's cells as 4-byte numbers, stated (7 significant figures a cell; totals still summed in 8 bytes);
+split the window into pieces (no value changed, but every raster step assumes one array, and about 4 GB a tab); or
+GHS-POP over a province in the example. Then asked whether rasters could be processed in Rust, the practitioner
+chose **streaming** (*"Start streaming"*): zonal sums and sampling read the raster block by block in the Rust kernel
+and never hold the whole window, so no value is narrowed. The 4-byte option is not pursued. Cost to settle in the
+design: a streamed raster is read again from its source at each run, where today the clipped window is kept.
+
+### The Tabular data dialog stalls at 250,000 rows (found 2026-11-19)
+
+Measuring maps of many points, a 250,000-row CSV of five columns was read and previewed in 0.6 s, and then ticking
+four key columns took over an hour (the test's limit): each tick redraws the dialog. Experiment 175 imported 250,000
+rows with no such stall, choosing fewer keys. To measure: the time of one tick at 25,000, 100,000 and 250,000 rows.
+
+### What crashes the interactive map at 150,000 marks (found 2026-11-19)
+
+Map 0.37.0 draws a large layer on the graphics card: 100,000 marks in 11 s; at 150,000 and 200,000 the tab crashed,
+the first time before any mark's image was even made. `INTERACTIVE_MARKS_LIMIT` stops there and says so. First
+suspect: the GeoJSON source's tiling at every zoom. Find it, then measure again.
+
 ### ~~A country at ADM0 can be refused, and the dialog draws nothing (found on Pages, 2026-11-05)~~
 
 **DONE 2026-11-05, in 0.30.0.** Acquired outlines are kept in IndexedDB under `areaRef`, both budgets are removed, every

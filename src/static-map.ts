@@ -8,7 +8,7 @@ import {linkLinesSvg} from './map-links.js';
 import type {Escape,Position} from './types.js';
 import type {DisplayValue} from './results.js';
 import {markPath} from './presentation.js';
-import {markLabel,LABEL_CEILING} from './point-layers.js';
+import {markLabel,LABEL_CEILING,MERGED_MARKS_FROM,MarkBatch} from './point-layers.js';
 
 /** The frame this map draws in, and the projection that puts anything else in it.
  *
@@ -87,7 +87,12 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
   // Layer by layer in the order set in Manage layers (2026-11-12); within a sized layer, the largest marks first.
   const rank=layerRanks((output as {mapLayers?:{sourceNodeId?:string}[]}).mapLayers);
   const rows=[...output.rows].map((r,at)=>({r,at})).sort((a,b)=>rank(a.r.sourceNodeId)-rank(b.r.sourceNodeId)||valueOf(b.r)-valueOf(a.r)||(colourValue(a.r)??0)-(colourValue(b.r)??0)||a.at-b.at).map(x=>x.r);
-  for(const r of rows){if(!r.coordinates!)continue;const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):statusLabel(r.status);
+  // EACH LAYER COUNTED ONCE. This counted the layer again for every mark (2026-11-19): 2.5 billion steps at 50,000 points.
+  const perLayer=new Map<string,number>();
+  for(const r of output.rows)if(r.coordinates)perLayer.set(r.sourceNodeId||'',(perLayer.get(r.sourceNodeId||'')??0)+1);
+  const batch=new MarkBatch();let batched='',batchedCount=0,batchedName='';
+  const flush=()=>{if(batch.size)svg+=batch.svg(batched,batchedCount,batchedName,esc);batchedCount=0;};
+  for(const r of rows){if(!r.coordinates!)continue;if((r.sourceNodeId||'')!==batched){flush();batched=r.sourceNodeId||'';}const [x,y]=project(r.coordinates!),label=['spatial-coverage','spatial-map'].includes(output.kind||'')?(r.excluded?'Excluded':r.relation):statusLabel(r.status);
     const symbol=symbols?.[r.sourceNodeId||''];
     // The layer's own radius, or the default where none was chosen. A focused mark is drawn
     // larger than whatever that is, rather than at a fixed size that could be smaller than the
@@ -107,9 +112,14 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
     const mark=symbol
       ?`<path d="${markPath(symbol.shape,x,y,radius)}" fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ink}" stroke-width="${1.6*markScale}"/>`
       :`<circle cx="${x}" cy="${y}" r="${radius}" fill="${statusFill}" stroke="white" stroke-width="${1.2*markScale}"/>`;
-    const named=output.rows.filter(x=>x.coordinates&&x.sourceNodeId===r.sourceNodeId).length<=LABEL_CEILING
+    if(symbol&&(perLayer.get(r.sourceNodeId||'')??0)>MERGED_MARKS_FROM&&focus?.id!==r.id){
+      batch.add(`fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ink}" stroke-width="${1.6*markScale}"`,
+        markPath(symbol.shape,x,y,radius));
+      batchedCount++;batchedName=r.layerLabel||r.sourceNodeId||'';continue;}
+    const named=(perLayer.get(r.sourceNodeId||'')??0)<=LABEL_CEILING
       ?markLabel(r as never,labelField[r.sourceNodeId||''],x,y,radius,esc):'';
     svg+=`<g class="location" role="button" tabindex="0" data-place="${esc(r.id)}" data-layer="${esc(r.sourceNodeId||'')}" aria-label="${esc(r.name)}, ${esc(label)}${r.layerLabel?', '+esc(r.layerLabel):''}"><title>${esc(r.name)} · ${esc(label)}${r.layerLabel?' · '+esc(r.layerLabel):''}</title>${mark}${named}</g>`;}
+  flush();
   // No caption or instruction printed on the figure (2026-11-11): the map's title and key say what it is.
   return svg
     +`<text x="826" y="25" text-anchor="middle">N \u2191</text>`;

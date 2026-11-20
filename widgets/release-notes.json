@@ -427,12 +427,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.36.3",
+   "version": "0.37.0",
    "released": "2026-11-19",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A study area of tens of thousands of vertices is drawn: the static map's frame was measured by spreading every vertex into Math.min, which threw past about 100,000 (DR Congo's 26 provinces, 194,009 vertices, drew a blank map). A map that cannot be drawn now says so where it would be."
+     "kind": "minor",
+     "description": "A map takes up to 250,000 point records (the 2,000 combined across its layers is gone). A layer of more than 2,000 marks is one shape per style on the static figure and is drawn on the graphics card (MapLibre GL) on the interactive map, which draws up to 100,000 marks and says so past that; offline or without WebGL, as circles. The static figure counts each layer once, not once per mark. Its Inspector and Configure dialog are in src/map-ui.ts."
     }
    ],
    "breaking": false,
@@ -576,12 +576,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.10.0",
-   "released": "2026-11-18",
+   "version": "0.11.0",
+   "released": "2026-11-19",
    "changes": [
     {
      "kind": "minor",
-     "description": "Coordinates in degrees may be written as degrees, minutes and seconds, such as 05° 56' 00\" S, as well as decimal numbers, in a CSV imported here and in points from a connected table (the practitioner, 2026-11-18, of a USGS table of Africa's mineral facilities: \"the more urgent thing is the degrees decimal conversion assuming the format is correct\"). They are converted to decimal degrees for the point; the column keeps its text. A value with no hemisphere is read as north or east and counted in the step's sentence. A value that cannot be read leaves its record without a position, with the reason, where a CSV in degrees used to be refused whole. Checked on the USGS table: 582 of 652 rows agree exactly with its own decimal columns and 13 within rounding; 57 disagree, mostly errors in those columns."
+     "description": "Point data takes up to 250,000 records from a file, pins, generated points or a workflow, and files of up to 40 MB (the table's limits), in place of 2,000 records and 5 MB."
     }
    ],
    "breaking": false,
@@ -724,21 +724,15 @@
    "migrationFrom": []
   },
   "reproject": {
-   "version": "0.2.0",
-   "released": "2026-10-13",
+   "version": "0.3.0",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "unstated",
-     "description": "Split: the widget stopped importing its own data and became a points-to-points transform, projecting CRS84 into a UTM zone.",
-     "breaking": true,
-     "migration": "A node saved under 0.1.0 carries params.data holding points the old widget had ALREADY converted to CRS84 at import. validateWorkflow rewrites such a node to point_input with those records, its label and its connections kept, and stamps sourceMigration.fromType 'reproject'. Recorded as a RecontractedNodeType: the type was neither retired nor renamed, its contract changed."
-    },
-    {
-     "kind": "initial",
-     "description": "Import-time projection change from WGS84 UTM metres to CRS84 degrees; see docs/experiments/40-reprojection-primitives.md. WGS84 zones only, no datum shift, no raster warping. Narrower than the general Reproject node proposed in experiment 05."
+     "kind": "minor",
+     "description": "Reproject points takes up to 250,000 records, Point data's limit, in place of 2,000."
     }
    ],
-   "breaking": true,
+   "breaking": false,
    "migrationFrom": []
   },
   "sample_raster": {
@@ -920,12 +914,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.12.1",
-   "released": "2026-11-15",
+   "version": "0.13.0",
+   "released": "2026-11-19",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A spread table shows what each column holds beside its name where the step that made it says (a two-by-two's cells), in Results, the full table viewer, Notes and the publication."
+     "kind": "minor",
+     "description": "A table of points takes up to 250,000 records across its point inputs; the 2,000 combined is gone."
     }
    ],
    "breaking": false,

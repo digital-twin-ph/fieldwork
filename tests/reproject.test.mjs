@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {reprojectToCRS84,projectedGeoJSONPoints,utmDefinition,ROUND_TRIP_TOLERANCE_M} from '../build/reproject.js';
 import {metric} from '../build/catchments.js';
+import {MAX_POINT_RECORDS} from '../build/point-layers.js';
 
 const collection=(coordinates)=>({type:'FeatureCollection',features:coordinates.map((c,i)=>({type:'Feature',id:`r${i+1}`,properties:{name:`Record ${i+1}`},geometry:c?{type:'Point',coordinates:c}:null}))});
 
@@ -72,8 +73,8 @@ test('invalid zones, empty files and nonnumeric coordinates are refused', () => 
 });
 
 test('the record limit matches the Input data contract', () => {
-  const many=collection(Array.from({length:2001},()=>[400_000,7_280_000]));
-  assert.throws(()=>reprojectToCRS84(many,35,'south'),/at most 2,000 records/);
+  const many=collection(Array.from({length:MAX_POINT_RECORDS+1},()=>[400_000,7_280_000]));
+  assert.throws(()=>reprojectToCRS84(many,35,'south'),new RegExp(`at most ${MAX_POINT_RECORDS.toLocaleString()} records`));
 });
 
 test('projected GeoJSON import keeps identifiers and refuses non-point geometry', () => {

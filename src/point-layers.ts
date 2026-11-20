@@ -2,11 +2,15 @@ import type {PointInput,PointLayer} from './types.js';
 import type {LayerShape,ValueClasses} from './presentation.js';
 import {classifyValues} from './presentation.js';
 export const MAX_POINT_LAYERS=8;
+/** HOW MANY POINT RECORDS A STEP TAKES, on import and on a map: measured, not chosen (widgets/caps.json, point-records). */
+export const MAX_POINT_RECORDS=250_000;
 export const pointPort=(index:number)=>index===0?'points':`points_${index+1}`;
-export const isPointPort=(port:string)=>port==='points'||/^points_[2-8]$/.test(port);
+/** A point port: `points`, then `points_2` up to the last MAX_POINT_LAYERS allows, the one number that says how many. */
+export const isPointPort=(port:string)=>{if(port==='points')return true;
+  const n=/^points_(\d+)$/.exec(port);return !!n&&Number(n[1])>=2&&Number(n[1])<=MAX_POINT_LAYERS;};
 export function pointLayers(points:PointInput){
   const layers='layers' in points?points.layers:[points];
-  if(layers.length>MAX_POINT_LAYERS||layers.reduce((sum,l)=>sum+l.features.length,0)>2000)throw new Error('Use at most 8 point layers and 2,000 records combined per operation.');
+  if(layers.length>MAX_POINT_LAYERS)throw new Error(`Use at most ${MAX_POINT_LAYERS} point layers per operation.`);
   if(new Set(layers.map(l=>l.sourceNodeId)).size!==layers.length)throw new Error('Connect each point source once per operation.');
   return layers;
 }
@@ -54,6 +58,31 @@ export interface MarkRow {
  *  This is a limit on legibility, not a limit on the data, so a layer over it is left unnamed and
  *  the Inspector says why rather than the figure failing. */
 export const LABEL_CEILING=24;
+
+/** HOW MANY MARKS A LAYER HAS BEFORE IT IS DRAWN AS ONE SHAPE PER STYLE (2026-11-19). Below it, each mark is its own
+ *  element, which a reader can focus, hover for its name and pick in the records table. Above it, a figure's marks of one
+ *  colour and fill are one path: 50,000 separate elements took 74 s to draw, and no reader picks one of 50,000. The
+ *  figure looks the same; only the marks' individual names are given up. widgets/caps.json, merged-marks. */
+export const MERGED_MARKS_FROM=2_000;
+
+/** HOW MANY MARKS THE INTERACTIVE MAP DRAWS, measured 2026-11-19 (widgets/caps.json, interactive-marks): 100,000 drew in
+ *  9 s; at 150,000 and 200,000 the tab crashed. Past it the interactive map draws none of the large layers and says so;
+ *  the static plot draws them. */
+export const INTERACTIVE_MARKS_LIMIT=100_000;
+
+/** One layer's marks, collected by style and written as one path each, in the order each style first appeared. */
+export class MarkBatch {
+  private styles=new Map<string,string[]>();
+  add(style:string,d:string){const held=this.styles.get(style);if(held)held.push(d);else this.styles.set(style,[d]);}
+  get size(){return this.styles.size;}
+  /** The layer's marks as SVG, labelled for a screen reader with how many there are; empty if none were added. */
+  svg(layer:string,count:number,name:string,esc:(v:unknown)=>string):string{
+    if(!this.styles.size)return '';
+    const out=`<g class="location-layer" data-layer="${esc(layer)}" role="img" aria-label="${esc(name)}: ${count.toLocaleString('en')} marks">`
+      +[...this.styles].map(([style,ds])=>`<path ${style} d="${ds.join('')}"/>`).join('')+'</g>';
+    this.styles.clear();return out;
+  }
+}
 
 /** A MARK'S NAME, FROM THE PROPERTY SOMEBODY NOMINATED.
  *
@@ -155,9 +184,12 @@ export function markedPoints(rows:readonly MarkRow[],
   const coloured=colouredClasses(rows,symbols);
   const colourOrder=(row:MarkRow)=>{const by=symbols[row.sourceNodeId||'']?.colourBy;return by?Number(valueOf(row,by))||0:0;};
   const ordered=[...rows].map((row,at)=>({row,at})).sort((a,b)=>rank(a.row.sourceNodeId)-rank(b.row.sourceNodeId)||sizeOf(b.row)-sizeOf(a.row)||colourOrder(a.row)-colourOrder(b.row)||a.at-b.at).map(x=>x.row);
+  const batch=new MarkBatch();let batched='',batchedCount=0,batchedName='';
+  const flush=()=>{if(batch.size)svg+=batch.svg(batched,batchedCount,batchedName,esc);batchedCount=0;};
   for(const row of ordered){
     if(!row.coordinates)continue;
     if(hidden?.has(row.sourceNodeId||''))continue;
+    if((row.sourceNodeId||'')!==batched){flush();batched=row.sourceNodeId||'';}
     const [x,y]=project(row.coordinates as [number,number]);
     if(!Number.isFinite(x)||!Number.isFinite(y))continue;
     const symbol=symbols[row.sourceNodeId||''];
@@ -174,6 +206,10 @@ export function markedPoints(rows:readonly MarkRow[],
     // two declarations `oldMap` makes, so one map does not say Outside in two ways.
     const hollow=row.relation==='Outside';
     const aside=row.excluded||row.relation==='MissingLocation';
+    if((drawnPerLayer.get(row.sourceNodeId||'')||0)>MERGED_MARKS_FROM&&focusId!==row.id){
+      batch.add(`fill="${hollow?'none':aside?'#a89b87':ink}"${sized?' fill-opacity="0.55"':''} stroke="${aside?'#a89b87':ramp?'#1d2f3a':ink}" stroke-width="1.6"`,
+        markPath(symbol?.shape||'circle',x,y,radius));
+      batchedCount++;batchedName=row.layerLabel||row.sourceNodeId||'';continue;}
     const said=label?label(row):[row.relation,row.layerLabel].filter(Boolean).join(' · ');
     svg+=`<g class="location" role="button" tabindex="0" data-place="${esc(row.id)}" `
       +`data-layer="${esc(row.sourceNodeId||'')}" `
@@ -187,5 +223,6 @@ export function markedPoints(rows:readonly MarkRow[],
         ?markLabel(row,labelField[row.sourceNodeId||''],x,y,radius,esc):'')
       +`</g>`;
   }
+  flush();
   return svg;
 }

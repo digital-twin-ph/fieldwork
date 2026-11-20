@@ -17,6 +17,14 @@ shown in a local build is not a claim that it has been published.
 - **An ORCID iD can be added to an identity file later**, under Identity's *Change your avatar, ORCID iD or
   affiliations*, keeping the same key. It could be given only when the file was made, and a new file means a new key.
 - **A slide deck on browser-based applications** is in `docs/presentations/`, the source of the published deck.
+- **Maps of up to 250,000 points, drawn in seconds.** A map, a table of points and Point data took at most 2,000
+  records, a number nobody had measured; files of points, at most 5 MB. Both are lifted to the table's limits,
+  250,000 records and 40 MB, which the static figure and the table reached when measured. 50,000 points now draw in
+  2.7 s on a static figure (74 s before) and 5.8 s on an interactive map (155 s before), whose large layers are drawn
+  by the graphics card. The interactive map draws up to 100,000 marks: at 150,000 the tab crashed, so past 100,000 it
+  says so and the static plot draws them. Offline, or without WebGL, large layers are drawn as circles. Map 0.37.0,
+  Table 0.13.0, Point data 0.11.0, Reproject points 0.3.0; times in Map's manual, under History.
+- **Map's Inspector and Configure dialog are in their own module**, out of `app.ts`, with nothing on screen changed.
 
 ## 0.151.2 — 2026-11-19
 

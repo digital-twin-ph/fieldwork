@@ -1,6 +1,6 @@
 # Map
 
-_Created 2026-10-14 · Updated 2026-11-19_
+_Created 2026-10-14 · Updated 2026-11-20_
 
 **An output widget.** It draws what your workflow produced. It computes nothing, changes
 nothing and decides nothing — if a number looks wrong on the map, the step that produced it is
@@ -146,6 +146,15 @@ is worked out when the document is rendered. Nothing here says "Figure 1".
 Edit it and it forks into a note of your own, like any machined note; the machined one goes on
 being rewritten by every run.
 
+
+### Words from the workflow
+
+A map's title, subtitle or source note may say **{country}**, **{units}**, **{unit}** or **{census}**. Each is
+filled from the workflow where the figure is drawn: the study area's country, what its units are called (stated on the
+study area, or its boundary's own name for them), and the year of a census read from **Census tables**. A copy of the
+workflow over another country reads that country. A word the workflow does not state is written as such, for example
+*[country not stated]*, never guessed. The dialog says what each reads here.
+
 ## What it will not do
 
 - **It cannot draw everything at once.** A map with both a raster and polygons connected draws
@@ -174,9 +183,11 @@ being rewritten by every run.
   map reads, and none of them changes a number. See the layers you connected, and say in the
   source note what the map is about.
 
-### 2026-11-20 · A study area named by its digest (0.38.0)
+### 2026-11-20 · A study area named by its digest; words from the workflow (0.38.0)
 
-The receipt names a study area's shape by the SHA-256 of its GeoJSON instead of writing out its coordinates.
+The receipt names a study area's shape by the SHA-256 of its GeoJSON instead of writing out its coordinates. The title,
+subtitle and source note take {country}, {units}, {unit} and {census} from the workflow; a copy of a workflow leaves
+the subtitle empty.
 
 ---
 

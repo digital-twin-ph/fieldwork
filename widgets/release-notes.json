@@ -151,12 +151,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.23.1",
-   "released": "2026-11-19",
+   "version": "0.24.0",
+   "released": "2026-11-20",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A chart's default source line is \"Source: <the step it reads>.\", without \"See N3 & evidence for method.\", which was an instruction to the application's reader printed in every figure and draft (target outputs audit, 2026-11-19)."
+     "kind": "minor",
+     "description": "The title, subtitle, axis titles and source note take {country}, {units}, {unit} and {census} from the workflow (the study area's country and what its units are called, the census read), each said as not stated where the workflow does not state it. A copy of a workflow leaves the subtitle empty, as the original's finding."
     }
    ],
    "breaking": false,
@@ -430,7 +430,7 @@
    "changes": [
     {
      "kind": "minor",
-     "description": "The receipt names a study area's shape by its GeoJSON's SHA-256 instead of writing it out."
+     "description": "The receipt names a study area's shape by its GeoJSON's SHA-256 instead of writing it out. The title, subtitle and source note take {country}, {units}, {unit} and {census} from the workflow; a copy of a workflow leaves the subtitle empty."
     }
    ],
    "breaking": false,
@@ -751,7 +751,7 @@
    "changes": [
     {
      "kind": "minor",
-     "description": "Columns are lined up in a grid: one row per column of the stacked table, the column of each table filling it or none, each changeable, and a stacked column renamed for every table (stackUnder). Each table is shown as read, before, and the stack after. A table holding the others' names under a column of its own is refused, naming the column to stack it under; the name most tables use is offered, whatever the order of the inputs. A run stopped there keeps the tables reaching it, so Columns can be used. A table whose value column or unit differs is named, with where to change it. The Inspector moves out of app.ts."
+     "description": "Columns are lined up in a grid: one row per column of the stacked table, the column of each table filling it or none, each changeable, and a stacked column renamed for every table (stackUnder). Each table is shown as read, before, and the stack after. A table holding the others' names under a column of its own is refused, naming the column to stack it under; the name most tables use is offered, whatever the order of the inputs. A run stopped there keeps the tables reaching it, so Columns can be used. A table whose value column or unit differs is named, with where to change it. The Inspector moves out of app.ts. A table whose every name matches the others' column is lined up without asking, and said in the grid and the run; Start again returns to that. \"persons\" and \"people\" are one unit. Labels take {census} and the other words from the workflow."
     }
    ],
    "breaking": false,
@@ -849,7 +849,7 @@
    "changes": [
     {
      "kind": "minor",
-     "description": "DR Congo's 26 provinces are chosen, applied and reopened in about a second each, where each took 5 to 7. The receipt names the shape by its GeoJSON's SHA-256; the dialog's summary counts several polygons. The Inspector moves out of app.ts."
+     "description": "DR Congo's 26 provinces are chosen, applied and reopened in about a second each, where each took 5 to 7. The receipt names the shape by its GeoJSON's SHA-256; the dialog's summary counts several polygons. The Inspector moves out of app.ts. Its units are called, stated beside its countries, is read by figures as {units}; an edit on the map keeps the countries and unit name; a copy of a workflow clears both with the outline."
     }
    ],
    "breaking": false,
@@ -905,7 +905,7 @@
    "changes": [
     {
      "kind": "minor",
-     "description": "A census table whose units are not today's is offered in today's: DR Congo's 1984 counts summed to the 26 provinces of 2015, with geoBoundaries' spelling, the printed counts linked. A step reopened and given another table starts from that table's defaults, where its key and value columns had been carried over by name; a refused read no longer shows the last table beside the refusal. A table from an address reopens read. One value column read wide is advice, not a refusal, and the value column is guessed only where it holds numbers. The data dictionary picker is under Your file only. The Inspector moves out of app.ts."
+     "description": "A census table whose units are not today's is offered in today's: DR Congo's 1984 counts summed to the 26 provinces of 2015, with geoBoundaries' spelling, the printed counts linked. A step reopened and given another table starts from that table's defaults, where its key and value columns had been carried over by name; a refused read no longer shows the last table beside the refusal. A table from an address reopens read. One value column read wide is advice, not a refusal, and the value column is guessed only where it holds numbers. The data dictionary picker is under Your file only. The Inspector moves out of app.ts. The value's unit is taken from the data dictionary where it states one for the columns read, and said so."
     }
    ],
    "breaking": false,

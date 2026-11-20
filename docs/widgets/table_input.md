@@ -174,7 +174,8 @@ read beside the refusal.
 A table read from an address reopens read, where it opened empty until fetched again. One value column read wide is
 advice, not a refusal, so a census's total can be named as the value. The value column is guessed only where it holds
 numbers. The data dictionary picker is under **Your file** only: a census table brings its own. The second name box
-reads *Name for the column holding variable values*.
+reads *Name for the column holding variable values*. The unit of the value is taken from the data dictionary where it
+states one for the columns read, and said so; typing one replaces it.
 
 ### 2026-11-20 · Where the table comes from, as tabs; census tables (0.12.0)
 

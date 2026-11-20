@@ -45,7 +45,9 @@
    "src/study-area.ts",
    "src/core.ts",
    "src/study-area-inspector.ts",
-   "src/inspector-kit.ts"
+   "src/inspector-kit.ts",
+   "src/figure-words.ts",
+   "src/workflow-template.ts"
   ],
   "definition": "src/core.ts#TYPES"
  },
@@ -58,7 +60,7 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "DR Congo's 26 provinces are chosen, applied and reopened in about a second each, where each took 5 to 7. The receipt names the shape by its GeoJSON's SHA-256; the dialog's summary counts several polygons. The Inspector moves out of app.ts."
+   "description": "DR Congo's 26 provinces are chosen, applied and reopened in about a second each, where each took 5 to 7. The receipt names the shape by its GeoJSON's SHA-256; the dialog's summary counts several polygons. The Inspector moves out of app.ts. Its units are called, stated beside its countries, is read by figures as {units}; an edit on the map keeps the countries and unit name; a copy of a workflow clears both with the outline."
   }
  ],
  "evidence": {

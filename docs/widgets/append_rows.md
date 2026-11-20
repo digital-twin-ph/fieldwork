@@ -1,6 +1,6 @@
 # Append rows
 
-_Created 2026-11-03 · Updated 2026-11-19_
+_Created 2026-11-03 · Updated 2026-11-20_
 
 **A summary step.** It stacks the rows of two or more tables, one after another, as pandas `concat` does.
 
@@ -41,9 +41,11 @@ that fills it, or *none*: that table's rows are then empty there.
   DR Congo's census names its provinces `province`; the population models name theirs `name`. Stacked as they are,
   the census rows would have no `name`. Choose `province` under `name` in the census's box.
 - **Rename a stacked column** in its first box: every table's column in that row takes the new name.
-- **Line every column up by its own name again** clears every choice made here, to start over.
+- **Start again from what the tables hold** clears every choice made here, back to what is lined up without asking.
 - **A suggestion** appears where a table lacks a column and one of its own seems to hold the same names: how many of
   its names are in that column of the other tables is shown beside it.
+- **Lined up without asking** where every one of its names is there: the grid and the run say which column went
+  under which, and any of it can be changed. Where only some match, the step asks.
 
 Below, **Before** shows each table as read, with where each column goes, and **After** the stacked table.
 
@@ -110,4 +112,5 @@ stacked column can be renamed, for every table at once, and a table's own column
 DR Congo's census names its provinces in "province", the population models in "name". Below it, each table as read,
 with where each column goes; the stacked table follows. A table holding the others' names under another column
 is refused, naming the column to stack it under, where it had been stacked with its names in a column of their own and
-every later step found none. A table whose value column or unit differs is named, with where to change it.
+every later step found none; one whose every name matches is lined up without asking, and said. A table whose value
+column or unit differs is named, with where to change it; "persons" and "people" are one unit.

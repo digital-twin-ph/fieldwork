@@ -46,7 +46,8 @@
    "src/append-ui.ts",
    "src/table-walkthrough.ts",
    "src/table-walkthroughs.ts",
-   "src/inspector-kit.ts"
+   "src/inspector-kit.ts",
+   "src/figure-words.ts"
   ],
   "definition": "src/append-rows.ts"
  },
@@ -59,7 +60,7 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "Columns are lined up in a grid: one row per column of the stacked table, the column of each table filling it or none, each changeable, and a stacked column renamed for every table (stackUnder). Each table is shown as read, before, and the stack after. A table holding the others' names under a column of its own is refused, naming the column to stack it under; the name most tables use is offered, whatever the order of the inputs. A run stopped there keeps the tables reaching it, so Columns can be used. A table whose value column or unit differs is named, with where to change it. The Inspector moves out of app.ts."
+   "description": "Columns are lined up in a grid: one row per column of the stacked table, the column of each table filling it or none, each changeable, and a stacked column renamed for every table (stackUnder). Each table is shown as read, before, and the stack after. A table holding the others' names under a column of its own is refused, naming the column to stack it under; the name most tables use is offered, whatever the order of the inputs. A run stopped there keeps the tables reaching it, so Columns can be used. A table whose value column or unit differs is named, with where to change it. The Inspector moves out of app.ts. A table whose every name matches the others' column is lined up without asking, and said in the grid and the run; Start again returns to that. \"persons\" and \"people\" are one unit. Labels take {census} and the other words from the workflow."
   }
  ],
  "evidence": {

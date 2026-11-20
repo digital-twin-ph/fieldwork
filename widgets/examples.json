@@ -927,7 +927,7 @@
       "id": "urn:fieldwork:example:population-models-census",
       "title": "Population models beside a census",
       "repository": "https://github.com/digital-twin-ph/example-population-models-census",
-      "commit": "c5ed2e5a45bb18e3165a52c189cb6e5647fb3ee9",
+      "commit": "c2345014a4c663b09d983921f2e75e5aee4edc47",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-population-models-census",
       "licence": {
         "data": "Census counts: Statistics Botswana (free to use, acknowledged, as the user's own processing) and NISR (no terms found, used credited). Boundaries: geoBoundaries, CC BY 3.0 IGO (Botswana) and CC BY 4.0 (Rwanda). Rasters, read where published: WorldPop, GRID3 and GHS-POP, CC BY 4.0. The repository's own files are CC0-1.0.",
@@ -959,8 +959,8 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "235c2548d43db9686d1d591fe4f9fb6a1d9c4607663fc525c3ff2587ced65287",
-          "bytes": 4914897
+          "sha256": "a2c7f0c9c45f969faf3fc771698f7688ae63acbd7363a147b90fb70afb230fc2",
+          "bytes": 4914963
         },
         {
           "path": "data/botswana_census_2022_districts.csv",

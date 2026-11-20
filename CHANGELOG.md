@@ -5,6 +5,20 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.154.0 — In development
 
+- **What a workflow already states is carried, not typed again.** A DR Congo workflow copied from Botswana's met, one
+  after another, a census unit typed by hand, names keyed in another spelling, a column stacked under the wrong name, and
+  charts still reading "Botswana", "by district" and "Census 2022". Now:
+  - **Words from the workflow in figure text.** A Chart's or Map's title, subtitle, axis titles and source note, and
+    Append rows' labels, may say {country}, {units}, {unit} or {census}, filled from the study area and the census read;
+    what the workflow does not state is written as not stated, never guessed. Chart 0.24.0, Map 0.38.0. The population
+    example's titles now use them.
+  - **A study area states what its units are called**, beside its countries, and an edit on the map keeps both. Study
+    area 0.10.0.
+  - **A complete name match is lined up without asking.** Append rows stacks a table whose every name matches the
+    others' column under it, and says so; a partial match still asks. "persons" and "people" are one unit.
+  - **The unit comes from the data dictionary** where it states one. Tabular data 0.13.0.
+  - **A copy of a workflow leaves its figures' subtitles to be written again**, with its study area's countries and unit
+    name: a subtitle is the original's finding.
 - **Census tables in today's units.** DR Congo's only census, of 1984, counted regions that match no map today. It is
   offered summed to the 26 provinces of 2015, with each province's name as geoBoundaries spells it; the counts as
   printed are linked. How each 1984 unit was placed, and what that does not establish, are in census-tables.

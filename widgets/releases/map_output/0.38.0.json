@@ -96,7 +96,9 @@
    "src/map-inset.ts",
    "styles.css",
    "src/map-parts-table.ts",
-   "src/basemaps.ts"
+   "src/basemaps.ts",
+   "src/figure-words.ts",
+   "src/workflow-template.ts"
   ],
   "definition": "src/core.ts#TYPES"
  },
@@ -115,7 +117,7 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "The receipt names a study area's shape by its GeoJSON's SHA-256 instead of writing it out."
+   "description": "The receipt names a study area's shape by its GeoJSON's SHA-256 instead of writing it out. The title, subtitle and source note take {country}, {units}, {unit} and {census} from the workflow; a copy of a workflow leaves the subtitle empty."
   }
  ],
  "evidence": {

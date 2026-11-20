@@ -1,6 +1,6 @@
 # Study area
 
-_Created 2026-10-19 · Updated 2026-11-19_
+_Created 2026-10-19 · Updated 2026-11-20_
 
 **An input widget.** It defines where your work takes place: one shape, kept on this device, that
 every later step can be scoped to.
@@ -82,6 +82,13 @@ rule, and lists each one by unit, kind and position. OCHA's districts of Sierra 
 
 A ring that touches itself anywhere else is not repaired, and is still refused, because that is a different shape.
 
+### What its units are called
+
+Beside its countries, **Its units are called** says, once, what the area's units are: *provinces*, *districts*. Charts
+and maps read it where their text says {units} or {unit}. Where it is left empty, the boundary's own name for its level
+is used, if it gives one; geoBoundaries gives *Unknown* for some, and a file read from disk none. Editing the area on
+the map keeps it, and the countries.
+
 ## What it will not do
 
 It does not simplify a boundary you took from a source. A published polygon is a claim about where
@@ -118,7 +125,8 @@ another hole is still refused.
 
 DR Congo's 26 provinces are chosen, applied and reopened in about a second each, where each took 5 to 7 seconds and
 Chrome called the page unresponsive. Every receipt names the shape by the SHA-256 of its GeoJSON instead of writing out
-its coordinates, 4.3 MB for those provinces. The dialog's summary counts several polygons.
+its coordinates, 4.3 MB for those provinces. The dialog's summary counts several polygons. **Its units are called** is
+new, read by figures as {units}; an edit on the map no longer drops the countries the area states.
 
 ---
 

@@ -47,11 +47,20 @@ than the table beside it.
    - The mark: bars, dots, or a **line**, which runs along the categories in their order, upright, with a dot at each
      value. And the orientation, for bars and dots. Bars read best horizontally when the labels are long or there are many of them;
      32 sub-districts is many.
-   - A title, a subtitle, axis titles and a source note, if you want them in the figure.
+   - A title, a subtitle, axis titles and a source note, if you want them in the figure. Each may take words from the
+     workflow, below.
    - Optionally the category legend, which colours each bar. It holds at most six categories, because the validated
      palette is six hues; past that, group the tail upstream rather than ask for a seventh colour.
 4. Run the workflow. Afterwards, **Configure…** shows a **Preview** at the bottom: the last run drawn with the
    settings as you change them, before **Apply**. Nothing is run again.
+
+### Words from the workflow
+
+A title, subtitle, axis title or source note may say **{country}**, **{units}**, **{unit}** or **{census}**. Each is
+filled from the workflow where the figure is drawn: the study area's country, what its units are called (stated on the
+study area, or its boundary's own name for them), and the year of a census read from **Census tables**. A copy of the
+workflow over another country reads that country. A word the workflow does not state is written as such, for example
+*[country not stated]*, never guessed. The dialog says what each reads here.
 
 ### Who infected whom: a transmission tree
 
@@ -233,3 +242,8 @@ A chart's default source line read "Source: … · See N3 & evidence for method.
 someone in the application, was printed in every figure and draft. The default is now "Source: …" and nothing more. A
 source line written in Configure is printed as written. Found by the target outputs audit
 ([audit](../audits/target-outputs-audit.md)).
+
+### 2026-11-20 · Words from the workflow (0.24.0)
+
+The title, subtitle, axis titles and source note take {country}, {units}, {unit} and {census} from the workflow, so a
+copy over another country reads its own. A copy of a workflow leaves the subtitle empty: it was the original's finding.

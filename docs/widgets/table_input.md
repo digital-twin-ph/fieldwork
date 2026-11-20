@@ -14,7 +14,8 @@ unknown, never read as zero.
 The Inspector says in one sentence what the step reads: the file, its shape, its value columns and its unit. **Configure…**
 opens the import.
 
-1. Choose the file, and say whether it is wide or long.
+1. Choose where the table comes from, in the tabs **Your file**, **From an address** or **Census tables**, and say
+   whether it is wide or long.
 2. Tick the key columns and choose the value column or columns.
 3. Under **What identifies a row?**, mark any primary and secondary keys.
 4. **Apply.** Nothing changes until you do; **Cancel** or **×** leaves the step as it was.
@@ -39,10 +40,10 @@ A Stata file, from Stata 8 onward, is read as Stata wrote it and then set up as 
 missing value, `.` or `.a` to `.z`, is empty, never zero. A variable Stata formats as a date is read as a date. Value
 labels are not applied: codes stay as stored, and the import says which variables carry labels.
 
-## Fetched from a URL
+## From an address
 
-Under **Or fetch from a URL**, give the address of a CSV, a Stata file or a zip. For a zip, choose the file inside.
-The table is then set up as any other.
+In the tab **From an address**, give the address of a CSV, a Stata file or a zip, and **Fetch**. For a zip, choose
+the file inside. The table is then set up as any other.
 
 The project keeps where the table came from, the URL, the file inside and the digests, in place of its rows. An
 exported project carries no rows, so sharing it does not republish data whose terms do not allow that. On another
@@ -53,6 +54,22 @@ with the same settings. A file whose digest has changed is refused, and nothing 
 device, that names the same file reads it from there, checked again, instead of downloading it. Typed again in the
 dialog, a URL reads the copy and says when it was fetched; **Fetch again from the source** checks for a newer file. A
 source that has not finished after two minutes is stopped and said to be late.
+
+## Census tables
+
+The tab **Census tables** lists the countries in [census-tables](https://github.com/digital-twin-ph/census-tables),
+counts as each national statistics office published them. For each it says the census, how many rows, the publisher,
+the terms of use and when the table is next reviewed. A table past its review date says so, and is still offered.
+
+Choose a country. Its counts are fetched by address, as in **From an address**, and its data dictionary with them, so
+what each column holds is proposed for you to accept. Both are fetched at the commit this version of Fieldwork names,
+and each is checked against the digest recorded with it: a file that differs is refused, and nothing is kept.
+
+A census table holds several levels in one file: DR Congo's has the country, its regions, and its cities and
+sub-regions, told apart by the column `level`. Keep the rows of one level before adding them up or joining them to
+an area.
+
+The step reopens on the tab its table came through. A new step opens on the tab last used on this device.
 
 ## Keys
 
@@ -139,6 +156,18 @@ after (`fw:CellEdit`). Experiment 214.
 It does not choose between rows that disagree. The table stays as read until a later step changes it.
 
 ## History
+
+### 2026-11-20 · Where the table comes from, as tabs; census tables (0.12.0)
+
+The dialog's sources are three tabs: **Your file**, **From an address** (until now **Or fetch from a URL**, a section
+that opened under the file box) and **Census tables**, new. The tab chosen shows only its own controls; what follows,
+the shape, the keys and the columns, is the same for all three.
+
+**Census tables** reads a country's counts and its data dictionary from the census-tables repository at a pinned
+commit, checked by digest. Three countries to begin with: Botswana (2022), DR Congo (1984) and Rwanda (2022).
+
+The heading no longer repeats the widget's name when the step still has it: "Tabular data", not "Tabular data ·
+Tabular data".
 
 ### 2026-11-19 · A large table no longer stalls the dialog (0.11.1)
 

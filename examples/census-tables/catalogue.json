@@ -1,7 +1,7 @@
 {
  "repository": "https://github.com/digital-twin-ph/census-tables",
- "commit": "c43ddba895ebbb3d0646461a29e61ce51448aa42",
- "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/c43ddba895ebbb3d0646461a29e61ce51448aa42/",
+ "commit": "ea43c4bd4fe4e86435eeb600530e1f3369ac1aa4",
+ "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/ea43c4bd4fe4e86435eeb600530e1f3369ac1aa4/",
  "countries": [
   {
    "iso3": "BWA",
@@ -32,7 +32,7 @@
    "census": "Recensement scientifique de la population, juillet 1984",
    "referenceDate": "1984-07-01",
    "publisher": "République du Zaïre, Ministère du Plan et Aménagement du Territoire, Institut National de la Statistique",
-   "licence": "none",
+   "licence": "none stated",
    "rows": 54,
    "reviewed": {
     "last": "2026-11-19",

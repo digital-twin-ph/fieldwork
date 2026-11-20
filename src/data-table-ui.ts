@@ -155,7 +155,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.className='config-dialog';dialog.setAttribute('aria-labelledby','table-title');
   const named=(text:string)=>text.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]!));
   dialog.innerHTML='<header class="config-head"><h2 id="table-title">Tabular data'
-    +(frame.step?`<span class="config-step"> \u00b7 ${named(frame.step)}</span>`:'')+'</h2>'
+    // The step's own name after the widget's, unless it is still the widget's name, as the standard dialog does.
+    +(frame.step?.trim()&&frame.step.trim().toLowerCase()!=='tabular data'?`<span class="config-step"> \u00b7 ${named(frame.step)}</span>`:'')+'</h2>'
     +'<button class="config-close" id="table-close" aria-label="Close">\u00d7</button></header><div class="config-body">'
     +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
     // WHERE THE TABLE COMES FROM, as tabs (2026-11-20). The practitioner: "Perhaps in the tabular input config dialog we can add

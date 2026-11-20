@@ -23,7 +23,7 @@ test('fetched from a zip, kept as a spec, fetched again by digest, and refused w
   await page.goto('/?example=blank');
   await page.locator('#node-library [data-add="table_input"]').click();
   await page.locator('#configure-step').click();
-  await page.locator('#table-remote summary').click();
+  await page.locator('#table-tab-remote').click();
   await page.locator('#table-url').fill(URL);
   await page.locator('#table-fetch').click();
   await expect(page.locator('#table-entry')).toBeVisible();

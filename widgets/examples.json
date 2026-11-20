@@ -396,7 +396,7 @@
       "id": "urn:fieldwork:example:nyc-asthma-ozone-2016-2025",
       "title": "Ozone and child asthma emergency visits, New York City, 2016–2025",
       "repository": "https://github.com/digital-twin-ph/example-2025-nyc-ozone",
-      "commit": "7625f3bd5d3e0631f803918fa89e77ab1544ceb2",
+      "commit": "9e9131329951f831345b5eb13ed7e97c76261299",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2025-nyc-ozone",
       "licence": {
         "data": "Not redistributed",
@@ -447,8 +447,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "8cb33a5c577c8a1afc240b2689011fd8427dd95f96cdd8906e9921110ec6a632",
-          "bytes": 46924
+          "sha256": "eac47b6a3eb5213ca1b3e90223d113936a34acf18c859ad8ff87f6abe8304258",
+          "bytes": 46884
         }
       ],
       "workflowCount": 6
@@ -457,7 +457,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "d282b9b2e0f01b77a8b957bd8bdac84896d61e91",
+      "commit": "809a110789247cc6fa4319ed628d4d29dbe41ce4",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -532,8 +532,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "ab1240541bfe95dafff761a5c0aa0d2224a91accca5c02713e8454a1f4250948",
-          "bytes": 87922
+          "sha256": "17ad071eac87db3779bb38ad4564666cca24ac7fbf6e47780b128f3508c017b4",
+          "bytes": 87882
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",
@@ -547,7 +547,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "a2806b7b72f574143da9a0708b506d57cf6b61cf",
+      "commit": "5323711d45565326d55755fda08c3118f5e2ada0",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -577,8 +577,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "0d96cca2805fbaf40d6792714ad4c53e3ed0cb47b34af805cec5cc92ad4581d6",
-          "bytes": 80685
+          "sha256": "07c681d49668fbf5af2c088ba5edb88fce007224dcb7a2dc6a64559b880c9810",
+          "bytes": 80645
         },
         {
           "path": "data/clinic-visits.csv",
@@ -643,7 +643,7 @@
       "id": "urn:fieldwork:example:sierra-leone-measles",
       "title": "Measles in Sierra Leone, 2019 to 2023",
       "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
-      "commit": "2d251cedf0d2e194fc17cbf50d4abff8cbf58f92",
+      "commit": "b96a9d054c7e0f769fe218e3179daa36fb9f8c0c",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
       "licence": {
         "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
@@ -679,8 +679,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "b9ad42e320fa3317cba23d1ef6f5e7b2e55ce2851c70ea499472a525b7162c70",
-          "bytes": 53610
+          "sha256": "3f5fff4ac6ef70cf09e50ed5c33df1a3cdeff734b6e9ac4e8070cc23d47e3b22",
+          "bytes": 53570
         },
         {
           "path": "data/measles-sierra-leone-semisynthetic.csv",
@@ -725,7 +725,7 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "0fa299de178ed72e33f292bfc67275246b9128cd",
+      "commit": "8edf506bd6e43b5020d111178c9ff847e88bdd9c",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; DeltaDTM v1.1 and DTU25MSS subsets CC BY 4.0; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",
@@ -760,8 +760,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "2915b774ddd2b98d95975b3f8d07b81481a9275c22a2239f018c1bf724e533fd",
-          "bytes": 58837
+          "sha256": "66728081cf48775298bf27ce42b2444c157dc6f2605404bfe2e265957b26e6cd",
+          "bytes": 58821
         },
         {
           "path": "README.md",
@@ -810,8 +810,8 @@
         },
         {
           "path": "scripts/make-manual.mjs",
-          "sha256": "33c4bf39c43a4855f109cbcd1cb6e82a08c291791f7d7df3514a4f25d0275acd",
-          "bytes": 31371
+          "sha256": "1a9e1df415b62d58040460d0ebc8ec02e151beab1d390fda3efa7156457da4d6",
+          "bytes": 31363
         },
         {
           "path": "scripts/make_grid_subsets.py",

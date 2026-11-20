@@ -902,12 +902,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.11.1",
-   "released": "2026-11-19",
+   "version": "0.12.0",
+   "released": "2026-11-20",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A key column ticked on a large table no longer stalls the dialog: rows repeating a key are grouped in place, a finding names its first ten rows, and the table under the dialog shows 200 rows at a time."
+     "kind": "minor",
+     "description": "Where the table comes from is chosen in three tabs: Your file, From an address (formerly the section Or fetch from a URL) and Census tables, new. Census tables reads a country's counts and data dictionary from digital-twin-ph/census-tables at a pinned commit, each checked against its recorded digest. The heading no longer repeats the widget's name."
     }
    ],
    "breaking": false,

@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.153.0 — In development
+
+- **Tabular data: where the table comes from, as tabs.** **Your file**, **From an address** (until now *Or fetch from
+  a URL*) and **Census tables**, new. Census tables lists the countries in the census-tables repository, each with its
+  census, its publisher, its terms and when it is next reviewed; choosing one reads its counts with its data dictionary,
+  checked against what this version names. Botswana (2022), DR Congo (1984) and Rwanda (2022) to begin with.
+
 ## 0.152.0 — 2026-11-20
 
 - **A save to GitHub reminds you to say who you are, and is never refused for it.** After saving, if the project does

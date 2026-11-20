@@ -30,7 +30,7 @@ const open=async page=>{
   const id=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').id);
   await page.locator(`.react-flow__node[data-id="${id}"]`).click();
   await page.locator('#configure-step').click();
-  await page.locator('#table-remote summary').click();
+  await page.locator('#table-tab-remote').click();
 };
 
 test('a slow download shows its progress and finishes',async({page})=>{

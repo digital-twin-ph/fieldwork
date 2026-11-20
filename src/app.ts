@@ -129,6 +129,7 @@ import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // across every workflow of the project, rather than the tab reading the open run alone.
 import {figureFor,describedNode,tableCsv,tableRowCount} from './write-up-figures.js';
 import type {InspectorKit,OwnInspector,StepKit} from './inspector-kit.js';
+import {tableInspector,type TableKit} from './data-table-ui.js';
 import {sampleInspector,type SampleKit} from './sample-raster-ui.js';
 import {AREA_STEP_INSPECTORS,type AreaStepKit} from './area-steps-ui.js';
 import {zipSync,strToU8} from 'fflate';
@@ -3786,48 +3787,7 @@ function renderInspector(){
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
     content+=standardSection('Result',placed?placedCard(n,esc):'<p class="standard-result">Nothing placed yet.</p>');
   }else if(n.type==='table_input'){
-    // THE STANDARD INSPECTOR (experiment 186): what the step is called, one sentence of what it reads, Configure… for
-    // the import, and what it holds. A source step has no inputs. Fetch the table is a button of its own, not a word in
-    // a notice: inline in the orange text, the practitioner could not see it as a button (2026-11-08).
-    const p=n.params;
-    content+=standardSection('Name',labelForm('table-label','Name',p.label||'Tabular data'));
-    const host=p.remote?new URL(p.remote.url).hostname:'';
-    const waiting=!!p.remote&&!p.data.rows.length;
-    // SETTINGS AS EVERY STANDARD WIDGET'S (2026-11-12, the practitioner: "The Table input inspector configure button is not
-    // standardized"): the sentence, where the table comes from, and Configure… last, primary. Fetching the rows is about
-    // what the step holds, so Fetch the table is under Result, beside "Not fetched yet."
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(tableSentence(p))}</p>`
-      +(p.remote?`<p class="description" data-table-remote>From <a href="${esc(p.remote.url)}" rel="noopener" target="_blank">${esc(host)}</a>`
-        +`${p.remote.entry?`, ${esc(p.remote.entry.split('/').at(-1))}`:''}. The project keeps where it came from, not the rows.`
-        // WHERE THESE ROWS CAME FROM THIS TIME, said where it stays: a line written beside the button was erased by the
-        // redraw that showed the rows, so a read from the device looked like another download (2026-11-04).
-        +(rowsReadFrom.get(n.id)==='device'?' These rows were read from the copy on this device, checked by its digest: nothing was downloaded.'
-          :rowsReadFrom.get(n.id)==='source'?` These rows were downloaded from ${esc(host)}, and the file is now kept on this device.`:'')
-        +'</p>':'')
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    // RESULT: what the step holds, counted, and where to look closer.
-    if(p.data.rows.length){
-      const columns=describableColumns(p.data,p.wide),described=columns.filter(c=>isDescribed(p.columns?.[c])).length;
-      const proposed=columns.filter(c=>p.columns?.[c]&&!p.columns[c]!.confirmed).length;
-      const findings=p.data.findings?.filter(f=>f.kind!=='undescribed-column'&&f.kind!=='unconfirmed-description')??[];
-      content+=standardSection('Result',`<p class="standard-result${findings.length?' standard-result-warning':''}">`
-        +`${esc(`${p.data.rowCount.toLocaleString('en-US')} rows, ${p.data.missingValueCount.toLocaleString('en-US')} values absent and kept as unknown.`)}</p>`
-        +(findings.length?`<p class="standard-state" data-table-findings>Data quality: ${esc(findingsSummary(p.data))}. The rows are kept as they stand.</p>`:'')
-        +`<p class="standard-state" data-table-meaning>What the columns mean: ${described} of ${columns.length} described`
-          +(proposed?`, ${proposed} proposed and not yet accepted`:'')+'.'
-          +(described<columns.length?' A column nobody has described is a data quality finding.':'')+'</p>'
-        +(p.dictionary?`<p class="standard-state" data-table-dictionary>Data dictionary: ${esc(p.dictionary.name)}, ${p.dictionary.sheets[0]?.rows.length??0} variables.</p>`:'')
-        +'<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>'
-        +'<button id="table-quality" class="button">Data quality</button>'
-        +'<button id="describe-columns" class="button">Describe columns\u2026</button>'
-        +(p.dictionary?'<button id="view-dictionary" class="button">View the data dictionary</button>':'')+'</div>'
-        +(!workflow.edges.some(e=>e.from===n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">\uff0b Display as table</button></div>':'')
-        +'<div data-standard-result></div>');
-    }else content+=standardSection('Result',`<p class="standard-result">${waiting?'Not fetched yet.':'No table imported yet. This step cannot run until a table is imported.'}</p>`
-      // THE ONE THING TO DO NEXT, so it looks like it (2026-11-14: "the Fetch the table is there, just not conspicuous").
-      +(waiting?'<div class="inspector-actions"><button id="table-fetch-remote" class="button primary">Fetch the table</button></div>'
-        +'<p class="description">A file already on this device is read from there, without downloading it.</p>':'')
-      +'<p id="table-fetch-status" class="description" role="status"></p>');
+    content+=tableInspector.markup(n,tableKit());
   }else if(n.type==='join_table_to_area'){
     // THE KEY COLUMN IS OFFERED, NOT TYPED. The columns are on the connected table, so a
     // practitioner picks one rather than spelling it and discovering the mismatch at the run.
@@ -5138,46 +5098,7 @@ function renderInspector(){
     view(0);
   });
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
-  if(n.type==='table_input')optionalElement('#configure-step')?.addEventListener('click',()=>{
-    const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
-    openTableEditor(async result=>{
-      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Close this and choose Configure\u2026 again.');
-      // THE ROWS ARE KEPT FIRST, as every other input keeps its data before the step points at it. The save then stores a
-      // reference to rows already written: found 2026-11-08, when a reload straight after Save found a reference to rows
-      // whose write had not committed, and the table was gone (CI, two runs of three).
-      if(result.data.rows.length&&!await keepDataset(tableDataKey(result.data),result.data))
-        throw new Error('This table could not be kept on this device, so it was not added. Export the project to keep it.');
-      // ITS DATA DICTIONARY, kept the same way and listed by the project (experiment 211).
-      if(result.dictionary&&!await keepDataset(dictionaryKeyOf(result.dictionary.sha256),result.dictionary))
-        throw new Error('The data dictionary could not be kept on this device, so the table was not added.');
-      const kept=change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;
-        // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
-        // columns taken. Deleted rather than set undefined when a table is re-read as long: a
-        // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
-        // one that disagrees with the keys.
-        if(result.wide)node.params.wide=result.wide;else delete node.params.wide;
-        if(result.remote)node.params.remote=result.remote;else delete node.params.remote;
-        if(result.distinctValuesFor?.length)node.params.distinctValuesFor=result.distinctValuesFor;else delete node.params.distinctValuesFor;
-        // The file's own labels as proposals; what the practitioner has accepted is never replaced by them.
-        if(result.proposed){const held=node.params.columns??{};
-          node.params.columns={...result.proposed,...Object.fromEntries(Object.entries(held).filter(([,m])=>m.confirmed))};}
-        // The file as published, kept whenever it was read as wide, so `convertOnRun` has
-        // something to convert and the node can say what it was made from either way.
-        if(result.source_table){node.params.sourceTable=result.source_table;
-          if(result.source?.sha256)node.params.sourceRef=`source:${result.source.sha256}`;else delete node.params.sourceRef;}
-        else{delete node.params.sourceTable;delete node.params.sourceRef;delete node.params.convertOnRun;}
-        if(result.source_table){if(result.convertOnRun)node.params.convertOnRun=true;else delete node.params.convertOnRun;}
-        if(result.dictionary){node.params.dictionary=result.dictionary;node.params.dictionaryRef=dictionaryKeyOf(result.dictionary.sha256);}
-        if(result.dictionaryCheck)node.params.dictionaryCheck=result.dictionaryCheck;},{requirePersistence:true});
-      if(kept!==false&&result.dictionary)listDictionary(n.id,result.dictionary,result.source.filename);
-      return kept;
-    },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
-      ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{}),
-        ...(current.remote?{remote:current.remote}:{})}:undefined,
-    // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
-    {step:current.label||'Tabular data',convertOnRun:!!current.convertOnRun,hasSource:!!current.sourceTable,
-      onConvertOnRun:on=>change(w=>{const node=getNode(w,n.id,'table_input');if(on)node.params.convertOnRun=true;else delete node.params.convertOnRun;})});
-  });
+  if(n.type==='table_input')tableInspector.wire(n,tableKit(),document);
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
   optionalElement('#configure-countries')?.addEventListener('click',()=>{
     const p=getNode(workflow,n.id,'study_area').params;
@@ -6775,6 +6696,56 @@ function sampleKit():SampleKit{
     said:id=>(result?.tables?.[id] as {sentence?:string}|undefined)?.sentence,
     connect:(w,from,to,port)=>setConnection(w,from,to,port),
     satelliteSentence:n=>satelliteSampleSentence(n),openSatellite:id=>openSatelliteSampleConfig(id)};
+}
+/** TABULAR DATA'S CONFIGURE…, kept here because it writes the rows and the dictionary to this device's store before
+ *  the step points at them. data-table-ui.ts's Inspector opens it through its kit. */
+function openTableStep(nodeId:string):void{
+  const n=getNode(workflow,nodeId,'table_input');
+  {
+    const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
+    openTableEditor(async result=>{
+      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Close this and choose Configure\u2026 again.');
+      // THE ROWS ARE KEPT FIRST, as every other input keeps its data before the step points at it. The save then stores a
+      // reference to rows already written: found 2026-11-08, when a reload straight after Save found a reference to rows
+      // whose write had not committed, and the table was gone (CI, two runs of three).
+      if(result.data.rows.length&&!await keepDataset(tableDataKey(result.data),result.data))
+        throw new Error('This table could not be kept on this device, so it was not added. Export the project to keep it.');
+      // ITS DATA DICTIONARY, kept the same way and listed by the project (experiment 211).
+      if(result.dictionary&&!await keepDataset(dictionaryKeyOf(result.dictionary.sha256),result.dictionary))
+        throw new Error('The data dictionary could not be kept on this device, so the table was not added.');
+      const kept=change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;
+        // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
+        // columns taken. Deleted rather than set undefined when a table is re-read as long: a
+        // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
+        // one that disagrees with the keys.
+        if(result.wide)node.params.wide=result.wide;else delete node.params.wide;
+        if(result.remote)node.params.remote=result.remote;else delete node.params.remote;
+        if(result.distinctValuesFor?.length)node.params.distinctValuesFor=result.distinctValuesFor;else delete node.params.distinctValuesFor;
+        // The file's own labels as proposals; what the practitioner has accepted is never replaced by them.
+        if(result.proposed){const held=node.params.columns??{};
+          node.params.columns={...result.proposed,...Object.fromEntries(Object.entries(held).filter(([,m])=>m.confirmed))};}
+        // The file as published, kept whenever it was read as wide, so `convertOnRun` has
+        // something to convert and the node can say what it was made from either way.
+        if(result.source_table){node.params.sourceTable=result.source_table;
+          if(result.source?.sha256)node.params.sourceRef=`source:${result.source.sha256}`;else delete node.params.sourceRef;}
+        else{delete node.params.sourceTable;delete node.params.sourceRef;delete node.params.convertOnRun;}
+        if(result.source_table){if(result.convertOnRun)node.params.convertOnRun=true;else delete node.params.convertOnRun;}
+        if(result.dictionary){node.params.dictionary=result.dictionary;node.params.dictionaryRef=dictionaryKeyOf(result.dictionary.sha256);}
+        if(result.dictionaryCheck)node.params.dictionaryCheck=result.dictionaryCheck;},{requirePersistence:true});
+      if(kept!==false&&result.dictionary)listDictionary(n.id,result.dictionary,result.source.filename);
+      return kept;
+    },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
+      ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{}),
+        ...(current.remote?{remote:current.remote}:{})}:undefined,
+    // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
+    {step:current.label||'Tabular data',convertOnRun:!!current.convertOnRun,hasSource:!!current.sourceTable,
+      onConvertOnRun:on=>change(w=>{const node=getNode(w,n.id,'table_input');if(on)node.params.convertOnRun=true;else delete node.params.convertOnRun;})});
+  }
+}
+/** TABULAR DATA'S KIT (data-table-ui.ts): the step kit, with where the rows came from this time, whether anything
+ *  reads the table, and Configure…, which writes to this device's store. */
+function tableKit():TableKit{
+  return {...stepKit(),readFrom:id=>rowsReadFrom.get(id),feeds:id=>workflow.edges.some(e=>e.from===id),configure:id=>openTableStep(id)};
 }
 function inspectorKit():InspectorKit{
   return {esc,section:standardSection,name:(id,value)=>labelForm(id,'Name',value),inputs:standardInputs,
@@ -10345,18 +10316,6 @@ renderManualPage();
 
 setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?(networkDownloadPhase??'One OSM request is in progress.'):networkDownloadError?networkDownloadError+(state.waitSeconds?' Next attempt available in '+state.waitSeconds+' seconds.':''):state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);
 
-/** TABLE INPUT'S ONE SENTENCE: what it reads, in what shape, and in what unit (experiment 186). */
-function tableSentence(p:WorkflowNode<'table_input'>['params']):string{
-  const from=p.remote?new URL(p.remote.url).hostname:'';
-  const file=p.remote?.entry?.split('/').at(-1)||p.source?.filename||(p.remote?p.remote.url.split('/').at(-1):'');
-  if(!p.keys.length&&!p.remote)return 'No table yet: import one in Configure\u2026';
-  const what=`Reads ${file||'a table'}${(p.source?.sheet??p.data.source?.sheet)?`, sheet ${p.source?.sheet??p.data.source?.sheet}`:''}${from?` from ${from}`:''}`;
-  const shape=p.wide
-    ?`wide: one row per ${p.wide.keys.join(' and ')}, ${p.wide.valueFields.length} variable${p.wide.valueFields.length===1?'':'s'}`
-    :`long: one row per ${p.keys.join(', ')}, values in ${p.valueField}`;
-  const unit=p.unit?.trim()?`, in ${p.unit.trim()}`:', unit unstated';
-  return `${what}, ${shape}${unit}${p.convertOnRun&&p.sourceTable?', converted on each run':''}.`;
-}
 
 /** STARTUP IS OVER: every top-level handler above is bound, the stored payloads among the awaits before them. A file
  *  given to #workflow-file before this is dropped without a word, because nothing is listening yet; WebKit on CI hit

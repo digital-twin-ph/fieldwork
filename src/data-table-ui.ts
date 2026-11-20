@@ -1,7 +1,9 @@
 import {editedTitle,type EditedCells} from './cell-edits.js';
-import type {Escape} from './types.js';
+import type {Escape,WorkflowNode} from './types.js';
+import type {OwnInspector,StepKit} from './inspector-kit.js';
+import {describableColumns,isDescribed} from './column-metadata.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
-import {dataTable,wideDataTable,keyDomains,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
+import {dataTable,wideDataTable,keyDomains,findingsSummary,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
 import {parseCSV} from './input-data.js';
 import {readStata,type StataTable} from './stata.js';
 import {readXlsx,type Sheet} from './xlsx.js';
@@ -1104,3 +1106,74 @@ export async function tableFromFetched(file:File,settings:{keys:string[];valueFi
   }
   return {data:dataTable(parsed,{keys:settings.keys,valueField:settings.valueField,...roles,...(settings.unit?{unit:settings.unit}:{})})};
 }
+
+/** TABLE INPUT'S ONE SENTENCE: what it reads, in what shape, and in what unit (experiment 186). */
+export function tableSentence(p:WorkflowNode<'table_input'>['params']):string{
+  const from=p.remote?new URL(p.remote.url).hostname:'';
+  const file=p.remote?.entry?.split('/').at(-1)||p.source?.filename||(p.remote?p.remote.url.split('/').at(-1):'');
+  if(!p.keys.length&&!p.remote)return 'No table yet: import one in Configure\u2026';
+  const what=`Reads ${file||'a table'}${(p.source?.sheet??p.data.source?.sheet)?`, sheet ${p.source?.sheet??p.data.source?.sheet}`:''}${from?` from ${from}`:''}`;
+  const shape=p.wide
+    ?`wide: one row per ${p.wide.keys.join(' and ')}, ${p.wide.valueFields.length} variable${p.wide.valueFields.length===1?'':'s'}`
+    :`long: one row per ${p.keys.join(', ')}, values in ${p.valueField}`;
+  const unit=p.unit?.trim()?`, in ${p.unit.trim()}`:', unit unstated';
+  return `${what}, ${shape}${unit}${p.convertOnRun&&p.sourceTable?', converted on each run':''}.`;
+}
+
+/** WHAT TABULAR DATA'S INSPECTOR IS GIVEN (2026-11-20, moved out of app.ts with the census tables and the choices that
+ *  belong to a step's own table). Configure… stays in app.ts, because it writes the rows to this device's store before
+ *  the step points at them. */
+export interface TableKit extends StepKit {
+  /** Where the rows shown came from this time: this device's copy, or the source. */
+  readFrom:(nodeId:string)=>'device'|'source'|undefined;
+  /** Whether any step reads the table. */
+  feeds:(nodeId:string)=>boolean;
+  configure:(nodeId:string)=>void;
+}
+/** THE STANDARD INSPECTOR (experiment 186): what the step is called, one sentence of what it reads, Configure… for the
+ *  import, and what it holds. A source step has no inputs. Fetch the table is a button of its own, not a word in a
+ *  notice: inline in the orange text, the practitioner could not see it as a button (2026-11-08). The buttons under
+ *  Result are wired by the application, as they are for Point data. */
+export const tableInspector:OwnInspector<'table_input'>={
+  markup:(n,kit)=>{const k=kit as TableKit,p=n.params,esc=kit.esc;
+    const host=p.remote?new URL(p.remote.url).hostname:'';
+    const waiting=!!p.remote&&!p.data.rows.length,read=k.readFrom(n.id);
+    // SETTINGS AS EVERY STANDARD WIDGET'S (2026-11-12, the practitioner: "The Table input inspector configure button is not
+    // standardized"): the sentence, where the table comes from, and Configure… last, primary. Fetching the rows is about
+    // what the step holds, so Fetch the table is under Result, beside "Not fetched yet."
+    let html=kit.section('Name',kit.name('table-label',p.label||'Tabular data'))
+      +kit.section('Settings',`<p class="standard-sentence">${esc(tableSentence(p))}</p>`
+      +(p.remote?`<p class="description" data-table-remote>From <a href="${esc(p.remote.url)}" rel="noopener" target="_blank">${esc(host)}</a>`
+        +`${p.remote.entry?`, ${esc(p.remote.entry.split('/').at(-1)??'')}`:''}. The project keeps where it came from, not the rows.`
+        // WHERE THESE ROWS CAME FROM THIS TIME, said where it stays: a line written beside the button was erased by the
+        // redraw that showed the rows, so a read from the device looked like another download (2026-11-04).
+        +(read==='device'?' These rows were read from the copy on this device, checked by its digest: nothing was downloaded.'
+          :read==='source'?` These rows were downloaded from ${esc(host)}, and the file is now kept on this device.`:'')
+        +'</p>':'')
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>');
+    // RESULT: what the step holds, counted, and where to look closer.
+    if(p.data.rows.length){
+      const columns=describableColumns(p.data,p.wide),described=columns.filter(c=>isDescribed(p.columns?.[c])).length;
+      const proposed=columns.filter(c=>p.columns?.[c]&&!p.columns[c]!.confirmed).length;
+      const findings=p.data.findings?.filter(f=>f.kind!=='undescribed-column'&&f.kind!=='unconfirmed-description')??[];
+      html+=kit.section('Result',`<p class="standard-result${findings.length?' standard-result-warning':''}">`
+        +`${esc(`${p.data.rowCount.toLocaleString('en-US')} rows, ${p.data.missingValueCount.toLocaleString('en-US')} values absent and kept as unknown.`)}</p>`
+        +(findings.length?`<p class="standard-state" data-table-findings>Data quality: ${esc(findingsSummary(p.data))}. The rows are kept as they stand.</p>`:'')
+        +`<p class="standard-state" data-table-meaning>What the columns mean: ${described} of ${columns.length} described`
+          +(proposed?`, ${proposed} proposed and not yet accepted`:'')+'.'
+          +(described<columns.length?' A column nobody has described is a data quality finding.':'')+'</p>'
+        +(p.dictionary?`<p class="standard-state" data-table-dictionary>Data dictionary: ${esc(p.dictionary.name)}, ${p.dictionary.sheets[0]?.rows.length??0} variables.</p>`:'')
+        +'<div class="inspector-actions"><button id="quick-look" class="button">Quick look at the table</button>'
+        +'<button id="table-quality" class="button">Data quality</button>'
+        +'<button id="describe-columns" class="button">Describe columns…</button>'
+        +(p.dictionary?'<button id="view-dictionary" class="button">View the data dictionary</button>':'')+'</div>'
+        +(!k.feeds(n.id)?'<div class="inspector-actions"><button id="add-table-view" class="button small">＋ Display as table</button></div>':'')
+        +'<div data-standard-result></div>');
+    }else html+=kit.section('Result',`<p class="standard-result">${waiting?'Not fetched yet.':'No table imported yet. This step cannot run until a table is imported.'}</p>`
+      // THE ONE THING TO DO NEXT, so it looks like it (2026-11-14: "the Fetch the table is there, just not conspicuous").
+      +(waiting?'<div class="inspector-actions"><button id="table-fetch-remote" class="button primary">Fetch the table</button></div>'
+        +'<p class="description">A file already on this device is read from there, without downloading it.</p>':'')
+      +'<p id="table-fetch-status" class="description" role="status"></p>');
+    return html;},
+  wire:(n,kit,root)=>{root.querySelector('#configure-step')?.addEventListener('click',()=>(kit as TableKit).configure(n.id));},
+};

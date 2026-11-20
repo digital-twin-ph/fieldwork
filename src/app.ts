@@ -7077,7 +7077,29 @@ $('#redo-button').onclick=()=>{if(busy||!future.length)return;history.push(struc
 // THE LIBRARY'S OWN "Restore example" AND ITS SLOGAN ARE GONE (the practitioner, 2026-11-18: "What's the use of this 'Your
 // data stays here' and the text below, looks stale"): the slogan was commentary and no longer true of basemaps, shared
 // projects or remote files, and the button restored without asking. Reset example, in the bar, asks first.
-$('#workflow-select').onchange=e=>loadExample(control(e).value);
+/** "OPENING …" WHILE A LARGE PROJECT LOADS (2026-11-20). The practitioner: *"when loading a big one like the population
+ *  rasters there is a noticeable lag. Perhaps we can alert the user that a project is loading, with an animated loading
+ *  icon."* Opening a workflow is synchronous until its tables are restored, so the notice is painted first, two frames
+ *  ahead of the work, and taken down when the canvas is drawn and its tables restored, or when a run starts, which says
+ *  its own state. */
+const opening=(()=>{
+  const el=document.createElement('div');el.id='opening-notice';el.className='opening-notice';el.setAttribute('role','status');el.hidden=true;
+  el.innerHTML='<span class="opening-ring" aria-hidden="true"></span><span id="opening-text"></span>';
+  document.body.append(el);return el;
+})();
+const painted=()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
+async function openWithNotice(key:string|(()=>string|undefined),name:string):Promise<void>{
+  ($('#opening-text') as HTMLElement).textContent=`Opening ${name}\u2026`;opening.hidden=false;
+  await painted();
+  try{
+    // WHICH WORKFLOW, decided after the notice is on screen: reading every saved workflow to choose was itself 1.9 s.
+    const chosen=typeof key==='function'?key():key;if(!chosen)return;
+    const loaded=loadExample(chosen);
+    await Promise.race([loaded,new Promise<void>(resolve=>{const check=setInterval(()=>{if(busy){clearInterval(check);resolve();}},100);void loaded.finally(()=>clearInterval(check));})]);
+  }finally{opening.hidden=true;}
+}
+$('#workflow-select').onchange=e=>{const select=control(e) as HTMLSelectElement,key=select.value;
+  void openWithNotice(key,select.selectedOptions[0]?.textContent?.trim()||key);};
 /** Switching project opens one of its workflows, because a project is not a thing you can look at
  *  on the canvas -- the canvas holds a question, and a project holds the questions. The first one
  *  that exists is opened; a project whose workflows have all been deleted opens an empty canvas
@@ -7085,10 +7107,8 @@ $('#workflow-select').onchange=e=>loadExample(control(e).value);
 $('#project-select').onchange=e=>{
   const id=control(e).value,project=allProjects().find(p=>p.id===id);
   if(!project){loadExample('blank');return;}
-  const saved=readSavedWorkflows();
-  const first=project.workflows.find(key=>saved[key])||project.workflows[0];
-  if(first)loadExample(first);
-  else addWorkflowToProject(project.id);
+  if(!project.workflows.length){addWorkflowToProject(project.id);return;}
+  void openWithNotice(()=>{const saved=readSavedWorkflows();return project.workflows.find(key=>saved[key])||project.workflows[0];},project.name);
 };
 $('#blank-add').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
 $('#blank-area').onclick=()=>$('#node-library [data-add="study_area"]')?.click();
@@ -7468,7 +7488,7 @@ function renderWidgetsView():void{
   view.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>{b.disabled=busy;if(busy)b.title='Wait for the run to finish';});
   view.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>b.addEventListener('click',async()=>{
     const key=b.dataset.openWorkflow!;
-    if(key!==storageKey(workflow))await loadExample(key);
+    if(key!==storageKey(workflow))await openWithNotice(key,b.closest('[data-workflow-row]')?.querySelector('strong')?.textContent?.trim()||b.textContent?.replace(/^Open\s*/,'').trim()||'the workflow');
     switchView('workflow');}));
   view.querySelectorAll<HTMLButtonElement>('[data-widget-manual]').forEach(b=>b.addEventListener('click',()=>{
     const type=b.dataset.widgetManual as NodeType;openManual(type,TYPES[type]?.title??type,esc);}));

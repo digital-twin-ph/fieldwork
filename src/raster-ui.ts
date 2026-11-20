@@ -101,7 +101,7 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
             return `<div class="field"><label class="field-label" for="raster-source-${key}">${esc(label)}</label>`
               +`<textarea id="raster-source-${key}" data-source-field="${key}" rows="${long?3:1}" maxlength="${long?4000:2000}">${esc(d.provenance[key as keyof RasterProvenance]||'')}</textarea></div>`;}).join('')
           +`</fieldset>`);
-      const said=reading||(metadata&&window?`Source: ${metadata.width} × ${metadata.height}${metadata.sourceRegistration?', values at grid nodes, read as the cells around them':''}. Retain ${window[2]-window[0]} × ${window[3]-window[1]} cells.`
+      const said=reading||(metadata&&window?`Source: ${metadata.width} × ${metadata.height}${metadata.sourceRegistration?', values at grid nodes, read as the cells around them':''}.${overWindowLimit(metadata,window)?` Window ${(window[2]-window[0]).toLocaleString('en')} × ${(window[3]-window[1]).toLocaleString('en')} cells, kept in blocks of ${reductionFactor(window[2]-window[0],window[3]-window[1])} by ${reductionFactor(window[2]-window[0],window[3]-window[1])}.`:` Retain ${window[2]-window[0]} × ${window[3]-window[1]} cells.`}`
         :existing?`Kept: ${existing.metadata.width} × ${existing.metadata.height} cells from ${existing.source.filename}.`:'No file chosen.');
       const shown=metadata&&window?{...(file?{sourceFile:file.name,sourceBytes:file.size}:{sourceURL:url,sourceBytes:urlBytes??null}),source:metadata,retainedWindow:window,retainedCells:(window[2]-window[0])*(window[3]-window[1]),extraPixels:d.padding}
         :existing?existing:undefined;

@@ -1732,3 +1732,10 @@ th .meaning{font-weight:400;white-space:normal}
 #project-title[role="button"]:has(.inline-rename)::after{display:none}
 .lock-warning{position:fixed;left:50%;bottom:1.25rem;transform:translateX(-50%);z-index:1000;display:flex;gap:.9rem;align-items:center;max-width:min(40rem,calc(100vw - 2rem));padding:.8rem 1rem;border-radius:.5rem;background:var(--surface-raised-1);color:var(--text-1);border:2px solid var(--warning-1);box-shadow:0 4px 18px var(--shadow-1);font-size:1.05rem}
 .lock-warning[hidden]{display:none}
+
+.opening-notice{position:fixed;top:84px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;gap:10px;
+  background:var(--surface-raised-1);color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:10px 16px;font-size:15px;
+  box-shadow:0 4px 16px var(--shadow-10)}
+.opening-ring{width:18px;height:18px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--green);animation:opening-spin .8s linear infinite}
+@keyframes opening-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.opening-ring{animation:none;border-top-color:var(--line)}}

@@ -1,6 +1,6 @@
 # 225 · WebGPU as an accelerator, never a requirement
 
-_Created 2026-11-19 · Updated 2026-11-19_
+_Created 2026-11-19 · Updated 2026-11-20_
 
 **Status:** asked. No spike run. Placed after raster streaming (TODO), 2026-11-19.
 
@@ -20,6 +20,14 @@ nothing on a laptop that has none?
   proposed, because that arithmetic was small; *measure first*.
 - [221](221-large-rasters-with-terrio.md): rasters are decoded by terrio in WebAssembly; the Rust kernel holds the
   regression, the scan and the agent-based model. These are the paths WebGPU would sit beside.
+
+- 2026-11-20, GHS-POP over DR Congo read from the JRC's address was slow, and the practitioner asked: *"If this can be
+  sped up by WebGPU we should explore its use."* Measured first: from the 12.3 GB file on the development Mac, the
+  reduced copy of the window (517,885,446 cells, decoded and summed in blocks) took under 30 s of a 91 s Apply, the
+  rest being the file's SHA-256; by address the same window is 2,070 tiles, **162 MB compressed**, and the strips it is
+  read in (340 rows, tiles 512 tall) fetch most tiles twice and wait on each strip before the next. **That read is the
+  network's, not arithmetic's, so WebGPU would not shorten it.** What would: strips aligned to the tiles, the next
+  strip fetched while one is summed, and the fetched tiles kept on the device so a run does not fetch them again.
 
 What differs now: maps of 250,000 points (Map 0.37.0), country rasters at 100 m streamed in strips (TODO, GHS-POP over
 DR Congo), and agent-based models at scale (199, 220) are the foreseeable work where arithmetic is large.

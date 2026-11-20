@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.154.0 — In development
+
+- **GHS-POP over a large country is streamed, not refused.** Raster input refused a window past what a tab holds as
+  soon as the raster was chosen, by file or by address, so the streaming Apply does was never reached. It now says the
+  window will be streamed: GHS-POP's 12.3 GB global file over DR Congo's provinces (517,885,446 cells) is applied in
+  about a minute and a half, most of it taking the file's digest.
+- **DR Congo's 26 provinces no longer freeze the study area.** Choosing them, applying them and reopening the dialog
+  each took 5 to 7 seconds, long enough for Chrome to call the page unresponsive; each now takes about a second. The
+  dialog's summary counts several polygons correctly.
+- **A receipt names a study area's shape instead of writing it out.** It gives the GeoJSON's format and SHA-256, which
+  anyone holding the project can recompute; DR Congo's provinces were 4.3 MB of text in every receipt that used them.
+- **Tabular data's data dictionary picker is under Your file only.** A census table brings its own dictionary.
+
 ## 0.153.0 — 2026-11-20
 
 - **Tabular data: where the table comes from, as tabs.** **Your file**, **From an address** (until now *Or fetch from

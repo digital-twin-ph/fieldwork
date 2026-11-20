@@ -55,9 +55,24 @@ For each country in `coastal-sea-level`:
 
 ## In the ontology
 
-The terms are taken from standards where a standard names them, after a dated search recorded in
-`ontology/vocabulary-basis.json`, and minted only where none does. The search began 2026-11-20 (W3C SOSA/SSN and Time,
-CF standard names, the NERC vocabulary server, QUDT, PROV-O); its result is recorded there, term by term.
+The terms are taken from standards where a standard names them, and minted only where none does. The search, 2026-11-20,
+read web pages only: W3C SOSA/SSN (2017, the 2020 extensions and the 2023 draft), W3C Time, PROV-O, the CF standard
+names through the NERC Vocabulary Server's P07 collection, NVS P01, P02, L05, L06, L11 and L22, and QUDT.
+
+| Concept | Standard found | Fit |
+| --- | --- | --- |
+| Relative sea level | CF `water_surface_height_above_reference_datum` (P07/CF15N1); CF `change_in_mean_sea_level_wrt_solid_surface` (P07/73ZJGOJB) | The first is exact on the datum but not sea-specific; the second is exact in meaning but referenced to the sea floor. A choice to make |
+| Geocentric sea level | CF `sea_surface_height_above_reference_ellipsoid` (P07/CFSN0777) | Exact |
+| Vertical land motion | CF `tendency_of_bedrock_altitude` (P07/CFSN0178); `bedrock_altitude_change_due_to_isostatic_adjustment` (P07/CFSN0733) for the glacial part | Related: geoid-referenced bedrock altitude. **No standard names vertical land motion** |
+| A rate over a window | `time:Interval` with `sosa:phenomenonTime`; `qudt:standardUncertainty` | Exact for the window and the uncertainty. **No standard names a linear trend** |
+| Measured or modelled | SOSA treats a simulation as a `sosa:Sensor`; PROV-O describes how a value was made | **No standard has the distinction**: it would come from the procedure |
+| The place, the gauge | `sosa:FeatureOfInterest`, `sosa:Sample`; NVS L05/111 "sea level recorders" | Exact |
+| A projection, a baseline | SOSA 7.2 (phenomenon time after result time); CF `anomaly_wrt` (not read) | Related. **No standard names a scenario** in these vocabularies; CMIP6's are JSON files, not opened |
+| mm/yr | QUDT `unit:MilliM-PER-YR` | Exact |
+
+So the ontology would mint few terms: vertical land motion (related to CF's bedrock altitude tendency), a rate
+estimate over a window, and measured versus modelled as kinds of procedure, each with its alignment recorded in
+`ontology/vocabulary-basis.json`. Not searched successfully: GCMD keywords, IHO S-32 in full, ISO 19156 (paywalled).
 
 ## What it does not settle
 

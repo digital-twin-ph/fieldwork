@@ -42,12 +42,13 @@ that fills it, or *none*: that table's rows are then empty there.
   the census rows would have no `name`. Choose `province` under `name` in the census's box.
 - **Rename a stacked column** in its first box: every table's column in that row takes the new name.
 - **A suggestion** appears where a table lacks a column and one of its own seems to hold the same names: how many of
-  its names are in the first table's column is shown beside it.
+  its names are in that column of the other tables is shown beside it.
 
 Below, **Before** shows each table as read, with where each column goes, and **After** the stacked table.
 
-A table whose names are the first table's but held under another column stops the step, naming the column to stack
-it under. The first table is the reference: its column names are the ones the others are lined up against.
+A table holding the same names as the others under a column of its own stops the step, naming the column to stack
+it under. The name most of the tables use is the one offered, whatever the order of the inputs: three tables naming
+their areas `name` and one naming them `province` are lined up under `name`.
 
 ### When the old keys would repeat
 
@@ -82,7 +83,7 @@ An estimate's interval, declared by Regression, survives the stacking when every
 ## What it will not do
 
 - Stack tables whose value columns or units differ. They measure different things, and one column cannot mean both.
-- Stack a table whose names are held under another column than the first table's, until you line it up.
+- Stack a table whose names are held under another column than the others', until you line it up.
 - Use a source column name any table already has, or one label for two tables.
 - Check that the two tables were collected the same way. Two surveys with different questions stack without
   complaint if their value column has one name.
@@ -106,6 +107,6 @@ Show me how it works follows the choice to name each row's table and uses the ex
 Under **Columns**, one row per column of the stacked table, and for each table the column that fills it, or none. A
 stacked column can be renamed, for every table at once, and a table's own column can be stacked under another's name:
 DR Congo's census names its provinces in "province", the population models in "name". Below it, each table as read,
-with where each column goes; the stacked table follows. A table holding the first table's names under another column
+with where each column goes; the stacked table follows. A table holding the others' names under another column
 is refused, naming the column to stack it under, where it had been stacked with its names in a column of their own and
 every later step found none. A table whose value column or unit differs is named, with where to change it.

@@ -59,7 +59,7 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "Columns are lined up in a grid: one row per column of the stacked table, the column of each table filling it or none, each changeable, and a stacked column renamed for every table (stackUnder). Each table is shown as read, before, and the stack after. A table holding the first table's names under another column is refused, naming the column to stack it under. A table whose value column or unit differs is named, with where to change it. The Inspector moves out of app.ts."
+   "description": "Columns are lined up in a grid: one row per column of the stacked table, the column of each table filling it or none, each changeable, and a stacked column renamed for every table (stackUnder). Each table is shown as read, before, and the stack after. A table holding the others' names under a column of its own is refused, naming the column to stack it under; the name most tables use is offered, whatever the order of the inputs. A run stopped there keeps the tables reaching it, so Columns can be used. A table whose value column or unit differs is named, with where to change it. The Inspector moves out of app.ts."
   }
  ],
  "evidence": {

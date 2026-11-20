@@ -14,7 +14,7 @@ import {appendTables,appendSentence,appendTableCount,appendLabel,appendPort,valu
 type Params=ParamsByType['append_rows'];
 export interface AppendDraft {count:number; nameSource:boolean; sourceColumn:string; labels:string[];
   numbers:boolean; unit:string; newKey:boolean; keyColumn:string;
-  /** Each table's own column stacked under the first table's name for it. */
+  /** Each table's own column stacked under another name: the one most of the tables use, or one given. */
   stackUnder:StackUnder[]}
 
 export function appendDraftOf(p:Params):AppendDraft{

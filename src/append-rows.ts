@@ -23,8 +23,8 @@ export interface AppendParams {
   /** A NEW PRIMARY KEY, numbered 1 to N across the stacked rows, where the old ones would repeat. The old key
    *  column stays, and with a named source, source and old key are kept as an alternate key. */
   newKey?:string;
-  /** A TABLE'S OWN NAME FOR A COLUMN, stacked under the first table's (2026-11-20): DR Congo's census names its provinces
-   *  in "province", the population models in "name". `table` is the port, from 0; the first table is the reference. */
+  /** A TABLE'S OWN NAME FOR A COLUMN, stacked under another (2026-11-20): DR Congo's census names its provinces in
+   *  "province", the population models in "name". `table` is the port, from 0. */
   stackUnder?:StackUnder[];
 }
 export interface StackUnder {table:number;column:string;as:string}
@@ -97,7 +97,7 @@ function unitDifference(tables:readonly DataTable[],names?:readonly string[]):st
     +(usual?`open ${called(odd[0]!)}'s Configure… and state its unit as "${usual}", if that is what it counts.`
       :`state the same unit on every table, or none on any.`);
 }
-/** Each table's columns as the step stacks them: a column named under `stackUnder` takes the first table's name. */
+/** Each table's columns as the step stacks them: a column named under `stackUnder` takes the name given there. */
 export function stackedUnder(tables:DataTable[],params:AppendParams,names?:readonly string[]):DataTable[]{
   const called=(i:number)=>names?.[i]?`"${names[i]}"`:`table ${i+1}`;
   return tables.map((table,i)=>{
@@ -113,21 +113,25 @@ export function stackedUnder(tables:DataTable[],params:AppendParams,names?:reado
       rows:table.rows.map(r=>({...r,key:Object.fromEntries(Object.entries(r.key).map(([k,v])=>[rename(k),v]))}))};
   });
 }
-/** THE FIRST TABLE'S COLUMNS ANOTHER TABLE HOLDS UNDER ANOTHER NAME. For each table after the first, each column of the
- *  first's it lacks, and the one of its own (not the first's) whose distinct values are most often the first's values
- *  there: offered where at least half are. */
+/** A TABLE'S OWN NAME FOR A COLUMN MOST OF THE OTHERS SHARE (2026-11-20). For each table, each column held by more of
+ *  the tables than any of its own, which it lacks, and the one of its own (held by fewer tables) whose distinct values are
+ *  most often values of that column in the others: offered where at least half are. The name most tables use wins, so
+ *  the order of the ports does not decide it: DR Congo's census, the first of four tables, holds "province" where three
+ *  population models hold "name", and it is the census that is stacked under "name". A tie goes to the first table. */
 export function unstackedColumns(tables:DataTable[],params:AppendParams={}):UnstackedColumn[]{
   const moved=stackedUnder(tables,params);
-  const [first]=moved;if(!first)return [];
+  const holders=(k:string)=>moved.filter(t=>t.keys.includes(k)).length;
   const values=(t:DataTable,k:string)=>new Set(t.rows.map(r=>(r.key[k]??'').trim()).filter(Boolean));
   const found:UnstackedColumn[]=[];
   moved.forEach((table,i)=>{
-    if(i===0)return;
-    const own=table.keys.filter(k=>!first.keys.includes(k));
-    for(const as of first.keys.filter(k=>!table.keys.includes(k))){
-      const theirs=values(first,as);if(!theirs.size)continue;
+    const lacking=[...new Set(moved.flatMap(t=>t.keys))].filter(k=>!table.keys.includes(k));
+    for(const as of lacking){
+      const held=holders(as),theirs=new Set(moved.filter(t=>t.keys.includes(as)).flatMap(t=>[...values(t,as)]));
+      if(!theirs.size)continue;
       let best:UnstackedColumn|undefined;
-      for(const column of own){
+      // A TIE, as with two tables, goes to the first table's name: the order of the inputs decides only then.
+      const fewer=(k:string)=>holders(k)<held||(holders(k)===held&&i>0&&moved[0]!.keys.includes(as)&&!moved[0]!.keys.includes(k));
+      for(const column of table.keys.filter(fewer)){
         const mine=values(table,column);if(!mine.size)continue;
         const matched=[...mine].filter(v=>theirs.has(v)).length;
         if(matched*2>=mine.size&&(!best||matched>best.matched))best={table:i,column,as,matched,of:mine.size};
@@ -145,10 +149,10 @@ export function appendTables(given:DataTable[],params:AppendParams={},names?:rea
   // "province" beside the models' "name"). Said here, with the column to stack it under, as a refusal.
   const unstacked=unstackedColumns(tables);
   if(unstacked.length){
-    const called=(i:number)=>names?.[i]?`"${names[i]}"`:tables.length===2?'the second table':`table ${i+1}`;
-    const u=unstacked[0]!,firstName=names?.[0]?`"${names[0]}"`:'the first table';
+    const called=(i:number)=>names?.[i]?`"${names[i]}"`:tables.length===2?(i===0?'the first table':'the second table'):`table ${i+1}`;
+    const u=unstacked[0]!,others=tables.filter(t=>t.keys.includes(u.as)).length;
     throw new Error(`${called(u.table)} has no "${u.as}" column, so its rows would have none, and its "${u.column}" seems to hold `
-      +`the same kind of names: ${u.matched} of its ${u.of} are names in ${firstName}'s "${u.as}". `
+      +`the same kind of names: ${u.matched} of its ${u.of} are names in "${u.as}" of the ${others===1?'other table':`${others} other tables`}. `
       +`Under Configure…, stack its "${u.column}" under "${u.as}"`
       +(u.matched<u.of?`, and check the ${u.of-u.matched} that are not: they may be spelled another way, or held in another column`:'')
       +'.'+(unstacked.length>1?` ${unstacked.length-1} other column${unstacked.length===2?' is':'s are'} offered the same way there.`:''));

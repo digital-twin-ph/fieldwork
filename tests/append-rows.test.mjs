@@ -109,7 +109,7 @@ const provinces=['Kinshasa','Ituri','Tshopo','Kwilu'];
 test('a table holding the first table\'s names under another column is refused, naming the column to stack it under',()=>{
   const models=keyed('name',provinces,100),census=keyed('province',['Kinshasa','Ituri','Tshopo','Equateur'],1);
   assert.throws(()=>appendTables([models,census],{},['WorldPop','Census 1984']),
-    /"Census 1984" has no "name" column.*its "province" seems to hold the same kind of names: 3 of its 4 are names in "WorldPop"'s "name".*stack its "province" under "name".*check the 1 that are not/s);
+    /"Census 1984" has no "name" column.*its "province" seems to hold the same kind of names: 3 of its 4 are names in "name" of the other table.*stack its "province" under "name".*check the 1 that are not/s);
 });
 test('stacked under the first table\'s column, the census rows carry their names there',()=>{
   const models=keyed('name',provinces,100),census=keyed('province',provinces,1);
@@ -131,7 +131,7 @@ test('a column to stack under that the table already has is refused',()=>{
 });
 
 /** THE GRID (2026-11-20): read from `stackUnder`, written back to it. */
-import {columnGrid,placeColumn,renameStacked} from '../build/append-rows.js';
+import {columnGrid,placeColumn,renameStacked,unstackedColumns} from '../build/append-rows.js';
 test('the grid shows each stacked column, the column of each table filling it, and a suggestion where none does',()=>{
   const models=keyed('name',provinces,100),census=keyed('province',provinces,1);
   const grid=columnGrid([models,census]);
@@ -143,4 +143,13 @@ test('the grid shows each stacked column, the column of each table filling it, a
   const renamed=renameStacked([models,census],under,'name','province_name');
   assert.deepEqual(columnGrid([models,census],renamed).map(r=>[r.as,r.cells.map(c=>c.column)]),[['province_name',['name','province']]]);
   assert.deepEqual(appendTables([models,census],{stackUnder:renamed}).table.keys,['province_name']);
+});
+
+test('the name most tables use wins, whatever the order: a census first, holding "province", is stacked under the models\' "name"',()=>{
+  const census=keyed('province',provinces,1),models=[100,200,300].map(v=>keyed('name',provinces,v));
+  const found=unstackedColumns([census,...models]);
+  assert.deepEqual(found.map(f=>[f.table,f.column,f.as]),[[0,'province','name']]);
+  assert.throws(()=>appendTables([census,...models],{},['Census 1984','WorldPop','GRID3','GHS-POP']),
+    /"Census 1984" has no "name" column.*4 of its 4 are names in "name" of the 3 other tables/s);
+  assert.deepEqual(appendTables([census,...models],{stackUnder:[{table:0,column:'province',as:'name'}]}).table.keys,['name']);
 });

@@ -9,9 +9,11 @@ shown in a local build is not a claim that it has been published.
   offered summed to the 26 provinces of 2015, with each province's name as geoBoundaries spells it; the counts as
   printed are linked. How each 1984 unit was placed, and what that does not establish, are in census-tables.
 - **Append rows lines its tables' columns up in a grid.** One row per column of the stacked table, the column of each
-  table filling it or none, each changeable, with every table before and the stack after. A table holding the first
-  table's names under another column is refused, naming the column to stack it under: DR Congo's census `province`
-  beside the models' `name` had been stacked into two columns, and every later step found no names for the census.
+  table filling it or none, each changeable, with every table before and the stack after. A table holding the others'
+  names under a column of its own is refused, naming the column to stack it under, and the name most tables use is
+  offered whatever the order of the inputs: DR Congo's census `province` beside three models' `name` had been stacked
+  into two columns, and every later step found no names for the census. A run stopped there keeps the tables reaching
+  it, so the columns can be lined up without a finished run.
   A table whose value column or unit differs is named, with where to change it. Append rows 0.4.0.
 - **Sample a raster's unit reaches its table**, so a census stating "people" stacks beside it; the population
   example's census steps now state "people" too. Sample a raster 0.9.0.

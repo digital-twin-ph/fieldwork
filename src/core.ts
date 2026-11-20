@@ -332,7 +332,7 @@ export function studyUnitAreas(study:{units:{id:string;name:string}[];boundary:i
  *  geometry. Its number, where the layer names the column that holds it (Sample a raster's total, such as population), is
  *  the table's value, so Total within groups adds it and gives each part's share; otherwise the parts' `value` is, under
  *  "value", or there is none. Botswana's 28 districts' totals from three rasters set beside the census needed it. */
-export function polygonsAsTable(value:{valueColumn?:string;kind?:string;summary?:{valueField?:string};
+export function polygonsAsTable(value:{valueColumn?:string;valueUnit?:string;kind?:string;summary?:{valueField?:string};
   features?:{id?:unknown;name?:string;value?:number;properties?:Record<string,unknown>|null;minutes?:number;status?:string;explanation?:string|null;
     areaSquareMetres?:number;count?:number;total?:number;missingValues?:number}[]}|undefined):DataTable{
   const features=value?.features??[],column=value?.valueColumn?.trim();
@@ -348,7 +348,10 @@ export function polygonsAsTable(value:{valueColumn?:string;kind?:string;summary?
     return {id:f.id,properties:{name:f.name??String(f.id??''),...props,...said(f)}};})});
   if(!valued)return table;
   const field=column||'value';
-  return {...table,valueField:field,rows:table.rows.map((row,i)=>({...row,value:typeof features[i]!.value==='number'?features[i]!.value!:null})),
+  // THE UNIT THE STEP DECLARED (2026-11-20): it was dropped here, so Sample a raster's "people" reached Append rows as no
+  // unit, and DR Congo's census, which states "people", was refused beside it.
+  const unit=value?.valueUnit?.trim();
+  return {...table,valueField:field,...(unit?{unit}:{}),rows:table.rows.map((row,i)=>({...row,value:typeof features[i]!.value==='number'?features[i]!.value!:null})),
     missingValueCount:features.filter(f=>typeof f.value!=='number').length};
 }
 /** What a table port reads from a step: its table, its distances as a table, or its points or polygons as a table. */

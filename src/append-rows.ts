@@ -73,17 +73,28 @@ export function valueMismatch(tables:readonly {valueField:string}[],names?:reado
     +`where ${list(even)} ${even.length===1?'has':'have'} "${usual}". Rows can be stacked only where the value column is the same quantity `
     +`under the same name: open ${called(odd[0]!)}'s Configure… and choose the column holding the same quantity as its value, named "${usual}".`;
 }
+/** WHICH STEP COUNTS IN ANOTHER UNIT, by name (2026-11-20), as for the value column: the odd one, its unit or none, the
+ *  rest's, and where to say it. "Table 2 counts in an unstated unit" left DR Congo's workflow to be searched by hand. */
+function unitDifference(tables:readonly DataTable[],names?:readonly string[]):string{
+  const units=tables.map(t=>t.unit?.trim()||'');
+  const called=(i:number)=>names?.[i]?`"${names[i]}"`:tables.length===2?(i===0?'the first table':'the second table'):`table ${i+1}`;
+  const counts=new Map<string,number>();for(const u of units)counts.set(u,(counts.get(u)??0)+1);
+  const top=Math.max(...counts.values()),most=[...counts].filter(([,n])=>n===top).map(([u])=>u);
+  const usual=most.length===1?most[0]!:(units.find(Boolean)??units[0]!);
+  const odd=units.flatMap((u,i)=>u===usual?[]:[i]),even=units.flatMap((u,i)=>u===usual?[i]:[]);
+  const list=(ix:number[])=>ix.map(called).join(ix.length>2?', ':' and ').replace(/, ([^,]*)$/,', and $1');
+  const say=(u:string)=>u?`"${u}"`:'no unit';
+  return `${list(odd)} ${odd.length===1?'counts':'count'} in ${[...new Set(odd.map(i=>say(units[i]!)))].join(' and ')}, `
+    +`where ${list(even)} ${even.length===1?'counts':'count'} in ${say(usual)}. Rows can be stacked only in one unit: `
+    +(usual?`open ${called(odd[0]!)}'s Configure… and state its unit as "${usual}", if that is what it counts.`
+      :`state the same unit on every table, or none on any.`);
+}
 export function appendTables(tables:DataTable[],params:AppendParams={},names?:readonly string[]):AppendResult{
   if(tables.length<2)throw new Error('Connect at least two tables: this step stacks their rows.');
   const [first]=tables as [DataTable,...DataTable[]];
   const mismatch=valueMismatch(tables,names);if(mismatch)throw new Error(mismatch);
-  tables.forEach((table,i)=>{
-    if(i===0)return;
-    if((first.unit??'')!==(table.unit??''))
-      throw new Error(tables.length===2
-        ?`The two tables count in different units: ${first.unit||'unstated'} and ${table.unit||'unstated'}.`
-        :`Table ${i+1} counts in ${table.unit||'an unstated unit'}, and the first in ${first.unit||'an unstated unit'}.`);
-  });
+  const unitMismatch=valueMismatch(tables.map(t=>({valueField:t.unit?.trim()||''})),names);
+  if(unitMismatch)throw new Error(unitDifference(tables,names));
   const source=params.nameSource?params.sourceColumn?.trim():undefined;
   const newKey=params.newKey?.trim();
   const allKeys=tables.flatMap(t=>t.keys);

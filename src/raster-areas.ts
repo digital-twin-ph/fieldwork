@@ -117,6 +117,7 @@ function areaTotalsFrom(features:readonly AreaFeature[],totals:readonly AreaSums
   const sentence=areaTotalsSentence(counts,column,params.valueUnit,params.cellStatistics);
   return {value:{features:out,sites:[],crs:'EPSG:4326',layerName:params.label||'Raster totals',featuresNamed:true,
     valueName:params.valueUnit?.trim()?`${column}, ${params.valueUnit.trim()}`:column,valueColumn:column,
+    ...(params.valueUnit?.trim()?{valueUnit:params.valueUnit.trim()}:{}),
     method:sentence,notes:[sentence]},counts,sentence};
 }
 

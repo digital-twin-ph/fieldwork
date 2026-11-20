@@ -102,6 +102,8 @@ async function census(page,code){
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('population');
   for(const key of c.keys)await page.locator(`#table-keys input[value="${key}"]`).check();
+  // THE CENSUS COUNTS PEOPLE, and says so (2026-11-20): Sample a raster's totals now carry their unit, "people", to Append rows.
+  await page.locator('#table-unit').fill('people');await page.locator('#table-unit').press('Tab');
   await page.locator('#table-save').click();
   await expect(page.locator('#table-dialog')).toHaveCount(0,{timeout:30000});
 }

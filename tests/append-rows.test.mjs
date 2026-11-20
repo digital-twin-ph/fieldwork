@@ -92,3 +92,11 @@ test('ports keep their saved names, and a saved two-table workflow keeps its lab
   const result=appendRows(cases,matched,{nameSource:true,sourceColumn:'source',firstLabel:'cases',secondLabel:'panel'});
   assert.deepEqual([...new Set(result.table.rows.map(r=>r.key.source))],['cases','panel']);
 });
+
+test('a step counting in another unit is named, with the unit to state (2026-11-20)',()=>{
+  const people=t=>({...t,unit:'people'});
+  const census={kind:'data-table',keys:['district'],valueField:'population',unit:'people',rows:[{key:{district:'A'},value:1}],rowCount:1,missingValueCount:0};
+  const raster={...census,unit:undefined};
+  assert.throws(()=>appendTables([census,raster,people(raster),people(raster)],{},['Census 1984','WorldPop','GRID3','GHS-POP']),
+    /"WorldPop" counts in no unit, where "Census 1984", "GRID3", and "GHS-POP" count in "people"\. .*open "WorldPop"'s Configure… and state its unit as "people"/);
+});

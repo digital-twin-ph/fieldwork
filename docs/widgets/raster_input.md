@@ -102,12 +102,13 @@ does not overlap the raster at all is refused.
   this device.
 - **It will not read classic NetCDF-3**, a satellite swath, or a grid on another projection. A NetCDF-3 file can be
   converted with `nccopy -k nc4`. **A NetCDF file at a URL** is not read yet: keep it on this laptop and choose it.
-- **It will not keep more than 518.9 million cells**, nor a window of more than 2.1 GB. Past either, the raster is
+- **It will not keep more than 166.4 million cells**, nor a window of more than 1.1 GB. Past either, the raster is
   **streamed**: what is kept, and drawn on a map, is a copy in blocks (10 by 10 cells for a country at 100 m), each block
   summed for a count such as people and averaged for a value such as elevation. Sample a raster reads the full cells
   from the source at each run, a strip at a time. Read from an address, that works on any device; read from a file on
-  this computer, the file is chosen again in each new session, and checked against the file first chosen. A NetCDF
-  file is not streamed yet.
+  this computer, the file is chosen again in each new session, from the run's stop message or here, and checked against
+  the file first chosen; Chrome and Edge remember it, and ask only to allow reading it again. A NetCDF file is not
+  streamed yet.
 
 ## Where it is used
 

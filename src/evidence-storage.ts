@@ -65,7 +65,12 @@ export async function readPDF(hash:string):Promise<Uint8Array<ArrayBuffer>|null>
       const value=request.result as unknown;
       if(value===undefined)resolve(null);
       else if(isRecord(value)&&Number.isSafeInteger(value.parts)&&Number.isSafeInteger(value.bytes)){
-        const parts=value.parts as number,whole=new Uint8Array(value.bytes as number);let offset=0;
+        // A WHOLE TOO LARGE FOR THIS TAB IS SAID, NOT THROWN INTO THE CALLBACK (2026-11-20): allocating DR Congo's 2.1 GB
+        // window failed inside this handler, where nobody heard, and the read never ended.
+        let whole:Uint8Array<ArrayBuffer>;
+        try{whole=new Uint8Array(value.bytes as number);}
+        catch{reject(new Error(`It is ${((value.bytes as number)/1e9).toFixed(1)} GB, more than this tab can hold at once.`));return;}
+        const parts=value.parts as number;let offset=0;
         // ONE PART AT A TIME (2026-11-17): asked for all at once, every part arrived before the first was copied, so a window
         // was in memory twice. Each part is asked for when the last has been copied, inside the same transaction.
         const next=(i:number)=>{const part=store.get(`${hash}:part:${i}`);part.onerror=()=>reject(stored(`part ${i+1} of ${parts}`,part.error));part.onsuccess=()=>{

@@ -5510,7 +5510,12 @@ function renderInspector(){
     if(!keptAsset){open();return;}
     void (async()=>{
       const {rereadable,rereadWindow,chooseStreamedFile}=await import('./raster-workflow.js');
-      const onDevice=!!await readPDF(keptAsset.sha256);
+      // CONFIGURE… ALWAYS OPENS (2026-11-20): a kept window that cannot be read back -- DR Congo's WorldPop, kept whole at
+      // 2.1 GB -- failed this read, and the error went nowhere: no dialog, no message. Now the dialog opens and says it.
+      let onDevice=false;
+      try{onDevice=!!await readPDF(keptAsset.sha256);}
+      catch(error){toast(`The window kept for ${keptAsset.source.filename} could not be read back on this device (${errorMessage(error)}). `
+        +'Choose the file again in this dialog.',{tone:'warning'});}
       open({onDevice,rereadable:rereadable(keptAsset),
         reread:async(file,say)=>{
           // A STREAMED RASTER'S COPY ON THIS DEVICE: only its source file is wanted, checked and held for this session.
@@ -5518,7 +5523,7 @@ function renderInspector(){
           const bytes=await rereadWindow(keptAsset,file,say);
           await storePDFs(new Map([[keptAsset.sha256,bytes]]),new Map([[keptAsset.sha256,{...keptAsset,asset:keptAsset}]]));renderInspector();},
         download:async()=>{downloadRaster(await rasterOfNode(workflow,n.id));}});
-    })();
+    })().catch(error=>toast(`Raster input could not open: ${errorMessage(error)}`,{tone:'failure'}));
   });
   optionalElement('#add-raster-map')?.addEventListener('click',()=>change(w=>{const id=`map-${Date.now()}`;w.nodes.push({id,type:'map_output',x:n.x+270,y:n.y,params:{label:'Clipped raster',inputMode:'raster',pointInputCount:1}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'raster'});selected=id;}));
   // Clip raster's own download, of the masked grid; Raster input's is in its dialog (186, 2026-11-17).

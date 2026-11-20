@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.152.0 — In development
+## 0.152.0 — 2026-11-20
 
 - **A save to GitHub reminds you to say who you are, and is never refused for it.** After saving, if the project does
   not name you yet, the answer says so and points to People. GitHub already records who saved; the project's own

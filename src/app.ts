@@ -3716,8 +3716,26 @@ function workflowSpanKm():number|undefined{
   return extentSpanKm([west,south,east,north]);
 }
 
+/** A CONNECTION, SELECTED (2026-11-20): what it joins, in the steps' own names and the receiving port's words, and the
+ *  one way to remove it from here. A click on a connection selected it into nothing before; it removed it. */
+function renderConnection(id:string):void{
+  const edge=workflow.edges.find(e=>e.id===id);
+  if(!edge){selected=null;render();return;}
+  const from=workflow.nodes.find(n=>n.id===edge.from),to=workflow.nodes.find(n=>n.id===edge.to);
+  const name=(n:WorkflowNode|undefined)=>n?(n.params.label||TYPES[n.type].title):'a step no longer here';
+  const ordinal=['first','second','third','fourth','fifth','sixth','seventh','eighth','ninth','tenth'];
+  const nth=edge.port==='records'?1:Number(/^records_(\d+)$/.exec(edge.port)?.[1]??0);
+  const port=to?.type==='append_rows'&&nth?`${ordinal[nth-1]??`table ${nth}`} table`:portLabel(edge.port).toLowerCase();
+  $('#inspector-content').innerHTML=`<div class="inspector-body"><div class="inspector-title"><div><h2>A connection</h2></div></div>`
+    +standardSection('Connection',`<p class="standard-sentence">From <strong>${esc(name(from))}</strong> to <strong>${esc(name(to))}</strong>, `
+      +`as its ${esc(port)}.</p>`
+      +`<div class="inspector-actions"><button type="button" id="remove-connection" class="button danger"${busy?' disabled':''}>Remove connection</button></div>`
+      +'<p class="muted">Delete or Backspace removes it too. Undo brings it back.</p>')+'</div>';
+  optionalElement('#remove-connection')?.addEventListener('click',()=>{change(w=>{w.edges=w.edges.filter(e=>e.id!==id);});selected=null;render();});
+}
 function renderInspector(){
   if(selected?.startsWith('result:')){renderEvidence(selected.slice(7));return;}
+  if(selected?.startsWith('edge:')){renderConnection(selected.slice(5));return;}
   if(exampleKey(workflow)==='blank'&&!workflow.nodes.some(n=>n.id===selected)){$('#inspector-content').innerHTML='<div class="inspector-body"><p class="description">Add a Study area, then select it to draw the area on the map.</p></div';return;}
   const n=workflow.nodes.find(n=>n.id===selected);if(!n){$('#inspector-content').innerHTML=`<div class="inspector-body"><p class="description">Choose a node to inspect its settings, or select a result to inspect its evidence.</p></div>`;return;}
   // ONE SHAPE FOR EVERY PANEL: title, one line of what it does, the way in for a learner, then the
@@ -4366,7 +4384,7 @@ function renderInspector(){
             +`<button type="button" class="button" id="configure-countries">Configure countries\u2026</button></div>`;})();
     }
     const geometry=p.source==='drawn'?p.geometry:undefined;
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(geometry?`${p.selectionMode==='bbox'?'A bounding box':p.selectionMode==='circle'?'A circle':'A polygon'} of ${geometryVertices(geometry)} vertices, in longitude, latitude order.`
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(geometry?`${p.selectionMode==='bbox'?'A bounding box':p.selectionMode==='circle'?'A circle':geometry.type==='MultiPolygon'&&(geometry.coordinates as unknown[]).length>1?`${(geometry.coordinates as unknown[]).length.toLocaleString('en')} polygons`:'A polygon'} of ${geometryVertices(geometry).toLocaleString('en')} vertices, in longitude, latitude order.`
       :'No area yet: select one on the map.')}</p>`+countryField
       +`<div class="inspector-actions"><button id="edit-study-area" class="button primary">${geometry?'Edit area on map':'Select area on map'}</button></div>`);
     let held='';
@@ -6767,7 +6785,8 @@ async function run(){if(busy)return;
   // ordinary middle of building something, so it gets the plain notice tone, no console trace and
   // a state line that says what is true -- not "Run failed", which claims something went wrong.
   try{executionPlan(workflow);}catch(e){
-    if(e instanceof IncompleteWorkflow){runIncomplete=true;toast(errorMessage(e),{tone:'notice'});render();return;}
+    if(e instanceof IncompleteWorkflow){runIncomplete=true;const at=e.nodeId;
+      toast(errorMessage(e),{tone:'notice',...(at&&workflow.nodes.some(n=>n.id===at)?{action:{label:'Show the step',run:()=>{switchView('workflow');selected=at;render();}}}:{})});render();return;}
     toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;runStartedAt=performance.now();statuses={};justFinished.clear();lastRunMs=null;/* THE LAST RUN'S RASTER IS LET GO AS THIS ONE STARTS (2026-11-17): held while the next run loaded its own, two windows were in memory at once, measured on Nigeria at 100 m. */if(result?.outputs.some(o=>o.raster)){result=null;renderResults();}{const key=storageKey(workflow);if(key&&runsByWorkflow.get(key)?.run.outputs.some(o=>o.raster))runsByWorkflow.delete(key);}render();try{await fillPlacedImages();}catch(e){busy=false;toast(errorMessage(e),{tone:'failure'});runFailed=true;render();return;}const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;
     // THE CANVAS CAN MOVE WHILE A RUN IS IN FLIGHT, and this run is then nobody's results.
     //
@@ -7002,7 +7021,7 @@ function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id=
   if(c.targetHandle==='layer'&&(b.type==='map_output'||b.type==='table_output'))
     return nodeInputs(b).some(([,type])=>type===outputOf(a))||(b.type==='table_output'&&portAccepts('table',outputOf(a)));
   return portAccepts(nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1],outputOf(a));}
-mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
+mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},selectEdge(id){selected=`edge:${id}`;render();},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
 // Delegated, because the canvas redraws its nodes whenever anything changes and a listener bound
 // to a button would go with them.
 $('#canvas').addEventListener('click',event=>{

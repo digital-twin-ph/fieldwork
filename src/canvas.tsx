@@ -14,7 +14,7 @@ export interface NodeDescription extends Record<string,unknown> {definition:Node
   availablePorts?:string[];type:NodeType;label:string;subtitle:string;detail:string;status?:string;glow?:boolean;alert?:string}
 type OperationFlowNode=Node<NodeDescription,'operation'>;
 export interface CanvasAPI {update:(graph:Workflow,selection:string|null|undefined,statuses?:Record<string,string>)=>void;fit:()=>void;zoomIn:()=>void;zoomOut:()=>void;setBusy:(busy:boolean)=>void}
-export interface CanvasCallbacks {ready:(api:CanvasAPI)=>void;describe:(node:WorkflowNode,status?:string)=>NodeDescription;select:(id:string)=>void;clear:()=>void;move:(id:string,position:{x:number;y:number})=>void;connect:(connection:Connection)=>void;valid:(connection:Connection|Edge)=>boolean;remove:(ids:string[])=>void;removeEdges:(ids:string[])=>void;zoom:(zoom:number)=>void}
+export interface CanvasCallbacks {selectEdge:(id:string)=>void;ready:(api:CanvasAPI)=>void;describe:(node:WorkflowNode,status?:string)=>NodeDescription;select:(id:string)=>void;clear:()=>void;move:(id:string,position:{x:number;y:number})=>void;connect:(connection:Connection)=>void;valid:(connection:Connection|Edge)=>boolean;remove:(ids:string[])=>void;removeEdges:(ids:string[])=>void;zoom:(zoom:number)=>void}
 import React, {useState, useEffect, useCallback} from 'react';
 import {createRoot} from 'react-dom/client';
 import {ReactFlow, ReactFlowProvider, Background, Handle, Position, useNodesState, useEdgesState, useReactFlow, useUpdateNodeInternals, useNodesInitialized} from '@xyflow/react';
@@ -136,7 +136,12 @@ export function mountCanvas(container:HTMLElement,callbacks:CanvasCallbacks):Can
         // Keep React Flow's measured dimensions across status and selection updates.
         // Dropping them during a run can leave an unchanged node hidden until it resizes.
         setNodes(previous=>{const current=new Map(previous.map(n=>[n.id,n]));return graph.nodes.map(n=>({...current.get(n.id),id:n.id,type:'operation',position:{x:n.x,y:n.y},selected:n.id===selection,data:callbacks.describe(n,statuses[n.id])}));});
-        setEdges(graph.edges.map(e=>({id:e.id,source:e.from,sourceHandle:'out',target:e.to,targetHandle:shownPort((graph.nodes.find(n=>n.id===e.to)?.type??'') as NodeType,e.port),type:'default',style:{stroke:'#9fb5a5',strokeWidth:1.7},interactionWidth:20})));
+        // A CONNECTION IS SELECTED BY A CLICK, NOT REMOVED (2026-11-20): a click removed it at once, and on a dense canvas a
+        // drag meant to pan took two of DR Congo's connections. Selected, it is drawn darker and thicker; Delete or the
+        // Inspector's Remove connection removes it. Its band is 8 px, the line's own width, not 20.
+        const chosenEdge=selection?.startsWith('edge:')?selection.slice(5):undefined;
+        setEdges(graph.edges.map(e=>({id:e.id,source:e.from,sourceHandle:'out',target:e.to,targetHandle:shownPort((graph.nodes.find(n=>n.id===e.to)?.type??'') as NodeType,e.port),type:'default',
+          selected:e.id===chosenEdge,style:e.id===chosenEdge?{stroke:'#0f4a3d',strokeWidth:4}:{stroke:'#9fb5a5',strokeWidth:1.7},interactionWidth:8})));
       };
       api.fit=()=>setFitRequested(true);api.zoomIn=()=>flow.zoomIn();api.zoomOut=()=>flow.zoomOut();api.setBusy=setBusy;
       callbacks.ready(api);
@@ -150,7 +155,7 @@ export function mountCanvas(container:HTMLElement,callbacks:CanvasCallbacks):Can
         if(id&&el.matches(':focus-visible')&&!el.classList.contains('selected'))callbacks.select(id);}} onPaneClick={()=>callbacks.clear()}
       onNodeDragStop={(_,n)=>callbacks.move(n.id,n.position)} onConnect={c=>callbacks.connect(c)} isValidConnection={callbacks.valid}
       onNodesDelete={ns=>callbacks.remove(ns.map(n=>n.id))} onEdgesDelete={es=>callbacks.removeEdges(es.map(e=>e.id))}
-      onEdgeClick={(_,e)=>callbacks.removeEdges([e.id])} onMove={(_,v)=>callbacks.zoom(v.zoom)}
+      onEdgeClick={(_,e)=>callbacks.selectEdge(e.id)} onMove={(_,v)=>callbacks.zoom(v.zoom)}
       proOptions={{hideAttribution:true}} nodesDraggable={!busy} nodesConnectable={!busy} deleteKeyCode={busy?null:['Backspace','Delete']} minZoom={.3} maxZoom={1.8}
       connectionLineStyle={{stroke:'#176b59',strokeWidth:2}} fitViewOptions={{padding:.16}}>
       <Background color="#c8d3c1" gap={18} size={1}/>

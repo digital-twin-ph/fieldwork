@@ -1090,7 +1090,14 @@ function resultNodes(w:Pick<Workflow,'nodes'>){return w.nodes.filter(n=>['output
  *  is the ordinary state of a canvas halfway through being built. The refusals that mean "add the
  *  next thing" carry this type, and the interface reads it rather than inferring tone from the
  *  fact that something was thrown. */
-export class IncompleteWorkflow extends Error {}
+/** A WORKFLOW THAT CANNOT RUN YET, said with the step it is about (2026-11-20), so the message can offer to show it. */
+export class IncompleteWorkflow extends Error {constructor(message:string,readonly nodeId?:string){super(message);}}
+/** A port in words: Append rows' tables by their order, as its dialog names them; any other by its name. */
+function portWords(node:WorkflowNode,port:string):string{
+  const nth=port==='records'?1:Number(/^records_(\d+)$/.exec(port)?.[1]??0);
+  if(node.type==='append_rows'&&nth)return `${['first','second','third','fourth','fifth','sixth','seventh','eighth'][nth-1]??`table ${nth}`} table`;
+  return `${port.replace(/_/g,' ')} input`;
+}
 
 export function executionPlan(workflow:Workflow) {
   const w=validateWorkflow(workflow), outputs=resultNodes(w);
@@ -1120,7 +1127,7 @@ export function executionPlan(workflow:Workflow) {
   function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=requiredInputs(node,{coverageConnected:w.edges.some(e=>e.to===node.id&&e.port==='coverage')});for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
       // The area is optional here: a country names the scope instead. Required only when the
       // practitioner has asked for the study area to bound the request.
-      const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new IncompleteWorkflow(`${TYPES[node.type].title} needs its ${port} input connected.`);visit(required(w.nodes.find(n=>n.id===e.from)));}
+      const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new IncompleteWorkflow(`${node.params.label&&node.params.label!==TYPES[node.type].title?`"${node.params.label}" (${TYPES[node.type].title})`:TYPES[node.type].title} needs its ${portWords(node,port)} connected.`,node.id);visit(required(w.nodes.find(n=>n.id===e.from)));}
       // Everything else actually wired, so the plan follows the EDGES and not only the ports a
       // node insists on. A map insists on nothing from 2026-10-15 -- it draws the layers it is
       // given -- and ordering by required ports alone put it in the plan BEFORE its own sources,

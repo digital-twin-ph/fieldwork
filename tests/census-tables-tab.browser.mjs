@@ -71,3 +71,21 @@ test('the tabs answer the arrow keys, and the tab last used is remembered on thi
   await page.locator('#configure-step').click();
   await expect(page.locator('#table-tab-census')).toHaveAttribute('aria-selected','true');
 });
+
+/** A TABLE DERIVED FROM THE COUNTS (2026-11-20): DR Congo's 1984 counts summed to today's 26 provinces, offered beside the
+ *  printed table, read with its own dictionary and checked against its own pin. */
+test('a derived census table is offered beside the printed one and read with its own dictionary',async({page})=>{test.skip(!!skip,skip);
+  const errors=collectPageErrors(page);
+  await answer(page);
+  await open(page);
+  await page.locator('#table-tab-census').click();
+  const also=catalogue.countries.find(c=>c.iso3==='COD').alsoTables[0];
+  await expect(page.locator('[data-census="COD:0"]')).toHaveText(also.label);
+  await page.locator('[data-census="COD:0"]').click();
+  await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
+  await expect(page.locator('#table-census-says')).toContainText(`its data dictionary, ${also.columns.path}, has 7 variables`);
+  await page.locator('#table-save').click();
+  await expect(page.locator('#table-save')).toBeHidden();
+  await expect.poll(async()=>(await storedTable(page)).remote?.sha256).toBe(also.counts.sha256);
+  expect(errors).toEqual([]);
+});

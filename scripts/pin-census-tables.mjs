@@ -17,7 +17,14 @@ const countries=readdirSync(repo).filter(d=>/^[A-Z]{3}$/.test(d)&&existsSync(new
     publisher:p.source?.publisher??'',licence:p.licence?.stated??'',rows,
     reviewed:{last:p.reviewed?.last??'',nextDue:p.reviewed?.next_due??''},
     counts:file(`${iso}/counts.csv`),
-    ...(existsSync(new URL(`${iso}/columns.csv`,repo))?{columns:file(`${iso}/columns.csv`)}:{})};
+    ...(existsSync(new URL(`${iso}/columns.csv`,repo))?{columns:file(`${iso}/columns.csv`)}:{}),
+    // A TABLE DERIVED FROM THE COUNTS, with its own dictionary (X.csv beside X-columns.csv) and a label in the provenance
+    // under X's name: DR Congo's 1984 counts summed to today's provinces.
+    alsoTables:readdirSync(new URL(`${iso}/`,repo)).filter(f=>f.endsWith('-columns.csv')).map(f=>f.replace(/-columns\.csv$/,''))
+      .filter(stem=>existsSync(new URL(`${iso}/${stem}.csv`,repo))).sort().map(stem=>({
+        label:p[stem.replace(/-/g,'_')]?.label??stem,
+        rows:readFileSync(new URL(`${iso}/${stem}.csv`,repo),'utf8').trim().split('\n').length-1,
+        counts:file(`${iso}/${stem}.csv`),columns:file(`${iso}/${stem}-columns.csv`)}))};
 });
 const out={repository:'https://github.com/digital-twin-ph/census-tables',commit,
   raw:`https://raw.githubusercontent.com/digital-twin-ph/census-tables/${commit}/`,countries};

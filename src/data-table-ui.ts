@@ -148,7 +148,13 @@ function columnTools(box:HTMLFieldSetElement,prefix:string,title:string,changed:
 
 interface CensusFile {path:string;bytes:number;sha256:string}
 interface CensusCountry {iso3:string;country:string;census:string;referenceDate:string;publisher:string;licence:string;rows:number;
-  reviewed:{last:string;nextDue:string};counts:CensusFile;columns?:CensusFile}
+  reviewed:{last:string;nextDue:string};counts:CensusFile;columns?:CensusFile;
+  /** Tables derived from the counts, each with its dictionary: DR Congo's 1984 counts summed to today's provinces. */
+  alsoTables?:{label:string;rows:number;counts:CensusFile;columns:CensusFile}[]}
+/** The country's printed counts, or one of the tables derived from them, by the button's `data-census`: ISO3, or ISO3:n. */
+const censusTable=(choice:string)=>{const [iso,n]=choice.split(':');const c=CENSUS.countries.find(x=>x.iso3===iso);if(!c)return undefined;
+  const also=n===undefined?undefined:c.alsoTables?.[Number(n)];
+  return {country:c.country,iso3:c.iso3,counts:also?.counts??c.counts,columns:also?.columns??c.columns};};
 const CENSUS=censusCatalogue as {repository:string;commit:string;raw:string;countries:CensusCountry[]};
 const CENSUS_RAW='https://raw.githubusercontent.com/digital-twin-ph/census-tables/';
 const TAB_KEY='fieldwork:table-source-tab';
@@ -161,7 +167,9 @@ function censusChoices():string{
     +CENSUS.countries.map(c=>'<li><button type="button" class="button" data-census="'+esc(c.iso3)+'">'+esc(c.country)+'</button>'
       +'<p>'+esc(c.census)+' \u00b7 '+c.rows.toLocaleString('en')+' rows \u00b7 '+esc(c.publisher)+'</p>'
       +'<p class="muted">Terms: '+esc(c.licence)+'</p>'
-      +'<p class="muted">'+(c.reviewed.nextDue&&c.reviewed.nextDue<today?'Review overdue since '+esc(c.reviewed.nextDue):'Next review '+esc(c.reviewed.nextDue))+'</p></li>').join('')
+      +'<p class="muted">'+(c.reviewed.nextDue&&c.reviewed.nextDue<today?'Review overdue since '+esc(c.reviewed.nextDue):'Next review '+esc(c.reviewed.nextDue))+'</p>'
+      +(c.alsoTables??[]).map((t,i)=>'<p><button type="button" class="button" data-census="'+esc(c.iso3)+':'+i+'">'+esc(t.label)+'</button> '
+        +t.rows.toLocaleString('en')+' rows, from the same counts</p>').join('')+'</li>').join('')
     +'</ul>';
 }
 export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boolean>,existing?:TableReopen,frame:TableFrame={}):void{
@@ -618,15 +626,15 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   q<HTMLButtonElement>('#table-fetch').onclick=()=>{dropCensusDictionary();dictionaryFile=undefined;dictionaryInput.value='';dictionarySays.textContent='';void fetchURL(false);};
   // A CENSUS TABLE: its counts by address, and its data dictionary beside it, each checked against the digest pinned.
   for(const button of dialog.querySelectorAll<HTMLButtonElement>('[data-census]'))button.onclick=async()=>{
-    const c=CENSUS.countries.find(x=>x.iso3===button.dataset.census);if(!c)return;
+    const c=censusTable(button.dataset.census??'');if(!c)return;
     error.hidden=true;dropCensusDictionary();
     if(c.columns){
       try{
         const got=await fetchOrDeviceCopy(CENSUS.raw+c.columns.path,{fresh:false});
         if(got.digest!==c.columns.sha256)throw new Error(`${c.columns.path} is not the file Fieldwork pinned: its digest differs.`);
         const sheets=dictionarySheets('columns.csv',got.bytes);
-        dictionaryFile={name:`${c.iso3}/columns.csv`,bytes:got.bytes,sheets};dictionaryFromCensus=true;
-        censusSays.textContent=`${c.country}: its data dictionary, ${c.iso3}/columns.csv, has ${sheets[0]?.rows.length??0} variables. Kept with the table; what it says is proposed for you to accept.`;
+        dictionaryFile={name:c.columns.path,bytes:got.bytes,sheets};dictionaryFromCensus=true;
+        censusSays.textContent=`${c.country}: its data dictionary, ${c.columns.path}, has ${sheets[0]?.rows.length??0} variables. Kept with the table; what it says is proposed for you to accept.`;
       }catch(e){fail(e);return;}
     }
     urlInput.value=CENSUS.raw+c.counts.path;

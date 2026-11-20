@@ -69,6 +69,12 @@ A census table holds several levels in one file: DR Congo's has the country, its
 sub-regions, told apart by the column `level`. Keep the rows of one level before adding them up or joining them to
 an area.
 
+Where a country's census units are not today's, a table derived from the counts is offered beside them. DR Congo's
+1984 counts are also offered **Summed to today's 26 provinces (2015)**: each 1984 city and sub-region placed in the
+province it went to, with the province's name as geoBoundaries spells it (`geoboundaries_name`), to relate to a map
+of today's provinces. Its counts are still 1984's. How each unit was placed, and what the placing does not establish,
+are in the repository beside it.
+
 The step reopens on the tab its table came through. A new step opens on the tab last used on this device.
 
 ## Keys
@@ -165,6 +171,8 @@ the shape, the keys and the columns, is the same for all three.
 
 **Census tables** reads a country's counts and its data dictionary from the census-tables repository at a pinned
 commit, checked by digest. Three countries to begin with: Botswana (2022), DR Congo (1984) and Rwanda (2022).
+DR Congo's 1984 counts are also offered summed to today's 26 provinces, so they relate to a map of today's provinces;
+the 1984 names (KIVU, SHABA) match none of them.
 
 The heading no longer repeats the widget's name when the step still has it: "Tabular data", not "Tabular data ·
 Tabular data".

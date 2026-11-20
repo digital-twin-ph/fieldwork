@@ -46,3 +46,12 @@ test('MERS: 162 cases with every recorded source, SK_39 with three and SK_107 wi
   assert.deepEqual(t.cases.find(c=>c.id==='SK_39').alsoFrom.length,2);
   assert.match(treeSentence(t),/2 cases record more than one source/);
 });
+
+/** NOTHING MATCHED (2026-11-20): today's provinces beside DR Congo's 1984 regions. The message shows a few keys from
+ *  each side, so the two kinds of key are seen together. */
+test('when no key matches, the message shows what each table holds',()=>{
+  const provinces=tableOf(['name'],[['Kinshasa'],['North Kivu'],['Haut-Katanga'],['Lualaba'],['Ituri'],['Tshopo']]);
+  const regions=tableOf(['name','total'],[['KIVU','1'],['SHABA','2']]);
+  assert.throws(()=>relateShape(provinces,regions,{on:'name',bring:'total'}),
+    /"name".*"name".*first table holds "Kinshasa", "North Kivu", "Haut-Katanga", "Lualaba" and 2 more; the second holds "KIVU", "SHABA"\./s);
+});

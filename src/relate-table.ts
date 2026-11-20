@@ -431,10 +431,18 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   // Reported before any decision is asked for: "no key matched at all" is a different fault from
   // "nine keys did not", and telling a practitioner to decide what to do with every row of their
   // table is not the message they need.
-  if(!matched)
-    throw new Error(`No key in the first table's "${on}" column appears in the second table's, so `
-      +'nothing could be related. Check that the two columns hold the same kind of key'
+  // WHAT EACH SIDE HOLDS, a few of each, so the person sees the two kinds of key side by side (2026-11-20: DR
+  // Congo's 1984 census named KIVU and SHABA beside today's North Kivu and Haut-Katanga, and the message said only
+  // that nothing matched).
+  if(!matched){
+    const some=(raws:Iterable<string>)=>{const all=[...new Set([...raws].filter(Boolean))];
+      return all.length?all.slice(0,4).map(v=>`"${v}"`).join(', ')+(all.length>4?` and ${all.length-4} more`:''):'only empty cells';};
+    const rightOnName=rightKeys.join(' and ');
+    throw new Error(`No key in the first table's "${on}" column appears in the second table's "${rightOnName}", so `
+      +`nothing could be related. The first table holds ${some(left.rows.map(rawOf))}; `
+      +`the second holds ${some(right.rows.map(rightRawOf))}. Check that the two columns hold the same kind of key`
       +(normalisation==='exact'?', or compare them with punctuation folded.':'.'));
+  }
 
   // WHAT THE JOIN DOES TO EACH NUMERIC VARIABLE, over the rows that MATCHED. Independent of the
   // decision, because that is the comparison the decision is made against: under `keep` the result

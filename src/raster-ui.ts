@@ -34,7 +34,7 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
   let reading='',failure='',urlField='',urlOpen=false,serial=0,redrawNow:()=>void=()=>{},rereadSaid='',rereadDone=false;
   const nameOf=(href:string)=>{try{return decodeURIComponent(new URL(href).pathname.split('/').pop()||href);}catch{return href;}};
   const picked=()=>!!(file||url);
-  const windowOf=(d:RasterDraft)=>metadata?rasterWindow(metadata,boundary,Number(d.padding)):undefined;
+  const windowOf=(d:RasterDraft)=>metadata?rasterWindow(metadata,boundary,Number(d.padding),false):undefined;
   const fail=(e:unknown)=>{failure=e instanceof Error?e.message:String(e);reading='';};
   const card=(title:string,body:string)=>`<section class="config-group"><h3 class="config-group-title">${title}</h3>${body}</section>`;
 
@@ -50,6 +50,17 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
     sections:d=>{
       let window:ReturnType<typeof rasterWindow>|undefined,windowFailure='';
       try{window=windowOf(d);}catch(e){windowFailure=e instanceof Error?e.message:String(e);}
+      // PAST WHAT A TAB HOLDS, SAID AND NOT REFUSED (2026-11-20). The window was checked against the old limits as soon as
+      // a raster was chosen, so GHS-POP over DR Congo was refused here and Apply, which streams it, was never reached.
+      // A NetCDF grid is not streamed, and is still refused.
+      let streamedNote='';
+      if(window&&metadata&&overWindowLimit(metadata,window)){
+        if(file&&netcdf){try{rasterWindow(metadata,boundary,Number(d.padding));}catch(e){windowFailure=e instanceof Error?e.message:String(e);}}
+        else{const width=window[2]-window[0],height=window[3]-window[1],factor=reductionFactor(width,height);
+          streamedNote=`This window is ${(width*height).toLocaleString('en')} cells, more than a tab holds at once. Apply keeps a copy `
+            +`in blocks of ${factor} by ${factor} cells for the map, and Sample a raster reads the full cells from `
+            +`${file?'this file':'its address'} in strips at each run.`;}
+      }
       const chosenName=file?file.name:url?nameOf(url):'';
       const presetShown=(file?file.name:existing&&!url?existing.source.filename:'')===WORLDPOP_BOTSWANA_FILENAME;
       const away=existing&&kept&&!kept.onDevice&&!picked();
@@ -102,7 +113,7 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
       const overhang=metadata&&window&&!problem?overhangSentence(rasterOverhang(metadata,boundary)):'';
       return {settings,preview,decisions:`<p>Pixel values are not automatically interpreted as population totals.</p>`,
         blocked:!!reading||!!problem||!(metadata&&window)&&!(existing&&!picked()),
-        ...(problem?{message:{tone:'refusal' as const,text:problem}}:overhang?{message:{tone:'warning' as const,text:overhang}}:{})};
+        ...(problem?{message:{tone:'refusal' as const,text:problem}}:streamedNote||overhang?{message:{tone:'warning' as const,text:[streamedNote,overhang].filter(Boolean).join(' ')}}:{})};
     },
     wire:(root,d,redraw)=>{
       redrawNow=redraw;

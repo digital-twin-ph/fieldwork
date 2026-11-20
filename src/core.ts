@@ -2014,7 +2014,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         if(absent.length)throw new Error(count===2?'Connect two tables: this step stacks the rows of the second under the first.'
           :`Connect a table to every port: ${absent.map(i=>`table ${i}`).join(', ')} ${absent.length===1?'has':'have'} none. `
             +'Remove a port you do not need.');
-        const result=appendTables(tables as import('./data-table.js').DataTable[],node.params);
+        const names=Array.from({length:count},(_,i)=>{const from=workflow.edges.find(e=>e.to===node.id&&e.port===appendPort(i))?.from;
+          const up=workflow.nodes.find(x=>x.id===from);return up?String((up.params as {label?:string}).label||TYPES[up.type]?.title||up.id):'';});
+        const result=appendTables(tables as import('./data-table.js').DataTable[],node.params,names);
         value={...result.table,sentence:appendSentence(result,node.params)} as unknown as DisplayValue;
         receipts.push({nodeId:node.id,kind:'computation',method:appendSentence(result,node.params),
           from:result.from,fromFirst:result.fromFirst,fromSecond:result.fromSecond,missing:result.missing} as unknown as Receipt);

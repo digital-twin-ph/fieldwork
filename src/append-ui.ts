@@ -8,7 +8,7 @@ import {openConfigDialog} from './config-dialog.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {appendWalkthrough} from './table-walkthroughs.js';
 import {dataTableMarkup,wireTablePages} from './data-table-ui.js';
-import {appendTables,appendSentence,appendTableCount,appendLabel} from './append-rows.js';
+import {appendTables,appendSentence,appendTableCount,appendLabel,valueMismatch} from './append-rows.js';
 
 type Params=ParamsByType['append_rows'];
 export interface AppendDraft {count:number; nameSource:boolean; sourceColumn:string; labels:string[];
@@ -45,6 +45,8 @@ export interface AppendConfigView {
   tables:(DataTable|undefined)[];
   /** The step feeding each port, by name. */
   sources:string[];
+  /** The value column each step feeding a port declares, where it says without a run. */
+  values?:(string|undefined)[];
   initial:AppendDraft;
   apply:(d:AppendDraft)=>void;
 }
@@ -79,10 +81,20 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
           +`<p class="muted">Numbers every row 1 to N. The old key column stays${d.nameSource?', and source with the old key is kept as a second unique key':''}.</p>`:'');
       shown=undefined;
       const tables=view.tables.slice(0,d.count);
-      if(tables.length<d.count||tables.some(t=>!t))return {settings,preview:'<p class="muted">Run the workflow once every table is connected, '
-        +'and the stacked table these settings make is shown here before they are applied.</p>'};
+      const names=view.sources.slice(0,d.count);
+      if(tables.length<d.count||tables.some(t=>!t)){
+        // EACH STEP'S VALUE COLUMN, as each declares it, and the one that differs, said before a run (2026-11-20).
+        const values=(view.values??[]).slice(0,d.count);
+        const known=values.length===d.count&&values.every(v=>!!v);
+        const mismatch=known?valueMismatch(values.map(v=>({valueField:v!})),names):null;
+        const list=values.some(Boolean)?'<ul class="append-values">'+Array.from({length:d.count},(_,i)=>
+          `<li>${esc(names[i]||`${name(i)}, not connected`)}: value column ${values[i]?`<strong>${esc(values[i]!)}</strong>`:'not known until a run'}</li>`).join('')+'</ul>':'';
+        return {settings,preview:list+'<p class="muted">Run the workflow once every table is connected, '
+          +'and the stacked table these settings make is shown here before they are applied.</p>',
+          ...(mismatch?{message:{tone:'warning' as const,text:mismatch}}:{})};
+      }
       try{
-        const result=appendTables(tables as DataTable[],asParams(d));shown=result.table;
+        const result=appendTables(tables as DataTable[],asParams(d),names);shown=result.table;
         return {settings,preview:`<p>${esc(appendSentence(result,asParams(d)))}</p><div class="append-preview">${dataTableMarkup(result.table,esc,{pageSize:12})}</div>`};
       }catch(error){return {settings,message:{tone:'refusal',text:error instanceof Error?error.message:String(error)},blocked:true};}
     },

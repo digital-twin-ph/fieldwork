@@ -22,7 +22,7 @@ test('rows stack in order, columns line up by name, and a column one table lacks
 
 test('tables measuring different things, a clashing source name and equal labels stop the step',()=>{
   const other=dataTable({headers:['id','n'],rows:[['x','1']]},{keys:['id'],valueField:'n'});
-  assert.throws(()=>appendRows(cases,other),/measure different things: "age" and "n"/);
+  assert.throws(()=>appendRows(cases,other),/the second table has "n" as the value column, where the first table has "age"/);
   assert.throws(()=>appendRows(cases,matched,{nameSource:true,sourceColumn:'fall'}),/already a column/);
   assert.throws(()=>appendRows(cases,matched,{nameSource:true,sourceColumn:'source',firstLabel:'a',secondLabel:'a'}),/different labels/);
 });
@@ -76,7 +76,10 @@ test('a label declared a number that is not one is a finding, and its rows are k
 test('three tables: a repeated label, a different measure, and the third table named in what is missing',()=>{
   assert.throws(()=>appendTables([cases,cases,cases],{nameSource:true,sourceColumn:'s',labels:['a','b','a']}),/"a" is used twice/);
   const other=dataTable({headers:['id','n'],rows:[['x','1']]},{keys:['id'],valueField:'n'});
-  assert.throws(()=>appendTables([cases,cases,other]),/Table 3 measures something different from the first: "n", not "age"/);
+  assert.throws(()=>appendTables([cases,cases,other]),/table 3 has "n" as the value column, where table 1 and table 2 have "age"/);
+  // THE ODD ONE OUT IS NAMED, wherever it is: a census read with "level" first, beside three population tables (2026-11-20).
+  assert.throws(()=>appendTables([other,cases,cases,cases],{},['Census 1984','WorldPop','GRID3','GHS-POP']),
+    /"Census 1984" has "n" as the value column, where "WorldPop", "GRID3", and "GHS-POP" have "age"\. .*open "Census 1984"'s Configure… and choose the column holding the same quantity as its value, named "age"/);
   const result=appendTables([cases,cases,matched]);
   assert.deepEqual(result.missing,[{column:'plz',rows:2,table:1},{column:'plz',rows:2,table:2}]);
   assert.match(appendSentence(result,{}),/"plz" is empty on the 2 rows from table 1/);

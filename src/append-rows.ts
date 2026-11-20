@@ -56,17 +56,29 @@ export function appendRows(first:DataTable,second:DataTable,params:AppendParams=
 
 /** ROWS OF EVERY TABLE, one after another, in port order. One step for any number of tables: the practitioner,
  *  2026-11-06, *"we do not want too many widgets of the same kind chained when 1 will do."* Experiment 181. */
-export function appendTables(tables:DataTable[],params:AppendParams={}):AppendResult{
+/** WHICH STEP MEASURES SOMETHING ELSE, by name (2026-11-20). The refusal said "Table 2 measures something different from the
+ *  first" when the first was the odd one: a DR Congo census read with "level" as its value, beside three population
+ *  rasters. It now names each step and its value column, singles out the one that differs from the rest, and says
+ *  where to change it. `names` are the steps feeding the ports, in port order; without them, tables are numbered. */
+export function valueMismatch(tables:readonly {valueField:string}[],names?:readonly string[]):string|null{
+  const fields=tables.map(t=>t.valueField);
+  if(new Set(fields).size<=1)return null;
+  const called=(i:number)=>names?.[i]?`"${names[i]}"`:tables.length===2?(i===0?'the first table':'the second table'):`table ${i+1}`;
+  const counts=new Map<string,number>();for(const f of fields)counts.set(f,(counts.get(f)??0)+1);
+  const top=Math.max(...counts.values()),most=[...counts].filter(([,n])=>n===top).map(([f])=>f);
+  const usual=most.length===1?most[0]!:fields[0]!;
+  const odd=fields.flatMap((f,i)=>f===usual?[]:[i]),even=fields.flatMap((f,i)=>f===usual?[i]:[]);
+  const list=(ix:number[])=>ix.map(called).join(ix.length>2?', ':' and ').replace(/, ([^,]*)$/,', and $1');
+  return `${list(odd)} ${odd.length===1?'has':'have'} ${[...new Set(odd.map(i=>`"${fields[i]}"`))].join(' and ')} as the value column, `
+    +`where ${list(even)} ${even.length===1?'has':'have'} "${usual}". Rows can be stacked only where the value column is the same quantity `
+    +`under the same name: open ${called(odd[0]!)}'s Configure… and choose the column holding the same quantity as its value, named "${usual}".`;
+}
+export function appendTables(tables:DataTable[],params:AppendParams={},names?:readonly string[]):AppendResult{
   if(tables.length<2)throw new Error('Connect at least two tables: this step stacks their rows.');
   const [first]=tables as [DataTable,...DataTable[]];
+  const mismatch=valueMismatch(tables,names);if(mismatch)throw new Error(mismatch);
   tables.forEach((table,i)=>{
     if(i===0)return;
-    if(first.valueField!==table.valueField)
-      throw new Error(tables.length===2
-        ?`The two tables measure different things: "${first.valueField}" and "${table.valueField}". `
-          +'Rows can be stacked only where the value column is the same quantity under the same name.'
-        :`Table ${i+1} measures something different from the first: "${table.valueField}", not "${first.valueField}". `
-          +'Rows can be stacked only where the value column is the same quantity under the same name.');
     if((first.unit??'')!==(table.unit??''))
       throw new Error(tables.length===2
         ?`The two tables count in different units: ${first.unit||'unstated'} and ${table.unit||'unstated'}.`

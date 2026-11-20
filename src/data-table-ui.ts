@@ -61,6 +61,16 @@ const esc:Escape=(value:unknown)=>String(value??'')
 
 /** More columns than this and a column list gets tools to find, clear and paste, and a long read starts unticked. */
 export const MANY_COLUMNS=12;
+/** THE VALUE COLUMN, GUESSED ONLY WHERE THE FILE AGREES (2026-11-20): a column named like a value -- value, amount,
+ *  measure, level -- and holding numbers in the rows read. DR Congo's census has "level" (pays, region, ville), which the
+ *  name alone took as its value, so Append rows later refused a census beside three population tables. Where no named
+ *  column holds numbers, nothing is guessed, and the dialog asks for the column. */
+export function guessValueColumn(headers:readonly string[],rows:readonly (readonly string[])[]):number{
+  const numeric=(i:number)=>{let seen=0;
+    for(const row of rows){const cell=(row[i]??'').trim();if(cell==='')continue;if(!Number.isFinite(Number(cell.replace(/,/g,''))))return false;if(++seen>=50)break;}
+    return seen>0;};
+  return headers.findIndex((h,i)=>/^(value|value_m|amount|measure|level)$/i.test(h.trim())&&numeric(i));
+}
 /** How each column list refreshes its summary when it is ticked in code -- a change of shape -- rather than by a person. */
 const refreshers=new WeakMap<Element,()=>void>();
 /** A LONG COLUMN LIST IS CHOSEN IN A DIALOG OF ITS OWN. The practitioner, 2026-11-04, on NYC's 92 key column checkboxes:
@@ -204,7 +214,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<fieldset id="table-values" hidden><legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p></fieldset>'
     +'<div id="table-long-value"><label class="field-label" for="table-value">Value column</label><select id="table-value" disabled></select></div>'
     +'<div id="table-wide-names" hidden><label class="field-label" for="table-measure-key">Name for the column holding the variable names</label><input id="table-measure-key" maxlength="40" value="measure">'
-    +'<label class="field-label" for="table-value-name">Name for the column holding their values</label><input id="table-value-name" maxlength="40" value="value">'
+    +'<label class="field-label" for="table-value-name">Name for the column holding variable values</label><input id="table-value-name" maxlength="40" value="value">'
     +'<p class="muted">Both are your words, because every downstream step names them: a Rate takes its measure key, and a derived value names two of its values.</p></div>'
     +'<label class="field-label" for="table-unit">Unit of the value (entered by you)</label><input id="table-unit" maxlength="40" placeholder="for example metre; leave empty if unstated">'
     +'<p class="muted">A unit is recorded as you state it and is never inferred from the file. An empty value cell is kept as unknown and counted, never read as zero.</p>'
@@ -451,6 +461,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
           +`${table.missingValueCount} values absent.`;
       }else{
         const valueField=valueSelect.value;
+        if(!valueField){status.textContent='Choose the value column: the one holding the numbers.';save.disabled=true;return;}
         table=dataTable(parsed,{keys,valueField,...roles,...(unit?{unit}:{})});
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
           keys,valueField,...(unit?{unit}:{})};
@@ -524,13 +535,13 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       keyNames=headers.filter((_,i)=>!numeric[i]);
       if(!keyNames.length)keyNames=headers.slice(0,1);
     }else{
-      const guess=headers.findIndex(h=>/^(value|value_m|amount|measure|level)$/i.test(h));
-      const valueAt=guess<0?headers.length-1:guess;
+      const valueAt=guessValueColumn(headers,parsed.rows);
       // A WIDE FILE READ LONG STARTS WITH NOTHING TICKED. Every column but the value was ticked, which for NYC's 92 was
       // 87 to untick to keep 5. The practitioner, 2026-11-04: *"This is choice overload"*. A small file keeps the
       // old default, where it is usually right.
-      keyNames=headers.length>MANY_COLUMNS?[]:headers.filter((_,i)=>i!==valueAt);
-      valueSelect.value=headers[valueAt];
+      // Nothing guessed, nothing ticked: the keys follow from the value column the person chooses.
+      keyNames=headers.length>MANY_COLUMNS||valueAt<0?[]:headers.filter((_,i)=>i!==valueAt);
+      valueSelect.value=valueAt<0?'':headers[valueAt]!;
     }
     const held=existing?.wide;
     for(const box of keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))
@@ -676,15 +687,15 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       parsed=stata??(sheet?{headers:sheet.headers,rows:sheet.rows}:undefined)??parseCSV(text,MAX_TABLE_ROWS,FILE_BYTES);
       status.textContent=stata?`Stata format ${stata.format}: ${stata.rows.length.toLocaleString()} rows of ${stata.headers.length} variables.`
         +(stata.notes.length?` ${stata.notes.join(' ')}`:''):'';
-      const guessValue=parsed.headers.findIndex(h=>/^(value|value_m|amount|measure|level)$/i.test(h.trim()));
+      const guessValue=guessValueColumn(parsed.headers,parsed.rows);
       keysBox.innerHTML+=parsed.headers.map((header,i)=>{
         const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
-        const preselect=existing?existing.keys.includes(header.trim()):i!==(guessValue<0?parsed!.headers.length-1:guessValue);
+        const preselect=existing?existing.keys.includes(header.trim()):guessValue>=0&&i!==guessValue;
         return `<label><input type="checkbox" value="${escaped}" ${preselect?'checked':''}> ${escaped}</label>`;}).join('');
       keysBox.hidden=false;
-      valueSelect.innerHTML=parsed.headers.map((header,i)=>{
+      valueSelect.innerHTML='<option value="">Choose the value column</option>'+parsed.headers.map((header,i)=>{
         const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
-        const chosen=existing?header.trim()===existing.valueField:i===(guessValue<0?parsed!.headers.length-1:guessValue);
+        const chosen=existing?header.trim()===existing.valueField:i===guessValue;
         return `<option value="${escaped}" ${chosen?'selected':''}>${escaped}</option>`;}).join('');
       valueSelect.disabled=false;
       // THE VALUE COLUMNS, for the wide reader. Preselected as everything that is not a chosen

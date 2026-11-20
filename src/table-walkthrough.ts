@@ -1,4 +1,5 @@
-/** A TABLE STEP SHOWN ON A SMALL EXAMPLE (experiment 223), the player every table widget's walkthrough shares.
+/** A TABLE STEP SHOWN ON A SMALL EXAMPLE (experiment 223), the player every table widget's walkthrough shares, and since
+ *  2026-11-20 every spatial one: a step may carry a drawing in place of the tables.
  *
  *  Back, Step and Play; it never starts by itself. Each step is one sentence, said to a screen reader too, and the rows
  *  it is about are outlined and labelled in words, never by colour alone. The result table fills as the steps go. A row
@@ -20,6 +21,9 @@ export interface WalkStep {
   stopped?:boolean;
   /** A problem found so far will stop the step once every row is checked: no table will come out. */
   willStop?:boolean;
+  /** A SPATIAL STEP'S DRAWING (2026-11-20), in place of the tables: made here from fixed shapes, never from a person's data.
+   *  `key` says in words what each kind of line in it is, so nothing is told by colour alone. */
+  figure?:{svg:string;key:string[]};
 }
 export interface Walkthrough {title:string; tables:WalkTable[]; resultColumns:string[]; steps:WalkStep[]}
 
@@ -28,6 +32,9 @@ const SHAPE:Record<MarkState,string>={looking:'›',matched:'✓',unmatched:'✕
 /** The walkthrough at one step, as markup: the input tables with this step's rows marked, the result so far, the sentence. */
 export function walkthroughMarkup(walk:Walkthrough,at:number,esc:Escape):string{
   const step=walk.steps[at]!;
+  if(step.figure)return `<p class="walk-made-up">Made-up example</p><figure class="walk-figure">${step.figure.svg}`
+    +`<figcaption><ul class="walk-key">${step.figure.key.map(k=>`<li>${esc(k)}</li>`).join('')}</ul></figcaption></figure>`
+    +`<p class="walk-say" aria-live="polite"><span class="walk-count">Step ${at+1} of ${walk.steps.length}.</span> ${esc(step.text)}</p>`;
   const tableHtml=(t:WalkTable,ti:number)=>`<figure class="walk-table"><figcaption>${esc(t.label)}</figcaption><table><thead><tr>`
     +t.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')+'<th scope="col"><span class="visually-hidden">This step</span></th></tr></thead><tbody>'
     +t.rows.map((r,ri)=>{const m=step.marks.find(x=>x.table===ti&&x.row===ri);

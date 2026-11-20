@@ -625,7 +625,7 @@ export interface ParamsByType {
   measure_distance:{unit:DistanceUnit; candidateFilter?:CandidateCondition[]; label?:string};
   travel_time:{label:string; speedMPerMin:number};
   policy:{thresholdKm:number};
-  measure_area:{unit:AreaUnit};
+  measure_area:{unit:AreaUnit;label?:string};
   /** RETIRED 2026-10-21, kept the way every other retired widget is kept: the definition and its
    *  parameters stay so the registry entry resolves and a saved workflow that still names the type
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */

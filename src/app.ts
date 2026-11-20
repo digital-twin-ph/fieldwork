@@ -5748,6 +5748,12 @@ function renderInspector(){
       tables:ports.map(port=>tableOnPort(workflow,n.id,port)??undefined),
       sources:ports.map(port=>{const from=workflow.edges.find(e=>e.to===n.id&&e.port===port)?.from;
         const up=workflow.nodes.find(x=>x.id===from);return up?(up.params.label||TYPES[up.type].title):'';}),
+      // WHAT EACH STEP SAYS ITS VALUE COLUMN IS, without a run (2026-11-20): a run stopped here leaves no tables to read.
+      values:ports.map(port=>{const table=tableOnPort(workflow,n.id,port);if(table)return table.valueField;
+        const from=workflow.edges.find(e=>e.to===n.id&&e.port===port)?.from,up=workflow.nodes.find(x=>x.id===from);
+        if(up?.type==='sample_raster')return up.params.attribute||undefined;
+        if(up?.type==='table_input')return up.params.valueField||undefined;
+        return undefined;}),
       initial:appendDraftOf(node.params),
       apply:d=>{change(w=>{const target=getNode(w,n.id,'append_rows');
         // FEWER TABLES DROP THE CONNECTIONS TO THE PORTS THAT GO.

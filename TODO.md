@@ -56,15 +56,18 @@ not a practitioner in the field.
 
 Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
-## Next, in order (2026-11-19)
+## Next, in order (2026-11-20)
 
-1. Publish 0.152.0 once a gate passes; on 2026-11-19 the network was too slow for two downloads.
+1. Tabular data's sources as tabs (2026-11-20): Your file, From an address, Census tables, Tide gauges with its overview
+   map, and DHIS2's export; manual pages for the census and tide-gauge sources; the five example manuals' fetch steps;
+   with the study area picker reading the boundaries repository, one gate.
 2. Raster streaming for GHS-POP over DR Congo: [GHS-POP over DR Congo is refused](#ghs-pop-over-dr-congo-is-refused-8-byte-cells-found-2026-11-19-streaming-decided-the-same-day).
 3. Experiment 225, WebGPU as an accelerator: [WebGPU as an accelerator](#webgpu-as-an-accelerator-never-a-requirement-225-asked-2026-11-19).
 4. The agent-based model compared with Hagelloch's recorded curve (experiment 199, option 4, chosen 2026-11-19): [item 29](#29-an-agent-based-model-in-the-browser-checked-against-starsim).
 5. The gate: recorded copies of live services, from-scratch tests on several workers, and a live-service check on GitHub ([gating audit](docs/audits/gating-audit.md), Decided 2026-11-19).
 6. Show-me-how walkthroughs for spatial steps: batch 1, Join a table to the study area and Sample a raster; then batch 2, Clip polygons, Keep points inside the area and Summarize points to polygons ([Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07)).
 7. Census tables, experiment 224: the download list for 15 countries, then a table source reading the census-tables repository ([224](docs/experiments/224-census-counts-as-a-table-source.md)).
+8. DHIS2: a test server in Docker, then a connection, its own release ([DHIS2 as a table source](#dhis2-as-a-table-source-with-a-test-server-in-docker-asked-2026-11-19-widened-2026-11-20)).
 
 ## Urgent
 
@@ -1360,7 +1363,7 @@ Placed after raster streaming (the practitioner: *"Agree with WebGPU order"*), w
 raster's cells is bound by arithmetic or by reading. The spike: where WebGPU is offered (the gate's headless Chromium
 included), a density surface in the Rust kernel and in WGSL compared cell by cell, and the fallback.
 
-### A connection to DHIS2's public test instance (asked 2026-11-19)
+### DHIS2 as a table source, with a test server in Docker (asked 2026-11-19, widened 2026-11-20)
 
 The practitioner: *"Can we also test connection with the public test DHIS2 instance, add as a TODO item."* DHIS2 runs
 public demonstration servers (play.dhis2.org) with published demonstration accounts. To find out, before anything is
@@ -1386,6 +1389,31 @@ which a server's administrator sets. A country's own server would have to add Fi
 server that is an administrator's change, and it would not survive the server's reset. Not established: whether a
 signed-in request differs (it should not, since the browser stops at the preflight), and which stable instances exist.
 Raised with the practitioner the same day, for a DHIS2 tab in Tabular data beside Census tables.
+
+**Widened 2026-11-20.** The practitioner: *"I asked about the public DHIS 2 instance as well because it is a source of
+tabular data where countries have DHIS2 based surveillance"*, then *"Add DHIS2 to TODO including a docker test
+server"*. In order:
+
+1. **DHIS2's own export, through Your file.** DHIS2's Data Visualizer and pivot tables download CSV, which Tabular data
+   already reads. Proposed for the Tabular data batch: a DHIS2 tab that says how to export, recognises the export's
+   columns (data element, period, organisation unit) and proposes their descriptions, as the census tab does with its
+   data dictionary. Works for any country, whitelisted or not.
+2. **A DHIS2 test server in Docker, on this Mac.** DHIS2's official image (`dhis2/core`) with PostgreSQL and PostGIS,
+   loaded with DHIS2's Sierra Leone demonstration database. On `localhost` its CORS whitelist can list Fieldwork's
+   local address, so the connection can be built and tried against a real DHIS2 that resets only when we reset it,
+   without asking anyone. Docker 28.3.2 is installed. Before anything is pulled: the image tags, the database dump's
+   source and size, and the memory DHIS2 asks for, each stated and asked, since the image and the dump are downloads.
+   DHIS2 is not Fieldwork's own application, so setting its administrator password, adding the whitelist entry and
+   making a personal access token are the practitioner's steps, written out for them; the assistant does not type
+   that password. The gate never depends on Docker: it answers from recorded copies of the server's replies, as for
+   geoBoundaries.
+3. **A connection to a DHIS2 server**, its own release: a personal access token held in Credentials, as GitHub's is;
+   data sets, data elements, organisation units and periods listed; analytics read as a table and organisation units'
+   geometry as a polygon layer. Tried against the Docker server first, then against a country's server whose
+   administrator whitelists Fieldwork's address.
+
+Not established: whether DHIS2's analytics API returns a district's data at a size a browser handles, which DHIS2
+versions the countries in the worked examples run, and who could whitelist Fieldwork on a country's server.
 
 ### From Nigeria, 2026-11-02 ([162](docs/experiments/162-polygons-are-records.md))
 

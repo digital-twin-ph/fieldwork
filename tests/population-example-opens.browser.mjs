@@ -137,3 +137,36 @@ test('Rwanda’s workflow opens from the example, its windows read again and che
   expect(await sideBySide.locator('svg image').count()).toBeGreaterThan(1);
   expect(errors).toEqual([]);
 });
+
+/** WITHOUT THE DOWNLOADS (2026-11-20): the example opens from its pin, each workflow's census reads census-tables as a
+ *  hand-built workflow does, and its figures' titles and census label carry the workflow's words. What the gate can
+ *  check with no raster on the machine; the run itself needs POP_FILES, above. */
+test('the example opens from its pin, its census read from Census tables, its titles in the workflow’s words',async({page})=>{
+  test.skip(!existsSync(new URL('fieldwork-project.json.gz',REPO)),'Needs the example repository beside this one.');
+  const errors=collectPageErrors(page);
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/example-population-models-census/,route=>{
+    const path=new URL(route.request().url()).pathname.split('/').slice(4).join('/');
+    route.fulfill({status:200,body:readFileSync(new URL(path,REPO))});
+  });
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="project"]').click();
+  await page.locator(`[data-open-example="${ID}"]`).click();
+  await expect(page.locator(`[data-example-status="${ID}"]`)).toContainText('digest matched',{timeout:60000});
+  for(const [country,rows,iso] of [['Botswana',28,'BWA'],['Rwanda',30,'RWA']]){
+    const value=await page.locator('#workflow-select option').filter({hasText:country}).getAttribute('value');
+    await page.locator('#workflow-select').selectOption(value);
+    await page.locator('[data-view="workflow"]').click();
+    await page.locator('.react-flow__node[data-id="census"]').click();
+    await expect(page.locator('[data-table-remote]')).toContainText('raw.githubusercontent.com');
+    await expect(page.locator('#inspector-content')).toContainText(`${rows} rows`);
+    const params=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes);
+    const census=params.find(n=>n.id==='census').params;
+    expect(census.remote.url).toContain(`/census-tables/`);expect(census.remote.url).toContain(`${iso}/districts.csv`);
+    expect(census.unit).toBe('persons');expect(census.valueField).toBe('population');
+    expect(params.find(n=>n.type==='append_rows').params.labels[0]).toBe('{census}');
+    expect(params.find(n=>n.type==='chart_output').params.chartTitle).toContain('{country}');
+    expect(params.find(n=>n.type==='study_area').params.countries).toEqual([iso]);
+  }
+  expect(errors).toEqual([]);
+});

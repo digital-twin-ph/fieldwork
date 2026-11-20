@@ -53,7 +53,9 @@ test('a census table is read with its data dictionary, checked against the pin, 
 });
 
 test('a census table whose bytes differ from the pin is refused, and nothing is kept',async({page})=>{test.skip(!!skip,skip);
-  await answer(page,(bytes,path)=>path.endsWith('counts.csv')?Buffer.concat([bytes,Buffer.from('region,X,Y,1,1,2,T-02,1,added\n')]):bytes);
+  // The table the tab reads for Rwanda, whichever it is, with a row added.
+  const rwa=catalogue.countries.find(c=>c.iso3==='RWA').counts.path;
+  await answer(page,(bytes,path)=>path===rwa?Buffer.concat([bytes,Buffer.from('X,Y,Y,,1,1,2\n')]):bytes);
   await open(page);
   await page.locator('#table-tab-census').click();
   await page.locator('[data-census="RWA"]').click();

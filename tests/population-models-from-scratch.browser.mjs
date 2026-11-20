@@ -1,10 +1,13 @@
 import {test,expect} from './fixtures.mjs';
 import {existsSync,readFileSync} from 'node:fs';
+import {execFileSync} from 'node:child_process';
 
 /** POPULATION MODELS BESIDE A CENSUS (experiment 209): WorldPop, GRID3 and GHS-POP totalled over each census district and
  *  set beside the 2022 census, as shares of the country, for Botswana (28 districts) and Rwanda (30). The steps are laid
  *  out as the example's project holds them; every piece of data comes in through the dialog a practitioner would use: the
- *  boundaries through the study area, each raster through Raster input, the census through Tabular data.
+ *  boundaries through the study area, each raster through Raster input, the census through Tabular data's Census tables,
+ *  as a hand-built workflow reads it (2026-11-20): each country's districts with geoBoundaries' name for each, read wide
+ *  with its total named "population", its unit from the data dictionary, and lined up under "name" by Append rows.
  *
  *  POP_FILES names a folder holding the downloads (see the example's README); REFERENCE a JSON of rasterio's district
  *  totals over the same files. POP_EXPORT saves the project for the example repository. */
@@ -18,7 +21,14 @@ const COUNTRIES={
   BWA:{name:'Botswana',districts:28,census:'botswana_census_2022_districts.csv',keys:['census_district','name'],boundaryFile:'dl-bwa-adm2/geoBoundaries-BWA-ADM2.geojson',
     worldpop:'worldpop-dl/bwa_pop_2025_CN_100m_R2025A_v1.tif',grid3:'dl-grid3-bwa/bwa_SSApopulation_ 2025_v1_0_gridded.tif'},
 };
-const SOURCES=['Census 2022','WorldPop 2025','GRID3 2025','GHS-POP 2025'];
+// The census's label takes the census read: {census}, shown as "2022 census".
+const LABELS=['{census}','WorldPop 2025','GRID3 2025','GHS-POP 2025'],SOURCES=['2022 census','WorldPop 2025','GRID3 2025','GHS-POP 2025'];
+const CATALOGUE=JSON.parse(readFileSync(new URL('../examples/census-tables/catalogue.json',import.meta.url),'utf8'));
+const CENSUS_REPO=new URL('../../census-tables/',import.meta.url).pathname;
+/** census-tables answered from the checkout beside this repository, at the commit Fieldwork pins. */
+const answerCensus=page=>page.route(url=>url.href.startsWith(CATALOGUE.raw),route=>route.fulfill({status:200,
+  body:execFileSync('git',['-C',CENSUS_REPO,'show',`${CATALOGUE.commit}:${route.request().url().slice(CATALOGUE.raw.length)}`]),
+  headers:{'access-control-allow-origin':'*','content-type':'text/plain'}}));
 
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const node=(page,id)=>page.locator(`.react-flow__node[data-id="${id}"]`);
@@ -33,7 +43,7 @@ function layout(code,tableParams){
     raster('worldpop','WorldPop 2025',320,40),raster('grid3','GRID3 2025',320,220),raster('ghs','GHS-POP 2025',320,400),
     sample('by-worldpop','WorldPop 2025 by district',620,40),sample('by-grid3','GRID3 2025 by district',620,220),sample('by-ghs','GHS-POP 2025 by district',620,400),
     {id:'census',type:'table_input',x:620,y:580,params:{...tableParams,label:'Census 2022 by district'}},
-    {id:'stacked',type:'append_rows',x:920,y:300,params:{label:'Four sources, row by row',tableCount:4,nameSource:true,sourceColumn:'source',labels:SOURCES}},
+    {id:'stacked',type:'append_rows',x:920,y:300,params:{label:'Four sources, row by row',tableCount:4,nameSource:true,sourceColumn:'source',labels:LABELS}},
     {id:'shares',type:'group_table',x:1220,y:300,params:{label:'Each district’s share, by source',by:['source','name'],aggregate:'sum',share:{within:['source']}}},
     {id:'only-shares',type:'select_rows',x:1520,y:300,params:{label:'The shares',keyColumn:'statistic',values:['% within source']}},
     {id:'table',type:'table_output',x:1820,y:200,params:{label:'Shares by district and source'}},
@@ -99,12 +109,14 @@ async function census(page,code){
   const c=COUNTRIES[code];
   await node(page,'census').click();
   await page.locator('#configure-step').click();
-  await page.locator('#table-file').setInputFiles(`${DATA}${c.census}`);
-  await page.locator('#table-shape').selectOption('long');
-  await page.locator('#table-value').selectOption('population');
-  for(const key of c.keys)await page.locator(`#table-keys input[value="${key}"]`).check();
-  // THE CENSUS COUNTS PEOPLE, and says so (2026-11-20): Sample a raster's totals now carry their unit, "people", to Append rows.
-  await page.locator('#table-unit').fill('people');await page.locator('#table-unit').press('Tab');
+  await page.locator('#table-tab-census').click();
+  await page.locator(`[data-census="${code}"]`).click();
+  await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
+  // WIDE, THE TOTAL ALONE, NAMED "population", as the DR Congo workflow read its census.
+  for(const value of ['men','women'])await page.locator(`#table-values input[value="${value}"]`).uncheck().catch(()=>{});
+  await page.locator('#table-value-name').fill('population');await page.locator('#table-value-name').press('Tab');
+  // THE UNIT FROM THE DATA DICTIONARY, not typed.
+  await expect(page.locator('#table-unit')).toHaveValue('persons');
   await page.locator('#table-save').click();
   await expect(page.locator('#table-dialog')).toHaveCount(0,{timeout:30000});
 }
@@ -114,6 +126,7 @@ test(`${COUNTRIES[code].name}: three population models totalled over the census 
   test.skip(!FILES||!existsSync(FILES),'Set POP_FILES to the folder holding the downloads.');
   test.setTimeout(1_800_000);
   const c=COUNTRIES[code];
+  await answerCensus(page);
   // Tabular data's own parameters, as the palette makes them, so the seeded step is one the application would make.
   await page.goto('/?example=blank');
   await page.locator('[data-view="workflow"]').click();
@@ -139,7 +152,7 @@ test(`${COUNTRIES[code].name}: three population models totalled over the census 
   await page.getByRole('tab',{name:'Shares by district and source'}).click();
   if(REFERENCE&&existsSync(REFERENCE)){
     const ref=JSON.parse(readFileSync(REFERENCE,'utf8'))[code];
-    const key={'Census 2022':'census','WorldPop 2025':'WorldPop','GRID3 2025':'GRID3','GHS-POP 2025':'GHS-POP'};
+    const key={'2022 census':'census','WorldPop 2025':'WorldPop','GRID3 2025':'GRID3','GHS-POP 2025':'GHS-POP'};
     for(const source of SOURCES){
       await page.locator('#result-search').fill(source);
       const rows=await page.locator('#data-table-view tbody tr').evaluateAll(trs=>trs.map(tr=>[...tr.children].map(td=>td.textContent.trim())));

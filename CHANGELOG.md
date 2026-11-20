@@ -19,9 +19,16 @@ shown in a local build is not a claim that it has been published.
   - **The unit comes from the data dictionary** where it states one. Tabular data 0.13.0.
   - **A copy of a workflow leaves its figures' subtitles to be written again**, with its study area's countries and unit
     name: a subtitle is the original's finding.
+- **The population example meets what a hand-built workflow meets.** It read census files prepared to fit its map, so it
+  never met a census in the statistics office's own spelling. Its census steps now read Census tables, as anyone's would:
+  each country's districts with the name geoBoundaries gives each (8 of Botswana's 28 spelled differently), read wide
+  with the total named *population* and its unit from the dictionary, lined up under the models' `name` by Append rows by
+  itself; its titles say {country} and {unit}, and its census label {census}. A new check opens it from its pin and
+  checks all this without the raster downloads; running it end to end still needs them.
 - **Census tables in today's units.** DR Congo's only census, of 1984, counted regions that match no map today. It is
   offered summed to the 26 provinces of 2015, with each province's name as geoBoundaries spells it; the counts as
-  printed are linked. How each 1984 unit was placed, and what that does not establish, are in census-tables.
+  printed are linked. How each 1984 unit was placed, and what that does not establish, are in census-tables. Rwanda's
+  and Botswana's districts are offered the same way, each with geoBoundaries' name for it.
 - **Append rows lines its tables' columns up in a grid.** One row per column of the stacked table, the column of each
   table filling it or none, each changeable, with every table before and the stack after. A table holding the others'
   names under a column of its own is refused, naming the column to stack it under, and the name most tables use is

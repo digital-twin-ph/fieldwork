@@ -70,7 +70,9 @@ summed from them and says so: DR Congo's only census, of 1984, counted 9 regions
 (KIVU, SHABA) that match no map today, so it is offered **Summed to today's 26 provinces (2015)**, with each
 province's name as geoBoundaries spells it (`geoboundaries_name`) to relate to a map of today's provinces. Its counts
 are still 1984's. The line beside it links to the counts as printed, kept in the repository as the source, with how
-each unit was placed and what the placing does not establish.
+each unit was placed and what the placing does not establish. Rwanda's and Botswana's districts are offered the same way, each
+with the name geoBoundaries gives it in `geoboundaries_name`: Rwanda's are the census's own, and 8 of Botswana's are
+spelled differently.
 
 The step reopens on the tab its table came through. A new step opens on the tab last used on this device.
 

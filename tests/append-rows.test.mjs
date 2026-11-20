@@ -163,3 +163,15 @@ test('"persons" and "people" are one unit; "metres" is not',()=>{
   assert.equal(appendTables([a,b]).table.rows.length,8);
   assert.throws(()=>appendTables([a,{...b,unit:'metres'}],{},['Census','Raster']),/"Census" counts in "persons"|"Raster" counts in "metres"/);
 });
+
+test('two complete candidates holding the same names are one choice: the first is taken; holding different names, the step asks',()=>{
+  const models=[100,200,300].map(v=>keyed('name',provinces,v));
+  const both={...keyed('unit',provinces,1),keys:['unit','geoboundaries_name'],rows:provinces.map((p,i)=>({key:{unit:p,geoboundaries_name:p},value:i}))};
+  const r=appendTables([both,...models]);
+  assert.deepEqual(r.automatic,[{table:0,column:'unit',as:'name'}]);
+  const other=['Kinshasa','Ituri','Tshopo','Kwilu'].reverse();
+  const split={...both,rows:provinces.map((p,i)=>({key:{unit:p,geoboundaries_name:other[i]},value:i}))};
+  // Both still hold every name, in different rows: which is meant is the person's to say.
+  assert.throws(()=>appendTables([split,...models]),/has no "name" column/);
+  assert.equal(appendTables([split,...models],{stackUnder:[{table:0,column:'geoboundaries_name',as:'name'}]}).table.rows.length,16);
+});

@@ -37,3 +37,8 @@ test('what the area says its units are called comes first; a boundary\'s "Unknow
   const local=workflow({boundaryID:'local:geoBoundaries-BWA-ADM2.geojson',canonical:'as published in the file'});local.nodes[0].params.countries=['BWA'];
   assert.equal(figureWordsOf(local).country,'Botswana');assert.equal(figureWordsOf(local).units,undefined);
 });
+
+test('a census read at an earlier commit of census-tables still names its census',()=>{
+  const old='https://raw.githubusercontent.com/digital-twin-ph/census-tables/ea43c4bd4fe4e86435eeb600530e1f3369ac1aa4/COD/counts.csv';
+  assert.equal(figureWordsOf(workflow({},old)).census,'1984 census');
+});

@@ -50,7 +50,10 @@ export function figureWordsOf(workflow:Workflow):FigureWords{
   const catalogue=censusCatalogue as {raw:string;countries:{counts:{path:string};referenceDate:string}[]};
   for(const n of workflow.nodes){
     const url=n.type==='table_input'?(n as WorkflowNode<'table_input'>).params.remote?.url:undefined;
-    const entry=url?.startsWith(catalogue.raw)?catalogue.countries.find(c=>url===catalogue.raw+c.counts.path):undefined;
+    // At any commit of census-tables: a step read at an earlier pin still names its census.
+    const path=url?.match(/^https:\/\/raw\.githubusercontent\.com\/digital-twin-ph\/census-tables\/[0-9a-f]{7,40}\/(.+)$/)?.[1];
+    const iso=path?.split('/')[0];
+    const entry=iso?catalogue.countries.find(c=>c.counts.path.startsWith(`${iso}/`)):undefined;
     if(entry)census.add(`${entry.referenceDate.slice(0,4)} census`);
   }
   return {...(countries.size?{country:list([...countries].map(countryName))}:{}),...(units??{}),

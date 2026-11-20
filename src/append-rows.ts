@@ -34,9 +34,36 @@ export interface AppendParams {
  *  and the step says so; one where only some match is still asked about. Undefined `stackUnder` means no choice made;
  *  an empty one means the person chose to line columns up by their own names only. */
 export function automaticStackUnder(tables:DataTable[]):StackUnder[]{
-  const found=unstackedColumns(tables).filter(u=>u.matched===u.of);
-  // One column per table and name: two complete candidates for the same name is a choice, not a fact.
-  return found.filter(u=>found.filter(v=>v.table===u.table&&v.as===u.as).length===1).map(({table,column,as})=>({table,column,as}));
+  const complete=completeCandidates(tables);
+  // Row by row: two columns are one choice only where they hold the same name on every row.
+  const names=(i:number,k:string)=>tables[i]!.rows.map(r=>(r.key[k]??'').trim()).join('\u001f');
+  const chosen:StackUnder[]=[];
+  for(const u of complete){
+    if(chosen.some(c=>c.table===u.table&&c.as===u.as))continue;
+    // Two complete candidates for one name are a choice, unless they hold the same names, as Rwanda's census "unit" and
+    // "geoboundaries_name" do: then either gives the same table, and the first is taken.
+    const rivals=complete.filter(v=>v.table===u.table&&v.as===u.as);
+    if(rivals.every(v=>names(v.table,v.column)===names(u.table,u.column)))chosen.push({table:u.table,column:u.column,as:u.as});
+  }
+  return chosen;
+}
+/** Every column of a table whose every name is a name of a column most tables share, in the table's own column order. */
+function completeCandidates(tables:DataTable[]):UnstackedColumn[]{
+  const moved=stackedUnder(tables,{});
+  const holders=(k:string)=>moved.filter(t=>t.keys.includes(k)).length;
+  const values=(t:DataTable,k:string)=>new Set(t.rows.map(r=>(r.key[k]??'').trim()).filter(Boolean));
+  const out:UnstackedColumn[]=[];
+  moved.forEach((table,i)=>{
+    for(const as of [...new Set(moved.flatMap(t=>t.keys))].filter(k=>!table.keys.includes(k))){
+      const held=holders(as),theirs=new Set(moved.filter(t=>t.keys.includes(as)).flatMap(t=>[...values(t,as)]));
+      if(!theirs.size)continue;
+      for(const column of table.keys.filter(k=>holders(k)<held||(holders(k)===held&&i>0&&moved[0]!.keys.includes(as)&&!moved[0]!.keys.includes(k)))){
+        const mine=values(table,column);
+        if(mine.size&&[...mine].every(v=>theirs.has(v)))out.push({table:i,column,as,matched:mine.size,of:mine.size});
+      }
+    }
+  });
+  return out;
 }
 /** The line-up a run uses: the person's, or where they made none, the automatic one. */
 export const lineUpOf=(tables:DataTable[],params:AppendParams):StackUnder[]=>params.stackUnder??automaticStackUnder(tables);

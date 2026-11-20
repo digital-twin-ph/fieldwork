@@ -1,7 +1,7 @@
 {
  "repository": "https://github.com/digital-twin-ph/census-tables",
- "commit": "d66d476342ef2a4e5bb7e6da0df58fc476c0ce3e",
- "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/d66d476342ef2a4e5bb7e6da0df58fc476c0ce3e/",
+ "commit": "db2cb942aa7fcdacd999e011cc5a9d521d1bb178",
+ "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/db2cb942aa7fcdacd999e011cc5a9d521d1bb178/",
  "countries": [
   {
    "iso3": "BWA",
@@ -10,20 +10,24 @@
    "referenceDate": "2022",
    "publisher": "Statistics Botswana",
    "licence": "Statistics Botswana's terms of use: use as the user wishes, acknowledging Statistics Botswana as the source of the basic data",
-   "rows": 29,
+   "rows": 28,
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
    "counts": {
-    "path": "BWA/counts.csv",
-    "bytes": 1237,
-    "sha256": "e32412087e67ab5b0188be0c05b1f6d5ee6e564c58ad7b0402c2197a4a48fc3a"
+    "path": "BWA/districts.csv",
+    "bytes": 857,
+    "sha256": "77c00c42fbed8313f25985c532ac3fcab5ca17e8ca68797122f9695450d32ddb"
    },
    "columns": {
-    "path": "BWA/columns.csv",
-    "bytes": 330,
-    "sha256": "8519d30a71c80d0e41fd4a9e3b062867a798ef2661a8b8a902fc3ff9ebc36fe7"
+    "path": "BWA/districts-columns.csv",
+    "bytes": 413,
+    "sha256": "42a75c1d40163ed33528c5a90f67c629bd3066d0563f84260e3c7eaa2d01e475"
+   },
+   "derived": {
+    "label": "Its 28 census districts, with geoBoundaries' names",
+    "printed": "BWA/counts.csv"
    }
   },
   {
@@ -60,20 +64,24 @@
    "referenceDate": "2022-08",
    "publisher": "National Institute of Statistics of Rwanda (NISR)",
    "licence": "CC BY 4.0",
-   "rows": 36,
+   "rows": 30,
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
    "counts": {
-    "path": "RWA/counts.csv",
-    "bytes": 2570,
-    "sha256": "bd686367fe82fd3c0671b45041c0f275cbedba6b38be8d613d52fe8c009b6d4e"
+    "path": "RWA/districts.csv",
+    "bytes": 2427,
+    "sha256": "2c4b5b9797e12001e930c859cebd8084c590295bb997ed6e0c0917ed39743690"
    },
    "columns": {
-    "path": "RWA/columns.csv",
-    "bytes": 572,
-    "sha256": "2bb4daa3bc5d081f273faaf33d397df6d76dc55005527ff83f539bac8d6b0313"
+    "path": "RWA/districts-columns.csv",
+    "bytes": 661,
+    "sha256": "c5a72762cbadfdf3daf2fe98e57184971b02f821b1f6e7808ecd270316be7ee6"
+   },
+   "derived": {
+    "label": "Its 30 districts, with geoBoundaries' names",
+    "printed": "RWA/counts.csv"
    }
   }
  ]

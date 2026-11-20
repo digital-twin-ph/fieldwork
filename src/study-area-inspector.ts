@@ -7,6 +7,7 @@ import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {countryName,countryOfArea} from './boundary-source.js';
 import {countriesOfArea} from './area-countries.js';
 import {openCountriesConfig} from './area-countries-ui.js';
+import {levelName} from './figure-words.js';
 
 export interface StudyAreaKit extends StepKit {
   /** The map, to select or edit the area. */
@@ -59,6 +60,11 @@ export const studyAreaInspector:OwnInspector<'study_area'>={
     const geometry=p.source==='drawn'?p.geometry:undefined;
     content+=kit.section('Settings',`<p class="standard-sentence">${esc(geometry?`${p.selectionMode==='bbox'?'A bounding box':p.selectionMode==='circle'?'A circle':geometry.type==='MultiPolygon'&&(geometry.coordinates as unknown[]).length>1?`${(geometry.coordinates as unknown[]).length.toLocaleString('en')} polygons`:'A polygon'} of ${geometryVertices(geometry).toLocaleString('en')} vertices, in longitude, latitude order.`
       :'No area yet: select one on the map.')}</p>`+countryField
+      // WHAT ITS UNITS ARE CALLED, said once as the country is (2026-11-20), for every figure's {units}.
+      +(()=>{const own=levelName((p as {boundary?:{canonical?:string}}).boundary?.canonical);
+        return `<div class="field"><label class="field-label" for="area-unit-name">Its units are called</label>`
+          +`<input id="area-unit-name" maxlength="60" value="${esc((p as {unitName?:string}).unitName??'')}" placeholder="${esc(own?own.toLowerCase():'for example provinces')}">`
+          +`<small>${own?`Its boundary calls them ${esc(own.toLowerCase())}; type to say otherwise. `:''}Figures read it where their text says {units} or {unit}.</small></div>`;})()
       +`<div class="inspector-actions"><button id="edit-study-area" class="button primary">${geometry?'Edit area on map':'Select area on map'}</button></div>`);
     let held='';
     if(p.source==='drawn'){
@@ -116,6 +122,9 @@ export const studyAreaInspector:OwnInspector<'study_area'>={
         geometry:structuredClone(chosen.geometry),selectionMode:chosen.selectionMode,
         restoredFrom:Number(b.dataset.restoreExtent)+1}];
     })));
+    root.querySelector<HTMLInputElement>('#area-unit-name')?.addEventListener('change',e=>{const v=(e.target as HTMLInputElement).value.trim();
+      kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type!=='study_area')return;const q=t.params as {unitName?:string};
+        if(v)q.unitName=v;else delete q.unitName;});});
     root.querySelector('#edit-study-area')?.addEventListener('click',()=>k.edit(n.id));
     root.querySelector('#area-view-n3')?.addEventListener('click',()=>k.viewN3());
   },

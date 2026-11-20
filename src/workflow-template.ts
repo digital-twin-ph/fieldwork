@@ -115,6 +115,15 @@ export function templateFrom(workflow:Workflow,options:{name:string;projectId?:s
       if(blank.known)params[key]=blank.value;
       else delete params[key];
     }
+    // A FIGURE'S SUBTITLE IS THE ORIGINAL'S FINDING (2026-11-20, the practitioner: *"when we use a workflow as a template,
+    // another preventive measure is to clear the subtitles from the Chart and Map titles"*). "WorldPop and GRID3 spread
+    // census counts by district, so their shares follow the census" was true of Botswana and travelled to DR Congo. The
+    // title and axis titles stay, and take the new workflow's words by placeholder (figure-words.ts).
+    // THE AREA'S COUNTRY AND WHAT ITS UNITS ARE CALLED go with its outline: a copy over another place states its own.
+    for(const key of node.type==='study_area'?['countries','country','unitName']:[])
+      if(params[key]!==undefined&&params[key]!==''&&!(Array.isArray(params[key])&&!(params[key] as unknown[]).length)){delete params[key];keys.push(key);}
+    for(const key of node.type==='chart_output'?['subtitle']:node.type==='map_output'?['mapSubtitle']:[])
+      if(typeof params[key]==='string'&&(params[key] as string).trim()){delete params[key];keys.push(key);}
     if(keys.length)cleared.push({nodeId:node.id,label:String(params.label||node.id),keys});
     return node as WorkflowNode;
   });

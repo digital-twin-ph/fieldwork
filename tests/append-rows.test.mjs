@@ -149,7 +149,17 @@ test('the name most tables use wins, whatever the order: a census first, holding
   const census=keyed('province',provinces,1),models=[100,200,300].map(v=>keyed('name',provinces,v));
   const found=unstackedColumns([census,...models]);
   assert.deepEqual(found.map(f=>[f.table,f.column,f.as]),[[0,'province','name']]);
-  assert.throws(()=>appendTables([census,...models],{},['Census 1984','WorldPop','GRID3','GHS-POP']),
-    /"Census 1984" has no "name" column.*4 of its 4 are names in "name" of the 3 other tables/s);
-  assert.deepEqual(appendTables([census,...models],{stackUnder:[{table:0,column:'province',as:'name'}]}).table.keys,['name']);
+  // Every name matching: lined up without asking, and said.
+  const auto=appendTables([census,...models],{},['Census 1984','WorldPop','GRID3','GHS-POP']);
+  assert.deepEqual(auto.table.keys,['name']);assert.deepEqual(auto.automatic,[{table:0,column:'province',as:'name'}]);
+  assert.match(appendSentence(auto,{}),/Lined up without asking, every name matching: table 1's "province" under "name"/);
+  // Cleared by the person, nothing is lined up for them, and the check is still the backstop: the step stops, naming it.
+  assert.throws(()=>appendTables([census,...models],{stackUnder:[]}),/4 of its 4 are names in "name" of the 3 other tables/);
+});
+
+/** UNITS THAT SAY THE SAME THING (2026-11-20): a census dictionary's "persons" stacks with a raster's "people". */
+test('"persons" and "people" are one unit; "metres" is not',()=>{
+  const a={...keyed('name',provinces,1),unit:'persons'},b={...keyed('name',provinces,100),unit:'people'};
+  assert.equal(appendTables([a,b]).table.rows.length,8);
+  assert.throws(()=>appendTables([a,{...b,unit:'metres'}],{},['Census','Raster']),/"Census" counts in "persons"|"Raster" counts in "metres"/);
 });

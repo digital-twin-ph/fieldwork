@@ -33,11 +33,15 @@ test('a census table is read with its data dictionary, checked against the pin, 
   await page.locator('[data-census="COD"]').click();
   await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
   await expect(page.locator('#table-census-says')).toContainText('its data dictionary, COD/provinces-2015-columns.csv, has 7 variables');
+  // THE UNIT FROM THE DICTIONARY (2026-11-20), not typed: men, women and total are all "persons".
+  await expect(page.locator('#table-unit')).toHaveValue('persons');
+  await expect(page.locator('#table-unit-from')).toContainText('From the data dictionary');
   await page.locator('#table-save').click();
   await expect(page.locator('#table-save')).toBeHidden();
   const cod=catalogue.countries.find(c=>c.iso3==='COD');
   await expect.poll(async()=>(await storedTable(page)).remote?.sha256).toBe(cod.counts.sha256);
   const params=await storedTable(page);
+  expect(params.unit).toBe('persons');
   expect(params.remote.url).toBe(catalogue.raw+cod.counts.path);
   expect(params.dictionaryRef).toBeTruthy();
   await expect(page.locator('[data-table-dictionary]').first()).toContainText('Data dictionary: COD/provinces-2015-columns.csv, 7 variables.');

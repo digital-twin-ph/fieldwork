@@ -1,3 +1,4 @@
+import {wordsHint} from './figure-words.js';
 /** MAP: ITS INSPECTOR AND ITS CONFIGURE DIALOG, out of app.ts (2026-11-19; the practitioner: "We can be opportunistic
  *  again with app.ts like we did with widgets"). The standard sections (experiment 186) are drawn here from the kit;
  *  the workflow is read through it and changed only through its `change`. The last run is read through `result`. */
@@ -92,7 +93,8 @@ function mapTextControls(n:WorkflowNode<'map_output'>){
   const p=n.params;
   return `<span class="inspector-section">Title, key and note</span>
     <label class="field-label" for="map-title">Map title</label><input id="map-title" maxlength="120" value="${esc(p.mapTitle||'')}" placeholder="Default: results tab name">
-    <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="280" value="${esc(p.mapSubtitle||'')}" placeholder="Optional scope or limitation">
+    <label class="field-label" for="map-subtitle">Subtitle / context</label><input id="map-subtitle" maxlength="280" value="${esc(p.mapSubtitle||'')}" placeholder="What this map shows, in your words">
+    ${wordsHint(esc)}
     <label><input id="map-legend-toggle" type="checkbox" ${p.showLegend!==false?'checked':''}> Show map key</label>
     <label><input id="map-halo-toggle" type="checkbox" ${p.markHalo!==false?'checked':''}> Dark outline on point symbols</label>
     <label class="field-label" for="map-source-note">Source / method note</label><textarea spellcheck="true" id="map-source-note" maxlength="500" rows="3" placeholder="Default: connected source labels and method">${esc(p.mapSourceNote||'')}</textarea>

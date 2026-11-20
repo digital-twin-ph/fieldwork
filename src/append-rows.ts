@@ -1,3 +1,4 @@
+import {fillWords,figureWords} from './figure-words.js';
 import {repeatedKeys,type DataTable} from './data-table.js';
 
 /** ROWS OF ONE TABLE AFTER ROWS OF ANOTHER, as pandas `concat` stacks them. Experiment 166.
@@ -27,6 +28,18 @@ export interface AppendParams {
    *  "province", the population models in "name". `table` is the port, from 0. */
   stackUnder?:StackUnder[];
 }
+/** LINED UP WITHOUT ASKING WHERE EVERY NAME MATCHES (2026-11-20, the practitioner: *"The last few errors could have been
+ *  prevented with automation instead of consistency checking and hand typing."*). Where the person has made no choice
+ *  under Columns, a table's own column whose every name is a name of the column most tables share is stacked under it,
+ *  and the step says so; one where only some match is still asked about. Undefined `stackUnder` means no choice made;
+ *  an empty one means the person chose to line columns up by their own names only. */
+export function automaticStackUnder(tables:DataTable[]):StackUnder[]{
+  const found=unstackedColumns(tables).filter(u=>u.matched===u.of);
+  // One column per table and name: two complete candidates for the same name is a choice, not a fact.
+  return found.filter(u=>found.filter(v=>v.table===u.table&&v.as===u.as).length===1).map(({table,column,as})=>({table,column,as}));
+}
+/** The line-up a run uses: the person's, or where they made none, the automatic one. */
+export const lineUpOf=(tables:DataTable[],params:AppendParams):StackUnder[]=>params.stackUnder??automaticStackUnder(tables);
 export interface StackUnder {table:number;column:string;as:string}
 /** A column a table lacks, which another of its columns seems to hold: most of that column's names are the first
  *  table's. Found by the values, so a census whose names are another table's names is offered, and one that is not
@@ -34,6 +47,8 @@ export interface StackUnder {table:number;column:string;as:string}
 export interface UnstackedColumn extends StackUnder {matched:number;of:number}
 export interface AppendResult {
   table:DataTable;
+  /** Columns stacked under another name without asking, every name matching (automaticStackUnder). */
+  automatic?:StackUnder[];
   /** Rows from each table, in port order. */
   from:number[];
   fromFirst:number;
@@ -46,7 +61,8 @@ export interface AppendResult {
 export function appendLabel(params:AppendParams,index:number):string{
   const given=params.labels?.[index]?.trim()
     ||(index===0?params.firstLabel?.trim():index===1?params.secondLabel?.trim():undefined);
-  return given||(index===0?'first':index===1?'second':`table ${index+1}`);
+  // Words from the workflow, {census} among them (figure-words.ts).
+  return (given?fillWords(given,figureWords()):undefined)||(index===0?'first':index===1?'second':`table ${index+1}`);
 }
 
 /** The port of table `index` (from 0): `records`, then `records_2`, `records_3`, ... as saved workflows name them. */
@@ -84,7 +100,8 @@ export function valueMismatch(tables:readonly {valueField:string}[],names?:reado
 /** WHICH STEP COUNTS IN ANOTHER UNIT, by name (2026-11-20), as for the value column: the odd one, its unit or none, the
  *  rest's, and where to say it. "Table 2 counts in an unstated unit" left DR Congo's workflow to be searched by hand. */
 function unitDifference(tables:readonly DataTable[],names?:readonly string[]):string{
-  const units=tables.map(t=>t.unit?.trim()||'');
+  // Compared as one unit where they say the same thing (sameUnit), said as each table wrote it.
+  const written=tables.map(t=>t.unit?.trim()||''),units=tables.map(t=>sameUnit(t.unit));
   const called=(i:number)=>names?.[i]?`"${names[i]}"`:tables.length===2?(i===0?'the first table':'the second table'):`table ${i+1}`;
   const counts=new Map<string,number>();for(const u of units)counts.set(u,(counts.get(u)??0)+1);
   const top=Math.max(...counts.values()),most=[...counts].filter(([,n])=>n===top).map(([u])=>u);
@@ -92,7 +109,7 @@ function unitDifference(tables:readonly DataTable[],names?:readonly string[]):st
   const odd=units.flatMap((u,i)=>u===usual?[]:[i]),even=units.flatMap((u,i)=>u===usual?[i]:[]);
   const list=(ix:number[])=>ix.map(called).join(ix.length>2?', ':' and ').replace(/, ([^,]*)$/,', and $1');
   const say=(u:string)=>u?`"${u}"`:'no unit';
-  return `${list(odd)} ${odd.length===1?'counts':'count'} in ${[...new Set(odd.map(i=>say(units[i]!)))].join(' and ')}, `
+  return `${list(odd)} ${odd.length===1?'counts':'count'} in ${[...new Set(odd.map(i=>say(written[i]!)))].join(' and ')}, `
     +`where ${list(even)} ${even.length===1?'counts':'count'} in ${say(usual)}. Rows can be stacked only in one unit: `
     +(usual?`open ${called(odd[0]!)}'s Configure… and state its unit as "${usual}", if that is what it counts.`
       :`state the same unit on every table, or none on any.`);
@@ -141,9 +158,14 @@ export function unstackedColumns(tables:DataTable[],params:AppendParams={}):Unst
   });
   return found;
 }
+/** UNITS THAT SAY THE SAME THING (2026-11-20): a census dictionary's "persons" and a population raster's "people" are one
+ *  unit, so their counts stack. Only these spellings of a head count; anything else is compared as written. */
+const HEADS=new Set(['people','persons','person','inhabitants','individuals']);
+export const sameUnit=(unit:string|undefined)=>{const u=unit?.trim().toLowerCase()??'';return HEADS.has(u)?'people':u;};
 export function appendTables(given:DataTable[],params:AppendParams={},names?:readonly string[]):AppendResult{
   if(given.length<2)throw new Error('Connect at least two tables: this step stacks their rows.');
-  const tables=stackedUnder(given,params,names);
+  const automatic=params.stackUnder===undefined?automaticStackUnder(given):[];
+  const tables=stackedUnder(given,{...params,stackUnder:lineUpOf(given,params)},names);
   // ONE TABLE'S NAMES IN ANOTHER COLUMN would be stacked beside the first's, each table's rows empty in the other's
   // column, and every step after reading the first's column would find nothing for them (2026-11-20, DR Congo's census
   // "province" beside the models' "name"). Said here, with the column to stack it under, as a refusal.
@@ -159,7 +181,7 @@ export function appendTables(given:DataTable[],params:AppendParams={},names?:rea
   }
   const [first]=tables as [DataTable,...DataTable[]];
   const mismatch=valueMismatch(tables,names);if(mismatch)throw new Error(mismatch);
-  const unitMismatch=valueMismatch(tables.map(t=>({valueField:t.unit?.trim()||''})),names);
+  const unitMismatch=valueMismatch(tables.map(t=>({valueField:sameUnit(t.unit)})),names);
   if(unitMismatch)throw new Error(unitDifference(tables,names));
   const source=params.nameSource?params.sourceColumn?.trim():undefined;
   const newKey=params.newKey?.trim();
@@ -212,7 +234,7 @@ export function appendTables(given:DataTable[],params:AppendParams={},names?:rea
       ...(primaryKey?{primaryKey}:{}),...(alternateKeys?{alternateKeys}:{}),...(findings.length?{findings}:{}),
       ...interval,...(Object.keys(numericKeys).length?{numericKeys}:{}),
       rows,rowCount:rows.length,missingValueCount:rows.filter(row=>row.value===null).length},
-    from,fromFirst:from[0]!,fromSecond:from[1]!,missing};
+    from,fromFirst:from[0]!,fromSecond:from[1]!,missing,...(automatic.length?{automatic}:{})};
 }
 
 /** What the step did, in one sentence for the receipt and the run summary. */
@@ -233,7 +255,8 @@ export function appendSentence(result:AppendResult,params:AppendParams):string{
     +(source?`; "${source}" says which`:'')
     +(source&&params.labelsAreNumbers?`, as a number${params.labelsAreNumbers.unit.trim()?` in ${params.labelsAreNumbers.unit.trim()}`:''}`:'')
     +(params.newKey?.trim()?`; "${params.newKey.trim()}" numbers them 1 to ${total} as the new key`:'')+'.'
-    +(said.length?` ${said.join('; ')}.`:'');
+    +(said.length?` ${said.join('; ')}.`:'')
+    +(result.automatic?.length?` Lined up without asking, every name matching: ${result.automatic.map(m=>`${which(m.table+1)}'s "${m.column}" under "${m.as}"`).join('; ')}.`:'');
 }
 
 /** THE COLUMNS AS A GRID (2026-11-20). The practitioner: *"what matters more is column sync and alignment than

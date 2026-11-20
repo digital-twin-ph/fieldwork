@@ -135,3 +135,24 @@ test('a template of every example workflow holding a raster can be made and open
   if(!existsSync(new URL('example-population-models-census/fieldwork-project.json.gz',root)))return;
   assert.ok(checked>=2,`at least the population example's two workflows, found ${checked}`);
 });
+
+// A FIGURE'S SUBTITLE IS THE ORIGINAL'S FINDING (2026-11-20): cleared in a copy, said as cleared; its title stays.
+test('a chart\'s and a map\'s subtitles are cleared in a copy, their titles kept',()=>{
+  const w={schema:'fieldwork/workflow/1',name:'Botswana',workflowKey:'p/1',nodes:[
+    {id:'chart',type:'chart_output',x:0,y:0,params:{label:'Shares',chartTitle:'Each {unit}’s share of {country}’s people',
+      subtitle:'WorldPop and GRID3 spread census counts by district, so their shares follow the census.'}},
+    {id:'map',type:'map_output',x:0,y:0,params:{label:'Map',mapTitle:'Districts',mapSubtitle:'Botswana, 2022.'}}],edges:[]};
+  const {workflow:copy,cleared}=templateFrom(w,{name:'DR Congo',workflowKey:'p/2'});
+  const chart=copy.nodes.find(n=>n.id==='chart').params,map=copy.nodes.find(n=>n.id==='map').params;
+  assert.equal(chart.subtitle,undefined);assert.equal(map.mapSubtitle,undefined);
+  assert.equal(chart.chartTitle,'Each {unit}’s share of {country}’s people');assert.equal(map.mapTitle,'Districts');
+  assert.deepEqual(cleared.map(c=>c.keys),[['subtitle'],['mapSubtitle']]);
+  assert.equal(w.nodes[0].params.subtitle.startsWith('WorldPop'),true,'the original is untouched');
+});
+test('a study area\'s countries and what its units are called are cleared in a copy, with its outline',()=>{
+  const w={schema:'fieldwork/workflow/1',name:'Botswana',workflowKey:'p/1',nodes:[
+    {id:'area',type:'study_area',x:0,y:0,params:{source:'drawn',label:'Botswana',selectionMode:'polygon',geometry:null,countries:['BWA'],unitName:'districts'}}],edges:[]};
+  const {workflow:copy,cleared}=templateFrom(w,{name:'DR Congo',workflowKey:'p/2'});
+  assert.equal(copy.nodes[0].params.countries,undefined);assert.equal(copy.nodes[0].params.unitName,undefined);
+  assert.deepEqual(cleared[0].keys,['countries','unitName']);
+});

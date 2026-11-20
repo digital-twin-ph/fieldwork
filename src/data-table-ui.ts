@@ -225,7 +225,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<div id="table-wide-names" hidden><label class="field-label" for="table-measure-key">Name for the column holding the variable names</label><input id="table-measure-key" maxlength="40" value="measure">'
     +'<label class="field-label" for="table-value-name">Name for the column holding variable values</label><input id="table-value-name" maxlength="40" value="value">'
     +'<p class="muted">Both are your words, because every downstream step names them: a Rate takes its measure key, and a derived value names two of its values.</p></div>'
-    +'<label class="field-label" for="table-unit">Unit of the value (entered by you)</label><input id="table-unit" maxlength="40" placeholder="for example metre; leave empty if unstated">'
+    +'<label class="field-label" for="table-unit">Unit of the value</label><input id="table-unit" maxlength="40" placeholder="for example metre; leave empty if unstated">'
+    +'<p id="table-unit-from" class="muted" hidden></p>'
     +'<p class="muted">A unit is recorded as you state it and is never inferred from the file. An empty value cell is kept as unknown and counted, never read as zero.</p>'
     // CONVERT ON RUN, a setting of the step: a melt done once here leaves nothing behind, a melt done by the run is a
     // step with a receipt naming every column taken (the practitioner, 2026-10-27).
@@ -257,7 +258,16 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   const keysSays=q<HTMLElement>('#table-keys-says');
   const shapeAlert=q<HTMLElement>('#table-shape-alert'),shapeSays=q<HTMLElement>('#table-shape-says');
   const shapeAccept=q<HTMLButtonElement>('#table-shape-accept');
-  const unitInput=q<HTMLInputElement>('#table-unit'),status=q<HTMLElement>('#table-status');
+  const unitInput=q<HTMLInputElement>('#table-unit'),status=q<HTMLElement>('#table-status'),unitFrom=q<HTMLElement>('#table-unit-from');
+  // THE UNIT FROM THE DATA DICTIONARY (2026-11-20), where the person has not given one: DR Congo's census unit was typed
+  // by hand, or left out, though its dictionary states it. Filled while the person has not typed one, and said.
+  let unitTyped=!!existing?.unit;
+  const dictionaryUnit=(columns:readonly string[]):string|undefined=>{
+    const sheet=dictionaryFile?.sheets[0];if(!sheet||!columns.length)return undefined;
+    const entries=readDictionary(sheet.headers,sheet.rows,guessMapping(sheet.headers));
+    const units=new Set(columns.map(c=>entries.get(c.trim())?.unit?.trim()??''));
+    const [only]=[...units];return units.size===1&&only?only:undefined;
+  };
   const sheetRow=q<HTMLElement>('#table-sheet-row'),sheetSelect=q<HTMLSelectElement>('#table-sheet'),workbookSays=q<HTMLElement>('#table-workbook');
   const check=q<HTMLElement>('#table-check'),beforePane=q<HTMLElement>('#table-before');
   const afterPane=q<HTMLElement>('#table-after'),reconcile=q<HTMLElement>('#table-reconcile');
@@ -389,6 +399,11 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     error.hidden=true;result=undefined;save.disabled=true;shapeAlert.hidden=true;
     if(!file||!parsed)return;
     const wide=shape()==='wide';
+    if(!unitTyped){
+      const stated=parsed?dictionaryUnit(shape()==='wide'?chosenValues():[valueSelect.value].filter(Boolean)):undefined;
+      unitInput.value=stated??'';
+      unitFrom.hidden=!stated;unitFrom.textContent=stated?`From the data dictionary, ${dictionaryFile!.name}. Change it if it says otherwise.`:'';
+    }
     const unit=unitInput.value.trim();
     try{
       const keys=chosenKeys();
@@ -742,7 +757,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     }catch(e){if(request===serial){status.textContent='The file could not be read.';fail(e);}}
   };
   rolesBox.onchange=build;
-  valueSelect.onchange=build;unitInput.onchange=build;
+  valueSelect.onchange=build;unitInput.onchange=()=>{unitTyped=!!unitInput.value.trim();unitFrom.hidden=true;build();};
   measureKeyInput.onchange=build;valueNameInput.onchange=build;
   cancel.onclick=()=>dialog.close();dialog.oncancel=e=>{if(busy)e.preventDefault();};
   q<HTMLButtonElement>('#table-close').onclick=()=>{if(!busy)dialog.close();};

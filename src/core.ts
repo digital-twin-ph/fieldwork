@@ -1,3 +1,4 @@
+import {setFigureWords,figureWordsOf} from './figure-words.js';
 ﻿import {sampleRaster,sampleReceipt,validateSampleNode} from './sample-raster.js';
 import {computeSpaceTimeScan,computeSpaceTimeReplay,scanValue,replayValue,validateScanParams} from './space-time-scan.js';
 import {bufferPoint,validateBufferPointNode} from './buffer-point.js';
@@ -800,7 +801,9 @@ export function validateWorkflow(raw:unknown):Workflow {
     if(n.type==='map_output'&&(n.params as {basemap?:string}).basemap===undefined)(n.params as {basemap?:string}).basemap=DEFAULT_BASEMAP;
     if(n.type==='study_area'){const listed=(n.params as {countries?:unknown}).countries;
       if(listed!==undefined&&(!Array.isArray(listed)||listed.length>30||listed.some(c=>typeof c!=='string'||!/^[A-Z]{3}$/.test(c))))
-        throw new Error('A study area\'s countries are ISO 3166 three-letter codes, up to 30.');}
+        throw new Error('A study area\'s countries are ISO 3166 three-letter codes, up to 30.');
+      const named=(n.params as {unitName?:unknown}).unitName;
+      if(named!==undefined&&(typeof named!=='string'||named.length>60))throw new Error('What a study area\'s units are called is a word or two, up to 60 characters.');}
     if ((n.type==='places'||n.type==='centers'||n.type==='point_input')) n.params.data=validateGeoJSON(n.params.data,{attributes:n.type==='point_input'});
     if(n.type==='summarize_hull')validateHullNode(n);
     if(n.type==='summarize_combined_area')validateCombinedAreaNode(n);
@@ -1271,6 +1274,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     receipt.facts+=facts;
     if(receipt.input)receipt.input+=facts;
   };
+  // THE WORKFLOW'S OWN WORDS for its figures' text, {country} and the rest (figure-words.ts), before anything is written.
+  setFigureWords(figureWordsOf(workflow));
   const sources=derivedNotes(workflow.nodes,workflow.workflowKey);
   const planned=executionPlan(workflow), values=new Map<string,unknown>(), trace:WorkflowRun['trace']=[];
   const optional=new Set(openEnds(workflow,planned).map(n=>n.id));

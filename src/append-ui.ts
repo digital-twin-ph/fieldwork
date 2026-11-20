@@ -1,3 +1,4 @@
+import {wordsHint} from './figure-words.js';
 /** APPEND ROWS, IN THE STANDARD DIALOG (experiment 186, 2026-11-14: changed that day, so moved, as every widget touched
  *  is). The Inspector says in one sentence what is stacked; how many tables, the column naming each row's source and
  *  its labels, whether the labels are numbers, and a new key are here, with the stacked table as the preview, and
@@ -9,20 +10,20 @@ import {openWalkthrough} from './table-walkthrough.js';
 import {appendWalkthrough} from './table-walkthroughs.js';
 import {dataTableMarkup,wireTablePages} from './data-table-ui.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
-import {appendTables,appendSentence,appendTableCount,appendLabel,appendPort,valueMismatch,columnGrid,placeColumn,renameStacked,type StackUnder} from './append-rows.js';
+import {appendTables,appendSentence,appendTableCount,appendLabel,appendPort,valueMismatch,columnGrid,placeColumn,renameStacked,lineUpOf,type StackUnder} from './append-rows.js';
 
 type Params=ParamsByType['append_rows'];
 export interface AppendDraft {count:number; nameSource:boolean; sourceColumn:string; labels:string[];
   numbers:boolean; unit:string; newKey:boolean; keyColumn:string;
   /** Each table's own column stacked under another name: the one most of the tables use, or one given. */
-  stackUnder:StackUnder[]}
+  stackUnder?:StackUnder[]}
 
 export function appendDraftOf(p:Params):AppendDraft{
   const count=appendTableCount(p);
   return {count,nameSource:!!p.nameSource,sourceColumn:p.sourceColumn??'source',
     labels:Array.from({length:count},(_,i)=>p.labels?.[i]??(i===0?p.firstLabel:i===1?p.secondLabel:undefined)??''),
     numbers:!!p.labelsAreNumbers,unit:p.labelsAreNumbers?.unit??'',newKey:p.newKey!==undefined,keyColumn:p.newKey??'row',
-    stackUnder:(p.stackUnder??[]).map(m=>({...m}))};
+    ...(p.stackUnder?{stackUnder:p.stackUnder.map(m=>({...m}))}:{})};
 }
 export function applyAppendDraft(p:Params,d:AppendDraft):void{
   if(d.count<=2)delete p.tableCount;else p.tableCount=d.count;
@@ -32,8 +33,8 @@ export function applyAppendDraft(p:Params,d:AppendDraft):void{
     if(d.numbers)p.labelsAreNumbers={unit:d.unit.trim()};else delete p.labelsAreNumbers;}
   else delete p.labelsAreNumbers;
   if(d.newKey)p.newKey=d.keyColumn.trim()||'row';else delete p.newKey;
-  const under=d.stackUnder.filter(m=>m.table<d.count);
-  if(under.length)p.stackUnder=under.map(m=>({...m}));else delete p.stackUnder;
+  // Undefined: no choice made, so a complete match is lined up automatically; an array, even empty, is the person's.
+  if(d.stackUnder)p.stackUnder=d.stackUnder.filter(m=>m.table<d.count).map(m=>({...m}));else delete p.stackUnder;
 }
 const asParams=(d:AppendDraft):Params=>{const p={label:''} as Params;applyAppendDraft(p,d);return p;};
 
@@ -79,6 +80,7 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
             +Array.from({length:d.count},(_,i)=>{const id=i===0?'append-first':i===1?'append-second':`append-label-${i+1}`;
               return `<div class="field"><label class="field-label" for="${id}">Label for rows of ${name(i)}</label>`
                 +`<input id="${id}" data-append-label="${i}" maxlength="60" value="${esc(d.labels[i]??'')}" placeholder="${i===0?'first':i===1?'second':`table ${i+1}`}"></div>`;}).join('')
+            +wordsHint(esc)
             +`<label class="check"><input type="checkbox" id="append-numbers"${d.numbers?' checked':''}> The labels are numbers</label>`
             +(d.numbers?`<div class="field"><label class="field-label" for="append-numbers-unit">Their unit</label>`
               +`<input id="append-numbers-unit" maxlength="40" value="${esc(d.unit)}" placeholder="weeks before"></div>`:'')
@@ -104,13 +106,15 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
       // THE COLUMNS, AS A GRID (2026-11-20): every stacked column, which of each table's columns fills it, and the
       // name it is stacked under, each changeable; then each table as read, its columns marked with where they go.
       const ts=tables as DataTable[];
-      const grid=columnGrid(ts,d.stackUnder);
-      const placedAs=(i:number,column:string)=>d.stackUnder.find(m=>m.table===i&&m.column===column)?.as??column;
+      const auto=!d.stackUnder,under=lineUpOf(ts,asParams(d));
+      const grid=columnGrid(ts,under);
+      const placedAs=(i:number,column:string)=>under.find(m=>m.table===i&&m.column===column)?.as??column;
       const lineUp='<fieldset class="append-grid"><legend>Columns</legend>'
         +'<p class="muted">One row per column of the stacked table. For each table, the column that fills it, or none: its rows are then empty there. '
         +'Rename a stacked column in its first box.</p>'
         // START AGAIN (2026-11-20): undoing earlier choices cell by cell left DR Congo's models' names stacked elsewhere.
-        +(d.stackUnder.length?'<p><button type="button" class="button small" id="append-grid-reset">Line every column up by its own name again</button></p>':'')
+        +(auto&&under.length?`<p class="notice" data-append-automatic>Lined up without asking, every name matching: ${under.map(m=>`${esc(names[m.table]||name(m.table))}'s "${esc(m.column)}" under "${esc(m.as)}"`).join('; ')}. Change any of it below.</p>`:'')
+        +(!auto?'<p><button type="button" class="button small" id="append-grid-reset">Start again from what the tables hold</button></p>':'')
         +'<div class="table-scroll"><table><thead><tr><th scope="col">Stacked as</th>'
         +ts.map((_,i)=>`<th scope="col">${esc(names[i]||name(i))}</th>`).join('')+'</tr></thead><tbody>'
         +grid.map((row,r)=>`<tr><td><input data-grid-name="${r}" aria-label="Stacked column ${r+1}, named" maxlength="60" value="${esc(row.as)}"></td>`
@@ -150,12 +154,12 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
       on('#append-key',el=>{d.keyColumn=el.value;});
       const ts=view.tables.slice(0,d.count) as DataTable[];
       root.querySelectorAll<HTMLSelectElement>('[data-grid-table]').forEach(el=>el.addEventListener('change',()=>{
-        const row=columnGrid(ts,d.stackUnder)[Number(el.dataset.gridRow)];if(!row)return;
-        d.stackUnder=placeColumn(d.stackUnder,Number(el.dataset.gridTable),row.as,el.value||null);redraw();}));
-      root.querySelector<HTMLButtonElement>('#append-grid-reset')?.addEventListener('click',()=>{d.stackUnder=[];redraw();});
+        const under=lineUpOf(ts,asParams(d)),row=columnGrid(ts,under)[Number(el.dataset.gridRow)];if(!row)return;
+        d.stackUnder=placeColumn(under,Number(el.dataset.gridTable),row.as,el.value||null);redraw();}));
+      root.querySelector<HTMLButtonElement>('#append-grid-reset')?.addEventListener('click',()=>{delete d.stackUnder;redraw();});
       root.querySelectorAll<HTMLInputElement>('[data-grid-name]').forEach(el=>el.addEventListener('change',()=>{
-        const row=columnGrid(ts,d.stackUnder)[Number(el.dataset.gridName)];if(!row)return;
-        d.stackUnder=renameStacked(ts,d.stackUnder,row.as,el.value);redraw();}));
+        const under=lineUpOf(ts,asParams(d)),row=columnGrid(ts,under)[Number(el.dataset.gridName)];if(!row)return;
+        d.stackUnder=renameStacked(ts,under,row.as,el.value);redraw();}));
     },
     apply:view.apply,
   },esc);

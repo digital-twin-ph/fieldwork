@@ -28,7 +28,8 @@ function layout(code,tableParams){
   const c=COUNTRIES[code],raster=(id,label,x,y)=>({id,type:'raster_input',x,y,params:{label}});
   const sample=(id,label,x,y)=>({id,type:'sample_raster',x,y,params:{label,attribute:'population',valueUnit:'people',over:'areas',source:'raster'}});
   return {name:`Where does each source put ${c.name}'s people?`,nodes:[
-    {id:'area',type:'study_area',x:20,y:300,params:{label:`${c.name}, its ${c.districts} census districts`,source:'drawn',selectionMode:'polygon',geometry:null}},
+    // THE COUNTRY AND WHAT ITS UNITS ARE CALLED, stated once (2026-11-20): the figures read them as {country} and {unit}.
+    {id:'area',type:'study_area',x:20,y:300,params:{label:`${c.name}, its ${c.districts} census districts`,source:'drawn',selectionMode:'polygon',geometry:null,countries:[code],unitName:'districts'}},
     raster('worldpop','WorldPop 2025',320,40),raster('grid3','GRID3 2025',320,220),raster('ghs','GHS-POP 2025',320,400),
     sample('by-worldpop','WorldPop 2025 by district',620,40),sample('by-grid3','GRID3 2025 by district',620,220),sample('by-ghs','GHS-POP 2025 by district',620,400),
     {id:'census',type:'table_input',x:620,y:580,params:{...tableParams,label:'Census 2022 by district'}},
@@ -37,7 +38,7 @@ function layout(code,tableParams){
     {id:'only-shares',type:'select_rows',x:1520,y:300,params:{label:'The shares',keyColumn:'statistic',values:['% within source']}},
     {id:'table',type:'table_output',x:1820,y:200,params:{label:'Shares by district and source'}},
     {id:'chart',type:'chart_output',x:1820,y:400,params:{label:'Where each source puts the people',keyColumn:'name',panelsBy:'source',
-      chartTitle:`Each district\u2019s share of ${c.name}\u2019s people, by source`,yAxisTitle:'Share of the country, %',xAxisTitle:'Census district',
+      chartTitle:'Each {unit}\u2019s share of {country}\u2019s people, by source',yAxisTitle:'Share of the country, %',xAxisTitle:'Census {unit}',
       subtitle:'WorldPop and GRID3 spread census counts by district, so their shares follow the census by construction; GHS-POP is built another way.'}},
     {id:'only-ghs',type:'select_rows',x:1820,y:600,params:{label:'GHS-POP’s shares',keyColumn:'source',values:['GHS-POP 2025']}},
     {id:'joined',type:'join_table_to_area',x:2120,y:600,params:{label:'GHS-POP’s share on the districts',keyField:'name',normalisation:'exact'}},

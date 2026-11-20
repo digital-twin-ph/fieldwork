@@ -1,4 +1,5 @@
 import {orderOf} from './select-rows.js';
+import {filledParams,figureWords} from './figure-words.js';
 import type {ChartSummary} from './results.js';
 import {generationColours} from './presentation.js';
 import type {WorkflowNode} from './types.js';
@@ -58,7 +59,8 @@ export const chartOrientation=(params:{orientation?:'horizontal'|'vertical'}):'h
  *  evidence for method -- so this follows it rather than inventing a second convention. The run
  *  id is not lost: it is in the receipt, which is where a reader checking reproducibility looks
  *  and where a reader of the figure does not. */
-export function chartSourceNote(params:ChartParams,sourceId?:string,runId?:string,sourceLabel?:string){
+export function chartSourceNote(given:ChartParams,sourceId?:string,runId?:string,sourceLabel?:string){
+  const params=filledParams(given,figureWords());
   if(params.sourceNote?.trim())return params.sourceNote.trim();
   const named=sourceLabel?.trim()||sourceId;
   return `Source: ${named||'connected workflow result'}.`;
@@ -98,7 +100,8 @@ export function wrapToWidth(value:string,width:number):string[]{
   return lines;
 }
 
-export function chartVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
+export function chartVegaSpec(chart:ChartSummary,given:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
+  const params=filledParams(given,figureWords());
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   if(chart.panels?.length&&params.figure==='pyramid')return pyramidVegaSpec(chart,params,context);
   if(chart.panels?.length&&params.figure==='stacked')return stackedVegaSpec(chart,params,context);
@@ -322,7 +325,8 @@ export const panelMark=(chart:ChartSummary,params:ChartParams,panel:string):'bar
 /** STACKED BARS (experiment 210, 2026-11-12): one bar per period, its height the total, divided by the values of the column
  *  the panels would be drawn by, one Okabe-Ito colour each, the first at the bottom. More values than the palette has hues
  *  is refused, naming how many: colours repeated would group values nobody grouped. A marked date is drawn over it. */
-export function stackedVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+export function stackedVegaSpec(chart:ChartSummary,given:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+  const params=filledParams(given,figureWords());
   const by=params.panelsBy?.trim()||chart.groupedBy||'group',groups=chart.panels!;
   if(groups.length>FIGURE_PALETTE.length)throw new Error(`Stacked bars give each value of ${by} its own colour, and ${by} has ${groups.length} values, more than the ${FIGURE_PALETTE.length} colours that can be told apart. Draw panels instead.`);
   const name=(g:string)=>g===''?`${by} blank`:g;
@@ -358,7 +362,8 @@ export function stackedVegaSpec(chart:ChartSummary,params:ChartParams,context:{s
 /** A POPULATION PYRAMID (experiment 210, 2026-11-12): two groups back to back, one band per row, the youngest at the
  *  bottom, each side counted outward and read as a count on either side. The groups are the two named values of the
  *  column the panels would be drawn by; rows where it is blank are not drawn, and the subtitle says how many. */
-export function pyramidVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+export function pyramidVegaSpec(chart:ChartSummary,given:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+  const params=filledParams(given,figureWords());
   const by=params.panelsBy?.trim()||'group';
   const sides=chart.panels!.filter(panel=>panel!=='');
   if(sides.length!==2)throw new Error(`A pyramid sets two groups back to back; ${by} holds ${sides.length}: ${sides.join(', ')||'none'}.`);
@@ -479,7 +484,8 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
   };
 }
 
-export function chartSpecificationFacts(node:WorkflowNode<'chart_output'>,runId:string,sourceId:string,chart:ChartSummary,measureKind:string):string{
+export function chartSpecificationFacts(given:WorkflowNode<'chart_output'>,runId:string,sourceId:string,chart:ChartSummary,measureKind:string):string{
+  const node={...given,params:filledParams(given.params,figureWords())};
   const spec=`<urn:fieldwork:run:${runId}:chart-spec:${node.id}>`;
   const activity=node.params.inputMode==='polygons'
     ?`<urn:fieldwork:run:${runId}:output:${node.id}:view>`
@@ -529,8 +535,9 @@ const nameActions=(host:HTMLElement)=>host.querySelector('details > summary')?.s
  *  The same figure the tree module computes, drawn by the renderer every other chart uses, so it exports, carries its
  *  title and source note, and enters the write-up the same way. Each link is two rules: down from the infector at its
  *  date to the case's row, then across to the case's date, so the length across is the serial interval. Text at 14 px. */
-export function treeVegaSpec(tree:import('./transmission-tree.js').TransmissionTree,params:ChartParams,
+export function treeVegaSpec(tree:import('./transmission-tree.js').TransmissionTree,given:ChartParams,
   context:{sourceId?:string;runId?:string;sourceLabel?:string}={}){
+  const params=filledParams(given,figureWords());
   const at=new Map(tree.cases.map(c=>[c.id,c]));
   const dayOf=(c:import('./transmission-tree.js').TreeCase):number|null=>c.day??(c.parent&&at.get(c.parent)?dayOf(at.get(c.parent)!):null);
   const iso=(day:number|null)=>day===null?null:new Date(day*86_400_000).toISOString().slice(0,10);

@@ -1,3 +1,4 @@
+import {fillWords,figureWords} from './figure-words.js';
 import {rampFor} from './raster-image.js';
 import type {Output,Receipt} from './results.js';
 import {generationColours} from './presentation.js';
@@ -73,7 +74,7 @@ function categoricalKey(polygons:{layerName?:string;featuresNamed?:boolean;featu
 
 export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,workflow:Workflow):MapPresentation{
   const upstream=workflow.edges.filter(e=>e.to===node.id).map(e=>workflow.nodes.find(n=>n.id===e.from)?.params.label||e.from);
-  const sourceNote=node.params.mapSourceNote?.trim()||`Sources: ${upstream.join(', ')||'connected workflow inputs'} · CRS84. ${output.polygons?.method||output.method||''}`.trim();
+  const sourceNote=fillWords(node.params.mapSourceNote?.trim(),figureWords())||`Sources: ${upstream.join(', ')||'connected workflow inputs'} · CRS84. ${output.polygons?.method||output.method||''}`.trim();
   // Colours come from FIGURE_ROLE, so the same meaning carries the same hue here, in the plot and
   // in a chart placed beside it. They were eight unrelated hex literals until 2026-10-13.
   const R=FIGURE_ROLE;
@@ -258,7 +259,8 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
   for(const text of attributionsFor(upstreamNodes.map(n=>
     provenanceOf(n!.params as unknown as Record<string,unknown>))))
     if(!credits.includes(text))credits.push(text);
-  return {title:node.params.mapTitle?.trim()||node.params.label,subtitle:node.params.mapSubtitle?.trim()||'',sourceNote,legend:node.params.showLegend!==false,items,presentation:interactive?'interactive':'plot',basemap,
+  const words=figureWords();
+  return {title:fillWords(node.params.mapTitle?.trim(),words)||node.params.label,subtitle:fillWords(node.params.mapSubtitle?.trim(),words)||'',sourceNote,legend:node.params.showLegend!==false,items,presentation:interactive?'interactive':'plot',basemap,
     attribution:credits.join(' · '),...(credits[0]&&basemap!=='none'&&!/^Ground: Natural Earth/.test(credits[0])?{basemapCredit:credits[0]}:{})};
 }
 

@@ -81,5 +81,11 @@ test('countries are named by hand, one removed, and a saved single country opens
   await expect(page.locator('#area-countries-sentence')).toContainText('South Africa (ZAF).');
   await expect.poll(()=>page.evaluate(()=>{const p=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='area').params;
     return `${JSON.stringify(p.countries)}/${p.country??'none'}`;})).toBe('["ZAF"]/none');
+  // WHAT ITS UNITS ARE CALLED, stated beside the countries (2026-11-20), and both kept when the shape is edited on the map.
+  await page.locator('#area-unit-name').fill('districts');await page.locator('#area-unit-name').press('Tab');
+  await page.locator('#edit-study-area').click();
+  await page.locator('#area-apply').click();
+  await expect.poll(()=>page.evaluate(()=>{const p=JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='area').params;
+    return `${JSON.stringify(p.countries)}/${p.unitName}`;})).toBe('["ZAF"]/districts');
   expect(errors).toEqual([]);
 });

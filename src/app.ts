@@ -130,6 +130,7 @@ import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // across every workflow of the project, rather than the tab reading the open run alone.
 import {figureFor,describedNode,tableCsv,tableRowCount} from './write-up-figures.js';
 import type {InspectorKit,OwnInspector,StepKit} from './inspector-kit.js';
+import {setFigureWords,figureWordsOf,fillWords,figureWords,wordsHint} from './figure-words.js';
 import {tableInspector,type TableKit} from './data-table-ui.js';
 import {sampleInspector,type SampleKit} from './sample-raster-ui.js';
 import {AREA_STEP_INSPECTORS,type AreaStepKit} from './area-steps-ui.js';
@@ -254,7 +255,8 @@ function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:
           :'');
     })()}
     <label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(p.chartTitle||'')}" placeholder="Default: result caption">
-    <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="280" value="${esc(p.subtitle||'')}" placeholder="Optional context or limitation">
+    <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="280" value="${esc(p.subtitle||'')}" placeholder="What this figure shows, in your words">
+    ${wordsHint(esc)}
     <label class="field-label" for="chart-x-axis">Horizontal axis label</label><input id="chart-x-axis" maxlength="80" value="${esc(p.xAxisTitle||'')}" placeholder="Default from data">
     ${p.panelsBy?'':`<label class="field-label" for="chart-y-axis">Vertical axis label</label><input id="chart-y-axis" maxlength="80" value="${esc(p.yAxisTitle||'')}" placeholder="Default from data">`}
     <label><input id="chart-legend" type="checkbox" ${p.colorByCategory?'checked':''}> Color categories and show legend</label>
@@ -1534,6 +1536,7 @@ function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TY
     availablePorts:nodeInputs(n).filter(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&portAccepts(type,outputOf(x)))).map(([port])=>port),
     type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id),alert:alert?alertHeadline(alert):undefined};}
 function render(){
+  setFigureWords(figureWordsOf(workflow));
   // ONLY WHEN IT CHANGES. This runs on every edit, and Safari refuses a hundred calls in ten seconds
   // by throwing, which stopped the edit that triggered it. Found 2026-11-02 building Oswego.
   const url=new URL(location.href);
@@ -2662,7 +2665,7 @@ function openChartConfig(nodeId:string){
             +`<input id="chart-tree-none" data-tree="none" value="${esc(draft.tree?.none??'')}" placeholder="for example none recorded">`
             +`<small>An empty cell always means none.</small></div>`
             // THE TREE'S TITLE AND SOURCE NOTE, as any chart's (2026-11-12: the tree offered neither, and drew its default).
-            +`<div class="field"><label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(draft.chartTitle||'')}" placeholder="Who infected whom"></div>`
+            +`<div class="field"><label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(draft.chartTitle||'')}" placeholder="Who infected whom"></div>`+wordsHint(esc)
             +`<div class="field"><label class="field-label" for="chart-source-note">Source / method note</label><input id="chart-source-note" maxlength="300" value="${esc(draft.sourceNote||'')}"></div>`
           :chartTableControls(shown)+chartControls(shown,{omitOrientation:curve})
             +(curve?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
@@ -5260,7 +5263,7 @@ function renderResults(){
       $('#bars-panel').innerHTML='<div id="vega-chart" class="vega-chart"></div>';
       const host=$('#vega-chart');void renderVegaTree(host,carried.tree,chartNode.params,{sourceId,runId:result?.runId,
         sourceLabel:runWorkflow?.nodes.find(n=>n.id===sourceId)?.params.label}).catch(e=>{if(host.isConnected)host.textContent=`Chart could not render: ${errorMessage(e)}.`;});
-    }else $('#bars-panel').innerHTML=treeSvg(carried.tree,esc,chartNode?.params.chartTitle||'');
+    }else $('#bars-panel').innerHTML=treeSvg(carried.tree,esc,fillWords(chartNode?.params.chartTitle,figureWords())||'');
   }else $('#bars-panel').innerHTML=output?.chart?chartMarkup(output.chart,esc,chartOrientation(chartNode?.params??{})):'';
   // The figure is drawn from the bins, not scraped from the panel, so it is the same file whichever
   // renderer is on screen -- and it exists at all for the classic bars, which are divs and have no
@@ -6554,7 +6557,11 @@ function editStudyArea(nodeId:string):void{
     const shape=(x:{source?:string;geometry?:unknown})=>x.source==='drawn'&&x.geometry?JSON.stringify(x.geometry):'';
     const changed=shape(params)!==shape(before);
     const kept=before.source==='drawn'?before.revisions??[]:[];
-    target.params=params;
+    // WHAT THE AREA STATES OUTSIDE ITS SHAPE stays when the shape is edited (2026-11-20): the map returns its shape and
+    // name only, so the countries it lies in, and what its units are called, were dropped by every edit.
+    const stated=before as {countries?:string[];country?:string;unitName?:string};
+    target.params={...params,...(stated.countries?.length?{countries:stated.countries}:{}),...(stated.country?{country:stated.country}:{}),
+      ...(stated.unitName?{unitName:stated.unitName}:{})} as typeof params;
     if(params.source==='drawn'&&params.geometry)
       target.params.revisions=changed||!kept.length
         ?[...kept,{at:new Date().toISOString(),geometry:structuredClone(params.geometry),selectionMode:params.selectionMode}]
@@ -7358,7 +7365,7 @@ function renderNotesView(){
     const node=held.workflow.nodes.find((n):n is WorkflowNode<'chart_output'>=>n.id===nodeId&&n.type==='chart_output');
     // WHO INFECTED WHOM, as Results draws it (2026-11-15: MERS's tree reached Notes as its sentence and no figure).
     const tree=(output as {kind?:string;tree?:import('./transmission-tree.js').TransmissionTree}|undefined);
-    if(tree?.kind==='transmission-tree'&&tree.tree&&node)return treeSvg(tree.tree,esc,node.params.chartTitle||'');
+    if(tree?.kind==='transmission-tree'&&tree.tree&&node)return treeSvg(tree.tree,esc,fillWords(node.params.chartTitle,figureWords())||'');
     if(!output?.chart?.bins?.length||!node)return null;
     if(chartRenderer(node.params)!=='vega-lite'&&!output.chart.interval&&!output.chart.panels?.length)return null;
     const key=`${held.run.runId}:${nodeId}`,drawn=notesChartSvg.get(key);
@@ -7952,12 +7959,16 @@ function addWorkflowFromTemplate(sourceKey:string){
     renderProjectOptions();renderLibrary();renderResults();render();switchView('workflow');
   }
   else if(!adoptNewWorkflow(report.workflow,key,project.id,'The template could not be saved, so no workflow was created.'))return;
-  const cleared=report.cleared.reduce((n,c)=>n+c.keys.length,0);
+  const figureKeys=new Set(['subtitle','mapSubtitle']);
+  const subtitles=report.cleared.reduce((n,c)=>n+c.keys.filter(k=>figureKeys.has(k)).length,0);
+  const material=report.cleared.map(c=>({...c,keys:c.keys.filter(k=>!figureKeys.has(k))})).filter(c=>c.keys.length);
+  const cleared=material.reduce((n,c)=>n+c.keys.length,0);
   // What it cleared, counted, because a template that silently emptied something is worse than
   // one that says so: the practitioner is about to fill exactly these.
   toast(`${fillOpen?`This canvas now holds the method of "${sourceName}"`:`A template of "${sourceName}"`}: the widgets and their `
     +`settings, with ${cleared} acquired ${cleared===1?'input':'inputs'} cleared across `
-    +`${report.cleared.length} ${report.cleared.length===1?'widget':'widgets'}. `
+    +`${material.length} ${material.length===1?'widget':'widgets'}. `
+    +(subtitles?`${subtitles} figure ${subtitles===1?'subtitle was':'subtitles were'} the original's findings and ${subtitles===1?'is':'are'} left for you to write. `:'')
     +`The study area is chosen again; the sources are already set.`,{tone:'notice'});
 }
 /** Remove this workflow from this device.

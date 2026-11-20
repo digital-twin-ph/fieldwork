@@ -33,7 +33,11 @@
     "file": "ontology/fieldwork.ttl"
    }
   ],
-  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined."
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
  },
  "implementation": {
   "files": [

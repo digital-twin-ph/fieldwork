@@ -1771,6 +1771,15 @@ fw:capValueInForce a owl:DatatypeProperty;
   fw:capEvidence "Measured 2026-11-12 in a Chromium tab at its default heap, against WorldPop Botswana 2025 at 100 m (11,248 by 10,953 cells, 16,232,187 bytes from data.worldpop.org): the whole 123,199,344-cell raster read in 5.7 s, kept as a 493 MB window in 0.2 s, stored in 0.16 s and read back in 0.43 s, carried through an encrypted workflow and back in 6.5 s, clipped in 7.5 s and drawn in 1.4 s, with the tab's heap peaking at about 3 GB. Two obstacles were removed to get there: the GeoTIFF library's writer took 32 s on the page for the same window, and IndexedDB refuses one value over 133,169,152 bytes, so a large file is stored in parts. Before that, 2026-10-22 measured the read alone and set 16,777,216; before that, 262,144 carried no evidence.";
   fw:capRefuses "A study area whose window on a raster holds more than 123.2 million cells: Botswana whole at 100 m fits; a larger country at 100 m does not.";
   fw:capLiftTest "Measure a larger country's window the same way, in Chromium and WebKit. The encrypted workflow's 500 MB, the bundle limit, is the next ceiling at 4 bytes a cell; clipping (7.5 s) holds the page and would be the next to move to a worker. Measured outside the application's own dialogs, which were not run at this size.".
+<urn:fieldwork:cap:raster-saved-window-cells> a fw:Cap;
+  rdfs:label "raster-saved-window-cells";
+  fw:capKind "discovery";
+  fw:capValue 518900000;
+  fw:capUnit "cells";
+  fw:capBasis "measured";
+  fw:capEvidence "The limit for keeping a window whole until 2026-11-20 (WorldPop over DR Congo, 518,812,635 cells of 4 bytes, read, kept and run twice in Chromium on 2026-11-17), kept so a window saved under it is still recognised as valid: its record read, its step drawn, and Configure… opened on it. Lowering the keeping limit to 166.4 million cells that day made such saved records invalid and broke the Inspector until this was separated.";
+  fw:capRefuses "Nothing a person is asked for. A saved window past it is treated as damaged; a new window is kept under raster-window-cells and streamed past it.";
+  fw:capLiftTest "Not applicable: it records what was once allowed, so records made then still open. It is not raised.".
 <urn:fieldwork:cap:interactive-segments> a fw:Cap;
   rdfs:label "interactive-segments";
   fw:capKind "artefact";

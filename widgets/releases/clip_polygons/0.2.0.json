@@ -36,7 +36,11 @@
     "file": "ontology/fieldwork.ttl"
    }
   ],
-  "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. Configuration SHACL is future work."
+  "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. Configuration SHACL is future work.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
  },
  "implementation": {
   "files": [

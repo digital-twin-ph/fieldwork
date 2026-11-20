@@ -37,7 +37,19 @@
     "file": "ontology/fieldwork.ttl"
    }
   ],
-  "note": "Emits fw:PointBuffer with the source point, the radius as a QUDT quantity and the fraction of the true circle area the polygon covers. The output is fw:StudyArea: a derived scope is still a scope, and the derivation rather than the class is what distinguishes it from a surveyed boundary."
+  "note": "Emits fw:PointBuffer with the source point, the radius as a QUDT quantity and the fraction of the true circle area the polygon covers. The output is fw:StudyArea: a derived scope is still a scope, and the derivation rather than the class is what distinguishes it from a surveyed boundary.",
+  "emits": {
+   "classes": [
+    "PointBuffer",
+    "StudyArea"
+   ],
+   "properties": [
+    "bufferDistance",
+    "circleAreaFraction",
+    "method",
+    "sourcePoint"
+   ]
+  }
  },
  "implementation": {
   "files": [

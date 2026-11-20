@@ -190,6 +190,18 @@
       "liftTest": "Not yet tried on Windows: Botswana's window ran in Edge there; Nigeria's and DR Congo's are to be tried, and a tab there may hold less than on a Mac. Measure a larger window the same way, in Chromium and WebKit. GHS-POP over Nigeria, 8 bytes a cell and 1.33 GB, is admitted and has not been run. A window of more than 2^31 bytes would pass the largest single array some browsers allow; the decoding limit sits just under it."
     },
     {
+      "id": "raster-saved-window-cells",
+      "constant": "SAVED_WINDOW_CELLS",
+      "iri": "urn:fieldwork:cap:raster-saved-window-cells",
+      "value": 518900000,
+      "unit": "cells",
+      "kind": "discovery",
+      "basis": "measured",
+      "evidence": "The limit for keeping a window whole until 2026-11-20 (WorldPop over DR Congo, 518,812,635 cells of 4 bytes, read, kept and run twice in Chromium on 2026-11-17), kept so a window saved under it is still recognised as valid: its record read, its step drawn, and Configure… opened on it. Lowering the keeping limit to 166.4 million cells that day made such saved records invalid and broke the Inspector until this was separated.",
+      "refuses": "Nothing a person is asked for. A saved window past it is treated as damaged; a new window is kept under raster-window-cells and streamed past it.",
+      "liftTest": "Not applicable: it records what was once allowed, so records made then still open. It is not raised."
+    },
+    {
       "id": "json-editor-elements",
       "constant": "JSON_EDITOR_ELEMENT_LIMIT",
       "iri": "urn:fieldwork:cap:json-editor-elements",

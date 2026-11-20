@@ -230,7 +230,7 @@
         {
           "version": "0.2.0",
           "path": "widgets/releases/buffer_point/0.2.0.json",
-          "sha256": "42676c05d0a2ebe31c40cc51a7fc6cf6a38ba675d4eaa8ace19b04fe0e9a3336"
+          "sha256": "0e309310ff46736035693aecc67a0a8e44e579a02191e52a8fd1505cb5e024ab"
         }
       ]
     },
@@ -500,7 +500,7 @@
         {
           "version": "0.2.0",
           "path": "widgets/releases/clip_polygons/0.2.0.json",
-          "sha256": "fecd3420f2781e2d7ba0066fd78932cb0dd5fce420dadd48d6caa8e8c5f31b1f"
+          "sha256": "6e565af609ce481c34d553062bc01cb3dafbb5c22f277da6626f1f39116a5bf1"
         }
       ]
     },
@@ -1338,7 +1338,7 @@
         {
           "version": "0.2.0",
           "path": "widgets/releases/measure_area/0.2.0.json",
-          "sha256": "e7691eafb72a62b51077796ff1f2ae30e4d524853a3a9a512c6f13f1635e8557"
+          "sha256": "2e4aebd70851d383ec1885b3d4fabfcdac14c43a83dc937189cb6ff92ef9cd47"
         }
       ]
     },

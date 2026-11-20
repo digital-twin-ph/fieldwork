@@ -100,3 +100,47 @@ test('a step counting in another unit is named, with the unit to state (2026-11-
   assert.throws(()=>appendTables([census,raster,people(raster),people(raster)],{},['Census 1984','WorldPop','GRID3','GHS-POP']),
     /"WorldPop" counts in no unit, where "Census 1984", "GRID3", and "GHS-POP" count in "people"\. .*open "WorldPop"'s Configure… and state its unit as "people"/);
 });
+
+/** COLUMNS NAMED DIFFERENTLY (2026-11-20): DR Congo's census names its provinces in "province", the population models
+ *  in "name". Stacked as they were, the census rows had no "name" and every later step found nothing for them. */
+const keyed=(key,names,value)=>({kind:'data-table',keys:[key],valueField:'population',unit:'people',
+  rows:names.map((n,i)=>({key:{[key]:n},value:value+i})),rowCount:names.length,missingValueCount:0});
+const provinces=['Kinshasa','Ituri','Tshopo','Kwilu'];
+test('a table holding the first table\'s names under another column is refused, naming the column to stack it under',()=>{
+  const models=keyed('name',provinces,100),census=keyed('province',['Kinshasa','Ituri','Tshopo','Equateur'],1);
+  assert.throws(()=>appendTables([models,census],{},['WorldPop','Census 1984']),
+    /"Census 1984" has no "name" column.*its "province" seems to hold the same kind of names: 3 of its 4 are names in "WorldPop"'s "name".*stack its "province" under "name".*check the 1 that are not/s);
+});
+test('stacked under the first table\'s column, the census rows carry their names there',()=>{
+  const models=keyed('name',provinces,100),census=keyed('province',provinces,1);
+  const r=appendTables([models,census],{stackUnder:[{table:1,column:'province',as:'name'}]});
+  assert.deepEqual(r.table.keys,['name']);
+  assert.deepEqual(r.table.rows.map(x=>x.key.name),[...provinces,...provinces]);
+  assert.deepEqual(r.missing,[]);
+});
+test('tables naming different things in different columns are stacked as before, with nothing offered',()=>{
+  const models=keyed('name',provinces,100),weeks=keyed('week',['1','2','3'],1);
+  const r=appendTables([models,weeks]);
+  assert.deepEqual(r.table.keys,['name','week']);
+});
+test('a column to stack under that the table already has is refused',()=>{
+  const models=keyed('name',provinces,100);
+  assert.throws(()=>appendTables([models,keyed('name',provinces,1)],{stackUnder:[{table:1,column:'name',as:'name'}]}).table&&
+    appendTables([models,{...keyed('province',provinces,1),keys:['province','name'],rows:provinces.map(p=>({key:{province:p,name:p},value:1}))}],
+      {stackUnder:[{table:1,column:'province',as:'name'}]}),/already has a "name" column/);
+});
+
+/** THE GRID (2026-11-20): read from `stackUnder`, written back to it. */
+import {columnGrid,placeColumn,renameStacked} from '../build/append-rows.js';
+test('the grid shows each stacked column, the column of each table filling it, and a suggestion where none does',()=>{
+  const models=keyed('name',provinces,100),census=keyed('province',provinces,1);
+  const grid=columnGrid([models,census]);
+  assert.deepEqual(grid.map(r=>r.as),['name','province']);
+  assert.deepEqual(grid[0].cells,[{column:'name'},{column:null,suggested:{column:'province',matched:4,of:4}}]);
+  const under=placeColumn([],1,'name','province');
+  assert.deepEqual(columnGrid([models,census],under).map(r=>[r.as,r.cells.map(c=>c.column)]),[['name',['name','province']]]);
+  assert.deepEqual(placeColumn(under,1,'name',null),[]);
+  const renamed=renameStacked([models,census],under,'name','province_name');
+  assert.deepEqual(columnGrid([models,census],renamed).map(r=>[r.as,r.cells.map(c=>c.column)]),[['province_name',['name','province']]]);
+  assert.deepEqual(appendTables([models,census],{stackUnder:renamed}).table.keys,['province_name']);
+});

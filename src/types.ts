@@ -297,7 +297,9 @@ export interface ParamsByType {
     strata?:string|string[];offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number};
   append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string;
     /** How many tables it stacks, 2 and up; absent is 2 (experiment 181). */ tableCount?:number;
-    labels?:string[];labelsAreNumbers?:{unit:string}};
+    labels?:string[];labelsAreNumbers?:{unit:string};
+    /** A table's own column stacked under the first table's name for it (2026-11-20). */
+    stackUnder?:{table:number;column:string;as:string}[]};
   /** A POLYGON LAYER READ FROM A FILE, which nothing could do until 2026-10-28.
    *
    *  Seven node types emit `polygons` and every one of them DERIVES polygons from something else --

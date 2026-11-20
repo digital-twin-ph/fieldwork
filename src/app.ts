@@ -17,7 +17,7 @@ import {recordRun,runsFor} from './widget-usage.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
 import {manualButton,openManual,hasManual,renderManualPage} from './manual.js';
 import {projectWidgets,projectWidgetsMarkup} from './project-widgets.js';
-import {openAppendConfig,appendDraftOf,applyAppendDraft,appendSettingsSentence} from './append-ui.js';
+import {appendInspector} from './append-ui.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {setupLabEvaluation} from './lab-evaluation-ui.js';
 import {canvasN3} from './canvas-semantics.js';
@@ -51,7 +51,7 @@ import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
 import {orderSentence} from './rule-evaluation.js';
-import {keyNoun,openRelateConfig,relateDraftOf,applyRelateDraft,relateSentence} from './relate-ui.js';
+import {relateInspector,type RelateKit} from './relate-ui.js';
 import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
 import {openGroupConfig,groupDraftOf,applyGroupDraft,groupSentence} from './group-ui.js';
 import {openConfigDialog} from './config-dialog.js';
@@ -128,7 +128,8 @@ import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
 // across every workflow of the project, rather than the tab reading the open run alone.
 import {figureFor,describedNode,tableCsv,tableRowCount} from './write-up-figures.js';
-import type {InspectorKit} from './inspector-kit.js';
+import type {InspectorKit,OwnInspector,StepKit} from './inspector-kit.js';
+import {AREA_STEP_INSPECTORS,type AreaStepKit} from './area-steps-ui.js';
 import {zipSync,strToU8} from 'fflate';
 import {referenceList} from './references.js';
 import {WRITE_UP_STORE,readWriteUp,entryForRun,recordEntry,writeUpOf,sourceOfNote,
@@ -1119,7 +1120,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','buffer_area','measure_area','clip_polygons']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -3770,7 +3771,10 @@ function renderInspector(){
   if(alert)content+=`<div class="inspector-alert" role="alert"><strong>${issuesOnly?'Read as not recorded':gapsOnly?'Not declared':'Out of bounds'} · ${esc(alertHeadline(alert))}</strong>`
     +`<p><button type="button" class="button" id="alert-details">See what was found</button></p>${dirty?'<p class="muted">From the previous run — rerun after changes.</p>':''}</div>`;
   if(!standard)content+=diveDeeperPanel(n.type,esc);
-  if(n.type==='mean_center'){
+  if(Object.hasOwn(AREA_STEP_INSPECTORS,n.type)){
+    // THE FOUR AREA STEPS ON THE STANDARD (area-steps-ui.ts, 2026-11-20).
+    content+=(AREA_STEP_INSPECTORS[n.type as keyof typeof AREA_STEP_INSPECTORS] as OwnInspector<NodeType>).markup(n as never,areaStepKit());
+  }else if(n.type==='mean_center'){
     content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
   }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
     if(n.type==='compare_point_sets')content+=`<div class="notice">Connect a Mean center widget to each branch. Both centers must use this UTM CRS and have matching source counts. Original and moved locations stay private.</div><label class="field-label" for="comparison-zone">WGS84 UTM zone</label><input id="comparison-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="comparison-hemisphere">Hemisphere</label><select id="comparison-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
@@ -3781,7 +3785,6 @@ function renderInspector(){
     if(n.type==='donut_geomask')content+=`<label class="field-label" for="privacy-innerM">Inner radius (m)</label><input id="privacy-innerM" type="number" min="0" max="5000" value="${n.params.innerM}"><label class="field-label" for="privacy-outerM">Outer radius (m)</label><input id="privacy-outerM" type="number" min="1" max="5000" value="${n.params.outerM}"><label class="field-label" for="privacy-seed">Demonstration seed</label><input id="privacy-seed" type="number" min="0" max="4294967295" value="${n.params.seed}"><p class="description">Output names and IDs are generated afresh; original attributes are not copied. The seeded generator is predictable and unsuitable as a production privacy control.</p>`;
     else content+=`<label class="field-label" for="privacy-resolution">H3 resolution</label><input id="privacy-resolution" type="number" min="0" max="15" value="${n.params.resolution}"><label class="field-label" for="privacy-minOccupancy">Minimum locations per released cell</label><input id="privacy-minOccupancy" type="number" min="2" max="100" value="${n.params.minOccupancy}"><p class="description">Counts locations, not deaths. Sparse cells are omitted; occupancy alone does not establish anonymity.</p>`;
   }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='buffer_area'||n.type==='reachable_nodes'){
-    if(n.type==='buffer_area')content+='<label class="field-label" for="catchment-distanceM">Buffer distance (metres)</label><input type="number" id="catchment-distanceM" data-catchment-param="distanceM" min="0" max="5000" value="'+n.params.distanceM+'">';
     // The study area is handed to the Inspector so a downloaded network can be seen against the
     // ground it was asked for. previewArea throws when nothing is connected, which is a legitimate
     // state: the caption then says coverage is unknown rather than implying it is complete.
@@ -3958,15 +3961,7 @@ function renderInspector(){
       // for it. A control says what the setting does; it is not where an argument is kept.
       +``;
   }else if(n.type==='append_rows'){
-    // THE STANDARD INSPECTOR (experiment 186, 2026-11-14): the name, the inputs, one sentence, Configure…, and the result.
-    const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Name',labelForm('append-label','Name',p.label||TYPES.append_rows.title));
-    content+=standardSection('Inputs',standardInputs(n));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(appendSettingsSentence(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
-      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method??'Not run yet.')}</p>`);
+    content+=appendInspector.markup(n,stepKit());
   }else if(n.type==='regression'){
     // THE STANDARD INSPECTOR (experiment 186, 2026-11-12): the name, the input, one sentence, Configure…, and the result.
     const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
@@ -3997,50 +3992,7 @@ function renderInspector(){
     content+=standardSection('Result',`<p class="standard-result${absent.length||why?' standard-result-warning':''}">${esc(line)}</p>`
       +'<div data-standard-result></div>');
   }else if(n.type==='relate_table'){
-    // THE STANDARD INSPECTOR (experiment 186): what the step is called, what feeds it, one sentence of what it will
-    // do, what the last run gave. Every setting, the preview of the join and the decision about unmatched rows are in
-    // the configuration dialog, which nothing changes the workflow from until Apply.
-    const p=n.params;
-    const left=portSourceName(workflow,n.id,'records','the first table');
-    const right=portSourceName(workflow,n.id,'related','the second table');
-    content+=standardSection('Name',labelForm('relate-label','Name',p.label||'Relate a column from another table'));
-    content+=standardSection('Inputs',standardInputs(n,{records:'Table being added to',related:'Table read from'}));
-    // WHETHER A DECISION IS OUTSTANDING, which the sentence alone cannot say. Planned from the tables where they can
-    // be resolved without a run, as the dialog's preview is.
-    const joinLeft=tableOnPort(workflow,n.id,'records'),joinRight=tableOnPort(workflow,n.id,'related');
-    let state='';
-    if(joinLeft&&joinRight&&p.on&&p.bring&&!((p.shifts?.length??0)>1)){
-      try{
-        const planned=relateShape(joinLeft,joinRight,{on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),
-          ...(p.within?{within:p.within}:{}),...(p.shiftDays?{shiftDays:p.shiftDays}:{}),bring:p.bring,
-          ...(p.normalisation?{normalisation:p.normalisation}:{}),...(p.measureKey?{measureKey:p.measureKey}:{}),
-          ...(p.rightOn?{rightOn:p.rightOn}:{}),...(p.spelling?{spelling:p.spelling}:{})});
-        const gaps=planned.overlap.gaps.length;
-        const decided=p.unmatched&&decisionMatches(p.unmatched.signature,planned)?p.unmatched:undefined;
-        state=!gaps?''
-          :decided?`<p class="standard-state">Decided: ${decided.decision==='drop'?'drop the unmatched rows'
-              :`keep them as \u201c${esc(decided.label??'')}\u201d`}${decided.reason?` \u2014 ${esc(decided.reason)}`:''}.</p>`
-          :`<div class="notice notice-warning">This join needs a decision before it can run: ${gaps} `
-            +`${esc(keyNoun([p.on,...(p.alsoOn??[])].join(' and '),gaps))} in ${esc(left)} ${gaps===1?'has':'have'} `
-            +`no row in ${esc(right)}. Decide what happens to them in Configure\u2026</div>`;
-      }catch(error){state=`<div class="notice notice-warning">${esc(errorMessage(error))}</div>`;}
-    }
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(relateSentence(p,right))}</p>${state}`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    // RESULT: one line, what came out and what was left out, counted.
-    const relation=result?.relations?.[n.id],shifted=result?.relateShifts?.[n.id];
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    const line=relation
-      ?`${relation.related.toLocaleString()} of ${relation.offered.toLocaleString()} rows related`
-        +(relation.dropped?`; ${relation.dropped.toLocaleString()} dropped, with no ${relation.on} in ${right}: `
-          +relation.gaps.map(g=>g.key).join(', '):'. No row was dropped')+'.'
-      :shifted
-        ?`${shifted.length} columns brought, every row kept. Empty: `
-          +shifted.map(c=>`${c.column} ${c.empty.toLocaleString()}`).join(', ')+'.'
-        :why?`The last run could not compute this step: ${why}`
-        :'Not run yet.';
-    content+=standardSection('Result',`<p class="standard-result${relation?.dropped||why?' standard-result-warning':''}">${esc(line)}</p>`
-      +'<div data-standard-result></div>');
+    content+=relateInspector.markup(n,relateKit());
   }else if(n.type==='transmission_chains'){
     // THE STANDARD INSPECTOR (experiment 186) for Transmission chains (experiment 216): the columns are in Configure…;
     // here, what it follows, and what the last run found.
@@ -4278,12 +4230,6 @@ function renderInspector(){
       +(list&&p.registerRetrieved?`<p class="description">${esc(p.registerRetrieved.registers.map(r=>`${r.title}, ${r.licence.includes('by/4.0')?'CC BY 4.0':r.licence}`).join('; '))}</p>`:'')
       +''
       +'<div data-standard-result></div>');
-  }else if(n.type==='buffer_point'){
-    const p=n.params;
-    content+='<p class="description">Everything within a stated distance of one named point.</p>'
-      +`<div class="field"><label class="field-label" for="bp-point">Point that defines the area</label><input id="bp-point" data-bp="pointId" maxlength="80" value="${esc(p.pointId)}" placeholder="MANILA"></div>`
-      +`<div class="field"><label class="field-label" for="bp-distance">Radius in metres</label><input id="bp-distance" data-bp-number="distanceM" type="number" min="0" max="5000" step="100" value="${p.distanceM}"></div>`
-      +'';
   }else if(n.type==='sample_raster'&&n.params.source!=='satellite-files'){
     // THE STANDARD INSPECTOR (experiments 186, 198): touched to read between the four nearest cells, as a geoid is read.
     const p=n.params;
@@ -4468,9 +4414,6 @@ function renderInspector(){
       ?'<p class="standard-result">Run the workflow to place the table\u2019s rows. A row with no usable position is kept and counted, never dropped.</p>'
       :`<p class="standard-result">${n.params.data.features.length} point records · ${n.params.data.features.filter(f=>!f.geometry).length} without a location</p>`
         +pointMeaning(n.params)+recordsPanel(n.id,n.params.data));
-  }else if(n.type==='measure_area'){
-    const input=workflow.edges.find(e=>e.to===n.id&&e.port==='area'),output=result?.outputs.find(o=>o.nodeId===n.id);
-    content+=`<div class="field"><label class="field-label" for="measure-area-source">Boundary input</label><select id="measure-area-source"><option value="">Select a Study area</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='area').map(x=>`<option value="${esc(x.id)}" ${input?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)} · ${esc(x.id)}</option>`).join('')}</select><small>Selecting an area adds its connector to the canvas.</small><label class="field-label" for="area-unit">Area unit</label><select id="area-unit" data-param="unit">${areaUnitOptions(n.params.unit)}</select></div><div class="source-card"><span class="inspector-section">${dirty?'Run to calculate or update':'Calculated area'}</span><h3>${!dirty&&output?.measurement?esc(formatArea(output.measurement)):'—'}</h3><p>Approximate surface area on a sphere.</p></div><p class="description">Outputs the same study area with its calculated area attached.</p>`;
   }else if(n.type==='apply_ruleset'){
     // THE STANDARD INSPECTOR (experiments 186 and 192): name, inputs, one sentence of what the step applies, Configure…,
     // and what the last run did. The rules, their columns and settings are in the dialog; here they are shown as blocks,
@@ -4680,6 +4623,7 @@ function renderInspector(){
     },()=>designChecklist(workflow,n.id));
   });
   if(n.type==='search_satellite_catalog')searchCatalogInspector.wire(n,inspectorKit(),document);
+  if(Object.hasOwn(AREA_STEP_INSPECTORS,n.type))(AREA_STEP_INSPECTORS[n.type as keyof typeof AREA_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,areaStepKit(),document);
   optionalElement('#satellite-find')?.addEventListener('click',()=>{
     const node=getNode(workflow,n.id,'find_satellite_products');
     openProductsDialog({question:node.params.question??node.params.topic,route:node.params.route},esc,choice=>{
@@ -4913,28 +4857,7 @@ function renderInspector(){
   });
   // RELATE'S CONFIGURATION DIALOG (experiment 186). Given the columns each table declares and, where they resolve, the
   // tables themselves, so the preview is the join this draft would make. Only Apply writes.
-  if(n.type==='relate_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
-    const node=workflow.nodes.find(x=>x.id===n.id);
-    if(node?.type!=='relate_table')return;
-    const p=node.params,here=upstreamKeyValues(node)??{},there=upstreamKeyValues(node,new Set(),'related')??{};
-    const left=tableOnPort(workflow,n.id,'records'),right=tableOnPort(workflow,n.id,'related');
-    const relatedValue=right?.valueField
-      // Before a run, from the second table's own settings: a count's column is "rows" (found 2026-11-09, Hagelloch's
-      // secondary cases, where the fallback read the step above the count and offered nothing to bring).
-      ??(()=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port==='related');return valueFieldOf(e&&workflow.nodes.find(m=>m.id===e.from));})();
-    openRelateConfig({
-      step:p.label||TYPES[n.type].title,
-      leftLabel:portSourceName(workflow,n.id,'records','the first table'),
-      rightLabel:portSourceName(workflow,n.id,'related','the second table'),
-      hereColumns:Object.keys(here),thereColumns:Object.keys(there),
-      ...(relatedValue?{relatedValue}:{}),...(p.measureKey?{measureKey:p.measureKey}:{}),
-      ...(left?{left}:{}),...(right?{right}:{}),
-      plan:request=>{try{return relateShape(left!,right!,request);}catch(error){return {refusal:errorMessage(error)};}},
-      planShifts:(request,shifts)=>{try{return relateAtShifts(left!,right!,request,shifts);}catch(error){return {refusal:errorMessage(error)};}},
-      initial:relateDraftOf(p),
-      apply:(draft,plan)=>{change(w=>{applyRelateDraft(getNode(w,n.id,'relate_table').params,draft,plan);},{requirePersistence:true});},
-    },esc);
-  });
+  if(n.type==='relate_table')relateInspector.wire(n,relateKit(),document);
   document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
   optionalElement('#manage-references')?.addEventListener('click',()=>{let baseline=JSON.stringify(n.references||[]);openEvidenceEditor(n,refs=>{const current=workflow.nodes.find(x=>x.id===n.id);if(!current||JSON.stringify(current.references||[])!==baseline)throw new Error('The node changed while editing. Close and reopen its references.');const saved=change(w=>{required(w.nodes.find(x=>x.id===n.id)).references=structuredClone(refs);},{requirePersistence:true});if(saved)baseline=JSON.stringify(refs);return saved;});});
   optionalElement('#add-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>;node.params.pointInputCount=(node.params.pointInputCount??1)+1;w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port==='coverage'));}));
@@ -5234,10 +5157,6 @@ function renderInspector(){
     const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,boolean>)[required(el.dataset.hfFlag)]=el.checked;})));
   document.querySelectorAll<HTMLInputElement>('[data-hf-list]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string[]>)[required(el.dataset.hfList)]=el.value.split(',').map(v=>v.trim().toLowerCase()).filter(Boolean);})));
-  document.querySelectorAll<HTMLInputElement>('[data-bp]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string>)[required(el.dataset.bp)]=el.value.trim();})));
-  document.querySelectorAll<HTMLInputElement>('[data-bp-number]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,number>)[required(el.dataset.bpNumber)]=Number(el.value);})));
   document.querySelectorAll<HTMLInputElement>('[data-sample]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string>)[required(el.dataset.sample)]=el.value.trim();})));
   // The kept values are a LIST and their ORDER is the order a figure reads in, so a checkbox
@@ -5574,7 +5493,6 @@ function renderInspector(){
   else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),workflow.nodes.filter((x):x is WorkflowNode<'study_area'>=>x.type==='study_area'&&!!x.params.geometry).map(x=>({id:x.id,label:x.params.label||'Study area',geometry:x.params.geometry as Boundary})),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
   document.querySelectorAll<HTMLSelectElement>('[data-coverage-port]').forEach(el=>el.onchange=()=>{const from=el.value,port=el.dataset.coveragePort!;change(w=>{w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===port));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port});});});
   document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
-  optionalElement('#measure-area-source')?.addEventListener('change',e=>{const from=control(e).value;change(w=>{w.edges=w.edges.filter(x=>!(x.to===n.id&&x.port==='area'));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port:'area'});});});
   // A committed geometry is stamped, so the receipt can say WHEN the area was revised. Only a
   // changed shape counts: renaming the area or switching its selection mode is not a revision of
   // the ground it covers, and stamping those would make the history say the extent moved when it
@@ -5772,29 +5690,7 @@ function renderInspector(){
     if(chosen)change(w=>setConnection(w,chosen,n.id,'layer'));
   });
   if(n.type==='map_output')mapInspector.wire(n,mapKit(),document);
-  if(n.type==='append_rows')optionalElement('#configure-step')?.addEventListener('click',()=>{
-    const node=workflow.nodes.find(x=>x.id===n.id);
-    if(node?.type!=='append_rows')return;
-    const most=Math.max(appendTableCount(node.params),8);
-    const ports=Array.from({length:most},(_,i)=>appendPort(i));
-    openAppendConfig({
-      step:node.params.label||TYPES.append_rows.title,
-      tables:ports.map(port=>tableOnPort(workflow,n.id,port)??undefined),
-      sources:ports.map(port=>{const from=workflow.edges.find(e=>e.to===n.id&&e.port===port)?.from;
-        const up=workflow.nodes.find(x=>x.id===from);return up?(up.params.label||TYPES[up.type].title):'';}),
-      // WHAT EACH STEP SAYS ITS VALUE COLUMN IS, without a run (2026-11-20): a run stopped here leaves no tables to read.
-      values:ports.map(port=>{const table=tableOnPort(workflow,n.id,port);if(table)return table.valueField;
-        const from=workflow.edges.find(e=>e.to===n.id&&e.port===port)?.from,up=workflow.nodes.find(x=>x.id===from);
-        if(up?.type==='sample_raster')return up.params.attribute||undefined;
-        if(up?.type==='table_input')return up.params.valueField||undefined;
-        return undefined;}),
-      initial:appendDraftOf(node.params),
-      apply:d=>{change(w=>{const target=getNode(w,n.id,'append_rows');
-        // FEWER TABLES DROP THE CONNECTIONS TO THE PORTS THAT GO.
-        w.edges=w.edges.filter(e=>!(e.to===n.id&&ports.slice(d.count).includes(e.port)));
-        applyAppendDraft(target.params,d);},{requirePersistence:true});},
-    },esc);
-  });
+  if(n.type==='append_rows')appendInspector.wire(n,stepKit(),document);
   optionalElement('#output-view')?.addEventListener('change',e=>change(w=>{const index=w.nodes.findIndex(x=>x.id===n.id);w.nodes[index]={...w.nodes[index],type:'output',params:{label:n.params.label,view:control(e).value as 'map'|'table'|'bars'}};}));
   optionalElement('#output-input-mode')?.addEventListener('change',e=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'>;(node.params as unknown as Record<string,string>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
   $('#delete-node').onclick=()=>removeNodes([n.id]);
@@ -6983,6 +6879,25 @@ const PORT_LABELS:Record<string,string>={area:'Study area',points:'Points',polyg
 /** ONE SECTION OF A STANDARD INSPECTOR, headed the same way in every widget (experiment 186). */
 /** WHAT A WIDGET'S OWN INSPECTOR IS GIVEN (inspector-kit.ts): the standard sections, read access to the workflow, and
  *  `change`, the one way to edit it. */
+/** THE AREA STEPS' KIT (area-steps-ui.ts): the standard one, with what the last run made and whether it is current. */
+function areaStepKit():AreaStepKit{
+  return {...inspectorKit(),output:id=>result?.outputs.find(o=>o.nodeId===id) as ReturnType<AreaStepKit['output']>,current:()=>!dirty};
+}
+/** THE KIT OF A STEP MOVED OUT OF APP.TS WITH ITS LAST RUN (inspector-kit.ts). */
+function stepKit():StepKit{
+  return {...inspectorKit(),method:id=>result?.receipts.find(r=>r.nodeId===id)?.method,
+    unfinished:id=>result?.unfinished?.find(u=>u.nodeId===id)?.message,
+    tableOn:(id,port)=>tableOnPort(workflow,id,port)??undefined,title:type=>TYPES[type].title,
+    keep:edit=>{change(edit,{requirePersistence:true});}};
+}
+/** RELATE'S KIT (relate-ui.ts): the step kit, with what the tables on its ports are called and hold, and what its last
+ *  run related. */
+function relateKit():RelateKit{
+  return {...stepKit(),sourceName:(id,port,fallback)=>portSourceName(workflow,id,port,fallback),
+    relation:id=>result?.relations?.[id],shifted:id=>result?.relateShifts?.[id],
+    keyColumns:(id,port)=>{const node=workflow.nodes.find(x=>x.id===id);return node?Object.keys(upstreamKeyValues(node,new Set(),port)??{}):[];},
+    valueOn:(id,port)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return valueFieldOf(e&&workflow.nodes.find(m=>m.id===e.from));}};
+}
 function inspectorKit():InspectorKit{
   return {esc,section:standardSection,name:(id,value)=>labelForm(id,'Name',value),inputs:standardInputs,
     workflow:()=>workflow,change:edit=>change(edit)};
@@ -7139,7 +7054,17 @@ const opening=(()=>{
   document.body.append(el);return el;
 })();
 const painted=()=>new Promise<void>(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve())));
-async function openWithNotice(key:string|(()=>string|undefined),name:string):Promise<void>{
+// OPENED IN ORDER, THE LAST ONE CHOSEN WINS (2026-11-20): the notice's wait for a paint let two quick choices finish
+// out of order, leaving the first on the canvas. Each open waits for the one before, and one already overtaken by a
+// later choice opens nothing.
+let openQueue:Promise<void>=Promise.resolve(),openSerial=0;
+function openWithNotice(key:string|(()=>string|undefined),name:string):Promise<void>{
+  const mine=++openSerial;
+  const run=openQueue.then(()=>mine===openSerial?openNow(key,name):undefined);
+  openQueue=run.catch(()=>undefined);
+  return run;
+}
+async function openNow(key:string|(()=>string|undefined),name:string):Promise<void>{
   ($('#opening-text') as HTMLElement).textContent=`Opening ${name}\u2026`;opening.hidden=false;
   await painted();
   try{

@@ -24,3 +24,18 @@ export interface OwnInspector<T extends NodeType> {
   markup:(n:WorkflowNode<T>,kit:InspectorKit)=>string;
   wire:(n:WorkflowNode<T>,kit:InspectorKit,root:ParentNode)=>void;
 }
+
+/** WHAT A STEP'S INSPECTOR READS OF THE LAST RUN, and the one change that must reach storage (2026-11-20, for the
+ *  widgets moved out of app.ts with this release: Append rows, Relate, Tabular data, Sample a raster, Raster input). */
+export interface StepKit extends InspectorKit {
+  /** The method the last run's receipt states for the step, if it ran. */
+  method:(nodeId:string)=>string|undefined;
+  /** Why the last run could not compute the step, if it could not. */
+  unfinished:(nodeId:string)=>string|undefined;
+  /** The table on one of the step's input ports, where the last run left one. */
+  tableOn:(nodeId:string,port:string)=>import('./data-table.js').DataTable|undefined;
+  /** A widget's title, as the library names it. */
+  title:(type:NodeType)=>string;
+  /** A change the project must keep: refused, and said, where storage is full. */
+  keep:(edit:(w:Workflow)=>void)=>void;
+}

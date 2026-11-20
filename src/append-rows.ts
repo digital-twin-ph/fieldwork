@@ -23,7 +23,15 @@ export interface AppendParams {
   /** A NEW PRIMARY KEY, numbered 1 to N across the stacked rows, where the old ones would repeat. The old key
    *  column stays, and with a named source, source and old key are kept as an alternate key. */
   newKey?:string;
+  /** A TABLE'S OWN NAME FOR A COLUMN, stacked under the first table's (2026-11-20): DR Congo's census names its provinces
+   *  in "province", the population models in "name". `table` is the port, from 0; the first table is the reference. */
+  stackUnder?:StackUnder[];
 }
+export interface StackUnder {table:number;column:string;as:string}
+/** A column a table lacks, which another of its columns seems to hold: most of that column's names are the first
+ *  table's. Found by the values, so a census whose names are another table's names is offered, and one that is not
+ *  is not. */
+export interface UnstackedColumn extends StackUnder {matched:number;of:number}
 export interface AppendResult {
   table:DataTable;
   /** Rows from each table, in port order. */
@@ -89,8 +97,62 @@ function unitDifference(tables:readonly DataTable[],names?:readonly string[]):st
     +(usual?`open ${called(odd[0]!)}'s Configure… and state its unit as "${usual}", if that is what it counts.`
       :`state the same unit on every table, or none on any.`);
 }
-export function appendTables(tables:DataTable[],params:AppendParams={},names?:readonly string[]):AppendResult{
-  if(tables.length<2)throw new Error('Connect at least two tables: this step stacks their rows.');
+/** Each table's columns as the step stacks them: a column named under `stackUnder` takes the first table's name. */
+export function stackedUnder(tables:DataTable[],params:AppendParams,names?:readonly string[]):DataTable[]{
+  const called=(i:number)=>names?.[i]?`"${names[i]}"`:`table ${i+1}`;
+  return tables.map((table,i)=>{
+    const moves=(params.stackUnder??[]).filter(m=>m.table===i&&m.column!==m.as);
+    if(!moves.length)return table;
+    for(const m of moves){
+      if(!table.keys.includes(m.column))throw new Error(`${called(i)} has no "${m.column}" column to stack under "${m.as}". Its columns are ${table.keys.join(', ')}.`);
+      if(table.keys.includes(m.as))throw new Error(`${called(i)} already has a "${m.as}" column, so its "${m.column}" cannot be stacked under it.`);
+    }
+    const to=new Map(moves.map(m=>[m.column,m.as]));
+    const rename=(k:string)=>to.get(k)??k;
+    return {...table,keys:table.keys.map(rename),...(table.primaryKey?{primaryKey:table.primaryKey.map(rename)}:{}),
+      rows:table.rows.map(r=>({...r,key:Object.fromEntries(Object.entries(r.key).map(([k,v])=>[rename(k),v]))}))};
+  });
+}
+/** THE FIRST TABLE'S COLUMNS ANOTHER TABLE HOLDS UNDER ANOTHER NAME. For each table after the first, each column of the
+ *  first's it lacks, and the one of its own (not the first's) whose distinct values are most often the first's values
+ *  there: offered where at least half are. */
+export function unstackedColumns(tables:DataTable[],params:AppendParams={}):UnstackedColumn[]{
+  const moved=stackedUnder(tables,params);
+  const [first]=moved;if(!first)return [];
+  const values=(t:DataTable,k:string)=>new Set(t.rows.map(r=>(r.key[k]??'').trim()).filter(Boolean));
+  const found:UnstackedColumn[]=[];
+  moved.forEach((table,i)=>{
+    if(i===0)return;
+    const own=table.keys.filter(k=>!first.keys.includes(k));
+    for(const as of first.keys.filter(k=>!table.keys.includes(k))){
+      const theirs=values(first,as);if(!theirs.size)continue;
+      let best:UnstackedColumn|undefined;
+      for(const column of own){
+        const mine=values(table,column);if(!mine.size)continue;
+        const matched=[...mine].filter(v=>theirs.has(v)).length;
+        if(matched*2>=mine.size&&(!best||matched>best.matched))best={table:i,column,as,matched,of:mine.size};
+      }
+      if(best&&!found.some(f=>f.table===i&&f.column===best!.column))found.push(best);
+    }
+  });
+  return found;
+}
+export function appendTables(given:DataTable[],params:AppendParams={},names?:readonly string[]):AppendResult{
+  if(given.length<2)throw new Error('Connect at least two tables: this step stacks their rows.');
+  const tables=stackedUnder(given,params,names);
+  // ONE TABLE'S NAMES IN ANOTHER COLUMN would be stacked beside the first's, each table's rows empty in the other's
+  // column, and every step after reading the first's column would find nothing for them (2026-11-20, DR Congo's census
+  // "province" beside the models' "name"). Said here, with the column to stack it under, as a refusal.
+  const unstacked=unstackedColumns(tables);
+  if(unstacked.length){
+    const called=(i:number)=>names?.[i]?`"${names[i]}"`:tables.length===2?'the second table':`table ${i+1}`;
+    const u=unstacked[0]!,firstName=names?.[0]?`"${names[0]}"`:'the first table';
+    throw new Error(`${called(u.table)} has no "${u.as}" column, so its rows would have none, and its "${u.column}" seems to hold `
+      +`the same kind of names: ${u.matched} of its ${u.of} are names in ${firstName}'s "${u.as}". `
+      +`Under Configure…, stack its "${u.column}" under "${u.as}"`
+      +(u.matched<u.of?`, and check the ${u.of-u.matched} that are not: they may be spelled another way, or held in another column`:'')
+      +'.'+(unstacked.length>1?` ${unstacked.length-1} other column${unstacked.length===2?' is':'s are'} offered the same way there.`:''));
+  }
   const [first]=tables as [DataTable,...DataTable[]];
   const mismatch=valueMismatch(tables,names);if(mismatch)throw new Error(mismatch);
   const unitMismatch=valueMismatch(tables.map(t=>({valueField:t.unit?.trim()||''})),names);
@@ -168,4 +230,34 @@ export function appendSentence(result:AppendResult,params:AppendParams):string{
     +(source&&params.labelsAreNumbers?`, as a number${params.labelsAreNumbers.unit.trim()?` in ${params.labelsAreNumbers.unit.trim()}`:''}`:'')
     +(params.newKey?.trim()?`; "${params.newKey.trim()}" numbers them 1 to ${total} as the new key`:'')+'.'
     +(said.length?` ${said.join('; ')}.`:'');
+}
+
+/** THE COLUMNS AS A GRID (2026-11-20). The practitioner: *"what matters more is column sync and alignment than
+ *  summarization."* One row per column of the stacked table, one cell per table naming which of its columns fills it,
+ *  or none; the step's `stackUnder` is the only state, and the grid is read from it and written back to it. */
+export interface GridCell {column:string|null;suggested?:{column:string;matched:number;of:number}}
+export interface GridRow {as:string;cells:GridCell[]}
+const placedOf=(tables:DataTable[],under:StackUnder[])=>tables.map((t,i)=>new Map(t.keys.map(k=>{
+  const m=under.find(x=>x.table===i&&x.column===k);return [k,m?m.as:k] as const;})));
+export function columnGrid(tables:DataTable[],under:StackUnder[]=[]):GridRow[]{
+  const placed=placedOf(tables,under);
+  const order:string[]=[];for(const p of placed)for(const as of p.values())if(!order.includes(as))order.push(as);
+  const hints=unstackedColumns(tables,{stackUnder:under});
+  return order.map(as=>({as,cells:placed.map((p,i)=>{
+    const column=[...p].find(([,a])=>a===as)?.[0]??null;
+    const hint=column===null?hints.find(h=>h.table===i&&h.as===as):undefined;
+    return {column,...(hint?{suggested:{column:hint.column,matched:hint.matched,of:hint.of}}:{})};})}));
+}
+/** Table `table`'s column `column` (or none) under the stacked column `as`. */
+export function placeColumn(under:StackUnder[],table:number,as:string,column:string|null):StackUnder[]{
+  const kept=under.filter(m=>!(m.table===table&&(m.as===as||m.column===column)));
+  return column===null||column===as?kept:[...kept,{table,column,as}];
+}
+/** The stacked column `as` called `to`, for every table filling it. */
+export function renameStacked(tables:DataTable[],under:StackUnder[],as:string,to:string):StackUnder[]{
+  const name=to.trim();if(!name||name===as)return under;
+  const placed=placedOf(tables,under);
+  let next=under;
+  placed.forEach((p,i)=>{const column=[...p].find(([,a])=>a===as)?.[0];if(column!==undefined)next=placeColumn(next,i,name,column);});
+  return next;
 }

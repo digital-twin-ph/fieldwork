@@ -1,5 +1,6 @@
-import type {RelateShape,MeasureShare,RelateRequest,ShiftColumn} from './relate-table.js';
-import {rateMultiplier,machinedNotes,matchWords,isNumberLabel} from './relate-table.js';
+import type {RelateShape,MeasureShare,RelateRequest,ShiftColumn,RelateOutcome} from './relate-table.js';
+import {rateMultiplier,machinedNotes,matchWords,isNumberLabel,relateShape,decisionMatches,relateAtShifts} from './relate-table.js';
+import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {DEFAULT_SPELLING_THRESHOLD,type SpellingSettings} from './spelling-match.js';
 import type {DataTable} from './data-table.js';
 import type {ParamsByType} from './types.js';
@@ -430,3 +431,83 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
     },
   },esc);
 }
+
+/** WHAT RELATE'S INSPECTOR IS GIVEN (2026-11-20, moved out of app.ts when touched for its message on no match). */
+export interface RelateKit extends StepKit {
+  /** What the step feeding a port is called, or `fallback`. */
+  sourceName:(nodeId:string,port:string,fallback:string)=>string;
+  /** What the last run related, and the columns it brought at each shift. */
+  relation:(nodeId:string)=>RelateOutcome|undefined;
+  shifted:(nodeId:string)=>ShiftColumn[]|undefined;
+  /** The key columns reaching a port, read up the workflow without a run. */
+  keyColumns:(nodeId:string,port:string)=>string[];
+  /** The value column the step feeding a port declares, without a run. */
+  valueOn:(nodeId:string,port:string)=>string|undefined;
+}
+const errorText=(error:unknown)=>error instanceof Error?error.message:String(error);
+/** RELATE'S INSPECTOR, out of app.ts (experiment 186's standard): what the step is called, what feeds it, one sentence
+ *  of what it will do, what the last run gave. Every setting, the preview of the join and the decision about unmatched
+ *  rows are in the configuration dialog, which nothing changes the workflow from until Apply. */
+export const relateInspector:OwnInspector<'relate_table'>={
+  markup:(n,kit)=>{const k=kit as RelateKit,p=n.params,esc=kit.esc;
+    const left=k.sourceName(n.id,'records','the first table'),right=k.sourceName(n.id,'related','the second table');
+    let html=kit.section('Name',kit.name('relate-label',p.label||'Relate a column from another table'))
+      +kit.section('Inputs',kit.inputs(n,{records:'Table being added to',related:'Table read from'}));
+    // WHETHER A DECISION IS OUTSTANDING, which the sentence alone cannot say. Planned from the tables where they can
+    // be resolved without a run, as the dialog's preview is.
+    const joinLeft=k.tableOn(n.id,'records'),joinRight=k.tableOn(n.id,'related');
+    let state='';
+    if(joinLeft&&joinRight&&p.on&&p.bring&&!((p.shifts?.length??0)>1)){
+      try{
+        const planned=relateShape(joinLeft,joinRight,{on:p.on,...(p.alsoOn?.length?{alsoOn:p.alsoOn}:{}),
+          ...(p.within?{within:p.within}:{}),...(p.shiftDays?{shiftDays:p.shiftDays}:{}),bring:p.bring,
+          ...(p.normalisation?{normalisation:p.normalisation}:{}),...(p.measureKey?{measureKey:p.measureKey}:{}),
+          ...(p.rightOn?{rightOn:p.rightOn}:{}),...(p.spelling?{spelling:p.spelling}:{})});
+        const gaps=planned.overlap.gaps.length;
+        const decided=p.unmatched&&decisionMatches(p.unmatched.signature,planned)?p.unmatched:undefined;
+        state=!gaps?''
+          :decided?`<p class="standard-state">Decided: ${decided.decision==='drop'?'drop the unmatched rows'
+              :`keep them as “${esc(decided.label??'')}”`}${decided.reason?` — ${esc(decided.reason)}`:''}.</p>`
+          :`<div class="notice notice-warning">This join needs a decision before it can run: ${gaps} `
+            +`${esc(keyNoun([p.on,...(p.alsoOn??[])].join(' and '),gaps))} in ${esc(left)} ${gaps===1?'has':'have'} `
+            +`no row in ${esc(right)}. Decide what happens to them in Configure…</div>`;
+      }catch(error){state=`<div class="notice notice-warning">${esc(errorText(error))}</div>`;}
+    }
+    html+=kit.section('Settings',`<p class="standard-sentence">${esc(relateSentence(p,right))}</p>${state}`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>');
+    // RESULT: one line, what came out and what was left out, counted.
+    const relation=k.relation(n.id),shifted=k.shifted(n.id),why=k.unfinished(n.id);
+    const line=relation
+      ?`${relation.related.toLocaleString()} of ${relation.offered.toLocaleString()} rows related`
+        +(relation.dropped?`; ${relation.dropped.toLocaleString()} dropped, with no ${relation.on} in ${right}: `
+          +relation.gaps.map(g=>g.key).join(', '):'. No row was dropped')+'.'
+      :shifted
+        ?`${shifted.length} columns brought, every row kept. Empty: `
+          +shifted.map(c=>`${c.column} ${c.empty.toLocaleString()}`).join(', ')+'.'
+        :why?`The last run could not compute this step: ${why}`
+        :'Not run yet.';
+    return html+kit.section('Result',`<p class="standard-result${relation?.dropped||why?' standard-result-warning':''}">${esc(line)}</p>`
+      +'<div data-standard-result></div>');},
+  wire:(n,kit,root)=>{const k=kit as RelateKit;
+    root.querySelector('#configure-step')?.addEventListener('click',()=>{
+      const node=kit.workflow().nodes.find(x=>x.id===n.id);
+      if(node?.type!=='relate_table')return;
+      const p=node.params,left=k.tableOn(n.id,'records'),right=k.tableOn(n.id,'related');
+      // Before a run, from the second table's own settings: a count's column is "rows" (found 2026-11-09, Hagelloch's
+      // secondary cases, where the fallback read the step above the count and offered nothing to bring).
+      const relatedValue=right?.valueField??k.valueOn(n.id,'related');
+      openRelateConfig({
+        step:p.label||k.title('relate_table'),
+        leftLabel:k.sourceName(n.id,'records','the first table'),
+        rightLabel:k.sourceName(n.id,'related','the second table'),
+        hereColumns:k.keyColumns(n.id,'records'),thereColumns:k.keyColumns(n.id,'related'),
+        ...(relatedValue?{relatedValue}:{}),...(p.measureKey?{measureKey:p.measureKey}:{}),
+        ...(left?{left}:{}),...(right?{right}:{}),
+        plan:request=>{try{return relateShape(left!,right!,request);}catch(error){return {refusal:errorText(error)};}},
+        planShifts:(request,shifts)=>{try{return relateAtShifts(left!,right!,request,shifts);}catch(error){return {refusal:errorText(error)};}},
+        initial:relateDraftOf(p),
+        apply:(draft,plan)=>k.keep(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='relate_table')applyRelateDraft(t.params,draft,plan);}),
+      },kit.esc);
+    });
+  },
+};

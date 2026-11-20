@@ -10,21 +10,23 @@ const errors=collectPageErrors(page);
 const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const run=async()=>{await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});};
 const select=async id=>{await page.locator('[data-view="workflow"]').click();await page.locator(`.react-flow__node[data-id="${id}"]`).click();};
+// THE STANDARD INSPECTOR (2026-11-20): the area unit is set in Configure…, and the input chosen under Inputs.
+const unit=async value=>{await page.locator('#configure-step').click();await page.locator('#measure-area-dialog #area-unit').selectOption(value);await page.locator('#measure-area-dialog #config-apply').click();};
   const w=blankWorkflow(),geometry=bboxPolygon(25.89,-24.7,25.91,-24.68);
   w.nodes=[{...newStudyArea(),id:'area-test',x:50,y:70}];w.nodes[0].params={...w.nodes[0].params,label:'Area experiment',selectionMode:'bbox',geometry};
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles({name:'area.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="measure_area"]').click();
-  await expect(page.locator('#area-unit')).toHaveValue('km2');
-  await page.locator('#measure-area-source').selectOption('area-test');
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('square kilometres');
+  await page.locator('#connect-area').selectOption('area-test');
   await page.locator('[data-view="workflow"]').click();
   await expect(page.locator('.react-flow__edge')).toHaveCount(1);
   const measureId=(await saved()).nodes.find(n=>n.type==='measure_area').id;
-  for(const unit of Object.keys(AREA_UNITS)){
-    await page.locator('#area-unit').selectOption(unit);await run();
+  for(const unitValue of Object.keys(AREA_UNITS)){
+    await select(measureId);await unit(unitValue);await run();
   await page.locator('[data-view="results"]').click();
-    await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(geometry,unit)));
+    await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(geometry,unitValue)));
   }
   await page.locator('[data-view="rules"]').click();await expect(page.locator('#n3-preview')).toContainText('COMPUTED FACTS (not inferred)');await expect(page.locator('#n3-preview')).toContainText('geo:hasMetricArea');
   const download=page.waitForEvent('download');await page.locator('#download-evidence').click();const receipt=JSON.parse(await readFile(await (await download).path(),'utf8'));
@@ -40,20 +42,20 @@ const select=async id=>{await page.locator('[data-view="workflow"]').click();awa
   await page.getByText('Enter bounding coordinates',{exact:true}).click();await page.locator('#area-east').fill('25.9');await page.locator('#area-use-bounds').click();await page.locator('#area-apply').click();
   await expect(page.locator('#workflow-state')).toContainText('Changed');await run();
   const smaller=bboxPolygon(25.89,-24.7,25.9,-24.68);await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(smaller,'mi2')));
-  await select(measureId);await page.locator('#area-unit').selectOption('acre');await run();
+  await select(measureId);await unit('acre');await run();
   await mkdir('test-results',{recursive:true});await page.screenshot({path:'test-results/area-computation-desktop.png',fullPage:true});
   const exported=page.waitForEvent('download');await page.locator('#backup-button').click();await page.locator('#export-button').click();const workflowBytes=await readFile(await (await exported).path());
   await page.locator('#new-workflow').click();await page.locator('#workflow-file').setInputFiles({name:'saved-area.json',mimeType:'application/json',buffer:workflowBytes});await run();
   await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
-  await select(measureId);await expect(page.locator('#area-unit')).toHaveValue('acre');await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(smaller,'acre')));
+  await select(measureId);await expect(page.locator('#inspector-content .standard-sentence')).toContainText('acres');await expect(page.locator('#result-metrics')).toContainText(formatArea(calculateArea(smaller,'acre')));
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   await page.screenshot({path:'test-results/area-computation-mobile.png',fullPage:true});
   await context.setOffline(false);await page.setViewportSize({width:1600,height:1100});
   await page.locator('#workflow-file').setInputFiles({name:'coverage.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(clipExercise()))});
   await expect(page.locator('#run-button')).toBeEnabled();await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-add="measure_area"]').click();
-  await page.locator('#measure-area-source').selectOption('scope');
+  await page.locator('#connect-area').selectOption('scope');
   const chainedId=(await saved()).nodes.find(n=>n.type==='measure_area').id;
   // Chained through the MAP's area port. It was the coverage check's until that widget was
   // retired on 2026-10-21; what is under test is the measurement reaching the consumer, and the

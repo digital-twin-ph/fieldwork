@@ -47,7 +47,7 @@ test('an area saved before revisions were recorded still emits valid facts',()=>
   assert.match(facts,/<urn:fieldwork:geometry:study> a geo:Geometry/);
   assert.doesNotMatch(facts,/prov:wasRevisionOf/);
   assert.doesNotMatch(facts,/prov:generatedAtTime/,'no timestamp is better than an invented one');
-  assert.match(facts,/geo:asWKT/);
+  assert.match(facts,/<urn:fieldwork:sha256> "[a-f0-9]{64}"/);
 });
 
 test('the prefixes the new assertions need are declared',()=>{

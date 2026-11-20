@@ -4,7 +4,7 @@ import {resolveLayerSymbol,fillClass,SPATIAL_RELATION_FILL,MARK_VOCABULARY,categ
 import type {AreaValue,MapValue,MapRow,Receipt} from './results.js';
 export type MapInputs={area:AreaValue;points:PointInput};
 import {pointRelation,relationLabel} from './spatial-coverage.js';
-import {CRS84,geometryWKT} from './study-area.js';
+import {CRS84,geometryWKT,geometryByReference} from './study-area.js';
 import {pointLayers,layerRecords,layerSummary} from './point-layers.js';
 import {mapLinks,linkSentence} from './map-links.js';
 
@@ -44,7 +44,7 @@ export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId
   }
   let facts=(area.areaFacts||'')+'@prefix fw: <urn:fieldwork:>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n'+
     `${activity} a fw:MapView, prov:Activity; prov:used <${area.areaId}>${layers.map(l=>`, <urn:fieldwork:source:${l.sourceNodeId}>`).join('')}.\n`+
-    `<${area.areaId}> a geo:Feature; geo:hasGeometry <${area.geometryId}>.\n<${area.geometryId}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(area.boundary))}^^geo:wktLiteral.\n`;
+    `<${area.areaId}> a geo:Feature; geo:hasGeometry <${area.geometryId}>.\n<${area.geometryId}> a geo:Geometry; ${geometryByReference(area.boundary)}.\n`;
   for(const row of rows){const record=`<urn:fieldwork:record:${row.sourceNodeId}:${encodeURIComponent(String(row.recordId))}>`,shape=`<urn:fieldwork:record:${row.sourceNodeId}:${encodeURIComponent(String(row.recordId))}:geometry>`;
     facts+=`${record} a geo:Feature; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:${row.sourceNodeId}>; fw:spatialRelation fw:${row.relation}.\n`;
     if(row.coordinates)facts+=`${record} geo:hasGeometry ${shape}; geo:${GEOSPARQL_PREDICATE[row.relation as Exclude<SpatialRelation,'MissingLocation'>]} <${area.areaId}>.\n${shape} a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> POINT ('+row.coordinates.join(' ')+')')}^^geo:wktLiteral.\n`;

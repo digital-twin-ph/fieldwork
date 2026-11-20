@@ -76,3 +76,5 @@ export function fileDigest(blob:Blob,onProgress?:(read:number,of:number)=>void):
     worker.postMessage({blob});
   });
 }
+/** A text's SHA-256, of its UTF-8 bytes, synchronously: what a receipt names a shape by (2026-11-20). */
+export const sha256OfText=(text:string)=>new Sha256().update(new TextEncoder().encode(text)).hex();

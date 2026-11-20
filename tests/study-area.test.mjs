@@ -1,6 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {blankWorkflow,newStudyArea,bboxPolygon,validateDrawnGeometry,validateAreaParams,studyAreaN3,quadToN3,boundaryFingerprint,CRS84} from '../build/study-area.js';
+import {blankWorkflow,newStudyArea,bboxPolygon,validateDrawnGeometry,validateAreaParams,studyAreaN3,quadToN3,boundaryFingerprint,CRS84,geometryWKT} from '../build/study-area.js';
+import {createHash} from 'node:crypto';
+// A RECEIPT NAMES A SHAPE BY ITS GEOJSON'S DIGEST (2026-11-20), so a shape reaches it whole when the digest is of that GeoJSON.
+const digestOf=g=>createHash('sha256').update(JSON.stringify(g)).digest('hex');
 import {validateWorkflow,executionPlan,executeWorkflow} from '../build/core.js';
 const polygon=points=>({type:'Polygon',coordinates:[[...points,points[0]]]});
 test('blank workflow has no hidden nodes and requires a selection to run',()=>{
@@ -27,15 +30,16 @@ test('invalid drawings fail before they can become spatial facts',()=>{
     [[25.4,-23.6],[25.6,-23.6],[25.6,-23.4],[25.4,-23.4],[25.4,-23.6]]]};
   assert.deepEqual(validateDrawnGeometry(withEnclave),withEnclave);
   assert.match(studyAreaN3({id:'area-h',params:{source:'drawn',label:'With enclave',selectionMode:'polygon',geometry:withEnclave}}).facts,
-    /POLYGON \(\(25 -24.*\), \(25.4 -23.6/,'both rings reach the receipt');
+    new RegExp(`<urn:fieldwork:sha256> "${digestOf(withEnclave)}"`),'both rings reach the receipt, in the GeoJSON it names');
 });
 test('GeoSPARQL representation preserves feature geometry separation and CRS84 coordinate order',()=>{
   const node={...newStudyArea(),id:'area-1'};node.params={...node.params,label:'Area "A"',selectionMode:'bbox',geometry:bboxPolygon(25.89,-24.7,25.91,-24.68)};
   const n3=studyAreaN3(node);
   assert.match(n3.facts,/a geo:Feature, fw:StudyArea/);
   assert.match(n3.facts,/geo:hasGeometry <urn:fieldwork:geometry:area-1>/);
-  assert.ok(n3.facts.includes(`<${CRS84}> POLYGON ((25.89 -24.7, 25.91 -24.7`));
-  assert.match(n3.facts,/\^\^geo:wktLiteral/);assert.ok(n3.facts.includes('Area \\"A\\"'));
+  assert.ok(n3.facts.includes(`<http://purl.org/dc/terms/format> "application/geo+json"; <urn:fieldwork:sha256> "${digestOf(node.params.geometry)}"`));
+  assert.doesNotMatch(n3.facts,/geo:asWKT/,'the shape is named, not written out');
+  assert.ok(geometryWKT(node.params.geometry).startsWith('POLYGON ((25.89 -24.7, 25.91 -24.7'),'WKT, where it is written, is longitude first');assert.ok(n3.facts.includes('Area \\"A\\"'));
   assert.match(n3.rules,/fw:geometryValidated true/);
   assert.equal(quadToN3({subject:'urn:a',predicate:'urn:p',object:'true',objectType:'Literal',datatype:'http://www.w3.org/2001/XMLSchema#boolean'}),'<urn:a> <urn:p> "true"^^<http://www.w3.org/2001/XMLSchema#boolean> .');
 });
@@ -119,8 +123,7 @@ test('two distant units are two parts, each as published',()=>{
   assert.deepEqual(validateDrawnGeometry(g),g,'nothing is merged, moved or boxed');
   const facts=studyAreaN3({id:'area-1',params:{source:'drawn',label:'Two districts',
     selectionMode:'polygon',geometry:g}}).facts;
-  assert.match(facts,/MULTIPOLYGON \(\(\(29.9 0.9/,'both parts reach the receipt as one geometry');
-  assert.ok(facts.includes('33.9 2.9'),'the second part is there too');
+  assert.ok(facts.includes(`<urn:fieldwork:sha256> "${digestOf(g)}"`),'both parts reach the receipt as one geometry, the GeoJSON it names');
 });
 
 test('parts that overlap are refused rather than silently double-counting ground',()=>{

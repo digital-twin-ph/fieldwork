@@ -8,7 +8,7 @@ import {buffer} from '@turf/buffer';
 import {area as turfArea} from '@turf/area';
 import type {AreaValue,Receipt} from './results.js';
 import type {Boundary,PointCollection,WorkflowNode} from './types.js';
-import {geometryWKT,CRS84,geometryBounds} from './study-area.js';
+import {geometryWKT,CRS84,geometryBounds,geometryByReference} from './study-area.js';
 import {validateBuffer} from './area-buffer.js';
 
 /** Turf's `steps` is per quadrant. Measured 2026-10-09 at a 5 km radius: 8 steps gives 32
@@ -58,7 +58,7 @@ export function bufferPoint(points:PointCollection,node:WorkflowNode<'buffer_poi
     +`fw:circleAreaFraction "${fraction.toFixed(4)}"^^xsd:decimal; `
     +`fw:bufferDistance [ a qudt:QuantityValue; qudt:numericValue ${distanceM}; qudt:unit <http://qudt.org/vocab/unit/M> ].\n`
     +`<${areaId}> a fw:StudyArea, geo:Feature; prov:wasGeneratedBy <${activity}>; geo:hasGeometry <${geometryId}>.\n`
-    +`<${geometryId}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(boundary))}^^geo:wktLiteral.\n`;
+    +`<${geometryId}> a geo:Geometry; ${geometryByReference(boundary)}.\n`;
   return {
     value:{kind:'study-area',boundary,areaId,geometryId,label:node.params.label,bounds,rows:[],centers:[],
       spatialReference:undefined},

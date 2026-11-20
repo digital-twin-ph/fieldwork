@@ -1,7 +1,7 @@
 import {buffer} from '@turf/buffer';
 import type {AreaValue,Receipt} from './results.js';
 import type {Boundary,Polygon,WorkflowNode,Position} from './types.js';
-import {geometryWKT,CRS84,bboxPolygon,geometryBounds} from './study-area.js';
+import {geometryWKT,CRS84,bboxPolygon,geometryBounds,geometryByReference} from './study-area.js';
 /** The buffer distance is a knob, and its range was a second number with no reason behind it.
  *
  *  It capped at 5,000 m while the geometry helpers in this same module accept 50,000 — `circleAround`
@@ -21,7 +21,7 @@ export function bufferedBoundary(boundary:Boundary,distanceM:number):Boundary{
 }
 export function bufferArea(node:WorkflowNode<'buffer_area'>,source:AreaValue,runId:string):{value:AreaValue;receipt:Receipt}{
   const boundary=bufferedBoundary(source.boundary,node.params.distanceM),areaId=`urn:fieldwork:run:${runId}:output:${node.id}`,geometryId=areaId+':geometry',activity=areaId+':buffer';
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix qudt: <http://qudt.org/schema/qudt/>.\n<${activity}> a fw:AreaBuffer, prov:Activity; fw:method "Turf/JSTS local azimuthal equidistant metre buffer; 8 quadrant segments"; prov:used <${source.areaId}>; fw:bufferDistance [ a qudt:QuantityValue; qudt:numericValue ${node.params.distanceM}; qudt:unit <http://qudt.org/vocab/unit/M> ].\n<${areaId}> a fw:StudyArea, geo:Feature; prov:wasGeneratedBy <${activity}>; prov:wasDerivedFrom <${source.areaId}>; geo:hasGeometry <${geometryId}>.\n<${geometryId}> a geo:Geometry; geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(boundary))}^^geo:wktLiteral.\n`;
+  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix qudt: <http://qudt.org/schema/qudt/>.\n<${activity}> a fw:AreaBuffer, prov:Activity; fw:method "Turf/JSTS local azimuthal equidistant metre buffer; 8 quadrant segments"; prov:used <${source.areaId}>; fw:bufferDistance [ a qudt:QuantityValue; qudt:numericValue ${node.params.distanceM}; qudt:unit <http://qudt.org/vocab/unit/M> ].\n<${areaId}> a fw:StudyArea, geo:Feature; prov:wasGeneratedBy <${activity}>; prov:wasDerivedFrom <${source.areaId}>; geo:hasGeometry <${geometryId}>.\n<${geometryId}> a geo:Geometry; ${geometryByReference(boundary)}.\n`;
   return {value:{kind:'study-area',boundary,areaId,geometryId,label:node.params.label,bounds:geometryBounds(boundary),rows:[],centers:[],spatialReference:structuredClone(source.spatialReference)},receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:'Turf/JSTS metre buffer using a local azimuthal equidistant projection, 8 quadrant segments; source reporting boundary unchanged.'}};
 }
 /** A circle of a stated radius around a centre, as a polygon.

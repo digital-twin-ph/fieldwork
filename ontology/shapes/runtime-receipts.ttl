@@ -125,8 +125,14 @@ fw:RuntimeStepShape a sh:NodeShape; sh:targetClass fw:WorkflowStep;
   sh:property [ sh:path fw:receiptActivity; sh:class prov:Activity; sh:node fw:ReceiptActivityShape ].
 fw:ReceiptActivityShape a sh:NodeShape;
   sh:property [ sh:path fw:workflowNode; sh:minCount 1; sh:maxCount 1; sh:class fw:WorkflowNodePlan ].
+# A GEOMETRY IS WRITTEN OUT OR NAMED (2026-11-20): WKT for a point and a generated cell; for a polygon the project keeps,
+# its GeoJSON's format and SHA-256, so a receipt does not carry megabytes no rule reads.
 fw:RuntimeGeometryShape a sh:NodeShape;
-  sh:property [ sh:path geo:asWKT; sh:minCount 1; sh:maxCount 1; sh:datatype geo:wktLiteral ].
+  sh:xone (
+    [ sh:property [ sh:path geo:asWKT; sh:minCount 1; sh:maxCount 1; sh:datatype geo:wktLiteral ] ]
+    [ sh:property [ sh:path fw:sha256; sh:minCount 1; sh:maxCount 1; sh:pattern "^[a-f0-9]{64}$" ];
+      sh:property [ sh:path <http://purl.org/dc/terms/format>; sh:minCount 1; sh:maxCount 1; sh:hasValue "application/geo+json" ] ]
+  ).
 fw:RuntimeQuantityShape a sh:NodeShape;
   sh:class qudt:QuantityValue;
   sh:property [ sh:path qudt:numericValue; sh:minCount 1; sh:maxCount 1; sh:nodeKind sh:Literal; sh:minInclusive 0 ];

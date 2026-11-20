@@ -21,7 +21,7 @@ import 'leaflet/dist/leaflet.css';
  *  on-demand half work at all, and a hashed chunk href resolved by hand would break on the next
  *  content change. */
 import 'maplibre-gl/dist/maplibre-gl.css';
-import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,geometryWKT,boundaryFingerprint,CRS84} from './study-area.js';
+import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,geometryWKT,boundaryFingerprint,CRS84,geometryByReference} from './study-area.js';
 import type {RasterGrid} from './raster.js';
 import {clipRaster,rasterOverhang,overhangSentence} from './raster.js';
 import {rasterImage} from './raster-ui.js';
@@ -240,7 +240,7 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
       const shapeKey=geometry===lastShape&&name.value===lastName&&settingsKey===lastSettings;
       try{if(!shapeKey){validateDrawnGeometry(geometry);validateClip();}
         const n3=(shapeKey&&lastN3)?lastN3:studyAreaN3({id:node.id,params:currentParams()});
-        lastShape=geometry;lastName=name.value;lastSettings=settingsKey;lastN3=n3;$('#area-n3').textContent=preview(context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; geo:asWKT '+JSON.stringify('<'+CRS84+'> '+geometryWKT(geometry))+'^^geo:wktLiteral.':n3.input,'facts and rules');{const c=shapeCounts(geometry);$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':c.parts>1?`${c.parts.toLocaleString('en')} polygons`:'Polygon'} · ${c.vertices.toLocaleString('en')} vertices${c.holes?` · ${c.holes.toLocaleString('en')} interior ring${c.holes===1?'':'s'}`:''} · ${Math.max(1,Math.round(JSON.stringify(geometry).length/1024)).toLocaleString('en')} KB · longitude, latitude`;}message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
+        lastShape=geometry;lastName=name.value;lastSettings=settingsKey;lastN3=n3;$('#area-n3').textContent=preview(context.clip?'@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n<urn:fieldwork:cutline:'+node.id+'> a geo:Geometry; '+geometryByReference(geometry)+'.':n3.input,'facts and rules');{const c=shapeCounts(geometry);$('#area-summary').textContent=`${selectionMode==='bbox'?'Bounding box':c.parts>1?`${c.parts.toLocaleString('en')} polygons`:'Polygon'} · ${c.vertices.toLocaleString('en')} vertices${c.holes?` · ${c.holes.toLocaleString('en')} interior ring${c.holes===1?'':'s'}`:''} · ${Math.max(1,Math.round(JSON.stringify(geometry).length/1024)).toLocaleString('en')} KB · longitude, latitude`;}message(context.raster?`${previewStatus?.textContent} Apply the clip parameters, then rerun to update results.`:'Shape is valid. Apply it to the node, then run to evaluate the N3 rule.');valid=true;}
       catch(e){message(errorMessage(e));$('#area-feedback').classList.add('clip-preview-error');$('#area-feedback').setAttribute('role','alert');if(previewStatus)previewStatus.textContent=errorMessage(e);$('#area-n3').textContent='The draft must be valid and named before N3 is generated.';$('#area-summary').textContent='Draft needs correction';}
       // VERTEX HANDLES ARE FOR A SINGLE-PART SHAPE. A study area may now hold several parts --
       // two jurisdictions, possibly in different countries -- and dragging a vertex of one of

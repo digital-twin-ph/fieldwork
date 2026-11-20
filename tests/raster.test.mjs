@@ -1,3 +1,4 @@
+import {createHash} from 'node:crypto';
 import {validateRasterProvenance,rasterProvenanceN3,WORLDPOP_BOTSWANA} from '../build/raster-provenance.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -26,8 +27,8 @@ test('clip parameters survive portable projects and evidence distinguishes cutli
  assert.deepEqual(restored.workflow.nodes.find(n=>n.id==='clip').params,w.nodes.at(-1).params);for(const marginPixels of [-1,1.1]){const invalid=structuredClone(w);invalid.nodes.at(-1).params.marginPixels=marginPixels;assert.throws(()=>validateWorkflow(invalid),/margin/);}
  const area={boundary:{type:'Polygon',coordinates:[[[25,-24],[26,-24],[26,-25],[25,-25],[25,-24]]]},areaId:'urn:area',geometryId:'urn:area-geometry'},receipt=rasterReceipt(w.nodes.at(-1),clipRaster(grid,boundary),area,'independent','raster');
  const quads=new Parser().parse(receipt.facts),cutlineQuad=quads.find(q=>q.predicate.value==='urn:fieldwork:clipGeometry');assert.ok(cutlineQuad);
- const wkt=subject=>quads.find(q=>q.subject.value===subject&&q.predicate.value==='http://www.opengis.net/ont/geosparql#asWKT').object.value;
- assert.notEqual(wkt(cutlineQuad.object.value),wkt('urn:area-geometry'));const bad=structuredClone(w);bad.nodes.at(-1).params.cutline.geometry={type:'Point',coordinates:[25,-24]};assert.throws(()=>validateWorkflow(bad),/polygon/i);
+ const wkt=subject=>quads.find(q=>q.subject.value===subject&&q.predicate.value==='urn:fieldwork:sha256')?.object.value;
+ const digestOf=g=>createHash('sha256').update(JSON.stringify(g)).digest('hex');assert.equal(wkt(cutlineQuad.object.value),digestOf(boundary),'the receipt names the cutline');assert.notEqual(wkt(cutlineQuad.object.value),digestOf(area.boundary),'and not the study area');const bad=structuredClone(w);bad.nodes.at(-1).params.cutline.geometry={type:'Point',coordinates:[25,-24]};assert.throws(()=>validateWorkflow(bad),/polygon/i);
 });
 async function fixture(){const values=[0,1.25,2,3,4,null,6,7,8,9,10,11,12,13,14,15],bytes=encodeRaster({metadata,values}),actual=await inspectRaster(new Blob([bytes])),asset={sha256:await contentHash(bytes),bytes:bytes.length,filename:'window.tif',mediaType:'image/tiff',metadata:actual,source:{filename:'original.tif',bytes:bytes.length,lastModified:0,metadata:actual},window:[0,0,4,4]};return {grid:{metadata:actual,values,asset},bytes};}
 test('GeoTIFF round trip preserves zero, floating values, NoData and native georeferencing',async()=>{const {grid,bytes}=await fixture(),r=await readRasterWindow(new Blob([bytes]),grid.metadata,[0,0,4,4]);assert.deepEqual(cells(r.values),grid.values);assert.deepEqual(r.metadata.bounds,metadata.bounds);assert.equal(r.metadata.crs,'EPSG:4326');});

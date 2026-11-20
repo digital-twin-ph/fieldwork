@@ -1,3 +1,4 @@
+import {sha256OfText} from './sha256-stream.js';
 import {REPAIR_RULE} from './boundary-repair.js';
 import type {AreaParams,Boundary,Bounds,Escape,NodeSpec,Polygon,Position,Workflow,WorkflowNode} from './types.js';
 import type {ReasonerQuad} from './worker-types.js';
@@ -351,6 +352,22 @@ export function validateAreaParams(p:AreaParams){
     }
   }
 }
+/** A SHAPE NAMED BY ITS GEOJSON'S DIGEST, NOT WRITTEN OUT (2026-11-20). The practitioner: *"I think we can skip writing the
+ *  study area as N3, we can refer to the GeoJSON of the study area from N3"*, then *"Apply N3 approach to every shape"*.
+ *  A receipt wrote each polygon as WKT -- DR Congo's provinces, 4.3 MB, in the study area's N3 and again in every receipt
+ *  that used the area -- and no rule read it: the reasoner does no geometry. The project keeps the GeoJSON, so the
+ *  receipt names it: its format, and the SHA-256 of `JSON.stringify(geometry)`, which anyone holding the project can
+ *  recompute. Points and the cells a run generates stay as WKT: a point is shorter than its digest, and a cell is kept
+ *  nowhere else. Full IRIs, so it reads the same in any document's prefixes. */
+const digests=new Map<string,string>();
+export function shapeDigest(g:Boundary):string{
+  const text=JSON.stringify(g);
+  let known=digests.get(text);
+  if(!known){known=sha256OfText(text);digests.set(text,known);if(digests.size>8)digests.delete(digests.keys().next().value!);}
+  return known;
+}
+export const geometryByReference=(g:Boundary)=>
+  `<http://purl.org/dc/terms/format> "application/geo+json"; <urn:fieldwork:sha256> "${shapeDigest(g)}"`;
 export function geometryWKT(g:Boundary){
   const ring=(r:Position[])=>'('+r.map(p=>p.join(' ')).join(', ')+')';
   return g.type==='Polygon'?'POLYGON ('+g.coordinates.map(ring).join(', ')+')':'MULTIPOLYGON ('+g.coordinates.map(p=>'('+p.map(ring).join(', ')+')').join(', ')+')';
@@ -449,8 +466,8 @@ export function studyAreaN3(node:Pick<WorkflowNode<'study_area'>,'id'|'params'>)
       +`  fw:identityBasis ${JSON.stringify(drew.basis)}`
       +(drew.at?`;\n  prov:generatedAtTime ${JSON.stringify(drew.at)}^^xsd:dateTime`:'')+'.\n'
     :'';
-  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n${provenance}${attribution}${history}  geo:asWKT ${JSON.stringify('<'+CRS84+'> '+geometryWKT(p.geometry))}^^geo:wktLiteral;\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n${agent}`;
-  const rules=`# Geometry checks run in the drawing widget. This rule consumes their explicit result.\n{ ?area a fw:StudyArea; geo:hasGeometry ?shape.\n  ?shape geo:asWKT ?wkt; fw:geometryValidated true.\n} => { ?area fw:readyForSpatialAnalysis true. }.\n`;
+  const facts=`${prefix}\n${subject} a geo:Feature, fw:StudyArea;\n  rdfs:label ${JSON.stringify(p.label)};\n  fw:selectionMode fw:${p.selectionMode==='bbox'?'BoundingBox':p.selectionMode==='circle'?'Circle':'Polygon'};\n  geo:hasGeometry ${geometry}.\n\n${geometry} a geo:Geometry;\n${provenance}${attribution}${history}  ${geometryByReference(p.geometry)};\n  fw:geometryValidated true;\n  fw:west ${west.toFixed(9)}; fw:south ${south.toFixed(9)};\n  fw:east ${east.toFixed(9)}; fw:north ${north.toFixed(9)}.\n${agent}`;
+  const rules=`# Geometry checks run in the drawing widget. This rule consumes their explicit result.\n{ ?area a fw:StudyArea; geo:hasGeometry ?shape.\n  ?shape <urn:fieldwork:sha256> ?digest; fw:geometryValidated true.\n} => { ?area fw:readyForSpatialAnalysis true. }.\n`;
   return {facts,rules:prefix+rules,input:facts+'\n'+rules};
 }
 export function quadToN3(q:ReasonerQuad){

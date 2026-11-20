@@ -1,6 +1,6 @@
 import type {Network,Polygons} from './catchments.js';
 import type {WorkflowNode} from './types.js';
-import {geometryWKT,CRS84} from './study-area.js';
+import {geometryWKT,CRS84,geometryByReference} from './study-area.js';
 const lit=JSON.stringify;
 const quantity=(value:number,unit:string)=>`[ a qudt:QuantityValue; qudt:numericValue "${value}"^^xsd:double; qudt:unit <http://qudt.org/vocab/unit/${unit}> ]`;
 
@@ -56,7 +56,7 @@ export function catchmentSemantics(node:WorkflowNode,value:Network|Polygons,enti
     for(const minutes of p.thresholds?.length?p.thresholds:[p.minutes])facts+=`<${activity}> fw:timeBudget ${quantity(minutes,'MIN')}.\n`;
     for(const snap of value.snaps||[])facts+=`<${activity}> fw:snap [ a fw:NetworkSnap; fw:siteId ${lit(snap.siteId)}; fw:networkVertexId ${lit(snap.nodeId)}; fw:snapDistance ${quantity(snap.distanceM,'M')} ].\n`;
   }
-  if(node.type==='clip_polygons'&&value.boundary)facts+=`<${activity}> fw:clipGeometry [ a geo:Geometry; geo:asWKT ${lit('<'+CRS84+'> '+geometryWKT(value.boundary))}^^geo:wktLiteral ].\n`;
+  if(node.type==='clip_polygons'&&value.boundary)facts+=`<${activity}> fw:clipGeometry [ a geo:Geometry; ${geometryByReference(value.boundary)} ].\n`;
   if(node.type==='summarize_points_to_polygon'&&value.summary){const s=value.summary;
     facts+=`<${activity}> fw:boundaryPolicy ${lit(node.params.boundary)}; fw:valueField ${lit(s.valueField)}.\n<${entity}> fw:inputRecordCount ${s.records}; fw:matchedRecordCount ${s.matched}; fw:outsideRecordCount ${s.unmatched}; fw:missingLocationCount ${s.missingLocation}; fw:multipleMembershipCount ${s.multiple}.\n`;
   }

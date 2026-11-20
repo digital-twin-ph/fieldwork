@@ -441,6 +441,7 @@ let remoteChecked:{project:string;at:number}|null=null;
 let sharedSignature='';
 /** A backup about to be imported into a shared repository, set by its button and taken by the import. */
 let pendingShare:{repository:NonNullable<Project['repository']>;at:number}|null=null;
+let incompleteShown=false;
 let workflow=EXAMPLE_TEMPLATES.hagelloch(),selected:string|null|undefined='cases',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,runIncomplete=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
 let tableSort:import('./table-output.js').TableSort|undefined;
@@ -536,7 +537,13 @@ const hiddenMapLayers=new Map<string,Set<string>>();
  *
  *  A failure is red, and it STAYS until it is closed. A message you are given five seconds to
  *  read is a message somebody decided you did not need. */
-function toast(message:string,options?:{action?:{label:string;run:()=>void};tone?:'failure'|'warning'|'notice'}){
+/** What is still missing before a run, with the step it is about, kept up to date as the person connects things. */
+function showIncomplete(e:IncompleteWorkflow):void{
+  const at=e.nodeId;
+  toast(errorMessage(e),{tone:'notice',...(at&&workflow.nodes.some(n=>n.id===at)?{action:{label:'Show the step',run:()=>{switchView('workflow');selected=at;render();}}}:{})});
+  incompleteShown=true;
+}
+function toast(message:string,options?:{action?:{label:string;run:()=>void};tone?:'failure'|'warning'|'notice'}){incompleteShown=false;
   const element=$('#toast');element.textContent=message;element.classList.add('visible');clearTimeout(toastTimer);
   element.classList.toggle('failure',options?.tone==='failure');
   element.classList.toggle('warning',options?.tone==='warning');
@@ -1294,7 +1301,12 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
  *  the run instead of failing: Hagelloch runs itself on open, and Describe columns saved while it ran said "The
  *  descriptions could not be saved" (gate 146, 2026-11-13). */
 const runFinished=():Promise<void>=>new Promise(resolve=>{const wait=()=>busy?setTimeout(wait,200):resolve();wait();});
-function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);const heldPayloads=heldPayloadsOf(workflow);try{fn(workflow);reconcilePayloadRefs(heldPayloads,workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){const bytes=JSON.stringify(workflow).length;workflow=previous;dropFocus();render();toast(storageRefusal(bytes),{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}dropFocus();render();return persisted;}catch(e){
+function change(fn:(w:Workflow)=>void,{spatial=true,requirePersistence=false}={}){if(busy)return false;const previous=structuredClone(workflow);const heldPayloads=heldPayloadsOf(workflow);try{fn(workflow);reconcilePayloadRefs(heldPayloads,workflow);syncProjectManifest(workflow,true);workflow=validateWorkflow(workflow);const persisted=save();if(requirePersistence&&!persisted){const bytes=JSON.stringify(workflow).length;workflow=previous;dropFocus();render();toast(storageRefusal(bytes),{tone:'failure'});return false;}history.push(previous);if(history.length>40)history.shift();future=[];if(spatial){dirty=true;runFailed=false;statuses={};}
+  // A WORKFLOW NOT READY TO RUN IS CHECKED AGAIN ON EACH CHANGE (2026-11-20): the message saying what was missing stayed
+  // on screen after the practitioner had connected it. Now it goes, and "Not ready to run" with it, once nothing is missing.
+  if(runIncomplete){try{executionPlan(workflow);runIncomplete=false;if(incompleteShown){$('#toast').classList.remove('visible');incompleteShown=false;}}
+    catch(e){if(incompleteShown&&e instanceof IncompleteWorkflow)showIncomplete(e);}}
+  dropFocus();render();return persisted;}catch(e){
   // The edit is rolled back and the panel is rewritten -- WHILE the control that made the edit
   // still holds focus. Chromium throws "The node to be removed is no longer a child of this
   // node. Perhaps it was moved in a 'blur' event handler?" from the innerHTML assignment,
@@ -6785,8 +6797,7 @@ async function run(){if(busy)return;
   // ordinary middle of building something, so it gets the plain notice tone, no console trace and
   // a state line that says what is true -- not "Run failed", which claims something went wrong.
   try{executionPlan(workflow);}catch(e){
-    if(e instanceof IncompleteWorkflow){runIncomplete=true;const at=e.nodeId;
-      toast(errorMessage(e),{tone:'notice',...(at&&workflow.nodes.some(n=>n.id===at)?{action:{label:'Show the step',run:()=>{switchView('workflow');selected=at;render();}}}:{})});render();return;}
+    if(e instanceof IncompleteWorkflow){runIncomplete=true;showIncomplete(e);render();return;}
     toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;runStartedAt=performance.now();statuses={};justFinished.clear();lastRunMs=null;/* THE LAST RUN'S RASTER IS LET GO AS THIS ONE STARTS (2026-11-17): held while the next run loaded its own, two windows were in memory at once, measured on Nigeria at 100 m. */if(result?.outputs.some(o=>o.raster)){result=null;renderResults();}{const key=storageKey(workflow);if(key&&runsByWorkflow.get(key)?.run.outputs.some(o=>o.raster))runsByWorkflow.delete(key);}render();try{await fillPlacedImages();}catch(e){busy=false;toast(errorMessage(e),{tone:'failure'});runFailed=true;render();return;}const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;
     // THE CANVAS CAN MOVE WHILE A RUN IS IN FLIGHT, and this run is then nobody's results.
     //

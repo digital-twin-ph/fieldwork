@@ -53,7 +53,7 @@ export function tidyLayout(workflow:Workflow,heights?:ReadonlyMap<string,number>
   const columns=new Map<number,string[]>();
   for(const node of [...workflow.nodes].sort((a,b)=>a.y-b.y||a.x-b.x)){
     const column=depth.get(node.id)??0;
-    columns.set(column,[...(columns.get(column)??[]),node.id]);
+    (columns.get(column)??columns.set(column,[]).get(column)!).push(node.id);
   }
   const positions=new Map<string,{x:number;y:number}>();
   for(const [column,ids] of columns){

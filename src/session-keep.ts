@@ -1,7 +1,8 @@
 /** UNLOCKED THROUGH A RELOAD (2026-11-16). The practitioner, offered three ways to make a reload cost less: *"I want stay
  *  unlocked but shorten the lock time to 10 minutes."* Their decision, taken knowing the cost: while it is unlocked, an
  *  open identity and unlocked credentials are kept in this browser's IndexedDB, where anything running on this page can
- *  use them, until Lock is pressed or ten minutes pass without use.
+ *  use them, until Lock is pressed or 15 minutes pass without use. Lengthened from 10 on 2026-11-19 (the
+ *  practitioner: *"Can we also increase the identify and credentials lock out to 15 minutes?"*).
  *
  *  What is kept is never plain text. It is encrypted with an AES-GCM key made here and kept beside it as a CryptoKey that
  *  cannot be exported, so the stored bytes are unreadable in the browser's storage panel, in a copy of the profile
@@ -10,7 +11,7 @@
  *  returned, once that has passed. */
 
 const DB='fieldwork-unlocked-v1',STORE='kept',WRAP='wrap-key';
-export const UNLOCKED_FOR_MS=10*60*1000;
+export const UNLOCKED_FOR_MS=15*60*1000;
 
 function database():Promise<IDBDatabase>{
   return new Promise((resolve,reject)=>{const r=indexedDB.open(DB,1);

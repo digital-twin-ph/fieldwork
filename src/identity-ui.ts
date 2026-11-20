@@ -174,7 +174,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
     const d=document.querySelector('#identity-dialog');
     if(d&&e.target instanceof Node&&d.contains(e.target))used();},{capture:true});
   setInterval(()=>{if(open&&Date.now()-lastActivity>=IDLE_MS)lock();},10_000);
-  // NOT LOCKED ON LEAVING THE PAGE any more: a reload keeps it, until ten minutes without use or Lock.
+  // NOT LOCKED ON LEAVING THE PAGE any more: a reload keeps it, until 15 minutes without use or Lock.
   void restore<{profile:OpenIdentity['profile'];algorithm:OpenIdentity['algorithm'];publicKey:string}>('identity').then(kept=>{
     const privateKey=kept?.keys?.privateKey;
     if(!kept||!privateKey||open)return;
@@ -239,7 +239,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         const on=t.dataset.identityTab===tab;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
         $(`#${t.getAttribute('aria-controls')}`).hidden=!!open||!on;}
       $('#identity-status').innerHTML=open
-        ?`${justOpened?`<span class="identity-done">✓ ${esc(justOpened)}</span> `:''}Open: <strong>${esc(identityLabel(open.profile))}</strong>. Notes you save now are signed (${esc(open.algorithm)}). It stays open through a reload, and locks after 10 minutes without use or when you press Lock.`
+        ?`${justOpened?`<span class="identity-done">✓ ${esc(justOpened)}</span> `:''}Open: <strong>${esc(identityLabel(open.profile))}</strong>. Notes you save now are signed (${esc(open.algorithm)}). It stays open through a reload, and locks after ${Math.round(IDLE_MS/60000)} minutes without use or when you press Lock.`
         :'No identity is open. Notes you save are kept with their versions, unsigned.';
       ($('#identity-lock') as HTMLButtonElement).disabled=!open;
       $('#identity-avatar').innerHTML=open?avatarSvg(open.profile,48)+`<span class="key-label">${keyPatternSvg(open.publicKey,28)} Your key</span>`:'';

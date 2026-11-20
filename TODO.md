@@ -1462,7 +1462,35 @@ chose **streaming** (*"Start streaming"*): zonal sums and sampling read the rast
 and never hold the whole window, so no value is narrowed. The 4-byte option is not pursued. Cost to settle in the
 design: a streamed raster is read again from its source at each run, where today the clipped window is kept.
 
-### The Tabular data dialog stalls at 250,000 rows (found 2026-11-19)
+### WebGPU as an accelerator, never a requirement ([225](docs/experiments/225-webgpu-as-an-accelerator.md), asked 2026-11-19)
+
+The practitioner: *"I think we should push WebGPU so when the need arrives, which is foreseeable, we are prepared."*
+Placed after raster streaming (the practitioner: *"Agree with WebGPU order"*), which will show whether summing a
+raster's cells is bound by arithmetic or by reading. The spike: where WebGPU is offered (the gate's headless Chromium
+included), a density surface in the Rust kernel and in WGSL compared cell by cell, and the fallback.
+
+### A connection to DHIS2's public test instance (asked 2026-11-19)
+
+The practitioner: *"Can we also test connection with the public test DHIS2 instance, add as a TODO item."* DHIS2 runs
+public demonstration servers (play.dhis2.org) with published demonstration accounts. To find out, before anything is
+built:
+
+- **Whether a browser page on another origin can call its Web API at all.** DHIS2 answers another origin only where
+  the server lists it (CORS); a demonstration server may not list Fieldwork's. If not, the question is a proxy, which
+  this project avoids, or a file exported from DHIS2.
+- **What a signed-in read returns**: organisation units with their geometry (a polygon layer), and data values or
+  analytics by unit and period (a table), at the size a district needs.
+- **How a person signs in**: a personal access token held in Credentials, as GitHub's is, not a password.
+
+Signing in to the demonstration server is the practitioner's step: its address is not a development or test host by
+the rules this assistant follows, so the assistant does not type its demonstration password. Nothing downloaded without
+asking.
+
+### ~~The Tabular data dialog stalls at 250,000 rows (found 2026-11-19)~~
+
+**Resolved the same day (Tabular data 0.11.1, Table 0.13.1):** grouping repeated keys copied each group at every row,
+and the table under the dialog drew every row (325,971 elements at 25,000 rows). A tick now takes 0.4 to 0.6 s at
+250,000 rows. The note as found:
 
 Measuring maps of many points, a 250,000-row CSV of five columns was read and previewed in 0.6 s, and then ticking
 four key columns took over an hour (the test's limit): each tick redraws the dialog. Experiment 175 imported 250,000

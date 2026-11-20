@@ -71,7 +71,7 @@ function grouped(table:DeclaredTable,valueOf:(cell:DeclaredCell)=>string|undefin
   const groups=new Map<string,string[]>();
   for(const key of TABLE_CELLS){
     const value=table.cells?.[key]?valueOf(table.cells[key]!)?.trim():'';
-    if(value)groups.set(value,[...(groups.get(value)??[]),key]);
+    if(value)(groups.get(value)??groups.set(value,[]).get(value)!).push(key);
   }
   return [...groups];
 }

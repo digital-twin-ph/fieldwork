@@ -49,7 +49,7 @@ export function columnValues(table:DataTable,column:string):string[]{
 /** Every distinct name of the first column, matched once. */
 export function linkNames(left:readonly string[],right:readonly string[],settings:SpellingSettings,margin=0.02):Map<string,LinkMatch>{
   const targets=new Map<string,string[]>();
-  for(const value of new Set(right.filter(v=>v.trim()))){const k=linkKey(value,settings.dropWords);if(k)targets.set(k,[...(targets.get(k)??[]),value]);}
+  for(const value of new Set(right.filter(v=>v.trim()))){const k=linkKey(value,settings.dropWords);if(k)(targets.get(k)??targets.set(k,[]).get(k)!).push(value);}
   const out=new Map<string,LinkMatch>();
   for(const name of new Set(left.filter(v=>v.trim()))){
     const k=linkKey(name,settings.dropWords);

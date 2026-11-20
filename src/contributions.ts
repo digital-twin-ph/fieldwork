@@ -109,7 +109,7 @@ export function contributions(authors:readonly Author[],
   const byLogin=new Map<string,AttributableAct[]>();
   for(const act of acts){
     const key=act.login.toLowerCase();
-    byLogin.set(key,[...(byLogin.get(key)??[]),act]);
+    (byLogin.get(key)??byLogin.set(key,[]).get(key)!).push(act);
   }
   return authors.map(author=>{
     const mine=byLogin.get(author.login.toLowerCase())??[];

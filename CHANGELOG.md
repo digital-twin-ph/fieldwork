@@ -25,6 +25,11 @@ shown in a local build is not a claim that it has been published.
   says so and the static plot draws them. Offline, or without WebGL, large layers are drawn as circles. Map 0.37.0,
   Table 0.13.0, Point data 0.11.0, Reproject points 0.3.0; times in Map's manual, under History.
 - **Map's Inspector and Configure dialog are in their own module**, out of `app.ts`, with nothing on screen changed.
+- **Credentials and an open identity stay unlocked for 15 minutes without use**, up from 10. One setting governs both.
+- **A large table no longer stalls the Tabular data dialog.** Ticking a key column on 250,000 rows took over an hour;
+  it now takes about half a second. Rows repeating a key were grouped by copying the group at every row (the same
+  pattern, fixed in nine other places, also slowed Deduplicate table, Apply ruleset's groups and the spelling match),
+  and a table drew every row on the page; it now shows 200 at a time. Tabular data 0.11.1, Table 0.13.1.
 
 ## 0.151.2 — 2026-11-19
 

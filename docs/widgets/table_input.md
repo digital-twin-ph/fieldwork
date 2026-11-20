@@ -137,3 +137,20 @@ after (`fw:CellEdit`). Experiment 214.
 ## What it will not do
 
 It does not choose between rows that disagree. The table stays as read until a later step changes it.
+
+## History
+
+### 2026-11-19 · A large table no longer stalls the dialog (0.11.1)
+
+Importing 250,000 rows of points to measure maps, ticking four key columns took over an hour (Chromium, development
+Mac). Two causes, both found by profiling one tick:
+
+- **Rows that repeat a key were grouped by copying the group at every row.** With a key of five values over 250,000
+  rows, each group was copied tens of thousands of times. They are now added in place; the groups are the same. A
+  finding names its first ten rows and how many more, not every row.
+- **The table under the dialog drew every row.** At 25,000 rows that was 325,971 elements on the page, and every
+  click searched them. It now shows 200 rows at a time, with Previous and Next, as Results does.
+
+After: a tick that rebuilds the table takes 0.4 to 0.6 s at 250,000 rows, measured by unticking and ticking a key
+column. A table of 200 rows or fewer looks as it did.
+

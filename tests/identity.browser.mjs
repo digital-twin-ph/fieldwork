@@ -166,7 +166,7 @@ test('an identity made here signs a note, the signature checks, and storage keep
   await changing;
   await expect(dialog.locator('#identity-status')).toContainText('ORCID 0000-0001-5109-3700');
 
-  // OPEN THROUGH A RELOAD (the practitioner, 2026-11-16: stay unlocked, and lock after 10 minutes).
+  // OPEN THROUGH A RELOAD (the practitioner, 2026-11-16: stay unlocked, and lock after 10 minutes; 15 from 2026-11-19).
   await page.reload();
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
   // NOTHING OF THE IDENTITY IN STORAGE AS PLAIN TEXT: not the file, not the passphrase, not the name. It is kept
@@ -207,7 +207,7 @@ test('the key page a phone opens from the QR code shows the key, offers Copy and
 });
 
 // ONLY ITS OWN USE KEEPS IT OPEN (2026-11-18, as for the credentials): clicks elsewhere in Fieldwork do not.
-test('an open identity locks after ten minutes without its own use, however much Fieldwork is used',async({page})=>{
+test('an open identity locks after 15 minutes without its own use, however much Fieldwork is used',async({page})=>{
   test.setTimeout(120000);
   await page.clock.install();
   await page.goto('/?example=blank');
@@ -222,6 +222,6 @@ test('an open identity locks after ten minutes without its own use, however much
   await download;
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
   await page.keyboard.press('Escape');
-  for(let minute=0;minute<11;minute++){await page.clock.fastForward(60*1000);await page.locator('body').click({position:{x:5,y:300}});}
+  for(let minute=0;minute<16;minute++){await page.clock.fastForward(60*1000);await page.locator('body').click({position:{x:5,y:300}});}
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity');
 });

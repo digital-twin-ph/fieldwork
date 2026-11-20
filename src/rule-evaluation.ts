@@ -94,7 +94,7 @@ export function orderRecords(records:SubjectRecord[],order:AuthoredOrder):{seque
       +'Choose a date column to sort by, or read the previous row recorded.');
   const groups=new Map<string,number[]>();
   records.forEach((r,i)=>{const key=order.within.map(c=>text(r.properties[c])).join('\u0000');
-    groups.set(key,[...(groups.get(key)??[]),i]);});
+    (groups.get(key)??groups.set(key,[]).get(key)!).push(i);});
   const compare=(a:number,b:number)=>{const x=byValues[a]!,y=byValues[b]!;
     if(x===''||y==='')return x===y?a-b:x===''?1:-1;
     if(kind==='number')return Number(x)-Number(y)||a-b;
@@ -283,7 +283,7 @@ export function evaluateAuthored(records:SubjectRecord[],bindings:FieldBinding[]
             value=localName(conclusion.value??'').replace(/_/g,' ');
             if(term)facts.set(conclusion.predicate,term);
           }
-          given.set(column,[...(given.get(column)??[]),{value,rule:index+1}]);
+          (given.get(column)??given.set(column,[]).get(column)!).push({value,rule:index+1});
         }
       });
       if(!changed){if(waiting&&!last){last=true;continue;}break;}

@@ -122,11 +122,24 @@ the page goes to "/", and the application then opens its default example and rew
 to catch "/", which a busier machine passes by. It now checks that the cleanup address is gone and the application has
 started again: 16 of 16 at 4 workers, Chromium and WebKit. Running in parallel did not cause the fault; it exposed one.
 
-## For the practitioner to decide
+## Decided 2026-11-19, after gates 223 and 224
 
-- Whether to answer Sentinel-5P and geoBoundaries from recorded copies in the gate, with a separate daily live check.
-- Whether to run the from-scratch tests on several workers. The gate runs one at a time; this has not been measured.
-- Whether conditional gating is worth pursuing through coverage, given the 13% it would save by file rules.
+Both gates failed only on live downloads (Brazil's 65.7 MB of boundaries from geoBoundaries, at about 33 KB/s; the
+South London example from GitHub), and `validate:sentence-numbers` spent about 25 minutes reading satellite files from
+Planetary Computer: it says *"Nothing else is fetched"*, but it held 27 connections to Azure. Not counted above.
+
+- **Recorded copies in the gate** (the practitioner: *"Agree with 1 and 2"*): Sentinel-5P, Planetary Computer,
+  geoBoundaries and the examples' files answered from recorded copies, as Sierra Leone's facilities already are.
+- **The from-scratch tests on several workers**, measured as the browser tests were.
+- **The live services checked in the cloud, not in the gate.** First proposed nightly on the Mac, at midnight and
+  after any running gate (*"Live check should be done at mignight"*; *"if there's no gate running at midnight,
+  otherwise it waits"*); then only on changes that touch them (*"only when we touch satellite or raster facing
+  updates"*); then on GitHub (*"Can we do those checks instead on the cloud on GitHub?"*). Settled: a workflow of its
+  own, run on a push that touches code reading an outside service and weekly on Sunday at midnight in New York, since
+  services change with no change of ours; a failure opens an issue and never blocks a release. The rule against
+  editing `.github/workflows` is lifted for this one file (*"Let's override #1. I will update token permissions."*).
+- **Conditional gating by coverage is not pursued.** Moving widgets out of `app.ts` makes rules by file finer at no
+  cost; it is measured again after the three changes above.
 
 ## What this does not establish
 

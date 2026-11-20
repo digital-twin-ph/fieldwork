@@ -83,8 +83,11 @@ test(`measure a map of ${N} points`,async({page,browserName})=>{
   await page.locator('#table-shape').selectOption('long',{timeout:LIMIT});
   await page.locator('#table-value').selectOption('count',{timeout:LIMIT});
   await expect(page.locator('#table-keys input[type="checkbox"]').first()).toBeAttached({timeout:LIMIT});
-  for(const box of await page.locator('#table-keys input[type="checkbox"]').all()){
-    const v=await box.getAttribute('value',{timeout:LIMIT});if(v)await box.setChecked(['id','lon','lat','cls'].includes(v),{timeout:LIMIT});}
+  // EACH TICK REBUILDS THE TABLE: timed on its own (2026-11-19, the dialog took over an hour at 250,000 rows).
+  await timed('import the table: tick the four key columns',async()=>{
+    for(const box of await page.locator('#table-keys input[type="checkbox"]').all()){
+      const v=await box.getAttribute('value',{timeout:LIMIT});if(v)await box.setChecked(['id','lon','lat','cls'].includes(v),{timeout:LIMIT});}});
+  if(process.env.MEASURE_ONLY==='import')return;
   await timed('import the table: save',async()=>{
     await page.locator('#table-save').click({timeout:LIMIT});
     await expect(page.locator('#table-save')).toBeHidden({timeout:LIMIT});

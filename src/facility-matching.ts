@@ -122,7 +122,7 @@ export function matchFacilityNames(names:readonly {name:string; area?:string}[],
         alternate:f.alternateName?nameParts(f.alternateName,typeWords).bare:''};});
     const byBare=new Map<string,typeof parts>();
     for(const p of parts)for(const key of new Set([p.bare,p.alternate].filter(Boolean)))
-      byBare.set(key,[...(byBare.get(key)??[]),p]);
+      (byBare.get(key)??byBare.set(key,[]).get(key)!).push(p);
     return {register:register.id,nameOnly:!!register.nameOnly,typeWords,parts,byBare};
   });
   const areaOf=(area?:string)=>fold((area??'').replace(/\b(district|region|province|state|county)\b/gi,' '));

@@ -105,3 +105,8 @@ A table of points refused more than 2,000 records across its point inputs. That 
 limit, 250,000, is the one that applies. A table of 250,000 points ran in 10 s and was shown in 5.5 s (Chromium,
 development Mac, `tests/measure-point-count.browser.mjs`).
 
+### 2026-11-19 · Long tables shown 200 rows at a time (0.13.1)
+
+A table shown as rows by subject, or as a cross-tabulation, drew every row: 25,000 rows were 325,971 elements on the
+page. It now shows 200 at a time, with Previous and Next; totals still count every row.
+

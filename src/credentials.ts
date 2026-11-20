@@ -1,4 +1,5 @@
 /** Separate from workflow state and persistence. Never log payloads or underlying crypto errors. */
+import {UNLOCKED_FOR_MS} from './session-keep.js';
 /** `repository` (2026-11-16): for a GitHub token, the one repository it was made for, as owner/name. Optional, so files
  *  made before it still open. GitHub cannot say which repository a fine-grained token was given: its list of the
  *  repositories a token reaches held 86 for a token given one (found by the practitioner, 2026-11-16). */
@@ -38,7 +39,7 @@ export async function decryptCredentials(blob:Blob,password:string):Promise<Cred
 }
 export class CredentialSession {
  #entries:Credential[]|null=null;#last=0;#generation=0;
- constructor(private changed:()=>void=()=>{},private now:()=>number=Date.now,readonly idleMs=10*60_000){}
+ constructor(private changed:()=>void=()=>{},private now:()=>number=Date.now,readonly idleMs=UNLOCKED_FOR_MS){}
  get generation(){return this.#generation;}
  expire(){if(this.#entries&&this.now()-this.#last>=this.idleMs)this.lock();}
  get unlocked(){this.expire();return this.#entries!==null;}

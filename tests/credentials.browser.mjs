@@ -40,7 +40,7 @@ test('a minute before the lock a warning says so, and Keep them open keeps crede
  await page.locator('#credential-origin').fill('https://healthsites.io');await page.locator('#credential-secret').fill(secret);
  await page.locator('#credential-add').click();await page.locator('#credential-close').click();
  await expect(page.locator('#lock-warning')).toBeHidden();
- await page.clock.fastForward(9*60*1000+15_000);
+ await page.clock.fastForward(14*60*1000+15_000);
  await expect(page.locator('#lock-warning')).toBeVisible();
  await expect(page.locator('#lock-warning')).toContainText('Your credentials will lock in under a minute without use.');
  await page.locator('#lock-keep').click();
@@ -60,6 +60,6 @@ test('an empty collection is not called unlocked, and clicks elsewhere in Fieldw
  await page.locator('#credential-origin').fill('https://healthsites.io');await page.locator('#credential-secret').fill(secret);
  await page.locator('#credential-add').click();await page.locator('#credential-close').click();
  await expect(page.locator('#credentials-button')).toContainText('1 key unlocked');
- for(let minute=0;minute<11;minute++){await page.clock.fastForward(60*1000);await page.locator('body').click({position:{x:5,y:300}});}
+ for(let minute=0;minute<16;minute++){await page.clock.fastForward(60*1000);await page.locator('body').click({position:{x:5,y:300}});}
  await expect(page.locator('#credentials-button')).toHaveText('Credentials');
 });

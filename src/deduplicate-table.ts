@@ -48,7 +48,7 @@ export function deduplicateTable(table:DataTable,sourceNodeId:string,sourceLabel
   const groups=new Map<string,number[]>();
   table.rows.forEach((row,at)=>{
     const signature=blocking.map(c=>cell(table,row,c)).join('\u0000');
-    groups.set(signature,[...(groups.get(signature)??[]),at]);
+    (groups.get(signature)??groups.set(signature,[]).get(signature)!).push(at);
   });
   const byKey=new Map(decisions.map(d=>[d.key,d]));
   const candidates:Candidate[]=[];
@@ -84,7 +84,7 @@ export function deduplicateTable(table:DataTable,sourceNodeId:string,sourceLabel
   const positions=table.rows.map((_,at)=>at+1).filter(n=>!removed.has(n));
   // WHAT IS STILL WRONG, in the file's row numbers so it matches Data quality on the input.
   const repeats=new Map<string,number[]>();
-  kept.forEach((row,at)=>{const s=blocking.map(c=>cell(table,row,c)).join('\u0000');repeats.set(s,[...(repeats.get(s)??[]),positions[at]!]);});
+  kept.forEach((row,at)=>{const s=blocking.map(c=>cell(table,row,c)).join('\u0000');(repeats.get(s)??repeats.set(s,[]).get(s)!).push(positions[at]!);});
   const findings:TableFinding[]=[
     ...(table.findings??[]).filter(f=>f.kind!=='repeated-key'&&f.rows.every(n=>!removed.has(n))),
     ...[...repeats.values()].filter(r=>r.length>1).map(rows=>({kind:'repeated-key' as const,rows,

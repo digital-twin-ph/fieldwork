@@ -80,11 +80,11 @@ export function repeatedKeys(rows:readonly Record<string,string>[],columns:reado
   const groups=new Map<string,number[]>();
   rows.forEach((row,position)=>{
     const signature=columns.map(name=>row[name]).join('\u0000');
-    groups.set(signature,[...(groups.get(signature)??[]),position+1]);
+    (groups.get(signature)??groups.set(signature,[]).get(signature)!).push(position+1);
   });
   const named=(at:number)=>columns.map(name=>`${name}=${rows[at]![name]}`).join(', ');
   return [...groups.values()].filter(found=>found.length>1).map(found=>({kind:'repeated-key',rows:found,
-    value:named(found[0]!-1),text:`Rows ${found.join(', ')} repeat ${named(found[0]!-1)}.`}));
+    value:named(found[0]!-1),text:`Rows ${found.length>10?`${found.slice(0,10).join(', ')} and ${(found.length-10).toLocaleString('en')} more`:found.join(', ')} repeat ${named(found[0]!-1)}.`}));
 }
 const declaredKeys=(selection:TableSelection,keys:readonly string[])=>{
   const inKeys=(names?:string[])=>(names??[]).map(trimmed).filter(name=>keys.includes(name));

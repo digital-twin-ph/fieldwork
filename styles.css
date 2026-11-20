@@ -1646,6 +1646,13 @@ th .meaning{font-weight:400;white-space:normal}
 .project-new-manual .manual-float{position:sticky!important;top:8px!important;left:auto!important;right:auto!important;bottom:auto!important;width:100%!important;height:min(70vh,640px)!important;z-index:1;resize:none}
 @media(max-width:900px){#project-tab-new:not([hidden]){grid-template-columns:1fr}}
 .identity-tabs{display:inline-flex;justify-self:start;margin:4px 0}
+.table-source-tabs{display:inline-flex;margin:8px 0 4px}
+.table-source-tabs button{font-size:15px;padding:7px 14px}
+.table-source-tabs button.active{font-weight:700;border:1px solid var(--accent-4,var(--green))}
+.census-choices{list-style:none;margin:8px 0;padding:0}
+.census-choices li{padding:10px 0;border-bottom:1px solid var(--line)}
+.census-choices li p{margin:4px 0;font-size:14px}
+
 .identity-tabs button{font-size:15px;padding:7px 14px}
 .identity-tabs button.active{font-weight:700;border:1px solid var(--accent-4,var(--green))}
 #identity-create-part,#identity-open-part{border-top:0;padding-top:0}

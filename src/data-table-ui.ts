@@ -8,6 +8,7 @@ import {readXlsx,type Sheet} from './xlsx.js';
 import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource,progressText} from './remote-table.js';
 import {contentHash} from './project-files.js';
 import {dictionarySheets} from './columns-dialog.js';
+import censusCatalogue from '../examples/census-tables/catalogue.json';
 import {guessMapping,readDictionary,proposeFrom,checkDictionary,sameNames,fileRows,type TableDictionary,type DictionaryCheck,type ColumnDeclarations} from './column-metadata.js';
 
 const FILE_BYTES=MAX_TABLE_FILE_BYTES;
@@ -132,6 +133,24 @@ function columnTools(box:HTMLFieldSetElement,prefix:string,title:string,changed:
   count();
 }
 
+interface CensusFile {path:string;bytes:number;sha256:string}
+interface CensusCountry {iso3:string;country:string;census:string;referenceDate:string;publisher:string;licence:string;rows:number;
+  reviewed:{last:string;nextDue:string};counts:CensusFile;columns?:CensusFile}
+const CENSUS=censusCatalogue as {repository:string;commit:string;raw:string;countries:CensusCountry[]};
+const CENSUS_RAW='https://raw.githubusercontent.com/digital-twin-ph/census-tables/';
+const TAB_KEY='fieldwork:table-source-tab';
+/** One line per country: what census, how many rows, whose, under what terms, and when it is next reviewed. A table past
+ *  its review date is still offered, and says so: an old count stays a count. */
+function censusChoices():string{
+  const today=new Date().toISOString().slice(0,10);
+  return '<p class="muted">From <a href="'+esc(CENSUS.repository)+'" target="_blank" rel="noopener">census-tables</a>, at commit '
+    +esc(CENSUS.commit.slice(0,7))+'. Each comes with its data dictionary.</p><ul class="census-choices">'
+    +CENSUS.countries.map(c=>'<li><button type="button" class="button" data-census="'+esc(c.iso3)+'">'+esc(c.country)+'</button>'
+      +'<p>'+esc(c.census)+' \u00b7 '+c.rows.toLocaleString('en')+' rows \u00b7 '+esc(c.publisher)+'</p>'
+      +'<p class="muted">Terms: '+esc(c.licence)+'</p>'
+      +'<p class="muted">'+(c.reviewed.nextDue&&c.reviewed.nextDue<today?'Review overdue since '+esc(c.reviewed.nextDue):'Next review '+esc(c.reviewed.nextDue))+'</p></li>').join('')
+    +'</ul>';
+}
 export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boolean>,existing?:TableReopen,frame:TableFrame={}):void{
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.className='config-dialog';dialog.setAttribute('aria-labelledby','table-title');
   const named=(text:string)=>text.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]!));
@@ -139,7 +158,23 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +(frame.step?`<span class="config-step"> \u00b7 ${named(frame.step)}</span>`:'')+'</h2>'
     +'<button class="config-close" id="table-close" aria-label="Close">\u00d7</button></header><div class="config-body">'
     +'<p>A <strong>wide</strong> CSV is assumed: one row per subject and a column per variable, which is what a line list, a surveillance export and a published table look like. Name the columns that identify the subject and the columns holding values; the rest of the application reads one long table, and this converts. A table has no geometry; latitude and longitude columns, if present, are ordinary columns.</p>'
-    +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta">'
+    // WHERE THE TABLE COMES FROM, as tabs (2026-11-20). The practitioner: "Perhaps in the tabular input config dialog we can add
+    // tabs, with one for census tables". Everything below the tabs is the same whichever one the table came through.
+    +'<div class="result-switch table-source-tabs" role="tablist" aria-label="Where the table comes from">'
+    +'<button type="button" role="tab" id="table-tab-file" data-table-tab="file" aria-controls="table-file-part">Your file</button>'
+    +'<button type="button" role="tab" id="table-tab-remote" data-table-tab="remote" aria-controls="table-remote">From an address</button>'
+    +'<button type="button" role="tab" id="table-tab-census" data-table-tab="census" aria-controls="table-census-part">Census tables</button></div>'
+    +'<section id="table-file-part" role="tabpanel" aria-labelledby="table-tab-file">'
+    +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta"></section>'
+    // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
+    // rows: another device fetches the same file when it opens. Experiment 170.
+    +'<section id="table-remote" role="tabpanel" aria-labelledby="table-tab-remote" hidden>'
+    +'<label class="field-label" for="table-url">URL of a CSV, Stata file or zip</label><input id="table-url" type="url" placeholder="https://">'
+    +'<button type="button" id="table-fetch" class="button">Fetch</button>'
+    +'<label class="field-label" for="table-entry" hidden>File inside the archive</label><select id="table-entry" hidden></select>'
+    +'<p class="muted">The project keeps where it came from, not the rows, so a shared project does not republish it.</p></section>'
+    // THE CENSUS TABLES, pinned at a commit of digital-twin-ph/census-tables: each country's counts and its data dictionary.
+    +'<section id="table-census-part" role="tabpanel" aria-labelledby="table-tab-census" hidden>'+censusChoices()+'</section>'
     // ITS DATA DICTIONARY, imported with it (the practitioner, 2026-11-13: "importable and viewable with the table input
     // that first imports the two"). Kept by the project; what it says each column means is proposed, not applied.
     +'<label class="field-label" for="table-dictionary-file">Its data dictionary, if it has one: CSV, Excel or Stata, one row per variable</label>'
@@ -147,13 +182,6 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     // AN EXCEL WORKBOOK'S SHEET (the practitioner, 2026-11-08: "Yes add Excel"). Shown only for a workbook of several.
     +'<div id="table-sheet-row" hidden><label class="field-label" for="table-sheet">Sheet</label><select id="table-sheet"></select></div>'
     +'<p id="table-workbook" class="muted" hidden></p>'
-    // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
-    // rows: another device fetches the same file when it opens. Experiment 170.
-    +'<details id="table-remote"><summary>Or fetch from a URL</summary>'
-    +'<label class="field-label" for="table-url">URL of a CSV, Stata file or zip</label><input id="table-url" type="url" placeholder="https://">'
-    +'<button type="button" id="table-fetch" class="button">Fetch</button>'
-    +'<label class="field-label" for="table-entry" hidden>File inside the archive</label><select id="table-entry" hidden></select>'
-    +'<p class="muted">The project keeps where it came from, not the rows, so a shared project does not republish it.</p></details>'
     +'<label class="field-label" for="table-shape">Shape of the file</label><select id="table-shape">'
     +'<option value="wide">Wide \u00b7 one row per subject, a column per variable</option>'
     +'<option value="long">Long \u00b7 one row per observation, one value column</option></select>'
@@ -232,8 +260,9 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   let stata:StataTable|undefined;
   let dictionaryFile:{name:string;bytes:Uint8Array;sheets:Sheet[]}|undefined;
   const dictionaryInput=q<HTMLInputElement>('#table-dictionary-file'),dictionarySays=q<HTMLElement>('#table-dictionary-says');
+  let dictionaryFromCensus=false;
   dictionaryInput.onchange=async()=>{
-    const chosen=dictionaryInput.files?.[0];dictionaryFile=undefined;dictionarySays.textContent='';
+    const chosen=dictionaryInput.files?.[0];dictionaryFile=undefined;dictionaryFromCensus=false;dictionarySays.textContent='';
     if(!chosen)return;
     try{
       const bytes=new Uint8Array(await chosen.arrayBuffer()),sheets=dictionarySheets(chosen.name,bytes);
@@ -528,7 +557,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   let remote:RemoteTableSource|undefined,archive:Uint8Array<ArrayBuffer>|undefined,archiveSha256:string|undefined;
   const urlInput=q<HTMLInputElement>('#table-url'),entrySelect=q<HTMLSelectElement>('#table-entry');
   // THE ADDRESS IT IS PUBLISHED AT, shown when the step is reopened (2026-11-14: NYC's Zenodo table read as if it had none).
-  if(existing?.remote?.url){urlInput.value=existing.remote.url;q<HTMLDetailsElement>('#table-remote').open=true;}
+  if(existing?.remote?.url)urlInput.value=existing.remote.url;
   const readFetched=async(bytes:Uint8Array<ArrayBuffer>,path:string)=>{
     remote={url:urlInput.value.trim(),...(archive?{entry:path,archiveSha256}:{}),
       sha256:await contentHash(bytes),bytes:bytes.length};
@@ -566,13 +595,45 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       await readFetched(bytes,url);
     }catch(e){status.textContent='Nothing was fetched.';fail(e);}
   };
-  q<HTMLButtonElement>('#table-fetch').onclick=()=>void fetchURL(false);
+  const dropCensusDictionary=()=>{if(dictionaryFromCensus){dictionaryFile=undefined;dictionaryFromCensus=false;dictionarySays.textContent='';}};
+  q<HTMLButtonElement>('#table-fetch').onclick=()=>{dropCensusDictionary();void fetchURL(false);};
+  // A CENSUS TABLE: its counts by address, and its data dictionary beside it, each checked against the digest pinned.
+  for(const button of dialog.querySelectorAll<HTMLButtonElement>('[data-census]'))button.onclick=async()=>{
+    const c=CENSUS.countries.find(x=>x.iso3===button.dataset.census);if(!c)return;
+    error.hidden=true;dropCensusDictionary();
+    if(c.columns){
+      try{
+        const got=await fetchOrDeviceCopy(CENSUS.raw+c.columns.path,{fresh:false});
+        if(got.digest!==c.columns.sha256)throw new Error(`${c.columns.path} is not the file Fieldwork pinned: its digest differs.`);
+        const sheets=dictionarySheets('columns.csv',got.bytes);
+        dictionaryFile={name:`${c.iso3}/columns.csv`,bytes:got.bytes,sheets};dictionaryFromCensus=true;
+        dictionarySays.textContent=`${sheets[0]?.rows.length??0} variables in ${c.iso3}/columns.csv, census-tables' data dictionary. Kept with the table; what it says is proposed for you to accept.`;
+      }catch(e){fail(e);return;}
+    }
+    urlInput.value=CENSUS.raw+c.counts.path;
+    await fetchURL(false);
+    if(remote&&remote.sha256!==c.counts.sha256){remote=undefined;result=undefined;save.disabled=true;
+      fail(new Error(`${c.counts.path} is not the file Fieldwork pinned: its digest differs.`));}
+  };
+  // WHICH TAB: the one the table came through when a step is reopened, otherwise the one last used on this device.
+  const tabs=[...dialog.querySelectorAll<HTMLButtonElement>('[data-table-tab]')];
+  const showTab=(name:string,remember=true)=>{
+    for(const t of tabs){const on=t.dataset.tableTab===name;t.classList.toggle('active',on);t.setAttribute('aria-selected',String(on));t.tabIndex=on?0:-1;
+      q<HTMLElement>(`#${t.getAttribute('aria-controls')}`).hidden=!on;}
+    if(remember)try{localStorage.setItem(TAB_KEY,name);}catch{/* a per-device convenience only */}
+  };
+  for(const t of tabs){t.onclick=()=>showTab(t.dataset.tableTab!);
+    t.onkeydown=event=>{const at=tabs.indexOf(t),next=event.key==='ArrowRight'?tabs[(at+1)%tabs.length]:event.key==='ArrowLeft'?tabs[(at+tabs.length-1)%tabs.length]:undefined;
+      if(next){event.preventDefault();showTab(next.dataset.tableTab!);next.focus();}};}
+  const remembered=(()=>{try{return localStorage.getItem(TAB_KEY);}catch{return null;}})();
+  showTab(existing?.remote?.url?(existing.remote.url.startsWith(CENSUS_RAW)?'census':'remote'):existing?'file'
+    :tabs.some(t=>t.dataset.tableTab===remembered)?remembered!:'file',false);
   entrySelect.onchange=async()=>{
     if(!archive||!entrySelect.value)return;
     try{await readFetched(archiveEntry(archive,entrySelect.value),entrySelect.value);}
     catch(e){fail(e);}
   };
-  fileInput.onchange=()=>{remote=undefined;sheet=undefined;void load(fileInput.files?.[0],false);};
+  fileInput.onchange=()=>{remote=undefined;sheet=undefined;dropCensusDictionary();void load(fileInput.files?.[0],false);};
   // ANOTHER SHEET of the same workbook is read as a fresh file would be, keys and all.
   sheetSelect.onchange=()=>{sheet=sheets?.find(s=>s.name===sheetSelect.value);if(file)void load(file,!!remote);};
   const load=async(chosen:File|undefined,fetched:boolean)=>{

@@ -1,7 +1,7 @@
 {
  "repository": "https://github.com/digital-twin-ph/census-tables",
- "commit": "7d77e526b2804f0664f95e7e27d315b1c60d2a14",
- "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/7d77e526b2804f0664f95e7e27d315b1c60d2a14/",
+ "commit": "d66d476342ef2a4e5bb7e6da0df58fc476c0ce3e",
+ "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/d66d476342ef2a4e5bb7e6da0df58fc476c0ce3e/",
  "countries": [
   {
    "iso3": "BWA",
@@ -24,8 +24,7 @@
     "path": "BWA/columns.csv",
     "bytes": 330,
     "sha256": "8519d30a71c80d0e41fd4a9e3b062867a798ef2661a8b8a902fc3ff9ebc36fe7"
-   },
-   "alsoTables": []
+   }
   },
   {
    "iso3": "COD",
@@ -34,37 +33,25 @@
    "referenceDate": "1984-07-01",
    "publisher": "République du Zaïre, Ministère du Plan et Aménagement du Territoire, Institut National de la Statistique",
    "licence": "none stated",
-   "rows": 54,
+   "rows": 26,
    "reviewed": {
     "last": "2026-11-19",
     "nextDue": "2027-05-19"
    },
    "counts": {
-    "path": "COD/counts.csv",
-    "bytes": 4136,
-    "sha256": "48b1a91f919a390d2b7bf24fdee4f0ecb669a0b646c3467626b2f3ea600ec3aa"
+    "path": "COD/provinces-2015.csv",
+    "bytes": 2179,
+    "sha256": "3ba57cdda6f41a71d4e84f200b8afb309116943e09dbd032dab1147ffc98304a"
    },
    "columns": {
-    "path": "COD/columns.csv",
-    "bytes": 833,
-    "sha256": "e808b8080f48258a6283d42f3c86f0b98eb54a529634646f2ed2e3e328cb2ded"
+    "path": "COD/provinces-2015-columns.csv",
+    "bytes": 803,
+    "sha256": "c47bba50e9a8cf536dd8d7693baa8889f913269d98bb851b29c3b8513362cdbc"
    },
-   "alsoTables": [
-    {
-     "label": "Summed to today's 26 provinces (2015)",
-     "rows": 26,
-     "counts": {
-      "path": "COD/provinces-2015.csv",
-      "bytes": 2179,
-      "sha256": "3ba57cdda6f41a71d4e84f200b8afb309116943e09dbd032dab1147ffc98304a"
-     },
-     "columns": {
-      "path": "COD/provinces-2015-columns.csv",
-      "bytes": 803,
-      "sha256": "c47bba50e9a8cf536dd8d7693baa8889f913269d98bb851b29c3b8513362cdbc"
-     }
-    }
-   ]
+   "derived": {
+    "label": "Summed to today's 26 provinces (2015)",
+    "printed": "COD/counts.csv"
+   }
   },
   {
    "iso3": "RWA",
@@ -87,8 +74,7 @@
     "path": "RWA/columns.csv",
     "bytes": 572,
     "sha256": "2bb4daa3bc5d081f273faaf33d397df6d76dc55005527ff83f539bac8d6b0313"
-   },
-   "alsoTables": []
+   }
   }
  ]
 }

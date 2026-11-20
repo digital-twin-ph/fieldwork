@@ -32,7 +32,7 @@ test('a census table is read with its data dictionary, checked against the pin, 
   await expect(page.locator('#table-census-part')).toContainText('Terms: none stated');
   await page.locator('[data-census="COD"]').click();
   await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
-  await expect(page.locator('#table-census-says')).toContainText('its data dictionary, COD/columns.csv, has 9 variables');
+  await expect(page.locator('#table-census-says')).toContainText('its data dictionary, COD/provinces-2015-columns.csv, has 7 variables');
   await page.locator('#table-save').click();
   await expect(page.locator('#table-save')).toBeHidden();
   const cod=catalogue.countries.find(c=>c.iso3==='COD');
@@ -40,7 +40,7 @@ test('a census table is read with its data dictionary, checked against the pin, 
   const params=await storedTable(page);
   expect(params.remote.url).toBe(catalogue.raw+cod.counts.path);
   expect(params.dictionaryRef).toBeTruthy();
-  await expect(page.locator('[data-table-dictionary]').first()).toContainText('Data dictionary: COD/columns.csv, 9 variables.');
+  await expect(page.locator('[data-table-dictionary]').first()).toContainText('Data dictionary: COD/provinces-2015-columns.csv, 7 variables.');
   // REOPENED, the step opens on the tab its table came through.
   await page.locator('#configure-step').click();
   await expect(page.locator('#table-tab-census')).toHaveAttribute('aria-selected','true');
@@ -72,20 +72,15 @@ test('the tabs answer the arrow keys, and the tab last used is remembered on thi
   await expect(page.locator('#table-tab-census')).toHaveAttribute('aria-selected','true');
 });
 
-/** A TABLE DERIVED FROM THE COUNTS (2026-11-20): DR Congo's 1984 counts summed to today's 26 provinces, offered beside the
- *  printed table, read with its own dictionary and checked against its own pin. */
-test('a derived census table is offered beside the printed one and read with its own dictionary',async({page})=>{test.skip(!!skip,skip);
-  const errors=collectPageErrors(page);
-  await answer(page);
+/** THE TABLE IN TODAY'S UNITS (2026-11-20): DR Congo's 1984 regions match no map today, so the tab offers its counts
+ *  summed to the 26 provinces, says so, and links to the counts as printed, which stay in census-tables as the source. */
+test('where the printed units are not today\'s, the tab offers the table summed to them and links to the printed one',async({page})=>{test.skip(!!skip,skip);
   await open(page);
   await page.locator('#table-tab-census').click();
-  const also=catalogue.countries.find(c=>c.iso3==='COD').alsoTables[0];
-  await expect(page.locator('[data-census="COD:0"]')).toHaveText(also.label);
-  await page.locator('[data-census="COD:0"]').click();
-  await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
-  await expect(page.locator('#table-census-says')).toContainText(`its data dictionary, ${also.columns.path}, has 7 variables`);
-  await page.locator('#table-save').click();
-  await expect(page.locator('#table-save')).toBeHidden();
-  await expect.poll(async()=>(await storedTable(page)).remote?.sha256).toBe(also.counts.sha256);
-  expect(errors).toEqual([]);
+  const cod=catalogue.countries.find(c=>c.iso3==='COD');
+  expect(cod.counts.path).toBe('COD/provinces-2015.csv');
+  const item=page.locator('.census-choices li').filter({has:page.locator('[data-census="COD"]')});
+  await expect(item).toContainText("Summed to today's 26 provinces (2015), from the counts as printed");
+  await expect(item.getByRole('link',{name:'the counts as printed'})).toHaveAttribute('href',`${catalogue.repository}/blob/${catalogue.commit}/COD/counts.csv`);
+  await expect(page.locator('[data-census]')).toHaveCount(catalogue.countries.length);
 });

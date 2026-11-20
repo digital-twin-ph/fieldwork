@@ -65,15 +65,12 @@ Choose a country. Its counts are fetched by address, as in **From an address**, 
 what each column holds is proposed for you to accept. Both are fetched at the commit this version of Fieldwork names,
 and each is checked against the digest recorded with it: a file that differs is refused, and nothing is kept.
 
-A census table holds several levels in one file: DR Congo's has the country, its regions, and its cities and
-sub-regions, told apart by the column `level`. Keep the rows of one level before adding them up or joining them to
-an area.
-
-Where a country's census units are not today's, a table derived from the counts is offered beside them. DR Congo's
-1984 counts are also offered **Summed to today's 26 provinces (2015)**: each 1984 city and sub-region placed in the
-province it went to, with the province's name as geoBoundaries spells it (`geoboundaries_name`), to relate to a map
-of today's provinces. Its counts are still 1984's. How each unit was placed, and what the placing does not establish,
-are in the repository beside it.
+Each country is offered in the units today's maps use. Where its census counted other units, the table offered is
+summed from them and says so: DR Congo's only census, of 1984, counted 9 regions and 44 cities and sub-regions
+(KIVU, SHABA) that match no map today, so it is offered **Summed to today's 26 provinces (2015)**, with each
+province's name as geoBoundaries spells it (`geoboundaries_name`) to relate to a map of today's provinces. Its counts
+are still 1984's. The line beside it links to the counts as printed, kept in the repository as the source, with how
+each unit was placed and what the placing does not establish.
 
 The step reopens on the tab its table came through. A new step opens on the tab last used on this device.
 
@@ -171,8 +168,8 @@ the shape, the keys and the columns, is the same for all three.
 
 **Census tables** reads a country's counts and its data dictionary from the census-tables repository at a pinned
 commit, checked by digest. Three countries to begin with: Botswana (2022), DR Congo (1984) and Rwanda (2022).
-DR Congo's 1984 counts are also offered summed to today's 26 provinces, so they relate to a map of today's provinces;
-the 1984 names (KIVU, SHABA) match none of them.
+DR Congo is offered as its 1984 counts summed to today's 26 provinces, so they relate to a map of today's provinces;
+the 1984 units (KIVU, SHABA) match none of them. The counts as printed are linked, not offered.
 
 The heading no longer repeats the widget's name when the step still has it: "Tabular data", not "Tabular data ·
 Tabular data".

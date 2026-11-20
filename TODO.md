@@ -54,568 +54,17 @@ an internal instrument, and [96](experiments/96-the-experiment-document.md) says
 so in its own closing section: its beneficiaries are us and future contributors,
 not a practitioner in the field.
 
-## The order of work, as the practitioner set it (2026-11-08)
+Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
-**Found 2026-11-13, not yet done:** a Polygon layer read from an OpenStreetMap extract reads the whole file into memory, as Raster input's digest did before it was read in slices; a country's extract of several gigabytes would fail the same way.
+## Next, in order (2026-11-19)
 
-**Added 2026-11-14:** build the map inset and the Locator ([Map's manual, History](docs/widgets/map_output.md#history)) (MERS
-hospitals, Oswego) (**done 0.119.0 and 0.120.0**: MERS's inset over Pyeongtaek, Oswego's locator in New York State);
-and revisit Oswego, one of the first examples (the practitioner: *"It has very few workflows, and
-being one of the first examples, we can probably revisit this to enhance"*), with four workflows chosen that day: the
-epidemic curve by hour of onset, the incubation period in hours from the meal (needs hours between two date-times in
-Apply ruleset), attack rates by age band and sex, and vanilla ice cream as its own two-by-two with the ill who did not
-eat it listed. Found 2026-11-15, before building: the line list writes onset as `4/19` and `12:30 AM` and the meal as
-`8:00 PM`, no year and no ISO form; Cases by period has no hour; Apply ruleset subtracts days, not hours. **A widget
-gap, closed in 0.120.0** (the practitioner, 2026-11-15: *"Date time arithmetic is important"*), and the four Oswego
-workflows built on it: Apply ruleset writes a
-date and time from a date column in a declared form, a year given as a setting and a time column on a declared clock,
-never guessing a value that does not fit; a difference of two date-times names its unit, days, hours or minutes; Cases
-by period gains an hour.
-
-**Added 2026-11-14:** revisit Salmonella the same way (the practitioner: *"Same with Salmonella example, we need to
-revisit"*), with four workflows chosen that day: who the cases were (age group and sex beside the classical controls),
-every food ranked in one two-by-two, where they shopped (organic shop, organic produce, market), and cases by federal
-state mapped over Germany's 16 Länder. The file has no onset dates, so no epidemic curve.
-**Built 2026-11-15** (0.121.0), with three departures, each found in the file. (1) **Where they shopped is counted, not
-compared**: `bioladen` and `markt` were filled in for cases only, and `bio` joins two questions (an organic shop for
-cases, organic food for controls), which would show 23 of 30 cases never against 0 of 108 controls; the practitioner
-chose cases only. (2) **Every food is not ranked**: the Two-by-two keeps exposures in the order chosen, by design
-([161](docs/experiments/161-the-epi-kernel-one-table-many-exposures.md)), so the 34 items are in the questionnaire's
-order. (3) **`bula`, `kreis`, `bioladen` and `markt` are not in the codebook**; `bula` is read as the official state
-code because `kreis` begins with it in all 110 classical controls. Found on the way and fixed: the map's key printed an
-empty "0.00 to 0.00" class when edges tied (Map 0.31.4), and Total within groups refused to hand on a column when
-every row was its own group (0.5.0).
-
-**Found 2026-11-15, not yet done:** (1) Two-by-two words a column that is empty in every row as `"1" has nobody in it,
-so it has no risk`, which names a risk in a case-control study and does not say the column is empty: Salmonella's
-`andobst2`, `obstsalat2`, `tkobst2`, `trockenobst2`. (2) Total within groups lists groups in the order they first appear,
-so Salmonella's age groups read 18-35, 60-79, 36-59, 1-4; nothing orders them by age. (3) The Länder table needs a
-numeric value column it does not use, so `data/laender.csv`'s `name` is its value and is lost at the relate (*a line
-list must name a numeric value column it does not use*, below).
-
-**2026-11-15: Hagelloch's replay in Notes is a chart, not six maps.** Six static panels were built and withdrawn before
-release ([Map's manual, History](docs/widgets/map_output.md#history)): the maps repeated their captions, and
-the two flags are what 78 unadjusted daily looks give by chance. The practitioner chose each evening's p-value with the
-0.05 line, beside the cases known. With it, the 1824 cadastral sheet under *Clusters over the village* (the practitioner,
-the same day: "Yes, the 1824 sheet").
-
-**A major item, this week (the practitioner, 2026-11-15): onboarding training materials for an Advanced FETP graduate
-from Sierra Leone**, who is to support Fieldwork's development: *"I am supposed to train an Advanced FETP graduate from
-Sierra Leone how to support the development of FieldWork. At some point, this week I need to develop onboarding
-training materials. This important step could help with FW field testing."* Settled the same day: the graduate's
-role is **field testing, worked examples, review and validation, code contributions and localisation**; the materials
-are **guided modules** (each a goal, a hands-on exercise in Fieldwork and a check); they live in **a new repository**,
-which the practitioner creates (repository creation is a human action). **Staged, slides first, starting the week
-of 2026-11-16** (the practitioner, the same day: *"The onboarding materials can be staged. Slides first, and we can start
-it next week. For now I am more interested in finishing up render as it's very consequential for uptake."*); the render
-work (202, Stages A to E) comes first. **Then identity, then collaborative projects** (the practitioner, the same day: *"Once we finish render,
-we can start identity, then collaborative project."*). The Sierra Leone measles example, made from that
-country's FETP line list, is the natural first exercise; its rules hold throughout (the original FETP file in no
-repository; no free text from it printed).
-
-**And with it, collaborative projects (the practitioner, the same day):** *"This also means we have to start working on
-collaborative projects, because this is how future worked examples are going to be developed."* Experiment
-[150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md) built the export (a project as
-a repository, one file per workflow, one note per object, authors by GitHub login) and decided conflicts are made rare
-and legible, not merged; **reading a repository back into Fieldwork is unbuilt**, which is what blocks a second author.
-Identity first (the practitioner: *"we have to strengthen the concept of identity within FW, perhaps using Open Science as
-a platform (e.g., identities - ORCID, GitHub, etc.)"* and *"We have to develop an encrypted identity file which user loads
-when identity requiring activities are active"*, *"Identity only"*): experiment
-[218](docs/experiments/218-an-identity-you-carry.md), an encrypted identity file carrying the profile (name, GitHub,
-ORCID, ROR affiliation, CRediT roles), its attestations and a signing key, loaded only for identity-requiring work.
-Needed, in order: (0) the identity file of 218; (1) read a project repository back; (2) show a conflict legibly, per file, two versions side by side
-for a person to choose; (3) a contribution path (branch or fork, work in Fieldwork, export, pull request, review),
-which onboarding modules 4 and 6 teach; (4) 150's second-author pilot, with the graduate as the second author.
-
-**Next, in this order, set 2026-11-15:** (1) the Notes maps below; (2) **the draft document configurable**
-([202](docs/experiments/202-one-record-several-products.md), dated section; the practitioner: *"I would do this before ABM
-spike"*, and *"The above can partly close the render experiment"*): notes' text and images resizable, so figures sit side
-by side or inserted beside text as in Word; the draft shown as the publication looks; one example each of a publication,
-a surveillance report and a sit rep, and then **formats as mappings onto section roles**, so the presentation format is
-flexible (202, dated section of the same day: the practitioner, *"perhaps we can do interformat mapping"*), designed
-from the check of open sit rep and surveillance report templates; (3) **the twelve model gaps found 2026-11-15** ([202](docs/experiments/202-one-record-several-products.md), *Gaps
-in the model*): an outline per product first (gap 7), then narrative paragraphs citing their evidence (1), short forms
-of step notes (3) and authored captions (9), designed from a real model paper, the South London publication written
-first as a mock-up; (4) the ABM spike.
-
-**Done 2026-11-15 (Map 0.33.2):** compared on Salmonella, South London and MERS, the Notes figure had lost the key's line
-under a shaded map's ramp and listed its classes again in two loose columns; both fixed in the figure Notes and the SVG
-download share. **Found 2026-11-14:** each static map in Results is more complete and professional than the same map in
-Notes (the practitioner: "still needs improvement"); compare the two renderers and make Notes draw what Results draws.
-**Done 2026-11-15 (0.125.1):** NYC's diagram of how ground-station and satellite measurements relate, as an authored
-note in the Introduction (the practitioner's request, same day).
-
-**2026-11-14, the practitioner: "For population rasters, did we finish the zonal statistics? And can we add them to the
-workflows?"** Built (Sample a raster's cell statistics, experiment 209) but switched on in neither population workflow,
-and lab check 50 recomputes only the totals. With the comparison: turn them on in all six sample steps, show them per
-district and source, and extend check 50 to the mean, median, standard deviation, cells populated and density.
-
-**A future case study, 2026-11-14: road traffic injuries on a street network.** The practitioner passed on notes from
-another assistant; **nothing in them is verified yet**, neither the datasets, their licences, nor what they hold. Leads
-to check at their sources: Barcelona's open traffic-accident data (points with time, vehicles and severity); a
-Medellín traffic incidents and fatalities dataset, 2008–2025, said to be published with a data descriptor; NHTSA's
-Pedestrian Crash Data Study on data.gov. Methods named: crashes snapped to the street network, kernel density along
-the network rather than on the plane, and network measures such as betweenness as covariates in a Poisson or negative
-binomial regression. What exists here: Street network, Snap sites to the network, Regression (Poisson). What does
-not: kernel density along a network, and betweenness. No order set; a design and admission review first, as for any
-new widget.
-
-**A future case study, 2026-11-14: genomic epidemiology, to be explored.** Notes from another assistant, passed on by
-the practitioner; **nothing in them is verified yet**, neither the repositories, their licences, nor their contents.
-Leads to check at their sources: Nextstrain's `ncov-tutorial` repository (said to hold about 200 SARS-CoV-2 sequences
-with `metadata.tsv`, strain, collection date and place, and a built tree, `auspice/default-build.json`); Nextclade's
-example datasets (`github.com/nextstrain/nextclade`; reference sequences, `genome_annotation.gff3`, small
-`sequences.fasta`, for SARS-CoV-2, influenza and RSV, made for tools that run in the browser); and a CERI/KRISP webinar,
-*Genomics surveillance in Africa: import/export analysis of viral lineages* (YouTube). What exists here: Tabular data
-reads a TSV's metadata; Cases by period gives sequences by collection week; Map places them by country or state; Chart
-draws a tree from a table of who came from whom. What does not: reading FASTA or a Nextstrain tree, a distance matrix
-between sequences, and lineage import and export between places. No order set; a design and admission review first.
-   More notes the same day, also unverified, give the distinctions a design would have to state and enforce: a line
-   list is one row per case and says when and where; sequences (FASTA, FASTQ, VCF, alignments) say how alike two
-   pathogens are, and reach analysis as pairwise distances or clusters; **genetic closeness is not transmission**, it
-   can suggest links contact tracing missed and tell an import from local spread, but does not show who infected whom;
-   and **sequences arrive days to weeks after the case** (collection, extraction, sequencing, assembly), so a sequence
-   date is not an onset date and a recent week holds fewer sequences than cases. A further lead: a video, *Precision
-   pathogen tracking: the power of genomic epidemiology* (YouTube, Computational Genome Biology).
-
-**Found 2026-11-14, from the practitioner's questions:** (1) Append rows was changed without moving to the standard
-Inspector and dialog: do it, with Join a table to the study area next when it is touched. (2) Map shows a polygon's
-name, key and shaded value, never its other attributes, so zonal statistics are not on the map: a table under the map
-linked to it, or every attribute in the popup, to be chosen. **Chosen 2026-11-14: the table under the map, linked**
-(a district's row highlights when the district is chosen, and the reverse); for 0.115.0. **Built 2026-11-15** (0.122.0, Map 0.32.0), in Results under both
-the static figure and the interactive map; not in Notes or the write-up, and not under maps side by side. (3) A polygon layer reaches Table output two ways: into
-its polygons input as a points-style table with empty Longitude and Latitude and attributes 12 to a page, or into its
-table input as a plain table; make the first read as the second. The practitioner, 2026-11-14: *"As table output the
-geometry attributes could be reprojected as X, Y."* Then, the same day: *"Or we can exclude because the purpose of a
-table output is to use for other purposes and non-geometry computation purpose may not be appropriate."* **Decided: a
-polygon layer reaches a table with no coordinate columns**, only its own attributes, whichever input it arrives at;
-its shape stays on the map (a table has no geometry). A point keeps its longitude and latitude, which are its recorded
-location, not a stand-in. Coordinates for a polygon, where wanted, come from a step that says what it computed. For
-0.115.0. **Built 2026-11-15** (0.123.0, Table output 0.12.0), with what the step that made a layer says of each
-polygon kept as columns. (4) A lead, unread: an article on a Vercel UI SDK for
-agent interfaces (marktechpost.com, 2026-11-13); against the rule of no AI in Fieldwork unless compelling, but its
-interface patterns may be worth a look. A second, the same day, also unread: an article on UI libraries for work with
-Claude Code (geeky-gadgets.com). Both to be read together when interface work is next planned; anything adopted is a
-dependency, so licence, size and offline use are checked first, as for any library here.
-
-**From the practitioner, 2026-11-14, for the next batch:** (1) Hagelloch's *What a daily scan would have said* map is hard
-to read in Notes: leave it out of the write-up (**done 0.117.0**: "Not in the write-up" on Map, Table and Chart), and later six
-representative days as static maps side by side (Map's panels). (2) Formulas in Notes as footnotes or in an Appendix:
-proposed, an Appendix, each Methods note keeping its sentence and pointing to its numbered formula with this run's
-numbers. (3) Other examples for a space-time scan: Sierra Leone's measles line list (Hagelloch's shape, next in the
-order); MERS by hospital (12 places, coarse); Brazil's dengue by municipality and week, which needs the scan to read
-counts per area as cases at the area's centre. Snow's deaths, Salmonella and NYC have no per-case date and place.
-
-**The order from here, as the practitioner set it on 2026-11-14:** *"Yes but after that let's work on our TODO."* First
-Notes as the place every result is (a Methods note from every step's own record; a source note with its provenance and
-its citation into References, or a limitation where none is described; provenance filled for MERS and the population
-sources), and MERS's epidemic curve coloured by transmission chain and its offspring distribution; then the TODO.
-**Then, the same day:** the publication render of Notes ([202](docs/experiments/202-one-record-several-products.md),
-reordered: publication first; formulas in an Appendix; a print layout saved as PDF first, Word later). The offspring
-distribution is built (0.116.0); the curve by chain needs a step that hands on each case's chain, designed first.
-**The publication's first step is built (0.117.0)**, and its open items (0.118.0): Hagelloch's source cited, the
-written parts kept, a map's title in its caption only. Still open for it: figures cited by number in the text, a
-thesis citation type, Word; the basemap under the cluster map is the practitioner's to check.
-
-**The order from here, as the practitioner set it on 2026-11-13:** *"After that let's finish MERS. Then table edit #12.
-Then Sierra Leone. Then ABM spike."* So 8, then 12, then 3, then 29. The numbering below is kept as written.
-
-1. **Done 2026-11-08 (Table input 0.7.0).** ~~**Table input on the standard Inspector and dialog**~~ ([186](docs/experiments/186-one-standard-inspector.md)). With
-   it, *Fetch the table*: in the dark theme it sits inline in the orange notice and does not read as a button.
-2. **Done 2026-11-08 (0.59.0).** ~~The built-in rulesets example moves to example-workflows-rulesets~~, then is removed: rules all of one category
-   (run by the reasoner), rules over points with a map, and counts written as text repaired in Data quality. The seven
-   tests that open it move with it. **The built-in coverage exercise is removed**; its four points stay as a test
-   fixture, and Keep points inside the area is recorded as having no worked example.
-3. **Sierra Leone** (below; [189](docs/experiments/189-a-measles-line-list-made-safe-to-teach-with.md)): reviewed,
-   de-identified and made semi-synthetic 2026-11-08; Find health facilities from a list built (0.60.0, GRID3) and
-   OpenStreetMap added as a register (0.61.0, measured: one hospital more, nothing wrong). Shares in Total within groups
-   (0.62.0, [191](docs/experiments/191-shares-within-groups.md)); *is not* and *otherwise* in Apply ruleset, which the
-   WHO classification needs ([192](docs/experiments/192-is-not-and-otherwise.md)). **Next:** the example's workflows and
-   manual: epidemic curve and cases by facility **built (0.65.0)**; cases by district next.
-   **A space-time scan, built and removed 2026-11-15:** a fifth workflow at the facilities with ten cases or more (the
-   practitioner's rule), 25 km circles. Every one of ten clusters reached p = 0.001 (the most likely, 198 cases against
-   53.9 expected near Freetown, October 2021 to April 2022, is the 2021-22 wave reaching Western Area); over five years
-   the scan's null fails for mundane reasons, waves and reporting changes, and visits were moved up to a week when the
-   file was made. Asked *"Is it really worth doing scan for SL?"*, then *"Remove scan for SL"*. Hagelloch remains the
-   scan's example. Kept from it: seven type-differs names decided on the facility map.
-   **Map on the standard, 0.66.0.** **Cases by district next**, as rates per 100,000 over WorldPop's 2021 district
-   sums on OCHA COD-AB's 16 districts (data/district-population.csv and data/districts-cod-ab.geojson, uncommitted in
-   the example until the workflow is built; WorldPop is 5.8% above the 2021 census). Names differ ("Bo District",
-   "Bo"; COD-AB spells Falaba "Fabala"): **Deduplicate records gains a mode linking two tables** (experiment 193, the
-   practitioner: *"extend the deduplication widget to also do matching of columns between two tables"*), and moves
-   to the standard in the same pass.
-   **Found 2026-11-09:** the pre-push fast gate validates the pinned examples against the sibling WORKING copies, so an
-   uncommitted edit in an example repository blocks a Fieldwork push whose pins are right. Commit or set aside first.
-   **Boundaries that change: GeoPrism Registry, after 18** (the practitioner, 2026-11-11: *"For SL example we can take a
-   look at https://github.com/terraframe/geoprism-registry-documentation/blob/main/version/v2.0.0/introduction.md for
-   detecting changes in admin boundaries and perhaps as a source of admin boundaries as well. After history rewrite."*).
-   Not yet read. Two questions: whether it records a unit's boundary over time, so a district split or renamed between
-   the line list's years and the boundary file's can be detected rather than met as an unmatched name (Falaba is the
-   case at hand); and whether a registry instance publishes Sierra Leone's units openly, with a licence, as a source
-   beside OCHA COD-AB and geoBoundaries. Its licence and the data's checked before anything is used.
-   **Case classification postponed** (the practitioner, 2026-11-08: *"Let's postpone the case definition work"*). Decided
-   so far: WHO 2018's classification; *Runny nose* counts as coryza; the clinician's *meets the definition* stands in
-   where symptoms were not recorded, shown in an analysis table. **Open:** whether *Contact with confirmed measles
-   (7-18d) or rubella (12-23d) case* is a measles link. It decides 21 of 2,606 rows, 19 of which stay clinically
-   compatible without it. Needs the FETP's data dictionary (the columns read as DHIS2 tracker fields), which would also
-   say which test the laboratory result records.
-   **Done 2026-11-08 (0.64.0): a case definition in the rulesets worked example** (the practitioner: *"Let's also add a
-   case definition example in the rules set worked example"*), its seventh workflow, on sixteen made-up cases in four
-   stages, every class reached. No conflict is reached, because staged rules cannot give one case two classes.
-4. **Table output on the standard** (186).
-5. **Done 2026-11-09 (0.68.0): Manila coastal exposure moved to example-2026-sea-level-rise-philippines**, the built-in
-   one removed, and the example now reports the rise at each facility's gauge
-   ([195](docs/experiments/195-the-sea-level-example-reports-a-sea-level.md)). The terrain note is in its README.
-   **Images in Notes: done 2026-11-09 (0.69.0, [196](docs/experiments/196-a-picture-in-a-note.md)).** As asked: (the practitioner, 2026-11-08): an authored note can carry an image, kept by
-   its digest, with required alt text and a caption, shown on the Notes board and in the write-up; an SVG is shown as
-   an image, never inlined. Its first use is the datum diagram, docs/images/vertical-datums.svg, as a note of the
-   example.
-6. **Done 2026-11-11, differently: Old Naledi retired** (the practitioner: *"What we will do instead is retire old
-   Naledi as an example along with its bespoke widgets"*; docs/audits/old-naledi-audit.md, with the heat example, four
-   rulesets, Travel time and decisions). As first planned: **Old Naledi**: `facilities` and `facility_audit` replaced by standard widgets (Keep points inside the area; Apply
-   ruleset and Table output), checked to give the same results, then moved to a repository.
-   **Keep points inside the area is decided here** (the practitioner, 2026-11-08, asking whether it can be retired): if
-   neither this nor Sierra Leone uses it, it is retired, and the Check spatial coverage migration that leads to it
-   becomes a refusal by name.
-
-7. **188 validated** (the practitioner, 2026-11-08: *"Let's validate 188 after #5"*, Old Naledi then numbered 5): South
-   London's workflows built from an empty canvas through the rules dialog, so its rebuilt Apply ruleset steps play back
-   as Nigeria's do.
-
-8. **Operational epidemiology's first slice: a 7-1-7 review on MERS-CoV, South Korea, 2015**
-   ([200](docs/experiments/200-operational-epidemiology.md); the practitioner, 2026-11-09: *"Yes"*, then *"But add that
-   to TODO"*). Onset to report and onset to diagnosis per case, counted against the targets; a contacts table for
-   contact tracing. **Days between two dates** in Apply ruleset's computed columns, the one extension it needed, is built
-   (Hagelloch's serial interval uses it). **Status, corrected 2026-11-11:** what is left is the data's terms, which the
-   practitioner is checking at the package's pages, and converting `mers_korea_2015.RData` to CSV in the example
-   repository.
-   **Built 2026-11-12** ([200](docs/experiments/200-operational-epidemiology.md)): the 7-1-7 ruleset, the column choice in Apply ruleset, and the
-   first workflow in example-2015-mers-korea (94 of 135 detected within 7 days, 161 of 162 reported within 1).
-   The 98 contacts as a second workflow the same day (cases per source, setting of exposure). Next: a lab recomputation;
-   the transmission tree, once the practitioner says how to show the two cases with more than one recorded source.
-   **2026-11-12:** the hospitals placed (example 9e8432c); the data's documentation and the other open sources researched,
-   [docs/research/mers-korea-2015-sources-2026-11-12.md](docs/research/mers-korea-2015-sources-2026-11-12.md). Next: a
-   workflow placing the cases by hospital; then, from that note, the KDCA 185-case file, an outbreak-level 7-1-7 review
-   from the response dates, and the README's corrections. **In progress** (the practitioner: *"We just begun"*).
-   **2026-11-14:** three more workflows (example ddf30f6): deaths by age class and sex in a two-by-two, days from
-   exposure to onset and onset to death with the median, secondary cases per source and the serial interval by setting;
-   lab check 51 agrees. Total within groups gained Mean, Median and Column to total for them.
-   **Decided 2026-11-11 by the practitioner:** *"Our use case for these worked examples is for teaching so that fits MERS
-   Korea purpose"*: the dataset is described as compiled "for teaching", and so are these examples. Used on that basis in
-   an example repository, attributed to ECDC's Epidemic Intelligence and the outbreaks package, never in the
-   application; no licence for the data itself is stated anywhere, and that stays said. **Converted 2026-11-11** with R
-   (`~/Downloads/mers-korea-2015/`, `.RData` sha256 2a08976a…): a line list of **162 cases** by 15 columns (onset missing
-   for 27, exposure dates for 5) and **98 contact links** by 4 columns. Dates are per case, so it teaches case-level
-   timeliness (onset to report, onset to diagnosis, 135 cases computable) and who infected whom; a full 7-1-7 review of
-   the outbreak as one event would need the early response action dates, which it does not hold. **Repository created
-   2026-11-11** at the practitioner's request, public: digital-twin-ph/example-2015-mers-korea, holding the two CSVs,
-   the conversion script, NOTICE.txt and provenance.json (424ee33). Next there: the workflows, after the 7-1-7 ruleset.
-   **And a 7-1-7 timeliness ruleset** (the practitioner, 2026-11-11: *"And we can build the ruleset extension as well"*):
-   a bundled ruleset for Apply ruleset reading four date columns (emergence, detection, notification, early response
-   complete), computing the three intervals in days, and marking each met or not against its target, 7, 1 and 7 days,
-   as step settings in days. A row missing a date gets no verdict for that interval, not a guessed one. Its basis cites
-   Bochner et al. 2023 and `ontology/response-timeliness.ttl`. The machinery exists: date fields, days by minus, and
-   rules that read a computed value; the open question is binding date columns to a bundled ruleset's input roles.
-   **Found 2026-11-09, before building:** `mers_korea_2015` in the R package `outbreaks` (reconverse/outbreaks): a line
-   list of 15 columns (onset, report, diagnosis, exposure start and end, death) and a contacts table (from, to,
-   exposure). Compiled by ECDC's Epidemic Intelligence from public information in the outbreak's first weeks; "for
-   teaching", and not the final investigation or a complete chain. **Terms unresolved**: no licence for the data is
-   stated; the package code is MIT on GitHub (GPL ≥ 2 on CRAN 1.9.0). **No CSV**: only `data/mers_korea_2015.RData`, so
-   a script in the example repository would convert it, and the row count is not yet known. Ask ECDC or the package
-   authors about the data's terms before shipping it.
-   **The 7-1-7 categories are ours to carry**: Fieldwork's own ontology, `ontology/response-timeliness.ttl`, built on
-   2026-11-09 from Bochner et al. 2023 (CC BY 4.0), holds the milestones, targets, early response actions and the
-   study's bottleneck and enabler categories, attributed (experiment 200). The practitioner, 2026-11-11: the categories
-   *"are also widely used in many public documents based alone on 717 published literature"*. The Alliance's own
-   BY-NC-SA list is not needed. **Alongside, still open:** the
-   appendix of the 41-event Lancet Global Health paper (`mmc1.pdf`, 229.5 KB, PMC), not yet read; the Sierra Leone
-   Ebola 2014 line list's own terms (Fang et al. 2016).
-
-9. **Done 2026-11-13, checked against what is built** (the practitioner: *"I think #9 is finished. You can check."*): the transmission tree in Chart, each case at its date joined to its infector, in Hagelloch's built-in *Who infected whom*; lab checks 43, 44 and 45. ~~**Who infected whom, on Hagelloch: operational epidemiology's first slice to build**~~ ([200](docs/experiments/200-operational-epidemiology.md);
-   the practitioner, 2026-11-09: *"Should we proceed first with contact tracing in Hagelloch"*, and *"After DTU"*).
-   Before MERS (8), whose data terms are open. In order: Relate the cases to themselves on `infector` (check a table
-   may be related to itself); **days between two dates** in Apply ruleset (a `date` kind; `minus` of two dates gives
-   days) for the serial interval; Total within groups for secondary cases per case (built 2026-11-09: counted, related
-   back, and the 126 children nobody names kept as 0, a number the practitioner types); **a links layer on Map** (built
-   2026-11-10 in Map 0.22.0: 94 lines drawn, 90 links inside one house counted, not drawn); **a transmission tree over time in Chart** (each case at its onset,
-   joined to its infector). No chart or map draws a network today. Each by hand on an empty canvas, each widget to
-   the standard Inspector, with its manual page and lab notebook.
-
-10. **Open data and studies for each 7-1-7 bottleneck theme** ([200](docs/experiments/200-operational-epidemiology.md);
-   the practitioner, 2026-11-09: *"If we can find open data sets and studies for the bottleneck themes, those will be
-   very helpful for demonstrating 717 support"*). One worked example per theme where open data allow: reporting
-   completeness, laboratory turnaround, care-seeking delay, travel time to care, cross-sector linkage, and supplies,
-   logistics and staffing (in reach, corrected by the practitioner the same day). Open evidence only; licences as stated.
-
-11. **Cluster detection under Detect** ([200](docs/experiments/200-operational-epidemiology.md); the practitioner,
-   2026-11-09). In order, after the Hagelloch transmission tree: the **space-time permutation scan** (built 2026-11-10
-   as Space-time scan 0.1.0; owes a lab check, SaTScan on its benchmark and the day-by-day replay); the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
-   (HDBSCAN, kernel density, and kernel density as a ratio of two layers), labelled exploratory, never under Detect.
-   Each on the standard Inspector, with a lab check, and SaTScan run by hand on its benchmark sets.
-12. **Built 2026-11-13 ([214](docs/experiments/214-editing-a-table-inline.md))**: values edited in Data quality's Records tab, kept as edits on the step with the value replaced, applied to a copy, stated in the run, removable; an empty cell filled like any edit (the practitioner's choice); and the playback dialog of 173. **Left:** a worked example's manual with an edit exercise, first in Sierra Leone. ~~**Edit a table's values inline, in the data quality check**~~ (the practitioner, 2026-11-10: *"One thing I have been
-   meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
-   exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair
-   on the node, never a write to the file, and every repair can be taken back. So an edited cell would be one more
-   repair: the record, the column, the value read, the value written, who and when, listed as an edit log and each
-   removable. Open: whether typing a value into an empty cell is allowed, since 117 holds that filling a missing value
-   is imputation, not a clerical fix; and what "widget playback exercise" means here, the manual playback dialog of
-   [173](docs/experiments/173-a-manual-for-each-worked-example.md) (designed, not built) or an exercise in a worked
-   example's manual.
-13. **Colour by generation, in the transmission tree and on the map's lines** (built 2026-11-10, 0.79.0: one magma ramp,
-   each step at least 3:1; shape now says what a case is) (the practitioner, 2026-11-10: *"One
-   thing we can do for the transmission chain is to color key the generation both in the tree and the map links."*).
-   One ordered ramp, one key, shared by Chart's tree and Map's lines between records, so generation 3 is the same colour
-   in both; an ordered ramp because generations have an order. To settle: the generation of a line is its case's; a
-   case whose chain has no root drawn keeps the tree's own marking; how many steps before the ramp stops being
-   readable (Hagelloch runs to 6).
-14. **Hagelloch's study area: the administrative area, not a box** (the practitioner, 2026-11-10: *"We should change
-   the study area for Hagelloch from box to administrative area"*). Today it is a box drawn round the anchored houses.
-   To settle: which boundary (Hagelloch is a district of Tübingen; its OSM or official boundary, and its licence), that
-   it is the present-day boundary and not 1861's, and whether any case falls outside it, which the map would then
-   show. Asks before downloading. With 13, the colour key. **Found 2026-11-10:** geoBoundaries' levels for Germany
-   (2021, Federal Agency for Cartography and Geodesy, Data licence Germany – Attribution 2.0) are ADM1 Länder (16),
-   ADM2 government districts (38), ADM3 independent cities and districts (428), and no ADM4; Hagelloch's finest is
-   ADM3 Landkreis Tübingen, about 520 km². A boundary of Hagelloch itself needs another source.
-15. **Georeference an 1861 map of Hagelloch in the widget itself** ([201](docs/experiments/201-georeferencing-by-matching-points.md): pairs of
-   points matched between the scan and a map of the place, South London first) (the practitioner, 2026-11-10: *"If we can get hold
-   of an old map of Hagelloch in 1861 we can also exercise georeferencing in the georeferenced image input widget. You
-   did it before for South London so I think it could be done this time in the widget itself."*). South London's plate
-   was placed outside the app, from four control points (`map2-georeference.json`) written into a world file; the
-   widget reads a north-up world file and refuses a rotated one ([143](docs/experiments/143-a-georeferenced-plate-as-ground.md)).
-   New: choose control points on the image and on the map, fit the transform, report each point's residual. Then the
-   houses: today one anchor places them right to the village, not to the building; a georeferenced plan would place
-   x_loc, y_loc properly. To find, open evidence only and asking before any download: whether Pfeilsticker's 1863
-   scan on archive.org carries the village plan (Google scans often leave out fold-outs); the Württemberg cadastral
-   maps of the 1820s to 1840s (Landesarchiv Baden-Württemberg), and their licence. With 14: the boundary is today's,
-   the plan 1861's.
-16. **A sketch pad in Notes** (the practitioner, 2026-11-10: *"Can we add a sketch pad in notes? This is for quickly
-   sketching hand drawing maps and diagrams"*). Notes already hold images (`note-image.ts`), so a sketch can be saved as
-   one, kept with its strokes so it can be edited again, and placed in the write-up like any figure. To settle: pen,
-   eraser and a few colours at sizes the practitioner can see; drawing over a map as a backdrop, or blank; a sketch map
-   is not a georeferenced one and says so.
-17. **Steps 1 and 2 done 2026-11-14 (Space-time scan 0.5.0, Fieldwork 0.115.0):** shuffles stop once 50 score as
-   high (Besag and Clifford 1991), and the replay's days run across the device's cores; Hagelloch's replay 44 s to 18.5 s
-   in Node from the stopping alone, and the example's browser test 1.5 min to 18 s (idle machine against a loaded gate,
-   so less than that ratio). Lab check 46 re-run: agrees. **Step 3 done the same day (Space-time scan 0.6.0):** the
-   test in the Rust kernel, identical to the script shuffle for shuffle (unit test); the scan 5.4 s to 3.4 s and the
-   replay 18.5 s to 8.3 s in Node. A speed-optimised build doubled the kernel (40 to 79 KB) for 3.4 to 2.9 s and was not
-   kept. **Left:** what remains is the method (1,305 circles by 87 days, about 3.7 million windows a shuffle for
-   Hagelloch), and lab check 46's own speed. Originally: **Faster space-time scans** (the practitioner, 2026-11-10: *"How can we speed up the browser"*, then *"Let's add all
-   3 to TODO"*). In Fieldwork's replay, in order: stop shuffling once the answer is clear, after 50 shuffles score
-   higher (Besag and Clifford 1991), and say when it stopped; run the days in parallel across the device's cores; move
-   the scan's inner loop to the Rust kernel compiled to WebAssembly. In lab check 46: score every run length at once
-   rather than one at a time, and, if still slow, fewer shuffles with the tolerance widened to match.
-18. **Done 2026-11-11: the Claude co-author line removed from the workspace's history, with the practitioner.** Every
-   repository rewritten (messages only; files identical) and force-pushed at the practitioner's yes; Fieldwork re-pinned,
-   old ids mapped in docs/history-rewrite-2026-11-11.tsv; verified with no line on any branch on GitHub or locally.
-   **Left, the practitioner's call:** Fieldwork pull request #1's twelve commits stay under GitHub's read-only
-   refs/pull/1/head, which only GitHub Support can remove (its description's line was removed). Originally:
-   **Remove the Claude co-author line from the workspace's history, with the practitioner. NEXT, before anything else**
-   (the practitioner, 2026-11-11: *"Let's move up 18 before anything else after this last task is done"*: after 0.94.0
-   and 0.95.0 are published, ahead of the census comparison and MERS; it was set for the weekend of 2026-11-14/15)
-   (2026-11-10: *"For repositories related to CDC work we cannot have agents as coauthors"*). Every repo
-   in the digitaltwin-ph workspace: fieldwork, validation-lab, the ten example repos, widget-pack-sea-level-rise and
-   fieldwork-ontology, about 1,190 commits. Mirror backups first; the lab and the siblings before Fieldwork, with a map
-   of old to new commit ids applied to Fieldwork's pins and messages; every branch force-pushed. Nothing under
-   digitaltwin-aas. New commits already carry no such line.
-19. **A Manual for Hagelloch** (the practitioner, 2026-11-10: *"Can we add a Manual to Hagelloch?"*), built in: a
-   `manual.json` beside its data, the files a reader downloads served from Fieldwork's own site, the Manual tab shown
-   for its three workflows, and a from-scratch browser test that performs every step. **The alternative, not chosen
-   for now** (*"Let's add alternative to TODO"*): Hagelloch in its own example repository, like the other worked
-   examples, so every manual and its data are published and pinned one way; against it, Hagelloch would leave the
-   built-ins that work offline from the first open.
-20. **One record, several products: the Notes tab** ([202](docs/experiments/202-one-record-several-products.md)): the
-   paper, a field report, a story map, a poster and a dashboard configured from one record of notes and views; notes
-   included or excluded per product, with versions flagged when their original changes; evidence before the story.
-   First: the story map on Hagelloch's six scenes.
-21. **Collaboration through GitHub** ([150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md);
-   the practitioner, 2026-11-10: *"We have not worked on the collaborative project yet which intends to use GitHub as
-   the shared space for collaboration."*). Written half exists (a project exports as a repository). In order: read a
-   repository back into a project; a second author on a real project; push from Fieldwork with the scoped token;
-   Discussions ([155](docs/experiments/155-discussions-as-the-governance-surface.md)); products on the repository's
-   Pages. Trust without a catalog: a commit pin, who and what before opening, data never instructions, a label.
-   **Progress 2026-11-16:** a repository read back into a project (Load the project), Save to the repository as one
-   commit, Get the latest, project roles and People, Discussions listed and posted from the project; tried against the
-   practitioner's repository up to loading, not yet a save or a second author.
-   **Next, to try:** mentioning a person in a discussion post, as `@login`, so GitHub notifies them (the
-   practitioner, 2026-11-16: *"try @user to direct discussion post to certain GitHub users"*). First observed from
-   GitHub's side: JLT posts to the practitioner with their login mentioned, on 2026-11-17, and we see whether the
-   notification arrives. Then from Fieldwork: whether a post sent through the API notifies the person mentioned the
-   same way, and whether **Start a discussion** should offer the project's members to mention.
-   **Next, to try:** a shared project saved with test workflows by different authors (the practitioner, 2026-11-16:
-   *"save a collab project with test workflows by different users"*). The practitioner and JLT each load
-   `project-test-collaboration`, each add a test workflow of their own, and each save to the repository. What it should
-   show: both workflows in `project.json` and under `workflows/`, each commit under its author's login; the second save
-   refused until its author gets the latest, then accepted; both authors' **This is me** entries in **People**. What it
-   may show instead, and is worth recording either way: a save that overwrites the other's `project.json` entry, since
-   the project file is shared and the workflow files are not (experiment 150, "the two files that do not divide").
-22. **QR codes from a product to its digital form** (first use built 2026-11-10, 0.80.0; lab check 47) ([203](docs/experiments/203-qr-codes-from-a-product-to-its-digital-form.md)):
-   first, a note for a worked example with two codes, Fieldwork with the example opened and the example's repository at
-   its pinned commit; needs `?example=` to open a repository example through the catalog. Ask before installing an
-   encoder.
-23. **"Made with Fieldwork <version>" on everything exported** (the practitioner, 2026-11-10: *"can we add small
-   watermarks for FieldWork outputs, I think it's time to toot our horn"*; *"Yes agree with branding settings"*): small,
-   with the logo, in the footer beside the source note and never over the data; at least 14 px and AA contrast; on by
-   default and removable per export, the choice recorded; Fieldwork's own name only.
-24. **More population rasters beside WorldPop: GRID3 and the Global Human Settlement Layer** (the practitioner, 2026-11-10:
-   *"We can also add GRID3 and GLobal Health Settlements layer where we can get population rasters?"*; GHSL read as the
-   JRC's Global Human Settlement Layer, to be confirmed). In Raster input's Configure…, where WorldPop now is. First, read
-   only: each source's licence as stated, its countries and years, its files and sizes, and whether a browser can fetch
-   it or must download it, as WorldPop must. GHS-POP is global and tiled; GRID3 is per country, mostly sub-Saharan
-   Africa. **Moved up 2026-11-10**, ahead of 19, by the practitioner on seeing only WorldPop in
-   Configure… (*"For raster input I thought we included GRID3, GHSL, etc. for population rasters"*). Read-only research
-   started the same day.
-   **GRID3 built 2026-11-11 (0.90.0)**: its sub-Saharan Africa set, 2025, 52 countries, one file each (CC BY 4.0), as a
-   *Population source* beside WorldPop. **Left:** GRID3's country-specific estimates (Nigeria v3.0, the DRC's v4.4 by
-   province with lower and upper bounds, Zambia, Mozambique and others; three are CC BY-SA); and GHS-POP, confirmed as
-   the JRC's Global Human Settlement Layer: JRC's AWS copy sends CORS and allows ranges, so a study area's window might be
-   read without a download, which one partial read of the file's header (about 16 KB) would settle. **Done 2026-11-11 with
-   the practitioner's yes**: a cloud-optimized GeoTIFF (512 x 512 tiles, deflate, five overviews), and **GHS-POP is built
-   (0.93.0)** as a population source read for the study area's window. **Left:** GRID3's country-specific estimates;
-   a live read of a real window, which only the tests' stand-in has done.
-   **Next: totals within areas, so the three models can be compared** (the practitioner, 2026-11-11: *"how do we compare
-   populations expressed by their models"*, then *"before we add let's survey for potential duplication"*). Surveyed by
-   input and output: **Sample satellite files at points or over areas** already sums a grid within each area, by the
-   cell rule Clip raster uses and lab check 02 holds against rasterio, but reads only catalog files; **Sample raster at
-   points** reads a raster at points only; **Clip raster** masks one area and gives a raster; **Summarize points to
-   polygon** totals points, not cells; **Rate with a denominator** takes a stated population. So no new widget.
-   **And not two that sample a grid** (the practitioner, 2026-11-11: *"sample satellite files does not explicitly say it
-   takes rasters that might be a problem"*): the two samplers are **merged into one, "Sample a raster at points or over
-   areas"** (the practitioner's choice of name, 2026-11-11), taking a Raster input or satellite files, as Cases by period
-   takes points or a table. Shared: the area sums (`src/satellite-areas.ts`), the cell rule, the point reading; offered
-   only for satellite files: the layer and the quality rule. The other node type is retired outright, there being no
-   outside users, and saved workflows move to the merged one; its manual page, lab checks and name review follow.
-   **Built 2026-11-11 in 0.94.0** (experiment 205): Sample a raster 0.3.0; Sample satellite files 1.0.0, retired; Brazil
-   dengue and New York ozone re-pinned. **Still owed:** the lab check against an external zonal sum. A comparison is then composed from what exists: three Raster
-   inputs, three area samples over the same polygons, Relate on the polygon, and Apply ruleset for the differences.
-   Compare per area at a common year, never cell by cell at 100 m, never pooled; say each model's population (all
-   land, settled cells, residential) beside its number. The same step gives Rate with a denominator a population per
-   area.
-   **Then a worked example of the comparison** (the practitioner, 2026-11-11: *"Once we add that capability let's create
-   a worked example for it"*): one place in GRID3's coverage, so all three models apply, its administrative units as the
-   areas, one common year. **A country with a census** (the practitioner, 2026-11-11: *"Let's use a country with a
-   census"*): the census count per unit is the independent reference that says which model fits, not only how far they
-   disagree. To choose by: counts published per unit, openly licensed, on boundaries that match the units, and a census
-   year near a year the models offer. Candidates in GRID3's coverage, none checked yet: Botswana 2022, Kenya 2019, Malawi
-   2018, Ghana 2021, Rwanda 2022, Zambia 2022, Uganda 2024. The windows read for its units
-   are kept in an example repository under each source's licence (all three CC BY 4.0), with their citations.
-25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
-   case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
-   **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,
-   named or found with shares and confirmed; the walk upstream; Raster input offering the area's countries with its
-   one-file limit said. **Left:** Find health facilities querying each country's register; acquired units from two
-   countries in one study area; Raster input reading a window across two files.
-26. **A repository of worked examples for georeferencing sheet maps** (the practitioner, 2026-11-11: *"We should have a
-   repo of worked examples for georeferencing different kinds of sheet maps"*). An `example-*` repository, one example
-   per kind of sheet: a cadastral sheet with a printed frame (Hagelloch's 1824 Flurkarte, placed by its corners and by
-   hand), a topographic sheet with a printed grid, a town plan with no grid (South London's Snow map), a railway or
-   small-scale map with a graticule (the 1861 Bahnkarte), and a sketch or hand-drawn map, each with its features to find,
-   their reasons, and the result against a reference. Each sheet's licence checked before it ships; experiment 201's cue,
-   live check and preview are the tools.
-27. **Open Science components in Fieldwork, with the collaborative project design layered to support their principles**
-   (the practitioner, 2026-11-11: *"Also after MERS let's build the Open Science components or FW and layer the
-   collaborative project design to support it's principles."*). **After MERS** (item 8). Builds on 21 (collaboration through
-   GitHub, [150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md),
-   [155](docs/experiments/155-discussions-as-the-governance-surface.md)) rather than beside it: the project design is the
-   layer, the open science principles what it is answerable to. What already exists to inventory first: a project
-   exported as a repository; provenance receipts in N3; licences, citations and pinned commits on every worked example;
-   the Validation Lab's independent checks; open evidence only. **Open, for the practitioner:** which statement of the
-   principles (for example UNESCO's 2021 Recommendation on Open Science, FAIR), and which components that means here.
-   An experiment record first, with the survey of what exists, before any widget. **Begun 2026-11-16:** ORCID iDs and
-   ROR IDs in the identity file and the project's membership; the running inventory is
-   [docs/audits/open-science-inventory.md](docs/audits/open-science-inventory.md).
-28. **The 1854 map under the John Snow example** (the practitioner, 2026-11-11: *"For John Snow built in example can we
-   look for an 1854 map of Soho district?"*). After the items already ordered (the stale-text sweep, the census
-   comparison, MERS). Found by search, none opened yet and every licence to confirm on its page:
-   **Snow's own map** (December 1854, printed 1855; Wikimedia Commons, Snow-cholera-map-1.jpg, public domain), the
-   first choice: Robin Wilson's digitised deaths and pumps were taken from it, so the points should fall on their own
-   houses, the check Hagelloch's 1824 sheet passed; **Edmund Cooper's map** for the Metropolitan Commission of Sewers
-   (September 1854, the base Snow drew on, with house numbers and sewers), no open scan found yet, to look for in the
-   Snow Online Companion (MSU) and the Wellcome Collection; **Stanford's Library Map of London** (1862; David Rumsey's
-   georeferenced sheets are the 1877 edition), licence unclear and probably not open. The Ordnance Survey's 1848-50
-   large-scale London plans would be the surveyed ideal; no open scan found (NLS georeferences only 1893-96). Placed by
-   hand with the georeferencing widget (201), as Hagelloch's sheet was; one of 26's kinds of sheet, a town plan with
-   no grid. Asks before downloading, with the size. Where it lives follows item 7: the built-in Snow example earns a
-   repository or retires.
-29. **An agent-based model in the browser, checked against Starsim: the spike for 199, after MERS**
-   ([199](docs/experiments/199-an-agent-based-model-in-the-browser.md); the practitioner, 2026-11-10: *"For 199 if we
-   do a spike for ABM what would that be?"*, then 2026-11-11: *"Let's do it after MERS"*). TB natural history only, at
-   the Gaborone model's rates, on Old Naledi's homes; weekly counts from a recorded seed, held against Starsim by
-   run-to-run spread; the browser's limit measured; about a day. Proposed 2026-11-10 and left unrecorded for a day,
-   found when the practitioner asked when the spike was.
-   **2026-11-17: moved ahead of MERS by the practitioner and run on Hagelloch's measles instead (*"Measles, Hagelloch
-   188"*): yes.** Same tables natively and in WebAssembly; agreement with Starsim 3.7.4 within run-to-run spread over
-   500 runs each; 188 children 1 ms a run, 940,000 3.3 s. Next, the practitioner's to choose: periods from an open
-   source, the Starsim script into the Validation Lab, a widget to run it, or a comparison with the recorded curve.
-30. **A heat stress worked example on real data, replacing the heat example** (the practitioner, 2026-11-11: *"We will
-   replace heat stress with a worked example, with real data so this needs a TODO so we can do the research."*). The
-   synthetic heat example retires in the Old Naledi pass (docs/audits/old-naledi-audit.md). Research first, open
-   evidence only: a heat event with published health outcomes (deaths, emergency visits or calls) by place and day,
-   openly licensed; temperature or heat index for the same places and days; the population at risk; and any
-   published cooling-centre or outreach locations. Then a worked example in its own repository, its rules written
-   as declared rules in Apply ruleset, with no bespoke ruleset code.
-31. **Syndromic surveillance: an aberration in a count over time** ([206](docs/experiments/206-syndromic-surveillance-aberration-detection.md);
-   the practitioner, 2026-11-11: *"We can add 206 to our TODO list."*). Not placed in the order yet. First, the check
-   that may need nothing built: whether Apply ruleset's previous-row value can read a value computed in the same step,
-   which would let EWMA and CUSUM be written as rules (option E). **Then, preferred (the practitioner: *"Can we modify
-   ruleset to read previous rows?"*): option F**, Apply ruleset reading a window of earlier periods (mean, sd, sum, min,
-   max over the last *k*, after a guard band), so EARS C1–C3 are rules too. Otherwise, closest step first: baseline columns on Cases
-   by period for window methods (A), expected counts from Regression for Farrington-style models (C), a new step only if
-   neither carries it (B), an aberration view in Chart (D). Open for the practitioner: which methods first; the New
-   York daily emergency-visit series as the first test bed; whether reading a syndromic feed as published is in scope.
-
-The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
-
-32. **Geoprivacy as worked examples of its own, with map encryption ported to Fieldwork** (the practitioner, 2026-11-12:
-   *"We may have to spin off the geoprivacy workflows on their own as geoprivacy worked examples which would include map
-   encryption which we haven't ported yet to FW."*). Out of the John Snow project: moving points (donut geomasking, and how
-   far the centre shifts) and counting by H3 cell, one question each, then map encryption from the geoprivacy notebooks
-   (git.cdc.gov/jupyterlite/2026-Map-Encryption-Library), which needs an experiment record and its admission review
-   before any widget. Until then `snow-geoprivacy` stays in the John Snow project, last ([210](docs/experiments/210-proposing-a-chart-or-a-map-from-the-data.md)).
-33. **Each worked example retold in Python notebooks, for validation and pedagogy: after the items above**
-   ([217](docs/experiments/217-worked-examples-as-python-notebooks.md); the practitioner, 2026-11-15: *"This is not a
-   generator problem but a set of notebooks we sculpt down to prose. It boils down to two things. Validation and
-   pedagogy."*, then *"this is a TODO item. After the others. And an experiment too."*). Hand-written per example, in
-   a `notebooks/` folder in the example's own repo, shaped on the PHI-Case-Studies John Snow series; the prose drafted
-   as Markdown for the practitioner to edit; each closes by setting its numbers beside Fieldwork's, and the lab lists
-   that check. Oswego first, then Salmonella.
-34. **What a two-by-two says of itself: its arithmetic readings as facts, interpretation left to authored notes**
-   (the practitioner, 2026-11-15, on Salmonella's melon
-   table: *"unless the ontology can help structure the interpretation"*, then *"Yes"* to both). The step states what
-   follows from its cells (interval above, below or across 1; a zero cell, no ratio; a cell of 1 or 2, unstable), never
-   which exposure is the vehicle. Salmonella's interpretation goes in as authored notes now. A widget improvement, not an
-   experiment (the practitioner, 2026-11-15: *"218 should also not be an experiment it's widget improvement"*); the plan:
-   - **The step states:** the interval wholly above 1, wholly below it, or across it; a cell of 0, so no ratio (today the
-     cell says "unknown" and nothing says why); a cell of 1 or 2, unstable; several exposures with no correction for the
-     number of comparisons, and odds ratios only for the declared design (both said today). **The practitioner states,
-     as authored notes:** which exposure is the likely vehicle, exposures that go together, what confirmed the vehicle
-     beyond the table, crude here and adjusted elsewhere. No exposure is named, ranked or highlighted, as experiment 161
-     decided for the table itself.
-   - **To decide:** whether "unstable" at 1 or 2 is stated, or the smallest cell given and the reader left to judge;
-     where a reading appears (a column per row, a line in the Notes table note, or both); reading classes in `fw:` so a
-     SHACL shape can check that no ratio is reported over a zero cell, reusing STATO or OBCS terms where one means the same.
-   - **Checked on:** Salmonella's matched panel table (Galia wholly above 1, 4.02 to 60.6; the other melons b = 0, no
-     ratio; cantaloupe b = 1, unstable); Oswego's menu (vanilla ice cream wholly above 1).
-   - **To watch with a trainee:** whether, with the readings beside the table, they still reason to the vehicle
-     themselves or read the readings as the answer. Not established by any reading: that an exposure caused illness, or
-     that the readings are complete.
-35. **Lycoming's 1943 sheets under Oswego's map, through Fieldwork's own widgets: next, ahead of NYC, Sierra Leone and
-   the ABM spike** (the practitioner, 2026-11-15: *"Do we have a 1940 map of Lycoming?"*, *"Yes download"*, *"I want
-   this process to use as much of the built in infrastructure FW has already with some enhancements"*, and *"Yes,
-   next"*). USGS 1:31,680 *Oswego East, NY, 1943* and *West of Texas, NY, 1943*, public domain, polyconic on NAD27.
-   Found on the way: **Oswego East's GeoTIFF tags place it 652 m east-west off its printed corners** (244 pixels at
-   both the north-east and south-west corners, under 2 vertically); West of Texas is exact; at the seam the road through
-   Lycoming steps 40 to 50 m. Known gaps in existing widgets, closed in this order, no new widget:
-   (1) **Georeferenced map image reads a GeoTIFF**: a picture told from a values raster by its tags (colour bands,
-   8-bit), its projection read with proj4 (polyconic, transverse Mercator and the like), redrawn north-up over the study
-   area only; (2) **it opens on the file's own placement, its printed corners marked**, so a misplacement shows on sight
-   in the existing preview over today's map; (3) **a shift-only fit** among the placement models, for tags that are
-   only offset, both placements kept in the record; (4) **Map takes several ground inputs**, as it takes several point
-   layers. With them, Raster input names a picture and points to Georeferenced map image. Then Lycoming ships in the
-   Oswego repository with both sheets and junction guides, as Hagelloch's 1824 sheet does, each sheet matched to
-   today's junctions so the seam is settled by evidence. Still a separate question: (b) a step that finds a historical
-   map for the study area from an open catalogue, which would need an experiment record first. **Enhancements (1) to (4) built 2026-11-15** (0.125.0; experiment 201, dated section); Lycoming's sheets in the
-   Oswego repository next.
+1. Publish 0.152.0 once a gate passes; on 2026-11-19 the network was too slow for two downloads.
+2. Raster streaming for GHS-POP over DR Congo: [GHS-POP over DR Congo is refused](#ghs-pop-over-dr-congo-is-refused-8-byte-cells-found-2026-11-19-streaming-decided-the-same-day).
+3. Experiment 225, WebGPU as an accelerator: [WebGPU as an accelerator](#webgpu-as-an-accelerator-never-a-requirement-225-asked-2026-11-19).
+4. The agent-based model compared with Hagelloch's recorded curve (experiment 199, option 4, chosen 2026-11-19): [item 29](#29-an-agent-based-model-in-the-browser-checked-against-starsim).
+5. The gate: recorded copies of live services, from-scratch tests on several workers, and a live-service check on GitHub ([gating audit](docs/audits/gating-audit.md), Decided 2026-11-19).
+6. Show-me-how walkthroughs for spatial steps: batch 1, Join a table to the study area and Sample a raster; then batch 2, Clip polygons, Keep points inside the area and Summarize points to polygons ([Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07)).
+7. Census tables, experiment 224: the download list for 15 countries, then a table source reading the census-tables repository ([224](docs/experiments/224-census-counts-as-a-table-source.md)).
 
 ## Urgent
 
@@ -752,32 +201,10 @@ an exact match would be brittle across `FIELDWORK_TEST_PORT`. Watch for a second
 deciding; if it recurs, the question is whether registration is actually failing under load or
 whether WebKit reports a cancelled fetch this way.
 
-**DONE 2026-10-24 — the refusal says what actually happened.** `change()` returns false while
-`busy` without attempting a save, so `lastSaveFailure` stayed null and `saveFailureMessage` fell
-through to the caller's storage sentence: "Study area could not be saved. Retry Apply.", over a
-workspace holding 169 KB, where retrying would fail identically until the run ended. Fixed in
-`saveFailureMessage` rather than at each caller, so every refusal routed through it gets the true
-reason. Third sighting of the same family: the first swallowed a New project click in silence, the
-second disabled the controls that open with the guard, and this one misdirected, which is worse.
-
 **Still open from that family:** `input-data-ui` says "Edits could not be saved on this device" on
 its own, without going through `saveFailureMessage`, so the same misdirection is available there.
 It was not touched because it was not what was reported, and a fix applied to a fraction of the
 places that need it is how the swallowed-click problem kept being rediscovered.
-
-**A table still cannot colour the boundaries it is keyed on.** study_area 0.5.0 brings polygons in
-and keeps `units[i]` naming part i, so the South London example's 32 sub-districts can now reach a
-canvas. Joining the 32 mortality rates to them cannot: nothing takes a table and an area and
-returns the area with a value per part. That join is the choropleth, and it is the figure the
-example has been arguing in prose since 2026-10-24.
-
-**DONE 2026-10-24 — a polygon comes in through the study area.** This entry said no widget took a
-polygon and that the first of its two gaps was a `polygon_input` beside `table_input`. The
-practitioner settled it differently and better: *"a study area is actually a polygon input."* Of
-the five port types only `polygons` lacked a source, and `polygons` is a catchment result
-carrying sites and a method, so a new source emitting it would have made imported boundaries
-masquerade as a computation nobody ran. study_area 0.5.0 takes a GeoJSON polygon file and holds
-units that share a border. The second gap is still open and is its own entry below.
 
 **Measure OPFS against IndexedDB for large rasters, before changing anything.** A raster asset
 currently goes through `storePDFs` into `evidence-storage.ts` as a single IndexedDB value. That is
@@ -829,7 +256,6 @@ The blocking unknown is not capacity but persistence: nothing has measured what
 `navigator.storage.persist()` grants in either engine, and a study area that is silently evicted
 would be worse than one refused up front. That probe is what 121 names as its closing condition,
 and it also decides where a PMTiles extract should live.
-
 
 **A mechanism for "below": nothing compares a release's claims to its code.**
 The practitioner's method is to look back, forward, sideways, above and below
@@ -917,28 +343,6 @@ What is retirable without contradicting D1:
 
 Roughly ten palette retirements, taking 51 to about 41, plus code-level factoring that changes
 no palette entry.
-
-**A table cannot be joined to another table, and no widget does arithmetic on columns.** Found
-2026-10-26, building South London's contingency table. The 2x2 of people by supply and outcome is
-derived from two published tables -- Table XII declares each sub-district's water supply, Table
-VIII gives its population and deaths -- and needs two operations the application does not have:
-a **table-to-table join** on the sub-district name, and a **derived column**, survivors being
-population minus deaths.
-
-`join_table_to_area` joins a table to a BOUNDARY, which is the same matching problem against a
-different second operand; nothing joins two plain tables. And nothing computes a column from
-other columns at all: `rate` divides two declared measures and emits a rate, which is the only
-arithmetic over columns in the application.
-
-So the workflow carries prepared data with its provenance stated, as the other inputs do. That
-is honest and it is not the same as the example demonstrating the operation -- a practitioner
-with the same two published tables cannot reproduce the step in Fieldwork, which is what
-[the glossary](glossary.md) says a worked example is for: the only artifact that demonstrates
-composition rather than declaring it.
-
-Neither operation is epidemiological. A join of two tables on a shared key and a column derived
-from others are the two most ordinary things in tabular work, and their absence is why the one
-genuinely checkable epidemiological table in this project had to be computed outside it.
 
 **Utilisation is runs, not appearances. BUILT 2026-10-26; what remains is below.** The
 practitioner, defining the term: *"use is defined as widget connected to another and run in a
@@ -1056,52 +460,6 @@ aimed at external owners [64](experiments/64-widget-streamlining.md) later found
 *"there are no external owners, only the seven shipped examples and the frozen fixtures this
 project owns."* Manila was carrying the domain the whole time while the pack carried the
 governance for carrying it.
-
-**AR6 as a ruleset — and this was settled on 2026-10-15, not today.**
-[115](experiments/115-decomposing-the-projection-extract.md) reads `slr_extract_import`
-operation by operation, finds that **none of its five operations is about sea level** — four
-are assertions about a table and one is a derivation over a column — and records the
-practitioner's decisions the same day: P1, the contract is the ruleset's own declaration via
-`inputContract.expects`, so no new widget and no ruleset power to stop a run; P2, provenance is
-an alert rather than a blocker; P3, the distinct values are a knob on the input widget. The
-blocker ledger had already reached the verdict too: *"`slr_` names a pack, not an operation.
-Becoming a ruleset makes that correct rather than needing a fix."* **The build has not started**,
-and 115 still reads `asked`.
-
-On 2026-10-25 the practitioner said *"AR6 as a ruleset"* and Claude re-derived the same
-conclusion from the ruleset format as though it were new, which is the relitigating this
-section is about. The practitioner: *"I remember the AR6 ruleset work as it was a significant
-amount of time."* They were right. What follows is a field mapping that supports 115's P1 and
-does not replace it; the decisions above are the ones to build.
-
-Checked against `fieldwork/ruleset/1` on 2026-10-25, the format has a slot for every constant:
-
-| In `src/sea-level.ts` today | Ruleset field it belongs in |
-| --- | --- |
-| `PROJECTION_KEYS` — the six key columns an extract must carry | `inputContract.expects`, which already lists what a fact generator requires |
-| `VALUE_UNITS` metre / millimetre, with `UNIT_IRIS` holding `qudt:M` and `qudt:MilliM` | `parameters[].unit`, which is already a QUDT IRI in every shipped ruleset |
-| `BASIS_KINDS` — `workflow` / `confidence-pbox` | an enumerated vocabulary, as `outputVocabulary.predicates[].values` already is |
-| the vertical-land-motion family pair | `parameters`, with `meaning` carrying what each names |
-| baseline period and the three obliged citations | `basis.evidence` and `basis.unresolvedCitations` |
-
-The field that makes the case is `mustNotBeReadAs`. `src/sea-level.ts` carries this as a code
-comment: *"wf_1e is one workflow, 'medium' is a p-box over several, and a p-box bound is not a
-quantile of one distribution."* That is a distinction in the glossary's sense, it is the most
-valuable thing the widget holds, and it is sitting where no reader of the application will ever
-meet it. `mustNotBeReadAs` is the declared, versioned, citable place for exactly that sentence,
-and `access-review 1.0.0` already uses it.
-
-One adaptation to settle before the work: a ruleset today carries N3 `rules` applied by the
-reasoner, and AR6's domain content is **refusals rather than inferences** — a missing key column,
-an uninterpretable unit, an undeclared basis kind. Either those become N3 rules, which would make
-each refusal declared and explainable rather than a `throw` in TypeScript, or the format admits a
-ruleset that is a contract with no rules. The first is the more interesting answer and is what
-"semantic reasoning" would mean here; neither is chosen yet.
-
-The disposition of `widgets/packs.json`, `validate:packs`, `src/pack-catalog.ts` and
-`src/catalog-ui.ts` is a separate question and is not answered here — it is governance for a
-mechanism no longer used, which is a different thing from the domain knowledge it was meant to
-carry.
 
 **The order is not retirement-first**, which is where this started and was wrong. Checked
 2026-10-12: no affected workflow is completely replaceable, because "replaceable" means a current
@@ -1414,42 +772,570 @@ consumer; or letting the output state its own margins where a reader has asserte
 commensurable. The first is smallest and the second is the one that is actually true of long
 tables, where each measure may count something different.
 
-**Revisit the Manila sea-level example, which reports no sea level.** **Done 2026-11-09:** its second workflow
-reports 1,124 mm at gauge 145 by 2100 (SSP2-4.5, with vertical land motion, middle quantile), in its own repository
-([195](docs/experiments/195-the-sea-level-example-reports-a-sea-level.md)). As raised:
-_Raised 2026-10-26 by the practitioner: **"that is a useless worked example if titled sea level
-rise."** Checked, and the criticism holds._ `assignSites` reads the AR6 extract **only to narrow
-which gauges are usable** — `usable` is the set of sites whose `site_id` appears in the extract —
-so the 288 projected values are imported, contract-checked, carried through a ruleset with three
-obligatory AR6 citations, and never read. The output is facility → gauge → distance. As a
-sea-level example it delivers no sea level, and its title claims the one thing it does not do.
-This is the D7 overclaim failure applied to a worked example rather than to a widget.
+### A Polygon layer from an OpenStreetMap extract is read whole (found 2026-11-13)
 
-Refusing to model inundation stays right, and the answer given on 2026-10-26
-dressed the gap up as that virtue, which it is not: not claiming inundation and never computing
-a projection are different omissions.
+**Found 2026-11-13, not yet done:** a Polygon layer read from an OpenStreetMap extract reads the whole file into memory, as Raster input's digest did before it was read in slices; a country's extract of several gigabytes would fail the same way.
 
-**What it should report**, and can report honestly: the projected change at each facility's
-assigned gauge, with scenario, year, quantile and vertical-land-motion family named in the
-output — "+X mm by 2100 under SSP2-4.5, median, with VLM". Real, uses the data it ships, and
-still not an inundation model.
+### Two-by-two, Total within groups and the Länder table (found 2026-11-15)
 
-**What blocks it is one named limit.** The extract is keyed `site_id, scenario, basis, family,
-year, quantile`; the assignment is keyed `point_id, projection_site`. Carrying the value across
-is a join of two tables on a shared column, which the 0.12.0 release notes already record as
-missing. Slicing the extract to one scenario, year, quantile and family is `select_rows`. The
-example stops exactly where the application stops.
+**Found 2026-11-15, not yet done:** (1) Two-by-two words a column that is empty in every row as `"1" has nobody in it,
+so it has no risk`, which names a risk in a case-control study and does not say the column is empty: Salmonella's
+`andobst2`, `obstsalat2`, `tkobst2`, `trockenobst2`. (2) Total within groups lists groups in the order they first appear,
+so Salmonella's age groups read 18-35, 60-79, 36-59, 1-4; nothing orders them by age. (3) The Länder table needs a
+numeric value column it does not use, so `data/laender.csv`'s `name` is its value and is lost at the relate (*a line
+list must name a numeric value column it does not use*, below).
 
-Until it reports a value, the note should say the projections are validated but not reported —
-today it says what it will not claim and is silent about what it never computed.
+### Onboarding training materials for an Advanced FETP graduate (2026-11-15)
 
-**Done 2026-11-09 (0.70.0, [197](docs/experiments/197-the-sea-level-widgets-retire.md)): both retired**, Assign
-projection site into Measure distance and Relate, Compare level to elevation into a published ruleset. As raised:
-**Check the two remaining sea-level widgets in the same pass**, which the practitioner has
-flagged to review: `slr_site_assignment` is listed in the Duplicates row as a one-off of
-nearest-neighbour-with-distance, and `slr_threshold_comparison` this file has called *"genuinely
-domain-bound"*, which under the domain-agnostic direction is a question rather than a settled
-exemption. Both are still classified `domain` in `widgets/classification.json`.
+**A major item, this week (the practitioner, 2026-11-15): onboarding training materials for an Advanced FETP graduate
+from Sierra Leone**, who is to support Fieldwork's development: *"I am supposed to train an Advanced FETP graduate from
+Sierra Leone how to support the development of FieldWork. At some point, this week I need to develop onboarding
+training materials. This important step could help with FW field testing."* Settled the same day: the graduate's
+role is **field testing, worked examples, review and validation, code contributions and localisation**; the materials
+are **guided modules** (each a goal, a hands-on exercise in Fieldwork and a check); they live in **a new repository**,
+which the practitioner creates (repository creation is a human action). **Staged, slides first, starting the week
+of 2026-11-16** (the practitioner, the same day: *"The onboarding materials can be staged. Slides first, and we can start
+it next week. For now I am more interested in finishing up render as it's very consequential for uptake."*); the render
+work (202, Stages A to E) comes first. **Then identity, then collaborative projects** (the practitioner, the same day: *"Once we finish render,
+we can start identity, then collaborative project."*). The Sierra Leone measles example, made from that
+country's FETP line list, is the natural first exercise; its rules hold throughout (the original FETP file in no
+repository; no free text from it printed).
+
+### Collaborative projects (2026-11-15)
+
+**And with it, collaborative projects (the practitioner, the same day):** *"This also means we have to start working on
+collaborative projects, because this is how future worked examples are going to be developed."* Experiment
+[150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md) built the export (a project as
+a repository, one file per workflow, one note per object, authors by GitHub login) and decided conflicts are made rare
+and legible, not merged; **reading a repository back into Fieldwork is unbuilt**, which is what blocks a second author.
+Identity first (the practitioner: *"we have to strengthen the concept of identity within FW, perhaps using Open Science as
+a platform (e.g., identities - ORCID, GitHub, etc.)"* and *"We have to develop an encrypted identity file which user loads
+when identity requiring activities are active"*, *"Identity only"*): experiment
+[218](docs/experiments/218-an-identity-you-carry.md), an encrypted identity file carrying the profile (name, GitHub,
+ORCID, ROR affiliation, CRediT roles), its attestations and a signing key, loaded only for identity-requiring work.
+Needed, in order: (0) the identity file of 218; (1) read a project repository back; (2) show a conflict legibly, per file, two versions side by side
+for a person to choose; (3) a contribution path (branch or fork, work in Fieldwork, export, pull request, review),
+which onboarding modules 4 and 6 teach; (4) 150's second-author pilot, with the graduate as the second author.
+
+### Zonal statistics in the population workflows (2026-11-14)
+
+**2026-11-14, the practitioner: "For population rasters, did we finish the zonal statistics? And can we add them to the
+workflows?"** Built (Sample a raster's cell statistics, experiment 209) but switched on in neither population workflow,
+and lab check 50 recomputes only the totals. With the comparison: turn them on in all six sample steps, show them per
+district and source, and extend check 50 to the mean, median, standard deviation, cells populated and density.
+
+### A future case study: road traffic injuries on a street network (2026-11-14)
+
+**A future case study, 2026-11-14: road traffic injuries on a street network.** The practitioner passed on notes from
+another assistant; **nothing in them is verified yet**, neither the datasets, their licences, nor what they hold. Leads
+to check at their sources: Barcelona's open traffic-accident data (points with time, vehicles and severity); a
+Medellín traffic incidents and fatalities dataset, 2008–2025, said to be published with a data descriptor; NHTSA's
+Pedestrian Crash Data Study on data.gov. Methods named: crashes snapped to the street network, kernel density along
+the network rather than on the plane, and network measures such as betweenness as covariates in a Poisson or negative
+binomial regression. What exists here: Street network, Snap sites to the network, Regression (Poisson). What does
+not: kernel density along a network, and betweenness. No order set; a design and admission review first, as for any
+new widget.
+
+### A future case study: genomic epidemiology (2026-11-14)
+
+**A future case study, 2026-11-14: genomic epidemiology, to be explored.** Notes from another assistant, passed on by
+the practitioner; **nothing in them is verified yet**, neither the repositories, their licences, nor their contents.
+Leads to check at their sources: Nextstrain's `ncov-tutorial` repository (said to hold about 200 SARS-CoV-2 sequences
+with `metadata.tsv`, strain, collection date and place, and a built tree, `auspice/default-build.json`); Nextclade's
+example datasets (`github.com/nextstrain/nextclade`; reference sequences, `genome_annotation.gff3`, small
+`sequences.fasta`, for SARS-CoV-2, influenza and RSV, made for tools that run in the browser); and a CERI/KRISP webinar,
+*Genomics surveillance in Africa: import/export analysis of viral lineages* (YouTube). What exists here: Tabular data
+reads a TSV's metadata; Cases by period gives sequences by collection week; Map places them by country or state; Chart
+draws a tree from a table of who came from whom. What does not: reading FASTA or a Nextstrain tree, a distance matrix
+between sequences, and lineage import and export between places. No order set; a design and admission review first.
+   More notes the same day, also unverified, give the distinctions a design would have to state and enforce: a line
+   list is one row per case and says when and where; sequences (FASTA, FASTQ, VCF, alignments) say how alike two
+   pathogens are, and reach analysis as pairwise distances or clusters; **genetic closeness is not transmission**, it
+   can suggest links contact tracing missed and tell an import from local spread, but does not show who infected whom;
+   and **sequences arrive days to weeks after the case** (collection, extraction, sequencing, assembly), so a sequence
+   date is not an onset date and a recent week holds fewer sequences than cases. A further lead: a video, *Precision
+   pathogen tracking: the power of genomic epidemiology* (YouTube, Computational Genome Biology).
+
+### Found 2026-11-14, from the practitioner's questions
+
+**Found 2026-11-14, from the practitioner's questions:** (1) Append rows was changed without moving to the standard
+Inspector and dialog: do it, with Join a table to the study area next when it is touched. (2) Map shows a polygon's
+name, key and shaded value, never its other attributes, so zonal statistics are not on the map: a table under the map
+linked to it, or every attribute in the popup, to be chosen. **Chosen 2026-11-14: the table under the map, linked**
+(a district's row highlights when the district is chosen, and the reverse); for 0.115.0. **Built 2026-11-15** (0.122.0, Map 0.32.0), in Results under both
+the static figure and the interactive map; not in Notes or the write-up, and not under maps side by side. (3) A polygon layer reaches Table output two ways: into
+its polygons input as a points-style table with empty Longitude and Latitude and attributes 12 to a page, or into its
+table input as a plain table; make the first read as the second. The practitioner, 2026-11-14: *"As table output the
+geometry attributes could be reprojected as X, Y."* Then, the same day: *"Or we can exclude because the purpose of a
+table output is to use for other purposes and non-geometry computation purpose may not be appropriate."* **Decided: a
+polygon layer reaches a table with no coordinate columns**, only its own attributes, whichever input it arrives at;
+its shape stays on the map (a table has no geometry). A point keeps its longitude and latitude, which are its recorded
+location, not a stand-in. Coordinates for a polygon, where wanted, come from a step that says what it computed. For
+0.115.0. **Built 2026-11-15** (0.123.0, Table output 0.12.0), with what the step that made a layer says of each
+polygon kept as columns. (4) A lead, unread: an article on a Vercel UI SDK for
+agent interfaces (marktechpost.com, 2026-11-13); against the rule of no AI in Fieldwork unless compelling, but its
+interface patterns may be worth a look. A second, the same day, also unread: an article on UI libraries for work with
+Claude Code (geeky-gadgets.com). Both to be read together when interface work is next planned; anything adopted is a
+dependency, so licence, size and offline use are checked first, as for any library here.
+
+### For the next batch (the practitioner, 2026-11-14)
+
+**From the practitioner, 2026-11-14, for the next batch:** (1) Hagelloch's *What a daily scan would have said* map is hard
+to read in Notes: leave it out of the write-up (**done 0.117.0**: "Not in the write-up" on Map, Table and Chart), and later six
+representative days as static maps side by side (Map's panels). (2) Formulas in Notes as footnotes or in an Appendix:
+proposed, an Appendix, each Methods note keeping its sentence and pointing to its numbered formula with this run's
+numbers. (3) Other examples for a space-time scan: Sierra Leone's measles line list (Hagelloch's shape, next in the
+order); MERS by hospital (12 places, coarse); Brazil's dengue by municipality and week, which needs the scan to read
+counts per area as cases at the area's centre. Snow's deaths, Salmonella and NYC have no per-case date and place.
+
+### Notes as the place every result is, and the publication's open items (2026-11-14)
+
+**The order from here, as the practitioner set it on 2026-11-14:** *"Yes but after that let's work on our TODO."* First
+Notes as the place every result is (a Methods note from every step's own record; a source note with its provenance and
+its citation into References, or a limitation where none is described; provenance filled for MERS and the population
+sources), and MERS's epidemic curve coloured by transmission chain and its offspring distribution; then the TODO.
+**Then, the same day:** the publication render of Notes ([202](docs/experiments/202-one-record-several-products.md),
+reordered: publication first; formulas in an Appendix; a print layout saved as PDF first, Word later). The offspring
+distribution is built (0.116.0); the curve by chain needs a step that hands on each case's chain, designed first.
+**The publication's first step is built (0.117.0)**, and its open items (0.118.0): Hagelloch's source cited, the
+written parts kept, a map's title in its caption only. Still open for it: figures cited by number in the text, a
+thesis citation type, Word; the basemap under the cluster map is the practitioner's to check.
+
+### 3. Sierra Leone
+
+3. **Sierra Leone** (below; [189](docs/experiments/189-a-measles-line-list-made-safe-to-teach-with.md)): reviewed,
+   de-identified and made semi-synthetic 2026-11-08; Find health facilities from a list built (0.60.0, GRID3) and
+   OpenStreetMap added as a register (0.61.0, measured: one hospital more, nothing wrong). Shares in Total within groups
+   (0.62.0, [191](docs/experiments/191-shares-within-groups.md)); *is not* and *otherwise* in Apply ruleset, which the
+   WHO classification needs ([192](docs/experiments/192-is-not-and-otherwise.md)). **Next:** the example's workflows and
+   manual: epidemic curve and cases by facility **built (0.65.0)**; cases by district next.
+   **A space-time scan, built and removed 2026-11-15:** a fifth workflow at the facilities with ten cases or more (the
+   practitioner's rule), 25 km circles. Every one of ten clusters reached p = 0.001 (the most likely, 198 cases against
+   53.9 expected near Freetown, October 2021 to April 2022, is the 2021-22 wave reaching Western Area); over five years
+   the scan's null fails for mundane reasons, waves and reporting changes, and visits were moved up to a week when the
+   file was made. Asked *"Is it really worth doing scan for SL?"*, then *"Remove scan for SL"*. Hagelloch remains the
+   scan's example. Kept from it: seven type-differs names decided on the facility map.
+   **Map on the standard, 0.66.0.** **Cases by district next**, as rates per 100,000 over WorldPop's 2021 district
+   sums on OCHA COD-AB's 16 districts (data/district-population.csv and data/districts-cod-ab.geojson, uncommitted in
+   the example until the workflow is built; WorldPop is 5.8% above the 2021 census). Names differ ("Bo District",
+   "Bo"; COD-AB spells Falaba "Fabala"): **Deduplicate records gains a mode linking two tables** (experiment 193, the
+   practitioner: *"extend the deduplication widget to also do matching of columns between two tables"*), and moves
+   to the standard in the same pass.
+   **Found 2026-11-09:** the pre-push fast gate validates the pinned examples against the sibling WORKING copies, so an
+   uncommitted edit in an example repository blocks a Fieldwork push whose pins are right. Commit or set aside first.
+   **Boundaries that change: GeoPrism Registry, after 18** (the practitioner, 2026-11-11: *"For SL example we can take a
+   look at https://github.com/terraframe/geoprism-registry-documentation/blob/main/version/v2.0.0/introduction.md for
+   detecting changes in admin boundaries and perhaps as a source of admin boundaries as well. After history rewrite."*).
+   Not yet read. Two questions: whether it records a unit's boundary over time, so a district split or renamed between
+   the line list's years and the boundary file's can be detected rather than met as an unmatched name (Falaba is the
+   case at hand); and whether a registry instance publishes Sierra Leone's units openly, with a licence, as a source
+   beside OCHA COD-AB and geoBoundaries. Its licence and the data's checked before anything is used.
+   **Case classification postponed** (the practitioner, 2026-11-08: *"Let's postpone the case definition work"*). Decided
+   so far: WHO 2018's classification; *Runny nose* counts as coryza; the clinician's *meets the definition* stands in
+   where symptoms were not recorded, shown in an analysis table. **Open:** whether *Contact with confirmed measles
+   (7-18d) or rubella (12-23d) case* is a measles link. It decides 21 of 2,606 rows, 19 of which stay clinically
+   compatible without it. Needs the FETP's data dictionary (the columns read as DHIS2 tracker fields), which would also
+   say which test the laboratory result records.
+   **Done 2026-11-08 (0.64.0): a case definition in the rulesets worked example** (the practitioner: *"Let's also add a
+   case definition example in the rules set worked example"*), its seventh workflow, on sixteen made-up cases in four
+   stages, every class reached. No conflict is reached, because staged rules cannot give one case two classes.
+
+### 4. Table output on the standard
+
+4. **Table output on the standard** (186).
+
+### 7. 188 validated
+
+7. **188 validated** (the practitioner, 2026-11-08: *"Let's validate 188 after #5"*, Old Naledi then numbered 5): South
+   London's workflows built from an empty canvas through the rules dialog, so its rebuilt Apply ruleset steps play back
+   as Nigeria's do.
+
+### 8. Operational epidemiology's first slice: a 7-1-7 review on MERS-CoV, South Korea, 2015
+
+8. **Operational epidemiology's first slice: a 7-1-7 review on MERS-CoV, South Korea, 2015**
+   ([200](docs/experiments/200-operational-epidemiology.md); the practitioner, 2026-11-09: *"Yes"*, then *"But add that
+   to TODO"*). Onset to report and onset to diagnosis per case, counted against the targets; a contacts table for
+   contact tracing. **Days between two dates** in Apply ruleset's computed columns, the one extension it needed, is built
+   (Hagelloch's serial interval uses it). **Status, corrected 2026-11-11:** what is left is the data's terms, which the
+   practitioner is checking at the package's pages, and converting `mers_korea_2015.RData` to CSV in the example
+   repository.
+   **Built 2026-11-12** ([200](docs/experiments/200-operational-epidemiology.md)): the 7-1-7 ruleset, the column choice in Apply ruleset, and the
+   first workflow in example-2015-mers-korea (94 of 135 detected within 7 days, 161 of 162 reported within 1).
+   The 98 contacts as a second workflow the same day (cases per source, setting of exposure). Next: a lab recomputation;
+   the transmission tree, once the practitioner says how to show the two cases with more than one recorded source.
+   **2026-11-12:** the hospitals placed (example 9e8432c); the data's documentation and the other open sources researched,
+   [docs/research/mers-korea-2015-sources-2026-11-12.md](docs/research/mers-korea-2015-sources-2026-11-12.md). Next: a
+   workflow placing the cases by hospital; then, from that note, the KDCA 185-case file, an outbreak-level 7-1-7 review
+   from the response dates, and the README's corrections. **In progress** (the practitioner: *"We just begun"*).
+   **2026-11-14:** three more workflows (example ddf30f6): deaths by age class and sex in a two-by-two, days from
+   exposure to onset and onset to death with the median, secondary cases per source and the serial interval by setting;
+   lab check 51 agrees. Total within groups gained Mean, Median and Column to total for them.
+   **Decided 2026-11-11 by the practitioner:** *"Our use case for these worked examples is for teaching so that fits MERS
+   Korea purpose"*: the dataset is described as compiled "for teaching", and so are these examples. Used on that basis in
+   an example repository, attributed to ECDC's Epidemic Intelligence and the outbreaks package, never in the
+   application; no licence for the data itself is stated anywhere, and that stays said. **Converted 2026-11-11** with R
+   (`~/Downloads/mers-korea-2015/`, `.RData` sha256 2a08976a…): a line list of **162 cases** by 15 columns (onset missing
+   for 27, exposure dates for 5) and **98 contact links** by 4 columns. Dates are per case, so it teaches case-level
+   timeliness (onset to report, onset to diagnosis, 135 cases computable) and who infected whom; a full 7-1-7 review of
+   the outbreak as one event would need the early response action dates, which it does not hold. **Repository created
+   2026-11-11** at the practitioner's request, public: digital-twin-ph/example-2015-mers-korea, holding the two CSVs,
+   the conversion script, NOTICE.txt and provenance.json (424ee33). Next there: the workflows, after the 7-1-7 ruleset.
+   **And a 7-1-7 timeliness ruleset** (the practitioner, 2026-11-11: *"And we can build the ruleset extension as well"*):
+   a bundled ruleset for Apply ruleset reading four date columns (emergence, detection, notification, early response
+   complete), computing the three intervals in days, and marking each met or not against its target, 7, 1 and 7 days,
+   as step settings in days. A row missing a date gets no verdict for that interval, not a guessed one. Its basis cites
+   Bochner et al. 2023 and `ontology/response-timeliness.ttl`. The machinery exists: date fields, days by minus, and
+   rules that read a computed value; the open question is binding date columns to a bundled ruleset's input roles.
+   **Found 2026-11-09, before building:** `mers_korea_2015` in the R package `outbreaks` (reconverse/outbreaks): a line
+   list of 15 columns (onset, report, diagnosis, exposure start and end, death) and a contacts table (from, to,
+   exposure). Compiled by ECDC's Epidemic Intelligence from public information in the outbreak's first weeks; "for
+   teaching", and not the final investigation or a complete chain. **Terms unresolved**: no licence for the data is
+   stated; the package code is MIT on GitHub (GPL ≥ 2 on CRAN 1.9.0). **No CSV**: only `data/mers_korea_2015.RData`, so
+   a script in the example repository would convert it, and the row count is not yet known. Ask ECDC or the package
+   authors about the data's terms before shipping it.
+   **The 7-1-7 categories are ours to carry**: Fieldwork's own ontology, `ontology/response-timeliness.ttl`, built on
+   2026-11-09 from Bochner et al. 2023 (CC BY 4.0), holds the milestones, targets, early response actions and the
+   study's bottleneck and enabler categories, attributed (experiment 200). The practitioner, 2026-11-11: the categories
+   *"are also widely used in many public documents based alone on 717 published literature"*. The Alliance's own
+   BY-NC-SA list is not needed. **Alongside, still open:** the
+   appendix of the 41-event Lancet Global Health paper (`mmc1.pdf`, 229.5 KB, PMC), not yet read; the Sierra Leone
+   Ebola 2014 line list's own terms (Fang et al. 2016).
+
+### 10. Open data and studies for each 7-1-7 bottleneck theme
+
+10. **Open data and studies for each 7-1-7 bottleneck theme** ([200](docs/experiments/200-operational-epidemiology.md);
+   the practitioner, 2026-11-09: *"If we can find open data sets and studies for the bottleneck themes, those will be
+   very helpful for demonstrating 717 support"*). One worked example per theme where open data allow: reporting
+   completeness, laboratory turnaround, care-seeking delay, travel time to care, cross-sector linkage, and supplies,
+   logistics and staffing (in reach, corrected by the practitioner the same day). Open evidence only; licences as stated.
+
+### 11. Cluster detection under Detect
+
+11. **Cluster detection under Detect** ([200](docs/experiments/200-operational-epidemiology.md); the practitioner,
+   2026-11-09). In order, after the Hagelloch transmission tree: the **space-time permutation scan** (built 2026-11-10
+   as Space-time scan 0.1.0; owes a lab check, SaTScan on its benchmark and the day-by-day replay); the **Poisson spatial scan**, on the same machinery; then **Describe where points are dense**
+   (HDBSCAN, kernel density, and kernel density as a ratio of two layers), labelled exploratory, never under Detect.
+   Each on the standard Inspector, with a lab check, and SaTScan run by hand on its benchmark sets.
+
+### 12. Edit a table's values inline, in the data quality check
+
+12. **Built 2026-11-13 ([214](docs/experiments/214-editing-a-table-inline.md))**: values edited in Data quality's Records tab, kept as edits on the step with the value replaced, applied to a copy, stated in the run, removable; an empty cell filled like any edit (the practitioner's choice); and the playback dialog of 173. **Left:** a worked example's manual with an edit exercise, first in Sierra Leone. ~~**Edit a table's values inline, in the data quality check**~~ (the practitioner, 2026-11-10: *"One thing I have been
+   meaning to add to data quality checks is the ability to edit tables inline. Can be added as a widget playback
+   exercise."*). To shape: per [117](docs/experiments/117-data-quality.md), a change to an input is a declared repair
+   on the node, never a write to the file, and every repair can be taken back. So an edited cell would be one more
+   repair: the record, the column, the value read, the value written, who and when, listed as an edit log and each
+   removable. Open: whether typing a value into an empty cell is allowed, since 117 holds that filling a missing value
+   is imputation, not a clerical fix; and what "widget playback exercise" means here, the manual playback dialog of
+   [173](docs/experiments/173-a-manual-for-each-worked-example.md) (designed, not built) or an exercise in a worked
+   example's manual.
+
+### 14. Hagelloch's study area: the administrative area, not a box
+
+14. **Hagelloch's study area: the administrative area, not a box** (the practitioner, 2026-11-10: *"We should change
+   the study area for Hagelloch from box to administrative area"*). Today it is a box drawn round the anchored houses.
+   To settle: which boundary (Hagelloch is a district of Tübingen; its OSM or official boundary, and its licence), that
+   it is the present-day boundary and not 1861's, and whether any case falls outside it, which the map would then
+   show. Asks before downloading. With 13, the colour key. **Found 2026-11-10:** geoBoundaries' levels for Germany
+   (2021, Federal Agency for Cartography and Geodesy, Data licence Germany – Attribution 2.0) are ADM1 Länder (16),
+   ADM2 government districts (38), ADM3 independent cities and districts (428), and no ADM4; Hagelloch's finest is
+   ADM3 Landkreis Tübingen, about 520 km². A boundary of Hagelloch itself needs another source.
+
+### 15. Georeference an 1861 map of Hagelloch in the widget itself
+
+15. **Georeference an 1861 map of Hagelloch in the widget itself** ([201](docs/experiments/201-georeferencing-by-matching-points.md): pairs of
+   points matched between the scan and a map of the place, South London first) (the practitioner, 2026-11-10: *"If we can get hold
+   of an old map of Hagelloch in 1861 we can also exercise georeferencing in the georeferenced image input widget. You
+   did it before for South London so I think it could be done this time in the widget itself."*). South London's plate
+   was placed outside the app, from four control points (`map2-georeference.json`) written into a world file; the
+   widget reads a north-up world file and refuses a rotated one ([143](docs/experiments/143-a-georeferenced-plate-as-ground.md)).
+   New: choose control points on the image and on the map, fit the transform, report each point's residual. Then the
+   houses: today one anchor places them right to the village, not to the building; a georeferenced plan would place
+   x_loc, y_loc properly. To find, open evidence only and asking before any download: whether Pfeilsticker's 1863
+   scan on archive.org carries the village plan (Google scans often leave out fold-outs); the Württemberg cadastral
+   maps of the 1820s to 1840s (Landesarchiv Baden-Württemberg), and their licence. With 14: the boundary is today's,
+   the plan 1861's.
+
+### 16. A sketch pad in Notes
+
+16. **A sketch pad in Notes** (the practitioner, 2026-11-10: *"Can we add a sketch pad in notes? This is for quickly
+   sketching hand drawing maps and diagrams"*). Notes already hold images (`note-image.ts`), so a sketch can be saved as
+   one, kept with its strokes so it can be edited again, and placed in the write-up like any figure. To settle: pen,
+   eraser and a few colours at sizes the practitioner can see; drawing over a map as a backdrop, or blank; a sketch map
+   is not a georeferenced one and says so.
+
+### 17. Faster space-time scans
+
+17. **Steps 1 and 2 done 2026-11-14 (Space-time scan 0.5.0, Fieldwork 0.115.0):** shuffles stop once 50 score as
+   high (Besag and Clifford 1991), and the replay's days run across the device's cores; Hagelloch's replay 44 s to 18.5 s
+   in Node from the stopping alone, and the example's browser test 1.5 min to 18 s (idle machine against a loaded gate,
+   so less than that ratio). Lab check 46 re-run: agrees. **Step 3 done the same day (Space-time scan 0.6.0):** the
+   test in the Rust kernel, identical to the script shuffle for shuffle (unit test); the scan 5.4 s to 3.4 s and the
+   replay 18.5 s to 8.3 s in Node. A speed-optimised build doubled the kernel (40 to 79 KB) for 3.4 to 2.9 s and was not
+   kept. **Left:** what remains is the method (1,305 circles by 87 days, about 3.7 million windows a shuffle for
+   Hagelloch), and lab check 46's own speed. Originally: **Faster space-time scans** (the practitioner, 2026-11-10: *"How can we speed up the browser"*, then *"Let's add all
+   3 to TODO"*). In Fieldwork's replay, in order: stop shuffling once the answer is clear, after 50 shuffles score
+   higher (Besag and Clifford 1991), and say when it stopped; run the days in parallel across the device's cores; move
+   the scan's inner loop to the Rust kernel compiled to WebAssembly. In lab check 46: score every run length at once
+   rather than one at a time, and, if still slow, fewer shuffles with the tolerance widened to match.
+
+### 18. The history rewrite: what is left
+
+18. **Done 2026-11-11: the Claude co-author line removed from the workspace's history, with the practitioner.** Every
+   repository rewritten (messages only; files identical) and force-pushed at the practitioner's yes; Fieldwork re-pinned,
+   old ids mapped in docs/history-rewrite-2026-11-11.tsv; verified with no line on any branch on GitHub or locally.
+   **Left, the practitioner's call:** Fieldwork pull request #1's twelve commits stay under GitHub's read-only
+   refs/pull/1/head, which only GitHub Support can remove (its description's line was removed). Originally:
+   **Remove the Claude co-author line from the workspace's history, with the practitioner. NEXT, before anything else**
+   (the practitioner, 2026-11-11: *"Let's move up 18 before anything else after this last task is done"*: after 0.94.0
+   and 0.95.0 are published, ahead of the census comparison and MERS; it was set for the weekend of 2026-11-14/15)
+   (2026-11-10: *"For repositories related to CDC work we cannot have agents as coauthors"*). Every repo
+   in the digitaltwin-ph workspace: fieldwork, validation-lab, the ten example repos, widget-pack-sea-level-rise and
+   fieldwork-ontology, about 1,190 commits. Mirror backups first; the lab and the siblings before Fieldwork, with a map
+   of old to new commit ids applied to Fieldwork's pins and messages; every branch force-pushed. Nothing under
+   digitaltwin-aas. New commits already carry no such line.
+
+### 19. A Manual for Hagelloch
+
+19. **A Manual for Hagelloch** (the practitioner, 2026-11-10: *"Can we add a Manual to Hagelloch?"*), built in: a
+   `manual.json` beside its data, the files a reader downloads served from Fieldwork's own site, the Manual tab shown
+   for its three workflows, and a from-scratch browser test that performs every step. **The alternative, not chosen
+   for now** (*"Let's add alternative to TODO"*): Hagelloch in its own example repository, like the other worked
+   examples, so every manual and its data are published and pinned one way; against it, Hagelloch would leave the
+   built-ins that work offline from the first open.
+
+### 20. One record, several products: the Notes tab
+
+20. **One record, several products: the Notes tab** ([202](docs/experiments/202-one-record-several-products.md)): the
+   paper, a field report, a story map, a poster and a dashboard configured from one record of notes and views; notes
+   included or excluded per product, with versions flagged when their original changes; evidence before the story.
+   First: the story map on Hagelloch's six scenes.
+
+### 21. Collaboration through GitHub
+
+21. **Collaboration through GitHub** ([150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md);
+   the practitioner, 2026-11-10: *"We have not worked on the collaborative project yet which intends to use GitHub as
+   the shared space for collaboration."*). Written half exists (a project exports as a repository). In order: read a
+   repository back into a project; a second author on a real project; push from Fieldwork with the scoped token;
+   Discussions ([155](docs/experiments/155-discussions-as-the-governance-surface.md)); products on the repository's
+   Pages. Trust without a catalog: a commit pin, who and what before opening, data never instructions, a label.
+   **Progress 2026-11-16:** a repository read back into a project (Load the project), Save to the repository as one
+   commit, Get the latest, project roles and People, Discussions listed and posted from the project; tried against the
+   practitioner's repository up to loading, not yet a save or a second author.
+   **Next, to try:** mentioning a person in a discussion post, as `@login`, so GitHub notifies them (the
+   practitioner, 2026-11-16: *"try @user to direct discussion post to certain GitHub users"*). First observed from
+   GitHub's side: JLT posts to the practitioner with their login mentioned, on 2026-11-17, and we see whether the
+   notification arrives. Then from Fieldwork: whether a post sent through the API notifies the person mentioned the
+   same way, and whether **Start a discussion** should offer the project's members to mention.
+   **Next, to try:** a shared project saved with test workflows by different authors (the practitioner, 2026-11-16:
+   *"save a collab project with test workflows by different users"*). The practitioner and JLT each load
+   `project-test-collaboration`, each add a test workflow of their own, and each save to the repository. What it should
+   show: both workflows in `project.json` and under `workflows/`, each commit under its author's login; the second save
+   refused until its author gets the latest, then accepted; both authors' **This is me** entries in **People**. What it
+   may show instead, and is worth recording either way: a save that overwrites the other's `project.json` entry, since
+   the project file is shared and the workflow files are not (experiment 150, "the two files that do not divide").
+
+### 23. "Made with Fieldwork" on everything exported
+
+23. **"Made with Fieldwork <version>" on everything exported** (the practitioner, 2026-11-10: *"can we add small
+   watermarks for FieldWork outputs, I think it's time to toot our horn"*; *"Yes agree with branding settings"*): small,
+   with the logo, in the footer beside the source note and never over the data; at least 14 px and AA contrast; on by
+   default and removable per export, the choice recorded; Fieldwork's own name only.
+
+### 24. More population rasters beside WorldPop: GRID3 and the Global Human Settlement Layer
+
+24. **More population rasters beside WorldPop: GRID3 and the Global Human Settlement Layer** (the practitioner, 2026-11-10:
+   *"We can also add GRID3 and GLobal Health Settlements layer where we can get population rasters?"*; GHSL read as the
+   JRC's Global Human Settlement Layer, to be confirmed). In Raster input's Configure…, where WorldPop now is. First, read
+   only: each source's licence as stated, its countries and years, its files and sizes, and whether a browser can fetch
+   it or must download it, as WorldPop must. GHS-POP is global and tiled; GRID3 is per country, mostly sub-Saharan
+   Africa. **Moved up 2026-11-10**, ahead of 19, by the practitioner on seeing only WorldPop in
+   Configure… (*"For raster input I thought we included GRID3, GHSL, etc. for population rasters"*). Read-only research
+   started the same day.
+   **GRID3 built 2026-11-11 (0.90.0)**: its sub-Saharan Africa set, 2025, 52 countries, one file each (CC BY 4.0), as a
+   *Population source* beside WorldPop. **Left:** GRID3's country-specific estimates (Nigeria v3.0, the DRC's v4.4 by
+   province with lower and upper bounds, Zambia, Mozambique and others; three are CC BY-SA); and GHS-POP, confirmed as
+   the JRC's Global Human Settlement Layer: JRC's AWS copy sends CORS and allows ranges, so a study area's window might be
+   read without a download, which one partial read of the file's header (about 16 KB) would settle. **Done 2026-11-11 with
+   the practitioner's yes**: a cloud-optimized GeoTIFF (512 x 512 tiles, deflate, five overviews), and **GHS-POP is built
+   (0.93.0)** as a population source read for the study area's window. **Left:** GRID3's country-specific estimates;
+   a live read of a real window, which only the tests' stand-in has done.
+   **Next: totals within areas, so the three models can be compared** (the practitioner, 2026-11-11: *"how do we compare
+   populations expressed by their models"*, then *"before we add let's survey for potential duplication"*). Surveyed by
+   input and output: **Sample satellite files at points or over areas** already sums a grid within each area, by the
+   cell rule Clip raster uses and lab check 02 holds against rasterio, but reads only catalog files; **Sample raster at
+   points** reads a raster at points only; **Clip raster** masks one area and gives a raster; **Summarize points to
+   polygon** totals points, not cells; **Rate with a denominator** takes a stated population. So no new widget.
+   **And not two that sample a grid** (the practitioner, 2026-11-11: *"sample satellite files does not explicitly say it
+   takes rasters that might be a problem"*): the two samplers are **merged into one, "Sample a raster at points or over
+   areas"** (the practitioner's choice of name, 2026-11-11), taking a Raster input or satellite files, as Cases by period
+   takes points or a table. Shared: the area sums (`src/satellite-areas.ts`), the cell rule, the point reading; offered
+   only for satellite files: the layer and the quality rule. The other node type is retired outright, there being no
+   outside users, and saved workflows move to the merged one; its manual page, lab checks and name review follow.
+   **Built 2026-11-11 in 0.94.0** (experiment 205): Sample a raster 0.3.0; Sample satellite files 1.0.0, retired; Brazil
+   dengue and New York ozone re-pinned. **Still owed:** the lab check against an external zonal sum. A comparison is then composed from what exists: three Raster
+   inputs, three area samples over the same polygons, Relate on the polygon, and Apply ruleset for the differences.
+   Compare per area at a common year, never cell by cell at 100 m, never pooled; say each model's population (all
+   land, settled cells, residential) beside its number. The same step gives Rate with a denominator a population per
+   area.
+   **Then a worked example of the comparison** (the practitioner, 2026-11-11: *"Once we add that capability let's create
+   a worked example for it"*): one place in GRID3's coverage, so all three models apply, its administrative units as the
+   areas, one common year. **A country with a census** (the practitioner, 2026-11-11: *"Let's use a country with a
+   census"*): the census count per unit is the independent reference that says which model fits, not only how far they
+   disagree. To choose by: counts published per unit, openly licensed, on boundaries that match the units, and a census
+   year near a year the models offer. Candidates in GRID3's coverage, none checked yet: Botswana 2022, Kenya 2019, Malawi
+   2018, Ghana 2021, Rwanda 2022, Zambia 2022, Uganda 2024. The windows read for its units
+   are kept in an example repository under each source's licence (all three CC BY 4.0), with their citations.
+
+### 25. A study area across a border
+
+25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
+   case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
+   **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,
+   named or found with shares and confirmed; the walk upstream; Raster input offering the area's countries with its
+   one-file limit said. **Left:** Find health facilities querying each country's register; acquired units from two
+   countries in one study area; Raster input reading a window across two files.
+
+### 26. A repository of worked examples for georeferencing sheet maps
+
+26. **A repository of worked examples for georeferencing sheet maps** (the practitioner, 2026-11-11: *"We should have a
+   repo of worked examples for georeferencing different kinds of sheet maps"*). An `example-*` repository, one example
+   per kind of sheet: a cadastral sheet with a printed frame (Hagelloch's 1824 Flurkarte, placed by its corners and by
+   hand), a topographic sheet with a printed grid, a town plan with no grid (South London's Snow map), a railway or
+   small-scale map with a graticule (the 1861 Bahnkarte), and a sketch or hand-drawn map, each with its features to find,
+   their reasons, and the result against a reference. Each sheet's licence checked before it ships; experiment 201's cue,
+   live check and preview are the tools.
+
+### 27. Open Science components in Fieldwork
+
+27. **Open Science components in Fieldwork, with the collaborative project design layered to support their principles**
+   (the practitioner, 2026-11-11: *"Also after MERS let's build the Open Science components or FW and layer the
+   collaborative project design to support it's principles."*). **After MERS** (item 8). Builds on 21 (collaboration through
+   GitHub, [150](docs/experiments/150-can-several-authors-collaborate-in-a-project-repository.md),
+   [155](docs/experiments/155-discussions-as-the-governance-surface.md)) rather than beside it: the project design is the
+   layer, the open science principles what it is answerable to. What already exists to inventory first: a project
+   exported as a repository; provenance receipts in N3; licences, citations and pinned commits on every worked example;
+   the Validation Lab's independent checks; open evidence only. **Open, for the practitioner:** which statement of the
+   principles (for example UNESCO's 2021 Recommendation on Open Science, FAIR), and which components that means here.
+   An experiment record first, with the survey of what exists, before any widget. **Begun 2026-11-16:** ORCID iDs and
+   ROR IDs in the identity file and the project's membership; the running inventory is
+   [docs/audits/open-science-inventory.md](docs/audits/open-science-inventory.md).
+
+### 28. The 1854 map under the John Snow example
+
+28. **The 1854 map under the John Snow example** (the practitioner, 2026-11-11: *"For John Snow built in example can we
+   look for an 1854 map of Soho district?"*). After the items already ordered (the stale-text sweep, the census
+   comparison, MERS). Found by search, none opened yet and every licence to confirm on its page:
+   **Snow's own map** (December 1854, printed 1855; Wikimedia Commons, Snow-cholera-map-1.jpg, public domain), the
+   first choice: Robin Wilson's digitised deaths and pumps were taken from it, so the points should fall on their own
+   houses, the check Hagelloch's 1824 sheet passed; **Edmund Cooper's map** for the Metropolitan Commission of Sewers
+   (September 1854, the base Snow drew on, with house numbers and sewers), no open scan found yet, to look for in the
+   Snow Online Companion (MSU) and the Wellcome Collection; **Stanford's Library Map of London** (1862; David Rumsey's
+   georeferenced sheets are the 1877 edition), licence unclear and probably not open. The Ordnance Survey's 1848-50
+   large-scale London plans would be the surveyed ideal; no open scan found (NLS georeferences only 1893-96). Placed by
+   hand with the georeferencing widget (201), as Hagelloch's sheet was; one of 26's kinds of sheet, a town plan with
+   no grid. Asks before downloading, with the size. Where it lives follows item 7: the built-in Snow example earns a
+   repository or retires.
+
+### 29. An agent-based model in the browser, checked against Starsim
+
+29. **An agent-based model in the browser, checked against Starsim: the spike for 199, after MERS**
+   ([199](docs/experiments/199-an-agent-based-model-in-the-browser.md); the practitioner, 2026-11-10: *"For 199 if we
+   do a spike for ABM what would that be?"*, then 2026-11-11: *"Let's do it after MERS"*). TB natural history only, at
+   the Gaborone model's rates, on Old Naledi's homes; weekly counts from a recorded seed, held against Starsim by
+   run-to-run spread; the browser's limit measured; about a day. Proposed 2026-11-10 and left unrecorded for a day,
+   found when the practitioner asked when the spike was.
+   **2026-11-17: moved ahead of MERS by the practitioner and run on Hagelloch's measles instead (*"Measles, Hagelloch
+   188"*): yes.** Same tables natively and in WebAssembly; agreement with Starsim 3.7.4 within run-to-run spread over
+   500 runs each; 188 children 1 ms a run, 940,000 3.3 s. Next, the practitioner's to choose: periods from an open
+   source, the Starsim script into the Validation Lab, a widget to run it, or a comparison with the recorded curve.
+
+### 30. A heat stress worked example on real data
+
+30. **A heat stress worked example on real data, replacing the heat example** (the practitioner, 2026-11-11: *"We will
+   replace heat stress with a worked example, with real data so this needs a TODO so we can do the research."*). The
+   synthetic heat example retires in the Old Naledi pass (docs/audits/old-naledi-audit.md). Research first, open
+   evidence only: a heat event with published health outcomes (deaths, emergency visits or calls) by place and day,
+   openly licensed; temperature or heat index for the same places and days; the population at risk; and any
+   published cooling-centre or outreach locations. Then a worked example in its own repository, its rules written
+   as declared rules in Apply ruleset, with no bespoke ruleset code.
+
+### 31. Syndromic surveillance: an aberration in a count over time
+
+31. **Syndromic surveillance: an aberration in a count over time** ([206](docs/experiments/206-syndromic-surveillance-aberration-detection.md);
+   the practitioner, 2026-11-11: *"We can add 206 to our TODO list."*). Not placed in the order yet. First, the check
+   that may need nothing built: whether Apply ruleset's previous-row value can read a value computed in the same step,
+   which would let EWMA and CUSUM be written as rules (option E). **Then, preferred (the practitioner: *"Can we modify
+   ruleset to read previous rows?"*): option F**, Apply ruleset reading a window of earlier periods (mean, sd, sum, min,
+   max over the last *k*, after a guard band), so EARS C1–C3 are rules too. Otherwise, closest step first: baseline columns on Cases
+   by period for window methods (A), expected counts from Regression for Farrington-style models (C), a new step only if
+   neither carries it (B), an aberration view in Chart (D). Open for the practitioner: which methods first; the New
+   York daily emergency-visit series as the first test bed; whether reading a syndromic feed as published is in scope.
+
+### The high-contrast theme in the order
+
+The high-contrast theme comes after Sierra Leone, as set on 2026-11-07; where it falls among 4 to 6 is not set.
+
+### 32. Geoprivacy as worked examples of its own
+
+32. **Geoprivacy as worked examples of its own, with map encryption ported to Fieldwork** (the practitioner, 2026-11-12:
+   *"We may have to spin off the geoprivacy workflows on their own as geoprivacy worked examples which would include map
+   encryption which we haven't ported yet to FW."*). Out of the John Snow project: moving points (donut geomasking, and how
+   far the centre shifts) and counting by H3 cell, one question each, then map encryption from the geoprivacy notebooks
+   (git.cdc.gov/jupyterlite/2026-Map-Encryption-Library), which needs an experiment record and its admission review
+   before any widget. Until then `snow-geoprivacy` stays in the John Snow project, last ([210](docs/experiments/210-proposing-a-chart-or-a-map-from-the-data.md)).
+
+### 33. Each worked example retold in Python notebooks
+
+33. **Each worked example retold in Python notebooks, for validation and pedagogy: after the items above**
+   ([217](docs/experiments/217-worked-examples-as-python-notebooks.md); the practitioner, 2026-11-15: *"This is not a
+   generator problem but a set of notebooks we sculpt down to prose. It boils down to two things. Validation and
+   pedagogy."*, then *"this is a TODO item. After the others. And an experiment too."*). Hand-written per example, in
+   a `notebooks/` folder in the example's own repo, shaped on the PHI-Case-Studies John Snow series; the prose drafted
+   as Markdown for the practitioner to edit; each closes by setting its numbers beside Fieldwork's, and the lab lists
+   that check. Oswego first, then Salmonella.
+
+### 34. What a two-by-two says of itself
+
+34. **What a two-by-two says of itself: its arithmetic readings as facts, interpretation left to authored notes**
+   (the practitioner, 2026-11-15, on Salmonella's melon
+   table: *"unless the ontology can help structure the interpretation"*, then *"Yes"* to both). The step states what
+   follows from its cells (interval above, below or across 1; a zero cell, no ratio; a cell of 1 or 2, unstable), never
+   which exposure is the vehicle. Salmonella's interpretation goes in as authored notes now. A widget improvement, not an
+   experiment (the practitioner, 2026-11-15: *"218 should also not be an experiment it's widget improvement"*); the plan:
+   - **The step states:** the interval wholly above 1, wholly below it, or across it; a cell of 0, so no ratio (today the
+     cell says "unknown" and nothing says why); a cell of 1 or 2, unstable; several exposures with no correction for the
+     number of comparisons, and odds ratios only for the declared design (both said today). **The practitioner states,
+     as authored notes:** which exposure is the likely vehicle, exposures that go together, what confirmed the vehicle
+     beyond the table, crude here and adjusted elsewhere. No exposure is named, ranked or highlighted, as experiment 161
+     decided for the table itself.
+   - **To decide:** whether "unstable" at 1 or 2 is stated, or the smallest cell given and the reader left to judge;
+     where a reading appears (a column per row, a line in the Notes table note, or both); reading classes in `fw:` so a
+     SHACL shape can check that no ratio is reported over a zero cell, reusing STATO or OBCS terms where one means the same.
+   - **Checked on:** Salmonella's matched panel table (Galia wholly above 1, 4.02 to 60.6; the other melons b = 0, no
+     ratio; cantaloupe b = 1, unstable); Oswego's menu (vanilla ice cream wholly above 1).
+   - **To watch with a trainee:** whether, with the readings beside the table, they still reason to the vehicle
+     themselves or read the readings as the answer. Not established by any reading: that an exposure caused illness, or
+     that the readings are complete.
+
+### 35. Lycoming's 1943 sheets under Oswego's map
+
+35. **Lycoming's 1943 sheets under Oswego's map, through Fieldwork's own widgets: next, ahead of NYC, Sierra Leone and
+   the ABM spike** (the practitioner, 2026-11-15: *"Do we have a 1940 map of Lycoming?"*, *"Yes download"*, *"I want
+   this process to use as much of the built in infrastructure FW has already with some enhancements"*, and *"Yes,
+   next"*). USGS 1:31,680 *Oswego East, NY, 1943* and *West of Texas, NY, 1943*, public domain, polyconic on NAD27.
+   Found on the way: **Oswego East's GeoTIFF tags place it 652 m east-west off its printed corners** (244 pixels at
+   both the north-east and south-west corners, under 2 vertically); West of Texas is exact; at the seam the road through
+   Lycoming steps 40 to 50 m. Known gaps in existing widgets, closed in this order, no new widget:
+   (1) **Georeferenced map image reads a GeoTIFF**: a picture told from a values raster by its tags (colour bands,
+   8-bit), its projection read with proj4 (polyconic, transverse Mercator and the like), redrawn north-up over the study
+   area only; (2) **it opens on the file's own placement, its printed corners marked**, so a misplacement shows on sight
+   in the existing preview over today's map; (3) **a shift-only fit** among the placement models, for tags that are
+   only offset, both placements kept in the record; (4) **Map takes several ground inputs**, as it takes several point
+   layers. With them, Raster input names a picture and points to Georeferenced map image. Then Lycoming ships in the
+   Oswego repository with both sheets and junction guides, as Hagelloch's 1824 sheet does, each sheet matched to
+   today's junctions so the seam is settled by evidence. Still a separate question: (b) a step that finds a historical
+   map for the study area from an open catalogue, which would need an experiment record first. **Enhancements (1) to (4) built 2026-11-15** (0.125.0; experiment 201, dated section); Lycoming's sheets in the
+   Oswego repository next.
 
 ### GHS-POP over DR Congo is refused: 8-byte cells (found 2026-11-19; streaming decided the same day)
 
@@ -1486,52 +1372,6 @@ Signing in to the demonstration server is the practitioner's step: its address i
 the rules this assistant follows, so the assistant does not type its demonstration password. Nothing downloaded without
 asking.
 
-### ~~The Tabular data dialog stalls at 250,000 rows (found 2026-11-19)~~
-
-**Resolved the same day (Tabular data 0.11.1, Table 0.13.1):** grouping repeated keys copied each group at every row,
-and the table under the dialog drew every row (325,971 elements at 25,000 rows). A tick now takes 0.4 to 0.6 s at
-250,000 rows. The note as found:
-
-Measuring maps of many points, a 250,000-row CSV of five columns was read and previewed in 0.6 s, and then ticking
-four key columns took over an hour (the test's limit): each tick redraws the dialog. Experiment 175 imported 250,000
-rows with no such stall, choosing fewer keys. To measure: the time of one tick at 25,000, 100,000 and 250,000 rows.
-
-### ~~What crashes the interactive map at 150,000 marks (found 2026-11-19)~~
-
-**Resolved the same day (Map 0.37.0):** MapLibre's source prepared the points to zoom 18 (now 12), and its layout of an icon
-per mark never finished past about 100,000. Circles are now a circle layer: 150,000 in 13 s, 250,000 in 24 s. Other
-shapes stay icons to 100,000 and are circles past that, said on the map. The note as found:
-
-Map 0.37.0 draws a large layer on the graphics card: 100,000 marks in 11 s; at 150,000 and 200,000 the tab crashed,
-the first time before any mark's image was even made. `INTERACTIVE_MARKS_LIMIT` stops there and says so. First
-suspect: the GeoJSON source's tiling at every zoom. Find it, then measure again.
-
-### ~~A country at ADM0 can be refused, and the dialog draws nothing (found on Pages, 2026-11-05)~~
-
-**DONE 2026-11-05, in 0.30.0.** Acquired outlines are kept in IndexedDB under `areaRef`, both budgets are removed, every
-part is carried and a refusal is said in the status line. The real Uganda ADM0 applies with all 48 parts in Chromium.
-Recorded in [experiment 121](docs/experiments/121-storage-beyond-local-storage.md), "The geometry moved". As found:
-
-
-The practitioner picked Uganda, ADM0, in the Study area dialog: *"nothing showed up on the dialog map."* Reproduced
-outside the browser against geoBoundaries' current UGA ADM0 file (1.6 MB, one unit, a MultiPolygon of 48 parts,
-43,116 vertices):
-
-- **Refused by the extent budget.** The largest part alone is 37,760 vertices, 1,215 KB; `GEOMETRY_BYTE_BUDGET` is
-  1,024 KB (`src/study-area.ts`), so `validateDrawnGeometry` throws: *"Choose a smaller area or a coarser
-  administrative level."* At ADM0 there is no coarser level, so the advice leads nowhere.
-- **The refusal is easy to miss.** It is written to `#area-boundary-terms`, a muted line under the unit list. The map
-  has already moved to Uganda (`lookAt` moves the camera only) and draws no outline, which reads as "nothing happened".
-- **A single unit keeps only its largest part.** `publishedRings` drops the other 47 parts (Lake Victoria's islands,
-  among them the Ssese Islands) with the note *"one outline is what a study area holds"*. That stopped being true
-  when several units became several parts of a MultiPolygon; one unit with several parts should be carried the same
-  way.
-
-Open: the 1 MB budget was set against the 5 MB localStorage quota. Node data has since moved to IndexedDB by digest;
-whether a study area's geometry still lives in the workflow document, and so whether this budget still binds, is
-the first thing to establish, by measuring. Until then, at minimum: draw the refused outline as a preview, say the
-refusal where the practitioner is looking, and drop the "coarser level" advice at ADM0. Not yet fixed.
-
 ### From Nigeria, 2026-11-02 ([162](docs/experiments/162-polygons-are-records.md))
 
 - **Declare `MAX_TABLE_ROWS` and `MAX_LAYER_VERTICES` in `widgets/caps.json`**, with measured evidence.
@@ -1562,7 +1402,6 @@ Found 2026-11-02, reading the Nigeria specification. A note can hold the words, 
 "this generated a question" from "this found something", and a machined sentence can read as a finding.
 Machined notes already carry a role (`fn:'limitation'`), so this may be a role and not a structure; the
 notes code is not read yet. Possibly an evidence kernel matter. Let Oswego and Nigeria show what it needs.
-
 
 ### Found building Oswego, 2026-11-02 ([160](docs/experiments/160-a-line-list-reaches-a-two-by-two.md))
 
@@ -1751,7 +1590,6 @@ contrast after Sierra Leone"*. The first pass is a review, not a build:
 
 _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, headings
 demoted one level and nothing else changed. An item here is a decision to do it later._
-
 
 ### Conflict events as a layer or a country repository (asked 2026-11-19, shelved the same day)
 
@@ -2708,36 +2546,6 @@ ratio ([161](docs/experiments/161-the-epi-kernel-one-table-many-exposures.md), s
   practitioner must scan and stops `xpert`, `facilities` and `alert` reading as general
   tools.
 
-### Reconstitute `xpert`
-
-Not a blocker and not a bug to patch: `xpert` is one sound operation welded to one example at
-every joint, and the disposition is to dissolve it rather than fix it. The name-keyed facility
-match **was** a defect and is fixed (id-keyed, with two tests), but that is interim protection
-for the current shape, not the destination.
-
-What reconstitution means, from [65](docs/experiments/65-ruleset-as-data.md) and the bottom-up
-derivation below:
-
-- The operation is **rule application with a declared ruleset** — the general primitive. There
-  is no `xpert` afterwards, only that widget plus a ruleset named for what it is.
-- The NB06 hierarchy becomes a **declared ruleset**: its seven rules, its citations (Baik 2019,
-  Mokomane 2024, Dickinson 2017 — from source notebook `06-Gaborone-Health-Facilities.ipynb`,
-  not a published standard), and its declared output vocabulary of four evidence levels and
-  four service categories.
-- The named-evidence claims become **an attribute on the facility records**, bound to a declared
-  role. The interim `NB06_NAMED_EVIDENCE` table in `src/old-naledi.ts` disappears with them.
-- Input becomes the general features carrier with declared roles — ownership, facility kind,
-  named-evidence status — replacing the private `facilities` port.
-- Output becomes the general `decisions` carrier with the ruleset's declared vocabulary, which
-  **retires `gradedFacilities`**, one of the six producer-named port types.
-- Zero parameters becomes the ruleset's own declared knobs, bound per
-  [66](docs/experiments/66-ports-as-schema-binding.md).
-
-This needs the typed field schema that [61](docs/experiments/61-input-dimensions.md),
-[65](docs/experiments/65-ruleset-as-data.md) and
-[66](docs/experiments/66-ports-as-schema-binding.md) all converge on, so it follows that work
-rather than leading it.
-
 ### Primitives derived bottom-up from NB06 / Old Naledi
 
 Traced from the actual 12-node workflow on 2026-10-09, asking of each node what the general
@@ -2766,30 +2574,6 @@ Four of the six are new findings from this derivation; the join and the ruleset 
 known. Doing the derivation on a second example — the heat workflow, or John Snow — would show
 whether the same four recur, which is the test of whether they are general or particular to
 this one.
-
-### Seven widgets could not be added from the palette
-
-Found 2026-10-09 by clicking Find healthsites facilities and watching nothing happen. The cause
-is the one [experiment 48](docs/experiments/48-tabular-input.md) already recorded: **an
-unconfigured node must be a valid draft.** `validateWorkflow` runs on every edit, so a validator
-that demands a node's full contract makes that node impossible to add — `change()` rolls the
-workflow back, and the canvas appears to ignore the click.
-
-**Fixed:** `healthsites_discovery`, `buffer_point` and `sample_raster`, all added this session and
-all repeating the recorded mistake. Each now has draft validation — what is wrong whenever it is
-present — separated from a `requireRunnable…` check called at execution.
-
-**Also fixed:** the add handler announced "*X* added" regardless of whether the add succeeded, so a
-rollback looked like success. It now returns early when `change()` reports failure, leaving the
-rollback's own message visible.
-
-**Still broken, and pre-existing:** `slr_extract_import`, `slr_threshold_comparison`, `rate` and
-`case_series`. They are reachable only from a template that already contains them, which is why
-nobody noticed. Two of them I made worse today by adding required parameters — `basisKind` and
-`elevationReference` — to validators that already ran on every edit. Each needs the same split.
-
-`tests/palette-add.browser.mjs` now clicks every palette entry on a blank canvas and pins that
-set, so it can shrink but never grow.
 
 ### The study area is Botswana-shaped
 
@@ -3022,73 +2806,6 @@ neither.
 widget's constraint applied upstream, which is worth checking for in each of these before assuming
 the number itself is the problem.
 
-### Let practitioners compose their own routine primitives
-
-Four experiments: [78](docs/experiments/78-trying-compositions-on-isochrone.md) is the trial, on the isochrone case, where a control exists. Three admission reviews behind it: [75](docs/experiments/75-compositions-as-nodes.md) proposes the mechanism, [76](docs/experiments/76-composition-governance.md) the governance, and [77](docs/experiments/77-composition-drift-detection.md) drift detection. The notes below are what they were built from.
-
-Proposed 2026-10-10. The project ships **core primitives**; a practitioner wires
-the sequence they keep repeating and saves it as a reusable node of their own —
-a routine primitive. A composite stays expandable, so opening it shows the steps.
-
-Already specified twice and never built:
-
-- [31](docs/experiments/31-facility-access-primitives.md): "Common tasks may be
-  presented as a reusable subworkflow with an expandable internal graph, rather
-  than requiring a beginner to configure every step."
-- [prior art](docs/research/prior-art.md), on the QGIS Model Designer: "Future
-  reusable subworkflows should expose a small public parameter set and retain the
-  internal graph."
-
-What is new in this proposal is **who composes**. The prior art reads as though
-the project ships the subworkflows. If practitioners make them, the project can
-stop guessing which composites are worth shipping — and the audit's nine example
-nodes, which bake one demonstration's specifics into a palette entry, are the
-case for it. Those should have been somebody's saved composition.
-
-It also dissolves the teaching tension above without a tier scheme: one node for
-whoever wants the answer, an open graph for whoever wants to learn.
-
-### Governance is inherited, because a composition is closed over the registry
-
-A composition may contain **only widgets in the registry**. That single rule
-makes most of the governance free rather than new.
-
-The application already enforces it. `core.ts` rejects any node whose type is not
-in `TYPES`, so every workflow is already closed over the registry and a
-composition built as a workflow fragment inherits the check without new code.
-
-What that closure buys:
-
-| Property | Where it comes from |
-| --- | --- |
-| Every member is versioned and digested | the widget registry |
-| Every member passed the design audit | D1–D10, at admission |
-| Every member emits a receipt | the execution contract |
-| Every edge type-checks | `validateWorkflow` already does this |
-
-So a composition needs no audit of its parts. What is genuinely new to govern is
-small: its **name**, its **public parameter set**, and its **claim** — what it
-says it does, which is where D7 applies and where a composition can mislead.
-
-### Levels of governance, which already exist at both ends
-
-A **widget** has a registry entry, a version, a digest, a release file and an
-audit. A **pack** has a repository, a commit SHA, an admission status, named
-reviews and a curated owner. A composition sits between them and can move up:
-
-1. **Private.** Saved in one browser. Governed by nothing, which is correct —
-   nobody else is relying on it.
-2. **Shared.** Exported and sent to a colleague. Needs a name that does not claim
-   more than it does, and the versions it was built against.
-3. **Published.** In a composition repository. Pack-shaped: owner, commit, review
-   state, admission.
-
-The naming convention for compositions is the one piece with no prior art. The
-widget convention governs node types the project controls. A practitioner naming
-their own routine primitive is not bound by it, and should not be while the
-composition is private — but a published one read as equivalent to a reviewed
-widget is exactly the `xpert` problem with more authors.
-
 ### Version drift is not hypothetical. It already happens, silently
 
 Not designed for. Forced instead, and measured, on 2026-10-10 —
@@ -3199,32 +2916,6 @@ good ideas.
 Before building any of them, write the notebook in the lab. That is the point of
 the method: the notebook is the evidence the primitive is needed, and three
 widgets were built this week without one.
-
-### Widget use tracking
-
-Proposed by the practitioner during the widget audit, raised again on 2026-10-10,
-and not recorded until now — which is itself the kind of lapse experiment 73
-describes.
-
-`npm run usage:widgets` counts nodes across shipped examples and frozen fixtures.
-It cannot see a widget a practitioner adds to a blank canvas, so a widget in daily
-use and a widget nobody has ever added look identical to it. That is the evidence
-missing when asking whether a widget earns its place.
-
-What would need deciding first:
-
-- **What is counted.** Adding a node is not using it; a node that never runs is
-  not evidence. The existing vocabulary already separates these — a **widget** is
-  the contract, a **node** an instance, a **workflow step** one execution — so
-  the count should say which it means.
-- **Where it is kept.** Workflows are in browser `localStorage` and nothing is
-  sent anywhere. Any count stays local, and should be readable by the practitioner
-  rather than only by the project.
-- **What it must not become.** A usage count is not a quality measure. The least
-  used widget may be the one that carries the hardest-won distinction, and a
-  number that invites pruning by popularity would delete exactly those.
-
-Not started.
 
 ### A WASM geometry kernel, instead of the JavaScript one
 
@@ -3376,41 +3067,6 @@ Worth settling before building any of it:
   sharper, because the number looks more authoritative.
 
 Not started.
-
-### Proposed: a data quality widget, with an editable table
-
-Asked for 2026-10-10. One widget that reports on the quality of whatever is connected to it —
-duplicates, missing values, and the rest — and an editable table beside it where a row can be
-inspected and corrected.
-
-Why it fits now rather than being a nice extra: every input this application has gained lately
-hands over data whose faults are real and currently invisible. The facility sources drop records
-and count them by reason, but what survives still holds duplicate facilities under slightly
-different names, missing kinds, and coordinates that are precise and wrong. A practitioner can see
-the drop counts and has nothing to act on them with.
-
-What it would need to settle first, because these are the decisions that make or break it:
-
-- **What it reports, per carrier kind.** Duplicates mean something different for a point layer
-  (same facility, two records) than for a table (repeated key tuple, which `table_input` already
-  refuses). The report has to adapt to the input the way the ruleset widget was argued to in
-  [65](docs/experiments/65-ruleset-as-data.md), and that argument should be reused rather than
-  redone.
-- **Whether editing is an edit or a correction.** A changed value is a new claim about the world,
-  and the provenance has to say who changed what and why, or the output is a dataset nobody can
-  defend. The evidence and receipt machinery already exists for this; what is missing is the
-  decision that an edit is recorded rather than applied silently.
-- **Whether it is one widget or two.** Reporting is a check and belongs with the comparisons and
-  checks group; editing produces a derived layer and is an operation on data. The naming convention
-  says the name states the operation, and "data quality" names a category, not an operation — the
-  same defect the audit found in `policy` and `access`. Likely `check_data_quality` plus
-  `correct_records`, or a single `review_records` if the two cannot usefully be separated.
-- **Where the editable table lives.** There is already a table editor for `table_input` and a pushpin
-  editor for points; a third editing surface would be the third place the same decisions about
-  validation and attribute schemas could drift apart.
-
-Not started. Recorded in full because the question "what should it report" is the design, and
-answering it in passing while building something else is how a category noun becomes a widget.
 
 ### Closed: health facilities come from sources a browser can read
 
@@ -3608,6 +3264,66 @@ Remaining here:
   when we get there is whether a GPU chart renderer answers the volume problem the 1,011,401
   polylines already demonstrated for Leaflet (769 ms to add, 824 ms to zoom), or only moves it.
 
+### Deduplicate, after the main problems are finished (practitioner, 2026-11-02)
+
+- Polygons: same-place by overlap. Test on building footprints from two open sources.
+- Point and polygon: the same facility as a point in one dataset and a polygon in another. Point inside, or within a set distance of the edge. Settle what shape a merged record has.
+
+### Citation builder for References (practitioner, 2026-11-02, after deduplicate)
+
+- Built 2026-11-02, experiment 165. Still open: an author-year style choice, and looking a work up by DOI.
+- Every item in References cites something. An authored note in References is written with a citation builder, reusing `Citation` and `renderCitation` from `input-provenance.ts`, with gaps shown before saving. Nigeria's seven references then move to structured citations.
+
+### Next worked example: NYC child asthma and ozone (practitioner, 2026-11-03)
+
+- **Data:** Lian et al., Zenodo [10.5281/zenodo.22757330](https://zenodo.org/records/22757330), CC BY 4.0 for the authors' own materials. `Data/Core/Derived/analysis_master_raw_rebuild.csv`: 3,653 daily rows, 2016–2025, citywide asthma-syndrome ED `count` for ages 5–17, with `o3`, `pm25`, `no2`, `tmean`, lags, `stratum`, `holiday`, `total_ed`.
+- **Check against:** the authors' archived Table 2, RR 1.061 (1.035–1.088) per 10 ppb ozone, time-stratified multipollutant Poisson on 3,643 days and 123,265 visits. No published or preprint paper, so "checkable" means against the archived outputs; the app computes crude comparisons only.
+- **A by-hand question:** the June 2023 Canadian smoke days, 49 visits on 2023-06-07 at PM2.5 190 µg/m³ against a June 1–5 mean of 25.
+- **Before shipping the data:** read NYC DOHMH EpiQuery's terms for the daily counts (the package says to check DOHMH, EPA and NOAA terms); run the package's own R code to confirm the archived numbers.
+- Research notes and ranking: `reports/Climate asthma worked examples.md` in the workspace root.
+- **Decided 2026-11-03:** NYC.gov reserves all rights to the counts, so they are fetched from the authors' Zenodo record at open, never republished (experiment 170). Repository `example-2025-nyc-ozone`, documents only.
+- **Later (practitioner, 2026-11-03):** augment with real downloads from remote sensing providers beside the monitors the authors used, such as satellite-derived PM2.5 or ozone, aerosol optical depth, or NOAA HMS smoke for June 2023, fetched at open by the same mechanism.
+- **Remote sensing: the plan (practitioner, 2026-11-04).** [EO discovery and tabular integration for the NYC asthma example](docs/research/eo-stac-nyc-architecture-and-plan-2026-11-04.md), a research note generated with ChatGPT and committed by the practitioner: an EO Satellite Viewer and a STAC Browser as widgets, a STAC branch that creates a daily measurement table, and a merge with the Zenodo table by date. Proposed, nothing established. Its phases:
+  - **0 · contracts first**, as a numbered experiment with an admission review: the original variable and lag definitions (now in the authors' dictionary, readable through experiment 172), one NYC boundary, the time basis, a short NO₂ pilot interval, and the table representation. The note flags two limits this application has: `DataTable` carries one value per row, so several numeric measures need an adapter or a contract change; and tables are capped at 20,000 rows (7 measures × 3,653 days is 25,571).
+  - **1 · access, all three tracks**: a source matrix for NO₂, PM2.5 and ozone with real bytes decoded in a browser, not metadata alone (experiment 91 is where STAC access was first examined).
+  - **2 · table preparation and a numeric merge**: a left join from the Zenodo table that never multiplies the counts, with duplicate keys, missing dates and name collisions shown before committing. Relate and Append are not to be widened into it silently; this is the "Relate as a merge" item with a concrete case.
+  - **3 · NO₂ end to end**, then **4 · PM2.5** (AOD kept as AOD; a surface estimate only from a product that makes one) and **5 · ozone** (total column, partial column and surface kept apart; an 8-hour maximum needs the within-day sampling to support it), each with its own exit evidence.
+  - **6 · full period and new models**, and **7 · practitioner evaluation**.
+  - The measurement dictionary it asks for (variable, unit, spatial and temporal statistic, coverage, product and lineage) is experiment 172's column descriptions extended, not a separate mechanism.
+
+### After NYC: London ozone and deaths, 2002–2006 (Bhaskaran et al. 2013)
+
+- **Why:** the open paper publishes three rate ratios per 10 µg/m³ ozone, a ready check that shows confounding step by step: 0.991 (0.987–0.994) crude, 1.007 (1.003–1.010) adjusted for season and trend, 1.003 (0.999–1.006) also adjusted for temperature. Int J Epidemiol 2013;42(4):1187, doi:10.1093/ije/dyt092, CC BY-NC 3.0.
+- **Data:** `londondataset2002_2006.dta` (34,540 bytes) in `gasparrini/2013_bhaskaran_IJE_codedata`, also the journal's supplement. Stata format, so it needs converting to CSV, and the conversion recorded.
+- **Terms, our reading:** the paper names no data source and states no data terms. It says the code is published "to reproduce our analyses, along with the dataset itself". The practitioner, 2026-11-03: *"this means to me they are fine with reproducing the results."* Ship it non-commercially with citation, quoting that sentence in NOTICE as the basis, and say it is our reading, not a stated licence. The GitHub repo carries no licence.
+- The app cannot fit the adjusted models yet; show crude comparisons beside the published ratios, as Salmonella does.
+
+### Next: what the columns mean (practitioner, 2026-11-03)
+
+Design and first measurement in [experiment 172](docs/experiments/172-what-the-columns-mean.md). Describing columns is the practitioner's step.
+
+- A Columns step in Table input: label, unit, description per kept column, as a CSVW table schema with QUDT units.
+- Pre-fill from Stata variable labels (the reader skips them today) and from an imported dictionary (CSVW, Frictionless, or a CSV dictionary mapped by the practitioner); unconfirmed until accepted.
+- **Match a codebook mechanically** against its tables (names, declared codes against values, missing counts) and test it on the three examples that ship metadata: NYC (all 92 agree), London (labels in the file), Salmonella (68 of 82 columns unmatched by name, `sex` as text, `schule`/`ausbildung`/`biolm` values outside the declared coding). The Salmonella codebook is xlsx, which Fieldwork does not read.
+- An undescribed kept column is a finding; declarations travel on the table, reach receipts and figures, make a run stale when edited, and export as a sidecar.
+- Write the Salmonella findings into that example's README data notes when the match is built, so the authored notes can cite them.
+
+### Worked example manuals (practitioner, 2026-11-04)
+
+Experiment 173. The Manual tab is built and NYC has a manual.
+
+- **Play back the build from the manual**: each step in a dialog with Previous, Next and Close, the canvas holding the nodes added so far.
+- Manuals for South London, Oswego, Nigeria and Salmonella, each performed by its from-scratch test.
+- The library heading reads "Node library" and its search "Find a node…"; by the glossary, what it lists are widgets. Not renamed yet.
+
+### Regression (practitioner, 2026-11-04)
+
+Built (experiment 167): NYC's 1.061 and Salmonella's 96 and 18 reproduced on the authors' data.
+
+- **Laboratory check**: refit the NYC and Salmonella models independently (statsmodels or R) for parity.
+- **London** (Bhaskaran et al. 2013): its seasonal and temperature terms, then the published 0.991, 1.007 and 1.003.
+- Later, as the design said: conditional logistic regression for individually matched studies, interactions.
+
 ## Known and recorded, not yet scheduled
 
 - **Checks 26 and 40 cannot run in the lab's browser kernel**: neither rapidfuzz nor jellyfish is in Pyodide v314.0.6.
@@ -3640,7 +3356,6 @@ has been read. Every formula in those notes was read off the implementation, so 
 a typeset equation attributed to Katz or to Woolf whose agreement with Katz or Woolf nothing has
 checked. The gap did not widen; what changed is that it is now in front of a reader rather than in
 a source file, and a formula set in mathematics is read as more checked than a number, not less.
-
 
 **The worked-example audit, 2026-10-29, and what the practitioner took from it.** Generated by
 `scripts/audit-worked-examples.mjs` into
@@ -3736,7 +3451,6 @@ provenance and a digest, no widget attached to it by name, a from-scratch rebuil
 a question worth asking rather than a tour of the palette. South London meets the first three as
 of 2026-10-29 and is the only example that does.
 
-
 **`case_series` has taken a table since 2026-10-16 and has never offered a control for it.** Its
 `source` param switches the `cases` port between points and a table, and nothing in the Inspector
 sets it, so table mode is reachable only by opening an example workflow that already has it — the
@@ -3752,11 +3466,6 @@ violation — the port check compares the release against the static `TYPES` dec
 `rate` 0.2.0 and `case_series` state the variant in prose. Whether a port whose type depends on a
 param should be expressible in the release schema rather than described in a note is the open
 question, and it governs every widget that does this.
-
-**The South London example carries no workflow bundle.** The widget gap is closed — `rate` reads
-the five rows directly — so what remains is the workflow document, its export into the example
-repository and the digest re-pin. The example is pinned at a commit that carries data and
-provenance only.
 
 **A record can no longer be excluded by judgement, and nothing replaces that.** `coverage_check`
 was retired on 2026-10-21 at the practitioner's decision, as redundant with `clip_points_to_area`
@@ -3779,30 +3488,6 @@ takes any point layer and emits decisions with reasons), to the existing `apply_
 nowhere because a judgement about a record belongs in the source data. That is a question for the
 practitioner, and it is recorded here rather than assumed.
 
-**Worked examples as repositories, starting with Snow's South London water supply study.** The
-practitioner, 2026-10-20: *"We also have the potential to set up a downloadable worked example from
-a repo - the water provider study by John Snow in South London"*, and *"worked examples do not have
-to occupy space in the downloaded app, we can set them up as repos read from a curated manifest."*
-
-Recorded in [experiment 127](experiments/127-examples-as-repositories.md) with the measurement and
-the rule analysis. Three things are known and are the reason it is here rather than in progress:
-
-- **The rule already permits it.** Experiment 49 records that preparation may download *resources*,
-  never widget *definitions*; an example declares no node type, so `runtimeFetching: "none"` does
-  not reach it. No admission rule has to change, and nobody should propose amending one.
-- **The saving is 9% today.** 1.0 MB of an 11.25 MB precache is example data, 640 KB of it a single
-  GraphML. The case rests on the examples not yet written — the cross-border archetype's would carry
-  ten countries of boundaries, rasters and routes.
-- **The cheapest first step is a read, not a build.** `examples/snow-gboh/provenance.json` pins
-  `snow.zip` at a digest and its documentation names **8 datasets**, of which 2 were extracted. If
-  the sub-district table is among them, the licence analysis and the NOTICE already exist. This has
-  not been checked, and it needs network this environment does not have.
-
-The example would be the first in the project to divide by a population: `rate` has zero example
-uses, and it already refuses to compute without `numeratorPeriod` and `denominatorVintage`. The
-geographic frame — 1851 registration sub-districts — is the piece most likely to carry
-non-commercial terms, which is the GADM problem again.
-
 **Built 2026-10-21: `deduplicate_points`.** The practitioner asked for it on 2026-10-20 — *"health
 facilities can be deduplicated by name and point location. By name can be algorithmic match or
 exact match, but we can study the OSM and Overture Places data sets before we decide what would
@@ -3820,56 +3505,6 @@ because the widget reports it: run it over North Kivu's OSM, Overture and HDX la
 generous blocking distance, and read off how many pairs match exactly by name, how many only after
 normalisation, and the distance distribution of the candidates. That is the evidence the defaults
 should be set from.
-
-**Worked examples as repositories, starting with Snow's South London water supply study.** The
-practitioner, 2026-10-20: *"We also have the potential to set up a downloadable worked example from
-a repo - the water provider study by John Snow in South London"*, and *"worked examples do not have
-to occupy space in the downloaded app, we can set them up as repos read from a curated manifest."*
-
-Recorded in [experiment 127](experiments/127-examples-as-repositories.md) with the measurement and
-the rule analysis. Three things are known and are the reason it is here rather than in progress:
-
-- **The rule already permits it.** Experiment 49 records that preparation may download *resources*,
-  never widget *definitions*; an example declares no node type, so `runtimeFetching: "none"` does
-  not reach it. No admission rule has to change, and nobody should propose amending one.
-- **The saving is 9% today.** 1.0 MB of an 11.25 MB precache is example data, 640 KB of it a single
-  GraphML. The case rests on the examples not yet written — the cross-border archetype's would carry
-  ten countries of boundaries, rasters and routes.
-- **The cheapest first step is a read, not a build.** `examples/snow-gboh/provenance.json` pins
-  `snow.zip` at a digest and its documentation names **8 datasets**, of which 2 were extracted. If
-  the sub-district table is among them, the licence analysis and the NOTICE already exist. This has
-  not been checked, and it needs network this environment does not have.
-
-The example would be the first in the project to divide by a population: `rate` has zero example
-uses, and it already refuses to compute without `numeratorPeriod` and `denominatorVintage`. The
-geographic frame — 1851 registration sub-districts — is the piece most likely to carry
-non-commercial terms, which is the GADM problem again.
-
-**A deduplication primitive, after the data says how to match.** The practitioner, 2026-10-20,
-with an OpenStreetMap search and an Overture Places search on one map: *"The other primitive we
-would need is a deduplication widget. For example, health facilities can be deduplicated by name
-and point location. By name can be algorithmic match or exact match, but we can study the OSM and
-Overture Places data sets before we decide what would work."*
-
-The need is visible already: two sources over one study area draw the same hospital twice, and a
-count of facilities is wrong by however many of those there are. What is NOT yet known is the rule,
-and that is the point of recording it here rather than building it:
-
-- **Name.** Exact match is cheap and will miss "Hôpital Général de Référence de Goma" against
-  "HGR Goma". A token or edit-distance match will join things that are not the same clinic. Which
-  errs where is a property of these two datasets, not of the algorithm.
-- **Location.** Two records of one facility sit metres or hundreds of metres apart depending on
-  whether a source digitised the building, the compound or the signpost. The threshold is a
-  measurement, not a default.
-- **What the study would produce:** on one real area — North Kivu is already loaded — how many
-  pairs match exactly by name, how many within an edit distance, the distance distribution between
-  candidate pairs, and how many are in one source only. That is the evidence a matching rule can be
-  argued from.
-
-Asked up front, because the project keeps finding the same defect: `compare_point_sets` already
-pairs two point layers and `nearest-neighbour` already measures proximity. A deduplication widget
-either uses those or duplicates them, and D2 should settle which before a third implementation
-exists.
 
 **The street network has no travel mode, and a travel time has no bound.** The download applies
 one walking filter, while `reachable_nodes` already offers walking, cycling, driving or other with
@@ -3913,7 +3548,6 @@ which this project already knows how to carry. The difference between the first 
 the number nothing records today — and it is also the evidence that a prespecified hypothesis was
 not quietly rewritten after the fact.
 
-
 **Revisit the Gaborone ABM notebooks for smaller worked examples.** (Old Naledi retired 2026-11-11; the notebooks remain
 the source for a later Gaborone example, and for experiment 199.) Worked example 02 Old
 Naledi was derived from them, and the practitioner, 2026-10-17: *"That's a complex set of
@@ -3923,14 +3557,6 @@ source of narrower exercises that would each demonstrate one thing. Map them the
 [`cholera-notebooks-to-primitives.md`](research/cholera-notebooks-to-primitives.md) maps the
 cholera studies — operation by operation, against the palette — before deciding which become
 examples.
-
-**Done 2026-11-11: Retire worked example 01 Heat outreach** (docs/audits/old-naledi-audit.md; its real-data successor is
-TODO 30). The practitioner, 2026-10-17: *"we can get rid of
-that example as we generate better ruleset examples. That one was for starters and has outlived
-its usefulness."* It is the oldest example and the one that gave `outreach-criteria` its only
-use outside the teaching example. Retiring it needs the workspace key, the example template, the
-tests that load `?example=heat`, and `apply_ruleset`'s evidence rung all checked — the widget
-loses an example use and may drop a rung.
 
 **Correct the geoBoundaries licence claim, in two places.** Experiment 47's table records
 geoBoundaries as *"CC BY 4.0 … attribution obligation only"*, and the glossary's **Out of
@@ -3994,519 +3620,6 @@ cases, denominators and places at once; the three port types exist, and `rate` a
 denominator declare what it counts. Terms are "educational as well as research purposes", which
 is enough to use and not enough to ship.
 
-**An on-surface guide — a tour, and something that answers questions.** Asked for as an
-exploration by the practitioner on 2026-10-15: *"add a Clippy like agent on the UI surface as a
-guide to the UI — can provide a guided tour and answer questions."*
-
-**Three different things wear that description, and they have almost nothing in common.** Which
-one is meant decides everything about the cost, so they are separated here rather than scoped
-together:
-
-| | What it is | Needs | Offline |
-| --- | --- | --- | --- |
-| A | **A scripted tour.** Steps through the interface pointing at things, in a fixed order, with text written by hand | nothing new | yes |
-| B | **An assistant that answers from the canvas.** "Why is this step refused?", "what produced this number?", "what can I connect here?" — answered from the workflow, the port contracts and the run receipts | query surfaces over things that already exist | yes |
-| C | **An assistant backed by a language model** | a network call carrying the practitioner's canvas to somebody else's service | **no** |
-
-**What already exists and should be counted first.** The playback behind *Play back the build*
-is a guided tour of a worked example — it steps a real workflow one widget at a time and says
-what each step revealed. The manual is one page per widget. Dive Deeper explains the assumption
-behind ten of them. Experiment [44](experiments/44-ontology-competency-questions.md) is
-literally a list of questions the graph is supposed to answer, several of which it does. A
-guide built on those would be assembling what is here; one built on a model would be answering
-beside it.
-
-**C has a cost this application has otherwise refused to pay.** Everything here runs locally:
-no widget is fetched at run time, the reasoner is WASM on the device, and the one feature that
-contacts an outside service — a basemap — says so in the interface and is off by default. An
-assistant that sends the canvas away would be the first thing to break that, and a canvas is
-not neutral: it holds case locations.
-
-**What Clippy actually got wrong is worth keeping in view.** Not that it was an assistant, but
-that it **interrupted** — it appeared uninvited, read what you were doing, and offered help
-nobody asked for. The feature to copy is the one a practitioner opens.
-
-**What would decide it:** which of A, B or C is wanted. A is small and could be built now. B is
-the interesting one for this project, because every answer it would give has to come from
-something the application can already show — which is a test of whether the ontology and the
-receipts are good enough to answer a practitioner's question, and that is a finding worth having
-either way. C needs a decision about sending a canvas off the device, which is a bigger
-question than a help feature.
-
-### The proposed shape: a **Field guide**, running an OODA loop
-
-**The name.** A field guide is a book you carry and open *when you choose* — the invitation is
-in the metaphor, which is the one thing Clippy got wrong. Its organising question is *"what is
-this thing in front of me?"*, which is option B. It absorbs the manual rather than competing
-with it: a field guide has an entry per species, so the per-widget pages become its entries.
-And it claims no intelligence — nobody expects a field guide to be clever, only accurate and
-indexed. *Assistant* and *Helper* claim agency and invite questions it cannot answer; *Compass*
-implies it tells you which way to go; *Scout* implies going ahead unasked. A character or a
-person's name is worse than all of them: anthropomorphism makes a reader trust a thing past its
-evidence, which is what most of the effort in this project goes into preventing.
-
-**What it looks like.** No face, no animation, no idle presence. An entry in the header beside
-Help, opening a dialog in the same family as the manual and the catalog, which is a pattern
-already here. Three sections: **this step** (the selected widget's entry, its ports, what it
-will not do), **this canvas** (answered from the workflow, the port contracts and the last run's
-receipts), and **a tour** (the playback, which exists, pointed at the current example).
-
-**It opens when asked.** One exception is worth allowing: a refused run already names its cause,
-so an *explain this* link there opens the guide at that entry — invited by a failure rather than
-by idle watching.
-
-**The loop.** The practitioner's framing, 2026-10-15: *Observe → Orient → Decide/Act.* It fits
-because each phase maps onto something the application already computes, which is the whole
-argument for building B rather than C:
-
-| | What it does | Where it comes from |
-| --- | --- | --- |
-| **Observe** | what is on the canvas, what cannot run, what the last run found, what is declared and what is not | listed below — all of it exists |
-| **Orient** | name the problem in the practitioner's terms, **with the evidence it came from** | the citation rule, below |
-| **Decide / Act** | the options with what each costs, and where the action is unambiguous, a button that takes it | the zone advice already works this way: it states the cost and offers *Use zone 30N* |
-
-**Twelve things Observe could read today, without anything new being computed:**
-
-| | Signal | Already computed by |
-| --- | --- | --- |
-| 1 | a step with no ruleset chosen | `executionPlan`, which refuses it by name |
-| 2 | a required input not connected | `requiredInputs` |
-| 3 | a map with nothing wired to it | the run's refusal, in layer terms |
-| 4 | a UTM zone that disagrees with the data, and what it costs | `suggestUTM`, `utmScaleFactor` |
-| 5 | a ruleset pinned to a superseded version | `supersession` |
-| 6 | provenance a step has not declared | `DeclarationGap` |
-| 7 | sites the street network could not reach | the run alert |
-| 8 | records no rule matched | `fw:unmatchedSubjectCount` in the receipt |
-| 9 | a comparison whose units disagree | `authoredUnitProblems` |
-| 10 | rules near the compile ceiling | `compiledRuleCount` |
-| 11 | a cached build older than the one installed | the service worker's version report |
-| 12 | a download that failed, and which instances were tried | the Overpass failover's message |
-
-**The rule that makes it this project's rather than a generic help bot: every answer cites
-where it came from — a receipt, a port contract, a manual page, a measurement — and links to
-it. When it has no citation it says it does not know.** That is the provenance discipline
-applied to a help feature, and it is also the honest constraint: it knows the application, not
-the epidemiology. It must not guess, must not paraphrase a receipt into something friendlier
-and less true, and must not answer a question about what the data *means*.
-
-**The cheapest thing building it would prove.** Six of the eight refusals measured in
-[112](experiments/112-progressive-widget-reveal.md) already name the step that should have come
-first. A Field guide that can answer *"why was this refused?"* from the receipt is reading
-something the application already writes — and if it cannot, that is a finding about the
-receipts rather than about the guide.
-
-
-**Four concepts worth taking from ArcGIS Model Builder**, from the sideways sweep in
-[116](experiments/116-model-builder-sideways.md) over screenshots the practitioner uploaded on
-2026-10-15. Each is independently useful and none depends on another:
-
-1. **Ask which role when more than one port fits.** Dropping a layer on a tool there opens a
-   menu — *Input Features*, *Extent*, *Precondition*. Our Map binds by type silently, which
-   already needed a workaround: `context` is points-typed and means *drawn beside polygons*, so
-   it had to be excluded from automatic binding to stop it taking a role nobody chose. Binding
-   silently when one port fits and **asking when more than one does** is the honest rule, and it
-   extends the configurable port from the Map to every widget.
-2. **Validate without running.** `executionPlan` already computes whether a canvas is coherent
-   and only Run reaches it. **Smallest of the four:** the reason first given — that a run
-   downloads street networks — was wrong, and the practitioner corrected it. `network_input`
-   downloads on its own button before the run, so the expensive unreliable part is already
-   outside it, and a run costs seconds of local reasoning.
-3. **Say on the node that it cannot run yet.** An unconfigured step says so in the Inspector, to
-   somebody who has already selected it. The canvas is where the shape of the work is read.
-4. **Declare the metric frame once per workflow.** *Partly built 2026-10-15: the study area now
-   suggests the zone and, when an area straddles a boundary, names each candidate with the worst
-   stretch it would cost. What remains is the Environments shape itself.* ArcGIS calls it an *Environment*: declared
-   for the model, inherited by every tool, overridable per tool. Ours is a UTM zone in every
-   measuring widget's parameters, refused when two disagree, with the cost of a wrong one
-   measured in [100](experiments/100-choosing-the-metric-crs.md). The better shape, and the only
-   one of the four that changes what a saved workflow holds.
-
-
-**A building-footprint widget.** Asked for by the practitioner on 2026-10-15. Specified in
-[docs/widget-specs/find_building_footprints.md](widget-specs/find_building_footprints.md),
-which carries the source evaluation from
-`digitaltwin-aas/gaborone/03a-Building-Footprint-Augmentation.ipynb` — five products compared
-against one city, with Overture and 3D-GloBFP used for their height and Google Open Buildings
-and Microsoft GlobalML excluded because they have none and their counts in informal settlements
-are inflated by sliver detections. **The data question is closed; the contract question is
-open:** of the five, only OpenStreetMap is reachable from a browser, so the widget either
-acquires from OSM alone or imports a file prepared elsewhere. The specification recommends
-import first and says why.
-
-**OpenFreeMap tiles and themes for the Map widget.** Asked for by the practitioner on
-2026-10-15. Today the only basemaps are OpenStreetMap's raster tiles and OpenTopoMap, both
-third-party services that see the viewed extent of every pan. [OpenFreeMap](https://openfreemap.org)
-serves **vector** tiles free and without an API key, with several styles, and can be
-self-hosted — which is the part that matters here, because it is the first basemap option that
-could remove the disclosure objection rather than trade against it. Vector tiles also mean themes:
-a light, dark or minimal ground chosen to sit under the data rather than compete with it, which
-raster tiles cannot offer. **What would decide it:** whether a vector renderer is worth the
-dependency. Leaflet draws raster tiles with no help; vector tiles need MapLibre GL or an
-equivalent, which is a substantial addition to a project that currently ships one mapping library.
-Related: the three basemap options recorded in [the Map specification](widget-specs/map_output.md),
-where PMTiles is the other offline-capable candidate.
-
-
-**Nothing converts a table into points.** Moved here from the blocker ledger on 2026-10-15, where
-it had been `standing` while gating nothing. No widget takes `table` and outputs `points`, and no
-widget anywhere names which columns hold coordinates — there is no `latField`, `lonField` or
-equivalent in `src/`. So a practitioner who imports a CSV with latitude and longitude columns
-cannot make it spatial. Three widgets consume `table` and all three emit a table or decisions; the
-only ways to obtain points are the data editor, the grid generator and the facility search. Two
-consequences are already paid for: `case_series` builds a FeatureCollection of null geometries and
-casts it `as unknown as PointCollection` to reuse the point path, and `SpatialRelation` keeps a
-`MissingLocation` value that conflates "the source omitted a location" with "this has no
-location". **Lifts when** a widget takes a table plus a declared binding of which columns are
-longitude and latitude, with a CRS, and outputs points; `SpatialRelation` becomes three-valued;
-and `case_series` consumes the table directly. This is experiment 61's problem exactly — *"the
-ability to say which column means what"* — and the same role-binding mechanism 65 needs for
-rulesets, so whichever lands first should be built for the other to use.
-
-**Three of six rule applications carry their rules outside a declared ruleset.** Moved here from
-the blocker ledger on 2026-10-15 for the same reason. `coverage_check` holds six N3 rules in a
-template literal; `facility_audit` and `slr_threshold_comparison` classify with a TypeScript
-ternary and call no reasoner at all. The standardization ratchet sees none of the latter two kinds.
-What makes it worth doing is not tidiness: `coverage_check`'s policy is stated in a code comment —
-*"Boundary points are included by policy"* — and two of its rules map **different** relations to
-the **same** decision, Outside→Review and MissingLocation→Review, so the policy collapses
-outside-ness and unknown-ness where a declared ruleset would have to say which it meant. Hosting
-it also needs a form extension the authored ruleset shape lacks: one of its rules concludes about
-the **activity** rather than a subject, and `slr_threshold_comparison` compares field to field.
-**Lifts when** all six resolve a declared ruleset with a basis and an output vocabulary including
-an unknown value, with byte-identical conclusions on the frozen fixtures.
-
-
-**A workflow cannot require an old widget version, because a widget version labels code and only
-one version of it is in the build.** Established 2026-10-15, correcting a claim made the same day
-and withdrawn within the hour. The practitioner's question: *"Isn't the widget version a
-representation of the overall code version?"* It is, and that settles it.
-
-A widget release file declares *about* code — `implementation.files` lists source paths — rather
-than carrying any. One build compiles one version of each of the 53 widgets, so there is no
-mechanism by which a saved workflow could run an earlier one and nothing a node could usefully
-pin: a per-node version would record what the workflow was *authored* against, not what can run
-it. A ruleset is the opposite, and that is the whole reason the alert was buildable there: rules
-are data, every published version ships in the same build, and a node selects one at run time.
-
-**Withdrawn:** the claim that *"a receipt's widget version describes the build that wrote the
-receipt, not the code that produced the result."* False. No receipt is persisted — only the
-workflow is saved, and `result` is cleared on load — so every receipt is written by the build
-that ran it, about the code that ran. `fw:catalogVersion` is truthful for its run.
-
-What is left is smaller and is a real gap: nothing records which version a workflow was authored
-against, so re-opening it under a later build cannot say "this was built against map_output 0.7.0
-and you are now on 0.9.0, which changed the following." That is a question about authorship
-rather than about computation, and whether it is worth a field on every node is the
-practitioner's call — the Inspector already says what the current version changed, which may be
-enough.
-
-**The release change vocabulary has ten values and no definition.** Measured 2026-10-15 across
-147 release files: `initial` (44), `baseline` (20), `added` (13), `changed` (4), `enhancement`
-(1), `feature` (1), `minor` (48), `major` (6), `patch` (10), and one entry with no `kind` at all.
-Four are semver, six are prose categories, and nothing says which means a practitioner must act.
-`scripts/release-notes.mjs` derives `breaking` from three signals — `kind: major`, an explicit
-`breaking`, a stated `migration` — and records the vocabulary in its output rather than quietly
-normalising it, because a warning derived from a vocabulary nobody has agreed will be wrong at
-some point and should be readable when it is. The ruleset layer is now the stricter of the two:
-`major | minor | patch`, enforced.
-
-
-**Nine of the ten published maps cannot show a basemap, and the tenth ships with it off.**
-Raised by the practitioner on 2026-10-14: *"Our map_output layers do not even have a basemap!"*
-Measured the same day — the control is rendered only when the input is `polygons` **and** the
-presentation is `interactive` (`src/app.ts:94`), because tiles are Leaflet's and `interactive`
-is the only presentation that mounts Leaflet. Every other map is a local SVG, which cannot hold
-a tile without fetching and embedding one. So a reader of any worked example sees geometry on
-blank ground. Recorded, not fixed: the basemap in use is now layer 0 in the receipt
-(`fw:BasemapLayer`, `fw:layerTileProvider`) instead of a property of the specification, and
-OpenTopoMap's CC-BY-SA style is credited separately from OSM's ODbL data. The two ways to close
-it are not equivalent and the choice is the practitioner's — a static tile composite embedded in
-the plot SVG (self-contained figure, one request per render, an embedded raster in every export)
-or more maps made interactive (cheap, but an interactive view has no scale bar and exports
-without its ground). Both in [the Map widget page](widget-specs/map_output.md).
-
-
-**Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**
-The kind/placement distinction behind this was corrected on 2026-10-12: there are two kinds of
-widget, primitive and composite, and being example-bound is a placement problem rather than a
-kind. D1 and the audit's table both said four kinds and now say two.
-Found by [the widget design audit](audits/widget_audit.md) on 2026-10-09 and restated by the
-practitioner on 2026-10-12: `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`
-(a product name — GeneXpert), `policy`, `access_policy`, `comparison_map`. `places` and
-`centers` already carry `migrationFrom` adapters into `observations`, so the principle and the
-mechanism are both established; seven remain. None of the nine has parity evidence and none is
-pinned by a composition, so renaming them costs only the adapters — which makes them the
-cheapest group to do first. The sea-level three are a separate decision: pack work is postponed
-([67](experiments/67-sample-raster-at-points.md)), `slr_site_assignment` is a one-off of
-nearest-neighbour-with-distance, and `slr_threshold_comparison` is genuinely domain-bound.
-Scope not chosen, because "a name so general it says nothing" is a worse failure than the
-present one.
-
-
-
-**The zone guard is still a zone too wide.** Fixed 2026-10-11: the palette default is now
-derived from the workflow's own data, and a disagreeing zone is reported in the Inspector with
-its measured cost and a button that applies the suggestion
-([100](experiments/100-choosing-the-metric-crs.md)). What remains is the guard itself —
-`metric()` allows ±6° from the central meridian where a zone spans ±3°, so an off-by-one zone
-still passes, costing +0.17% at London's latitude and **+0.47% at 15°N**, which is where the
-Philippines is. Tightening it to ±3° is one character and would start refusing workflows that
-run today, so it needs checking against the shipped examples first.
-
-**Metres and angles are related through a constant, in nine places, with the same error.**
-Audited 2026-10-12 by `npm run audit:metres`, which measures every site against a Vincenty
-geodesic, in both directions. Metres into angles: `buffer_point`, `buffer_area`, `area` (circle
-and box dimensions), `donut_geomask`, `samples`, `network_input`, `measure_area`. Angles into
-metres, via the shared `distanceKm` haversine: `nearest`, `access`, `facilities`,
-`slr_site_assignment` — the same magnitudes with the sign reversed. Three conversion methods that
-look unrelated — a Turf buffer, a great circle on a mean radius, a flat 111,195 m per degree —
-give the **same** answer to two decimals, because they are one approximation written three
-ways. The error is directional and latitude-dependent: **−0.56% to +0.11% at the equator**,
-−0.49% to +0.13% at Manila, 0.06% to 0.32% at Soho. So it is worst in the tropics, which is
-where this project is aimed: a 500 m buffer in Manila is 497.6 m north–south and 500.7 m
-east–west, and a 5 km scope spans 31 m. The two directions differ in consequence: a reported
-distance that is 0.5% out is a reporting error, while `facilities` uses a radius as a
-**membership** test, where a facility on the boundary can fall either side. Nothing is
-corrected, because correcting it changes every one of those outputs and means re-pinning the
-Lab's parity for the buffer widgets and everything downstream. Record: [101](experiments/101-metres-into-angles.md).
-
-
-
-**One widget cannot be added from the palette as a draft: `slr_threshold_comparison`.**
-It validates its full contract on every edit, so `change()` rolls back and the
-canvas appears to ignore the click. Recorded in
-`tests/palette-add.browser.mjs`, which fails if the set grows. Four once:
-`slr_extract_import` retired on 2026-10-26, and `rate` and `case_series` were
-fixed on 2026-11-06 (0.33.0) when the Brazil dengue example needed Rate
-(experiment 180).
-
-**Numeric Inspector fields revert visually after a change.**
-The model updates and the field does not. Affects every numeric parameter, not
-one panel; measured on `mean-center-zone`, which predates the micro-workflow
-work. Recorded in [92](experiments/92-micro-workflow-on-the-canvas.md).
-
-**A desktop build now has a settled rationale and no plan.**
-Three reasons converge on it: acquisition no browser will permit
-([69](experiments/69-healthsites-acquisition.md)), STAC assets behind CORS or
-authentication ([91](experiments/91-stac-browser-integration.md)), and a
-durable learning record, which as of 2026-10-11 is where learning belongs at all
-([desktop and browser for learning](research/desktop-and-browser-for-learning.md)).
-Nothing is scheduled, nothing is designed, and the WebKit gate below comes
-first. Recorded so that "the desktop app will do it" stops being a way of
-agreeing with an idea without doing it.
-
-**The widget audit covers 39 of 51 widgets.** It ran on 2026-10-09 and twelve widgets have
-been added since without going through D1 in that table: `buffer_point`, `fill_interior_gaps`,
-`find_health_facilities`, `micro_workflow`, `reachable_corridor`, `reachable_nodes`,
-`sample_raster`, `snap_to_network`, `stack_polygons`, `summarize_combined_area`,
-`summarize_hull`, `travel_time_band`. Each had an admission review at the time, which states a
-kind, so the gap is in the audit's counts rather than in the record — but the counts should not
-be read as current. Noted 2026-10-12 while restructuring the table.
-
-**The documented gate is Chromium only, and so is CI.** ~~Done 2026-10-13.~~ The default in
-`playwright.config.mjs` is now `chromium,webkit` and the Pages workflow installs both. It was
-changed after measuring that all 102 browser checks pass under WebKit unmodified, so the gate
-began at parity rather than with exemptions. This was the precondition
-[70](experiments/70-webkit-parity.md) set for any desktop packaging decision, raised again when
-the practitioner asked whether the application could be compiled to Tauri -- which runs WKWebView
-on macOS. Firefox remains opt-in.
-
-**The Validation Lab had no execution gate.** Fixed 2026-10-11:
-`scripts/run_notebooks.py` executes every notebook and fails on any error cell,
-and the Pages workflow runs it before building the site, so a broken notebook
-blocks publishing. CPython only; the browser kernel is still unchecked, which is
-the remaining half of item 1.
-
-An earlier version of this entry said `_output` was "a committed artifact that
-nothing checks". That was wrong — it is gitignored, and CI builds the site fresh
-from `content/` on every push, so the published site was never stale. What was
-three notebooks behind was a local build directory, which matters to nobody.
-
-**A source should be able to declare the CRS of its output port.** Proposed
-2026-10-13, from the pandas/geopandas analogy the project already follows: a
-`GeoDataFrame` carries its CRS and `to_crs` is a method on it, so acquiring data
-in UTM and wanting it in WGS84 is one call, not two objects. Today `reproject`
-is the second node, and it is filed under Sources because it imports its own
-data — which is why the naming ratchet flags it twice
-(`widgets/naming.json`). Giving each geospatial source an output-CRS knob saves
-that step for the common case.
-
-The knob is honest by the test experiment 107 derived — the contract does not
-move with it. The output port type stays `points`; what changes is the
-`spatialReference` travelling on the value. That is the precedent `nearest`
-already set with its distance unit: *the unit travels on the output, because a
-distance without its unit is not interpretable*. Coordinates without their CRS
-are not interpretable either, and `SpatialReference` is currently frozen to
-WGS84/EPSG:4326 in `src/types.ts`, so this makes a field that pretends to be
-constant actually vary — which `checkRange` and the UTM advice already assume it
-does.
-
-`reproject` is still needed, and not as a leftover: a practitioner may want a
-mid-workflow translation, or two versions of the same data in different CRSs
-side by side, which a knob on the source cannot express because it has only one
-output. So this is a split, not a replacement — the source gains a knob and
-`reproject` becomes a true `points → points` transform under Spatial
-operations. Renaming it is a migration under the
-[experiment 18](experiments/18-shared-input-standardization.md) adapter, and the
-two naming entries say so.
-
-## Done
-
-**DONE 2026-10-25 — a static figure carries its own ground.** A raster basemap is fetched
-once and baked into the figure as `data:` URIs, cached in the payload store so a later visit
-redraws it offline, and credited in the figure because ODbL attaches to the copy. Each tile is
-placed by its own corners, since tiles are Web Mercator and this plot is equirectangular.
-[Experiment 137](experiments/137-a-static-figure-can-carry-its-ground.md). **Written without
-reading the prior art, which is the finding worth keeping**: [52](experiments/52-cacheable-basemaps.md)
-had already concluded "PMTiles for interactive navigation, Natural Earth for static figures" and
-measured 215 kB for Natural Earth context, and [53](experiments/53-reproducible-maps.md) had
-already recorded that a live tile basemap cannot be reproduced at all. **Still open:** reconcile
-137 with 49, 51, 52 and 53; Natural Earth for static figures is the recorded answer and is
-unbuilt; the OpenFreeMap styles are vector and still cannot be baked.
-
-**DONE 2026-10-25 — the figure defects the practitioner found by looking at figures.** A raster
-was a mode that threw away every other wired layer; `oldMap` and the isochrone plot each drew
-colours and marks their own keys contradicted; the orphan prune discarded any output whose node
-id ended `-map` or `-table`, which would have thrown away the whole geoprivacy run on any node
-delete; `deleteWorkflow` asked whether a key had a slash rather than whether the application
-ships the example; the Hagelloch curve drew 87 overlapping labels under an axis titled
-"Category", sourced to a run UUID. Each is in its own commit with what it does not establish.
-
-**DONE 2026-10-25 — Snow's own map, and mark size as a setting.** Both John Snow workspaces drew
-a catchment map and neither drew the figure the outbreak is remembered for. Mark radius is now
-per layer, because eight pumps across a parish and 250 addresses in four streets are one figure
-and no single default serves both.
-
-**DONE 2026-10-25 — the interface stopped assuming a travel mode.** Six runtime messages said
-"the walk" whatever mode was declared, including the note that travels into a published figure.
-
-**DONE 2026-10-25 — gates run in a worktree.** `scripts/gate.sh` gates a commit in
-`../fieldwork-gate` on port 4184, so the main tree stays usable for the 25 minutes and what is
-validated is what would be pushed. [CONTRIBUTING.md](../CONTRIBUTING.md) carries the pipeline and
-the merge policy for human developers; AGENTS.md carries the same for agents.
-
-**The ruleset widget stopped being pinned.** Done 2026-10-15, in two halves on the
-practitioner's reports. First *"this is not the design we discussed, the rules are pinned not
-very flexible"*: experiment [106](experiments/106-rule-builder-ui.md) had specified the authored
-form on 2026-10-12 and none of it was built, so a practitioner met a dropdown of four bundled
-rulesets whose text was fixed. The compiler and B1 followed — all three shipped rulesets rebuilt
-in the authored form reach identical conclusions under the real engine. Then *"I see the ruleset
-widget but it's not editable"*, and *"perhaps the rule editor should be a modal dialog so there
-is enough space"*: `src/rule-editor.ts`. **Still open:** two comparators are offered that have
-never been executed against the real engine (B2), and conclusions are free text, so two rules
-can disagree and only a run catches it.
-
-**A measurement states its unit.** Done 2026-10-15. Numeric fields and settings declare a QUDT
-unit, a comparison whose sides disagree is refused by name rather than converted, and the check
-runs while a rule is written as well as when it runs. What no rule can catch — a bare literal
-takes the field's unit — is met by showing that unit beside the box. Closes A7, the second of
-106's three debts; the example and its tests exercise all three.
-
-**A map has layers, not modes.** Done 2026-10-15, a day after the direction was settled and
-written into the docs without the code changing — which is what
-[docs/directions.json](directions.json) now exists to catch. Every layer port is always
-declared, the renderer is read from the connections, and the node carries the layers it draws
-plus one configurable port. Basemaps became reachable on every map as a consequence: the
-interactive renderer had required polygons, which is why nine of the ten shipped maps could not
-have one.
-
-**A practitioner is told when the version they are running is not the current one**, and a stale
-cached build can be cleared without developer tools. Done 2026-10-15. The service worker served
-a cached build forever and the page could not say so; navigations are network-first with a cache
-fallback, the header names a cached version, and `?reset-cache=1` clears it from an embedded
-browser. Ruleset versions declare what they changed and whether moving is a drop-in.
-
-**The manual is for the person using the widget.** Done 2026-10-15. Four pages rewritten to one
-shape — what kind of widget, what it does, what to connect, how to use it, which examples
-exercise it, what it will not do — with the design records moved to `docs/widget-specs/` and the
-split enforced from both sides.
-
-
-**A practitioner is now told when the version they are running is not the current one.**
-Done 2026-10-15, on the practitioner's instruction of 2026-10-14: *"We should not offer up old
-widget versions in the palette, only updated versions. When new versions appear, and a workflow
-is run that requires an old version, we have to alert the user that there is a newer version. The
-widget manual should explain what was changed in the current version, and to warn of deprecated
-or incompatible functionality."* The palette half shipped that day. The other two halves shipped
-now, and both were **available in the data already and read by nothing**: widget releases have
-carried `changes` since the registry existed — 148 descriptions across 147 release files — and
-the ruleset layer has carried them since 2026-10-12. Computed, published, and inert, for the
-sixth and seventh time.
-
-What is built:
-
-- **A superseded ruleset pin says so, in the Inspector and at the run.** `supersession()` reads
-  the change notes of every version between the pin and the newest, so a pin two versions behind
-  is told about both, and styles the notice as a danger when any of them declares an
-  incompatibility — because then the choice is not "update when convenient" but "rewire or stay".
-  The run names every superseded pin it just used, since that is the moment a result is produced
-  by rules the practitioner may not know are superseded.
-- **Every newer version now declares what it changed and what moving costs.** `incompatibility`
-  and `deprecates` are typed and required: `scripts/validate-rulesets.mjs` fails a version that
-  supersedes another and declares no changes, and fails a version that moves a port and states no
-  incompatibility. Verified by removing one and watching the gate fail.
-- **The Inspector says what the offered version of a widget changed**, folded for an ordinary
-  release and open for a breaking one, from `widgets/release-notes.json` — generated by
-  `scripts/release-notes.mjs` from each widget's current release, checked by
-  `npm run validate:release-notes`. All 53 current releases say what they changed; 4 are breaking.
-
-Two findings fell out of doing it, both recorded above under what is not scheduled: a widget
-version labels code that only ships one version at a time, which is why the alert is a ruleset
-mechanism and not a widget one, and the release change vocabulary has ten values.
-
-
-**The lab check coverage ratchet exists, and thirteen of the 26 are done.** Done
-2026-10-11. The classification could not be derived — `implementation.definition` names
-`src/core.ts#TYPES` for 39 of 51 widgets, so the registry does not record where most
-widgets are implemented — so it is declared and reviewed instead, and the validator
-enforces completeness and the ratchet rather than the judgement. Verified by breaking it
-four ways. Thirteen widgets now have checks, all agreeing. Three recompute the
-John Snow Voronoi example, which is independently verified end to end, and the four primitives
-of the isochrone decomposition are now all checked. (An earlier version of this entry said
-`isochrone` could therefore be compared against its own decomposition. That is wrong and
-[41](experiments/41-validation-lab.md) forbids it — both sides would be Fieldwork. What is
-cheaper is that the reference code in checks 07 and 08 composes into a reference for the
-monolith.) Three checks failed on their first run and in every case the
-criterion was wrong, not the widget — most instructively `22-case-series`, whose own docstring
-named the week as the dangerous rule before the code got that rule wrong. Awaiting fell
-26 → 13.
-
-
-
-**Notebook CI is complete, in both environments.** Done 2026-10-11.
-`scripts/run_notebooks.py` executes every notebook under CPython -- 20 of them as of
-2026-10-11, in 14 s -- and
-`node/check_09_notebooks_browser.mjs` executes them in the browser kernel in
-58 s; both fail on any error cell and **both block publication**. The browser
-half was the open item, blocked on `02-clip-vs-rasterio` not completing in
-twelve minutes. Cause: requesting `pyproj` alongside `rasterio` makes
-`rasterio.open` kill the kernel outright, and a fatal kernel error produces no
-error cell, so the runner waited for an execution count that could never arrive.
-Each notebook now requests what it imports, and the runner races cell completion
-against kernel death. Record: [97](experiments/97-the-browser-kernel-gate.md).
-
-Two things that followed and are **not** resolved: the Pyodide distribution is
-loaded from a CDN pinned by nothing in the lab, so an upgrade would be found out
-by the gate failing; and the crash is an unexplained upstream defect with a
-two-package reproduction that has not been filed.
-
-
-
-**The experiment document is standardised.** Done 2026-10-11:
-[docs/experiments/README.md](experiments/README.md) states the form,
-`validate:experiments` gates the two parts a machine can honestly read, and it
-runs inside `npm run check` and so in CI. The five questions are deliberately
-**not** enforced — they are a reading test, and a validator demanding
-`## What happened` would have produced 96 conforming documents and no better
-reading. 9 of 96 conform; 87 are recorded in
-[standard-debt.json](experiments/standard-debt.json) and the list only shrinks.
-Record: [96](experiments/96-the-experiment-document.md).
-
-The new **what changed our minds** element is in place on four documents and
-counted in every run. It is not required, because not every document had its
-mind changed; it is counted so that it does not quietly become a rule nobody
-follows. If the count sits still for a month, that is the finding.
-
 **Hypothesis, the practitioner's, 2026-10-12: a decision class is its own widget.**
 Not scheduled, and recorded so it is not re-derived. The claim: *"the policy widget after all may
 be just a ruleset based widget that emits a decision class which can be defined externally within
@@ -4536,46 +3649,6 @@ Three things that would decide it, none of them done:
 
 Related: the explanation gap named in [65](experiments/65-ruleset-as-data.md) may belong to the
 decision class too — a class that owns its values is the natural owner of how each value reads.
-
-**Old Naledi is an incomplete example that was never revisited**, and a slice of the Gaborone TB
-ABM notebooks is the way to raise it. The practitioner's point, 2026-10-12. Not scheduled.
-
-Measured the same day, per worked example, from `widgets/evidence.json`:
-
-| Example | Widgets | Lab-checked | Check owed |
-| --- | --- | --- | --- |
-| snow-voronoi, snow-geoprivacy, snow-epidemic-curve | 10 each | **4** each | 0 |
-| snow-isochrone | 12 | **4** | 1 (`isochrone`) |
-| **old-naledi** | 10 | **1** | 3 — `access`, `facilities`, `samples` |
-| sea-level | 8 | **0** | 3 |
-| heat | 6 | 1 | 1 |
-
-So the claim holds and is sharper than "incomplete". The four snow examples carry four
-independently checked widgets each; Old Naledi carries one of ten. Sea-level is weaker still and
-its weakness is **owned** — all pack work is deliberately postponed and the record says so. Old
-Naledi's was not owned by anything until now.
-
-Three things follow, and the first is a correction to today's own work:
-
-- **It was being used as an oracle.** The blocker `ruleset-as-declared-data` named "every frozen
-  fixture and Old Naledi classification replays identically" as its liftTest, and that test passed,
-  and the lift is recorded. But an incomplete example's frozen expectations are weaker evidence
-  than that liftTest implied. The merge is not thereby wrong — 356 unit and 97 browser tests pass,
-  and check 23 verifies the rulesets exhaustively and independently — but the Old Naledi half of
-  that argument should be read for what it is.
-- **It is where the example-bound widgets live.** Of the widgets still declaring themselves
-  example-specific, `access`, `facilities` and `alert` are Old Naledi's or the heat demo's, and
-  `facility_audit` is Old Naledi's presentation widget with a decision rule hidden in a ternary.
-  An example nobody revisited is where widgets accumulate that nobody generalised.
-- **A real slice beats a synthetic one.** Its sample locations are a generated grid with
-  Old Naledi's spacing, and `NB06_NAMED_EVIDENCE` carries two facilities keyed by registry id
-  after a name-string match was found and fixed. A slice from the Gaborone TB ABM notebooks would
-  replace generated demonstration points with real structure, which is also what would let
-  `samples`, `access` and `facilities` be checked against something.
-
-What would settle the size of the slice: the smallest one that exercises the same four stages the
-example claims to teach — a boundary, a facility registry, an access proxy, and a classification
-with its basis — without needing a widget that does not exist.
 
 **Audit the worked examples for their exact derivation and source.** The practitioner's
 request, 2026-10-12. Not scheduled. What is already known, measured the same day, is enough to say
@@ -4687,76 +3760,318 @@ of point coordinates, and the names invite the confusion — but GeoSPARQL expos
 *function*, so there is no class to be disjoint with. That one stays in an `rdfs:comment`, and the
 missing axiom does not mean the question went unasked.
 
-## Found 2026-11-02, Nigeria report
+**An on-surface guide — a tour, and something that answers questions.** Asked for as an
+exploration by the practitioner on 2026-10-15: *"add a Clippy like agent on the UI surface as a
+guide to the UI — can provide a guided tour and answer questions."*
+
+**Three different things wear that description, and they have almost nothing in common.** Which
+one is meant decides everything about the cost, so they are separated here rather than scoped
+together:
+
+| | What it is | Needs | Offline |
+| --- | --- | --- | --- |
+| A | **A scripted tour.** Steps through the interface pointing at things, in a fixed order, with text written by hand | nothing new | yes |
+| B | **An assistant that answers from the canvas.** "Why is this step refused?", "what produced this number?", "what can I connect here?" — answered from the workflow, the port contracts and the run receipts | query surfaces over things that already exist | yes |
+| C | **An assistant backed by a language model** | a network call carrying the practitioner's canvas to somebody else's service | **no** |
+
+**What already exists and should be counted first.** The playback behind *Play back the build*
+is a guided tour of a worked example — it steps a real workflow one widget at a time and says
+what each step revealed. The manual is one page per widget. Dive Deeper explains the assumption
+behind ten of them. Experiment [44](experiments/44-ontology-competency-questions.md) is
+literally a list of questions the graph is supposed to answer, several of which it does. A
+guide built on those would be assembling what is here; one built on a model would be answering
+beside it.
+
+**C has a cost this application has otherwise refused to pay.** Everything here runs locally:
+no widget is fetched at run time, the reasoner is WASM on the device, and the one feature that
+contacts an outside service — a basemap — says so in the interface and is off by default. An
+assistant that sends the canvas away would be the first thing to break that, and a canvas is
+not neutral: it holds case locations.
+
+**What Clippy actually got wrong is worth keeping in view.** Not that it was an assistant, but
+that it **interrupted** — it appeared uninvited, read what you were doing, and offered help
+nobody asked for. The feature to copy is the one a practitioner opens.
+
+**What would decide it:** which of A, B or C is wanted. A is small and could be built now. B is
+the interesting one for this project, because every answer it would give has to come from
+something the application can already show — which is a test of whether the ontology and the
+receipts are good enough to answer a practitioner's question, and that is a finding worth having
+either way. C needs a decision about sending a canvas off the device, which is a bigger
+question than a help feature.
+
+### The proposed shape: a **Field guide**, running an OODA loop
+
+**The name.** A field guide is a book you carry and open *when you choose* — the invitation is
+in the metaphor, which is the one thing Clippy got wrong. Its organising question is *"what is
+this thing in front of me?"*, which is option B. It absorbs the manual rather than competing
+with it: a field guide has an entry per species, so the per-widget pages become its entries.
+And it claims no intelligence — nobody expects a field guide to be clever, only accurate and
+indexed. *Assistant* and *Helper* claim agency and invite questions it cannot answer; *Compass*
+implies it tells you which way to go; *Scout* implies going ahead unasked. A character or a
+person's name is worse than all of them: anthropomorphism makes a reader trust a thing past its
+evidence, which is what most of the effort in this project goes into preventing.
+
+**What it looks like.** No face, no animation, no idle presence. An entry in the header beside
+Help, opening a dialog in the same family as the manual and the catalog, which is a pattern
+already here. Three sections: **this step** (the selected widget's entry, its ports, what it
+will not do), **this canvas** (answered from the workflow, the port contracts and the last run's
+receipts), and **a tour** (the playback, which exists, pointed at the current example).
+
+**It opens when asked.** One exception is worth allowing: a refused run already names its cause,
+so an *explain this* link there opens the guide at that entry — invited by a failure rather than
+by idle watching.
+
+**The loop.** The practitioner's framing, 2026-10-15: *Observe → Orient → Decide/Act.* It fits
+because each phase maps onto something the application already computes, which is the whole
+argument for building B rather than C:
+
+| | What it does | Where it comes from |
+| --- | --- | --- |
+| **Observe** | what is on the canvas, what cannot run, what the last run found, what is declared and what is not | listed below — all of it exists |
+| **Orient** | name the problem in the practitioner's terms, **with the evidence it came from** | the citation rule, below |
+| **Decide / Act** | the options with what each costs, and where the action is unambiguous, a button that takes it | the zone advice already works this way: it states the cost and offers *Use zone 30N* |
+
+**Twelve things Observe could read today, without anything new being computed:**
+
+| | Signal | Already computed by |
+| --- | --- | --- |
+| 1 | a step with no ruleset chosen | `executionPlan`, which refuses it by name |
+| 2 | a required input not connected | `requiredInputs` |
+| 3 | a map with nothing wired to it | the run's refusal, in layer terms |
+| 4 | a UTM zone that disagrees with the data, and what it costs | `suggestUTM`, `utmScaleFactor` |
+| 5 | a ruleset pinned to a superseded version | `supersession` |
+| 6 | provenance a step has not declared | `DeclarationGap` |
+| 7 | sites the street network could not reach | the run alert |
+| 8 | records no rule matched | `fw:unmatchedSubjectCount` in the receipt |
+| 9 | a comparison whose units disagree | `authoredUnitProblems` |
+| 10 | rules near the compile ceiling | `compiledRuleCount` |
+| 11 | a cached build older than the one installed | the service worker's version report |
+| 12 | a download that failed, and which instances were tried | the Overpass failover's message |
+
+**The rule that makes it this project's rather than a generic help bot: every answer cites
+where it came from — a receipt, a port contract, a manual page, a measurement — and links to
+it. When it has no citation it says it does not know.** That is the provenance discipline
+applied to a help feature, and it is also the honest constraint: it knows the application, not
+the epidemiology. It must not guess, must not paraphrase a receipt into something friendlier
+and less true, and must not answer a question about what the data *means*.
+
+**The cheapest thing building it would prove.** Six of the eight refusals measured in
+[112](experiments/112-progressive-widget-reveal.md) already name the step that should have come
+first. A Field guide that can answer *"why was this refused?"* from the receipt is reading
+something the application already writes — and if it cannot, that is a finding about the
+receipts rather than about the guide.
+
+**Four concepts worth taking from ArcGIS Model Builder**, from the sideways sweep in
+[116](experiments/116-model-builder-sideways.md) over screenshots the practitioner uploaded on
+2026-10-15. Each is independently useful and none depends on another:
+
+1. **Ask which role when more than one port fits.** Dropping a layer on a tool there opens a
+   menu — *Input Features*, *Extent*, *Precondition*. Our Map binds by type silently, which
+   already needed a workaround: `context` is points-typed and means *drawn beside polygons*, so
+   it had to be excluded from automatic binding to stop it taking a role nobody chose. Binding
+   silently when one port fits and **asking when more than one does** is the honest rule, and it
+   extends the configurable port from the Map to every widget.
+2. **Validate without running.** `executionPlan` already computes whether a canvas is coherent
+   and only Run reaches it. **Smallest of the four:** the reason first given — that a run
+   downloads street networks — was wrong, and the practitioner corrected it. `network_input`
+   downloads on its own button before the run, so the expensive unreliable part is already
+   outside it, and a run costs seconds of local reasoning.
+3. **Say on the node that it cannot run yet.** An unconfigured step says so in the Inspector, to
+   somebody who has already selected it. The canvas is where the shape of the work is read.
+4. **Declare the metric frame once per workflow.** *Partly built 2026-10-15: the study area now
+   suggests the zone and, when an area straddles a boundary, names each candidate with the worst
+   stretch it would cost. What remains is the Environments shape itself.* ArcGIS calls it an *Environment*: declared
+   for the model, inherited by every tool, overridable per tool. Ours is a UTM zone in every
+   measuring widget's parameters, refused when two disagree, with the cost of a wrong one
+   measured in [100](experiments/100-choosing-the-metric-crs.md). The better shape, and the only
+   one of the four that changes what a saved workflow holds.
+
+**A building-footprint widget.** Asked for by the practitioner on 2026-10-15. Specified in
+[docs/widget-specs/find_building_footprints.md](widget-specs/find_building_footprints.md),
+which carries the source evaluation from
+`digitaltwin-aas/gaborone/03a-Building-Footprint-Augmentation.ipynb` — five products compared
+against one city, with Overture and 3D-GloBFP used for their height and Google Open Buildings
+and Microsoft GlobalML excluded because they have none and their counts in informal settlements
+are inflated by sliver detections. **The data question is closed; the contract question is
+open:** of the five, only OpenStreetMap is reachable from a browser, so the widget either
+acquires from OSM alone or imports a file prepared elsewhere. The specification recommends
+import first and says why.
+
+**OpenFreeMap tiles and themes for the Map widget.** Asked for by the practitioner on
+2026-10-15. Today the only basemaps are OpenStreetMap's raster tiles and OpenTopoMap, both
+third-party services that see the viewed extent of every pan. [OpenFreeMap](https://openfreemap.org)
+serves **vector** tiles free and without an API key, with several styles, and can be
+self-hosted — which is the part that matters here, because it is the first basemap option that
+could remove the disclosure objection rather than trade against it. Vector tiles also mean themes:
+a light, dark or minimal ground chosen to sit under the data rather than compete with it, which
+raster tiles cannot offer. **What would decide it:** whether a vector renderer is worth the
+dependency. Leaflet draws raster tiles with no help; vector tiles need MapLibre GL or an
+equivalent, which is a substantial addition to a project that currently ships one mapping library.
+Related: the three basemap options recorded in [the Map specification](widget-specs/map_output.md),
+where PMTiles is the other offline-capable candidate.
+
+**Nothing converts a table into points.** Moved here from the blocker ledger on 2026-10-15, where
+it had been `standing` while gating nothing. No widget takes `table` and outputs `points`, and no
+widget anywhere names which columns hold coordinates — there is no `latField`, `lonField` or
+equivalent in `src/`. So a practitioner who imports a CSV with latitude and longitude columns
+cannot make it spatial. Three widgets consume `table` and all three emit a table or decisions; the
+only ways to obtain points are the data editor, the grid generator and the facility search. Two
+consequences are already paid for: `case_series` builds a FeatureCollection of null geometries and
+casts it `as unknown as PointCollection` to reuse the point path, and `SpatialRelation` keeps a
+`MissingLocation` value that conflates "the source omitted a location" with "this has no
+location". **Lifts when** a widget takes a table plus a declared binding of which columns are
+longitude and latitude, with a CRS, and outputs points; `SpatialRelation` becomes three-valued;
+and `case_series` consumes the table directly. This is experiment 61's problem exactly — *"the
+ability to say which column means what"* — and the same role-binding mechanism 65 needs for
+rulesets, so whichever lands first should be built for the other to use.
+
+**A workflow cannot require an old widget version, because a widget version labels code and only
+one version of it is in the build.** Established 2026-10-15, correcting a claim made the same day
+and withdrawn within the hour. The practitioner's question: *"Isn't the widget version a
+representation of the overall code version?"* It is, and that settles it.
+
+A widget release file declares *about* code — `implementation.files` lists source paths — rather
+than carrying any. One build compiles one version of each of the 53 widgets, so there is no
+mechanism by which a saved workflow could run an earlier one and nothing a node could usefully
+pin: a per-node version would record what the workflow was *authored* against, not what can run
+it. A ruleset is the opposite, and that is the whole reason the alert was buildable there: rules
+are data, every published version ships in the same build, and a node selects one at run time.
+
+**Withdrawn:** the claim that *"a receipt's widget version describes the build that wrote the
+receipt, not the code that produced the result."* False. No receipt is persisted — only the
+workflow is saved, and `result` is cleared on load — so every receipt is written by the build
+that ran it, about the code that ran. `fw:catalogVersion` is truthful for its run.
+
+What is left is smaller and is a real gap: nothing records which version a workflow was authored
+against, so re-opening it under a later build cannot say "this was built against map_output 0.7.0
+and you are now on 0.9.0, which changed the following." That is a question about authorship
+rather than about computation, and whether it is worth a field on every node is the
+practitioner's call — the Inspector already says what the current version changed, which may be
+enough.
+
+**The release change vocabulary has ten values and no definition.** Measured 2026-10-15 across
+147 release files: `initial` (44), `baseline` (20), `added` (13), `changed` (4), `enhancement`
+(1), `feature` (1), `minor` (48), `major` (6), `patch` (10), and one entry with no `kind` at all.
+Four are semver, six are prose categories, and nothing says which means a practitioner must act.
+`scripts/release-notes.mjs` derives `breaking` from three signals — `kind: major`, an explicit
+`breaking`, a stated `migration` — and records the vocabulary in its output rather than quietly
+normalising it, because a warning derived from a vocabulary nobody has agreed will be wrong at
+some point and should be readable when it is. The ruleset layer is now the stricter of the two:
+`major | minor | patch`, enforced.
+
+**Nine widgets bake in one demonstration's specifics, and two of them are already fixed.**
+The kind/placement distinction behind this was corrected on 2026-10-12: there are two kinds of
+widget, primitive and composite, and being example-bound is a placement problem rather than a
+kind. D1 and the audit's table both said four kinds and now say two.
+Found by [the widget design audit](audits/widget_audit.md) on 2026-10-09 and restated by the
+practitioner on 2026-10-12: `places`, `centers`, `alert`, `facilities`, `samples`, `xpert`
+(a product name — GeneXpert), `policy`, `access_policy`, `comparison_map`. `places` and
+`centers` already carry `migrationFrom` adapters into `observations`, so the principle and the
+mechanism are both established; seven remain. None of the nine has parity evidence and none is
+pinned by a composition, so renaming them costs only the adapters — which makes them the
+cheapest group to do first. The sea-level three are a separate decision: pack work is postponed
+([67](experiments/67-sample-raster-at-points.md)), `slr_site_assignment` is a one-off of
+nearest-neighbour-with-distance, and `slr_threshold_comparison` is genuinely domain-bound.
+Scope not chosen, because "a name so general it says nothing" is a worse failure than the
+present one.
+
+**The zone guard is still a zone too wide.** Fixed 2026-10-11: the palette default is now
+derived from the workflow's own data, and a disagreeing zone is reported in the Inspector with
+its measured cost and a button that applies the suggestion
+([100](experiments/100-choosing-the-metric-crs.md)). What remains is the guard itself —
+`metric()` allows ±6° from the central meridian where a zone spans ±3°, so an off-by-one zone
+still passes, costing +0.17% at London's latitude and **+0.47% at 15°N**, which is where the
+Philippines is. Tightening it to ±3° is one character and would start refusing workflows that
+run today, so it needs checking against the shipped examples first.
+
+**Metres and angles are related through a constant, in nine places, with the same error.**
+Audited 2026-10-12 by `npm run audit:metres`, which measures every site against a Vincenty
+geodesic, in both directions. Metres into angles: `buffer_point`, `buffer_area`, `area` (circle
+and box dimensions), `donut_geomask`, `samples`, `network_input`, `measure_area`. Angles into
+metres, via the shared `distanceKm` haversine: `nearest`, `access`, `facilities`,
+`slr_site_assignment` — the same magnitudes with the sign reversed. Three conversion methods that
+look unrelated — a Turf buffer, a great circle on a mean radius, a flat 111,195 m per degree —
+give the **same** answer to two decimals, because they are one approximation written three
+ways. The error is directional and latitude-dependent: **−0.56% to +0.11% at the equator**,
+−0.49% to +0.13% at Manila, 0.06% to 0.32% at Soho. So it is worst in the tropics, which is
+where this project is aimed: a 500 m buffer in Manila is 497.6 m north–south and 500.7 m
+east–west, and a 5 km scope spans 31 m. The two directions differ in consequence: a reported
+distance that is 0.5% out is a reporting error, while `facilities` uses a radius as a
+**membership** test, where a facility on the boundary can fall either side. Nothing is
+corrected, because correcting it changes every one of those outputs and means re-pinning the
+Lab's parity for the buffer widgets and everything downstream. Record: [101](experiments/101-metres-into-angles.md).
+
+**Numeric Inspector fields revert visually after a change.**
+The model updates and the field does not. Affects every numeric parameter, not
+one panel; measured on `mean-center-zone`, which predates the micro-workflow
+work. Recorded in [92](experiments/92-micro-workflow-on-the-canvas.md).
+
+**A desktop build now has a settled rationale and no plan.**
+Three reasons converge on it: acquisition no browser will permit
+([69](experiments/69-healthsites-acquisition.md)), STAC assets behind CORS or
+authentication ([91](experiments/91-stac-browser-integration.md)), and a
+durable learning record, which as of 2026-10-11 is where learning belongs at all
+([desktop and browser for learning](research/desktop-and-browser-for-learning.md)).
+Nothing is scheduled, nothing is designed, and the WebKit gate below comes
+first. Recorded so that "the desktop app will do it" stops being a way of
+agreeing with an idea without doing it.
+
+**The widget audit covers 39 of 51 widgets.** It ran on 2026-10-09 and twelve widgets have
+been added since without going through D1 in that table: `buffer_point`, `fill_interior_gaps`,
+`find_health_facilities`, `micro_workflow`, `reachable_corridor`, `reachable_nodes`,
+`sample_raster`, `snap_to_network`, `stack_polygons`, `summarize_combined_area`,
+`summarize_hull`, `travel_time_band`. Each had an admission review at the time, which states a
+kind, so the gap is in the audit's counts rather than in the record — but the counts should not
+be read as current. Noted 2026-10-12 while restructuring the table.
+
+**The Validation Lab had no execution gate.** Fixed 2026-10-11:
+`scripts/run_notebooks.py` executes every notebook and fails on any error cell,
+and the Pages workflow runs it before building the site, so a broken notebook
+blocks publishing. CPython only; the browser kernel is still unchecked, which is
+the remaining half of item 1.
+
+An earlier version of this entry said `_output` was "a committed artifact that
+nothing checks". That was wrong — it is gitignored, and CI builds the site fresh
+from `content/` on every push, so the published site was never stale. What was
+three notebooks behind was a local build directory, which matters to nobody.
+
+**A source should be able to declare the CRS of its output port.** Proposed
+2026-10-13, from the pandas/geopandas analogy the project already follows: a
+`GeoDataFrame` carries its CRS and `to_crs` is a method on it, so acquiring data
+in UTM and wanting it in WGS84 is one call, not two objects. Today `reproject`
+is the second node, and it is filed under Sources because it imports its own
+data — which is why the naming ratchet flags it twice
+(`widgets/naming.json`). Giving each geospatial source an output-CRS knob saves
+that step for the common case.
+
+The knob is honest by the test experiment 107 derived — the contract does not
+move with it. The output port type stays `points`; what changes is the
+`spatialReference` travelling on the value. That is the precedent `nearest`
+already set with its distance unit: *the unit travels on the output, because a
+distance without its unit is not interpretable*. Coordinates without their CRS
+are not interpretable either, and `SpatialReference` is currently frozen to
+WGS84/EPSG:4326 in `src/types.ts`, so this makes a field that pretends to be
+constant actually vary — which `checkRange` and the UTM advice already assume it
+does.
+
+`reproject` is still needed, and not as a leftover: a practitioner may want a
+mid-workflow translation, or two versions of the same data in different CRSs
+side by side, which a knob on the source cannot express because it has only one
+output. So this is a split, not a replacement — the source gains a knob and
+`reproject` becomes a true `points → points` transform under Spatial
+operations. Renaming it is a migration under the
+[experiment 18](experiments/18-shared-input-standardization.md) adapter, and the
+two naming entries say so.
+
+### Found 2026-11-02, Nigeria report
 
 - An input widget has no form to declare its source, so `derived` notes and automatic References need `provenance` written into the file. South London's was. Nigeria's works are authored notes.
 - Machined notes on a map are one caption sentence. The report's findings are authored; nothing machines a sum of zero-dose children over years.
 - Interactive map names no places, because labels need fonts from a server.
 - Import tiles: confirm an import in WebKit against the real archive, and the map offline afterwards.
 
-## Deduplicate, after the main problems are finished (practitioner, 2026-11-02)
-
-- Polygons: same-place by overlap. Test on building footprints from two open sources.
-- Point and polygon: the same facility as a point in one dataset and a polygon in another. Point inside, or within a set distance of the edge. Settle what shape a merged record has.
-
-## Citation builder for References (practitioner, 2026-11-02, after deduplicate)
-
-- Built 2026-11-02, experiment 165. Still open: an author-year style choice, and looking a work up by DOI.
-- Every item in References cites something. An authored note in References is written with a citation builder, reusing `Citation` and `renderCitation` from `input-provenance.ts`, with gaps shown before saving. Nigeria's seven references then move to structured citations.
-
-## Next worked example: NYC child asthma and ozone (practitioner, 2026-11-03)
-
-- **Data:** Lian et al., Zenodo [10.5281/zenodo.22757330](https://zenodo.org/records/22757330), CC BY 4.0 for the authors' own materials. `Data/Core/Derived/analysis_master_raw_rebuild.csv`: 3,653 daily rows, 2016–2025, citywide asthma-syndrome ED `count` for ages 5–17, with `o3`, `pm25`, `no2`, `tmean`, lags, `stratum`, `holiday`, `total_ed`.
-- **Check against:** the authors' archived Table 2, RR 1.061 (1.035–1.088) per 10 ppb ozone, time-stratified multipollutant Poisson on 3,643 days and 123,265 visits. No published or preprint paper, so "checkable" means against the archived outputs; the app computes crude comparisons only.
-- **A by-hand question:** the June 2023 Canadian smoke days, 49 visits on 2023-06-07 at PM2.5 190 µg/m³ against a June 1–5 mean of 25.
-- **Before shipping the data:** read NYC DOHMH EpiQuery's terms for the daily counts (the package says to check DOHMH, EPA and NOAA terms); run the package's own R code to confirm the archived numbers.
-- Research notes and ranking: `reports/Climate asthma worked examples.md` in the workspace root.
-- **Decided 2026-11-03:** NYC.gov reserves all rights to the counts, so they are fetched from the authors' Zenodo record at open, never republished (experiment 170). Repository `example-2025-nyc-ozone`, documents only.
-- **Later (practitioner, 2026-11-03):** augment with real downloads from remote sensing providers beside the monitors the authors used, such as satellite-derived PM2.5 or ozone, aerosol optical depth, or NOAA HMS smoke for June 2023, fetched at open by the same mechanism.
-- **Remote sensing: the plan (practitioner, 2026-11-04).** [EO discovery and tabular integration for the NYC asthma example](docs/research/eo-stac-nyc-architecture-and-plan-2026-11-04.md), a research note generated with ChatGPT and committed by the practitioner: an EO Satellite Viewer and a STAC Browser as widgets, a STAC branch that creates a daily measurement table, and a merge with the Zenodo table by date. Proposed, nothing established. Its phases:
-  - **0 · contracts first**, as a numbered experiment with an admission review: the original variable and lag definitions (now in the authors' dictionary, readable through experiment 172), one NYC boundary, the time basis, a short NO₂ pilot interval, and the table representation. The note flags two limits this application has: `DataTable` carries one value per row, so several numeric measures need an adapter or a contract change; and tables are capped at 20,000 rows (7 measures × 3,653 days is 25,571).
-  - **1 · access, all three tracks**: a source matrix for NO₂, PM2.5 and ozone with real bytes decoded in a browser, not metadata alone (experiment 91 is where STAC access was first examined).
-  - **2 · table preparation and a numeric merge**: a left join from the Zenodo table that never multiplies the counts, with duplicate keys, missing dates and name collisions shown before committing. Relate and Append are not to be widened into it silently; this is the "Relate as a merge" item with a concrete case.
-  - **3 · NO₂ end to end**, then **4 · PM2.5** (AOD kept as AOD; a surface estimate only from a product that makes one) and **5 · ozone** (total column, partial column and surface kept apart; an 8-hour maximum needs the within-day sampling to support it), each with its own exit evidence.
-  - **6 · full period and new models**, and **7 · practitioner evaluation**.
-  - The measurement dictionary it asks for (variable, unit, spatial and temporal statistic, coverage, product and lineage) is experiment 172's column descriptions extended, not a separate mechanism.
-
-## After NYC: London ozone and deaths, 2002–2006 (Bhaskaran et al. 2013)
-
-- **Why:** the open paper publishes three rate ratios per 10 µg/m³ ozone, a ready check that shows confounding step by step: 0.991 (0.987–0.994) crude, 1.007 (1.003–1.010) adjusted for season and trend, 1.003 (0.999–1.006) also adjusted for temperature. Int J Epidemiol 2013;42(4):1187, doi:10.1093/ije/dyt092, CC BY-NC 3.0.
-- **Data:** `londondataset2002_2006.dta` (34,540 bytes) in `gasparrini/2013_bhaskaran_IJE_codedata`, also the journal's supplement. Stata format, so it needs converting to CSV, and the conversion recorded.
-- **Terms, our reading:** the paper names no data source and states no data terms. It says the code is published "to reproduce our analyses, along with the dataset itself". The practitioner, 2026-11-03: *"this means to me they are fine with reproducing the results."* Ship it non-commercially with citation, quoting that sentence in NOTICE as the basis, and say it is our reading, not a stated licence. The GitHub repo carries no licence.
-- The app cannot fit the adjusted models yet; show crude comparisons beside the published ratios, as Salmonella does.
-
-## Found 2026-11-03, building NYC
+### Found 2026-11-03, building NYC
 
 - **A wide file is slow to set up.** NYC's daily table has about 100 columns, mostly ready-made lags, all ticked as keys by default, and each untick rebuilds the preview of 3,653 rows: seconds a column. A "select none" for key columns, or a preview of the first rows only, would fix it.
 - **Picking many values in Select rows was not frictionless** (practitioner, 2026-11-03). Done: a range of dates or numbers, and search over a long list. Experiment 171, lab check 32.
 - **Worked example charts were left raw** (practitioner, 2026-11-03: *"That's the reason it's called a "worked" example."*). NYC's chart finished; `tests/worked-example-charts-are-finished.test.mjs` requires every pinned example's chart to carry its own title. Axis labels wait for column metadata. Nigeria's six maps and Oswego's map have no subtitle or source note; not written here, because captions are the practitioner's.
-
-## Next: what the columns mean (practitioner, 2026-11-03)
-
-Design and first measurement in [experiment 172](docs/experiments/172-what-the-columns-mean.md). Describing columns is the practitioner's step.
-
-- A Columns step in Table input: label, unit, description per kept column, as a CSVW table schema with QUDT units.
-- Pre-fill from Stata variable labels (the reader skips them today) and from an imported dictionary (CSVW, Frictionless, or a CSV dictionary mapped by the practitioner); unconfirmed until accepted.
-- **Match a codebook mechanically** against its tables (names, declared codes against values, missing counts) and test it on the three examples that ship metadata: NYC (all 92 agree), London (labels in the file), Salmonella (68 of 82 columns unmatched by name, `sex` as text, `schule`/`ausbildung`/`biolm` values outside the declared coding). The Salmonella codebook is xlsx, which Fieldwork does not read.
-- An undescribed kept column is a finding; declarations travel on the table, reach receipts and figures, make a run stale when edited, and export as a sidecar.
-- Write the Salmonella findings into that example's README data notes when the match is built, so the authored notes can cite them.
-
-## Worked example manuals (practitioner, 2026-11-04)
-
-Experiment 173. The Manual tab is built and NYC has a manual.
-
-- **Play back the build from the manual**: each step in a dialog with Previous, Next and Close, the canvas holding the nodes added so far.
-- Manuals for South London, Oswego, Nigeria and Salmonella, each performed by its from-scratch test.
-- The library heading reads "Node library" and its search "Find a node…"; by the glossary, what it lists are widgets. Not renamed yet.
-
-
-## Regression (practitioner, 2026-11-04)
-
-Built (experiment 167): NYC's 1.061 and Salmonella's 96 and 18 reproduced on the authors' data.
-
-- **Laboratory check**: refit the NYC and Salmonella models independently (statsmodels or R) for parity.
-- **London** (Bhaskaran et al. 2013): its seasonal and temperature terms, then the published 0.991, 1.007 and 1.003.
-- Later, as the design said: conditional logistic regression for individually matched studies, interactions.

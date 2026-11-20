@@ -1,0 +1,39 @@
+# Clip polygons
+
+_Created 2026-11-20 · Updated 2026-11-20_
+
+**Polygons cut to the study area.** Catchments or districts that spill past the reporting area, kept only where
+they fall inside it.
+
+## What it does
+
+It cuts each polygon to the study area. A polygon wholly inside is kept as it is; one across the study area's edge is
+cut along the edge, and only the part inside is kept; one outside is left out. What each polygon carries is kept with
+the part that remains.
+
+## What you connect
+
+| Input | What it takes |
+| --- | --- |
+| **Study area** | the area to clip to |
+| **Polygons** | the polygons to clip |
+
+## How to use it
+
+Connect both inputs; there is nothing to set. **Show me how it works**, under Settings, clips three made-up units, one
+inside, one across the edge and one outside, step by step.
+
+**Result** gives how many polygons the last run kept.
+
+## What it will not do
+
+- **It will not keep a polygon outside the study area**, even one that touches its edge at a single point.
+- **It will not recompute what a polygon carries.** A count or a population stays the whole polygon's, though only
+  part of it is kept: a step after this one that needs the part's share must compute it.
+- **It will not change the study area.**
+- **It does not cut on a projection.** Edges are cut as straight lines in longitude and latitude, which is close
+  enough for a district and not for an area spanning hundreds of kilometres.
+
+## Where it is used
+
+The John Snow examples clip their pump catchments to the illustrative Soho reporting rectangle.

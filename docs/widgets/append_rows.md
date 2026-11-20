@@ -6,9 +6,9 @@ _Created 2026-11-03 · Updated 2026-11-19_
 
 ## What it does
 
-Two or more tables become one, with every row of each, in the order of the ports. Columns are lined up by name. A
-column some tables lack is empty on their rows, and the run says which column, which table and how many rows,
-because empty there means the question was not asked.
+Two or more tables become one, with every row of each, in the order of the ports. Columns are lined up by name, or
+as you line them up under **Columns**. A column some tables lack is empty on their rows, and the run says which
+column, which table and how many rows, because empty there means the question was not asked.
 
 ## What you connect
 
@@ -31,6 +31,23 @@ changes until **Apply**.
 | **Label for rows of** each table | What that column holds on that table's rows |
 | **The labels are numbers**, and **Their unit** | Says the labels are numbers, such as a lag in weeks, so a chart places them as numbers and titles its axis with the unit |
 | **Create a new primary key** | Adds a column numbering every row 1 to N, and makes it the primary key |
+
+### Columns
+
+Once the workflow has run, **Columns** shows one row per column of the stacked table, and for each table the column
+that fills it, or *none*: that table's rows are then empty there.
+
+- **A table's own name for a column.** Choose its column in that table's box, and it is stacked under the row's name.
+  DR Congo's census names its provinces `province`; the population models name theirs `name`. Stacked as they are,
+  the census rows would have no `name`. Choose `province` under `name` in the census's box.
+- **Rename a stacked column** in its first box: every table's column in that row takes the new name.
+- **A suggestion** appears where a table lacks a column and one of its own seems to hold the same names: how many of
+  its names are in the first table's column is shown beside it.
+
+Below, **Before** shows each table as read, with where each column goes, and **After** the stacked table.
+
+A table whose names are the first table's but held under another column stops the step, naming the column to stack
+it under. The first table is the reference: its column names are the ones the others are lined up against.
 
 ### When the old keys would repeat
 
@@ -65,6 +82,7 @@ An estimate's interval, declared by Regression, survives the stacking when every
 ## What it will not do
 
 - Stack tables whose value columns or units differ. They measure different things, and one column cannot mean both.
+- Stack a table whose names are held under another column than the first table's, until you line it up.
 - Use a source column name any table already has, or one label for two tables.
 - Check that the two tables were collected the same way. Two surveys with different questions stack without
   complaint if their value column has one name.
@@ -82,3 +100,12 @@ is asked for. Its last step is the table this step makes from the same rows. Exp
 ### 2026-11-19 · The example's own names (0.3.1)
 
 Show me how it works follows the choice to name each row's table and uses the example's own column and labels, not the person's. Found in use on Hagelloch's *Each case's infector* step.
+
+### 2026-11-20 · Columns lined up in a grid (0.4.0)
+
+Under **Columns**, one row per column of the stacked table, and for each table the column that fills it, or none. A
+stacked column can be renamed, for every table at once, and a table's own column can be stacked under another's name:
+DR Congo's census names its provinces in "province", the population models in "name". Below it, each table as read,
+with where each column goes; the stacked table follows. A table holding the first table's names under another column
+is refused, naming the column to stack it under, where it had been stacked with its names in a column of their own and
+every later step found none. A table whose value column or unit differs is named, with where to change it.

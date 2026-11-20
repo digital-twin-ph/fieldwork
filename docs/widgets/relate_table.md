@@ -256,3 +256,8 @@ stops with. Experiment [223](../experiments/223-a-table-step-shown-on-a-small-ex
 ### 2026-11-19 · The example's own names (0.13.1)
 
 Show me how it works follows the choice to keep unmatched rows and writes the example's own name, "Not known", not the person's, which is about their data. Found in use on Hagelloch's *Each case's infector* step.
+
+### 2026-11-20 · What each table holds, when nothing matches (0.13.2)
+
+When no key of the first table appears in the second, the message names both columns and shows a few keys from each,
+so two kinds of key are seen side by side: DR Congo's 1984 regions beside today's provinces.

@@ -66,3 +66,7 @@ parameters was removed, and Result now reports the cells kept.
 A raster too large to keep is streamed (Raster input, History), and a clip of it would be as large. Clip raster says
 so and points to Sample a raster, which reads a streamed raster over areas or at points.
 
+### 2026-11-20 · The boundary named by its digest (1.3.0)
+
+The receipt names the boundary by the SHA-256 of its GeoJSON, which anyone holding the project can recompute, instead of
+writing out its coordinates.

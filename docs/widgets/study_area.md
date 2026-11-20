@@ -114,6 +114,12 @@ in an outline can meet, and the check asked whether one hole was inside the othe
 other's edge, where a point can read as inside. It now asks from a corner that is not on the other hole. A hole inside
 another hole is still refused.
 
+### 2026-11-20 · Large boundaries quick to choose; the shape named by its digest (0.10.0)
+
+DR Congo's 26 provinces are chosen, applied and reopened in about a second each, where each took 5 to 7 seconds and
+Chrome called the page unresponsive. Every receipt names the shape by the SHA-256 of its GeoJSON instead of writing out
+its coordinates, 4.3 MB for those provinces. The dialog's summary counts several polygons.
+
 ---
 
 *How this widget is built, and the decisions behind it: [docs/widget-specs/study_area.md](../widget-specs/study_area.md).*

@@ -198,7 +198,7 @@
     {
       "id": "urn:fieldwork:widget:buffer_area",
       "nodeType": "buffer_area",
-      "currentVersion": "1.0.0",
+      "currentVersion": "1.1.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -209,18 +209,28 @@
           "version": "1.0.0",
           "path": "widgets/releases/buffer_area/1.0.0.json",
           "sha256": "a298f19fc76f280da7840a03de6372d8d1505838bc99324e671c9dc34ee43cfb"
+        },
+        {
+          "version": "1.1.0",
+          "path": "widgets/releases/buffer_area/1.1.0.json",
+          "sha256": "02c97399fb410b5fde7d50071e257a516307e2c43fc419cd03bbc02c314c83c9"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:buffer_point",
       "nodeType": "buffer_point",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/buffer_point/0.1.0.json",
           "sha256": "7fa9971d05b6edd13202a001d241443c20f9f18a9cb5719ae4f72461ff922969"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/buffer_point/0.2.0.json",
+          "sha256": "42676c05d0a2ebe31c40cc51a7fc6cf6a38ba675d4eaa8ace19b04fe0e9a3336"
         }
       ]
     },
@@ -480,19 +490,24 @@
     {
       "id": "urn:fieldwork:widget:clip_polygons",
       "nodeType": "clip_polygons",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/clip_polygons/0.1.0.json",
           "sha256": "d2a5be0957285aa17eaf2663ac667df04f8907e2fdb676ecdfcef5af1fa4880f"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/clip_polygons/0.2.0.json",
+          "sha256": "fecd3420f2781e2d7ba0066fd78932cb0dd5fce420dadd48d6caa8e8c5f31b1f"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:clip_raster",
       "nodeType": "clip_raster",
-      "currentVersion": "1.2.1",
+      "currentVersion": "1.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -543,6 +558,11 @@
           "version": "1.2.1",
           "path": "widgets/releases/clip_raster/1.2.1.json",
           "sha256": "6036c8ae10cf6663411517a566fea63187e7dfedb562ebe8454c3fd57660bcf7"
+        },
+        {
+          "version": "1.3.0",
+          "path": "widgets/releases/clip_raster/1.3.0.json",
+          "sha256": "d42e6a90b366e61f2434720faf3403d4a2c69e81a0e069162bc439e2936fb7b1"
         }
       ]
     },
@@ -969,7 +989,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.37.0",
+      "currentVersion": "0.38.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1280,6 +1300,11 @@
           "version": "0.37.0",
           "path": "widgets/releases/map_output/0.37.0.json",
           "sha256": "2e600c7a10d5f92ce7a40fb0a30c9a37b6eee332cbdd988a6e2dcd930a96a1b7"
+        },
+        {
+          "version": "0.38.0",
+          "path": "widgets/releases/map_output/0.38.0.json",
+          "sha256": "272720d90d319d82ad79adbd1d83011c27b54f5bfb9be80de098fd44d2395adc"
         }
       ]
     },
@@ -1303,12 +1328,17 @@
     {
       "id": "urn:fieldwork:widget:measure_area",
       "nodeType": "measure_area",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/measure_area/0.1.0.json",
           "sha256": "9fa3708e4e263bc1d639e0efc1987e81189b3208185ab7037bf137ea4ebfbdd5"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/measure_area/0.2.0.json",
+          "sha256": "e7691eafb72a62b51077796ff1f2ae30e4d524853a3a9a512c6f13f1635e8557"
         }
       ]
     },
@@ -1652,7 +1682,7 @@
     {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
-      "currentVersion": "0.13.0",
+      "currentVersion": "0.14.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1758,6 +1788,11 @@
           "version": "0.13.0",
           "path": "widgets/releases/raster_input/0.13.0.json",
           "sha256": "56d52c7b5e0a3af30e46be2f843129c8000b409ab78064dfdd64902cd17d3292"
+        },
+        {
+          "version": "0.14.0",
+          "path": "widgets/releases/raster_input/0.14.0.json",
+          "sha256": "784311dbdf168e3560d0da1ef2b1c56da684cd47c098588f2992088898da3cbc"
         }
       ]
     },
@@ -1877,7 +1912,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.13.1",
+      "currentVersion": "0.13.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -1983,6 +2018,11 @@
           "version": "0.13.1",
           "path": "widgets/releases/relate_table/0.13.1.json",
           "sha256": "d9b8b4fe721f7c168e26b41cd22c8099c2fb88a5414748dbe5cb053d62e103d8"
+        },
+        {
+          "version": "0.13.2",
+          "path": "widgets/releases/relate_table/0.13.2.json",
+          "sha256": "69333f03be192018fb5f8c3597ede31cd21144d3dcce6463ed9d3a8a6d895b8e"
         }
       ]
     },
@@ -2011,7 +2051,7 @@
     {
       "id": "urn:fieldwork:widget:sample_raster",
       "nodeType": "sample_raster",
-      "currentVersion": "0.8.0",
+      "currentVersion": "0.9.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2067,13 +2107,18 @@
           "version": "0.8.0",
           "path": "widgets/releases/sample_raster/0.8.0.json",
           "sha256": "6b211358d4f75debe1ccd1e3f5089617f38308425fb239660c974202adff0615"
+        },
+        {
+          "version": "0.9.0",
+          "path": "widgets/releases/sample_raster/0.9.0.json",
+          "sha256": "6d94cad0a3d29fb29cd0c484192b6c096fde22231e83ab1494e83869c66ec869"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:append_rows",
       "nodeType": "append_rows",
-      "currentVersion": "0.3.1",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2104,6 +2149,11 @@
           "version": "0.3.1",
           "path": "widgets/releases/append_rows/0.3.1.json",
           "sha256": "676d33b9ca8ce4b7c7a27aa93f225cd1828128f18b59edcbe62ef03533211074"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/append_rows/0.4.0.json",
+          "sha256": "18ad577269eefb223c7c2b22fbe8c18039c8c3da8ba2d3727fe888d068c1d2ec"
         }
       ]
     },
@@ -2242,7 +2292,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.9.4",
+      "currentVersion": "0.10.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2323,6 +2373,11 @@
           "version": "0.9.4",
           "path": "widgets/releases/study_area/0.9.4.json",
           "sha256": "3401f2e4c183844a8018e44a3cca4a1607b33e532afee86623e013398f8ae23b"
+        },
+        {
+          "version": "0.10.0",
+          "path": "widgets/releases/study_area/0.10.0.json",
+          "sha256": "8223161eac4872c1a31a501584b6f9f8786dbba6481a4faf3ede6587ebf9c315"
         }
       ],
       "previousNodeTypes": [
@@ -2381,7 +2436,7 @@
     {
       "id": "urn:fieldwork:widget:table_input",
       "nodeType": "table_input",
-      "currentVersion": "0.12.0",
+      "currentVersion": "0.13.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2477,6 +2532,11 @@
           "version": "0.12.0",
           "path": "widgets/releases/table_input/0.12.0.json",
           "sha256": "19469e1db0605434d9f7ac6507d96e4272eee49313135e888d48621691fa6916"
+        },
+        {
+          "version": "0.13.0",
+          "path": "widgets/releases/table_input/0.13.0.json",
+          "sha256": "f4aac383adea08d6eeb33e89b924ee1debcb6c49e97383dbece88884c056cb00"
         }
       ]
     },

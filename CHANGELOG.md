@@ -5,16 +5,37 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.154.0 — In development
 
-- **GHS-POP over a large country is streamed, not refused.** Raster input refused a window past what a tab holds as
-  soon as the raster was chosen, by file or by address, so the streaming Apply does was never reached. It now says the
-  window will be streamed: GHS-POP's 12.3 GB global file over DR Congo's provinces (517,885,446 cells) is applied in
-  about a minute and a half, most of it taking the file's digest.
+- **Census tables in today's units.** DR Congo's only census, of 1984, counted regions that match no map today. It is
+  offered summed to the 26 provinces of 2015, with each province's name as geoBoundaries spells it; the counts as
+  printed are linked. How each 1984 unit was placed, and what that does not establish, are in census-tables.
+- **Append rows lines its tables' columns up in a grid.** One row per column of the stacked table, the column of each
+  table filling it or none, each changeable, with every table before and the stack after. A table holding the first
+  table's names under another column is refused, naming the column to stack it under: DR Congo's census `province`
+  beside the models' `name` had been stacked into two columns, and every later step found no names for the census.
+  A table whose value column or unit differs is named, with where to change it. Append rows 0.4.0.
+- **Sample a raster's unit reaches its table**, so a census stating "people" stacks beside it; the population
+  example's census steps now state "people" too. Sample a raster 0.9.0.
+- **Tabular data keeps a step's choices for its own table.** Given another table, a reopened step starts from that
+  table's defaults; a refused read shows no table beside the refusal; a table from an address reopens read; one value
+  column read wide is advice, not a refusal; the data dictionary picker is under Your file only. Tabular data 0.13.0.
+- **Relate says what each table holds when nothing matches.** Relate 0.13.2.
+- **GHS-POP over a large country is streamed, not refused**, by file or by address: its 12.3 GB global file over DR
+  Congo's provinces (517,885,446 cells) is applied in about a minute and a half, most of it taking the file's digest.
+  A streamed file is chosen again from the run's stop message, and remembered in Chrome and Edge. Configure… always
+  opens. Raster input 0.14.0.
 - **DR Congo's 26 provinces no longer freeze the study area.** Choosing them, applying them and reopening the dialog
-  each took 5 to 7 seconds, long enough for Chrome to call the page unresponsive; each now takes about a second. The
-  dialog's summary counts several polygons correctly.
-- **A receipt names a study area's shape instead of writing it out.** It gives the GeoJSON's format and SHA-256, which
-  anyone holding the project can recompute; DR Congo's provinces were 4.3 MB of text in every receipt that used them.
-- **Tabular data's data dictionary picker is under Your file only.** A census table brings its own dictionary.
+  each took 5 to 7 seconds, long enough for Chrome to call the page unresponsive; each now takes about a second.
+  Study area 0.10.0.
+- **A receipt names a shape instead of writing it out.** It gives the GeoJSON's format and SHA-256, which anyone
+  holding the project can recompute; DR Congo's provinces were 4.3 MB of text in every receipt that used them. Study
+  area, Clip raster 1.3.0, Map 0.38.0 and the four area steps below.
+- **Area around a point, Buffer study area, Calculate area and Clip polygons are on the standard Inspector**, each
+  with Show me how it works drawn on made-up shapes, and each with a manual page. Area around a point 0.2.0, Buffer
+  study area 1.1.0, Calculate area 0.2.0, Clip polygons 0.2.0.
+- **A click on a connection selects it**, where it removed it. The not-ready message names the step and follows what
+  is still missing. Opening a project or workflow says so while it loads, and two choices made quickly open the last.
+- **Inspectors out of app.ts**: Tabular data, Append rows, Relate, Raster input, Clip raster, Sample a raster, Study
+  area and the four area steps, each in its own module.
 
 ## 0.153.0 — 2026-11-20
 

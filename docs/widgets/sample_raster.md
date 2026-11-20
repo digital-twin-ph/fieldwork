@@ -273,3 +273,7 @@ first run failed for that, and was read with positioned reads. A browser's File 
 
 **Not yet measured:** the same in a browser tab, through Raster input's dialog; and read by range from an address.
 
+### 2026-11-20 · The unit reaches the table (0.9.0)
+
+Over areas, the unit stated in **Configure…** is the unit of the table it makes. It had been kept in a label only, so
+Append rows refused a census that stated "people" beside it.

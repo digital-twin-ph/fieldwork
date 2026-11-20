@@ -1,6 +1,6 @@
 # Raster input
 
-_Created 2026-11-09 · Updated 2026-11-19_
+_Created 2026-11-09 · Updated 2026-11-20_
 
 **A window of a GeoTIFF or NetCDF grid around the study area, kept in the project.** A population surface, a terrain model, a geoid.
 
@@ -124,6 +124,14 @@ over holding GHS-POP's cells in 4 bytes, which would have changed its values in 
 a raster. Checked on a small GeoTIFF read by terrio (`tests/raster-stream.test.mjs`): the blocks equal their cells'
 sums and means. On DR Congo in Node.js, the copy in blocks of 10 took 6.3 s (Sample a raster's manual, History). **Not yet
 measured in a browser tab.**
+
+### 2026-11-20 · Streamed by file or by address; chosen again from the stop message (0.14.0)
+
+A window past what a tab holds, 166.4 million cells or 1.1 GB, is streamed rather than refused, by file or by address:
+GHS-POP's 12.3 GB global file over DR Congo's provinces is applied in about a minute and a half. A window saved before
+under the old limit is still read and drawn. When a run needs a streamed file again, its stop message offers to choose
+it; Chrome and Edge remember the file across sessions. **Configure…** always opens, even where the kept bytes cannot be
+read on this device.
 
 ---
 

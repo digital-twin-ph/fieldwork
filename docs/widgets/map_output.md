@@ -174,6 +174,10 @@ being rewritten by every run.
   map reads, and none of them changes a number. See the layers you connected, and say in the
   source note what the map is about.
 
+### 2026-11-20 · A study area named by its digest (0.38.0)
+
+The receipt names a study area's shape by the SHA-256 of its GeoJSON instead of writing out its coordinates.
+
 ---
 
 *How this widget is built, what it assumes, and what has been measured about it:

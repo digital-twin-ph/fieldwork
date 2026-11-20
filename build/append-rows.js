@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g}from"./chunks/chunk-CWTWMSID.js";import"./chunks/chunk-IPALJ3QU.js";import"./chunks/chunk-KVMUXFPB.js";export{a as appendLabel,b as appendPort,d as appendRows,g as appendSentence,c as appendTableCount,f as appendTables,e as valueMismatch};
+import{a,b,c,d,e,f,g,h,i,j,k,l}from"./chunks/chunk-DZDCGJFN.js";import"./chunks/chunk-IPALJ3QU.js";import"./chunks/chunk-KVMUXFPB.js";export{a as appendLabel,b as appendPort,d as appendRows,i as appendSentence,c as appendTableCount,h as appendTables,j as columnGrid,k as placeColumn,l as renameStacked,f as stackedUnder,g as unstackedColumns,e as valueMismatch};
 //# sourceMappingURL=append-rows.js.map

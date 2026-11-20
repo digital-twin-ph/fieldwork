@@ -1,6 +1,6 @@
 # Tabular data
 
-_Created 2026-11-02 · Updated 2026-11-19_
+_Created 2026-11-02 · Updated 2026-11-20_
 
 **A source.** It reads a CSV, Excel or Stata file into a table.
 
@@ -160,6 +160,22 @@ It does not choose between rows that disagree. The table stays as read until a l
 
 ## History
 
+### 2026-11-20 · Census tables in today's units; a step's choices for its own table (0.13.0)
+
+DR Congo is offered as its 1984 counts summed to today's 26 provinces, with each province's name as geoBoundaries
+spells it, so the counts relate to a map of today's provinces; the 1984 units (KIVU, SHABA) match none of them. The
+counts as printed are linked, not offered.
+
+A step reopened and given another table starts from that table's defaults. The key and value columns it was saved
+with had been carried over by name, so a column that had been a key could not be taken as a value. A step keeps its
+choices for its own table: the same address, or a file chosen again. A refused read no longer shows the last table
+read beside the refusal.
+
+A table read from an address reopens read, where it opened empty until fetched again. One value column read wide is
+advice, not a refusal, so a census's total can be named as the value. The value column is guessed only where it holds
+numbers. The data dictionary picker is under **Your file** only: a census table brings its own. The second name box
+reads *Name for the column holding variable values*.
+
 ### 2026-11-20 · Where the table comes from, as tabs; census tables (0.12.0)
 
 The dialog's sources are three tabs: **Your file**, **From an address** (until now **Or fetch from a URL**, a section
@@ -168,16 +184,9 @@ the shape, the keys and the columns, is the same for all three.
 
 **Census tables** reads a country's counts and its data dictionary from the census-tables repository at a pinned
 commit, checked by digest. Three countries to begin with: Botswana (2022), DR Congo (1984) and Rwanda (2022).
-DR Congo is offered as its 1984 counts summed to today's 26 provinces, so they relate to a map of today's provinces;
-the 1984 units (KIVU, SHABA) match none of them. The counts as printed are linked, not offered.
 
 The heading no longer repeats the widget's name when the step still has it: "Tabular data", not "Tabular data ·
 Tabular data".
-
-A step reopened and given another table starts from that table's defaults. The key and value columns it was saved
-with were carried over by name, so a column that had been a key could not be taken as a value. A step keeps its
-choices for its own table: the same address, or a file chosen again. A refused read no longer shows the last table
-read beside the refusal.
 
 ### 2026-11-19 · A large table no longer stalls the dialog (0.11.1)
 

@@ -14,8 +14,10 @@
 <urn:fieldwork:widget:alert> a fw:WidgetDefinition; fw:nodeType "alert"; rdfs:label "Heat alert".
 <urn:fieldwork:widget:apply_ruleset> a fw:WidgetDefinition; fw:nodeType "apply_ruleset"; rdfs:label "Apply ruleset";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/apply_ruleset.md>.
-<urn:fieldwork:widget:buffer_area> a fw:WidgetDefinition; fw:nodeType "buffer_area"; rdfs:label "Buffer study area".
-<urn:fieldwork:widget:buffer_point> a fw:WidgetDefinition; fw:nodeType "buffer_point"; rdfs:label "Area around a point".
+<urn:fieldwork:widget:buffer_area> a fw:WidgetDefinition; fw:nodeType "buffer_area"; rdfs:label "Buffer study area";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/buffer_area.md>.
+<urn:fieldwork:widget:buffer_point> a fw:WidgetDefinition; fw:nodeType "buffer_point"; rdfs:label "Area around a point";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/buffer_point.md>.
 <urn:fieldwork:widget:case_series> a fw:WidgetDefinition; fw:nodeType "case_series"; rdfs:label "Cases by period";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/case_series.md>.
 <urn:fieldwork:widget:centers> a fw:WidgetDefinition; fw:nodeType "centers"; rdfs:label "Cooling centers".
@@ -24,7 +26,8 @@
   fw:defaultFigureSection "Results".
 <urn:fieldwork:widget:clip_points_to_area> a fw:WidgetDefinition; fw:nodeType "clip_points_to_area"; rdfs:label "Keep points inside the area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/clip_points_to_area.md>.
-<urn:fieldwork:widget:clip_polygons> a fw:WidgetDefinition; fw:nodeType "clip_polygons"; rdfs:label "Clip polygons".
+<urn:fieldwork:widget:clip_polygons> a fw:WidgetDefinition; fw:nodeType "clip_polygons"; rdfs:label "Clip polygons";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/clip_polygons.md>.
 <urn:fieldwork:widget:clip_raster> a fw:WidgetDefinition; fw:nodeType "clip_raster"; rdfs:label "Clip raster";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/clip_raster.md>.
 <urn:fieldwork:widget:compare_point_sets> a fw:WidgetDefinition; fw:nodeType "compare_point_sets"; rdfs:label "Compare point sets".
@@ -54,7 +57,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>;
   fw:defaultFigureSection "Results".
 <urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".
-<urn:fieldwork:widget:measure_area> a fw:WidgetDefinition; fw:nodeType "measure_area"; rdfs:label "Calculate area".
+<urn:fieldwork:widget:measure_area> a fw:WidgetDefinition; fw:nodeType "measure_area"; rdfs:label "Calculate area";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/measure_area.md>.
 <urn:fieldwork:widget:measure_distance> a fw:WidgetDefinition; fw:nodeType "measure_distance"; rdfs:label "Measure distance";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/measure_distance.md>.
 <urn:fieldwork:widget:micro_workflow> a fw:WidgetDefinition; fw:nodeType "micro_workflow"; rdfs:label "Micro-workflow".

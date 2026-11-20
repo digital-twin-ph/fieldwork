@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.154.0 — In development
+## 0.154.0 — 2026-11-20
 
 - **What a workflow already states is carried, not typed again.** A DR Congo workflow copied from Botswana's met, one
   after another, a census unit typed by hand, names keyed in another spelling, a column stacked under the wrong name, and

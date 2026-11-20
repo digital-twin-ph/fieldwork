@@ -5536,10 +5536,9 @@ function renderInspector(){
   });
   // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).
   if(n.type==='raster_input'&&n.params.asset){const asset=n.params.asset,host=optionalElement('[data-raster-presence]');
-    if(host)void readPDF(asset.sha256).then(held=>{
-      if(held||!host.isConnected)return;
-      host.innerHTML=`<p class="standard-result standard-result-warning" data-raster-not-here>Not on this device yet: read it again in Configure\u2026</p>`;
-    });}
+    const notHere=(why:string)=>{if(host?.isConnected)host.innerHTML=`<p class="standard-result standard-result-warning" data-raster-not-here>${esc(why)}</p>`;};
+    if(host)void readPDF(asset.sha256).then(held=>{if(!held)notHere('Not on this device yet: read it again in Configure\u2026');},
+      error=>notHere(`Kept, but not readable on this device (${errorMessage(error)}): choose the file again in Configure\u2026`));}
   optionalElement('#preview-raster-clip')?.addEventListener('click',async e=>{
     const button=e.currentTarget as HTMLButtonElement,label=button.textContent||'',baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Loading raster preview…';
     try{

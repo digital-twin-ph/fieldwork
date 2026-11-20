@@ -3,12 +3,13 @@ import {validateRasterProvenance,rasterProvenanceN3} from './raster-provenance.j
 import type {WorkflowNode} from './types.js';
 import type {AreaValue,Receipt} from './results.js';
 import type {RasterAsset,RasterGrid} from './raster.js';
-import {inspectRaster,readRasterWindow,rasterWindow,clipRaster,MAX_RASTER_CELLS,rasterFileByteLimit,rasterOverhang,overhangSentence} from './raster.js';
+import {inspectRaster,readRasterWindow,rasterWindow,clipRaster,rasterOverhang,overhangSentence} from './raster.js';
+import {SAVED_WINDOW_CELLS,SAVED_WINDOW_BYTES} from './raster-limits.js';
 import {verifiedProjectFile} from './evidence-storage.js';
 import {geometryWKT,CRS84,geometryByReference} from './study-area.js';
 export function validateRasterAsset(asset:RasterAsset):void{
   validateRasterProvenance(asset?.provenance);const m=asset?.metadata;
-  if(!asset||asset.mediaType!=='image/tiff'||!/^[a-f0-9]{64}$/.test(asset.sha256)||!Number.isSafeInteger(asset.bytes)||asset.bytes<8||asset.bytes>rasterFileByteLimit()||typeof asset.filename!=='string'||asset.filename.length>200||!m||!Number.isSafeInteger(m.width)||!Number.isSafeInteger(m.height)||m.width<1||m.height<1||m.width*m.height>MAX_RASTER_CELLS||m.crs!=='EPSG:4326'||m.rasterType!=='PixelIsArea'||!Array.isArray(m.origin)||m.origin.length!==2||!m.origin.every(Number.isFinite)||!Array.isArray(m.resolution)||m.resolution.length!==2||!(m.resolution[0]>0&&m.resolution[1]<0)||!Array.isArray(m.bounds)||m.bounds.length!==4||!m.bounds.every(Number.isFinite)||!asset.source||typeof asset.source.filename!=='string'||!Number.isSafeInteger(asset.source.bytes)||!Array.isArray(asset.window)||asset.window.length!==4||!asset.window.every(Number.isSafeInteger)||JSON.stringify(asset).length>200000)throw new Error('Invalid retained raster asset or metadata.');
+  if(!asset||asset.mediaType!=='image/tiff'||!/^[a-f0-9]{64}$/.test(asset.sha256)||!Number.isSafeInteger(asset.bytes)||asset.bytes<8||asset.bytes>SAVED_WINDOW_BYTES||typeof asset.filename!=='string'||asset.filename.length>200||!m||!Number.isSafeInteger(m.width)||!Number.isSafeInteger(m.height)||m.width<1||m.height<1||m.width*m.height>SAVED_WINDOW_CELLS||m.crs!=='EPSG:4326'||m.rasterType!=='PixelIsArea'||!Array.isArray(m.origin)||m.origin.length!==2||!m.origin.every(Number.isFinite)||!Array.isArray(m.resolution)||m.resolution.length!==2||!(m.resolution[0]>0&&m.resolution[1]<0)||!Array.isArray(m.bounds)||m.bounds.length!==4||!m.bounds.every(Number.isFinite)||!asset.source||typeof asset.source.filename!=='string'||!Number.isSafeInteger(asset.source.bytes)||!Array.isArray(asset.window)||asset.window.length!==4||!asset.window.every(Number.isSafeInteger)||JSON.stringify(asset).length>200000)throw new Error('Invalid retained raster asset or metadata.');
   const derived=[m.origin[0],m.origin[1]+m.height*m.resolution[1],m.origin[0]+m.width*m.resolution[0],m.origin[1]];
   if(!m.resolution.every(Number.isFinite)||m.bands!==1||m.bounds.some((v,i)=>Math.abs(v-derived[i])>1e-9)||![m.blockWidth,m.blockHeight,m.bytesPerPixel].every(v=>Number.isSafeInteger(v)&&v>0)||(asset.source.url?asset.source.bytes<0||!/^https?:\/\/\S{1,2000}$/.test(asset.source.url):asset.source.bytes<8)||asset.source.filename.length>255||(asset.source.sha256!==undefined&&!/^[a-f0-9]{64}$/.test(asset.source.sha256))||!Number.isFinite(asset.source.lastModified)||!asset.source.metadata||asset.window[0]<0||asset.window[1]<0||Math.ceil((asset.window[2]-asset.window[0])/(asset.streamed?.factor??1))!==m.width||Math.ceil((asset.window[3]-asset.window[1])/(asset.streamed?.factor??1))!==m.height||(asset.streamed!==undefined&&(!Number.isSafeInteger(asset.streamed.factor)||asset.streamed.factor<2||!['sum','mean'].includes(asset.streamed.how))))throw new Error('Raster bounds, dimensions or source window are inconsistent.');
 }
@@ -84,6 +85,11 @@ export async function fileAgainByClick(asset:RasterAsset,say?:(text:string)=>voi
 export const rereadable=(asset:RasterAsset):boolean=>!!asset.source.url||/^[a-f0-9]{64}$/.test(asset.source.sha256??'');
 /** READ THE KEPT WINDOW AGAIN, from its address or from the file chosen, and refuse it unless it is the window kept. */
 export async function rereadWindow(asset:RasterAsset,file?:File,say?:(text:string)=>void):Promise<Uint8Array<ArrayBuffer>>{
+  // A WINDOW KEPT WHOLE PAST TODAY'S LIMITS IS NOT READ WHOLE AGAIN (2026-11-20): DR Congo's 2.1 GB could not be read back.
+  const {overWindowLimit}=await import('./raster.js');
+  if(!asset.streamed&&overWindowLimit(asset.source.metadata,asset.window))
+    throw new Error(`This window was kept whole, ${(asset.bytes/1e9).toFixed(1)} GB, more than a tab reads back. Choose ${asset.source.filename} `
+      +'above and Apply: a window this size is now streamed, a reduced copy kept and the full cells read at each run.');
   const {inspectRaster,readRasterWindow,encodeRaster}=await import('./raster.js');
   const {contentHash}=await import('./project-files.js');
   let from:File|string;
@@ -106,9 +112,11 @@ export async function rereadWindow(asset:RasterAsset,file?:File,say?:(text:strin
   return bytes;
 }
 export async function loadRaster(asset:RasterAsset,area:AreaValue):Promise<RasterGrid>{
-  validateRasterAsset(asset);rasterWindow(asset.metadata,area.boundary);
+  // A SAVED WINDOW IS NOT REFUSED BY TODAY'S KEEPING LIMITS (2026-11-20): one kept whole before them is said to be off the
+  // device, and Raster input reads it again, streamed.
+  validateRasterAsset(asset);rasterWindow(asset.metadata,area.boundary,0,false);
   const grid=await loadRasterAsset(asset);
-  rasterWindow(grid.metadata,area.boundary);
+  rasterWindow(grid.metadata,area.boundary,0,false);
   return {...grid,boundary:structuredClone(area.boundary)};
 }
 /** Preview may need to repair a boundary outside the retained window. */

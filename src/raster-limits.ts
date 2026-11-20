@@ -14,3 +14,7 @@ export const MAX_DECODE_BYTES=1_100_000_000;
  *  5 MB of local storage, and refused a province at 100 m long before the cell cap could (2026-11-12). A window is kept
  *  at its source's precision, so a 4-byte source reaches the cell cap first and an 8-byte one this. */
 export const rasterFileByteLimit=():number=>MAX_DECODE_BYTES+(1<<20);
+/** A WINDOW SAVED BEFORE 2026-11-20 may hold up to the limits of then: its record is still read, its step still drawn, and
+ *  Configure… opens on it to read the source again, streamed. Only the keeping of a new window uses the limits above. */
+export const SAVED_WINDOW_CELLS=518_900_000;
+export const SAVED_WINDOW_BYTES=2_124_000_000+(1<<20);

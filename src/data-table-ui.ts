@@ -11,6 +11,7 @@ import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSo
 import {contentHash} from './project-files.js';
 import {dictionarySheets} from './columns-dialog.js';
 import censusCatalogue from '../examples/census-tables/catalogue.json';
+import {GAUGES,GAUGES_RAW,gaugeChoices} from './tide-gauges-ui.js';
 import {guessMapping,readDictionary,proposeFrom,checkDictionary,sameNames,fileRows,type TableDictionary,type DictionaryCheck,type ColumnDeclarations} from './column-metadata.js';
 
 const FILE_BYTES=MAX_TABLE_FILE_BYTES;
@@ -183,7 +184,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<div class="result-switch table-source-tabs" role="tablist" aria-label="Where the table comes from">'
     +'<button type="button" role="tab" id="table-tab-file" data-table-tab="file" aria-controls="table-file-part">Your file</button>'
     +'<button type="button" role="tab" id="table-tab-remote" data-table-tab="remote" aria-controls="table-remote">From an address</button>'
-    +'<button type="button" role="tab" id="table-tab-census" data-table-tab="census" aria-controls="table-census-part">Census tables</button></div>'
+    +'<button type="button" role="tab" id="table-tab-census" data-table-tab="census" aria-controls="table-census-part">Census tables</button>'
+    +'<button type="button" role="tab" id="table-tab-gauges" data-table-tab="gauges" aria-controls="table-gauges-part">Tide gauges</button></div>'
     +'<section id="table-file-part" role="tabpanel" aria-labelledby="table-tab-file">'
     +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta">'
     // ONLY FOR A FILE OF YOUR OWN (2026-11-20): a census table brings its dictionary, and a table from an address can be
@@ -204,6 +206,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<p class="muted">The project keeps where it came from, not the rows, so a shared project does not republish it.</p></section>'
     // THE CENSUS TABLES, pinned at a commit of digital-twin-ph/census-tables: each country's counts and its data dictionary.
     +'<section id="table-census-part" role="tabpanel" aria-labelledby="table-tab-census" hidden>'+censusChoices()+'<p id="table-census-says" class="muted" role="status"></p></section>'
+    // THE TIDE GAUGES, pinned at a commit of digital-twin-ph/coastal-sea-level: each country's index of its gauges.
+    +'<section id="table-gauges-part" role="tabpanel" aria-labelledby="table-tab-gauges" hidden>'+gaugeChoices(esc)+'<p id="table-gauges-says" class="muted" role="status"></p></section>'
     +'<label class="field-label" for="table-shape">Shape of the file</label><select id="table-shape">'
     +'<option value="wide">Wide \u00b7 one row per subject, a column per variable</option>'
     +'<option value="long">Long \u00b7 one row per observation, one value column</option></select>'
@@ -561,7 +565,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     const wide=shape()==='wide';
     let keyNames:string[];
     if(wide){
-      keyNames=headers.filter((_,i)=>!numeric[i]);
+      // AN IDENTIFIER IS A SUBJECT, NOT A VARIABLE, though it is written in digits (2026-11-20): PSMSL's station IDs read
+      // as a measurement to average. A column named id, or ending in _id, _code or _no, is a key by its name.
+      const identifier=(h:string)=>/(^|_)(id|code|no)$/i.test(h);
+      keyNames=headers.filter((h,i)=>!numeric[i]||identifier(h));
       if(!keyNames.length)keyNames=headers.slice(0,1);
     }else{
       const valueAt=guessValueColumn(headers,parsed.rows);
@@ -644,23 +651,33 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   const dropCensusDictionary=()=>{if(dictionaryFromCensus){dictionaryFile=undefined;dictionaryFromCensus=false;censusSays.textContent='';}};
   // A TABLE FROM AN ADDRESS CARRIES NO DICTIONARY FROM ANOTHER TAB: one chosen under Your file is for that file.
   q<HTMLButtonElement>('#table-fetch').onclick=()=>{dropCensusDictionary();dictionaryFile=undefined;dictionaryInput.value='';dictionarySays.textContent='';void fetchURL(false);};
-  // A CENSUS TABLE: its counts by address, and its data dictionary beside it, each checked against the digest pinned.
-  for(const button of dialog.querySelectorAll<HTMLButtonElement>('[data-census]'))button.onclick=async()=>{
-    const c=CENSUS.countries.find(x=>x.iso3===button.dataset.census);if(!c)return;
-    error.hidden=true;dropCensusDictionary();
-    if(c.columns){
+  // A PINNED TABLE, from Census tables or Tide gauges: the table by address, and its data dictionary beside it, each checked
+  // against the digest pinned with it.
+  const gaugesSays=q<HTMLElement>('#table-gauges-says');
+  const readPinned=async(raw:string,table:{path:string;sha256:string},columns:{path:string;sha256:string}|undefined,name:string,says:HTMLElement)=>{
+    error.hidden=true;dropCensusDictionary();gaugesSays.textContent='';
+    if(columns){
       try{
-        const got=await fetchOrDeviceCopy(CENSUS.raw+c.columns.path,{fresh:false});
-        if(got.digest!==c.columns.sha256)throw new Error(`${c.columns.path} is not the file Fieldwork pinned: its digest differs.`);
+        const got=await fetchOrDeviceCopy(raw+columns.path,{fresh:false});
+        if(got.digest!==columns.sha256)throw new Error(`${columns.path} is not the file Fieldwork pinned: its digest differs.`);
         const sheets=dictionarySheets('columns.csv',got.bytes);
-        dictionaryFile={name:c.columns.path,bytes:got.bytes,sheets};dictionaryFromCensus=true;
-        censusSays.textContent=`${c.country}: its data dictionary, ${c.columns.path}, has ${sheets[0]?.rows.length??0} variables. Kept with the table; what it says is proposed for you to accept.`;
+        dictionaryFile={name:columns.path,bytes:got.bytes,sheets};dictionaryFromCensus=true;
+        says.textContent=`${name}: its data dictionary, ${columns.path}, has ${sheets[0]?.rows.length??0} variables. Kept with the table; what it says is proposed for you to accept.`;
       }catch(e){fail(e);return;}
     }
-    urlInput.value=CENSUS.raw+c.counts.path;
+    urlInput.value=raw+table.path;
     await fetchURL(false);
-    if(remote&&remote.sha256!==c.counts.sha256){remote=undefined;result=undefined;save.disabled=true;
-      fail(new Error(`${c.counts.path} is not the file Fieldwork pinned: its digest differs.`));}
+    if(remote&&remote.sha256!==table.sha256){remote=undefined;result=undefined;save.disabled=true;
+      fail(new Error(`${table.path} is not the file Fieldwork pinned: its digest differs.`));}
+  };
+  for(const button of dialog.querySelectorAll<HTMLButtonElement>('[data-census]'))button.onclick=async()=>{
+    const c=CENSUS.countries.find(x=>x.iso3===button.dataset.census);if(!c)return;
+    await readPinned(CENSUS.raw,c.counts,c.columns,c.country,censusSays);
+  };
+  // A COUNTRY'S TIDE GAUGES: its stations table, and the dictionary every country's shares.
+  for(const button of dialog.querySelectorAll<HTMLButtonElement>('[data-gauges]'))button.onclick=async()=>{
+    const c=GAUGES.countries.find(x=>x.iso3===button.dataset.gauges);if(!c)return;
+    await readPinned(GAUGES.raw,c.table,GAUGES.columns,`${c.country}'s tide gauges`,gaugesSays);
   };
   // WHICH TAB: the one the table came through when a step is reopened, otherwise the one last used on this device.
   const tabs=[...dialog.querySelectorAll<HTMLButtonElement>('[data-table-tab]')];
@@ -673,7 +690,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     t.onkeydown=event=>{const at=tabs.indexOf(t),next=event.key==='ArrowRight'?tabs[(at+1)%tabs.length]:event.key==='ArrowLeft'?tabs[(at+tabs.length-1)%tabs.length]:undefined;
       if(next){event.preventDefault();showTab(next.dataset.tableTab!);next.focus();}};}
   const remembered=(()=>{try{return localStorage.getItem(TAB_KEY);}catch{return null;}})();
-  showTab(existing?.remote?.url?(existing.remote.url.startsWith(CENSUS_RAW)?'census':'remote'):existing?'file'
+  showTab(existing?.remote?.url?(existing.remote.url.startsWith(CENSUS_RAW)?'census':existing.remote.url.startsWith(GAUGES_RAW)?'gauges':'remote'):existing?'file'
     :tabs.some(t=>t.dataset.tableTab===remembered)?remembered!:'file',false);
   // A TABLE FROM AN ADDRESS REOPENS READ (2026-11-20): it opened empty until fetched again, so its columns, value name and
   // keys could not be changed, and what showed was stale. Its copy on this device is read, checked by digest, and the

@@ -900,12 +900,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.13.0",
+   "version": "0.14.0",
    "released": "2026-11-20",
    "changes": [
     {
      "kind": "minor",
-     "description": "A census table whose units are not today's is offered in today's: DR Congo's 1984 counts summed to the 26 provinces of 2015, with geoBoundaries' spelling, the printed counts linked. A step reopened and given another table starts from that table's defaults, where its key and value columns had been carried over by name; a refused read no longer shows the last table beside the refusal. A table from an address reopens read. One value column read wide is advice, not a refusal, and the value column is guessed only where it holds numbers. The data dictionary picker is under Your file only. The Inspector moves out of app.ts. The value's unit is taken from the data dictionary where it states one for the columns read, and said so."
+     "description": "Tide gauges, a fourth source: the coastal countries in digital-twin-ph/coastal-sea-level over a map of every gauge drawn with no network, each country's index of its gauges read with the shared data dictionary at a pinned commit and checked by digest. An index, not the archives' records. A column named id, or ending in _id, _code or _no, is offered as a key in a wide read though written in digits."
     }
    ],
    "breaking": false,

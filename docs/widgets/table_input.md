@@ -14,7 +14,7 @@ unknown, never read as zero.
 The Inspector says in one sentence what the step reads: the file, its shape, its value columns and its unit. **Configure…**
 opens the import.
 
-1. Choose where the table comes from, in the tabs **Your file**, **From an address** or **Census tables**, and say
+1. Choose where the table comes from, in the tabs **Your file**, **From an address**, **Census tables** or **Tide gauges**, and say
    whether it is wide or long.
 2. Tick the key columns and choose the value column or columns.
 3. Under **What identifies a row?**, mark any primary and secondary keys.
@@ -74,6 +74,31 @@ each unit was placed and what the placing does not establish. Rwanda's and Botsw
 with the name geoBoundaries gives it in `geoboundaries_name`: Rwanda's are the census's own, and 8 of Botswana's are
 spelled differently.
 
+
+## Tide gauges
+
+The tab **Tide gauges** lists the coastal countries in
+[coastal-sea-level](https://github.com/digital-twin-ph/coastal-sea-level), with a map of every gauge above them: filled
+where PSMSL computes a long-term trend, hollow where it holds the record only. The map is drawn here, with no network.
+
+Choose a country. Its index of its gauges is read, one row per station, with the data dictionary every country shares,
+fetched at the commit this version of Fieldwork names and checked against its digest. Each row gives the station's ID
+and name at PSMSL, its position, the years its record covers and how complete it is, the trend PSMSL computes where it
+computes one, its numbers at UHSLC, and how fast the land moves at the nearest GNSS station within 15 km, where one is.
+
+**An index, not the records.** The monthly and annual means are at PSMSL, and the hourly and daily values at UHSLC;
+neither states terms that allow copying them, so each row links to the station's page, where its record is.
+
+**What a gauge measures.** A tide gauge measures the sea against the land it stands on. Where the land sinks, the gauge
+shows more rise than the sea's own; where it rises, less. PSMSL's trends carry no correction for it, and PSMSL says they
+are not for planning or policy. A GNSS station near a gauge is not the gauge: the ground can move at different rates a
+few kilometres apart. A station on PSMSL's *metric* list is never to be used for a trend.
+
+![How heights on a low coast are measured: local mean sea level sits above the geoid by an offset measured at a levelled tide gauge, and a projected sea level is that baseline plus the rise.](../images/vertical-datums.svg)
+
+Cite the archives when using a row: PSMSL (Holgate et al., 2013) and the date of its extraction; UHSLC (Caldwell et
+al., 2015); SONEL ULR7a (Gravelle et al., 2023), whose velocities are CC BY 4.0. The repository's README gives each
+citation in full.
 The step reopens on the tab its table came through. A new step opens on the tab last used on this device.
 
 ## Keys
@@ -161,6 +186,12 @@ after (`fw:CellEdit`). Experiment 214.
 It does not choose between rows that disagree. The table stays as read until a later step changes it.
 
 ## History
+
+### 2026-11-20 · Tide gauges (0.14.0)
+
+The dialog's sources gain **Tide gauges**: the coastal countries in coastal-sea-level, over a map of every gauge, each
+country's index of its gauges read with the shared data dictionary at a pinned commit, checked by digest. A column
+named *id*, or ending in *_id*, *_code* or *_no*, is offered as a key in a wide read, though written in digits.
 
 ### 2026-11-20 · Census tables in today's units; a step's choices for its own table (0.13.0)
 

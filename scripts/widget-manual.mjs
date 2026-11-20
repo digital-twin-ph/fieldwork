@@ -93,6 +93,13 @@ export function toHTML(markdown){
   for(const raw of markdown.split('\n')){
     const line=raw.trimEnd();
     if(!line.trim()){closePara();closeList();closeTable();continue;}
+    // A DIAGRAM FROM docs/images, its own SVG inlined when the page is compiled (2026-11-20), so it shows offline in the
+    // application. Only an .svg in that folder, written for this project; anything else is left as text.
+    const figure=/^!\[([^\]]+)\]\(\.\.\/images\/([\w.-]+\.svg)\)$/.exec(line.trim());
+    if(figure){closePara();closeList();closeTable();
+      const svg=readFileSync(join(root,'docs/images',figure[2]),'utf8').replace(/<\?xml[^>]*>\s*/,'');
+      if(!/^<svg[\s>]/.test(svg.trim())||/<script|on\w+=/i.test(svg))throw new Error(`docs/images/${figure[2]} is not a plain SVG`);
+      out.push(`<figure class="manual-figure">${svg.trim()}<figcaption>${inline(figure[1])}</figcaption></figure>`);continue;}
     const heading=/^(#{1,4})\s+(.*)$/.exec(line);
     if(heading){closePara();closeList();closeTable();const level=heading[1].length+1;out.push(`<h${level}>${inline(heading[2])}</h${level}>`);continue;}
     if(/^\|/.test(line)){

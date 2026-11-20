@@ -1,0 +1,1292 @@
+{
+ "repository": "https://github.com/digital-twin-ph/coastal-sea-level",
+ "commit": "4477298619318683de4401c403d57e596a79c0ba",
+ "raw": "https://raw.githubusercontent.com/digital-twin-ph/coastal-sea-level/4477298619318683de4401c403d57e596a79c0ba/",
+ "columns": {
+  "path": "columns.csv",
+  "bytes": 2297,
+  "sha256": "5998daedc3bff86a0d47789b0f394e09ed2b989246c75c23d6ad8fa4435bf741"
+ },
+ "countries": [
+  {
+   "iso3": "AGO",
+   "country": "Angola",
+   "stations": 3,
+   "withTrend": 0,
+   "rlr": 0,
+   "lastYear": 1975,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "AGO/stations.csv",
+    "bytes": 697,
+    "sha256": "74c3680eb616f249808328f040e261e650defee56458346970c85bcf802dfc4c"
+   },
+   "gauges": [
+    [
+     13.567,
+     -12.333,
+     "LOBITO",
+     false
+    ],
+    [
+     12.15,
+     -15.2,
+     "MOCAMEDES",
+     false
+    ],
+    [
+     13.233,
+     -8.783,
+     "LUANDA",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "CIV",
+   "country": "Côte d'Ivoire",
+   "stations": 2,
+   "withTrend": 0,
+   "rlr": 1,
+   "lastYear": 1988,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "CIV/stations.csv",
+    "bytes": 582,
+    "sha256": "9d8421d830f345d31530adf44318af0756b5622b155d9faf5ea8b3c575fea415"
+   },
+   "gauges": [
+    [
+     -4,
+     5.25,
+     "ABIDJAN-VRIDI",
+     false
+    ],
+    [
+     -4,
+     5.25,
+     "ABIDJAN",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "CMR",
+   "country": "Cameroon",
+   "stations": 1,
+   "withTrend": 0,
+   "rlr": 0,
+   "lastYear": 2011,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "CMR/stations.csv",
+    "bytes": 470,
+    "sha256": "7d5c64449e843510aff906a90acf9eb35fbc4ad39f2d795ea298433bc3d227c2"
+   },
+   "gauges": [
+    [
+     9.126,
+     4.006,
+     "PORT SONARA",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "COG",
+   "country": "Congo",
+   "stations": 2,
+   "withTrend": 0,
+   "rlr": 1,
+   "lastYear": 2014,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "COG/stations.csv",
+    "bytes": 594,
+    "sha256": "1fc89da38ceb6d76ab4978fb5b26ded50318758a8eabbfda9075e63fd53111ba"
+   },
+   "gauges": [
+    [
+     11.833,
+     -4.783,
+     "POINTE NOIRE II",
+     false
+    ],
+    [
+     11.833,
+     -4.783,
+     "POINTE NOIRE",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "CPV",
+   "country": "Cabo Verde",
+   "stations": 5,
+   "withTrend": 0,
+   "rlr": 2,
+   "lastYear": 2024,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "CPV/stations.csv",
+    "bytes": 993,
+    "sha256": "61c074a3466be62c092be2ae9893a7309d7019c8b5da72276c44cdaedc01103f"
+   },
+   "gauges": [
+    [
+     -22.983,
+     16.75,
+     "PALMEIRA",
+     false
+    ],
+    [
+     -25,
+     16.883,
+     "PORTO GRANDE (ST. VINCENT) 2",
+     false
+    ],
+    [
+     -24.983,
+     16.867,
+     "PORTO GRANDE (ST. VINCENT)",
+     false
+    ],
+    [
+     -23.508,
+     14.908,
+     "PRAIA B",
+     false
+    ],
+    [
+     -23.5,
+     14.917,
+     "PRAIA A",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "DJI",
+   "country": "Djibouti",
+   "stations": 2,
+   "withTrend": 0,
+   "rlr": 0,
+   "lastYear": 2016,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "DJI/stations.csv",
+    "bytes": 592,
+    "sha256": "3544472973e6529c75d705ce104312e4b31a012abf277685cb32a34a14eb769f"
+   },
+   "gauges": [
+    [
+     43.139,
+     11.608,
+     "DJIBOUTI II",
+     false
+    ],
+    [
+     43.15,
+     11.583,
+     "DJIBOUTI",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "EGY",
+   "country": "Egypt",
+   "stations": 7,
+   "withTrend": 1,
+   "rlr": 2,
+   "lastYear": 2015,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "EGY/stations.csv",
+    "bytes": 1177,
+    "sha256": "156f8e279a562f031f46b7614675ced2bbdb3c4fdf93c6c3feb4dc646929f9b5"
+   },
+   "gauges": [
+    [
+     29.917,
+     31.217,
+     "ALEXANDRIA",
+     true
+    ],
+    [
+     32.567,
+     29.933,
+     "SUEZ (PORT TAUFIG)",
+     false
+    ],
+    [
+     32.3,
+     31.25,
+     "PORT SAID",
+     false
+    ],
+    [
+     32.5,
+     30.267,
+     "KABRET",
+     false
+    ],
+    [
+     29.924,
+     31.211,
+     "ALEXANDRIA II",
+     false
+    ],
+    [
+     32.35,
+     30.417,
+     "DEVERSOIR",
+     false
+    ],
+    [
+     32.567,
+     30.167,
+     "GENEFFE",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "GHA",
+   "country": "Ghana",
+   "stations": 3,
+   "withTrend": 1,
+   "rlr": 2,
+   "lastYear": 2012,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "GHA/stations.csv",
+    "bytes": 693,
+    "sha256": "8e97173c6bf3ea7eb09da3978f41421b9b5567bb9ae808547490d528b268d78e"
+   },
+   "gauges": [
+    [
+     -1.745,
+     4.885,
+     "TAKORADI",
+     true
+    ],
+    [
+     0,
+     5.617,
+     "TEMA",
+     false
+    ],
+    [
+     -0.2,
+     5.533,
+     "ACCRA",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "GIN",
+   "country": "Guinea",
+   "stations": 1,
+   "withTrend": 0,
+   "rlr": 0,
+   "lastYear": 1994,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "GIN/stations.csv",
+    "bytes": 463,
+    "sha256": "aa214c71bf9c717471228b861cc61fa5a277828e3b4898e5f83ef4c8396a46b6"
+   },
+   "gauges": [
+    [
+     -13.717,
+     9.517,
+     "CONAKRY",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "GNQ",
+   "country": "Equatorial Guinea",
+   "stations": 1,
+   "withTrend": 0,
+   "rlr": 0,
+   "lastYear": 1963,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "GNQ/stations.csv",
+    "bytes": 465,
+    "sha256": "d1828397cf2d5895798d7c0ba1795540131362f7e3092ee6b62e2fc2a24ba3b2"
+   },
+   "gauges": [
+    [
+     8.8,
+     3.733,
+     "SANTA ISABEL",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "KEN",
+   "country": "Kenya",
+   "stations": 5,
+   "withTrend": 1,
+   "rlr": 2,
+   "lastYear": 2024,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "KEN/stations.csv",
+    "bytes": 950,
+    "sha256": "d1e4455baf5107015c5e70a53f77820f5eb19313a7475b02bd72da50bbea0b07"
+   },
+   "gauges": [
+    [
+     39.65,
+     -4.067,
+     "MOMBASA",
+     false
+    ],
+    [
+     39.65,
+     -4.067,
+     "MOMBASA II",
+     false
+    ],
+    [
+     40.903,
+     -2.272,
+     "LAMU B",
+     true
+    ],
+    [
+     40.9,
+     -2.267,
+     "LAMU",
+     false
+    ],
+    [
+     40.9,
+     -2.267,
+     "LAMU A",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "MAR",
+   "country": "Morocco",
+   "stations": 3,
+   "withTrend": 0,
+   "rlr": 1,
+   "lastYear": 1963,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "MAR/stations.csv",
+    "bytes": 692,
+    "sha256": "cd435456881b3b164d8d093196cc0f4324a62ccd8a88b72d54ac1f3028bd2e68"
+   },
+   "gauges": [
+    [
+     -3.917,
+     35.25,
+     "VILLA SANJURJO",
+     false
+    ],
+    [
+     -7.6,
+     33.6,
+     "CASABLANCA",
+     false
+    ],
+    [
+     -10.2,
+     29.367,
+     "SIDI IFNI",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "MDG",
+   "country": "Madagascar",
+   "stations": 3,
+   "withTrend": 0,
+   "rlr": 1,
+   "lastYear": 1999,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "MDG/stations.csv",
+    "bytes": 694,
+    "sha256": "31d67f06ca682557dadb30e19c4c80f47bd93496a991d19dcde6f772fd4c182f"
+   },
+   "gauges": [
+    [
+     48.283,
+     -13.4,
+     "NOSY-BE",
+     false
+    ],
+    [
+     48.3,
+     -13.4,
+     "NOSY-BE II",
+     false
+    ],
+    [
+     43.667,
+     -23.383,
+     "TULEAR",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "MOZ",
+   "country": "Mozambique",
+   "stations": 9,
+   "withTrend": 0,
+   "rlr": 2,
+   "lastYear": 2013,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "MOZ/stations.csv",
+    "bytes": 1412,
+    "sha256": "31f8b59cd26ea6e8ca436efad8ddffd9f1f9a0961b86cb2fe56997769db53516"
+   },
+   "gauges": [
+    [
+     32.567,
+     -25.967,
+     "MAPUTO",
+     false
+    ],
+    [
+     40.483,
+     -12.967,
+     "PEMBA",
+     false
+    ],
+    [
+     40.683,
+     -14.467,
+     "NACALA",
+     false
+    ],
+    [
+     34.833,
+     -19.817,
+     "BEIRA",
+     false
+    ],
+    [
+     40.733,
+     -15.033,
+     "MOZAMBIQUE ISLAND",
+     false
+    ],
+    [
+     40.484,
+     -12.967,
+     "PEMBA II",
+     false
+    ],
+    [
+     39.967,
+     -16.233,
+     "ANTONIO ENES",
+     false
+    ],
+    [
+     35.377,
+     -23.867,
+     "IMHAMBANE II",
+     false
+    ],
+    [
+     35.383,
+     -23.867,
+     "INHAMBANE",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "MRT",
+   "country": "Mauritania",
+   "stations": 1,
+   "withTrend": 0,
+   "rlr": 0,
+   "lastYear": 2015,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "MRT/stations.csv",
+    "bytes": 472,
+    "sha256": "414324d91690fdce3b157584486bec575f488e3b28c0efee5b2cc79573ac2c3a"
+   },
+   "gauges": [
+    [
+     -16.037,
+     17.99,
+     "NOUAKCHOTT",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "MUS",
+   "country": "Mauritius",
+   "stations": 4,
+   "withTrend": 2,
+   "rlr": 4,
+   "lastYear": 2025,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "MUS/stations.csv",
+    "bytes": 856,
+    "sha256": "5828a7677c62edebbfff945635b37daadd4dba8a1b77dd03005326240e9eff3f"
+   },
+   "gauges": [
+    [
+     57.5,
+     -20.15,
+     "PORT LOUIS II",
+     true
+    ],
+    [
+     63.417,
+     -19.667,
+     "RODRIGUES IS",
+     true
+    ],
+    [
+     57.5,
+     -20.15,
+     "PORT LOUIS",
+     false
+    ],
+    [
+     57.75,
+     -20.367,
+     "GRAND PORT",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "NAM",
+   "country": "Namibia",
+   "stations": 2,
+   "withTrend": 0,
+   "rlr": 2,
+   "lastYear": 2015,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "NAM/stations.csv",
+    "bytes": 579,
+    "sha256": "b2f2507de1d6d0eef6219052c56a72f5032ba0ef1034a720bb4e4d71a1d4c65a"
+   },
+   "gauges": [
+    [
+     14.499,
+     -22.949,
+     "WALVIS BAY",
+     false
+    ],
+    [
+     15.155,
+     -26.643,
+     "LUDERITZ",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "NGA",
+   "country": "Nigeria",
+   "stations": 6,
+   "withTrend": 0,
+   "rlr": 1,
+   "lastYear": 1996,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "NGA/stations.csv",
+    "bytes": 1019,
+    "sha256": "a2fec8354e8e8b124f19f18f588385adbf824f6a62c6dccd9b2936bec330f43c"
+   },
+   "gauges": [
+    [
+     3.4,
+     6.417,
+     "LAGOS",
+     false
+    ],
+    [
+     5.35,
+     5.35,
+     "FORCADOS",
+     false
+    ],
+    [
+     7.183,
+     4.45,
+     "BONNY",
+     false
+    ],
+    [
+     8.317,
+     4.967,
+     "CALABAR",
+     false
+    ],
+    [
+     3.417,
+     6.417,
+     "LAGOS II",
+     false
+    ],
+    [
+     7,
+     4.767,
+     "PORT HARCOURT",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "PHL",
+   "country": "Philippines",
+   "stations": 35,
+   "withTrend": 4,
+   "rlr": 26,
+   "lastYear": 2025,
+   "reviewed": {
+    "last": "2026-11-19",
+    "nextDue": "2027-05-19"
+   },
+   "table": {
+    "path": "PHL/stations.csv",
+    "bytes": 4768,
+    "sha256": "5d62cb0e0bd558e8e975c605837a37a5ca467e6f4de172d299d24a901fb72577"
+   },
+   "gauges": [
+    [
+     120.967,
+     14.583,
+     "MANILA, S. HARBOR",
+     false
+    ],
+    [
+     123.917,
+     10.3,
+     "CEBU",
+     true
+    ],
+    [
+     123.75,
+     13.15,
+     "LEGASPI, ALBAY",
+     true
+    ],
+    [
+     125.633,
+     7.083,
+     "DAVAO, DAVAO GULF",
+     true
+    ],
+    [
+     120.3,
+     16.617,
+     "SAN FERNANDO, LA UNION",
+     false
+    ],
+    [
+     125,
+     11.25,
+     "TACLOBAN, LEYTE",
+     false
+    ],
+    [
+     121,
+     6.067,
+     "JOLO, SULU",
+     true
+    ],
+    [
+     122.1,
+     18.383,
+     "PORT IRENE",
+     false
+    ],
+    [
+     125.5,
+     9.783,
+     "SURIGAO",
+     false
+    ],
+    [
+     121.083,
+     12.333,
+     "SAN JOSE",
+     false
+    ],
+    [
+     118.733,
+     9.75,
+     "PUERTO PRINCESA, PALAWAN",
+     false
+    ],
+    [
+     121.6,
+     14.667,
+     "REAL QUEZON",
+     false
+    ],
+    [
+     124.233,
+     13.583,
+     "VIRAC, CATANDUANES",
+     false
+    ],
+    [
+     122.8,
+     10.517,
+     "PULUPANDAN, NEGROS OCCIDENTAL",
+     false
+    ],
+    [
+     123.433,
+     7.817,
+     "PAGADIAN CITY",
+     false
+    ],
+    [
+     125.15,
+     6.1,
+     "MAKAR, GENERAL SANTOS CITY",
+     false
+    ],
+    [
+     124.667,
+     8.5,
+     "MACABALAN PORT, CAGAYAN DE ORO",
+     false
+    ],
+    [
+     118.133,
+     9.35,
+     "BALINTANG, QUEZON, PALAWAN",
+     false
+    ],
+    [
+     126.217,
+     6.95,
+     "MATI, DAVAO ORIENTAL",
+     false
+    ],
+    [
+     121.867,
+     13.533,
+     "BALANACAN, MARINDUQUE",
+     false
+    ],
+    [
+     126.2,
+     9.083,
+     "TANDAG, SURIGAO DEL SUR",
+     false
+    ],
+    [
+     121.933,
+     11.95,
+     "CATICLAN MALAY AKLAN",
+     false
+    ],
+    [
+     120.483,
+     17.983,
+     "CURRIMAO ILOCOS NORTE",
+     false
+    ],
+    [
+     124.733,
+     9.25,
+     "MAMBAJAO CAMGUIN",
+     false
+    ],
+    [
+     122.067,
+     6.917,
+     "ZAMBOANGA CITY",
+     false
+    ],
+    [
+     120.25,
+     14.767,
+     "SUBIC ZAMBALES",
+     false
+    ],
+    [
+     120.2,
+     13.817,
+     "LUBANG, OCCIDENTAL MINDORO",
+     false
+    ],
+    [
+     122.567,
+     10.7,
+     "ILOILO, PANAY",
+     false
+    ],
+    [
+     120.2,
+     12.017,
+     "PORT USON, BUSUANGA ISLAND",
+     false
+    ],
+    [
+     119.983,
+     10.583,
+     "ARACELI, DUMARIN ISLAND",
+     false
+    ],
+    [
+     122.067,
+     6.9,
+     "ZAMBOANGA, MINDANAO",
+     false
+    ],
+    [
+     123.583,
+     12.667,
+     "PORT SAN MIGUEL, TIKAO",
+     false
+    ],
+    [
+     123.783,
+     12.417,
+     "BATUAN BAY, TIKAO",
+     false
+    ],
+    [
+     124.367,
+     12.65,
+     "BIRI ISLAND, SAMAR",
+     false
+    ],
+    [
+     117.067,
+     7.983,
+     "BALABAC",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "SDN",
+   "country": "Sudan",
+   "stations": 1,
+   "withTrend": 0,
+   "rlr": 1,
+   "lastYear": 1994,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "SDN/stations.csv",
+    "bytes": 462,
+    "sha256": "fd0171e8eeb17dd94c35baa2885ae1d99a364a8777dfb946ee1db2dda5502e44"
+   },
+   "gauges": [
+    [
+     37.117,
+     19.633,
+     "PORT SUDAN",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "SEN",
+   "country": "Senegal",
+   "stations": 7,
+   "withTrend": 0,
+   "rlr": 2,
+   "lastYear": 2022,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "SEN/stations.csv",
+    "bytes": 1347,
+    "sha256": "f59d810fdee03b81e9e5e302c549da894f90212248874e61c352fd46f66af72e"
+   },
+   "gauges": [
+    [
+     -17.417,
+     14.683,
+     "DAKAR 2",
+     false
+    ],
+    [
+     -17.45,
+     14.633,
+     "DAKAR",
+     false
+    ],
+    [
+     -17.433,
+     14.667,
+     "DAKAR D",
+     false
+    ],
+    [
+     -17.4,
+     14.667,
+     "GOREE",
+     false
+    ],
+    [
+     -17.433,
+     14.667,
+     "DAKAR A",
+     false
+    ],
+    [
+     -17.433,
+     14.667,
+     "DAKAR B",
+     false
+    ],
+    [
+     -17.433,
+     14.667,
+     "DAKAR C",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "SLE",
+   "country": "Sierra Leone",
+   "stations": 1,
+   "withTrend": 0,
+   "rlr": 0,
+   "lastYear": 1927,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "SLE/stations.csv",
+    "bytes": 461,
+    "sha256": "644b9b77fa31782148243d6a10b2047a22da1188c12ad7e8f0cb4a3957756bea"
+   },
+   "gauges": [
+    [
+     -13.233,
+     8.5,
+     "FREETOWN",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "STP",
+   "country": "São Tomé and Príncipe",
+   "stations": 2,
+   "withTrend": 0,
+   "rlr": 0,
+   "lastYear": 2010,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "STP/stations.csv",
+    "bytes": 581,
+    "sha256": "a94330ce8fe9c36ac48c0cf9962111beae835276ed484c1be0dfbd4802cffc9b"
+   },
+   "gauges": [
+    [
+     6.738,
+     0.349,
+     "SAO TOME II",
+     false
+    ],
+    [
+     6.517,
+     0.017,
+     "SAO TOME",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "SYC",
+   "country": "Seychelles",
+   "stations": 5,
+   "withTrend": 1,
+   "rlr": 1,
+   "lastYear": 2024,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "SYC/stations.csv",
+    "bytes": 1052,
+    "sha256": "7c17521b87e3c331f84d09e6feabe7718f176fab642e3bd08b165a489eab85c0"
+   },
+   "gauges": [
+    [
+     55.533,
+     -4.667,
+     "POINT LA RUE",
+     true
+    ],
+    [
+     55.467,
+     -4.617,
+     "PORT VICTORIA",
+     false
+    ],
+    [
+     55.467,
+     -4.617,
+     "PORT VICTORIA-B",
+     false
+    ],
+    [
+     46.217,
+     -9.4,
+     "ALDABRA",
+     false
+    ],
+    [
+     55.767,
+     -4.35,
+     "PRASLIN",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "TZA",
+   "country": "Tanzania",
+   "stations": 4,
+   "withTrend": 1,
+   "rlr": 1,
+   "lastYear": 2022,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "TZA/stations.csv",
+    "bytes": 852,
+    "sha256": "bb2dee7bf789335c610799706b3f2b44c60687a0f002d1214bc7e3ee52683aa2"
+   },
+   "gauges": [
+    [
+     39.183,
+     -6.15,
+     "ZANZIBAR",
+     true
+    ],
+    [
+     40.183,
+     -10.283,
+     "MTWARA",
+     false
+    ],
+    [
+     39.283,
+     -6.817,
+     "DAR ES SALAAM",
+     false
+    ],
+    [
+     39.1,
+     -5.067,
+     "TANGA",
+     false
+    ]
+   ]
+  },
+  {
+   "iso3": "ZAF",
+   "country": "South Africa",
+   "stations": 16,
+   "withTrend": 0,
+   "rlr": 13,
+   "lastYear": 2022,
+   "reviewed": {
+    "last": "2026-11-20",
+    "nextDue": "2027-05-20"
+   },
+   "table": {
+    "path": "ZAF/stations.csv",
+    "bytes": 2212,
+    "sha256": "43a3beba075cf2fdcc58dbbd18fedee3aee9d838e56a162b8ff16e85701843dd"
+   },
+   "gauges": [
+    [
+     18.44,
+     -34.188,
+     "SIMONS BAY",
+     false
+    ],
+    [
+     31.051,
+     -29.874,
+     "DURBAN",
+     false
+    ],
+    [
+     25.63,
+     -33.951,
+     "PORT ELIZABETH",
+     false
+    ],
+    [
+     18.35,
+     -34.05,
+     "HOUT BAY",
+     false
+    ],
+    [
+     18.435,
+     -33.905,
+     "CAPE TOWN (GRANGER BAY)",
+     false
+    ],
+    [
+     27.932,
+     -33.027,
+     "EAST LONDON",
+     false
+    ],
+    [
+     19.233,
+     -34.433,
+     "HERMANUS",
+     false
+    ],
+    [
+     23.046,
+     -34.049,
+     "KNYSNA",
+     false
+    ],
+    [
+     22.135,
+     -34.179,
+     "MOSSEL BAY",
+     false
+    ],
+    [
+     16.868,
+     -29.257,
+     "PORT NOLLOTH",
+     false
+    ],
+    [
+     32.079,
+     -28.812,
+     "RICHARDS BAY",
+     false
+    ],
+    [
+     18.367,
+     -33.783,
+     "ROBBEN ISLAND",
+     false
+    ],
+    [
+     18,
+     -33.067,
+     "SALAMANDER",
+     false
+    ],
+    [
+     17.961,
+     -33.023,
+     "SALDANHA BAY",
+     false
+    ],
+    [
+     17.983,
+     -32.717,
+     "STOMPNEUS BAY",
+     false
+    ],
+    [
+     18.433,
+     -33.917,
+     "TABLE BAY HARBOUR",
+     false
+    ]
+   ]
+  }
+ ]
+}

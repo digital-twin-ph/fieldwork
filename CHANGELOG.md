@@ -5,6 +5,12 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.155.0 — In development
 
+- **Tide gauges in Tabular data.** A fourth tab: the 26 coastal countries in coastal-sea-level over a map of their 131
+  gauges, filled where PSMSL computes a trend, drawn with no network. Choosing a country reads its index of its gauges,
+  one row per station, with the shared data dictionary, checked against what this version names. An index, not the
+  records, which are at PSMSL and UHSLC. Its manual section shows what a gauge measures with the datum diagram; a manual
+  page can now carry a diagram from the project's images. A column named *id* or ending in *_id* is a key in a wide read.
+  Tabular data 0.14.0.
 - **TODO**: the threads 0.154.0 left, and where the list's items stand after it.
 
 ## 0.154.0 — 2026-11-20

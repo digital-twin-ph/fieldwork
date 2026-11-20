@@ -61,6 +61,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 1. Tabular data's sources as tabs (2026-11-20): Your file, From an address, Census tables, Tide gauges with its overview
    map, and DHIS2's export; manual pages for the census and tide-gauge sources; the five example manuals' fetch steps;
    with the study area picker reading the boundaries repository, one gate.
+1a. Stress tests of every table operation (2026-11-20): a battery of made-up tables, each built around one gotcha (names, values, shape, keys, chains), through all 21 table steps; refusals name the step, nothing missing reads as zero, nothing hangs.
+1b. Experiment [226](docs/experiments/226-table-operations-as-challenges.md), table operations as challenges: `example-table-operations`, one challenge per workflow, Walk me through or Solve it, scored at each run.
 2. Raster streaming for GHS-POP over DR Congo: [GHS-POP over DR Congo is refused](#ghs-pop-over-dr-congo-is-refused-8-byte-cells-found-2026-11-19-streaming-decided-the-same-day).
 3. Experiment 225, WebGPU as an accelerator: [WebGPU as an accelerator](#webgpu-as-an-accelerator-never-a-requirement-225-asked-2026-11-19).
 4. The agent-based model compared with Hagelloch's recorded curve (experiment 199, option 4, chosen 2026-11-19): [item 29](#29-an-agent-based-model-in-the-browser-checked-against-starsim).

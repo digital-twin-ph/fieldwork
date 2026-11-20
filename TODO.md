@@ -1377,6 +1377,16 @@ Signing in to the demonstration server is the practitioner's step: its address i
 the rules this assistant follows, so the assistant does not type its demonstration password. Nothing downloaded without
 asking.
 
+**Measured 2026-11-20, headers only, no sign-in.** `play.dhis2.org` now redirects to `im.dhis2.org/public/instances`, a
+JavaScript list of instances; `play.im.dhis2.org/dev` answers. Asked from `https://digital-twin-ph.github.io` and from
+`http://localhost:4199`, its `/api/system/info` sent **no `Access-Control-Allow-Origin`**, on a GET and on the
+preflight a browser sends before an `Authorization` header. So a Fieldwork page cannot read it: the demonstration
+servers do not list Fieldwork's address. DHIS2 lists allowed addresses in its CORS whitelist (System Settings, Access),
+which a server's administrator sets. A country's own server would have to add Fieldwork's address; on a demonstration
+server that is an administrator's change, and it would not survive the server's reset. Not established: whether a
+signed-in request differs (it should not, since the browser stops at the preflight), and which stable instances exist.
+Raised with the practitioner the same day, for a DHIS2 tab in Tabular data beside Census tables.
+
 ### From Nigeria, 2026-11-02 ([162](docs/experiments/162-polygons-are-records.md))
 
 - **Declare `MAX_TABLE_ROWS` and `MAX_LAYER_VERTICES` in `widgets/caps.json`**, with measured evidence.

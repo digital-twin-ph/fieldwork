@@ -19,6 +19,9 @@ pub mod scan;
 pub mod abm;
 pub mod declared;
 
+/// A raster totalled over areas, one strip of rows at a time. Streaming, 2026-11-19.
+pub mod zonal;
+
 fn ratio(numerator: f64, denominator: f64) -> f64 {
     if denominator > 0.0 {
         numerator / denominator

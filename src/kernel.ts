@@ -37,6 +37,10 @@ export interface Kernel {
   // through decl_ptr and reads decl_run's count unsigned.
   decl_prepare(n:number,days:number,nets:number,steps:number,states:number):number; decl_ptr(which:number):number;
   decl_run(seed:bigint,index:number,susceptible:number,infected:number,infectious:number):number;
+  // A raster totalled over areas, one strip of rows at a time (src/raster-stream.ts, 2026-11-19).
+  zonal_prepare(areas:number,edges:number,width:number,strip:number,bins:number,collect:number):number;
+  zonal_ptr(which:number):number; zonal_begin(mode:number):number;
+  zonal_rows(first:number,rows:number,values:number,mode:number,noData:number,hasNoData:number):number;
 }
 const bytes=Uint8Array.from(atob(KERNEL_BASE64),character=>character.charCodeAt(0));
 export const kernel=(await WebAssembly.instantiate(bytes,{})).instance.exports as unknown as Kernel;

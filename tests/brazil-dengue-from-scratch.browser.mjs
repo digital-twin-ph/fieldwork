@@ -9,7 +9,7 @@ import {serveRange} from './fixtures/s5p-fixture.mjs';
  *  The table is an extract of DATASET_MULTIMODAL_V8 (CC BY 4.0) committed to the example's repository, and the manual
  *  fetches it from raw.githubusercontent.com at a fixed commit. This test answers that URL from the checkout beside
  *  this repository, by path, so it reads the bytes the commit holds without the network. The boundaries come from
- *  geoBoundaries live, as a practitioner's would. BRAZIL_EXPORT saves the project for the example repository. */
+ *  geoBoundaries' recorded copy where one is saved (recorded-copies.mjs), and live otherwise. BRAZIL_EXPORT saves the project for the example repository. */
 test.use({serviceWorkers:'block'});
 
 const REPO=new URL('../../example-2024-brazil-dengue/',import.meta.url);

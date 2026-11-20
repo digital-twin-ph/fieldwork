@@ -10,6 +10,7 @@
  *  are drawn as circles on a canvas, in their colour and fill, and the map says so: the shape is the one thing lost. */
 import L from 'leaflet';
 import {markPath,MARK_HALO,type LayerShape} from './presentation.js';
+import {INTERACTIVE_MARKS_LIMIT} from './point-layers.js';
 
 export interface GlMark {
   lon:number; lat:number;
@@ -32,7 +33,11 @@ export class GlGroup extends L.Layer {
 }
 
 let workerSet=false;
-const ICON_LAYER='fieldwork-marks';
+/** CIRCLES AND ICONS ARE DRAWN APART (2026-11-19). MapLibre lays out an icon for every mark, and past about 100,000 that
+ *  layout never finished; its circle layer drew 250,000 in 24 s. So circles, the default mark, are a circle layer over a
+ *  halo layer, and only the other shapes are icons. */
+const HALO_LAYER='fieldwork-marks-halo',CIRCLE_LAYER='fieldwork-marks-circles',ICON_LAYER='fieldwork-marks';
+const LAYERS=[HALO_LAYER,CIRCLE_LAYER,ICON_LAYER] as const;
 
 export class GlMarks {
   private marks:GlMark[]=[];
@@ -65,14 +70,28 @@ export class GlMarks {
     Promise.all([import('maplibre-gl'),import('@maplibre/maplibre-gl-leaflet')]).then(([maplibre])=>{
       if(this.disposed)return;
       if(!workerSet){maplibre.setWorkerUrl(new URL('./maplibre-gl-worker.mjs',import.meta.url).href);workerSet=true;}
+      // PAST THE LIMIT FOR ICONS, every mark is a circle, in its colour and fill, and the map says so.
+      const icons=this.marks.filter(m=>m.shape!=='circle').length;
+      this.asCircles=icons>INTERACTIVE_MARKS_LIMIT;
+      if(this.asCircles)this.options.say(`${icons.toLocaleString('en')} marks of shapes other than a circle are more than the interactive map draws as shapes `
+        +`(${INTERACTIVE_MARKS_LIMIT.toLocaleString('en')}), so they are drawn as circles. The static plot draws their shapes.`);
       const data={type:'FeatureCollection' as const,features:this.marks.map((m,i)=>({type:'Feature' as const,
         geometry:{type:'Point' as const,coordinates:[m.lon,m.lat]},
-        properties:{i,icon:this.iconKey(m),group:m.group,date:m.date}}))};
+        properties:{i,circle:this.asCircles||m.shape==='circle',icon:this.iconKey(m),group:m.group,date:m.date,
+          r:m.radius,fill:m.fill??'#000000',filled:m.fill?m.fillOpacity:0,stroke:m.stroke}}))};
+      const halo=this.options.halo;
       const layer=(L as unknown as {maplibreGL:(o:unknown)=>L.Layer&{getMaplibreMap:()=>import('maplibre-gl').Map}}).maplibreGL({
         pane:this.options.pane,interactive:false,
-        style:{version:8,sources:{marks:{type:'geojson',data}},layers:[{id:ICON_LAYER,type:'symbol',source:'marks',
-          layout:{'icon-image':['get','icon'],'icon-allow-overlap':true,'icon-ignore-placement':true,
-            'symbol-sort-key':['get','i'],'symbol-z-order':'source'},filter:this.filter()}]}});
+        // Points need no detail past zoom 12: the source is cut there, not at 18, which ran the tab out of memory at 150,000.
+        style:{version:8,sources:{marks:{type:'geojson',data,maxzoom:12,buffer:0}},layers:[
+          {id:HALO_LAYER,type:'circle',source:'marks',filter:this.filter(HALO_LAYER),
+            paint:{'circle-radius':['get','r'],'circle-opacity':0,'circle-stroke-width':halo?2.6:0,'circle-stroke-color':MARK_HALO}},
+          {id:CIRCLE_LAYER,type:'circle',source:'marks',filter:this.filter(CIRCLE_LAYER),
+            paint:{'circle-radius':['-',['get','r'],0.75],'circle-color':['get','fill'],'circle-opacity':['get','filled'],
+              'circle-stroke-width':1.5,'circle-stroke-color':['get','stroke']}},
+          {id:ICON_LAYER,type:'symbol',source:'marks',filter:this.filter(ICON_LAYER),
+            layout:{'icon-image':['get','icon'],'icon-allow-overlap':true,'icon-ignore-placement':true,
+              'symbol-sort-key':['get','i'],'symbol-z-order':'source'}}]}});
       layer.addTo(this.map);
       const gl=layer.getMaplibreMap();
       if(!gl){layer.remove();this.drawFallback('The graphics renderer could not start');return;}
@@ -80,7 +99,7 @@ export class GlMarks {
       // EACH MARK'S IMAGE MADE WHEN FIRST NEEDED. MapLibre 6 asks a resolver; its `styleimagemissing` event no longer fires.
       const resolve=(id:string)=>{const image=this.icon(id);if(image&&!gl.hasImage(id))gl.addImage(id,image.data,{pixelRatio:image.ratio});};
       gl.setMissingStyleImageResolver(id=>{resolve(id);});
-      gl.on('error',()=>{/* a missing image or tile is reported by MapLibre and never stops the other marks */});
+      gl.on('error',e=>{console.warn('fieldwork marks:',(e as unknown as {error?:{message?:string}}).error?.message??e);});
       this.map.on('click',this.onClick);
       // DRAWN, said on the map's element once MapLibre has finished its first frame of the marks.
       gl.once('idle',()=>{if(!this.disposed)this.map.getContainer().dataset.marksDrawn='gpu';});
@@ -93,18 +112,23 @@ export class GlMarks {
     const gl=this.gl;if(!gl)return;
     const at=this.map.latLngToContainerPoint(e.latlng),pad=this.map.getSize().multiplyBy(0.1);
     const x=at.x+pad.x,y=at.y+pad.y;
-    const found=gl.queryRenderedFeatures([[x-6,y-6],[x+6,y+6]],{layers:[ICON_LAYER]});
+    const found=gl.queryRenderedFeatures([[x-6,y-6],[x+6,y+6]],{layers:[CIRCLE_LAYER,ICON_LAYER]});
     const top=found[0];if(!top)return;
     const mark=this.marks[Number(top.properties?.i)];if(!mark)return;
     L.popup().setLatLng([mark.lat,mark.lon]).setContent(mark.popup).openOn(this.map);
   };
 
-  private filter():unknown{
+  private asCircles=false;
+  private filter(layer:typeof LAYERS[number]):unknown{
+    const shape=layer===ICON_LAYER?['!',['get','circle']]:['get','circle'];
+    return ['all',shape,this.shown()];
+  }
+  private shown():unknown{
     const groups:unknown=['in',['get','group'],['literal',[...this.visible]]];
     return this.day?['all',groups,['any',['==',['get','date'],''],['<=',['get','date'],this.day]]]:groups;
   }
   private refilter(){
-    if(this.gl?.getLayer(ICON_LAYER))this.gl.setFilter(ICON_LAYER,this.filter() as never);
+    for(const layer of LAYERS)if(this.gl?.getLayer(layer))this.gl.setFilter(layer,this.filter(layer) as never);
     if(this.fallback)for(const [key,group] of this.fallback){
       const on=this.visible.has(key);
       if(on&&!this.map.hasLayer(group))group.addTo(this.map);

@@ -65,9 +65,9 @@ export const LABEL_CEILING=24;
  *  figure looks the same; only the marks' individual names are given up. widgets/caps.json, merged-marks. */
 export const MERGED_MARKS_FROM=2_000;
 
-/** HOW MANY MARKS THE INTERACTIVE MAP DRAWS, measured 2026-11-19 (widgets/caps.json, interactive-marks): 100,000 drew in
- *  9 s; at 150,000 and 200,000 the tab crashed. Past it the interactive map draws none of the large layers and says so;
- *  the static plot draws them. */
+/** HOW MANY MARKS OF A SHAPE OTHER THAN A CIRCLE THE INTERACTIVE MAP DRAWS AS SHAPES, measured 2026-11-19
+ *  (widgets/caps.json, interactive-marks): 100,000 drew in 11 s; at 150,000 MapLibre's layout of the icons never finished.
+ *  Circles are drawn another way, to the record limit. Past this, every mark is drawn as a circle, and the map says so. */
 export const INTERACTIVE_MARKS_LIMIT=100_000;
 
 /** One layer's marks, collected by style and written as one path each, in the order each style first appeared. */

@@ -1963,11 +1963,11 @@ fw:capValueInForce a owl:DatatypeProperty;
   rdfs:label "interactive-marks";
   fw:capKind "artefact";
   fw:capValue 100000;
-  fw:capUnit "marks";
+  fw:capUnit "marks of a shape other than a circle";
   fw:capBasis "measured";
-  fw:capEvidence "Measured 2026-11-19 in Chromium on the development Mac, tests/measure-point-count.browser.mjs (MEASURE_POINTS, MEASURE_VIA=file): points spread over about a degree around Kinshasa, inside a drawn study area, run on their own to a static map, an interactive map and a table, each timed from Run to the figure on screen. Large layers drawn by MapLibre GL: 10,000 marks in 1.5 s, 50,000 in 5.8 s, 100,000 in 11 s. At 150,000 and at 200,000 the tab crashed. Before the graphics card drew them, one Leaflet marker each: 10,000 in 21 s, 50,000 in 155 s.";
-  fw:capRefuses "Nothing. Past it, the interactive map draws none of the large layers and says so; the static plot draws them.";
-  fw:capLiftTest "Find what crashes the tab at 150,000 (the source's tiling at every zoom is the first suspect) and measure again.".
+  fw:capEvidence "Measured 2026-11-19 in Chromium on the development Mac, tests/measure-point-count.browser.mjs (MEASURE_POINTS, MEASURE_VIA=file): points spread over about a degree around Kinshasa, inside a drawn study area, run on their own to a static map, an interactive map and a table, each timed from Run to the figure on screen. Large layers drawn by MapLibre GL: 10,000 marks in 1.5 s, 50,000 in 5.8 s, 100,000 in 11 s. At 150,000 and 200,000 the tab crashed while MapLibre's source prepared the points to zoom 18; cut at zoom 12, nothing was drawn, the layout of an icon per mark never finishing. Circles drawn with MapLibre's circle layer: 150,000 in 13 s, 250,000 in 24 s, so circles have no limit of their own below the record limit. Before the graphics card drew them, one Leaflet marker each: 10,000 in 21 s, 50,000 in 155 s.";
+  fw:capRefuses "Nothing. Past it, marks of other shapes are drawn as circles in their colour, and the map says so; the static plot draws their shapes.";
+  fw:capLiftTest "Draw the other shapes another way than an icon per mark (a shape drawn in the shader, as the circle layer draws circles) and measure again.".
 
 <urn:fieldwork:cap:merged-marks> a fw:Cap;
   rdfs:label "merged-marks";

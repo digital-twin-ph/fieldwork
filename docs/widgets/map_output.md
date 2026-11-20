@@ -158,8 +158,9 @@ being rewritten by every run.
 - **A layer of more than 2,000 marks gives up its marks' names.** On the static figure its marks of one colour are one
   shape, so a mark cannot be focused or picked in the records table. On the interactive map a click still opens a
   mark's details.
-- **The interactive map draws at most 100,000 marks.** Past that it says so and draws none of the large layers; the
-  static plot draws up to 250,000. The interactive map's large layers are drawn by the graphics card with MapLibre,
+- **The interactive map draws at most 100,000 marks as squares, triangles, stars or crosses.** Past that they are drawn
+  as circles in their colour, and the map says so; the static plot draws their shapes. Circles are drawn to 250,000.
+  The interactive map's large layers are drawn by the graphics card with MapLibre,
   which is fetched only when online. Offline, or on a computer without WebGL, they are drawn as circles in their
   colour, and the map says so.
 - **An interactive map's basemap is not included in its export.** Its tiles come from an outside service as you
@@ -695,7 +696,8 @@ from Run to the figure on screen (Chromium, development Mac, `tests/measure-poin
 | 10,000 | 7.6 s | 0.7 s | 21 s | 1.5 s |
 | 50,000 | 74 s | 2.7 s | 155 s | 5.8 s |
 | 100,000 | not finished when stopped, after several minutes | 5.8 s | not tried | 11 s |
-| 250,000 | not tried | 19 s, read from a file | not tried | the tab crashed (also at 150,000 and 200,000) |
+| 150,000 | not tried | not measured | not tried | 13 s |
+| 250,000 | not tried | 19 s, read from a file | not tried | 24 s |
 
 What changed:
 
@@ -704,14 +706,19 @@ What changed:
 - **A layer of more than 2,000 marks is one shape per style** on the static figure, labelled with how many marks it
   holds, instead of one focusable element per mark.
 - **The interactive map draws such a layer on the graphics card** (MapLibre GL), one image per shape, colour and size.
-  A click opens the mark's details, the layer list hides it, a timeline filters it. Past 100,000 marks it does not try.
+  A click opens the mark's details, the layer list hides it, a timeline filters it.
 - **The limits are measured**: 250,000 records (the table limit, which the static figure and the table reached), and
-  100,000 marks on the interactive map. Both are in `widgets/caps.json`.
+  100,000 marks drawn as shapes other than circles on the interactive map. Both are in `widgets/caps.json`.
 
 Found on the way: the first interactive timings were void. MapLibre 6 no longer asks for a mark's image through the
 event used, so the layer drew nothing and still reported itself drawn; the browser test that clicks a mark caught it.
 At 250,000 rows the Tabular data dialog took over an hour to tick four key columns, so 100,000 and above were read from
-a workflow file instead.
+a workflow file instead (fixed the same day: Tabular data 0.11.1).
+
+**The interactive map at 150,000.** First it crashed the tab, at 150,000 and at 200,000: MapLibre's source prepared the
+points for every zoom to 18; cut at 12, the tab no longer crashed but drew nothing, and reported no error. Drawn with
+MapLibre's circle layer instead of an icon per mark, 150,000 took 14 s and 250,000 24 s, so the icons' layout was what
+never finished. Circles, the default mark, are now a circle layer over a halo layer; only the other shapes are icons.
 
 #### What it does not establish
 

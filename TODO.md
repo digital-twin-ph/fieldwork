@@ -1496,7 +1496,11 @@ Measuring maps of many points, a 250,000-row CSV of five columns was read and pr
 four key columns took over an hour (the test's limit): each tick redraws the dialog. Experiment 175 imported 250,000
 rows with no such stall, choosing fewer keys. To measure: the time of one tick at 25,000, 100,000 and 250,000 rows.
 
-### What crashes the interactive map at 150,000 marks (found 2026-11-19)
+### ~~What crashes the interactive map at 150,000 marks (found 2026-11-19)~~
+
+**Resolved the same day (Map 0.37.0):** MapLibre's source prepared the points to zoom 18 (now 12), and its layout of an icon
+per mark never finished past about 100,000. Circles are now a circle layer: 150,000 in 13 s, 250,000 in 24 s. Other
+shapes stay icons to 100,000 and are circles past that, said on the map. The note as found:
 
 Map 0.37.0 draws a large layer on the graphics card: 100,000 marks in 11 s; at 150,000 and 200,000 the tab crashed,
 the first time before any mark's image was even made. `INTERACTIVE_MARKS_LIMIT` stops there and says so. First

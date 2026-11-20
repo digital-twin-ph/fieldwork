@@ -29,6 +29,7 @@ test(`measure a map of ${N} points`,async({page,browserName})=>{
     try{const outcome=await fn();record(step,performance.now()-t,outcome??'ok',{heapMB:await heap(page)});return true;}
     catch(e){record(step,performance.now()-t,`FAILED: ${String(e.message).split('\n')[0].slice(0,300)}`,{heapMB:await heap(page).catch(()=>null)});return false;}};
 
+  if(process.env.MEASURE_CONSOLE)page.on('console',m=>{if(m.type()!=='log')console.log('CONSOLE',m.type(),m.text().slice(0,300));});
   await page.goto('/');await page.evaluate(()=>localStorage.clear());
   await page.goto('/?example=blank');
   // THE POINTS AS A WORKFLOW FILE (MEASURE_VIA=file): past what the Tabular data dialog handles, the points are held by
@@ -43,7 +44,8 @@ test(`measure a map of ${N} points`,async({page,browserName})=>{
       ['static map',{id:'map',type:'map_output',x:400,y:0,params:{label:'Static',presentation:'plot'}},true,
         async()=>{await expect(page.locator('#map-panel svg').first()).toBeVisible({timeout:LIMIT});return 'drawn';}],
       ['interactive map',{id:'imap',type:'map_output',x:400,y:0,params:{label:'Interactive',presentation:'interactive'}},true,
-        async()=>{const gpu=page.locator('.catchment-leaflet[data-marks-drawn]');await expect(gpu).toBeVisible({timeout:LIMIT});
+        async()=>{const gpu=page.locator('.catchment-leaflet[data-marks-drawn]');
+          await expect(gpu).toBeVisible({timeout:LIMIT}).catch(async e=>{await page.screenshot({path:`test-results/measure-points-${N}-interactive-timeout.png`});throw e;});
           await page.screenshot({path:`test-results/measure-points-${N}-interactive.png`});
           return `large layers drawn as ${await gpu.getAttribute('data-marks-drawn')}`;}],
       ['table of the points',{id:'tab',type:'table_output',x:400,y:0,params:{label:'Records'}},false,

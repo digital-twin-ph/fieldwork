@@ -1,4 +1,4 @@
-import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM,INTERACTIVE_MARKS_LIMIT} from './point-layers.js';
+import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM} from './point-layers.js';
 import {GlMarks,type GlMark} from './gl-marks.js';
 /** SITES ABOVE EVERY POINT LAYER: point layers are lifted by their place in Manage layers, up to 1000 x 10,000 for a layer
  *  the list does not name, and a pump covered by a death mark could not be clicked (gate 134, 2026-11-12). */
@@ -633,12 +633,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       if(!hiddenPort(port?`${port}/links`:'')){group.addTo(map);all.addLayer(group);}
     }
   }
-  // PAST WHAT THE INTERACTIVE MAP HAS DRAWN WITHOUT THE TAB CRASHING, it does not try: it says so, and the static plot draws them.
-  if(gpu&&gpu.size>INTERACTIVE_MARKS_LIMIT){
-    toolbar.querySelector('[data-marks-status]')!.textContent=`${gpu.size.toLocaleString('en')} marks are more than the interactive map draws `
-      +`(${INTERACTIVE_MARKS_LIMIT.toLocaleString('en')}). Set the presentation to Static plot in Configure… to see them.`;
-    canvas.dataset.marksDrawn='over-limit';
-  }else gpu?.start();
+  gpu?.start();
   if(layers.centers?.length){
     const group=L.featureGroup();
     for(const center of layers.centers){

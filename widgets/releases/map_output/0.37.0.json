@@ -115,7 +115,7 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "A map takes up to 250,000 point records (the 2,000 combined across its layers is gone). A layer of more than 2,000 marks is one shape per style on the static figure and is drawn on the graphics card (MapLibre GL) on the interactive map, which draws up to 100,000 marks and says so past that; offline or without WebGL, as circles. The static figure counts each layer once, not once per mark. Its Inspector and Configure dialog are in src/map-ui.ts."
+   "description": "A map takes up to 250,000 point records (the 2,000 combined across its layers is gone). A layer of more than 2,000 marks is one shape per style on the static figure and is drawn on the graphics card (MapLibre GL) on the interactive map: circles with MapLibre's circle layer, to 250,000; other shapes as icons up to 100,000 and as circles past that, which the map says; offline or without WebGL, as circles. The static figure counts each layer once, not once per mark. Its Inspector and Configure dialog are in src/map-ui.ts."
   }
  ],
  "evidence": {

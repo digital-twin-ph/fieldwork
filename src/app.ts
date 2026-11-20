@@ -4140,7 +4140,10 @@ function renderInspector(){
     const identity=widgetIdentity(n.type);
     content+=standardSection('Learn and record',`<div class="standard-links">${learnBlock(n.type,esc,hasManual(n.type)?n.type:'')}`
       +`<button id="manage-references" class="button learn-link">Evidence (${(n.references||[]).length})</button></div>`
-      +(identity?`<details class="standard-version"><summary>Version ${esc(identity.version)}</summary>${identityMarkup(n.type,esc)}</details>`:''));
+      +(identity?`<details class="standard-version"><summary>Version ${esc(identity.version)}</summary>${identityMarkup(n.type,esc)}</details>`:'')
+      // DIVE DEEPER, kept on the standard (2026-11-20): a step moved to the standard Inspector had lost the link to its
+      // validation notebook, Clip polygons' among them.
+      +diveDeeperPanel(n.type,esc));
   }else{
   content+=evidenceInspector(n);
   content+=identityMarkup(n.type,esc);

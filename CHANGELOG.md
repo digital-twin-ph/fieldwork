@@ -57,6 +57,7 @@ shown in a local build is not a claim that it has been published.
   study area 1.1.0, Calculate area 0.2.0, Clip polygons 0.2.0.
 - **A click on a connection selects it**, where it removed it. The not-ready message names the step and follows what
   is still missing. Opening a project or workflow says so while it loads, and two choices made quickly open the last.
+- **Dive deeper stays on the standard Inspector**: a step moved to it had lost the link to its validation notebook.
 - **Inspectors out of app.ts**: Tabular data, Append rows, Relate, Raster input, Clip raster, Sample a raster, Study
   area and the four area steps, each in its own module.
 

@@ -45,7 +45,8 @@ const points=async(list)=>{const b=await page.locator('#area-map').boundingBox()
   const receiptDownload=page.waitForEvent('download');await page.locator('#download-evidence').click();
   const receipt=JSON.parse(await readFile(await (await receiptDownload).path(),'utf8'));
   assert.equal(receipt.outputs[0].ready,true);assert.equal(receipt.receipts.length,1);
-  assert.ok(receipt.receipts[0].input.includes('geo:wktLiteral'));
+  // THE SHAPE BY REFERENCE (2026-11-20): its GeoJSON's format and SHA-256, not the coordinates written out.
+  assert.ok(receipt.receipts[0].input.includes('"application/geo+json"'));assert.match(receipt.receipts[0].input,/<urn:fieldwork:sha256> "[0-9a-f]{64}"/);
   await open();await page.locator('#area-clear').click();await expect(page.locator('#area-apply')).toBeDisabled();await page.locator('#area-cancel').click();
   assert.deepEqual((await saved()).nodes[0].params.geometry,box);
   await open();await page.locator('#draw-polygon').click();await points([[.2,.2],[.7,.7],[.2,.7],[.7,.2]]);await page.locator('#area-finish').click();

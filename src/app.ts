@@ -8,6 +8,7 @@ import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl,ghsRec
 import {rasterUnitsOf} from './raster-units.js';
 import {grid3RasterFor,grid3RecordFor,GRID3_CITATION,GRID3_COUNTRIES,GRID3_LICENCE,GRID3_NOTE,GRID3_PRODUCT,GRID3_TAKEN} from './grid3-catalogue.js';
 import {countriesOfArea} from './area-countries.js';
+import {studyAreaInspector,geometryVertices,type StudyAreaKit} from './study-area-inspector.js';
 import {placedCard} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
 import {SCAN_DEFAULTS,newScanSeed} from './space-time-scan.js';
@@ -1528,14 +1529,6 @@ function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
  *  example is worse than no count, because a practitioner reads it as a study area that failed
  *  to load.
  */
-function geometryVertices(geometry:{type:string;coordinates:unknown}|undefined):number{
-  if(!geometry)return 0;
-  const rings=(geometry.type==='MultiPolygon'
-    ?(geometry.coordinates as number[][][][]).flat()
-    :geometry.coordinates as number[][][])||[];
-  // The closing point repeats the first, so each ring counts one fewer.
-  return rings.reduce((total,ring)=>total+Math.max(0,ring.length-1),0);
-}
 function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if((n.type==='places'||n.type==='centers')){subtitle=`${n.params.data.features.length} local locations`;detail='GeoJSON · CRS84';}if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='policy'){subtitle=`Heat alert + distance > ${n.params.thresholdKm} km`;detail='Evidence → decision';}if(n.type==='alert'){subtitle=n.params.active===null?'Alert status unknown':n.params.active?'Heat alert is active':'No active heat alert';detail=n.params.date;}if(n.type==='measure_distance'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='study_area'){const p=n.params;subtitle=p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet';detail=!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}const alert=badgeFor(n.id);return {flagged:!!nodeAlert(n.id),definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},
     connectedPorts:workflow.edges.filter(e=>e.to===n.id).map(e=>e.port),
     availablePorts:nodeInputs(n).filter(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&portAccepts(type,outputOf(x)))).map(([port])=>port),
@@ -3649,7 +3642,7 @@ function renderInspector(){
     content+='<details><summary>How does this geoprivacy method work? (?)</summary><p>Map encryption and its calibration are planned, not executable here. See the <a href="https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library" target="_blank" rel="noopener noreferrer">geoprivacy notebooks</a>.</p></details>';
     if(n.type==='donut_geomask')content+=`<label class="field-label" for="privacy-innerM">Inner radius (m)</label><input id="privacy-innerM" type="number" min="0" max="5000" value="${n.params.innerM}"><label class="field-label" for="privacy-outerM">Outer radius (m)</label><input id="privacy-outerM" type="number" min="1" max="5000" value="${n.params.outerM}"><label class="field-label" for="privacy-seed">Demonstration seed</label><input id="privacy-seed" type="number" min="0" max="4294967295" value="${n.params.seed}"><p class="description">Output names and IDs are generated afresh; original attributes are not copied. The seeded generator is predictable and unsuitable as a production privacy control.</p>`;
     else content+=`<label class="field-label" for="privacy-resolution">H3 resolution</label><input id="privacy-resolution" type="number" min="0" max="15" value="${n.params.resolution}"><label class="field-label" for="privacy-minOccupancy">Minimum locations per released cell</label><input id="privacy-minOccupancy" type="number" min="2" max="100" value="${n.params.minOccupancy}"><p class="description">Counts locations, not deaths. Sparse cells are omitted; occupancy alone does not establish anonymity.</p>`;
-  }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='buffer_area'||n.type==='reachable_nodes'){
+  }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='reachable_nodes'){
     // The study area is handed to the Inspector so a downloaded network can be seen against the
     // ground it was asked for. previewArea throws when nothing is connected, which is a legitimate
     // state: the caption then says coverage is unknown rather than implying it is complete.
@@ -4059,66 +4052,7 @@ function renderInspector(){
   }else if(n.type==='raster_input'||n.type==='clip_raster'){
     content+=rasterInspector.markup(n as never,rasterKit());
   }else if(n.type==='study_area'){
-    // THE STANDARD INSPECTOR (experiment 186): the name; no inputs; one sentence, the country and the map, which is this
-    // step's dialog; and what it holds -- the shape, what the boundary repair removed, and every extent it has had.
-    const p=n.params;
-    content+=standardSection('Name',`<form id="study-area-label-form" class="field"><label class="field-label" for="study-area-label">Study area label</label><input id="study-area-label" maxlength="100" required value="${esc(p.label||'My study area')}"><button type="submit" class="button small">Apply label</button></form>`);
-    content+=standardSection('Inputs',standardInputs(n));
-    // THE COUNTRY, SAID ONCE, HERE. Every widget that needs one -- the population raster, the facilities export -- reads it
-    // from the area rather than asking again.
-    let countryField='';
-    {
-      // PICKED ONCE, AND ONLY WHERE IT WAS NEVER PICKED. The practitioner, 2026-10-23: *"State
-      // it once is best for manually derived study areas like bounding box, circle, hand drawn
-      // polygons. But for administrative boundaries from geoBoundaries, it could actually be
-      // derived from the country selection so pick country once. Not twice."*
-      //
-      // An acquired boundary was chosen BY country -- the picker asks for one before it can
-      // offer a level or a unit -- and carries it in its own identifier, BWA-ADM1-... Offering a
-      // list there asks a question already answered, and a list implies the answer is in doubt.
-      // So it is stated, not asked. A bounding box, a circle or a drawn polygon was never picked
-      // by country and has none to derive, and that is where the list belongs.
-      const acquired=countryOfArea({boundary:(n.params as {boundary?:{boundaryID?:string;provenance?:{boundaryID?:string}}}).boundary});
-      countryField=acquired
-        ?`<div class="field"><span class="field-label">Country</span>`
-          +`<p class="muted">${esc(countryName(acquired))} (${esc(acquired)}), from the boundary this area was acquired as.</p></div>`
-        // A LIST, CONFIGURED IN ITS OWN DIALOG (experiment 204): named, or found from where the shape falls and confirmed.
-        :(()=>{const listed=countriesOfArea(n.params as {countries?:string[];country?:string});
-          return `<div class="field"><span class="field-label">Countries</span><p class="standard-sentence" id="area-countries-sentence">`
-            +(listed.length?`${esc(listed.map(c=>`${countryName(c)} (${c})`).join(', '))}.`:'Not stated. Read by the widgets that need a country.')+`</p>`
-            +`<button type="button" class="button" id="configure-countries">Configure countries\u2026</button></div>`;})();
-    }
-    const geometry=p.source==='drawn'?p.geometry:undefined;
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(geometry?`${p.selectionMode==='bbox'?'A bounding box':p.selectionMode==='circle'?'A circle':geometry.type==='MultiPolygon'&&(geometry.coordinates as unknown[]).length>1?`${(geometry.coordinates as unknown[]).length.toLocaleString('en')} polygons`:'A polygon'} of ${geometryVertices(geometry).toLocaleString('en')} vertices, in longitude, latitude order.`
-      :'No area yet: select one on the map.')}</p>`+countryField
-      +`<div class="inspector-actions"><button id="edit-study-area" class="button primary">${geometry?'Edit area on map':'Select area on map'}</button></div>`);
-    let held='';
-    if(p.source==='drawn'){
-      const boundary=p.boundary;
-      const repairs=boundary?.repairs??[];
-      held+=`<p class="standard-result">${geometry?`${esc(p.label)}: ${p.selectionMode==='bbox'?'bounding box':'polygon'} · ${geometryVertices(geometry)} vertices`
-        +(boundary?` · from ${esc(boundary.source)}`:''):'Not selected yet.'}</p>`
-        +(repairs.length?`<p>The boundary repair removed ${repairs.length} of ${boundary!.vertices} published vertices: `
-          +`${repairs.filter(r=>r.kind==='repeated').length} repeated straight after themselves, ${repairs.filter(r=>r.kind==='spike').length} at the tip of a zero-width spike`
-          +`${(()=>{const spiked=[...new Set(repairs.filter(r=>r.kind==='spike').map(r=>r.unit))];return spiked.length?` (${spiked.map(esc).join(', ')})`:'';})()}. `
-          +'No outline encloses a different area; each vertex is listed in the evidence.</p>':'')
-        +(geometry?'<button id="area-view-n3" class="text-button">Inspect N3 facts and rule \u2197</button>':'');
-        if(n.params.source==='drawn'&&(n.params.revisions?.length??0)>1){
-          const history=n.params.revisions!;
-          held+=`<span class="inspector-section">Extent history</span>`
-            +`<p class="muted">${history.length} extents kept. Restoring one records a new extent carrying the old shape; nothing is removed.</p>`
-            +`<ul class="record-list">`+history.map((r,i)=>{
-              const current=i===history.length-1;
-              const vertices=r.geometry?.coordinates?.[0]?.length;
-              return `<li><span>v${i+1} · ${esc(new Date(r.at).toLocaleString())}`
-                +`${r.restoredFrom?` · restored v${r.restoredFrom}`:''}`
-                +`${vertices?` · ${vertices-1} vertices`:''}</span>`
-                +(current?'<strong>current</strong>'
-                  :`<button class="text-button" data-restore-extent="${i}">Restore this extent</button>`)+`</li>`;
-            }).join('')+`</ul>`;
-        }
-    }
-    content+=standardSection('Result',held);
+    content+=studyAreaInspector.markup(n,studyAreaKit());
   }else if(n.type==='search_satellite_catalog'){
     // ITS OWN MODULE'S INSPECTOR (2026-11-19): the first widget moved out of app.ts when touched.
     content+=searchCatalogInspector.markup(n,inspectorKit());
@@ -5004,13 +4938,6 @@ function renderInspector(){
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   if(n.type==='table_input')tableInspector.wire(n,tableKit(),document);
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
-  optionalElement('#configure-countries')?.addEventListener('click',()=>{
-    const p=getNode(workflow,n.id,'study_area').params;
-    openCountriesConfig({step:p.label||'Study area',countries:countriesOfArea(p as {countries?:string[];country?:string}),
-      geometry:p.source==='drawn'&&p.geometry?p.geometry:null,esc,
-      apply:countries=>change(w=>{const t=getNode(w,n.id,'study_area').params as {countries?:string[];country?:string};
-        delete t.country;if(countries.length)t.countries=countries;else delete t.countries;})});
-  });
   optionalElement('#join-key')?.addEventListener('change',e=>
     change(w=>{getNode(w,n.id,'join_table_to_area').params.keyField=control(e).value;}));
   optionalElement('#join-normalisation')?.addEventListener('change',e=>
@@ -5028,8 +4955,7 @@ function renderInspector(){
   // Clip raster's own download, of the masked grid; Raster input's is in its dialog (186, 2026-11-17).
   // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).
   if(n.type==='raster_input'||n.type==='clip_raster')rasterInspector.wire(n as never,rasterKit(),document);
-  optionalElement('#study-area-label-form')?.addEventListener('submit',e=>{e.preventDefault();const input=$('#study-area-label'),label=input.value.trim();if(!label){input.setCustomValidity('Enter a label for the study area.');input.reportValidity();return;}change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=label);});
-  optionalElement('#study-area-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
+  if(n.type==='study_area')studyAreaInspector.wire(n,studyAreaKit(),document);
   // The same gesture for every other widget. The field already saves on change, so this is the
   // affordance rather than the mechanism: pressing it confirms, and an empty label is refused
   // here rather than silently writing one nobody can read on the canvas.
@@ -5051,50 +4977,6 @@ function renderInspector(){
   // did not. Experiment 01 calls this step "Correct, save, and revisit"; until 2026-10-17 it left
   // no trace at all, because the study area's IRI is node-scoped while every other area in this
   // application mints per run.
-  document.querySelectorAll<HTMLButtonElement>('[data-restore-extent]').forEach(b=>b.onclick=()=>change(w=>{
-    const target=getNode(w,n.id,'study_area');
-    if(target.params.source!=='drawn')return;
-    const history=target.params.revisions??[],chosen=history[Number(b.dataset.restoreExtent)];
-    if(!chosen)return;
-    target.params.geometry=structuredClone(chosen.geometry);
-    target.params.selectionMode=chosen.selectionMode;
-    // Appended, never truncated: the chain has to be able to say the area was once wider.
-    target.params.revisions=[...history,{at:new Date().toISOString(),
-      geometry:structuredClone(chosen.geometry),selectionMode:chosen.selectionMode,
-      restoredFrom:Number(b.dataset.restoreExtent)+1}];
-  }));
-  optionalElement('#edit-study-area')?.addEventListener('click',()=>openStudyAreaEditor(getNode(workflow,n.id,'study_area'),params=>change(w=>{
-    const target=getNode(w,n.id,'study_area'),before=target.params;
-    const shape=(x:{source?:string;geometry?:unknown})=>x.source==='drawn'&&x.geometry?JSON.stringify(x.geometry):'';
-    const changed=shape(params)!==shape(before);
-    const kept=before.source==='drawn'?before.revisions??[]:[];
-    target.params=params;
-    if(params.source==='drawn'&&params.geometry)
-      target.params.revisions=changed||!kept.length
-        ?[...kept,{at:new Date().toISOString(),geometry:structuredClone(params.geometry),selectionMode:params.selectionMode}]
-        :kept;
-    // SAY IT LANDED. The practitioner, 2026-10-20, after acquiring North Kivu: *"What's missing
-    // is the feedback that the download completed."* The dialog had one -- "Applied in 0.7 s" --
-    // written into a panel that closes in the same breath, so nobody ever read it. Confirmation
-    // belongs where the practitioner is afterwards, which is the canvas, and it names what landed
-    // rather than saying "done": the unit, its size, and that it is the published outline.
-    const area=params.source==='drawn'?params:undefined;
-    const ring=area?.geometry?.type==='Polygon'
-      ?(area.geometry.coordinates as number[][][])[0]?.length??0
-      :(area?.geometry?.coordinates as number[][][][]|undefined)?.reduce((n,part)=>n+(part[0]?.length??0),0)??0;
-    if(area?.boundary)
-      toast(`${area.boundary.unitName||'Boundary'} applied as published \u00b7 ${ring.toLocaleString()} vertices \u00b7 `
-        +`${area.boundary.licence||'see the evidence panel for terms'}`);
-    else if(ring)toast(`Study area applied \u00b7 ${ring.toLocaleString()} vertices.`);
-  },{requirePersistence:true}),
-    // THE PROJECT'S OTHER STUDY AREAS, read here because this is where the open project and the
-    // saved workflows are known. `study-area-map.ts` draws a map and holds no import from
-    // storage; it is handed the offers and renders them, or renders nothing when there are none.
-    // Read at CLICK rather than at render, so a workflow saved in another tab since this
-    // inspector was drawn is still offered.
-    {refusal:saveFailureMessage,
-      areas:siblingAreas(storageKey(workflow),allProjects(),readSavedWorkflows())}));
-  optionalElement('#area-view-n3')?.addEventListener('click',()=>{renderN3();switchView('rules');});
   // The knobs, and the decisions the review band asks for. A decision is stored WITH a signature
   // of the pair it was made about, so editing either record lapses it rather than letting a stale
   // judgement ride on changed data -- the device the retired coverage check used, in the place
@@ -6655,6 +6537,45 @@ function rasterKit():RasterKit{
     keepChange:edit=>change(edit,{requirePersistence:true}),
     prepare:n=>prepareRasterStep(n),previewClip:(n,e)=>previewClipStep(n,e),downloadClipped:(n,e)=>downloadClipped(n,e),
     addMap:n=>addRasterMap(n),presence:(n,host)=>rasterPresence(n,host)};
+}
+/** STUDY AREA'S MAP, kept here: it reads the project's other study areas from storage and says what landed. */
+function editStudyArea(nodeId:string):void{
+  const n=getNode(workflow,nodeId,'study_area');
+  openStudyAreaEditor(n,params=>change(w=>{
+    const target=getNode(w,n.id,'study_area'),before=target.params;
+    const shape=(x:{source?:string;geometry?:unknown})=>x.source==='drawn'&&x.geometry?JSON.stringify(x.geometry):'';
+    const changed=shape(params)!==shape(before);
+    const kept=before.source==='drawn'?before.revisions??[]:[];
+    target.params=params;
+    if(params.source==='drawn'&&params.geometry)
+      target.params.revisions=changed||!kept.length
+        ?[...kept,{at:new Date().toISOString(),geometry:structuredClone(params.geometry),selectionMode:params.selectionMode}]
+        :kept;
+    // SAY IT LANDED. The practitioner, 2026-10-20, after acquiring North Kivu: *"What's missing
+    // is the feedback that the download completed."* The dialog had one -- "Applied in 0.7 s" --
+    // written into a panel that closes in the same breath, so nobody ever read it. Confirmation
+    // belongs where the practitioner is afterwards, which is the canvas, and it names what landed
+    // rather than saying "done": the unit, its size, and that it is the published outline.
+    const area=params.source==='drawn'?params:undefined;
+    const ring=area?.geometry?.type==='Polygon'
+      ?(area.geometry.coordinates as number[][][])[0]?.length??0
+      :(area?.geometry?.coordinates as number[][][][]|undefined)?.reduce((n,part)=>n+(part[0]?.length??0),0)??0;
+    if(area?.boundary)
+      toast(`${area.boundary.unitName||'Boundary'} applied as published \u00b7 ${ring.toLocaleString()} vertices \u00b7 `
+        +`${area.boundary.licence||'see the evidence panel for terms'}`);
+    else if(ring)toast(`Study area applied \u00b7 ${ring.toLocaleString()} vertices.`);
+  },{requirePersistence:true}),
+    // THE PROJECT'S OTHER STUDY AREAS, read here because this is where the open project and the
+    // saved workflows are known. `study-area-map.ts` draws a map and holds no import from
+    // storage; it is handed the offers and renders them, or renders nothing when there are none.
+    // Read at CLICK rather than at render, so a workflow saved in another tab since this
+    // inspector was drawn is still offered.
+    {refusal:saveFailureMessage,
+      areas:siblingAreas(storageKey(workflow),allProjects(),readSavedWorkflows())});
+}
+/** STUDY AREA'S KIT (study-area-inspector.ts): the step kit, with its map and its N3. */
+function studyAreaKit():StudyAreaKit{
+  return {...stepKit(),edit:id=>editStudyArea(id),viewN3:()=>{renderN3();switchView('rules');}};
 }
 function inspectorKit():InspectorKit{
   return {esc,section:standardSection,name:(id,value)=>labelForm(id,'Name',value),inputs:standardInputs,

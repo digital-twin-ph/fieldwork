@@ -225,4 +225,7 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
   tables?:Record<string,import('./data-table.js').DataTable>;
   /** EACH POINT LAYER'S COLUMNS AND THEIR KINDS, by step (experiment 192): what a rules step downstream can read, kept
    *  without the layer itself. Read from its first 200 points. */
-  pointColumns?:Record<string,{attribute:string;kind:'number'|'term'}[]>}
+  pointColumns?:Record<string,{attribute:string;kind:'number'|'term'}[]>;
+  /** THE STUDY AREAS STEPS MADE, by step (2026-11-21): a Combined area of DR Congo and South Sudan, for Point data to
+   *  generate points in. Only areas a step computed; a Study area holds its own shape. */
+  areas?:Record<string,{label:string;boundary:import('./types.js').Boundary}>}

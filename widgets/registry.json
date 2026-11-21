@@ -1603,7 +1603,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.11.0",
+      "currentVersion": "0.12.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1664,6 +1664,11 @@
           "version": "0.11.0",
           "path": "widgets/releases/point_input/0.11.0.json",
           "sha256": "4d55e079aff549d68ed7bc0fe926ce50abd4b1a69a025c31cbb637ace6701e36"
+        },
+        {
+          "version": "0.12.0",
+          "path": "widgets/releases/point_input/0.12.0.json",
+          "sha256": "12a85fb2803e047478199f940e77943d7797c831ee2cdffe6900a6e8350c6f52"
         }
       ],
       "previousNodeTypes": [
@@ -1695,7 +1700,7 @@
     {
       "id": "urn:fieldwork:widget:polygon_input",
       "nodeType": "polygon_input",
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1721,6 +1726,11 @@
           "version": "0.6.0",
           "path": "widgets/releases/polygon_input/0.6.0.json",
           "sha256": "41c4108962d506a21981a15e5065b75dbe22671481ccaa3d896c991bf39ee88b"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/polygon_input/0.7.0.json",
+          "sha256": "9fc4d5dc3e9b09ec8bbee3b8a40806202cb3ee96525e790002ba814d7f38e4cd"
         }
       ]
     },

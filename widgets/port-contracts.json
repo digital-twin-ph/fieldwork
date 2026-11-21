@@ -1208,6 +1208,10 @@
             [
               "records",
               "table"
+            ],
+            [
+              "area",
+              "area"
             ]
           ]
         }

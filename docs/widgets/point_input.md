@@ -35,6 +35,7 @@ overwrites what the file held.
 | Port | What goes there |
 | --- | --- |
 | **records** | optional: a table with longitude and latitude columns, read as one point per row |
+| **area** | optional: the study area to generate synthetic points in, offered first in **Configure…**; a Study area, or an area another step made, such as a **Combined area** across a border, once the workflow has run |
 
 Its output is `points`, which nearly everything accepts: maps, tables, distance measurement, catchments, summaries,
 rates, case series and the geoprivacy steps. A step that takes a table reads it as one too: each point a row of its
@@ -93,6 +94,12 @@ events is something your labels and your weights have to say.
 1861** loads a 188-case line list.
 
 ## History
+
+### 2026-11-21 · A study area connected to generate in (0.12.0)
+
+Its generator chose from a list of the workflow's Study areas, with nothing on the canvas to say which. Now an area connected to it is offered first, and an
+area another step made (a Combined area of two countries) can be generated in after a run. Unconnected, the list is as
+before.
 
 ### 2026-11-19 · Up to 250,000 records (0.11.0)
 

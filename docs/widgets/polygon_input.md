@@ -7,9 +7,9 @@ attributes — as distinct from a study area, which is the single boundary your 
 Sub-districts, water bodies, supply zones, parishes, building footprints: anything that is a set of
 areas rather than one frame.
 
-## Two ways in
+## Three ways in
 
-Both are in **Configure…**. Choosing one shows that method's steps and hides the other's, so the dialog describes the
+All are in **Configure…**. Choosing one shows that method's steps and hides the others', so the dialog describes the
 path you are on. Nothing is read until **Apply**, which is the read.
 
 **A published GeoJSON layer.** A `FeatureCollection` of polygons and multipolygons you already
@@ -18,6 +18,14 @@ have. It is read exactly as published.
 **Areas from a published `.osm.pbf` extract.** An OpenStreetMap extract — Geofabrik's country and
 region files, or any other — chosen with the file picker. You say which kinds of area you want and
 the widget reads those, within your study area's bounds.
+
+**The parts of connected study areas.** No file: each part of each study area you connect is a feature, named, with
+its geoBoundaries ID, and with the country and level its boundary states (`COD-ADM2-…`). Connect one study area per
+country, each at the level you want, with **+ Add a study area** for the next: DR Congo's provinces and South Sudan's
+counties become one layer across the border. **After** lists the parts before anything runs. A table of cases by unit
+can then be joined onto the layer on the IDs, which are unique across countries where names are not. Parts at different
+levels are said to be: a count compares only units at one level, and a rate compares across them. To make one study
+area of several instead, for a raster or a street network over the whole outbreak, use **Combined area**.
 
 ## What it does
 
@@ -161,3 +169,11 @@ what OpenStreetMap calls the boating lake.
 **Snow's South London water supply study, 1854** reads the registration sub-districts and the two
 reaches of the Thames as layers inside one study area, which is what lets the tidal and non-tidal
 reaches be drawn as separate exposures.
+
+## History
+
+### 2026-11-21 · The parts of connected study areas (0.7.0)
+
+A study area could feed this widget only as the box an extract is read inside, so its own shape could not become a layer,
+and two countries' areas could not be drawn or joined to as one layer for an outbreak across a border. A third source makes a layer of the connected study areas'
+parts, up to six study areas, each part with its name, geoBoundaries ID, country and level.

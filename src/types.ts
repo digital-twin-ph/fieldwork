@@ -358,7 +358,11 @@ export interface ParamsByType {
      *  areas of the chosen kinds out of a published .osm.pbf the practitioner already holds,
      *  within the connected study area's bounds. Absent means `file`, which is every layer that
      *  existed before acquisition did. */
-    inputMethod?:'file'|'extract';
+    /** `areas` (2026-11-21): no file read; each part of each connected study area is a feature, with its country and
+     *  level, so one layer can cross a border (an outbreak in DR Congo, Uganda and South Sudan). */
+    inputMethod?:'file'|'extract'|'areas';
+    /** How many study-area inputs the `areas` source offers: `area`, then `area_2`, `area_3`… */
+    areaInputCount?:number;
     /** Which kinds of area to read from an extract, and the threshold below which a feature is
      *  too small to be the study's own geometry. Both are stated, never inferred. */
     kinds?:readonly import('./osm-areas.js').AreaKind[];

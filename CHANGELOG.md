@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.159.0 — In development
+
+- **A polygon layer of connected study areas' parts.** Polygon layer's third source: each part of up to six study areas,
+  with its name, geoBoundaries ID, country and level, one layer across a border (an outbreak in DR Congo, Uganda and
+  South Sudan), drawn on Map and joined to a table on the IDs.
+- **Point data takes a study area**, optionally: the area to generate points in, offered first, including a Combined
+  area of two countries after a run.
+
 ## 0.158.0 — 2026-11-21
 
 - **Buffer study area's remaining code is removed.** It was retired in 0.37.0; a saved workflow holding one is still

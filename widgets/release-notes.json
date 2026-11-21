@@ -571,12 +571,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.11.0",
-   "released": "2026-11-19",
+   "version": "0.12.0",
+   "released": "2026-11-21",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Point data takes up to 250,000 records from a file, pins, generated points or a workflow, and files of up to 40 MB (the table's limits), in place of 2,000 records and 5 MB."
+     "kind": "added",
+     "description": "An optional study-area input: the connected area is offered first to generate points in, including an area another step made, such as a Combined area, after a run."
     }
    ],
    "breaking": false,
@@ -607,12 +607,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "polygon_input": {
-   "version": "0.6.0",
-   "released": "2026-11-13",
+   "version": "0.7.0",
+   "released": "2026-11-21",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Choose features is in Configure…, under Preview: the features beside the file they came from, chosen in one dialog and written by Apply with the settings; Cancel leaves the layer as it was. The practitioner, 2026-11-13: \"I think the Choose features can be incorporated in the Configure dialog so the polygon can be viewed and configured in one go (less friction).\" Configure… opened on a layer it holds names the file and applies without it; it had said \"No file chosen\" and \"Choose a GeoJSON file.\" over 32 features read from one, with Apply disabled. A GeoJSON file is read as soon as it is chosen, so its features can be chosen before Apply; an extract is still read on Apply. A changed naming property names the held features again from their properties. Numbered 0.6.0 because widgets/releases/polygon_input/0.5.0.json, the three reductions of 2026-10-29, was committed and never registered; it is left as it was."
+     "kind": "added",
+     "description": "A third source, the parts of connected study areas: each part of up to six study areas a feature with its name, geoBoundaries ID, country and level, one layer across a border."
     }
    ],
    "breaking": false,

@@ -33,6 +33,7 @@ import {compareInspector,type CompareKit} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
 import {mountCatchmentMap,mountDensityPanel,BASEMAP_OPTIONS,placeOnMap} from './catchment-map.js';
+import {areaParts} from './area-parts-layer.js';
 import {catchmentPlot,polygonSvg,polygonPanelsSvg,panelColumns,catchmentFrame,polygonFrame} from './catchment-output.js';
 import {rasterPanelsSvg,densityImage,rampFor,scaleWords,drawnWords} from './raster-image.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
@@ -111,7 +112,7 @@ function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assig
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
 import {PORT_NAMES,PORT_GROUPS,groupFor} from './port-names.js';
 import {proposeChartForms,proposalOrder,type ChartForm,type ChartProposal} from './chart-proposals.js';
-import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce} from './core.js';
+import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce,MAX_AREA_INPUTS} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {staticBoundaryMap,staticMapFrame} from './static-map.js';
@@ -2404,10 +2405,28 @@ function scanSettingsSentence(p:import('./types.js').ParamsByType['space_time_sc
  *  inside, what to read, the file, and how to name them -- a draft until Apply, and Apply is the read. The file is held
  *  here, outside the controls, because a redraw would empty a file input; a read that fails leaves the dialog open
  *  with the reason, and nothing on the step changed. */
+/** THE AREAS POINT DATA CAN GENERATE IN, the connected one first (2026-11-21): a Study area's own shape, or an area a step
+ *  made in the last run, such as a Combined area across a border; then every other Study area, as before. */
+function generationAreas(nodeId:string):{id:string;label:string;geometry:Boundary}[]{
+  const own=workflow.nodes.filter((x):x is WorkflowNode<'study_area'>=>x.type==='study_area'&&!!x.params.geometry)
+    .map(x=>({id:x.id,label:x.params.label||'Study area',geometry:x.params.geometry as Boundary}));
+  const connected=workflow.edges.find(e=>e.to===nodeId&&e.port==='area')?.from;
+  if(!connected)return own;
+  const made=result?.areas?.[connected];
+  const first=own.find(a=>a.id===connected)??(made?{id:connected,label:made.label,geometry:made.boundary}:undefined);
+  return first?[first,...own.filter(a=>a.id!==connected)]:own;
+}
 function openPolygonConfig(nodeId:string){
   const node=getNode(workflow,nodeId,'polygon_input');
   const connected=workflow.edges.find(e=>e.to===nodeId&&e.port==='area')?.from;
+  const areaPort=(i:number)=>i===0?'area':`area_${i+1}`;
+  const connectedAreas=Array.from({length:MAX_AREA_INPUTS},(_,i)=>workflow.edges.find(e=>e.to===nodeId&&e.port===areaPort(i))?.from)
+    .filter((x):x is string=>!!x);
   const areaSources=workflow.nodes.filter(x=>x.id!==nodeId&&outputOf(x)==='area').map(x=>({id:x.id,label:x.params.label||TYPES[x.type].title}));
+  // THE PARTS, BEFORE A RUN, where an area is a Study area that holds its shape; another step's area is known once it runs.
+  const partsOf=(ids:string[])=>{const known=ids.map(id=>workflow.nodes.find(x=>x.id===id)).filter((x):x is WorkflowNode<'study_area'>=>x?.type==='study_area'&&!!x.params.geometry);
+    return {parts:areaParts(known.map(x=>({value:{boundary:x.params.geometry!,...(x.params.boundary?.units?{units:x.params.boundary.units}:{}),areaId:x.id,geometryId:x.id,label:x.params.label||'Study area'},
+      ...(x.params.boundary?.boundaryID?{boundaryID:x.params.boundary.boundaryID}:{})}))),unknown:ids.length-known.length};};
   let file:File|undefined;
   type Feature=WorkflowNode<'polygon_input'>['params']['data']['features'][number];
   const held=node.params.data.features as Feature[];
@@ -2440,8 +2459,20 @@ function openPolygonConfig(nodeId:string){
     return b?[b[0],b[1],b[2],b[3]] as [number,number,number,number]:undefined;
   };
   openConfigDialog<PolygonDraft>({
-    id:'polygon-config',widget:'Polygon layer',step:node.params.label||TYPES.polygon_input.title,draft:polygonDraftOf(node,connected),wide:true,
+    id:'polygon-config',widget:'Polygon layer',step:node.params.label||TYPES.polygon_input.title,draft:polygonDraftOf(node,connected,connectedAreas),wide:true,
     sections:d=>{
+      if(d.inputMethod==='areas'){
+        const missing=polygonMissing(d),{parts,unknown}=partsOf(d.areas.filter(Boolean));
+        const after=parts.features.length?'<fieldset class="join-after"><legend>After</legend>'
+          +`<p><strong>${parts.features.length.toLocaleString('en')} parts</strong> at ${esc(parts.levels.join(', '))}`
+          +(parts.levels.length>1?': at different levels, so a count compares only units at one level, and a rate compares across them.':'.')+'</p>'
+          +'<div class="table-scroll"><table><thead><tr><th scope="col">name</th><th scope="col">id</th><th scope="col">country</th><th scope="col">level</th><th scope="col">study area</th></tr></thead><tbody>'
+          +parts.features.map(f=>`<tr>${['name','id','country','level','study_area'].map(k=>`<td>${esc(String(f.properties[k]??''))}</td>`).join('')}</tr>`).join('')
+          +'</tbody></table></div>'+(unknown?`<p class="muted">${unknown} more area${unknown===1?' is':'s are'} made by a step, and ${unknown===1?'its':'their'} parts are known once the workflow runs.</p>`:'')+'</fieldset>'
+          :unknown?'<p class="muted">The parts are known once the workflow runs: the area is made by a step.</p>':'';
+        return {settings:polygonConfigSettings(d,esc,undefined,areaSources,undefined,''),...(after?{preview:after}:{}),blocked:!!missing,
+          ...(missing?{message:{tone:'warning' as const,text:missing}}:{})};
+      }
       const shown=shownFor(d);
       const missing=readError||polygonMissing(d,file,held.length>0)||(shown&&!anyKept?'Every feature is set aside. Tick at least one.':'');
       const preview=shown?`<div id="polygon-chooser-host"></div>`
@@ -2454,7 +2485,11 @@ function openPolygonConfig(nodeId:string){
     wire:(root,d,redraw)=>{
       const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
         root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
-      on('#polygon-input-method',el=>{d.inputMethod=el.value==='extract'?'extract':'file';file=undefined;fresh=undefined;readError='';});
+      on('#polygon-input-method',el=>{d.inputMethod=el.value==='extract'||el.value==='areas'?el.value:'file';file=undefined;fresh=undefined;readError='';
+        if(d.inputMethod==='areas'&&!d.areas.length&&connected)d.areas=[connected];});
+      on('[data-polygon-area]',el=>{const i=Number(el.dataset.polygonArea);if(!d.areas.length)d.areas=[''];d.areas[i]=el.value;});
+      root.querySelector('#polygon-add-area')?.addEventListener('click',()=>{if(!d.areas.length)d.areas=[''];d.areas.push('');redraw();});
+      root.querySelector('#polygon-remove-area')?.addEventListener('click',()=>{d.areas.pop();redraw();});
       on('#polygon-area',el=>{if(el.value)d.area=el.value;else delete d.area;});
       on('[data-area-kind]',el=>{const kind=el.dataset.areaKind as AreaKind,kept=new Set(d.kinds);
         if(el.checked)kept.add(kind);else kept.delete(kind);d.kinds=AREA_KINDS.filter(k=>kept.has(k));});
@@ -2477,6 +2512,18 @@ function openPolygonConfig(nodeId:string){
     },
     apply:()=>{},
     applyAsync:async(d,say)=>{
+      // THE PARTS OF CONNECTED STUDY AREAS: nothing to read; the areas are connected, one to each input, and the layer is
+      // made from them each run.
+      if(d.inputMethod==='areas'){
+        const chosen=d.areas.filter(Boolean);
+        if(!change(w=>{const t=getNode(w,nodeId,'polygon_input').params;t.inputMethod='areas';t.areaInputCount=Math.max(1,chosen.length);
+          if(d.layerName)t.layerName=d.layerName;else delete t.layerName;
+          w.edges=w.edges.filter(e=>!(e.to===nodeId&&/^area(_\d+)?$/.test(e.port)));
+          chosen.forEach((id,i)=>w.edges.push({id:`e-${nodeId}-${areaPort(i)}`,from:id,to:nodeId,port:areaPort(i)}));},{requirePersistence:true}))
+          throw new Error('The layer could not be saved on this device.');
+        toast('Polygon layer updated. Run the workflow to make it.');
+        return true;
+      }
       // The settings first, then any read: the read is of these settings, and the study area it reads inside.
       const settle=(w:Workflow)=>{const t=getNode(w,nodeId,'polygon_input').params;
         t.inputMethod=d.inputMethod;t.kinds=d.kinds;t.marginM=d.marginM;
@@ -3721,10 +3768,14 @@ function renderInspector(){
     // read; and what it holds, with the features to choose from.
     const p=n.params;
     content+=standardSection('Name',labelForm('polygon-label','Name',p.label||'Polygon layer'));
-    content+=standardSection('Inputs',standardInputs(n));
+    content+=standardSection('Inputs',standardInputs(n,p.inputMethod==='areas'
+      ?Object.fromEntries(Array.from({length:MAX_AREA_INPUTS},(_,i)=>[i===0?'area':`area_${i+1}`,`Study area ${i+1}`]))
+      :{area:'Study area to read inside, for an extract'}));
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(polygonSentence(n))}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    content+=standardSection('Result',p.data.features.length
+    content+=standardSection('Result',p.inputMethod==='areas'
+      ?`<p class="standard-result">${esc(result?.outputs.some(o=>o.nodeId===n.id)?'Made from the connected study areas in the last run.':'Made from the connected study areas when the workflow runs.')}</p>`
+      :p.data.features.length
       // Choosing among the features is in Configure… since 2026-11-13, beside the file they came from.
       ?polygonLayerCard(n,esc)
       :'<p class="standard-result">Nothing read yet.</p>');
@@ -4042,7 +4093,7 @@ function renderInspector(){
       ?`Replaced the retired <strong>Visual output</strong> widget; name and connections retained.`
       :`Now uses the shared Input data editor; label, records and connections retained.`}</p>`;
     content+=standardSection('Name',labelForm('source-label','Name',n.params.label||'Point data'));
-    content+=standardSection('Inputs',standardInputs(n,{records:'A table with longitude and latitude columns, optional'}));
+    content+=standardSection('Inputs',standardInputs(n,{records:'A table with longitude and latitude columns, optional',area:'The area to generate points in, optional'}));
     content+=standardSection('Settings',`<p class="standard-sentence">${esc(pointSentence(n))}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
     const fromTable=workflow.edges.some(e=>e.to===n.id&&e.port==='records');
@@ -4924,7 +4975,7 @@ function renderInspector(){
   });
   optionalElement('#catchment-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
   if(n.type==='point_input'&&workflow.edges.some(e=>e.to===n.id&&e.port==='records'))optionalElement('#configure-step')?.addEventListener('click',()=>openPointsFromTableConfig(n.id));
-  else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),workflow.nodes.filter((x):x is WorkflowNode<'study_area'>=>x.type==='study_area'&&!!x.params.geometry).map(x=>({id:x.id,label:x.params.label||'Study area',geometry:x.params.geometry as Boundary})),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
+  else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),generationAreas(n.id),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
   document.querySelectorAll<HTMLSelectElement>('[data-coverage-port]').forEach(el=>el.onchange=()=>{const from=el.value,port=el.dataset.coveragePort!;change(w=>{w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===port));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port});});});
   document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
   // A committed geometry is stamped, so the receipt can say WHEN the area was revised. Only a

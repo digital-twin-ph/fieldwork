@@ -73,10 +73,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 0.154.0 and 0.155.0 (2026-11-20), not yet ordered
 
-- **0.158.0, in development:** a join run with no column chosen joins on the proposal, and says when the table is
-  finer than the study area; Hagelloch's periods from the record and probabilities fitted (199); a Zarr reader (227);
-  Buffer study area's remaining code removed (retired in 0.37.0); the levels said before a join, and IDs joined on;
-  long tables scroll in dialogs; Map's key ranges laid out.
+- **0.159.0, in development:** Polygon layer from connected study areas' parts, across a border; Point data's optional
+  study area. Next in it: Detect unusual counts (CUSUM, EWMA) and a syndromic surveillance worked example.
 
 - **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);
   the practitioner, 2026-11-21). The spike reads a point by two byte ranges, checked against Planetary Computer at five
@@ -1229,8 +1227,8 @@ thesis citation type, Word; the basemap under the cluster map is the practitione
    case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
    **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,
    named or found with shares and confirmed; the walk upstream; Raster input offering the area's countries with its
-   one-file limit said. **Left:** Find health facilities querying each country's register; acquired units from two
-   countries in one study area; Raster input reading a window across two files.
+   one-file limit said. **Built 2026-11-21 (0.159.0):** a Polygon layer of
+   several study areas' parts, each with its country and level, one layer across a border. **Left:** Find health facilities querying each country's register; Raster input reading a window across two files.
 
 ### 26. A repository of worked examples for georeferencing sheet maps
 

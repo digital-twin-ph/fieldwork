@@ -25,6 +25,9 @@ import type {PointComparison} from './point-comparison.js';
 import {computeMeanCenter,meanCenterReceipt,validateMeanCenterNode} from './mean-center.js';
 import type {MeanCenter} from './mean-center.js';
 import {validateBuffer} from './area-buffer.js';
+import {areaParts} from './area-parts-layer.js';
+/** Study areas a Polygon layer of their parts takes: the cap Map keeps on polygon layers. */
+export const MAX_AREA_INPUTS=6;
 import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,isochrone,clipPolygons,summarizePolygons,catchmentReceipt,unconnectedSites,offNetworkSites} from './catchments.js';
 import type {Polygons,Network} from './catchments.js';
 import {polygonDisplay,polygonPresentationReceipt} from './catchment-output.js';
@@ -282,7 +285,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   measure_area:{title:'Calculate area',group:'Spatial operations',icon:'▱',color:'teal',description:'Attach an area measurement to the study area',inputs:[['area','area']],output:'area'},
   // The `records` table is OPTIONAL, as Polygon layer's area is: unconnected, this is the source it always was;
   // connected, the points are read from the table's x (longitude) and y (latitude) columns. Experiment 178.
-  point_input:{title:'Point data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records, or read them from a table\'s longitude and latitude columns',inputs:[['records','table']],output:'points'},
+  point_input:{title:'Point data',group:'Sources',icon:'▦',color:'blue',description:'Import point observations or generate synthetic records, or read them from a table\'s longitude and latitude columns',inputs:[['records','table'],['area','area']],output:'points'},
   // Retired 2026-10-21 and archived here, not deleted: a registry entry must resolve to a
   // definition, and a saved workflow that still names this type is migrated to
   // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
@@ -422,9 +425,12 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // so insisting on it would make the widget's original job impossible and -- because
   // `INPUT_STAGE` is derived from what a widget requires -- would also drop it off a blank
   // canvas, which is where a source widget has to be.
+  // A LAYER MADE OF THE AREAS' PARTS needs one area at least; the others are added as wanted.
+  if(node.type==='polygon_input'&&node.params.inputMethod==='areas')return all.filter(([port])=>port==='area');
   if(node.type==='network_input'||node.type==='polygon_input')
     return all.filter(([port])=>port!=='area');
-  if(node.type==='point_input')return all.filter(([port])=>port!=='records');
+  // THE AREA TO GENERATE IN, optional too (2026-11-21): connected, it is the one Configure… generates in.
+  if(node.type==='point_input')return all.filter(([port])=>port!=='records'&&port!=='area');
   // A SEARCH'S AREA MAY BE TYPED IN ITS DIALOG, as in JLT's STAC Browser, so a Study area fills it but is not required.
   // Requiring it left Search grey with no way forward inside the dialog (the practitioner, 2026-11-05).
   if(node.type==='search_satellite_catalog')return all.filter(([port])=>port!=='area');
@@ -571,6 +577,10 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // port a connection needed might not exist on the node -- the blocker
   // `output-mode-set-before-the-shape-arrives`, and the reason a practitioner had to answer a
   // question about shape before having the shape.
+  // SEVERAL STUDY AREAS, each its own input, where the layer is made of their parts (2026-11-21).
+  if(node.type==='polygon_input')return [['area','area'],
+    ...Array.from({length:node.params.inputMethod==='areas'?Math.max(0,Math.min(MAX_AREA_INPUTS,node.params.areaInputCount??1)-1):0},
+      (_,i)=>[`area_${i+2}`,'area'] as [string,PortType])];
   if(node.type==='map_output')return [['area','area'],
     ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
     // SEVERAL POLYGON LAYERS, each its own port, as point layers are (2026-11-13): the practitioner, of Collect polygon
@@ -1669,7 +1679,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // READ AS PUBLISHED. The features were parsed and refused at import; this emits them as the
         // `polygons` value the seven existing consumers already accept, which is why the widget
         // needed no new port type.
-        const imported=node.params.data.features;
+        // THE CONNECTED STUDY AREAS' PARTS, where that is the source: read from the areas, not from a file.
+        const fromAreas=node.params.inputMethod==='areas'?(()=>{
+          const ports=nodeInputs(node).map(([port])=>port);
+          const connected=ports.flatMap(port=>{const value=(inputs as unknown as Record<string,AreaValue|undefined>)[port];if(!value?.boundary)return [];
+            const from=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===node.id&&e.port===port)?.from);
+            const boundaryID=from?.type==='study_area'?from.params.boundary?.boundaryID:undefined;
+            return [{value,...(boundaryID?{boundaryID}:{})}];});
+          if(!connected.length)throw new Error(`Connect a study area to "${node.params.label||node.id}": its parts are the layer.`);
+          return areaParts(connected);})():undefined;
+        const imported=fromAreas?fromAreas.features as typeof node.params.data.features:node.params.data.features;
         if(!imported.length)throw new Error('Import a polygon layer before running.');
         // WHAT THE PRACTITIONER SET ASIDE IN THE FEATURE VIEWER. A read of Greater London's water
         // areas returns 606 features where two are wanted, and the way to find those two is to
@@ -1715,8 +1734,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // "Layer 1" and "Layer 2", so a map carrying the sub-districts and the Thames offered a
         // reader two toggles named after nothing. The words on the canvas are the words the
         // practitioner already chose.
-        value=polygonLayer(shown,{...node.params,
+        value=polygonLayer(shown,{...node.params,...(fromAreas?{nameField:'name'}:{}),
           layerName:node.params.layerName||node.params.label}) as unknown as DisplayValue;
+        // AREAS AT DIFFERENT LEVELS, said: a count compares only like units; a rate across the border still does.
+        if(fromAreas)(value as unknown as {notes?:string[]}).notes=[
+          `${shown.length} part${shown.length===1?'':'s'} of the connected study areas, at ${fromAreas.levels.join(', ')}.`,
+          ...(fromAreas.levels.length>1?[`The parts are at different levels: a count compares only units at one level; a rate compares across them.`]:[])];
         const {facts,vertices}=polygonLayerFacts(shown,node.params,{runId,nodeId:node.id});
         // SAID IN THE RECEIPT, because a layer of two drawn from a read of 606 is a choice a
         // reader of the evidence has to be able to see.
@@ -1730,7 +1753,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           :'';
         receipts.push({nodeId:node.id,kind:'computation',facts:facts+kept+cutFacts,rules:'',
           input:facts+kept+cutFacts,conclusions:[],
-          method:read
+          method:fromAreas
+            ? `${features.length} part${features.length===1?'':'s'} of the connected study areas (${fromAreas.levels.join(', ')}), `
+              +`${vertices.toLocaleString()} vertices, each with its name, geoBoundaries ID, country and level`
+          :read
             ? `${features.length} ${read.kinds.join(' and ')} feature`
               +`${features.length===1?'':'s'} read from ${node.params.source?.filename
                 ??'a published OpenStreetMap extract'} within `
@@ -2884,6 +2910,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   return {...provenance,alerts,outputs,trace,receipts,runId,engine:'EYE-JS 21.1.24 (WASM)',runAt:new Date().toISOString(),
     ...(Object.keys(tables).length?{tables}:{}),
     ...(Object.keys(pointColumns).length?{pointColumns}:{}),
+    ...(()=>{const areas:Record<string,{label:string;boundary:import('./types.js').Boundary}>={};
+      for(const [nodeId,value] of values){const n=workflow.nodes.find(x=>x.id===nodeId),v=value as AreaValue|undefined;
+        if(n&&n.type!=='study_area'&&outputOf(n)==='area'&&v?.boundary)areas[nodeId]={label:v.label,boundary:v.boundary};}
+      return Object.keys(areas).length?{areas}:{};})(),
     ...(unfinished.length?{unfinished}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),

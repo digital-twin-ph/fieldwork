@@ -6,6 +6,8 @@ import {geometryBounds} from './study-area.js';
 import {labelField} from './catchment-ui.js';
 import {shareAlike} from './input-provenance.js';
 import type {FeatureDecisions} from './polygon-review.js';
+/** Study areas a layer of their parts takes; the cap Map keeps on polygon layers (core's MAX_AREA_INPUTS). */
+const MAX_AREAS=6;
 
 /** THE WIDGET HAD NO INSPECTOR AT ALL until this panel.
  *
@@ -101,14 +103,16 @@ function nameFields(p:WorkflowNode<'polygon_input'>['params'],esc:Escape):string
 /** WHAT CONFIGURE… HOLDS (experiment 186, 2026-11-11: the practitioner, "Let's also standardize the Polygon layer input
  *  ASAP"). Everything the panel used to carry, now a draft that nothing reads until Apply, which is the read. */
 export interface PolygonDraft {
-  inputMethod:'file'|'extract'; kinds:AreaKind[]; marginM:number; minVertices?:number;
+  inputMethod:'file'|'extract'|'areas'; kinds:AreaKind[];
+  /** The study areas whose parts make the layer, one per input, in order (2026-11-21). */
+  areas:string[]; marginM:number; minVertices?:number;
   nameField?:string; layerName?:string; area?:string; label:string;
   /** Choose features' decisions, made in the same dialog (2026-11-13). */
   decisions:FeatureDecisions;
 }
-export function polygonDraftOf(n:WorkflowNode<'polygon_input'>,connectedArea?:string):PolygonDraft{
+export function polygonDraftOf(n:WorkflowNode<'polygon_input'>,connectedArea?:string,connectedAreas:string[]=[]):PolygonDraft{
   const p=n.params;
-  return {inputMethod:p.inputMethod==='extract'?'extract':'file',kinds:[...(p.kinds??[])],marginM:p.marginM??0,
+  return {inputMethod:p.inputMethod==='extract'||p.inputMethod==='areas'?p.inputMethod:'file',areas:[...connectedAreas],kinds:[...(p.kinds??[])],marginM:p.marginM??0,
     ...(p.minVertices!==undefined?{minVertices:p.minVertices}:{}),...(p.nameField?{nameField:p.nameField}:{}),
     ...(p.layerName?{layerName:p.layerName}:{}),...(connectedArea?{area:connectedArea}:{}),label:p.label||'',
     decisions:{hidden:[...(p.hidden??[])],clipped:p.clipToBox===true,names:{...(p.names??{})},merges:(p.merges??[]).map(g=>[...g])}};
@@ -116,6 +120,7 @@ export function polygonDraftOf(n:WorkflowNode<'polygon_input'>,connectedArea?:st
 /** What is still missing before Apply, one thing at a time. A layer already held needs no file: Apply then writes the
  *  settings and the features chosen, and a file is chosen only to replace what is held. */
 export function polygonMissing(d:PolygonDraft,file?:File,held=false):string{
+  if(d.inputMethod==='areas')return d.areas.some(Boolean)?'':'Choose a study area.';
   if(held&&!file)return '';
   return d.inputMethod==='extract'
     ?(!d.area?'Choose the study area to read inside.':!d.kinds.length?'Choose at least one kind of area to read.'
@@ -146,9 +151,24 @@ export function polygonConfigSettings(d:PolygonDraft,esc:Escape,boundary:Boundar
   let html=step(1,'Where the features come from',
     `<select id="polygon-input-method" aria-label="Where the features come from">`
     +`<option value="file" ${d.inputMethod==='file'?'selected':''}>A GeoJSON file</option>`
-    +`<option value="extract" ${d.inputMethod==='extract'?'selected':''}>An OpenStreetMap extract (.osm.pbf)</option></select>`
+    +`<option value="extract" ${d.inputMethod==='extract'?'selected':''}>An OpenStreetMap extract (.osm.pbf)</option>`
+    +`<option value="areas" ${d.inputMethod==='areas'?'selected':''}>The parts of connected study areas</option></select>`
     +`<small>${d.inputMethod==='file'?'A layer somebody published. Read as published — nothing is clipped or reprojected.'
+      :d.inputMethod==='areas'?'Each part of each study area is a feature, with its country and level: one layer across a border.'
       :'Areas read out of a published extract on your computer, inside your study area.'}</small>`);
+  if(d.inputMethod==='areas'){
+    const slots=d.areas.length?d.areas:[''];
+    html+=step(2,'Study areas',slots.map((chosen,i)=>`<label class="field-label" for="polygon-area-${i}">Study area ${i+1}</label>`
+      +`<select id="polygon-area-${i}" data-polygon-area="${i}"><option value="">Not connected</option>`
+      +areaSources.map(source=>`<option value="${esc(source.id)}" ${chosen===source.id?'selected':''}>${esc(source.label)}</option>`).join('')
+      +'</select>').join('')
+      +`<div class="inspector-actions">`
+      +(slots.length<MAX_AREAS?'<button type="button" class="button" id="polygon-add-area">+ Add a study area</button>':'')
+      +(slots.length>1?'<button type="button" class="button" id="polygon-remove-area">Remove the last</button>':'')+'</div>'
+      +`<small>Each country at the level you want; a part keeps its name and geoBoundaries ID.</small>`);
+    return html+step(3,'What to call the layer',`<input id="polygon-layer-name" maxlength="100" value="${esc(d.layerName||'')}" placeholder="${esc(d.label||'Polygon layer')}">`
+      +`<small>What a reader sees beside it on a map.</small>`);
+  }
   if(d.inputMethod==='file'){
     html+=step(2,'Choose the file',`<input id="polygon-file" type="file" accept=".geojson,.json,application/geo+json,application/json">`
       +`<small>Polygons and multipolygons, longitude then latitude.</small>`+pending);
@@ -183,6 +203,8 @@ export function polygonConfigSettings(d:PolygonDraft,esc:Escape,boundary:Boundar
 /** The Inspector's one sentence: what the layer holds and where it came from. */
 export function polygonSentence(n:WorkflowNode<'polygon_input'>):string{
   const p=n.params,count=p.data.features.length;
+  if(p.inputMethod==='areas'){const k=p.areaInputCount??1;
+    return `The parts of ${k===1?'the connected study area':`${k} connected study areas`}, each a feature with its name, geoBoundaries ID, country and level.`;}
   if(!count)return 'No features yet. Choose a GeoJSON file, or read areas out of an OpenStreetMap extract, in Configure…';
   const from=p.retrieval?`read from ${p.source?.filename??'an OpenStreetMap extract'} inside the study area (${p.retrieval.kinds.join(' and ')})`
     :`read from ${p.source?.filename??'a GeoJSON file'}, as published`;

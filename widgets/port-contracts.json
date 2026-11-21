@@ -541,6 +541,21 @@
         }
       ]
     },
+    "detect_unusual_counts": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "case_series": {
       "output": "table",
       "contracts": [

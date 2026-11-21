@@ -1,0 +1,62 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:detect_unusual_counts",
+ "nodeType": "detect_unusual_counts",
+ "version": "0.1.0",
+ "title": "Detect unusual counts",
+ "released": "2026-11-21",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['detect_unusual_counts']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "table"
+   }
+  ],
+  "output": "table",
+  "optionalInputs": [],
+  "note": "A table of counts per period in, one series or one per value of a chosen column; a table out, each period's observed, expected, threshold, statistic and signal under a measure column."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "No ontology mapping yet. The receipt states the method, its settings and which periods signal; a signal is not asserted to be an outbreak.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/aberration.ts",
+   "src/detect-ui.ts",
+   "src/core.ts",
+   "src/app.ts"
+  ],
+  "definition": "src/aberration.ts"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "initial",
+   "description": "Flags the periods whose count passes a threshold set from the series' own past: EARS C1, C2 and C3 (Hutwagner et al. 2003), CUSUM (Page 1954, counts standardized as R's surveillance does) and EWMA (Roberts 1959). Experiment 228."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested against R 4.4.1's surveillance 1.25.0 on a 40-day series with five days of excess: EARS C1 and C2 thresholds within 7e-8 and identical signals; CUSUM sums within 9e-15, bounds and signals identical; EARS C3 differs on one day by design (R's bound leaves out the current day's term, Hutwagner's definition includes it); EWMA against its formula computed independently. No lab notebook yet. Nothing here establishes that a signal is an outbreak, or that a threshold suits a given surveillance system."
+ }
+}

@@ -6,11 +6,11 @@
     "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
     "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
   },
-  "measuredAt": "2026-11-20",
+  "measuredAt": "2026-11-21",
   "counts": {
-    "widgets": 50,
+    "widgets": 51,
     "covered": 31,
-    "awaiting": 9,
+    "awaiting": 10,
     "none": 9,
     "blocked": 1
   },
@@ -293,6 +293,11 @@
       "nodeType": "transmission_chains",
       "expectation": "parity",
       "computes": "Each case's chain, generation, offspring and chain size, by following the recorded source to the first case. An independent implementation (networkx, or a recursive walk in R) can recompute MERS's 67 chains, SK_1's 94 cases over 4 generations, and every case's generation; worth checking because a case in a loop, or naming a source not held, must start a chain rather than be dropped."
+    },
+    {
+      "nodeType": "detect_unusual_counts",
+      "expectation": "parity",
+      "computes": "Each period's expected count, threshold and signal by EARS C1, C2, C3, CUSUM or EWMA. R's surveillance package (earsC, algo.cusum) recomputes EARS and CUSUM; EWMA by its formula. Checked in unit tests against R on one series (experiment 228); a lab notebook over several series, including a seasonal one, is owed."
     }
   ]
 }

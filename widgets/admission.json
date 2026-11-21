@@ -1,8 +1,8 @@
 {
   "schema": "fieldwork/admission-state/1",
   "note": "Admission is a claim made at a point in time against a stated standard, not a permanent property. This is a developmental evaluation: the criteria change as lessons are learned, so what passed D1 at widget 20 may fail the D1 of widget 51. Treating admission as permanent is what left three implementations of one operation, nine example-bound widgets and four port names encoding a use in a registry whose every member had passed its own review honestly. The widget audit's own Method section is where the permanence came from: D3 and D4 were sampled because 'doing it retroactively for all of them is a separate task', and D5, D6, D8 and D9 were declared 'not applicable retroactively'. That separate task was never scheduled. So each criterion now records when it last CHANGED and when the set was last SWEPT against it. A criterion changed after its last sweep is a re-admission debt: validate:admission fails, and the only ways to clear it are to sweep or to record why the change does not reach the existing set.",
-  "measuredAt": "2026-11-10",
-  "widgets": 72,
+  "measuredAt": "2026-11-21",
+  "widgets": 73,
   "criteria": [
     {
       "id": "D1",
@@ -123,10 +123,10 @@
     }
   ],
   "setChanged": {
-    "at": "2026-11-15",
-    "registry": 72,
-    "live": 60,
+    "at": "2026-11-21",
+    "registry": 73,
+    "live": 61,
     "retired": 11,
-    "note": "transmission_chains added, reviewed in docs/experiments/216-each-case-its-chain.md. D1: a primitive the practitioner asks for by name, on the palette. D2: Relate follows one step, Total within groups counts offspring, Apply ruleset reads a record or the previous row, and Chart's tree computes chains in an output; none hands a chain on. D4: no new port type, table in, table out. D11: each case's chain, generation, offspring and chain size, nothing dropped. Previous change, 2026-11-10: space_time_scan added, reviewed in docs/experiments/200-operational-epidemiology.md (Detect). D1: the practitioner asks for it by name (\"a cluster detection widget like SatScan\"). D2: examined first; Summarize points to polygons and Aggregate points to H3 cells count points in areas and test nothing, and no widget compares timing across places. D4: no new port type, points in, polygons out, so Map"
+    "note": "detect_unusual_counts added, reviewed in docs/experiments/228-detect-unusual-counts.md. D1: a primitive the practitioner asks for by name (CUSUM, EWMA). D2: Cases by period counts, Chart draws, Apply ruleset compares with a declared number, Space-time scan tests place and time; none sets a threshold from a series' own past. D4: no new port type, table in, table out. Previous change, 2026-11-15: transmission_chains added, reviewed in docs/experiments/216-each-case-its-chain.md. D1: a primitive the practitioner asks for by name, on the palette. D2: Relate follows one step, Total within groups counts offspring, Apply ruleset reads a record or the previous row, and Chart's tree computes chains"
   }
 }

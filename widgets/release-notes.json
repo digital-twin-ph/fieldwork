@@ -1074,6 +1074,18 @@
    ],
    "breaking": false,
    "migrationFrom": []
+  },
+  "detect_unusual_counts": {
+   "version": "0.1.0",
+   "released": "2026-11-21",
+   "changes": [
+    {
+     "kind": "initial",
+     "description": "Flags the periods whose count passes a threshold set from the series' own past: EARS C1, C2 and C3 (Hutwagner et al. 2003), CUSUM (Page 1954, counts standardized as R's surveillance does) and EWMA (Roberts 1959). Experiment 228."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   }
  }
 }

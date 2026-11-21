@@ -14,11 +14,11 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-50 live widgets across 11 shipped examples and 11 pinned in its own repository.
+51 live widgets across 11 shipped examples and 11 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
-| Used by no workflow | **12** |
+| Used by no workflow | **13** |
 | Used by exactly one | 12 |
 | Used by two or more | **26** |
 
@@ -33,6 +33,7 @@ fixed — see experiment 64.
 - `clip_points_to_area`
 - `clip_raster`
 - `deduplicate_points`
+- `detect_unusual_counts`
 - `fill_interior_gaps`
 - `measure_area`
 - `point_grid`
@@ -278,7 +279,7 @@ doing: that is a decision with a cost, and this file measures.
 
 **R1. Give the 4 data-carrying nodes a declared source.** 4 shipped examples hold 4 nodes that carry data and name no origin: `snow-curve` (1), `snow-isochrone` (1), `hagelloch-cluster` (1), `hagelloch-sheet` (1). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
 
-**R2. Ask D11 of the 8 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `clip_raster`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `point_grid`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
+**R2. Ask D11 of the 9 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `clip_raster`, `deduplicate_points`, `detect_unusual_counts`, `fill_interior_gaps`, `measure_area`, `point_grid`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
 
 **R3. Settle what a monolith and its decomposition owe each other.** Use propagates from a composition to its members and not from an equivalent monolith, so 4 widgets read as unreached while a workflow performs their work. It is a question about the admission criteria rather than about those widgets, and the count is deliberately left as it is until it is answered.
 

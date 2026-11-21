@@ -26,6 +26,7 @@ import {computeMeanCenter,meanCenterReceipt,validateMeanCenterNode} from './mean
 import type {MeanCenter} from './mean-center.js';
 import {validateBuffer} from './area-buffer.js';
 import {areaParts} from './area-parts-layer.js';
+import {detectSettings,detectTable,detectSentence} from './aberration.js';
 /** Study areas a Polygon layer of their parts takes: the cap Map keeps on polygon layers. */
 export const MAX_AREA_INPUTS=6;
 import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,isochrone,clipPolygons,summarizePolygons,catchmentReceipt,unconnectedSites,offNetworkSites} from './catchments.js';
@@ -215,6 +216,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     // predicted a declaration would buy. Experiment 154.
     inputs:[['records','table'],['design','design']],output:'table'},
   rate:{title:'Rate with a denominator',group:'Epidemiology',icon:'÷',color:'teal',description:'Divide counts by a declared population at risk, stating what the denominator counts',inputs:[['records','points']],output:'table'},
+  detect_unusual_counts:{title:'Detect unusual counts',group:'Epidemiology',icon:'⚑',color:'teal',description:'Flag the periods whose count passes a threshold set from the series\' own past: EARS C1, C2 or C3, CUSUM or EWMA',inputs:[['records','table']],output:'table'},
   case_series:{title:'Cases by period',group:'Epidemiology',icon:'▦',color:'teal',description:'Count cases by day, week, month, day of the week or month of the year, by a declared kind of date',inputs:[['points','points']],output:'table'},
   slr_extract_import:{title:'Sea-level projection extract',group:'Sources',icon:'≈',color:'blue',description:'Declare an imported long-format table as a bounded extract of published AR6 projections',inputs:[['projections','table']],output:'table'},
   slr_site_assignment:{title:'Assign projection site',group:'Spatial operations',icon:'⊕',color:'teal',description:'Assign each point its nearest published projection site and record the distance',inputs:[['points','points'],['sites','points'],['projections','table']],output:'table'},
@@ -1018,6 +1020,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (n.type==='policy' && (!Number.isFinite(n.params.thresholdKm) || n.params.thresholdKm<0 || n.params.thresholdKm>1000)) throw new Error('Distance threshold must be between 0 and 1,000 km.');
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
+    if(n.type==='detect_unusual_counts'){if(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>100)throw new Error('Name the detection using 1–100 characters.');detectSettings(n.params);}
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error(`Use 1–${MAX_POINT_LAYERS} point input ports.`);
     if(n.type==='space_time_scan')validateScanParams(n.params as never);
@@ -2074,6 +2077,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         receipts.push({...regressionReceipt(node,result,node.params,runId,
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from,!!declared&&!declared.stopped),
           method:sentence} as unknown as Receipt);
+        break;}
+      case 'detect_unusual_counts':{
+        const table=inputs.records as unknown as import('./data-table.js').DataTable|undefined;
+        if(table?.kind!=='data-table')throw new Error('Connect a table of counts per period, such as Cases by period gives.');
+        if(!node.params.timeField)throw new Error(`Choose, in Configure…, the column holding each period for "${node.params.label}".`);
+        const found=detectTable(table,node.params),sentence=detectSentence(found,node.params);
+        value={...found.table,sentence} as unknown as DisplayValue;
+        receipts.push({nodeId:node.id,kind:'computation',method:sentence,facts:'',input:'',rules:'',conclusions:[]} as unknown as Receipt);
         break;}
       case 'append_rows':{
         const count=appendTableCount(node.params);

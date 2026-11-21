@@ -1785,3 +1785,13 @@ th .meaning{font-weight:400;white-space:normal}
 .opening-ring{width:18px;height:18px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--green);animation:opening-spin .8s linear infinite}
 @keyframes opening-spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.opening-ring{animation:none;border-top-color:var(--line)}}
+/* DETECT UNUSUAL COUNTS' CHART (2026-11-21): counts as bars, the threshold dashed, the periods that signal dark. */
+.detect-chart{margin:8px 0}
+.detect-chart svg{display:block;width:100%;max-width:48rem;height:auto;background:var(--surface-raised,#fff)}
+.detect-bar{fill:var(--accent-soft,#cfe6df);stroke:var(--accent,#176b59);stroke-width:.5}
+.detect-bar-signal{fill:var(--accent,#176b59)}
+.detect-threshold{fill:none;stroke:var(--text,#222);stroke-width:2;stroke-dasharray:6 4}
+.detect-axis{font-size:14px;fill:var(--text,#111)}
+.detect-axis-line{stroke:var(--text-muted,#555);stroke-width:1}
+.detect-chart .walk-key li{font-size:16px;line-height:1.5;color:var(--text,#111)}
+tr.detect-signal-row td{font-weight:700}

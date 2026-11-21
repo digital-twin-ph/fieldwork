@@ -3078,6 +3078,18 @@
           "sha256": "69b252234aadabc2c04d1df5fc796c7cbcecf2c07b5daa3d9e28f4dfdcf1d40a"
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:widget:detect_unusual_counts",
+      "nodeType": "detect_unusual_counts",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/detect_unusual_counts/0.1.0.json",
+          "sha256": "7db3b16c017cc30dd55fd0491c7c97101f028e43cdddf8f82ef802fb5ba3225a"
+        }
+      ]
     }
   ]
 }

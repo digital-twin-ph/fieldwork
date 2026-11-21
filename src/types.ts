@@ -298,6 +298,10 @@ export interface ParamsByType {
     adjust:{column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number;perModel?:string[]}[];
     /** One strata column, or several taken together (experiment 182). */
     strata?:string|string[];offset?:string;errors:'wald'|'profile'|'overdispersed'|'hac';hacLag?:number;order?:string;level?:number};
+  /** DETECT UNUSUAL COUNTS (2026-11-21): a table of counts per period, one series or one per `groupField`, and a method
+   *  with its settings; see aberration.ts. */
+  detect_unusual_counts:{label:string;timeField:string;groupField?:string;method:import('./aberration.js').DetectMethod;
+    baseline?:number;alpha?:number;minSigma?:number;baselinePeriods?:number;k?:number;h?:number;reset?:boolean;lambda?:number;L?:number};
   append_rows:{label:string;nameSource?:boolean;sourceColumn?:string;firstLabel?:string;secondLabel?:string;newKey?:string;
     /** How many tables it stacks, 2 and up; absent is 2 (experiment 181). */ tableCount?:number;
     labels?:string[];labelsAreNumbers?:{unit:string};

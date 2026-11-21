@@ -5,6 +5,9 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.159.0 — In development
 
+- **Detect unusual counts**, a new step: each period of a table of counts held to a threshold set from the series'
+  own past, by EARS C1, C2 or C3, CUSUM or EWMA, one series or one per syndrome or district; the counts and threshold
+  drawn in Configure…, and Show me how. Checked against R's surveillance package (experiment 228).
 - **A polygon layer of connected study areas' parts.** Polygon layer's third source: each part of up to six study areas,
   with its name, geoBoundaries ID, country and level, one layer across a border (an outbreak in DR Congo, Uganda and
   South Sudan), drawn on Map and joined to a table on the IDs.

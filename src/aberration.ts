@@ -129,3 +129,60 @@ export function detect(series:readonly number[],settings:DetectSettings):DetectR
     return {index:t,observed:x,expected:m,threshold:limit,statistic:Z,signal:Z>limit};
   });
 }
+
+/** THE NAMES THE PRACTITIONER READS, in the dialog, the table and the receipt. */
+export const METHOD_NAMES:Record<DetectMethod,string>={'ears-c1':'EARS C1','ears-c2':'EARS C2','ears-c3':'EARS C3',cusum:'CUSUM',ewma:'EWMA'};
+export const MEASURES=['observed','expected','threshold','statistic','signal'] as const;
+
+export interface DetectTableSettings extends DetectSettings {timeField:string;groupField?:string}
+export interface DetectTableResult {
+  table:import('./data-table.js').DataTable;
+  /** Per series: its name ('' with none), the periods watched and those that signal. */
+  series:{name:string;watched:number;signals:string[];filled:number}[];
+  periods:string[];
+}
+
+/** A TABLE OF COUNTS, DETECTED: one series per value of `groupField` (one series with none), its periods in order. A
+ *  period a series has no row for counts as 0, and is said; a period a series has two rows for is refused, since a
+ *  count per period is what each method reads. Out: one row per period, series and measure. */
+export function detectTable(table:import('./data-table.js').DataTable,s:DetectTableSettings):DetectTableResult{
+  if(!table.keys.includes(s.timeField))throw new Error(`The table has no column "${s.timeField}". It is keyed by ${table.keys.join(', ')}.`);
+  if(s.groupField&&!table.keys.includes(s.groupField))throw new Error(`The table has no column "${s.groupField}". It is keyed by ${table.keys.join(', ')}.`);
+  if(s.groupField===s.timeField)throw new Error('The column splitting the series cannot also be the periods.');
+  const at=(r:{key:Record<string,unknown>},k:string)=>String(r.key[k]??'').trim();
+  const periods=[...new Set(table.rows.map(r=>at(r,s.timeField)).filter(Boolean))];
+  const numeric=periods.every(p=>p!==''&&Number.isFinite(Number(p)));
+  periods.sort((a,b)=>numeric?Number(a)-Number(b):a<b?-1:a>b?1:0);
+  const names=s.groupField?[...new Set(table.rows.map(r=>at(r,s.groupField!)))].sort():[''];
+  const rows:import('./data-table.js').DataTable['rows']=[],series:DetectTableResult['series']=[];
+  for(const name of names){
+    const counts=new Map<string,number>();
+    for(const r of table.rows){
+      if(s.groupField&&at(r,s.groupField)!==name)continue;
+      const p=at(r,s.timeField);if(!p)continue;
+      if(counts.has(p))throw new Error(`${name?`"${name}" has`:'The table has'} two rows for ${p}. Each method reads one count per period: `
+        +'choose the column that splits the series, or select the rows of one measure first.');
+      if(r.value===null||r.value===undefined)throw new Error(`${p}${name?` for "${name}"`:''} has no count.`);
+      counts.set(p,r.value);
+    }
+    const filled=periods.filter(p=>!counts.has(p)).length;
+    const result=detect(periods.map(p=>counts.get(p)??0),s);
+    result.forEach((d,i)=>{const p=periods[i]!;
+      for(const m of MEASURES){const v=m==='signal'?(d.signal===null?null:d.signal?1:0):d[m];
+        rows.push({key:{[s.timeField]:p,...(s.groupField?{[s.groupField]:name}:{}),measure:m},value:v===null?null:Number(v)});}});
+    series.push({name,watched:result.filter(d=>d.signal!==null).length,signals:result.filter(d=>d.signal).map(d=>periods[d.index]!),filled});
+  }
+  const keys=[s.timeField,...(s.groupField?[s.groupField]:[]),'measure'];
+  return {periods,series,table:{kind:'data-table',keys,valueField:'value',rows,rowCount:rows.length,
+    missingValueCount:rows.filter(r=>r.value===null).length,primaryKey:keys,
+    columns:{measure:{label:'Measure',description:`observed, expected, threshold, statistic, and signal (1 where the period signals) by ${METHOD_NAMES[s.method]}`,origin:'file',confirmed:true}}} as import('./data-table.js').DataTable};
+}
+
+/** One sentence of what a detection found, for the Inspector, the receipt and Notes. */
+export function detectSentence(r:DetectTableResult,s:DetectTableSettings):string{
+  const n=(x:number)=>x.toLocaleString('en');
+  const said=r.series.map(x=>`${x.name?`${x.name}: `:''}${x.signals.length?`${n(x.signals.length)} of ${n(x.watched)} periods signal (${x.signals.slice(0,6).join(', ')}${x.signals.length>6?' …':''})`:`none of ${n(x.watched)} periods signals`}`);
+  const filled=r.series.reduce((t,x)=>t+x.filled,0);
+  return `${METHOD_NAMES[s.method]} over ${n(r.periods.length)} periods${r.series.length>1?` in ${r.series.length} series`:''}: ${said.join('; ')}.`
+    +(filled?` ${n(filled)} period${filled===1?'':'s'} with no row counted as 0.`:'');
+}

@@ -1,7 +1,7 @@
 {
  "repository": "https://github.com/digital-twin-ph/census-tables",
- "commit": "753697471452ce93d317afdf09f50cbd1a637efd",
- "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/753697471452ce93d317afdf09f50cbd1a637efd/",
+ "commit": "e688e90a7fb7df7c880a185b61b7e7371d3bd1ec",
+ "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/e688e90a7fb7df7c880a185b61b7e7371d3bd1ec/",
  "countries": [
   {
    "iso3": "BRA",
@@ -156,7 +156,8 @@
    },
    "derived": {
     "label": "Its 47 counties, summed, with geoBoundaries' names",
-    "printed": "KEN/counts.csv"
+    "printed": "KEN/counts.csv",
+    "level": "ADM1"
    },
    "more": [
     {
@@ -216,7 +217,8 @@
    },
    "derived": {
     "label": "Its 28 districts with their cities, with geoBoundaries' names",
-    "printed": "MWI/counts.csv"
+    "printed": "MWI/counts.csv",
+    "level": "ADM2"
    },
    "more": [
     {
@@ -276,7 +278,8 @@
    },
    "derived": {
     "label": "Its 37 states, with geoBoundaries' names",
-    "printed": "NGA/counts.csv"
+    "printed": "NGA/counts.csv",
+    "level": "ADM1"
    },
    "more": [
     {
@@ -293,7 +296,8 @@
      },
      "derived": {
       "label": "Its 774 LGAs, with geoBoundaries' names",
-      "printed": "NGA/counts.csv"
+      "printed": "NGA/counts.csv",
+      "level": "ADM2"
      }
     }
    ]
@@ -381,7 +385,8 @@
    },
    "derived": {
     "label": "Its 14 districts, with geoBoundaries' names",
-    "printed": "SLE/counts.csv"
+    "printed": "SLE/counts.csv",
+    "level": "ADM2"
    },
    "more": [
     {
@@ -398,7 +403,8 @@
      },
      "derived": {
       "label": "Its 164 chiefdoms and areas, with geoBoundaries' names",
-      "printed": "SLE/counts.csv"
+      "printed": "SLE/counts.csv",
+      "level": "ADM3"
      }
     }
    ]

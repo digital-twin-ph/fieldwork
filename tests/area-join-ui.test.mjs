@@ -42,3 +42,30 @@ test('a table finer than the study area is said to be, not joined on its first r
 test('a table naming no part says what its columns and the parts are called',()=>{
   assert.throws(()=>keyColumnForRun(table,[{id:'x',name:'Elsewhere'}],'fuzzy'),/columns are unit, geoboundaries_name, and the parts are called Elsewhere\. Choose/);
 });
+
+/** THE LEVELS, SAID BEFORE A RUN, AND IDS JOINED ON (the practitioner, 2026-11-21: Nigeria's LGAs joined to its states,
+ *  "How can we alert the user that the admin levels are different?", then "yes" to a warning and a join on IDs). */
+import {levelMismatch,censusTableLevel} from '../build/boundary-levels.js';
+import {joinTableToAreas} from '../build/area-join.js';
+const RAW='https://raw.githubusercontent.com/digital-twin-ph/census-tables/e688e90a7fb7df7c880a185b61b7e7371d3bd1ec/';
+test("a census table's level is read from its address, and a study area at another level is said to be",()=>{
+  assert.deepEqual(censusTableLevel(RAW+'NGA/lgas.csv'),{iso3:'NGA',country:'Nigeria',level:'ADM2',rows:774});
+  assert.equal(censusTableLevel('https://example.org/NGA/lgas.csv'),undefined);
+  assert.equal(levelMismatch(RAW+'NGA/lgas.csv','NGA-ADM2-27671186'),undefined);
+  assert.match(levelMismatch(RAW+'NGA/lgas.csv','NGA-ADM1-27671186'),/census at ADM2, 774 rows; the study area is at ADM1\. The table is finer .*Choose “Its 37 states/);
+  assert.match(levelMismatch(RAW+'NGA/states.csv','NGA-ADM2-27671186'),/coarser than the study area/);
+  assert.match(levelMismatch(RAW+'NGA/states.csv','KEN-ADM1-1'),/in KEN: no part will be named/);
+  assert.equal(levelMismatch(undefined,'NGA-ADM1-1'),undefined);
+});
+test('two parts with one name each take their own row when the column gives their IDs',()=>{
+  const lgas={kind:'data-table',keys:['geoboundaries_name','geoboundaries_id'],valueField:'total',rowCount:3,missingValueCount:0,rows:[
+    {key:{geoboundaries_name:'Obi',geoboundaries_id:'B1'},value:100},{key:{geoboundaries_name:'Obi',geoboundaries_id:'N1'},value:200},
+    {key:{geoboundaries_name:'Makurdi',geoboundaries_id:'B2'},value:300}]};
+  const parts=[{id:'B1',name:'Obi'},{id:'N1',name:'Obi'},{id:'B2',name:'Makurdi'}];
+  assert.deepEqual(proposeKeyColumn(lgas,parts,lgas.keys,'fuzzy'),{column:'geoboundaries_id',named:3,rows:3});
+  const j=joinTableToAreas(parts,lgas,{keyField:'geoboundaries_id'});
+  assert.deepEqual(j.parts.map(p=>p.value),[100,200,300]);assert.equal(j.declared.matchedOn,'id');
+  assert.equal(j.diagnostics.length,0);
+  const byName=joinTableToAreas(parts,lgas,{keyField:'geoboundaries_name'});
+  assert.equal(byName.declared.matchedOn,'name');assert.ok(byName.diagnostics.some(d=>d.code==='multiple-data-rows'));
+});

@@ -75,6 +75,9 @@ export interface AreaJoinResult {
   /** What the join was told to do, carried so the receipt can state it. */
   declared:{keyField:string; valueField:string; normalisation:'exact'|'fuzzy';
     categoryField?:string; frameField?:string;
+    /** 'id' where the key column gives the parts' IDs rather than their names (Nigeria's geoboundaries_id, 2026-11-21:
+     *  five LGA names are each two LGAs in two states, and matched by name both took one row's count). */
+    matchedOn?:'id'|'name';
     /** What the joined value is, in words, for the map's key: a share where every row is one, such as "% within source",
      *  else the value column and its unit (2026-11-13: GHS-POP's shares were keyed "the joined value"). */
     valueName?:string};
@@ -95,13 +98,17 @@ const text=(value:unknown):string|undefined=>{
  *  more than `named` when the table is finer than the area (Nigeria's 774 LGAs name its 37 states in their
  *  `state_geoboundaries`, 2026-11-21). A tie goes to the column naming each part fewest times. None names any part:
  *  nothing proposed. */
-export function proposeKeyColumn(table:DataTable,parts:readonly {name:string}[],columns:readonly string[],
+export function proposeKeyColumn(table:DataTable,parts:readonly {name:string;id?:string}[],columns:readonly string[],
   match:'exact'|'fuzzy'):{column:string;named:number;rows:number}|undefined{
   const fold=(value:unknown)=>normaliseName(typeof value==='number'?String(value):value,match);
   const names=new Set(parts.map(p=>fold(p.name)).filter(Boolean));
+  const ids=new Set(parts.map(p=>fold((p as {id?:string}).id)).filter(Boolean));
   let best:{column:string;named:number;rows:number}|undefined;
   for(const column of columns){
-    const said=table.rows.map(r=>fold(r.key[column])).filter(x=>x&&names.has(x));
+    // A column of the parts' IDs counts as naming them: geoboundaries_id names each LGA once, where two share a name.
+    const held=table.rows.map(r=>fold(r.key[column]));
+    const byName=held.filter(x=>x&&names.has(x)),byId=held.filter(x=>x&&ids.has(x));
+    const said=new Set(byId).size>new Set(byName).size?byId:byName;
     const named=new Set(said).size,rows=said.length;
     if(named&&(!best||named>best.named||(named===best.named&&rows<best.rows)))best={column,named,rows};
   }
@@ -110,7 +117,7 @@ export function proposeKeyColumn(table:DataTable,parts:readonly {name:string}[],
 
 /** THE COLUMN A RUN JOINS ON when none was chosen: the proposal, used where it names each part once. The practitioner,
  *  2026-11-21, joining Nigeria's LGAs to its states with no column chosen, met *"The table has no column """*. */
-export function keyColumnForRun(table:DataTable,parts:readonly {name:string}[],normalisation:'exact'|'fuzzy'):string{
+export function keyColumnForRun(table:DataTable,parts:readonly {name:string;id?:string}[],normalisation:'exact'|'fuzzy'):string{
   const n=(x:number)=>x.toLocaleString('en');
   const proposed=proposeKeyColumn(table,parts,table.keys,normalisation);
   const distinct=[...new Set(parts.map(p=>p.name))];
@@ -185,8 +192,11 @@ export function joinTableToAreas(
   // Reis is 14 polygons, its islands, and one municipality. Counting parts called all 14 a duplicate name and buried
   // the map under 30 such notices for Rio de Janeiro state (2026-11-06). Distinct units are counted; a part with no
   // id counts as its own unit, as before.
+  // BY ID WHERE THE COLUMN GIVES IDS: a column that names more parts by their IDs than by their names is matched on IDs.
+  const byId=units.filter(u=>u.id&&byKey.has(fold(u.id))).length,byName=units.filter(u=>byKey.has(fold(u.name))).length;
+  const matchedOn:'id'|'name'=byId>byName?'id':'name',said=(unit:{id:string;name:string})=>matchedOn==='id'?unit.id:unit.name;
   const unitsNamed=new Map<string,Set<string>>();
-  units.forEach((unit,index)=>{const key=fold(unit.name);if(!key)return;
+  units.forEach((unit,index)=>{const key=fold(said(unit));if(!key)return;
     const seen=unitsNamed.get(key)??new Set<string>();seen.add(unit.id||`part ${index}`);unitsNamed.set(key,seen);});
   for(const [key,ids] of unitsNamed)
     if(ids.size>1)diagnostics.push({code:'duplicate-boundary-key',subject:key,
@@ -194,11 +204,12 @@ export function joinTableToAreas(
 
   const used=new Set<string>();
   const parts:JoinedPart[]=units.map((unit,index)=>{
-    const key=fold(unit.name);
+    const key=fold(said(unit));
     const row=key?byKey.get(key):undefined;
     if(row)used.add(key);
     else diagnostics.push({code:'unmatched-boundary',subject:unit.name,
-      says:`No row of the table names "${unit.name}", so this part has no value.`});
+      says:matchedOn==='id'?`No row of the table gives "${unit.name}"'s ID, ${unit.id}, so this part has no value.`
+        :`No row of the table names "${unit.name}", so this part has no value.`});
     const last=frameOrder.at(-1);
     return {index,id:unit.id,name:unit.name,key,
       value:row?(row.frames&&last!==undefined?row.frames[last]??null:row.value):null,
@@ -215,7 +226,7 @@ export function joinTableToAreas(
 
   const matchedParts=parts.filter(part=>part.matched).length;
   return {parts,diagnostics,
-    declared:{keyField,valueField:table.valueField,normalisation,valueName:(()=>{
+    declared:{keyField,valueField:table.valueField,normalisation,matchedOn,valueName:(()=>{
         const shares=table.keys.includes('statistic')?new Set(table.rows.map(r=>r.key.statistic)):undefined;
         const unit=table.unit?.trim();
         // A column named for its unit ("per 1,000 people") is not named twice.
@@ -262,7 +273,7 @@ export function joinedPolygons(boundary:Boundary|undefined,result:AreaJoinResult
     layerName:label,
     ...(result.declared.valueName?{valueName:result.declared.valueName}:{}),
     ...(result.frames?{frames:result.frames}:{}),
-    method:`Keyed join on ${result.declared.keyField}, ${result.declared.normalisation} normalisation: `
+    method:`Keyed join on ${result.declared.keyField}${result.declared.matchedOn==='id'?', matched to each part’s ID':''}, ${result.declared.normalisation} normalisation: `
       +`${counts.matchedParts} of ${counts.parts} parts carry a value from ${counts.matchedRows} of ${counts.rows} rows.`,
     crs:'OGC:CRS84',
     notes:[`${label}. A part with no matching row is drawn and left empty rather than omitted.`,

@@ -13,6 +13,11 @@ shown in a local build is not a claim that it has been published.
 - **Joining a table to the study area with no column chosen** joins on the column that names each part once. Where
   the table names each part in several rows, as Nigeria's LGAs name their states, the run says the table is finer than
   the study area; it used to stop on *The table has no column ""*.
+- **A census table and a study area at different levels are said to be, before any run**, in the join's panel and its
+  Configure…, naming the census table at the area's level. Census tables records each table's geoBoundaries level
+  (census-tables e688e90).
+- **A column of the parts' IDs is joined on the IDs**: Nigeria's five LGA names held by two LGAs each now take their own
+  counts.
 - **Hagelloch's measles model:** the periods measured from the record, and the three probabilities fitted to its
   curve (experiment 199). The timing agrees; the record's sharp peak is class 1's burst, which the model cannot make.
 - **Experiment 227:** Sentinel-2 read from ESA's Zarr stores, a point by two byte ranges, checked against Planetary

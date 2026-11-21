@@ -10,6 +10,8 @@ import {joinTableToAreas,proposeKeyColumn,type AreaJoinResult} from './area-join
 export {proposeKeyColumn};
 import {openConfigDialog} from './config-dialog.js';
 import {PREVIEW_ROWS} from './long-tables.js';
+import {levelMismatch} from './boundary-levels.js';
+import type {Workflow} from './types.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {joinTableWalkthrough} from './spatial-walkthroughs.js';
 export {joinTableWalkthrough};
@@ -31,6 +33,16 @@ export interface JoinKit extends StepKit {
 
 const n=(x:number)=>x.toLocaleString('en');
 
+/** THE LEVELS OF WHAT IS CONNECTED, said before a run: a census table's from the address its step keeps, the study area's
+ *  from its boundary's ID. Read from the steps connected straight to the join; anything between says nothing. */
+export function joinLevelWarning(workflow:Workflow,nodeId:string):string|undefined{
+  const from=(port:string)=>{const e=workflow.edges.find(x=>x.to===nodeId&&x.port===port);return e&&workflow.nodes.find(x=>x.id===e.from);};
+  const table=from('records'),area=from('area');
+  const url=table?.type==='table_input'?table.params.remote?.url:undefined;
+  const id=area?.type==='study_area'?area.params.boundary?.boundaryID:undefined;
+  return levelMismatch(url,id);
+}
+
 /** One sentence of what the step will do, or what it still needs. */
 export function joinSentence(p:JoinParams,table:string,area:string):string{
   if(!p.keyField)return `Puts a value from ${table} onto each part of ${area}, once the column naming each part is chosen.`;
@@ -41,7 +53,7 @@ export function joinSentence(p:JoinParams,table:string,area:string):string{
 
 interface JoinDraft {keyField:string;normalisation:Match;frameField:string;categoryField:string;proposed?:number;proposedRows?:number}
 export interface JoinConfigView {
-  step:string; tableName:string; areaName:string;
+  step:string; tableName:string; areaName:string; levels?:string;
   columns:string[]; table?:DataTable; parts?:Part[];
   initial:JoinDraft;
   apply:(draft:JoinDraft)=>void;
@@ -62,6 +74,7 @@ export function openJoinConfig(view:JoinConfigView,esc:Escape):void{
       const others=view.columns.filter(c=>c!==d.keyField);
       const settings=`<p class="description">Puts a value from <strong>${esc(view.tableName)}</strong> onto each part of `
         +`<strong>${esc(view.areaName)}</strong> its row names.</p>`
+        +(view.levels?`<p class="notice notice-warning" data-join-levels>${esc(view.levels)}</p>`:'')
         +'<p><button type="button" class="button" id="join-show-me" data-show-me>Show me how it works</button></p>'
         +select('join-key','Column naming each part',view.columns,d.keyField,'Choose a column…')
         +(d.proposed!==undefined&&d.keyField?`<p class="notice" data-join-proposed>Proposed: "${esc(d.keyField)}" names ${n(d.proposed)} of `
@@ -99,7 +112,8 @@ export function openJoinConfig(view:JoinConfigView,esc:Escape):void{
       const other=joined.diagnostics.filter(x=>!['unmatched-data-key','unmatched-boundary'].includes(x.code));
       const after='<fieldset class="join-after"><legend>After</legend>'
         +`<p data-join-counts><strong>${n(c.matchedParts)} of ${n(c.parts)} parts</strong> take a value; `
-        +`${n(c.unmatchedParts)} ${c.unmatchedParts===1?'is':'are'} drawn empty; ${n(c.unmatchedRows)} of ${n(c.rows)} rows name no part.</p>`
+        +`${n(c.unmatchedParts)} ${c.unmatchedParts===1?'is':'are'} drawn empty; ${n(c.unmatchedRows)} of ${n(c.rows)} rows name no part.`
+        +(joined.declared.matchedOn==='id'?` Matched on each part’s ID, which "${esc(d.keyField)}" gives: two parts with one name each take their own row.`:'')+'</p>'
         +scroll(['part',joined.declared.valueName??t.valueField??'value',...(d.categoryField?[d.categoryField]:[])],
           joined.parts.map(p=>[p.name,valueOf(p),...(d.categoryField?[p.category??'']:[])]),esc)
         +(rowsNamingNone.length?`<details><summary>Rows naming no part · ${n(rowsNamingNone.length)}</summary><p>${rowsNamingNone.map(esc).join(', ')}</p></details>`:'')
@@ -143,13 +157,15 @@ export const joinInspector:OwnInspector<'join_table_to_area'>={
     const table=k.sourceName(n0.id,'records','the table'),area=k.sourceName(n0.id,'area','')||k.sourceName(n0.id,'polygons','the study area');
     const missing=!p.keyField&&k.keyColumns(n0.id).length
       ?'<div class="notice notice-warning" data-join-missing>Choose the column naming each part in Configure… before running.</div>':'';
+    const levels=joinLevelWarning(kit.workflow(),n0.id);
+    const levelNotice=levels?`<div class="notice notice-warning" data-join-levels>${esc(levels)}</div>`:'';
     const joined=k.joined(n0.id),why=k.unfinished(n0.id);
     const line=joined
       ?`${n(joined.counts.matchedParts)} of ${n(joined.counts.parts)} parts took a value; ${n(joined.counts.unmatchedRows)} of ${n(joined.counts.rows)} rows named no part.`
       :why?`The last run could not compute this step: ${why}`:'Not run yet.';
     return kit.section('Name',kit.name('join-label',p.label||'Values on the study area'))
       +kit.section('Inputs',kit.inputs(n0,{records:'Table naming the parts',area:'Study area',polygons:'Or a polygon layer'}))
-      +kit.section('Settings',`<p class="standard-sentence">${esc(joinSentence(p,table,area))}</p>${missing}`
+      +kit.section('Settings',`<p class="standard-sentence">${esc(joinSentence(p,table,area))}</p>${levelNotice}${missing}`
         +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>')
       +kit.section('Result',`<p class="standard-result${why||(joined&&joined.counts.unmatchedParts)?' standard-result-warning':''}">${esc(line)}</p>`);},
   wire:(n0,kit,root)=>{const k=kit as JoinKit;
@@ -160,6 +176,7 @@ export const joinInspector:OwnInspector<'join_table_to_area'>={
       openJoinConfig({step:p.label||k.title('join_table_to_area'),
         tableName:k.sourceName(n0.id,'records','the table'),
         areaName:k.sourceName(n0.id,'area','')||k.sourceName(n0.id,'polygons','the study area'),
+        ...(joinLevelWarning(kit.workflow(),n0.id)?{levels:joinLevelWarning(kit.workflow(),n0.id)!}:{}),
         columns,...(table?{table}:{}),...(parts?{parts}:{}),initial:joinDraftOf(p,table,parts,columns),
         apply:draft=>k.keep(w=>{const t=w.nodes.find(x=>x.id===n0.id);if(t?.type==='join_table_to_area')applyJoinDraft(t.params,draft);}),
       },kit.esc);

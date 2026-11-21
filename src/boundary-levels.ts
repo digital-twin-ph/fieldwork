@@ -32,3 +32,38 @@ export function levelCheck(iso:string,level:{level:string;units:number;canonical
     :`No level of the census has this level's ${n(level.units)} units: check what it holds before relating the census to it.`);
   return said.join(' ');
 }
+
+interface CensusTable{rows:number;counts:{path:string};derived?:{label:string;level?:string}}
+interface CensusCountry extends CensusTable{iso3:string;country:string;more?:CensusTable[]}
+const tablesOf=(c:CensusCountry):CensusTable[]=>[c,...(c.more??[])];
+const CENSUS_FILE=/digital-twin-ph\/census-tables\/[0-9a-f]+\/([A-Z]{3}\/[^/?#]+\.csv)$/;
+
+/** THE LEVEL A CENSUS TABLE WAS MATCHED ON, read from the address its step keeps: Nigeria's lgas.csv is geoBoundaries'
+ *  ADM2. Undefined for a table from a file or any other address, which states no level. */
+export function censusTableLevel(url:string|undefined):{iso3:string;country:string;level:string;rows:number}|undefined{
+  const path=url?.match(CENSUS_FILE)?.[1];
+  if(!path)return undefined;
+  for(const c of (censusCatalogue as {countries:CensusCountry[]}).countries)
+    for(const t of tablesOf(c))if(t.counts.path===path&&t.derived?.level)return {iso3:c.iso3,country:c.country,level:t.derived.level,rows:t.rows};
+  return undefined;
+}
+
+/** A TABLE AND A STUDY AREA AT DIFFERENT LEVELS, said before anything runs (the practitioner, 2026-11-21: Nigeria's 774
+ *  LGAs joined to its 37 states, *"How can we alert the user that the admin levels are different?"*). The table's level
+ *  is the one Census tables matched it on; the area's is in its boundary's ID (NGA-ADM1-…). Where the census offers a
+ *  table at the area's level, it is named. Undefined where either level is not stated, or they agree. */
+export function levelMismatch(tableUrl:string|undefined,boundaryID:string|undefined):string|undefined{
+  const table=censusTableLevel(tableUrl);
+  const area=boundaryID?.match(/^([A-Z]{3})-(ADM\d)\b/);
+  if(!table||!area)return undefined;
+  const [,iso,level]=area;
+  if(iso===table.iso3&&level===table.level)return undefined;
+  if(iso!==table.iso3)return `The table is ${table.country}'s census and the study area is in ${iso}: no part will be named.`;
+  const country=(censusCatalogue as {countries:CensusCountry[]}).countries.find(c=>c.iso3===iso);
+  const there=country&&tablesOf(country).find(t=>t.derived?.level===level);
+  const finer=Number(table.level.slice(3))>Number(level!.slice(3));
+  return `The table is ${table.country}'s census at ${table.level}, ${n(table.rows)} rows; the study area is at ${level}. `
+    +`The table is ${finer?'finer':'coarser'} than the study area, and a part takes one row's value. `
+    +(there?`Choose “${there.derived!.label}” in Census tables, or the study area at ${table.level}.`
+      :`Choose the study area at ${table.level}.`);
+}

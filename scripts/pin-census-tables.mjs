@@ -21,7 +21,9 @@ const countries=readdirSync(repo).filter(d=>/^[A-Z]{3}$/.test(d)&&existsSync(new
   const offer=stem=>{const csv=stem==='counts'?'counts.csv':`${stem}.csv`,dict=stem==='counts'?'columns.csv':`${stem}-columns.csv`;
     return {rows:readFileSync(new URL(`${iso}/${csv}`,repo),'utf8').trim().split('\n').length-1,counts:file(`${iso}/${csv}`),
       ...(existsSync(new URL(`${iso}/${dict}`,repo))?{columns:file(`${iso}/${dict}`)}:{}),
-      ...(stem!=='counts'?{derived:{label:p[stem.replace(/-/g,'_')]?.label??stem,printed:`${iso}/counts.csv`}}:{})};};
+      ...(stem!=='counts'?{derived:{label:p[stem.replace(/-/g,'_')]?.label??stem,printed:`${iso}/counts.csv`,
+        // The geoBoundaries level its units were matched on (2026-11-21), for a join to check a study area against.
+        ...(p[stem.replace(/-/g,'_')]?.boundaries?.level?{level:p[stem.replace(/-/g,'_')].boundaries.level}:{})}}:{})};};
   const [first,...rest]=stems.map(offer);
   // THE LEVELS AS PRINTED, each with how many units it holds (2026-11-20), so a boundary level can be set beside them.
   const levels=[];{const lines=readFileSync(new URL(`${iso}/counts.csv`,repo),'utf8').trim().split('\n');

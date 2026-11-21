@@ -39,7 +39,7 @@ chosen. Press **Configure…**:
 
 | Setting | What it decides |
 | --- | --- |
-| **Column naming each part** | Which of the table's columns holds the part's name. Where none is chosen, the column naming the most parts is proposed, saying how many it names: a census from Census tables carries `geoboundaries_name`, which names a study area from geoBoundaries. A run with none chosen joins on the proposed column where it names each part once. |
+| **Column naming each part** | Which of the table's columns holds the part's name. Where none is chosen, the column naming the most parts is proposed, saying how many it names: a census from Census tables carries `geoboundaries_name`, which names a study area from geoBoundaries. A run with none chosen joins on the proposed column where it names each part once. A column of the parts' IDs, such as `geoboundaries_id`, is matched on the IDs, so two parts with one name each take their own row. |
 | **Match names** | *Ignoring capitals, punctuation and spacing*, or *Exactly as written, capitals aside*. |
 | **Frames from** | Optional: a column whose values are frames (below). |
 | **Shade by a class** | Optional: a column whose values are classes, not quantities. |
@@ -128,6 +128,16 @@ Each part then carries one value per frame, and an interactive map can play thro
 the last frame's. A key repeated across frames is expected; a key repeated within a frame is reported.
 
 ## History
+
+### 2026-11-21 · The levels said before a run, and IDs joined on (0.6.0)
+
+A census table from Census tables connected to a study area at another level is said to be, in the panel and in
+**Configure…**, before anything runs: *The table is Nigeria's census at ADM2, 774 rows; the study area is at ADM1*,
+naming the census table at the area's level. The table's level is the one Census tables matched it on, its area's from
+its boundary's ID. A table from a file or another address states no level, and is checked by its rows when it runs.
+
+A column giving the parts' IDs, as `geoboundaries_id` does, is joined on the IDs. Matched by name, Nigeria's five LGA
+names held by two LGAs each (Obi, Bassa, Ifelodun, Irepodun, Surulere) gave both one row's count.
 
 ### 2026-11-21 · A run proposes the column (0.6.0)
 

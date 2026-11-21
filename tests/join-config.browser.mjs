@@ -136,3 +136,20 @@ test('a dialog’s Before and After tables of more than 20 rows show 20 at a tim
     expect(seen).toEqual({rows:30,inView:20,scrolls:true,headHeld:true});
   }
 });
+
+/** THE LEVELS, SAID BEFORE A RUN (the practitioner, 2026-11-21): Nigeria's LGA table connected to a study area of its
+ *  states says so in the panel and in Configure…, naming the census table at the area's level. */
+test('a census table at another level than the study area is said to be, before any run',async({page})=>{
+  const levels=structuredClone(workflow);
+  const area=levels.nodes.find(n=>n.id==='area'),census=levels.nodes.find(n=>n.id==='census');
+  area.params.boundary.boundaryID='NGA-ADM1-TEST';
+  census.params.remote={url:'https://raw.githubusercontent.com/digital-twin-ph/census-tables/e688e90a7fb7df7c880a185b61b7e7371d3bd1ec/NGA/lgas.csv',sha256:'0'.repeat(64),bytes:1};
+  await page.route(/tile\.openstreetmap\.org|basemaps|tiles|raw\.githubusercontent/,route=>route.abort('failed'));
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'levels.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(levels))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="join"]').click({timeout:45000});
+  await expect(page.locator('#inspector-content [data-join-levels]')).toContainText('census at ADM2, 774 rows; the study area is at ADM1');
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#join-config [data-join-levels]')).toContainText('Choose “Its 37 states');
+});

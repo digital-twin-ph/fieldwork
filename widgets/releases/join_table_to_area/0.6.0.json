@@ -80,7 +80,8 @@
    "src/table-walkthrough.ts",
    "src/inspector-kit.ts",
    "src/results.ts",
-   "src/app.ts"
+   "src/app.ts",
+   "src/boundary-levels.ts"
   ],
   "definition": "src/area-join.ts"
  },
@@ -93,7 +94,7 @@
  "changes": [
   {
    "kind": "changed",
-   "description": "A run with no column chosen joins on the proposed one where it names each part once; where the table names each part in several rows, the run stops saying the table is finer than the study area."
+   "description": "A census table at another level than the study area is said to be before a run; a column of the parts' IDs is joined on the IDs; a run with no column chosen joins on the proposed one where it names each part once, and stops where the table is finer than the study area."
   }
  ],
  "evidence": {

@@ -78,12 +78,32 @@ export function polygonFrame(p:Polygons,area?:Boundary|null):{project:(c:Positio
     if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
   }
   const frame=plotFrame([west,south,east,north],{width:790,margin:60});
-  return {bounds:[west,south,east,north],height:frame.height+KEY_BAND,project:frame.project};
+  return {bounds:[west,south,east,north],height:frame.height+(p.kind==='hexbin'?KEY_BAND:keyBand(p.features)),project:frame.project};
 }
 /** THE KEY'S OWN BAND, under the map rather than over it (2026-11-15): drawn in the frame's last 45 px, Salmonella's
  *  ramp and its labels lay on Switzerland's tiles and place names and could not be read. The figure is this much
  *  taller; the map keeps its place and scale; the band is plain ground, so no tile runs under the key. */
 export const KEY_BAND=56;
+/** THE CLASS RANGES, LAID OUT SO NONE TOUCHES (the practitioner, 2026-11-21, on Nigeria's LGAs in five quantiles: "The
+ *  numbers are overlapping"). Each range was given 90 px, and "31,641 to 111,254" is half as wide again. A class is
+ *  as wide as its longest range; where five or more such ranges do not fit across, each is said on two lines, "31,641" over
+ *  "to 111,254", and the band is one line taller. At 14 px a digit or comma is taken as 8 px. */
+const KEY_LINE=16,RAMP_SPAN=790;
+export function rampLayout(features:Polygons['features']):{width:number;lines:string[][]}|null{
+  const {classed}=polygonShading(features);
+  if(!classed)return null;
+  const values=shadedValues(features);
+  if(!values.length||!values.every(v=>Number.isInteger(v)))return null;
+  const ranges=classRanges(values,classed.breaks),fit=(texts:string[])=>Math.max(90,Math.ceil(Math.max(...texts.map(t=>t.length))*8+16));
+  const one=fit(ranges);
+  if(one*ranges.length<=RAMP_SPAN)return {width:one,lines:ranges.map(r=>[r])};
+  const two=ranges.map(r=>{const at=r.indexOf(' to ');return at<0?[r]:[r.slice(0,at),r.slice(at+1)];});
+  return {width:Math.min(fit(two.flat()),Math.floor(RAMP_SPAN/ranges.length)),lines:two};
+}
+/** The key's band for these features: one line taller where the ranges are said on two. */
+export function keyBand(features:Polygons['features']):number{
+  return KEY_BAND+(rampLayout(features)?.lines.some(l=>l.length>1)?KEY_LINE:0);
+}
 export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null):string{
   if(p.kind==='hexbin'){
     const coords=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2));
@@ -99,7 +119,7 @@ export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null):string{
   }
   const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...contextRings(area).flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
   const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);
-  const framed=plotFrame([west,south,east,north],{width:790,margin:60}),project=framed.project,height=framed.height+KEY_BAND;
+  const framed=plotFrame([west,south,east,north],{width:790,margin:60}),project=framed.project,height=framed.height+keyBand(p.features);
   // COLOURED BY VALUE WHERE THERE IS ONE, by position where there is not. A catchment's colour
   // says which catchment; a choropleth's colour says how much, and reading the second as the
   // first is the misreading this whole figure exists to avoid. `classifyValues` returns null
@@ -152,7 +172,7 @@ export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null):string{
     // A RING, outline only, where the polygon stands for one place (a cluster at one house): what is under it shows.
     const opacity=f.ring?'0':classed||grouped?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
     return `<path data-catchment="${esc(f.id)}"${f.ring?' data-ring=""':''}${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${f.ring?(f.ring==='secondary'?RING_BLUE:RING_RED):classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${f.ring?'3.5':classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="1.8" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4}" y="${y-4}" width="8" height="8" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')
-    +`<rect data-plot-key-band x="0" y="${height-KEY_BAND}" width="850" height="${KEY_BAND}" fill="#f7faf8"/>`+plotKey(p,classed,esc,grouped,height);
+    +`<rect data-plot-key-band x="0" y="${height-keyBand(p.features)}" width="850" height="${keyBand(p.features)}" fill="#f7faf8"/>`+plotKey(p,classed,esc,grouped,height);
 }
 
 // THE KEY NAMES WHAT IS DRAWN, and nothing else. This line was a fixed string -- "Squares:
@@ -217,7 +237,8 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   const lowest=Math.min(...values);
   // THE RAMP WITH ITS EDGES, as the practitioner reads it (2026-11-13: "The legend is readable"), each class 90 pixels wide
   // so seven-figure edges with their separators stand apart: at 56, Botswana's 143454 and 217031 touched.
-  const width=90,left=40,top=foot+250;
+  const layout=rampLayout(p.features),extra=layout?.lines.some(l=>l.length>1)?KEY_LINE:0;
+  const width=layout?.width??90,left=40,top=foot+250-extra;
   const round=(v:number)=>{const a=Math.abs(v);return Number(a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2)).toLocaleString('en');};
   const swatches=classed.colours.map((colour,i)=>
     `<rect x="${left+i*width}" y="${top}" width="${width}" height="10" fill="${colour}" `
@@ -225,9 +246,9 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
   // WHOLE NUMBERS ARE LABELLED BY CLASS, under each shade: a count's class above 1 and up to 5 holds 2 to 5, and an
   // edge "1" between two shades said neither (Salmonella's Länder, 2026-11-15).
   const edges=values.every(v=>Number.isInteger(v))
-    ?classRanges(values,classed.breaks).map((said,i)=>
-      `<text x="${left+i*width+width/2}" y="${top+23}" font-size="14" text-anchor="middle" `
-      +`fill="${FIGURE_ROLE.quietInk}">${esc(said)}</text>`).join('')
+    ?(layout?.lines??classRanges(values,classed.breaks).map(r=>[r])).map((said,i)=>said.map((line,j)=>
+      `<text data-plot-key="range" x="${left+i*width+width/2}" y="${top+23+j*KEY_LINE}" font-size="14" text-anchor="middle" `
+      +`fill="${FIGURE_ROLE.quietInk}">${esc(line)}</text>`).join('')).join('')
     :[lowest,...classed.breaks].map((v,i)=>
     `<text x="${left+i*width}" y="${top+23}" font-size="14" text-anchor="middle" `
     +`fill="${FIGURE_ROLE.quietInk}">${round(v)}</text>`).join('');

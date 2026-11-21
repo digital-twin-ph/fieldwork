@@ -5,6 +5,11 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.158.0 — In development
 
+- **A long table in a dialog scrolls.** A Before or After table of more than 20 rows shows 20 at a time, its header
+  held, in every configuration dialog and in Tabular data's; the previews that showed the first 5 or 12 rows, or
+  pages of 6 to 12, show the whole table.
+- **Map's key no longer prints its ranges over one another.** Each class is as wide as its range; seven-figure ranges
+  go on two lines, the key one line taller.
 - **Joining a table to the study area with no column chosen** joins on the column that names each part once. Where
   the table names each part in several rows, as Nigeria's LGAs name their states, the run says the table is finer than
   the study area; it used to stop on *The table has no column ""*.

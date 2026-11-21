@@ -375,6 +375,13 @@ Methods as a limitation, by itself. Natural Earth is bundled and writes no such 
 How the panels and the inset came to be: what was asked, designed, built, checked and found, dated. Each was
 once an experiment record (212 and 213).
 
+### The key's ranges, laid out so none touches (0.40.0)
+
+_2026-11-21._ Nigeria's 774 LGAs in five quantile classes printed their ranges over one another: each class had 90 px,
+and "31,641 to 111,254" is half as wide again. A class is now as wide as its longest range. Where five such ranges do
+not fit across the 790 px the map is drawn in, each is said on two lines, "31,641" over "to 111,254", and the key's band
+is one line taller, so nothing lies on the map. The ramp never runs wider than the map, and the text stays 14 px.
+
 ### Maps side by side, arranged in Configure
 
 _2026-11-13 to 2026-11-15. Kept here, as the widget's own history, since 2026-11-15; it was an experiment record before._

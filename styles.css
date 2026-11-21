@@ -1797,7 +1797,8 @@ th .meaning{font-weight:400;white-space:normal}
 tr.detect-signal-row td{font-weight:700}
 /* THE RULE EDITOR'S JSON VIEW (2026-11-21): line numbers beside the text, a problem's line marked by a sign and its number,
    not by colour alone; 16 px, as everything the practitioner reads. */
-.rule-view-switch{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.rule-view-switch{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:8px 0 12px}
+.config-dialog .config-body .rule-view-switch select{width:auto;margin:0;font-size:16px}
 .json-editor{display:grid;grid-template-columns:auto 1fr;border:1px solid var(--line,#ccc);border-radius:6px;overflow:hidden;background:var(--surface-raised,#fff)}
 .json-gutter{margin:0;padding:10px 8px;text-align:right;font:16px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--text-muted,#555);
   background:var(--surface-tint,#f2f4f2);overflow:hidden;height:0;min-height:100%;box-sizing:border-box;user-select:none;white-space:pre}

@@ -42,3 +42,21 @@ test('brackets close themselves, are typed over, are removed in pairs, and open 
   assert.deepEqual(autoBracket('"a"',2,2,'"'),{text:'"a"',caret:3});
   assert.equal(autoBracket('ab',2,2,'x'),undefined);
 });
+
+/** STARTING POINTS (2026-11-21): each template passes the checks and runs as loaded, on the step's own columns and on its
+ *  stand-ins, and a value for every record (a group with no condition) is not refused. */
+import {rulesetTemplate,RULESET_TEMPLATES} from '../build/ruleset-json.js';
+import {evaluateAuthored} from '../build/rule-evaluation.js';
+test('every template passes the checks and runs, on stand-in columns and on the step\'s own',()=>{
+  const own=[{attribute:'cc',predicate:'fwa:cc',kind:'term'},{attribute:'age',predicate:'fwa:age',kind:'number',unit:'http://qudt.org/vocab/unit/YR',unitLabel:'years'},
+    {attribute:'pop',predicate:'fwa:pop',kind:'number',unit:'http://qudt.org/vocab/unit/YR',unitLabel:'years'},
+    {attribute:'onset',predicate:'fwa:onset',kind:'date'},{attribute:'notified',predicate:'fwa:notified',kind:'date'}];
+  for(const {id} of RULESET_TEMPLATES)for(const fields of [[],own]){
+    const r=rulesetTemplate(id,fields),{problems}=checkRulesetJson(rulesetText(r));
+    assert.deepEqual(problems,[],`${id} on ${fields.length?'own':'stand-in'} columns`);
+    const record={id:'x',label:'x',properties:Object.fromEntries(r.fields.map(f=>[f.attribute,f.kind==='term'?'Vomiting':f.kind==='date'?'2026-01-0'+(f.attribute.includes('notif')||f.attribute==='notified'?'9':'1'):40]))};
+    const e=evaluateAuthored([record],r.fields,r.rules,Object.fromEntries((r.parameters??[]).map(p=>[p.name,7])),undefined,r.otherwise??[]);
+    assert.ok(Object.keys(e.records[0].values).length>0,`${id} gave the record a value`);
+  }
+  assert.equal(rulesetTemplate('words',own).fields[0].attribute,'cc');
+});

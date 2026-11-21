@@ -38,6 +38,11 @@ test('the rules as JSON, checked as typed, brackets closed, uploaded and downloa
   const area=editor.locator('#rule-json');
   await expect(area).toHaveValue(/"schema": "fieldwork\/authored-ruleset\/1"/);
   await expect(editor.locator('.json-ok')).toBeVisible();
+  // A TEMPLATE, on this step's own text column, valid as loaded.
+  await editor.locator('#rule-json-template').selectOption('words');
+  await expect(area).toHaveValue(/"title": "Categories from words"/);
+  await expect(area).toHaveValue(/"attribute": "chief_complaint"/);
+  await expect(editor.locator('.json-ok')).toBeVisible();
   // UPLOADED: the file's rules, checked and taken.
   await editor.locator('#rule-json-upload').setInputFiles({name:'syndromes.ruleset.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(RULES,null,2))});
   await expect(area).toHaveValue(/"influenza-like"/);

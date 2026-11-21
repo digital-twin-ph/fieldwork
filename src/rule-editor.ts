@@ -21,7 +21,7 @@ import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,isWrittenDateTime,DIFFERENCE_UNITS,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
   type AuthoredOtherwise,bandRules,targetRules,isWordComparator} from './authored-rules.js';
-import {checkRulesetJson,rulesetText,autoBracket,highlightJson,type JsonProblem,type RulesetFile} from './ruleset-json.js';
+import {checkRulesetJson,rulesetText,autoBracket,highlightJson,rulesetTemplate,RULESET_TEMPLATES,type JsonProblem,type RulesetFile,type TemplateId} from './ruleset-json.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import {openConfigDialog,type ConfigSections} from './config-dialog.js';
 import {DATE_FORMS,CLOCKS,type SubjectRecord} from './authored-application.js';
@@ -597,7 +597,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       const switcher=`<div class="rule-view-switch" role="group" aria-label="How the rules are shown">`
         +(['rules','json'] as const).map(v=>`<button type="button" class="button${view===v?' primary':''}" data-rule-view="${v}" aria-pressed="${view===v}">${v==='rules'?'Rules':'JSON'}</button>`).join('')
         +`<button type="button" class="button" id="rule-json-download">Download (JSON)</button>`
-        +(review?'':`<label class="button" for="rule-json-upload">Upload (JSON)</label><input type="file" id="rule-json-upload" accept=".json,application/json" hidden>`)+'</div>';
+        +(review?'':`<label class="button" for="rule-json-upload">Upload (JSON)</label><input type="file" id="rule-json-upload" accept=".json,application/json" hidden>`)
+        // STARTING POINTS: a small ruleset that runs as loaded, on this step's columns where it has the kind each needs.
+        +(review?'':`<select id="rule-json-template" aria-label="Start from a template"><option value="">Start from a template…</option>`
+          +RULESET_TEMPLATES.map(t=>`<option value="${t.id}">${esc(t.label)}</option>`).join('')+'</select>')+'</div>';
       if(view==='json'){
         const text=jsonText??rulesetText(currentFile()),lines=text.split('\n'),bad=new Set(jsonProblems.map(p=>p.line));
         const gutter=lines.map((_,k)=>bad.has(k+1)?`<span class="json-bad">⚠ ${k+1}</span>`:String(k+1)).join('\n');
@@ -657,6 +660,11 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         if(ruleset&&!review){rules=ruleset.rules as never;fields=ruleset.fields as Field[];choices=readable(fields);
           settings=(ruleset.parameters??[]) as never;order=ruleset.order as never;otherwise=(ruleset.otherwise??[]) as never;}
         render();};
+      root.querySelector<HTMLSelectElement>('#rule-json-template')?.addEventListener('change',e=>{
+        const id=(e.target as HTMLSelectElement).value as TemplateId;if(!id)return;
+        // The columns this ruleset declares first, then the connected records' others, each kind as declared.
+        const known=[...fields,...(options?.candidates??[]).filter(c=>!fields.some(f=>f.predicate===c.predicate))];
+        view='json';takeJson(rulesetText(rulesetTemplate(id,known as never)));});
       root.querySelector<HTMLInputElement>('#rule-json-upload')?.addEventListener('change',async e=>{
         const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;view='json';takeJson(await file.text());});
       const area=root.querySelector<HTMLTextAreaElement>('#rule-json'),gutter=root.querySelector<HTMLElement>('.json-gutter');

@@ -4,7 +4,7 @@
  *  breaks, by line and column, in words (a browser's own message names no line in Safari), and the checks a ruleset
  *  must pass before it runs, each placed on the line it is about. */
 import {authoredUnitProblems,otherwiseProblems,computesValues,evaluatedDirectly,compileAuthoredRuleset,isWordComparator,
-  containedWords,type Comparator} from './authored-rules.js';
+  containedWords,bandRules,targetRules,type Comparator} from './authored-rules.js';
 
 export const RULESET_SCHEMA='fieldwork/authored-ruleset/1';
 export interface JsonProblem {line:number;column?:number;says:string;path?:string}
@@ -100,7 +100,9 @@ export function checkRulesetJson(text:string):{ruleset?:RulesetFile;problems:Jso
     if(!isObj(rule)){say(p,`Rule ${r+1} is an object: { "any": [ … ], "then": [ … ] }.`);return;}
     if(!Array.isArray(rule.any)||!rule.any.length)say(`${p}.any`,`Rule ${r+1}: "any" lists one group of conditions or more.`);
     (Array.isArray(rule.any)?rule.any:[]).forEach((group,g)=>{const q=`${p}.any.${g}`;
-      if(!isObj(group)||!Array.isArray(group.all)||!group.all.length){say(q,`Rule ${r+1}, group ${g+1}: "all" lists one condition or more.`);return;}
+      // A VALUE FOR EVERY RECORD is a rule whose one group has no condition: it computes, and holds for each record.
+      const computes=Array.isArray(rule.then)&&rule.then.some(t=>isObj(t)&&(isObj(t.compute)||isObj(t.datetime)));
+      if(!isObj(group)||!Array.isArray(group.all)||(!group.all.length&&!computes)){say(q,`Rule ${r+1}, group ${g+1}: "all" lists one condition or more.`);return;}
       group.all.forEach((c,k)=>{const s=`${q}.all.${k}`;
         if(!isObj(c)){say(s,`Rule ${r+1}, condition ${k+1} is an object: { "field", "comparator", "value" }.`);return;}
         const field=String(c.field??''),base=field.replace(/Known$/,'');
@@ -177,4 +179,37 @@ export function highlightJson(text:string,badLines:ReadonlySet<number>=new Set()
     out+=esc(line.slice(last));
     return `<div class="json-line${badLines.has(k+1)?' json-line-bad':''}">${out||'​'}</div>`;
   }).join('');
+}
+
+/** STARTING POINTS (the practitioner, 2026-11-21: "for anyone coming up with new ruleset we have a template JSON?"):
+ *  small rulesets that run as they are loaded, on the step's own columns where it has the kind each needs, and on named
+ *  stand-ins where it has not, to be renamed to the columns the records carry. */
+export interface TemplateField {attribute:string;predicate:string;kind:string;unit?:string;unitLabel?:string}
+export const RULESET_TEMPLATES=[
+  {id:'words',label:'Categories from words in text (a syndrome from a complaint)'},
+  {id:'bands',label:'Bands from a number (age groups)'},
+  {id:'target',label:'Days between two dates, against a target (7-1-7)'},
+  {id:'every',label:'A value computed for every record (one column divided by another)'},
+] as const;
+export type TemplateId=typeof RULESET_TEMPLATES[number]['id'];
+export function rulesetTemplate(id:TemplateId,fields:readonly TemplateField[]):RulesetFile{
+  const of=(kind:string,n=0,attribute='',unit?:string):TemplateField=>fields.filter(f=>f.kind===kind)[n]
+    ??{attribute,predicate:`fwa:${attribute}`,kind,...(unit?{unit:`http://qudt.org/vocab/unit/${unit}`,unitLabel:unit.toLowerCase()}:{})};
+  const name=(f:TemplateField)=>f.attribute||f.predicate.replace(/^[^:]*:/,'');
+  if(id==='words'){const text=of('term',0,'complaint');
+    return {title:'Categories from words',mustNotBeReadAs:'a diagnosis: a category is what the words say',fields:[text],parameters:[],
+      rules:[{any:[{all:[{field:text.predicate,comparator:'contains',value:'vomit, diarrh, n/v'}]}],then:[{predicate:'fwa:category',value:'gastrointestinal'}]},
+        {any:[{all:[{field:text.predicate,comparator:'contains',value:'fever, flu'},{field:text.predicate,comparator:'notContains',value:'vomit, diarrh'}]}],
+          then:[{predicate:'fwa:category',value:'influenza-like'}]}],
+      otherwise:[{predicate:'fwa:category',value:'other'}]};}
+  if(id==='bands'){const n=of('number',0,'age','YR');const {rules}=bandRules(n.predicate,0,[5,15,45,65],'band');
+    return {title:`Bands of ${name(n)}`,mustNotBeReadAs:'a finding: the cut points are a choice',fields:[n],parameters:[],rules};}
+  if(id==='target'){const earlier=of('date',0,'date_onset'),later=of('date',1,'date_notified');
+    const t=targetRules({later:later.predicate,earlier:earlier.predicate,days:'days',target:7,setting:'target_days',verdict:'within_target'});
+    return {title:`Days from ${name(earlier)} to ${name(later)}, against a target`,mustNotBeReadAs:'a judgement of anyone\'s work: a target met or not, as recorded',
+      fields:[earlier,later],parameters:[t.setting],rules:t.rules,otherwise:t.otherwise};}
+  const a=of('number',0,'cases','NUM'),b=of('number',1,'population','NUM');
+  return {title:`${name(a)} divided by ${name(b)}`,mustNotBeReadAs:'a risk: the counts are as recorded',fields:[a,b],parameters:[],
+    rules:[{any:[{all:[]}],then:[{predicate:'fwa:ratio',column:'ratio',meaning:`${name(a)} divided by ${name(b)}`,
+      compute:{left:{field:a.predicate},operator:'dividedBy',right:{field:b.predicate}}}]}]};
 }

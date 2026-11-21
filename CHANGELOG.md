@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.156.0 — In development
+## 0.156.0 — 2026-11-21
 
 - **Nigeria's census by state or by LGA, with the map's names.** Census tables offers Nigeria as two tables, its 37
   states and its 774 LGAs, each unit beside the name and ID geoBoundaries gives it: "JIGAWA STATE" is "Jigawa", and the

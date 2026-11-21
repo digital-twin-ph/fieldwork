@@ -36,6 +36,8 @@ const COMPARISONS=[
    what:'prodrome and rash, as in 1861 (school shut on Sundays): rash, against the recorded rash'},
   {id:'from-the-record',structure:'measles-prodrome-rash-household-class-village',set:'measles-hagelloch-from-the-record',scenario:'hagelloch-as-in-1861',from:['Q','R'],against:0,
    what:'prodrome and rash, the periods measured from the record, as in 1861: rash, against the recorded rash'},
+  {id:'fitted',structure:'measles-prodrome-rash-household-class-village',set:'measles-hagelloch-fitted',scenario:'hagelloch-as-in-1861',from:['Q','R'],against:0,
+   what:'prodrome and rash, the probabilities fitted (abm-hagelloch-fit.mjs), as in 1861: rash, against the recorded rash'},
 ];
 const out={recorded:{},comparisons:{}};
 for(const c of COMPARISONS){

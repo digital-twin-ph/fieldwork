@@ -10,7 +10,8 @@ as data rather than written in Rust, on 2026-11-17 in [220](220-a-disease-model-
 in [200](200-operational-epidemiology.md) on 2026-11-09, and the proposal went unrecorded for a day. **Set beside the
 recorded curve on 2026-11-21** (option 4, chosen 2026-11-19): the size and the timing of the bulk agree, the recorded
 peak is twice as sharp as the model's; not fitted. **The periods measured from the record the same day** (the practitioner's choice): the timing
-then agrees, the peak is still half the record's.
+then agrees, the peak is still half the record's. **The three probabilities fitted, also 2026-11-21:** a better fit, the peak still not reached; the
+record's peak is class 1's burst, which one probability for both classes cannot make.
 
 ## The question
 
@@ -214,6 +215,57 @@ the record sharp is not in the periods.
 **What this does not establish:** that the infectors are right (they are the record's attribution); the shape of either
 period (drawn evenly, the model gives as many 2-day as 4-day prodromes, where the record has 29 against 72, a shape the
 structure cannot yet declare); or why the peak is sharp. That is the probabilities' question, and the fit's.
+
+## The three probabilities fitted, 2026-11-21
+
+The practitioner, 2026-11-21: *"Yes start"*. `scripts/abm-hagelloch-fit.mjs` fits household, class and village
+together, with the periods of `measles-hagelloch-from-the-record` held and the school shut on Sundays. The measure is
+the Poisson deviance of the record's rashes per day, days 0 to 89 from the index child's, against the model's mean over
+its runs. A grid of 8 × 10 × 8 points at 100 runs each, then 7 × 7 × 7 around the best at 300, then the best at 1,000:
+83 s in Node. Declared as `measles-hagelloch-fitted`, each value's basis "fitted".
+
+| | Assumed (0.08, 0.02, 0.002) | Fitted |
+| --- | --- | --- |
+| Household, per day from one infectious housemate | 0.08 | 0.47 (0.25 to 0.9) |
+| Class, per day from one infectious classmate | 0.02 | 0.0035 (0.0017 to 0.007) |
+| Village, per day from one infectious child elsewhere | 0.002 | 0.0052 (0.0041 to 0.0052) |
+| Deviance | 203 | 154 |
+| Half reached by day (recorded 29) | 30 (25 to 38) | 27 (23 to 32) |
+| Peak day (recorded 31) | 30 (23 to 39) | 28 (22 to 34) |
+| Children on the peak day (recorded **26**) | 13 (11 to 17) | 17 (14 to 21) |
+| Recorded days inside the band | 72 of 83 | 76 of 83 |
+| The three peak days' 95th percentiles (recorded 68) | 40 | 52 |
+
+The ranges are the points of the fine grid within 4 of the best deviance (38 of 343). The household's is flat to the
+top of the grid: a household's children are reached either way. The fit moves transmission from the school class to the
+village.
+
+**Where the record's peak comes from.** Class 1 (30 children, mostly 8 to 10; the index child, aged 13, was in class 2)
+came out in the rash almost together: 25 of the 30 on days 18 to 21. The record names class 1's children as the
+infectors of 34 of the 68 rashes on the three peak days, and class 2's of 25. Generation 3 in the record's tree holds
+102 children. One synchronous class infects a synchronous next generation.
+
+**The periods as a sensitivity**, fitted again with them replaced for the run only (`--periods`):
+
+| Periods | Deviance | Peak day count | Three peak days, 95th |
+| --- | --- | --- | --- |
+| Latent 6 to 11, prodrome 2 to 6 (the record's, declared) | 154 | 17 (14 to 21) | 52 |
+| Latent 8 to 9, prodrome 2 to 6 | 141 | 17 (14 to 21) | 54 |
+| Latent 8 to 9, prodrome 3 to 5 | 152 | 18 (15 to 23) | 59 |
+| Latent 10, prodrome 4, fixed | 406 | 18 (15 to 24) | 45 |
+
+Narrower periods do not make the peak: no run in any of these peaks near 26 at the 95th percentile. Fixed periods fit
+far worse.
+
+**Found:** the fit is better than the assumption, and the timing agrees, but no setting of these three probabilities,
+with these periods or narrower ones, makes the record's peak. The structure gives both classes one probability; the
+record has class 1 infected in one burst and class 2 over longer.
+
+**What this does not establish:** whether a probability for each class, or a single shared exposure (a day at school,
+a gathering), would make the peak; that is a change to the structure, not to a value. Nor that the fitted values are
+right in any other village: the household's is barely determined, and the deviance against a mean curve rewards a
+model whose runs agree on timing, not one whose runs are each sharp. The fit's last day is 41 (35 to 47), against the
+record's 82, which is one late child.
 
 ## Left for later, step by step, if the spike says yes
 

@@ -1,0 +1,118 @@
+{
+  "schema": "fieldwork/parameter-set/1",
+  "id": "measles-hagelloch-fitted",
+  "version": "1.0.0",
+  "title": "Hagelloch 1861: the periods from the record, the probabilities fitted to its curve",
+  "structure": {
+    "id": "measles-prodrome-rash-household-class-village",
+    "version": "1.0.0"
+  },
+  "values": {
+    "latent_period": {
+      "min": 6,
+      "max": 11,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "quote": "date_of_prodrome and infector, for 184 of the 188 children",
+        "working": "For each child with an infector, the days from the infector's prodrome to the child's own: 7 to 16, median 10 (184 pairs; 10 in school-class pairs, 11 in household pairs). The child was infected at some point in the infector's infectious days; a classmate only in the prodrome, when the infector was at school. Taking the middle of the infector's prodrome as the day of infection gives 6 days (10th centile), 8.5 (median) and 10.5 to 11 (90th) in each kind of pair. No single number fits: of the 68 class pairs, at most 41 allow any one value. 6 to 11 days, drawn evenly, has the median's mean of 8.5.",
+        "note": "The infector column is each child's putative source, as the record gives it, not an observed transmission. The Pink Book's 10 days lies inside this range, toward its top."
+      }
+    },
+    "prodrome": {
+      "min": 2,
+      "max": 6,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "quote": "date_of_prodrome and date_of_rash, for all 188 children",
+        "working": "Days from the prodrome to the rash: 0 to 13, 10th centile 2, median 4, 90th 6, mean 3.95; 72 children had 4. 2 to 6 days, drawn evenly, has a mean of 4.",
+        "note": "Drawn evenly, the model gives as many 2-day as 4-day prodromes; the record has 29 against 72. A shape the structure cannot yet declare."
+      }
+    },
+    "rash_infectious": {
+      "min": 5,
+      "max": 5,
+      "evidence": {
+        "basis": "derived",
+        "place": "global",
+        "time": {
+          "same": false,
+          "note": "a 2024 reference for an 1861 outbreak"
+        },
+        "directness": "indirect",
+        "credibility": "unverified",
+        "source": {
+          "citation": "CDC. Epidemiology and Prevention of Vaccine-Preventable Diseases (the Pink Book), chapter 13: Measles. Page dated 24 April 2024.",
+          "url": "https://www.cdc.gov/pinkbook/hcp/table-of-contents/chapter-13-measles.html",
+          "open": true,
+          "read": "full text, 2026-11-17"
+        },
+        "quote": "transmissible from 4 days before through 4 days after rash onset",
+        "working": "The day of the rash and the 4 days after it: 5 days. With the 4-day prodrome, 9 infectious days in all, as in the Pink Book set.",
+        "note": "Not in the record: nothing marks when a child stopped being infectious. Kept from the Pink Book."
+      }
+    },
+    "p_household": {
+      "value": 0.47,
+      "evidence": {
+        "basis": "fitted",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "working": "Fitted 2026-11-21 by scripts/abm-hagelloch-fit.mjs: the three probabilities together, on a grid of 8 × 10 × 8 points at 100 runs each, then 7 × 7 × 7 around the best at 300; the Poisson deviance of the record's rashes per day (days 0 to 89 from the index child's) against the model's mean, with the periods of measles-hagelloch-from-the-record and the school shut on Sundays. Best 0.47; within 4 of the best's deviance, 0.25 to 0.9.",
+        "note": "Poorly determined: the fit is as good up to the top of the grid. A household's children are reached either way."
+      }
+    },
+    "p_class": {
+      "value": 0.0035,
+      "evidence": {
+        "basis": "fitted",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "working": "Fitted 2026-11-21 by scripts/abm-hagelloch-fit.mjs: the three probabilities together, on a grid of 8 × 10 × 8 points at 100 runs each, then 7 × 7 × 7 around the best at 300; the Poisson deviance of the record's rashes per day (days 0 to 89 from the index child's) against the model's mean, with the periods of measles-hagelloch-from-the-record and the school shut on Sundays. Best 0.0035; within 4 of the best's deviance, 0.0017 to 0.007.",
+        "note": "Lower than the assumed 0.02: the fit moves the transmission to the village."
+      }
+    },
+    "p_village": {
+      "value": 0.0052,
+      "evidence": {
+        "basis": "fitted",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "working": "Fitted 2026-11-21 by scripts/abm-hagelloch-fit.mjs: the three probabilities together, on a grid of 8 × 10 × 8 points at 100 runs each, then 7 × 7 × 7 around the best at 300; the Poisson deviance of the record's rashes per day (days 0 to 89 from the index child's) against the model's mean, with the periods of measles-hagelloch-from-the-record and the school shut on Sundays. Best 0.0052; within 4 of the best's deviance, 0.0041 to 0.0052.",
+        "note": "Per day, from one infectious child to each other child in the village: with 20 children infectious, about one in ten of the rest a day."
+      }
+    }
+  }
+}

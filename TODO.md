@@ -76,6 +76,12 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **0.157.0, in development:** Census tables offers Sierra Leone, Malawi and Kenya by level with geoBoundaries' names,
   as Nigeria in 0.156.0; a dictionary chosen after its table proposes the values again.
 
+- **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);
+  the practitioner, 2026-11-21). The spike reads a point by two byte ranges, checked against Planetary Computer at five
+  places; no worked example lies in what the stores hold (Europe, from September 2021). Two threads: (1) watch the
+  stores' coverage over Africa and our examples' places (Nigeria, Sierra Leone, Malawi, Kenya, Rio), and say when it
+  arrives; (2) look for a European example, late 2021 onwards, that a 10 m vegetation or water layer would serve. Then
+  the reader in a browser, an area rather than points, and Sentinel-1.
 - **Private worked examples.** A worked example held in a private repository, listed only when the person's identity
   and a credential naming that repository (fine-grained, Contents: read) are both unlocked; read at its pinned commit
   with that credential, checked by digest, never offered for sharing or publishing. Nothing in this repository names

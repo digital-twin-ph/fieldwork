@@ -5,7 +5,8 @@
 import censusCatalogue from '../examples/census-tables/catalogue.json';
 import {levelName} from './figure-words.js';
 
-interface CensusEntry{iso3:string;country:string;census:string;rows:number;levels?:{level:string;units:number}[];derived?:{label:string}}
+interface CensusEntry{iso3:string;country:string;census:string;rows:number;levels?:{level:string;units:number}[];derived?:{label:string};
+  more?:{rows:number;derived?:{label:string}}[]}
 const catalogue=censusCatalogue as {countries:CensusEntry[]};
 const n=(x:number)=>x.toLocaleString('en-US');
 
@@ -19,7 +20,7 @@ export function levelCheck(iso:string,level:{level:string;units:number;canonical
   const counted=levels.map(l=>`${n(l.units)} ${l.level}`);
   // Two levels together count too: Malawi's 32 ADM2 units are its census's 28 districts and 4 cities.
   const pairs=levels.flatMap((a,i)=>levels.slice(i+1).map(b=>({what:`its ${a.level} and ${b.level} together`,units:a.units+b.units})));
-  const offered=census.derived?[{what:`the rows of “${census.derived.label}”`,units:census.rows}]:[];
+  const offered=[census,...(census.more??[])].flatMap(t=>t.derived?[{what:`the rows of “${t.derived.label}”`,units:t.rows}]:[]);
   const candidates=[...levels.map(l=>({what:`its ${l.level}`,units:l.units})),...offered];
   const single=candidates.filter(l=>l.units===level.units);
   const same=single.length?single:pairs.filter(l=>l.units===level.units);

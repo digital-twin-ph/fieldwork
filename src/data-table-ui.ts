@@ -160,7 +160,10 @@ interface CensusFile {path:string;bytes:number;sha256:string}
 interface CensusCountry {iso3:string;country:string;census:string;referenceDate:string;publisher:string;licence:string;rows:number;
   reviewed:{last:string;nextDue:string};counts:CensusFile;columns?:CensusFile;
   /** Where the printed units are not today's, the table offered is summed from them: what it is, and the printed file. */
-  derived?:{label:string;printed:string}}
+  derived?:{label:string;printed:string};
+  /** The country's other tables offered, one per level, each derived as `derived` says (Nigeria's states, then its LGAs). */
+  more?:CensusTable[]}
+type CensusTable=Pick<CensusCountry,'rows'|'counts'|'columns'|'derived'>;
 const CENSUS=censusCatalogue as {repository:string;commit:string;raw:string;countries:CensusCountry[]};
 const CENSUS_RAW='https://raw.githubusercontent.com/digital-twin-ph/census-tables/';
 const TAB_KEY='fieldwork:table-source-tab';
@@ -177,10 +180,16 @@ function censusChoices():string{
   const today=new Date().toISOString().slice(0,10);
   return '<p class="muted">From <a href="'+esc(CENSUS.repository)+'" target="_blank" rel="noopener">census-tables</a>, at commit '
     +esc(CENSUS.commit.slice(0,7))+'. Each comes with its data dictionary.</p><ul class="census-choices">'
-    +CENSUS.countries.map(c=>'<li><button type="button" class="button" data-census="'+esc(c.iso3)+'">'+esc(c.country)+'</button>'
-      +'<p>'+esc(c.census)+' \u00b7 '+c.rows.toLocaleString('en')+' rows \u00b7 '+esc(c.publisher)+'</p>'
+    +CENSUS.countries.map(c=>'<li>'+(c.more
+        // ONE BUTTON PER TABLE where a country offers several: the country's name, then what each holds.
+        ?'<p class="census-country">'+esc(c.country)+'</p><p class="census-tables">'+[c,...c.more].map((t,i)=>'<button type="button" class="button" data-census="'
+          +esc(c.iso3)+'" data-census-table="'+i+'">'+esc(t.derived?.label??c.country)+'</button>').join(' ')+'</p>'
+          +'<p>'+esc(c.census)+' \u00b7 '+esc(c.publisher)+'</p>'
+        :'<button type="button" class="button" data-census="'+esc(c.iso3)+'">'+esc(c.country)+'</button>'
+          +'<p>'+esc(c.census)+' \u00b7 '+c.rows.toLocaleString('en')+' rows \u00b7 '+esc(c.publisher)+'</p>')
       +'<p class="muted">Terms: '+esc(c.licence)+'</p>'
-      +(c.derived?'<p>'+esc(c.derived.label)+', from <a href="'+esc(`${CENSUS.repository}/blob/${CENSUS.commit}/${c.derived.printed}`)
+      +(c.more?'<p>Each from <a href="'+esc(`${CENSUS.repository}/blob/${CENSUS.commit}/${c.derived!.printed}`)+'" target="_blank" rel="noopener">the counts as printed</a></p>'
+      :c.derived?'<p>'+esc(c.derived.label)+', from <a href="'+esc(`${CENSUS.repository}/blob/${CENSUS.commit}/${c.derived.printed}`)
         +'" target="_blank" rel="noopener">the counts as printed</a></p>':'')
       +'<p class="muted">'+(c.reviewed.nextDue&&c.reviewed.nextDue<today?'Review overdue since '+esc(c.reviewed.nextDue):'Next review '+esc(c.reviewed.nextDue))+'</p></li>').join('')
     +'</ul>';
@@ -606,6 +615,13 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       // as a measurement to average. A column named id, or ending in _id, _code or _no, is a key by its name.
       const identifier=(h:string)=>/(^|_)(id|code|no)$/i.test(h);
       keyNames=headers.filter((h,i)=>!numeric[i]||identifier(h));
+      // THE DICTIONARY SAYS WHICH ARE COUNTS (2026-11-21): where it gives some numeric columns a unit, those are the
+      // values and the rest are keys. Nigeria's census has `printed_page` and `s_no` in digits, read as measures beside
+      // men, women and total; its dictionary gives a unit, persons, to those three only.
+      const sheet=dictionaryFile?.sheets[0];
+      if(sheet){const entries=readDictionary(sheet.headers,sheet.rows,guessMapping(sheet.headers));
+        const counted=headers.filter((h,i)=>numeric[i]&&!keyNames.includes(h)&&entries.get(h)?.unit?.trim());
+        if(counted.length)keyNames=headers.filter(h=>!counted.includes(h));}
       if(!keyNames.length)keyNames=headers.slice(0,1);
     }else{
       const valueAt=guessValueColumn(headers,parsed.rows);
@@ -716,7 +732,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   };
   for(const button of dialog.querySelectorAll<HTMLButtonElement>('[data-census]'))button.onclick=async()=>{
     const c=CENSUS.countries.find(x=>x.iso3===button.dataset.census);if(!c)return;
-    await readPinned(CENSUS.raw,c.counts,c.columns,c.country,censusSays);
+    const t:CensusTable=[c,...(c.more??[])][Number(button.dataset.censusTable??0)]??c;
+    await readPinned(CENSUS.raw,t.counts,t.columns,c.country,censusSays);
   };
   // A COUNTRY'S TIDE GAUGES: its stations table, and the dictionary every country's shares.
   wireGauges(dialog,esc,c=>{void readPinned(GAUGES.raw,c.table,GAUGES.columns,`${c.country}'s tide gauges`,gaugesSays);});

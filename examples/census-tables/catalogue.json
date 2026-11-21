@@ -1,7 +1,7 @@
 {
  "repository": "https://github.com/digital-twin-ph/census-tables",
- "commit": "e579fc3c06aa3c0a131abac438a96dd7b57dd710",
- "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/e579fc3c06aa3c0a131abac438a96dd7b57dd710/",
+ "commit": "3b366d545b0b85785caba71a0d9c51cd7742fb89",
+ "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/3b366d545b0b85785caba71a0d9c51cd7742fb89/",
  "countries": [
   {
    "iso3": "BRA",
@@ -10,7 +10,6 @@
    "referenceDate": "2022-07-31",
    "publisher": "Instituto Brasileiro de Geografia e Estatística (IBGE), Diretoria de Pesquisas, Coordenação Técnica do Censo Demográfico",
    "licence": "none found",
-   "rows": 5598,
    "levels": [
     {
      "level": "país",
@@ -29,6 +28,7 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
+   "rows": 5598,
    "counts": {
     "path": "BRA/counts.csv",
     "bytes": 427833,
@@ -47,7 +47,6 @@
    "referenceDate": "2022",
    "publisher": "Statistics Botswana",
    "licence": "Statistics Botswana's terms of use: use as the user wishes, acknowledging Statistics Botswana as the source of the basic data",
-   "rows": 28,
    "levels": [
     {
      "level": "country",
@@ -62,6 +61,7 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
+   "rows": 28,
    "counts": {
     "path": "BWA/districts.csv",
     "bytes": 857,
@@ -84,7 +84,6 @@
    "referenceDate": "1984-07-01",
    "publisher": "République du Zaïre, Ministère du Plan et Aménagement du Territoire, Institut National de la Statistique",
    "licence": "none stated",
-   "rows": 26,
    "levels": [
     {
      "level": "pays",
@@ -107,6 +106,7 @@
     "last": "2026-11-19",
     "nextDue": "2027-05-19"
    },
+   "rows": 26,
    "counts": {
     "path": "COD/provinces-2015.csv",
     "bytes": 2179,
@@ -129,7 +129,6 @@
    "referenceDate": "2019-08",
    "publisher": "Kenya National Bureau of Statistics (KNBS)",
    "licence": "Public Domain / No restrictions (CC0): HDX's licence label, chosen by the uploading account, not a KNBS statement",
-   "rows": 350,
    "levels": [
     {
      "level": "sub-county",
@@ -144,6 +143,7 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
+   "rows": 350,
    "counts": {
     "path": "KEN/counts.csv",
     "bytes": 29474,
@@ -162,7 +162,6 @@
    "referenceDate": "2018-09",
    "publisher": "National Statistical Office (NSO), Malawi",
    "licence": "none stated by the NSO; HDX labels the dataset 'Creative Commons Attribution International (CC BY)'",
-   "rows": 36,
    "levels": [
     {
      "level": "country",
@@ -185,6 +184,7 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
+   "rows": 36,
    "counts": {
     "path": "MWI/counts.csv",
     "bytes": 2080,
@@ -203,7 +203,6 @@
    "referenceDate": "2006-03-21",
    "publisher": "National Population Commission, Abuja, Nigeria, April 2010",
    "licence": "none stated",
-   "rows": 813,
    "levels": [
     {
      "level": "country",
@@ -226,16 +225,40 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
+   "rows": 37,
    "counts": {
-    "path": "NGA/counts.csv",
-    "bytes": 87183,
-    "sha256": "3567be1285c60871e84fa93b67b602ddb49a23507bc9bb7041ffacec196f1950"
+    "path": "NGA/states.csv",
+    "bytes": 2549,
+    "sha256": "95b03bcc35f1bc19b9d57fd9386154a659e3d48d0522e2effda934ba76ea2811"
    },
    "columns": {
-    "path": "NGA/columns.csv",
-    "bytes": 1313,
-    "sha256": "2b5ea3505ba3a111dab620bccfb2472b83fca805b3f0c725137ee4b7f672186d"
-   }
+    "path": "NGA/states-columns.csv",
+    "bytes": 538,
+    "sha256": "b1075a49cbe98187818e1d450e076faa4bccdad78731516dad62e1fa3043fd5a"
+   },
+   "derived": {
+    "label": "Its 37 states, with geoBoundaries' names",
+    "printed": "NGA/counts.csv"
+   },
+   "more": [
+    {
+     "rows": 774,
+     "counts": {
+      "path": "NGA/lgas.csv",
+      "bytes": 63247,
+      "sha256": "6609925f02b9a340d8cafb157e25aa851276bc6687202dd19041cbfccb20b279"
+     },
+     "columns": {
+      "path": "NGA/lgas-columns.csv",
+      "bytes": 805,
+      "sha256": "a27d0f605a69d70a9f916266da3064ef8e23d437af8d9ef3dd9350746b39e1de"
+     },
+     "derived": {
+      "label": "Its 774 LGAs, with geoBoundaries' names",
+      "printed": "NGA/counts.csv"
+     }
+    }
+   ]
   },
   {
    "iso3": "RWA",
@@ -244,7 +267,6 @@
    "referenceDate": "2022-08",
    "publisher": "National Institute of Statistics of Rwanda (NISR)",
    "licence": "CC BY 4.0",
-   "rows": 30,
    "levels": [
     {
      "level": "country",
@@ -263,6 +285,7 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
+   "rows": 30,
    "counts": {
     "path": "RWA/districts.csv",
     "bytes": 2427,
@@ -285,7 +308,6 @@
    "referenceDate": "2015-12-04",
    "publisher": "Statistics Sierra Leone (Stats SL), Freetown, December 2016",
    "licence": "Statistics Sierra Leone's Open License Agreement: a \"non-exclusive, worldwide, royalty-free license to copy, modify, translate, publish, adapt, distribute\", for commercial and non-commercial use, on condition of the notice it prescribes. Not a named standard licence.",
-   "rows": 183,
    "levels": [
     {
      "level": "country",
@@ -308,6 +330,7 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
+   "rows": 183,
    "counts": {
     "path": "SLE/counts.csv",
     "bytes": 11615,

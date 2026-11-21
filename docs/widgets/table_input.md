@@ -74,9 +74,18 @@ each unit was placed and what the placing does not establish. Rwanda's and Botsw
 with the name geoBoundaries gives it in `geoboundaries_name`: Rwanda's are the census's own, and 8 of Botswana's are
 spelled differently.
 
-Brazil's municipalities, Kenya's sub-counties, Malawi's districts and cities, Nigeria's local government areas and
-Sierra Leone's districts and chiefdoms are offered as printed, in the census's own units, each with the level it is
-at in `level`. Their names are the census's spelling: a map's may differ, and Relate says which do not match.
+Nigeria is offered as two tables, one button each: **Its 37 states, with geoBoundaries' names** and **Its 774 LGAs,
+with geoBoundaries' names**. The volume prints "JIGAWA STATE" where geoBoundaries writes "Jigawa", and 31 LGAs are
+spelled differently in the two; `geoboundaries_name` gives each unit the map's spelling, and `geoboundaries_id` its ID.
+Choose the table at the level of your study area: the states for a map of states, the LGAs for a map of LGAs.
+
+Brazil's municipalities, Kenya's sub-counties, Malawi's districts and cities and Sierra Leone's districts and chiefdoms
+are offered as printed, in the census's own units, each with the level it is at in `level`. Their names are the
+census's spelling: a map's may differ, and Relate says which do not match.
+
+Where the data dictionary gives some numeric columns a unit, those are proposed as the values and every other column as
+a key. Sierra Leone's `printed_page` is written in digits but has no unit: it is the page the row was read from, so it
+is a key, and men, women and total, in persons, are the values.
 
 
 ## Tide gauges
@@ -215,6 +224,13 @@ after (`fw:CellEdit`). Experiment 214.
 It does not choose between rows that disagree. The table stays as read until a later step changes it.
 
 ## History
+
+### 2026-11-21 · A table per level; the dictionary says which columns are counts (0.16.0)
+
+**Census tables** offers a country's levels as separate tables where its census-tables folder does: Nigeria's 37
+states and its 774 LGAs, each with geoBoundaries' name and ID for every unit, where Nigeria was one printed table of
+all its levels with names like "JIGAWA STATE". In a wide read, a numeric column the data dictionary gives no unit, such
+as a printed page number, is proposed as a key rather than a value.
 
 ### 2026-11-20 · Tide gauges chosen on the map; DHIS2 says what is missing (0.15.0)
 

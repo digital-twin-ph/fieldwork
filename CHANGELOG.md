@@ -5,6 +5,11 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.156.0 — In development
 
+- **Nigeria's census by state or by LGA, with the map's names.** Census tables offers Nigeria as two tables, its 37
+  states and its 774 LGAs, each unit beside the name and ID geoBoundaries gives it: "JIGAWA STATE" is "Jigawa", and the
+  31 LGAs the two sources spell differently are paired. A column the data dictionary gives no unit, such as the page a
+  row was printed on, is now proposed as a key rather than a value.
+
 - **Tide gauges chosen on the map.** Click a country's outline, or one of its gauges for an island too small to have one,
   or choose it from a short list; the map closes in on it, and the line beneath offers to read its index. The long list
   of countries beneath the map is gone.

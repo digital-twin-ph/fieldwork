@@ -21,3 +21,9 @@ test('a level matching no census level says so',()=>{
 test('a country without a census table says only the name',()=>{
   assert.equal(levelCheck('FRA',{level:'ADM1',units:13,canonical:'Regions'}),'geoBoundaries calls ADM1\'s units “Regions”.');
 });
+
+test('each table a country offers is set beside the level',()=>{
+  // Nigeria offers its states and its LGAs as two tables (2026-11-21); each names the level it matches.
+  assert.match(levelCheck('NGA',{level:'ADM1',units:37}),/as many as its state and the rows of “Its 37 states/);
+  assert.match(levelCheck('NGA',{level:'ADM2',units:774}),/as many as its lga and the rows of “Its 774 LGAs/);
+});

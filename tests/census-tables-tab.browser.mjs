@@ -88,7 +88,8 @@ test('where the printed units are not today\'s, the tab offers the table summed 
   const item=page.locator('.census-choices li').filter({has:page.locator('[data-census="COD"]')});
   await expect(item).toContainText("Summed to today's 26 provinces (2015), from the counts as printed");
   await expect(item.getByRole('link',{name:'the counts as printed'})).toHaveAttribute('href',`${catalogue.repository}/blob/${catalogue.commit}/COD/counts.csv`);
-  await expect(page.locator('[data-census]')).toHaveCount(catalogue.countries.length);
+  // One button per table offered: a country's first, and each of `more` (Nigeria's states and LGAs).
+  await expect(page.locator('[data-census]')).toHaveCount(catalogue.countries.reduce((n,c)=>n+1+(c.more?.length??0),0));
 });
 
 /** A STEP'S CHOICES BELONG TO ITS OWN TABLE (2026-11-20): a DR Congo step reopened and given another table kept the
@@ -155,4 +156,31 @@ test('a wide read’s own measure column is said as made by the read',async({pag
   await page.locator('[data-census="COD"]').click();
   await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
   await expect(page.locator('#table-distinct label').filter({hasText:/^\s*measure/})).toContainText('made by this read');
+});
+
+test('a country offering a table per level has a button for each, and the dictionary says which columns are counts',async({page})=>{test.skip(!!skip,skip);
+  const errors=collectPageErrors(page);
+  await answer(page);
+  await open(page);
+  await page.locator('#table-tab-census').click();
+  // NIGERIA (2026-11-21): its states and its LGAs, each with geoBoundaries' names, as two tables.
+  const nga=catalogue.countries.find(c=>c.iso3==='NGA');
+  await expect(page.locator('[data-census="NGA"]')).toHaveCount(2);
+  await expect(page.locator('[data-census="NGA"][data-census-table="0"]')).toHaveText("Its 37 states, with geoBoundaries' names");
+  await page.locator('[data-census="NGA"][data-census-table="1"]').click();
+  await expect(page.locator('#table-census-says')).toContainText('NGA/lgas-columns.csv', {timeout:60000});
+  await expect(page.locator('#table-values input[value="total"]')).toBeChecked();
+  await expect(page.locator('#table-keys input[value="geoboundaries_name"]')).toBeChecked();
+  await page.locator('#table-save').click();
+  await expect(page.locator('#table-save')).toBeHidden();
+  await expect.poll(async()=>(await storedTable(page)).remote?.sha256).toBe(nga.more[0].counts.sha256);
+  // SIERRA LEONE'S PRINTED TABLE: printed_page is in digits, and its dictionary gives it no unit, so it is a key; men,
+  // women and total, in persons, are the values.
+  await page.locator('#configure-step').click();
+  await page.locator('[data-census="SLE"]').click();
+  await expect(page.locator('#table-census-says')).toContainText('SLE/columns.csv', {timeout:60000});
+  await expect(page.locator('#table-keys input[value="printed_page"]')).toBeChecked();
+  await expect(page.locator('#table-values input[value="printed_page"]')).not.toBeChecked();
+  for(const v of ['men','women','total'])await expect(page.locator(`#table-values input[value="${v}"]`)).toBeChecked();
+  expect(errors).toEqual([]);
 });

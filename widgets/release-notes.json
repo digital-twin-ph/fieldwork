@@ -897,12 +897,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.15.0",
-   "released": "2026-11-20",
+   "version": "0.16.0",
+   "released": "2026-11-21",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Tide gauges: a country is chosen on the map, by its outline from Natural Earth's countries or one of its gauges, or from a short list, and the map closes in on it, where it was a long list beneath the map. DHIS2: an empty or partial server address is named; the tokens are read again on Connect, each shown with the address it is for; a token for another address is named with the address it is for."
+     "kind": "changed",
+     "description": "Census tables offers a country's levels as separate tables where census-tables does (Nigeria's states and LGAs, with geoBoundaries' names); in a wide read, a numeric column the data dictionary gives no unit is proposed as a key."
     }
    ],
    "breaking": false,

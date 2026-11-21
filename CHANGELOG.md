@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.158.0 — In development
+
+- **Joining a table to the study area with no column chosen** joins on the column that names each part once. Where
+  the table names each part in several rows, as Nigeria's LGAs name their states, the run says the table is finer than
+  the study area; it used to stop on *The table has no column ""*.
+- **Hagelloch's measles model:** the periods measured from the record, and the three probabilities fitted to its
+  curve (experiment 199). The timing agrees; the record's sharp peak is class 1's burst, which the model cannot make.
+- **Experiment 227:** Sentinel-2 read from ESA's Zarr stores, a point by two byte ranges, checked against Planetary
+  Computer at five places. No worked example lies in what the stores hold yet.
+
 ## 0.157.0 — 2026-11-21
 
 - **Sierra Leone, Malawi and Kenya by level, with the map's names.** Census tables offers Sierra Leone's 14 districts

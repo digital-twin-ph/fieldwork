@@ -114,7 +114,7 @@ import type {DataTable} from './data-table.js';
 import {computeRate,fromPoints,fromTable,fromWideTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
 import {computeRateTwoByTwo,readRatesUnderDesign,readRatesUndeclared} from './two-by-two-rates.js';
 import {caseSeries,caseSeriesFromTable,seriesTable,seriesChart,seriesReceipt,validateCaseSeriesNode} from './case-series.js';
-import {joinTableToAreas,joinedPolygons,areaJoinReceipt} from './area-join.js';
+import {joinTableToAreas,joinedPolygons,areaJoinReceipt,keyColumnForRun} from './area-join.js';
 import {projectionExtract,projectionTable,readExtract,extractFromRuleset,assignSites,assignmentTable,compareToElevation,extractReceipt,assignmentReceipt,comparisonReceipt as thresholdReceipt,validateSeaLevelNode} from './sea-level.js';
 import {distanceKm,nearestOf,satisfies} from './nearest-neighbour.js';
 export const NS = 'urn:fieldwork:';
@@ -1592,9 +1592,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // `records`, not `table`: `inputs` is keyed by PORT name, and the port is called records
         // to match every other widget that takes rows. Reading `inputs.table` here cost a run
         // that failed with "Cannot read properties of undefined" and named neither port.
-        const joined=joinTableToAreas(units,
-          inputs.records as unknown as import('./data-table.js').DataTable,
-          {keyField:node.params.keyField,normalisation:node.params.normalisation,
+        const table=inputs.records as unknown as import('./data-table.js').DataTable;
+        const keyField=node.params.keyField||keyColumnForRun(table,units,node.params.normalisation??'fuzzy');
+        const joined=joinTableToAreas(units,table,
+          {keyField,normalisation:node.params.normalisation,
             categoryField:node.params.categoryField,frameField:node.params.frameField});
         joins[node.id]=joined;
         value=layer?joinedPolygons(undefined,joined,node.params.label,

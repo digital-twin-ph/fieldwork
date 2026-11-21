@@ -6,8 +6,8 @@
 import type {Escape,WorkflowNode} from './types.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import type {DataTable} from './data-table.js';
-import {joinTableToAreas,type AreaJoinResult} from './area-join.js';
-import {normaliseName} from './deduplicate-points.js';
+import {joinTableToAreas,proposeKeyColumn,type AreaJoinResult} from './area-join.js';
+export {proposeKeyColumn};
 import {openConfigDialog} from './config-dialog.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {joinTableWalkthrough} from './spatial-walkthroughs.js';
@@ -28,21 +28,7 @@ export interface JoinKit extends StepKit {
   joined:(nodeId:string)=>AreaJoinResult|undefined;
 }
 
-const fold=(value:unknown,match:Match)=>normaliseName(typeof value==='number'?String(value):value,match);
 const n=(x:number)=>x.toLocaleString('en');
-
-/** THE COLUMN NAMING THE MOST PARTS, proposed rather than asked for: a census read from Census tables carries
- *  `geoboundaries_name`, and a study area from geoBoundaries is named the same way. None names any part: nothing proposed. */
-export function proposeKeyColumn(table:DataTable,parts:readonly Part[],columns:readonly string[],match:Match):{column:string;named:number}|undefined{
-  const names=new Set(parts.map(p=>fold(p.name,match)).filter(Boolean));
-  let best:{column:string;named:number}|undefined;
-  for(const column of columns){
-    const said=new Set(table.rows.map(r=>fold(r.key[column],match)).filter(Boolean));
-    const named=[...names].filter(x=>said.has(x)).length;
-    if(named&&(!best||named>best.named))best={column,named};
-  }
-  return best;
-}
 
 /** One sentence of what the step will do, or what it still needs. */
 export function joinSentence(p:JoinParams,table:string,area:string):string{
@@ -52,7 +38,7 @@ export function joinSentence(p:JoinParams,table:string,area:string):string{
     +(p.frameField?`, one value per "${p.frameField}"`:'')+(p.categoryField?`, each part classed by "${p.categoryField}"`:'')+'.';
 }
 
-interface JoinDraft {keyField:string;normalisation:Match;frameField:string;categoryField:string;proposed?:number}
+interface JoinDraft {keyField:string;normalisation:Match;frameField:string;categoryField:string;proposed?:number;proposedRows?:number}
 export interface JoinConfigView {
   step:string; tableName:string; areaName:string;
   columns:string[]; table?:DataTable; parts?:Part[];
@@ -78,7 +64,10 @@ export function openJoinConfig(view:JoinConfigView,esc:Escape):void{
         +'<p><button type="button" class="button" id="join-show-me" data-show-me>Show me how it works</button></p>'
         +select('join-key','Column naming each part',view.columns,d.keyField,'Choose a column…')
         +(d.proposed!==undefined&&d.keyField?`<p class="notice" data-join-proposed>Proposed: "${esc(d.keyField)}" names ${n(d.proposed)} of `
-          +`${n(view.parts?.length??0)} parts. Choose another if it is not the column naming them.</p>`:'')
+          +`${n(view.parts?.length??0)} parts. Choose another if it is not the column naming them.</p>`
+          +(d.proposedRows!==undefined&&d.proposedRows>d.proposed?`<p class="notice notice-warning" data-join-repeats>It names them in ${n(d.proposedRows)} rows, `
+            +`about ${n(Math.round(d.proposedRows/d.proposed))} each, and a part carries one value: the table is finer than the study area. `
+            +'Use a table with one row per part, or a study area at the table’s level.</p>':''):'')
         +`<div class="field"><label class="field-label" for="join-normalisation">Match names</label><select id="join-normalisation">`
         +`<option value="fuzzy"${d.normalisation==='fuzzy'?' selected':''}>Ignoring capitals, punctuation and spacing</option>`
         +`<option value="exact"${d.normalisation==='exact'?' selected':''}>Exactly as written, capitals aside</option></select></div>`
@@ -122,7 +111,7 @@ export function openJoinConfig(view:JoinConfigView,esc:Escape):void{
       const show=root.querySelector<HTMLButtonElement>('#join-show-me');
       if(show)show.onclick=()=>openWalkthrough(joinTableWalkthrough(d.normalisation),esc,show);
       const on=(id:string,f:(v:string)=>void)=>root.querySelector<HTMLSelectElement>(id)?.addEventListener('change',e=>{f((e.target as HTMLSelectElement).value);redraw();});
-      on('#join-key',v=>{d.keyField=v;delete d.proposed;if(d.frameField===v)d.frameField='';if(d.categoryField===v)d.categoryField='';});
+      on('#join-key',v=>{d.keyField=v;delete d.proposed;delete d.proposedRows;if(d.frameField===v)d.frameField='';if(d.categoryField===v)d.categoryField='';});
       on('#join-normalisation',v=>{d.normalisation=v==='exact'?'exact':'fuzzy';});
       on('#join-frames',v=>{d.frameField=v;if(d.categoryField===v)d.categoryField='';});
       on('#join-category',v=>{d.categoryField=v;});
@@ -135,7 +124,7 @@ export function openJoinConfig(view:JoinConfigView,esc:Escape):void{
 export function joinDraftOf(p:JoinParams,table:DataTable|undefined,parts:Part[]|undefined,columns:string[]):JoinDraft{
   const draft:JoinDraft={keyField:p.keyField,normalisation:p.normalisation??'fuzzy',frameField:p.frameField??'',categoryField:p.categoryField??''};
   if(!draft.keyField&&table&&parts){const proposed=proposeKeyColumn(table,parts,columns,draft.normalisation);
-    if(proposed){draft.keyField=proposed.column;draft.proposed=proposed.named;}}
+    if(proposed){draft.keyField=proposed.column;draft.proposed=proposed.named;draft.proposedRows=proposed.rows;}}
   return draft;
 }
 export function applyJoinDraft(p:JoinParams,d:JoinDraft):void{

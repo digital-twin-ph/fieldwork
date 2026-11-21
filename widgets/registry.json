@@ -920,7 +920,7 @@
     {
       "id": "urn:fieldwork:widget:join_table_to_area",
       "nodeType": "join_table_to_area",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -956,6 +956,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/join_table_to_area/0.5.0.json",
           "sha256": "e4ec5e5d4f462389763689de1cbd865908ac938d510506c2a4898db91f80694e"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/join_table_to_area/0.6.0.json",
+          "sha256": "93e7b03b0b115eb78e1542a76cbc0588979162a23bf17d6a1e324a6113089c2d"
         }
       ]
     },

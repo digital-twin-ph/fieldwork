@@ -39,7 +39,7 @@ chosen. Press **Configure…**:
 
 | Setting | What it decides |
 | --- | --- |
-| **Column naming each part** | Which of the table's columns holds the part's name. Where none is chosen, the column naming the most parts is proposed, saying how many it names: a census from Census tables carries `geoboundaries_name`, which names a study area from geoBoundaries. |
+| **Column naming each part** | Which of the table's columns holds the part's name. Where none is chosen, the column naming the most parts is proposed, saying how many it names: a census from Census tables carries `geoboundaries_name`, which names a study area from geoBoundaries. A run with none chosen joins on the proposed column where it names each part once. |
 | **Match names** | *Ignoring capitals, punctuation and spacing*, or *Exactly as written, capitals aside*. |
 | **Frames from** | Optional: a column whose values are frames (below). |
 | **Shade by a class** | Optional: a column whose values are classes, not quantities. |
@@ -93,6 +93,9 @@ did not, and every part left without a value, so a figure made from this can say
   place is reported, not approximated.
 - **It will not aggregate.** Two rows naming the same part are a duplicate-key problem in the
   table, and are reported as one rather than quietly summed or averaged.
+- **It will not join a finer table on its first rows.** With no column chosen, a table naming each part in several
+  rows (Nigeria's 774 LGAs, each with its state, joined to the 37 states) stops the run, saying the table is finer than
+  the study area: use a table with one row per part, or a study area at the table's level.
 - **It will not decide whether the number is worth mapping.** Whether the rate was computed over
   the right denominator, whether the classes are honest, and whether a reader will take area for
   magnitude are questions this widget does not answer.
@@ -125,6 +128,13 @@ Each part then carries one value per frame, and an interactive map can play thro
 the last frame's. A key repeated across frames is expected; a key repeated within a frame is reported.
 
 ## History
+
+### 2026-11-21 · A run proposes the column (0.6.0)
+
+A run with no column chosen joins on the column the dialog would propose, where it names each part once. Joining
+Nigeria's LGA table to its 37 states, with no column chosen, stopped on *The table has no column ""*. Now it stops on
+what is wrong: the table names each state in about 21 rows, because it is finer than the study area. The dialog
+says the same beside its proposal.
 
 ### 2026-11-21 · Show me how shows both tables (0.5.0)
 

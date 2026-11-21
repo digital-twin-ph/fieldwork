@@ -1,2 +1,2 @@
-import{a,b,c}from"./chunks/chunk-KL2GM7PZ.js";import"./chunks/chunk-CNOQQASB.js";import"./chunks/chunk-Y7AFQXFJ.js";import"./chunks/chunk-KVMUXFPB.js";export{c as areaJoinReceipt,a as joinTableToAreas,b as joinedPolygons};
+import{a,b,c,d,e}from"./chunks/chunk-SCWZDPQL.js";import"./chunks/chunk-CNOQQASB.js";import"./chunks/chunk-Y7AFQXFJ.js";import"./chunks/chunk-KVMUXFPB.js";export{e as areaJoinReceipt,c as joinTableToAreas,d as joinedPolygons,b as keyColumnForRun,a as proposeKeyColumn};
 //# sourceMappingURL=area-join.js.map

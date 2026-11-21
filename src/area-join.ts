@@ -90,6 +90,38 @@ const text=(value:unknown):string|undefined=>{
   return said?said:undefined;
 };
 
+/** THE COLUMN NAMING THE MOST PARTS, proposed rather than asked for: a census read from Census tables carries
+ *  `geoboundaries_name`, and a study area from geoBoundaries is named the same way. `rows` is how many rows name a part:
+ *  more than `named` when the table is finer than the area (Nigeria's 774 LGAs name its 37 states in their
+ *  `state_geoboundaries`, 2026-11-21). A tie goes to the column naming each part fewest times. None names any part:
+ *  nothing proposed. */
+export function proposeKeyColumn(table:DataTable,parts:readonly {name:string}[],columns:readonly string[],
+  match:'exact'|'fuzzy'):{column:string;named:number;rows:number}|undefined{
+  const fold=(value:unknown)=>normaliseName(typeof value==='number'?String(value):value,match);
+  const names=new Set(parts.map(p=>fold(p.name)).filter(Boolean));
+  let best:{column:string;named:number;rows:number}|undefined;
+  for(const column of columns){
+    const said=table.rows.map(r=>fold(r.key[column])).filter(x=>x&&names.has(x));
+    const named=new Set(said).size,rows=said.length;
+    if(named&&(!best||named>best.named||(named===best.named&&rows<best.rows)))best={column,named,rows};
+  }
+  return best;
+}
+
+/** THE COLUMN A RUN JOINS ON when none was chosen: the proposal, used where it names each part once. The practitioner,
+ *  2026-11-21, joining Nigeria's LGAs to its states with no column chosen, met *"The table has no column """*. */
+export function keyColumnForRun(table:DataTable,parts:readonly {name:string}[],normalisation:'exact'|'fuzzy'):string{
+  const n=(x:number)=>x.toLocaleString('en');
+  const proposed=proposeKeyColumn(table,parts,table.keys,normalisation);
+  const distinct=[...new Set(parts.map(p=>p.name))];
+  if(!proposed)throw new Error(`No column of the table names a part of the study area: its columns are ${table.keys.join(', ')||'none'}, `
+    +`and the parts are called ${distinct.slice(0,3).join(', ')}${distinct.length>3?' and so on':''}. Choose the column naming each part in Configure….`);
+  if(proposed.rows>proposed.named)throw new Error(`The table names the study area's parts in "${proposed.column}" (${n(proposed.named)} of `
+    +`${n(distinct.length)}), but in ${n(proposed.rows)} rows, about ${n(Math.round(proposed.rows/proposed.named))} each, and a part carries one value: `
+    +'the table is finer than the study area. Use a table with one row per part, or a study area at the table’s level.');
+  return proposed.column;
+}
+
 export function joinTableToAreas(
   units:{id:string;name:string}[], table:DataTable,
   options:{keyField:string; normalisation?:'exact'|'fuzzy'; categoryField?:string; frameField?:string}

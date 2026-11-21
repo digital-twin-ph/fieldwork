@@ -73,8 +73,9 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 0.154.0 and 0.155.0 (2026-11-20), not yet ordered
 
-- **0.157.0, in development:** Census tables offers Sierra Leone, Malawi and Kenya by level with geoBoundaries' names,
-  as Nigeria in 0.156.0; a dictionary chosen after its table proposes the values again.
+- **0.158.0, in development:** a join run with no column chosen joins on the proposal, and says when the table is
+  finer than the study area; Hagelloch's periods from the record and probabilities fitted (199); a Zarr reader (227);
+  Buffer study area's remaining code to remove (retired in 0.37.0).
 
 - **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);
   the practitioner, 2026-11-21). The spike reads a point by two byte ranges, checked against Planetary Computer at five

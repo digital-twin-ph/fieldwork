@@ -40,6 +40,17 @@ test('the column naming each part is proposed, the table and parts shown Before,
   // SHOW ME HOW, from the Inspector.
   await page.locator('#inspector-content [data-show-me]').click();
   await expect(page.locator('#table-walkthrough')).toBeVisible();
+  // EVERY STEP'S DRAWING IS STYLED (2026-11-21): the shapes had no styles from 0.154.0, so each filled black. A shape is
+  // outlined or tinted, never black; a made part is filled.
+  const walk=page.locator('#table-walkthrough');
+  for(let i=0;;i++){
+    const fills=await walk.locator('.walk-shape').evaluateAll(xs=>xs.map(x=>getComputedStyle(x).fill));
+    expect(fills.length).toBeGreaterThan(0);
+    expect(fills.filter(f=>f==='rgb(0, 0, 0)'),`step ${i+1}`).toEqual([]);
+    if(!await walk.locator('[data-walk-step]').isEnabled().catch(()=>false)||await walk.locator('[data-walk-step]').count()===0)break;
+    await walk.locator('[data-walk-step]').click();if(i>8)break;
+  }
+  expect(await walk.locator('.walk-shape-result').evaluateAll(xs=>xs.map(x=>getComputedStyle(x).fill))).not.toContain('none');
   await page.keyboard.press('Escape');await expect(page.locator('#table-walkthrough')).toHaveCount(0);
   await page.locator('#configure-step').click();
   const dialog=page.locator('#join-config');

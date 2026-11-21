@@ -10,6 +10,9 @@ shown in a local build is not a claim that it has been published.
   summed from its sub-counties, each unit beside the name and ID geoBoundaries gives it. Malawi and Kenya are also
   offered as printed. Brazil is still offered as printed only.
 - **A data dictionary chosen after its table** proposes the values again: the columns it gives a unit.
+- **Show me how draws its shapes again.** The spatial walkthroughs (Area around a point, Buffer study area, Calculate
+  area, Clip polygons, Join a table to the study area) drew every shape black: their styles were never written. Each kind
+  now looks as its key says, and the key is 16 px.
 
 ## 0.156.0 — 2026-11-21
 

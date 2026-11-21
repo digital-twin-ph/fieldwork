@@ -1454,6 +1454,18 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 #table-walkthrough tr.walk-unused{opacity:.75;outline-style:dotted}
 #table-walkthrough .walk-word{font-weight:700;white-space:nowrap}
 #table-walkthrough .walk-result{border-left:3px solid var(--line);padding-left:12px}
+/* THE SPATIAL WALKTHROUGHS' DRAWINGS (2026-11-21). Drawn with these classes since 0.154.0 and never styled, so every shape
+   filled black: the practitioner found Join's black throughout. Each kind as its key says, in the theme's colours. */
+#table-walkthrough .walk-drawing{display:block;width:100%;max-width:40rem;height:auto;margin:8px auto;background:var(--surface-raised,#fff)}
+#table-walkthrough .walk-shape{fill:none;stroke:var(--text-muted,#555);stroke-width:1.5;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+#table-walkthrough .walk-shape-area{stroke:var(--text,#222);stroke-width:2;stroke-dasharray:6 4}
+#table-walkthrough .walk-shape-look{stroke:var(--accent,#176b59);stroke-width:4}
+#table-walkthrough .walk-shape-result{fill:var(--accent-soft,#cfe6df);fill-opacity:.85;stroke:var(--accent,#176b59);stroke-width:2}
+#table-walkthrough .walk-shape-gone{stroke:var(--text-faint,#888);stroke-dasharray:2 4}
+#table-walkthrough .walk-point{fill:var(--surface-raised,#fff)}
+#table-walkthrough .walk-point.walk-shape-look,#table-walkthrough .walk-point.walk-shape-result{fill:var(--accent,#176b59)}
+#table-walkthrough .walk-key{font-size:16px;line-height:1.5;color:var(--text,#111);margin:4px 0 0;padding-left:1.2em}
+#table-walkthrough .walk-shape-label{fill:var(--text,#111);font-size:14px;font-weight:700;paint-order:stroke;stroke:var(--surface-raised,#fff);stroke-width:3px;stroke-linejoin:round}
 #table-walkthrough tr.walk-fresh{animation:walk-in .4s ease-out}
 @keyframes walk-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 #table-walkthrough .walk-say{font-size:17px;line-height:1.5;margin:14px 0 8px;min-height:3em}

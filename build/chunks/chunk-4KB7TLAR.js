@@ -3,4 +3,4 @@ import{d as I}from"./chunk-7Z5NKNP6.js";var W=a=>{let t=1/0,e=1/0,n=-1/0,r=-1/0;
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 ${`<${r}output:${a.id}:activity>`} a fw:RasterAreaTotal, prov:Activity; prov:used <${r}output:${n}>; fw:cellRule "cell centre inside or on the area; counted whole, not area-weighted"; `+(a.params.cellStatistics?`fw:cellStatisticsGiven "mean, median, population standard deviation, minimum, maximum, cells above zero and their share, of the cells with a value; and the total over the area's size on the sphere"; `:"")+`fw:areaCount "${t.areas}"^^xsd:nonNegativeInteger; fw:totalledCellCount "${t.cells}"^^xsd:nonNegativeInteger; fw:noDataCellCount "${t.noData}"^^xsd:nonNegativeInteger; fw:outsideRasterCellCount "${t.outside}"^^xsd:nonNegativeInteger; fw:areasWithoutValueCount "${t.empty}"^^xsd:nonNegativeInteger.
 `;return{nodeId:a.id,kind:"computation",facts:s,input:s,rules:"",conclusions:[],method:E(t,a.params.attribute?.trim()||"total",a.params.valueUnit,a.params.cellStatistics)}}export{P as a,z as b,L as c,O as d,E as e,j as f};
-//# sourceMappingURL=chunk-TKX4ZRZA.js.map
+//# sourceMappingURL=chunk-4KB7TLAR.js.map

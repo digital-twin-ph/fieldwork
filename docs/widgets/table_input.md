@@ -74,6 +74,10 @@ each unit was placed and what the placing does not establish. Rwanda's and Botsw
 with the name geoBoundaries gives it in `geoboundaries_name`: Rwanda's are the census's own, and 8 of Botswana's are
 spelled differently.
 
+Brazil's municipalities, Kenya's sub-counties, Malawi's districts and cities, Nigeria's local government areas and
+Sierra Leone's districts and chiefdoms are offered as printed, in the census's own units, each with the level it is
+at in `level`. Their names are the census's spelling: a map's may differ, and Relate says which do not match.
+
 
 ## Tide gauges
 

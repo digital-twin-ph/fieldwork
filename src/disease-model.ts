@@ -23,13 +23,15 @@ export interface Evidence {
 export interface ModelStructure {
   schema:'fieldwork/model-structure/1'; id:string; version:string; title:string; step:'day';
   states:{id:string;label:string}[];
-  infection:{from:string;to:string;infectious:string[]};
+  /** `weights`: how infectious a state is, as a `relative` parameter, where not every infectious day is alike (experiment
+   *  199, 2026-11-21); an infectious state without one counts as 1. */
+  infection:{from:string;to:string;infectious:string[];weights?:Record<string,string>};
   /** Steps from the same state are branches, each with a share: a probability parameter, or 'rest' for one of them. */
   course:{from:string;to:string;duration:string;share?:string}[];
   /** `states`: the infectious states that transmit on this network, where not all of them do (a child with the rash is
    *  kept home from school). Absent, every infectious state does. */
   networks:({id:string;label:string;probability:string;states?:string[]}&({groups:string;none?:number}|{everyone:true}))[];
-  parameters:{id:string;label:string;kind:'duration'|'probability';unit:string}[];
+  parameters:{id:string;label:string;kind:'duration'|'probability'|'relative';unit:string}[];
 }
 export interface ParameterValue {value?:number; min?:number; max?:number; evidence?:Evidence|null}
 export interface ParameterSet {
@@ -73,6 +75,10 @@ export function validateStructure(s:ModelStructure):ModelStructure{
     for(const c of s.course.filter(x=>x.from===state))walk(c.to,new Set([...path,state]));
   };
   walk(to,new Set());
+  for(const [state,weight] of Object.entries(s.infection.weights??{})){
+    if(!infectious.includes(state))fail(`${s.id}: ${state} is weighted for infectiousness, and is not an infectious state.`);
+    if(params.get(weight)?.kind!=='relative')fail(`${s.id}: ${weight} is not a declared relative infectiousness.`);
+  }
   if(!s.networks.length||s.networks.length>16)fail(`${s.id}: between 1 and 16 contact networks.`);
   for(const n of s.networks){
     if(params.get(n.probability)?.kind!=='probability')fail(`${s.id}: ${n.probability} is not a declared probability.`);
@@ -103,6 +109,8 @@ export function validateParameterSet(set:ParameterSet,structure:ModelStructure):
     if(v.evidence)validEvidence(v.evidence,`${set.id}, ${id}`);
     if(p.kind==='probability'&&v.value!==undefined&&!(Number.isFinite(v.value)&&v.value>=0&&v.value<=1))
       fail(`${set.id}, ${id}: a probability between 0 and 1.`);
+    if(p.kind==='relative'&&v.value!==undefined&&!(Number.isFinite(v.value)&&v.value>=0))
+      fail(`${set.id}, ${id}: a relative infectiousness is 0 or more.`);
     if(p.kind==='duration'&&(v.min!==undefined||v.max!==undefined)
       &&!(Number.isInteger(v.min)&&Number.isInteger(v.max)&&v.min!>=1&&v.max!>=v.min!))
       fail(`${set.id}, ${id}: a duration is whole days, at least 1, the longest no shorter than the shortest.`);
@@ -114,7 +122,7 @@ export function validateParameterSet(set:ParameterSet,structure:ModelStructure):
 export function missingValues(set:ParameterSet,structure:ModelStructure):string[]{
   return structure.parameters.filter(p=>{const v=set.values[p.id];
     if(!v?.evidence)return true;
-    return p.kind==='probability'?v.value===undefined:v.min===undefined||v.max===undefined;}).map(p=>p.id);
+    return p.kind==='duration'?v.min===undefined||v.max===undefined:v.value===undefined;}).map(p=>p.id);
 }
 
 /** How many values rest on each basis, and how many are missing: what the dialog opens on. */
@@ -133,6 +141,8 @@ export interface Program {
   steps:[number,number,number,number][];
   /** For each step, its share of those leaving its state; 1 where there is no alternative. */
   shares:number[];
+  /** For each state, how many infectious contacts an agent in it counts as; 1 unless the structure weights it. */
+  weights:number[];
 }
 
 export function compile(structure:ModelStructure,set:ParameterSet,population:Population):Program{
@@ -151,6 +161,7 @@ export function compile(structure:ModelStructure,set:ParameterSet,population:Pop
   });
   const program:Program={n:population.n,states:structure.states.length,susceptible:state(structure.infection.from),infected:state(structure.infection.to),
     infectious:structure.infection.infectious.reduce((mask,id)=>mask|(1<<state(id)),0)>>>0,nets,
+    weights:structure.states.map(s=>{const w=structure.infection.weights?.[s.id];return w?set.values[w]!.value!:1;}),
     steps:structure.course.map(c=>{const v=set.values[c.duration]!;return [state(c.from),state(c.to),v.min!,v.max!];}),
     shares:structure.course.map(c=>{
       if(c.share===undefined)return 1;
@@ -274,6 +285,7 @@ export function runDeclared(kernel:DeclaredKernel,program:Program,{seed,index,da
   view(Int32Array,4,steps.length*4).set(steps.flat());
   view(Float64Array,10,steps.length).set(program.shares);
   view(Uint32Array,12,nets.length).set(nets.map(x=>x.states));
+  view(Float64Array,19,states).set(program.weights);
   if(response){
     if(response.open.length!==days*nets.length)fail('The response was laid out for another number of days.');
     view(Uint8Array,13,days*nets.length).set(response.open);

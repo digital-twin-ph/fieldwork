@@ -18,8 +18,10 @@ shown in a local build is not a claim that it has been published.
   (census-tables e688e90).
 - **A column of the parts' IDs is joined on the IDs**: Nigeria's five LGA names held by two LGAs each now take their own
   counts.
-- **Hagelloch's measles model:** the periods measured from the record, and the three probabilities fitted to its
-  curve (experiment 199). The timing agrees; the record's sharp peak is class 1's burst, which the model cannot make.
+- **Hagelloch's measles model** (experiment 199): the periods measured from the record; the probabilities fitted to its
+  curve, one per class tried; and how infectious each part of the illness is, which the kernel now takes as a weight
+  per state (1 unless declared, so every model without weights runs as before). The best fit puts nearly all
+  transmission in the prodrome's last days. The record's sharp peak is still not made.
 - **Experiment 227:** Sentinel-2 read from ESA's Zarr stores, a point by two byte ranges, checked against Planetary
   Computer at five places. No worked example lies in what the stores hold yet.
 

@@ -22,7 +22,7 @@
 const PAGE: usize = 65_536;
 static mut BASE: usize = 0;
 static mut CAPACITY: usize = 0;
-static mut OFF: [usize; 19] = [0; 19];
+static mut OFF: [usize; 20] = [0; 20];
 static mut N: usize = 0;
 static mut DAYS: usize = 0;
 static mut NETS: usize = 0;
@@ -39,7 +39,7 @@ const STATE: usize = 5; // u8[n]
 const COURSE: usize = 6; // i32[n*steps*2]: an agent's course, (the state it moves to, the day it moves), -1 ends it
 const COUNTS: usize = 7; // u32[days*states]: agents in each state at the end of each day
 const INFECTED_ON: usize = 8; // i32[n]: the day each agent was infected, -1 never
-const SCRATCH: usize = 9; // u32[nets*n]: infectious agents by network and group
+const SCRATCH: usize = 9; // f64[nets*n]: infectious agents by network and group, each counted at its state's weight
 const SHARE: usize = 10; // f64[steps]: the caller's; a branch's share of those leaving its state, unread for a step with no alternative
 const CURSOR: usize = 11; // u32[n]: how far along its course each agent is
 // A RESPONSE (experiment 220, the 7-1-7 spike, 2026-11-18). Each defaults, at `decl_prepare`, to what a run did before
@@ -51,6 +51,10 @@ const NOTICE_STATE: usize = 15; // f64[states]: the daily chance an agent in the
 const ACTION: usize = 16; // f64[MAX_ACTIONS*3]: network, factor on its daily probability, days after notification it starts
 const EVENTS: usize = 17; // i32[2+MAX_ACTIONS]: the day detected, the day notified, the day each action starts; -1 never
 const RESPONSE: usize = 18; // i32[2]: days from detection to notification (-1 no notification), how many actions
+// HOW INFECTIOUS EACH STATE IS (experiment 199, 2026-11-21: the practitioner chose infectiousness that varies across the
+// illness). An agent counts as this many infectious contacts; 1 by default, so a model that declares no weights draws
+// exactly as before, its sums of ones being whole numbers.
+const STATE_WEIGHT: usize = 19; // f64[states]
 const MAX_ACTIONS: usize = 16;
 
 fn ptr<T>(which: usize) -> *mut T {
@@ -101,9 +105,9 @@ pub extern "C" fn decl_prepare(n: u32, days: u32, nets: u32, steps: u32, states:
     if n == 0 || days == 0 || nets == 0 || nets > 16 || steps == 0 || steps > 16 || states < 2 || states > 32 {
         return 0;
     }
-    let sizes = [4 * nets * n, 8 * nets, 4 * nets, 4 * nets, 16 * steps, n, 8 * n * steps, 4 * days * states, 4 * n, 4 * nets * n, 8 * steps, 4 * n,
-        4 * nets, days * nets, 8 * nets, 8 * states, 8 * MAX_ACTIONS * 3, 4 * (2 + MAX_ACTIONS), 8];
-    let mut offsets = [0usize; 19];
+    let sizes = [4 * nets * n, 8 * nets, 4 * nets, 4 * nets, 16 * steps, n, 8 * n * steps, 4 * days * states, 4 * n, 8 * nets * n, 8 * steps, 4 * n,
+        4 * nets, days * nets, 8 * nets, 8 * states, 8 * MAX_ACTIONS * 3, 4 * (2 + MAX_ACTIONS), 8, 8 * states];
+    let mut offsets = [0usize; 20];
     let mut total = 0usize;
     for (i, size) in sizes.iter().enumerate() {
         total = (total + 7) & !7;
@@ -130,6 +134,7 @@ pub extern "C" fn decl_prepare(n: u32, days: u32, nets: u32, steps: u32, states:
     }
     for s in 0..states {
         put::<f64>(NOTICE_STATE, s, 0.0);
+        put::<f64>(STATE_WEIGHT, s, 1.0);
     }
     put::<i32>(RESPONSE, 0, -1);
     put::<i32>(RESPONSE, 1, 0);
@@ -379,25 +384,26 @@ pub extern "C" fn decl_run(seed: u64, index: u32, susceptible: u32, infected: u3
             }
         }
         for i in 0..nets * n {
-            put::<u32>(SCRATCH, i, 0);
+            put::<f64>(SCRATCH, i, 0.0);
         }
-        let mut everyone = [0u32; 16];
+        let mut everyone = [0f64; 16];
         let mut anyone = false;
         for i in 0..n {
             let s = at::<u8>(STATE, i);
             if transmits(s) {
                 anyone = true;
+                let weight = at::<f64>(STATE_WEIGHT, s as usize);
                 for j in 0..nets {
                     if !on(s, j) {
                         continue;
                     }
                     if at::<i32>(NET_KIND, j) == 1 {
-                        everyone[j] += 1;
+                        everyone[j] += weight;
                     } else {
                         let g: i32 = at(GROUPS, j * n + i);
                         if g != at::<i32>(NET_NONE, j) {
                             let slot = j * n + g as usize;
-                            put::<u32>(SCRATCH, slot, at::<u32>(SCRATCH, slot) + 1);
+                            put::<f64>(SCRATCH, slot, at::<f64>(SCRATCH, slot) + weight);
                         }
                     }
                 }
@@ -414,9 +420,9 @@ pub extern "C" fn decl_run(seed: u64, index: u32, susceptible: u32, infected: u3
                         everyone[j]
                     } else {
                         let g: i32 = at(GROUPS, j * n + i);
-                        if g == at::<i32>(NET_NONE, j) { 0 } else { at::<u32>(SCRATCH, j * n + g as usize) }
+                        if g == at::<i32>(NET_NONE, j) { 0.0 } else { at::<f64>(SCRATCH, j * n + g as usize) }
                     };
-                    escape *= libm::pow(q[j], count as f64);
+                    escape *= libm::pow(q[j], count);
                 }
                 if rng.unit() < 1.0 - escape {
                     infect(i, today, &mut rng);

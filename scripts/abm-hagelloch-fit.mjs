@@ -8,7 +8,10 @@
 // --by-class (the practitioner, 2026-11-21, "Agree with probability suggestion"): each school class its own probability,
 // on measles-prodrome-rash-household-classes-village, four probabilities fitted together. Class 1 came out in the rash in
 // one burst (25 of 30 in four days), which one probability for both classes could not make.
-// node scripts/abm-hagelloch-fit.mjs [--by-class] [--json out.json] [--periods latent_period=8-9,prodrome=4-4]
+// --split (the practitioner, 2026-11-21, "Yes let's go with infectiousness"): the prodrome in two parts, its early days
+// and its last 1 to 2 before the rash, on measles-prodrome-split-household-class-village; how infectious the early
+// prodrome and the rash are, each against the last days, fitted with the three probabilities.
+// node scripts/abm-hagelloch-fit.mjs [--by-class|--split] [--json out.json] [--periods latent_period=8-9,prodrome=4-4]
 import {readFileSync,writeFileSync} from 'node:fs';
 import {compile,runDeclared,compileResponse} from '../build/disease-model.js';
 const kernel=(await WebAssembly.instantiate(readFileSync(new URL('../kernel/fieldwork-kernel.wasm',import.meta.url)),{})).instance.exports;
@@ -23,14 +26,20 @@ const day=s=>Date.parse(s+'T00:00:00Z')/864e5;
 const recorded=new Array(SPAN).fill(0);
 for(const c of cases){const d=day(c.date_of_rash)-day(cases[index].date_of_rash);if(d>=0&&d<SPAN)recorded[d]++;}
 
-const BY_CLASS=process.argv.includes('--by-class');
+const BY_CLASS=process.argv.includes('--by-class'),SPLIT=process.argv.includes('--split');
 const NETS=BY_CLASS?['household','class_1','class_2','village']:['household','class','village'];
-const structure=json(`structures/${BY_CLASS?'measles-prodrome-rash-household-classes-village':'measles-prodrome-rash-household-class-village'}`);
+const WEIGHTS=SPLIT?['P1','Q']:[];
+const structure=json(`structures/${BY_CLASS?'measles-prodrome-rash-household-classes-village'
+  :SPLIT?'measles-prodrome-split-household-class-village':'measles-prodrome-rash-household-class-village'}`);
 // The periods of the record's set; by class, its one class probability stands for each class's until the grid sets them.
 const set=json('parameter-sets/measles-hagelloch-from-the-record');
+if(SPLIT){set.structure={id:structure.id,version:structure.version};const pro=set.values.prodrome;delete set.values.prodrome;
+  // The record's 2 to 6 days, as 1 to 4 early and 1 to 2 late: the same mean, 4.
+  set.values.prodrome_early={...pro,min:1,max:4};set.values.prodrome_late={...pro,min:1,max:2};
+  set.values.w_early=set.values.w_rash={value:1,evidence:{basis:'assumed',note:'Set by the grid.'}};}
 if(BY_CLASS){set.structure={id:structure.id,version:structure.version};set.values.p_class_1=set.values.p_class_2=set.values.p_class;delete set.values.p_class;}
 const program=compile(structure,set,population);
-const response=compileResponse(structure,json(`response-scenarios/${BY_CLASS?'hagelloch-as-in-1861-by-class':'hagelloch-as-in-1861'}`),DAYS);
+const response=compileResponse(structure,json(`response-scenarios/${BY_CLASS?'hagelloch-as-in-1861-by-class':SPLIT?'hagelloch-as-in-1861-split-prodrome':'hagelloch-as-in-1861'}`),DAYS);
 // --periods latent_period=8-9,prodrome=4-4: a sensitivity, the declared periods replaced for this run only.
 const periods=process.argv.indexOf('--periods');
 if(periods>0)for(const part of process.argv[periods+1].split(',')){const [id,span]=part.split('='),[lo,hi]=span.split('-').map(Number);
@@ -39,6 +48,7 @@ const width=structure.states.length,at=['Q','R'].map(id=>structure.states.findIn
 const net=id=>program.nets[structure.networks.findIndex(x=>x.id===id)];
 
 const curves=(p,runs)=>{NETS.forEach((id,i)=>{net(id).probability=p[i];});
+  WEIGHTS.forEach((id,i)=>{program.weights[structure.states.findIndex(s=>s.id===id)]=p[NETS.length+i];});
   return Array.from({length:runs},(_,i)=>{
     const run=runDeclared(kernel,program,{seed:i+1,index,days:DAYS,response});
     const reached=d=>at.reduce((t,k)=>t+run.counts[d*width+k],0);
@@ -60,9 +70,10 @@ if(atArg>0){const p=process.argv[atArg+1].split(',').map(Number),runs=500;
   process.exit(0);}
 const t0=performance.now();
 const around=(x,lo,hi,k)=>geo(Math.max(lo,x/2),Math.min(hi,x*2),k);
-const coarse=BY_CLASS?grid([geo(0.05,0.9,5),geo(0.002,0.5,8),geo(0.002,0.5,8),geo(0.0005,0.01,6)],100)
+const W=[0,0.1,0.3,1],wAround=x=>x===0?[0,0.03,0.07]:geo(x/2,Math.min(1.5,x*2),3);
+const coarse=SPLIT?grid([geo(0.03,0.9,5),geo(0.002,0.3,6),geo(0.0005,0.01,5),W,W],100):BY_CLASS?grid([geo(0.05,0.9,5),geo(0.002,0.5,8),geo(0.002,0.5,8),geo(0.0005,0.01,6)],100)
   :grid([geo(0.01,0.5,8),geo(0.002,0.3,10),geo(0.0001,0.01,8)],100);
-const fine=grid(coarse[0].p.map((x,i)=>NETS[i]==='village'?around(x,0.00002,0.05,BY_CLASS?5:7):around(x,0.0005,0.9,BY_CLASS?5:7)),300);
+const fine=grid(coarse[0].p.map((x,i)=>i>=NETS.length?wAround(x):NETS[i]==='village'?around(x,0.00002,0.05,BY_CLASS?5:7):around(x,0.0005,0.9,BY_CLASS?5:7)),300);
 const best=score(fine[0].p,1000);
 const q=(xs,f)=>{const s=[...xs].sort((a,b)=>a-b);return s[Math.min(s.length-1,Math.floor(f*(s.length-1)+0.5))];};
 const summary=curve=>{const total=curve.reduce((a,b)=>a+b,0);let peak=0,cum=0,half=-1,last=0;
@@ -75,18 +86,18 @@ let inside=0;for(let d=0;d<span;d++)if(recorded[d]>=band[d][0]&&recorded[d]<=ban
 const peak3=[29,30,31],within=Math.round(fine[0].deviance)+4;
 const near=fine.filter(x=>x.deviance<=within);
 const range=i=>[Math.min(...near.map(x=>x.p[i])),Math.max(...near.map(x=>x.p[i]))];
-const ASSUMED=BY_CLASS?[0.08,0.02,0.02,0.002]:[0.08,0.02,0.002],before=score(ASSUMED,1000);
+const ASSUMED=BY_CLASS?[0.08,0.02,0.02,0.002]:SPLIT?[0.47,0.0035,0.0052,1,1]:[0.08,0.02,0.002],before=score(ASSUMED,1000);
 const out={recorded,coarseTop:coarse.slice(0,10),fineTop:fine.slice(0,10),best:{p:best.p,deviance:best.deviance,
   inside:`${inside} of ${span} days`,peak3p95:peak3.reduce((t,d)=>t+band[d][2],0),peak3recorded:peak3.reduce((t,d)=>t+recorded[d],0),
   ...Object.fromEntries(['total','peakDay','peakCount','halfDay','lastDay'].map(k=>[k,stat(k)]))},
-  assumedDeviance:before.deviance,nearBest:{within,count:near.length,of:fine.length,...Object.fromEntries(NETS.map((id,i)=>[id,range(i)]))},
+  assumedDeviance:before.deviance,nearBest:{within,count:near.length,of:fine.length,...Object.fromEntries([...NETS,...WEIGHTS.map(w=>`weight ${w}`)].map((id,i)=>[id,range(i)]))},
   seconds:Math.round((performance.now()-t0)/1000)};
 const arg=process.argv.indexOf('--json');if(arg>0)writeFileSync(process.argv[arg+1],JSON.stringify(out));
 const f=s=>`${s.median} (${s.p5}-${s.p95})`,r3=x=>x.map(y=>+y.toPrecision(3));
 console.log(`recorded: ${rec.total}, peak day ${rec.peakDay} with ${rec.peakCount}, half by ${rec.halfDay}, last ${rec.lastDay}`);
-console.log(`${NETS.join(', ')}; the assumed probabilities (${ASSUMED.join(', ')}): deviance ${before.deviance.toFixed(1)}`);
+console.log(`${[...NETS,...WEIGHTS.map(w=>`weight ${w}`)].join(', ')}; the assumed probabilities (${ASSUMED.join(', ')}): deviance ${before.deviance.toFixed(1)}`);
 console.log('coarse, best five:',coarse.slice(0,5).map(x=>`${r3(x.p)} ${x.deviance.toFixed(1)}`).join('; '));
 console.log('fine, best five:',fine.slice(0,5).map(x=>`${r3(x.p)} ${x.deviance.toFixed(1)}`).join('; '));
 const b=out.best;
 console.log(`best ${r3(b.p)}, deviance ${b.deviance.toFixed(1)} over 1000 runs: ${f(b.total)}, peak day ${f(b.peakDay)} with ${f(b.peakCount)}, half by ${f(b.halfDay)}, last ${f(b.lastDay)}; inside the band ${b.inside}; peak three days p95 ${b.peak3p95} against ${b.peak3recorded}`);
-console.log(`within 4 of the best on the fine grid: ${near.length} of ${fine.length} points; ${NETS.map((id,i)=>`${id} ${r3(range(i))}`).join(', ')}; ${out.seconds} s`);
+console.log(`within 4 of the best on the fine grid: ${near.length} of ${fine.length} points; ${[...NETS,...WEIGHTS.map(w=>`weight ${w}`)].map((id,i)=>`${id} ${r3(range(i))}`).join(', ')}; ${out.seconds} s`);

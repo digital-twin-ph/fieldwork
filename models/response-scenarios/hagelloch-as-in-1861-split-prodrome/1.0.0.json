@@ -1,0 +1,48 @@
+{
+  "schema": "fieldwork/response-scenario/1",
+  "id": "hagelloch-as-in-1861-split-prodrome",
+  "version": "1.0.0",
+  "title": "Hagelloch as in 1861, the prodrome in two parts: care sought at the hospital, nothing done to stop the spread",
+  "structure": {
+    "id": "measles-prodrome-split-household-class-village",
+    "version": "1.0.0"
+  },
+  "calendar": {
+    "start": "1861-10-30",
+    "closed": {
+      "class": [
+        "Sunday"
+      ]
+    },
+    "note": "30 October 1861, the first child's first symptoms, was a Wednesday. The school is taken to meet Monday to Saturday: assumed, since the 1861 school calendar is not in any open source found."
+  },
+  "detection": [
+    {
+      "id": "care",
+      "label": "A family seeks care for a child with the rash",
+      "state": "Q",
+      "chance": "p_care_sought"
+    }
+  ],
+  "actions": [],
+  "values": {
+    "p_care_sought": {
+      "value": 0.02,
+      "evidence": {
+        "basis": "assumed",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "source": {
+          "citation": "Pfeilsticker A. Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse. Tübingen: Eberhard-Karls-Universität; 1863.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "page image, printed page 7, 2026-11-18"
+        },
+        "quote": "wird meist die ärztliche Hilfe im Tübinger Krankenhaus gesucht (medical help is mostly sought at the Tübingen hospital)",
+        "note": "The pathway is cited: news of the outbreak reached the hospital through care sought there. The daily chance is assumed. 0.02 a day for each child with the rash."
+      }
+    }
+  }
+}

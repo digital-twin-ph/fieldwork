@@ -180,3 +180,24 @@ test('the structure with a probability for each class validates, and a class net
   assert.equal(program.nets.length,4);
   assert.ok(compileResponse(byClass,json('response-scenarios/hagelloch-as-in-1861-by-class/1.0.0.json'),30));
 });
+
+/** HOW INFECTIOUS EACH STATE IS (experiment 199, 2026-11-21): a weight per infectious state, 1 by default, so a model
+ *  without weights draws as it did; a weight of 0 stops a state transmitting; the prodrome declared in two parts. */
+test('a structure weighting its infectious states validates, and a weight of 0 stops that state transmitting',()=>{
+  const split=json('structures/measles-prodrome-split-household-class-village/1.0.0.json');
+  validateStructure(split);
+  const set=json('parameter-sets/measles-hagelloch-from-the-record/1.0.0.json'),pro=set.values.prodrome;delete set.values.prodrome;
+  Object.assign(set.values,{prodrome_early:{...pro,min:1,max:4},prodrome_late:{...pro,min:1,max:2},
+    w_early:{value:1,evidence:{basis:'assumed'}},w_rash:{value:1,evidence:{basis:'assumed'}}});
+  set.structure={id:split.id,version:split.version};
+  const people={n:40,groups:{household:Array.from({length:40},(_,i)=>i>>2),class:Array.from({length:40},(_,i)=>i%3)}};
+  const ones=compile(split,set,people);
+  assert.deepEqual(ones.weights,[1,1,1,1,1,1]);
+  const reached=program=>Array.from({length:20},(_,i)=>runDeclared(kernel,program,{seed:i+1,index:0,days:120}).ever).reduce((a,b)=>a+b,0);
+  // NOTHING TRANSMITS when every infectious state weighs 0: only the index is ever infected.
+  const none=compile(split,set,people);none.weights=none.weights.map(()=>0);
+  assert.equal(reached(none),20);
+  assert.ok(reached(ones)>20);
+  assert.throws(()=>validateStructure({...split,infection:{...split.infection,weights:{E:'w_early'}}}),/not an infectious state/);
+  assert.throws(()=>compile(split,{...set,values:{...set.values,w_rash:{value:-1,evidence:{basis:'assumed'}}}},people),/0 or more/);
+});

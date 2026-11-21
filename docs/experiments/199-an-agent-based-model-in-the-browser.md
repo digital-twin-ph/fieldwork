@@ -12,7 +12,8 @@ recorded curve on 2026-11-21** (option 4, chosen 2026-11-19): the size and the t
 peak is twice as sharp as the model's; not fitted. **The periods measured from the record the same day** (the practitioner's choice): the timing
 then agrees, the peak is still half the record's. **The three probabilities fitted, also 2026-11-21:** a better fit, the peak still not reached; the
 record's peak is class 1's burst, which one probability for both classes cannot make. **A probability for each class,
-also 2026-11-21:** it does not make the peak either, even at 0.6 a day in class 1.
+also 2026-11-21:** it does not make the peak either, even at 0.6 a day in class 1. **Infectiousness across the illness, also
+2026-11-21:** the best fit yet, nearly all transmission in the prodrome's last days; the peak still not made.
 
 ## The question
 
@@ -306,6 +307,45 @@ burst is made, but the next generation spreads out again over the periods. The f
 model makes every infectious day alike; if most transmission falls on the prodrome's first days, a burst would stay
 a burst); a single shared exposure; and whether the record's dates are heaped. Nor is this a finding about measles: it is
 about this model against one record.
+
+## How infectious each day is, 2026-11-21
+
+The practitioner, 2026-11-21: *"Yes let's go with infectiousness"*. Until now every infectious day counted alike. The
+kernel now takes a weight for each state (`STATE_WEIGHT`): an agent counts as that many infectious contacts, 1 by
+default, so a model that declares none draws exactly as before (the kernel's 55 tests, and the declared model against
+the hand-written one, unchanged). A structure declares a weight as a `relative` parameter on an infectious state.
+
+Declared as `measles-prodrome-split-household-class-village`: the prodrome in two parts, its early days (`P1`, 1 to 4)
+and its last before the rash (`P2`, 1 to 2), the record's 2 to 6 days with the same mean of 4; the late prodrome counts
+as 1, and the early prodrome (`w_early`) and the rash (`w_rash`) are fitted with the three probabilities
+(`--split`; 5 × 6 × 5 × 4 × 4 points at 100 runs, then 7³ × 3 × 3 at 300; 651 s). Declared as
+`measles-hagelloch-fitted-split`.
+
+| | Every infectious day alike | Weighted by part of the illness |
+| --- | --- | --- |
+| Early prodrome, against its last days | 1 | **0.15** |
+| With the rash, against the prodrome's last days | 1 | **0** (0 to 0.07) |
+| Household | 0.47 | 0.33 (0.08 to 0.33) |
+| Class | 0.0035 | 0.04 (0.02 to 0.05) |
+| Village | 0.0052 | 0.016 (0.013 to 0.02) |
+| Deviance | 154 | **143** |
+| Children on the peak day (recorded **26**) | 17 (14 to 21) | 16 (14 to 21) |
+| Three peak days, 95th percentiles (recorded 68) | 52 | 52 |
+
+The village's best lies at the top of the fine grid, and was checked past it by hand: 0.025 gives a deviance of 217,
+0.035 one of 413.
+
+**Pushed by hand** (`--at`): with every child infectious only in the prodrome's last one or two days, the peak day is 12
+(95th 16); raising the village's probability does sharpen it, to 22 (95th 28) at 0.05, but the outbreak then runs far
+too fast (deviance 676).
+
+**Found:** the best fit of any so far puts nearly all transmission in the last days before the rash, and none after it.
+That is what Pfeilsticker reports: the prodrome transmits, the rash-to-rash interval in a household 10 or 11 days and not
+14 (see `measles-hagelloch-prodrome-rash`). The peak is still not made.
+
+**What this does not establish:** the split of the prodrome, which is assumed (nothing in the record marks it); that the
+weights are measles's rather than this record's; why the peak is sharp. Of the three left on 2026-11-21, a single shared
+exposure and the record's dates heaped remain.
 
 ## Left for later, step by step, if the spike says yes
 

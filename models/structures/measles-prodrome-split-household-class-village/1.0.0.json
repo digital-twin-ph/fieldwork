@@ -1,0 +1,149 @@
+{
+  "schema": "fieldwork/model-structure/1",
+  "id": "measles-prodrome-split-household-class-village",
+  "version": "1.0.0",
+  "title": "Measles over households, school classes and the village, the prodrome in two parts, each infectious state weighted",
+  "step": "day",
+  "states": [
+    {
+      "id": "S",
+      "label": "Susceptible"
+    },
+    {
+      "id": "E",
+      "label": "Infected, not yet infectious"
+    },
+    {
+      "id": "P1",
+      "label": "Infectious, early in the prodrome"
+    },
+    {
+      "id": "P2",
+      "label": "Infectious, the last days before the rash"
+    },
+    {
+      "id": "Q",
+      "label": "Infectious, with the rash"
+    },
+    {
+      "id": "R",
+      "label": "Recovered"
+    }
+  ],
+  "infection": {
+    "from": "S",
+    "to": "E",
+    "infectious": [
+      "P1",
+      "P2",
+      "Q"
+    ],
+    "weights": {
+      "P1": "w_early",
+      "Q": "w_rash"
+    }
+  },
+  "course": [
+    {
+      "from": "E",
+      "to": "P1",
+      "duration": "latent_period"
+    },
+    {
+      "from": "P1",
+      "to": "P2",
+      "duration": "prodrome_early"
+    },
+    {
+      "from": "P2",
+      "to": "Q",
+      "duration": "prodrome_late"
+    },
+    {
+      "from": "Q",
+      "to": "R",
+      "duration": "rash_infectious"
+    }
+  ],
+  "networks": [
+    {
+      "id": "household",
+      "label": "Household",
+      "groups": "household",
+      "probability": "p_household"
+    },
+    {
+      "id": "class",
+      "label": "School class",
+      "groups": "class",
+      "none": 0,
+      "probability": "p_class",
+      "states": [
+        "P1",
+        "P2"
+      ]
+    },
+    {
+      "id": "village",
+      "label": "Village",
+      "everyone": true,
+      "probability": "p_village"
+    }
+  ],
+  "parameters": [
+    {
+      "id": "latent_period",
+      "label": "Infected, not yet infectious",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "prodrome_early",
+      "label": "Infectious early in the prodrome",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "prodrome_late",
+      "label": "Infectious in the prodrome's last days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "rash_infectious",
+      "label": "Infectious from the day of the rash",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "p_household",
+      "label": "Infection from one infectious housemate",
+      "kind": "probability",
+      "unit": "per day"
+    },
+    {
+      "id": "p_class",
+      "label": "Infection from one infectious classmate",
+      "kind": "probability",
+      "unit": "per day"
+    },
+    {
+      "id": "p_village",
+      "label": "Infection from one infectious child elsewhere in the village",
+      "kind": "probability",
+      "unit": "per day"
+    },
+    {
+      "id": "w_early",
+      "label": "How infectious early in the prodrome, against its last days",
+      "kind": "relative",
+      "unit": "times"
+    },
+    {
+      "id": "w_rash",
+      "label": "How infectious with the rash, against the prodrome's last days",
+      "kind": "relative",
+      "unit": "times"
+    }
+  ]
+}

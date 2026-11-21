@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.158.0 — In development
+## 0.158.0 — 2026-11-21
 
 - **Buffer study area's remaining code is removed.** It was retired in 0.37.0; a saved workflow holding one is still
   refused by name. Its manual page, its run, its default and its tests go; the validation lab's check of it stays as the

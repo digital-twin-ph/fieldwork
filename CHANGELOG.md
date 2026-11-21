@@ -3,6 +3,10 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.156.0 — In development
+
+- **Join a table to the study area on the standard; Comparison map retired into Map.** In progress.
+
 ## 0.155.0 — 2026-11-20
 
 - **Tide gauges in Tabular data.** A fourth tab: the 26 coastal countries in coastal-sea-level over a map of their 131

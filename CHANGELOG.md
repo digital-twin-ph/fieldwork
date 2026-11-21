@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.159.0 — In development
+## 0.159.0 — 2026-11-21
 
 - **Detect unusual counts**, a new step: each period of a table of counts held to a threshold set from the series'
   own past, by EARS C1, C2 or C3, CUSUM or EWMA, one series or one per syndrome or district; the counts and threshold

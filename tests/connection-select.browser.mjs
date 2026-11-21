@@ -42,9 +42,15 @@ test('a drag that starts on a connection pans the canvas and removes nothing',as
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__edge').first().waitFor();
   const before=await saved(page);
-  const id=await page.locator('.react-flow__edge').first().getAttribute('data-id')
-    ??(await page.locator('.react-flow__edge').first().getAttribute('data-testid')).replace('rf__edge-','');
-  const at=await centreOf(page,id);
+  // A CONNECTION WHOSE MIDPOINT IS UNDER THE POINTER, in this window: the first one's can lie under a step or off the
+  // canvas, and on CI's window it did, so the drag never started on a connection (2026-11-20).
+  const ids=await page.locator('.react-flow__edge').evaluateAll(es=>es.map(e=>e.getAttribute('data-id')??e.getAttribute('data-testid')?.replace('rf__edge-','')));
+  let id,at;
+  for(const candidate of ids){const c=await centreOf(page,candidate);
+    const hit=await page.evaluate(({x,y,candidate})=>{const el=document.elementFromPoint(x,y)?.closest('.react-flow__edge');
+      return !!el&&(el.getAttribute('data-id')??el.getAttribute('data-testid')?.replace('rf__edge-',''))===candidate;},{...c,candidate});
+    if(hit){id=candidate;at=c;break;}}
+  expect(id,'a connection whose midpoint is visible and uncovered').toBeTruthy();
   const view=()=>page.evaluate(()=>document.querySelector('.react-flow__viewport').style.transform);
   const start=await view();
   await page.mouse.move(at.x,at.y);await page.mouse.down();await page.mouse.move(at.x+90,at.y+50,{steps:8});await page.mouse.up();

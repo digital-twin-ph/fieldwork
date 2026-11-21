@@ -315,7 +315,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       +(table.rowCount>shown.length?`<p class="muted">${shown.length} of ${table.rowCount.toLocaleString('en')} rows shown.</p>`:'')
       +'<details class="after-crosstab"><summary>The same table as a crosstab</summary><div data-after-crosstab></div></details>';
     const host=afterPane.querySelector<HTMLElement>('[data-after-crosstab]')!;
-    host.innerHTML=dataTableMarkup(table,esc);wireTablePages(host,table,esc);
+    host.innerHTML=dataTableMarkup(table,esc,{pageSize:PREVIEW_ROWS});wireTablePages(host,table,esc,{pageSize:PREVIEW_ROWS});
     scrollLongTables(afterPane);
   };
   const error=q<HTMLElement>('#table-error'),save=q<HTMLButtonElement>('#table-save'),cancel=q<HTMLButtonElement>('#table-cancel');

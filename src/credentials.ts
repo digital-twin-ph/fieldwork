@@ -16,7 +16,10 @@ export function validateCredentials(raw:unknown):Credential[]{
   requireValue(typeof v.label==='string'&&v.label.trim().length>0&&v.label.length<=120,'Enter a label up to 120 characters.');
   requireValue(typeof v.secret==='string'&&v.secret.length>0&&v.secret.length<=4096,'Enter a secret up to 4096 characters.');
   requireValue(typeof v.origin==='string','Enter an HTTPS origin.');let url:URL;try{url=new URL(v.origin);}catch{throw new Error('Enter an HTTPS origin, such as https://healthsites.io.');}
-  requireValue(url.protocol==='https:'&&url.origin===v.origin,'Use an exact HTTPS origin without path, query or credentials.');
+  // HTTPS, or plain HTTP on this computer's own loopback (2026-11-20, a DHIS2 test server in Docker on localhost:8080):
+  // a request to localhost never leaves the machine, and browsers count it a secure context. Anywhere else, HTTPS only.
+  const loopback=url.protocol==='http:'&&['localhost','127.0.0.1','[::1]'].includes(url.hostname);
+  requireValue((url.protocol==='https:'||loopback)&&url.origin===v.origin,'Use an exact HTTPS origin without path, query or credentials (plain HTTP only for localhost).');
   requireValue(v.repository===undefined||(typeof v.repository==='string'&&/^[A-Za-z0-9-]{1,39}\/[A-Za-z0-9._-]{1,100}$/.test(v.repository)),'Name the repository as owner/name.');
   return {ref:v.ref,provider:v.provider,label:v.label,origin:v.origin,secret:v.secret,...(typeof v.repository==='string'?{repository:v.repository}:{})};
  });

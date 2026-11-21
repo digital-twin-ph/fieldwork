@@ -24,3 +24,10 @@ test('a GitHub credential may name the one repository it is for; a malformed one
   assert.equal(validateCredentials([base])[0].repository,undefined);
   assert.throws(()=>validateCredentials([{...base,repository:'no-slash'}]),/owner\/name/);
 });
+
+// PLAIN HTTP ON THIS COMPUTER'S LOOPBACK ONLY (2026-11-20): a DHIS2 test server in Docker answers on localhost:8080.
+test('a loopback HTTP origin is accepted; any other HTTP origin is still refused',()=>{
+  const one=origin=>[{ref:'d',provider:'dhis2',label:'d',origin,secret:'s'}];
+  for(const origin of ['http://localhost:8080','http://127.0.0.1:8080','http://[::1]:8080'])assert.doesNotThrow(()=>validateCredentials(one(origin)),origin);
+  for(const origin of ['http://dhis2.example.org','http://localhost.example.org','http://192.168.1.5:8080'])assert.throws(()=>validateCredentials(one(origin)),origin);
+});

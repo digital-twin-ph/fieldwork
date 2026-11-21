@@ -12,11 +12,14 @@ import {contentHash} from './project-files.js';
 import {dictionarySheets} from './columns-dialog.js';
 import censusCatalogue from '../examples/census-tables/catalogue.json';
 import {GAUGES,GAUGES_RAW,gaugeChoices} from './tide-gauges-ui.js';
+import {dhis2Markup,wireDhis2} from './dhis2-tab.js';
 import {guessMapping,readDictionary,proposeFrom,checkDictionary,sameNames,fileRows,type TableDictionary,type DictionaryCheck,type ColumnDeclarations} from './column-metadata.js';
 
 const FILE_BYTES=MAX_TABLE_FILE_BYTES;
 export interface WideChoice {keys:string[]; valueFields:string[]; measureKey:string}
 export interface TableImport {data:DataTable; source:DataTableSource; keys:string[]; valueField:string;
+  /** Where a table read from a service came from, as the step keeps it: DHIS2's server, request and time. */
+  provenance?:import('./input-provenance.js').InputProvenance;
   /** In a long read whose value is named otherwise, the file's column it is read from. */
   valueColumn?:string;
   /** Present when the file was fetched from a URL: the spec the project keeps in place of the rows. */
@@ -34,7 +37,9 @@ export interface TableImport {data:DataTable; source:DataTableSource; keys:strin
   distinctValuesFor?:string[]}
 /** THE STANDARD FRAME (experiment 186): the step's name in the heading, and the one setting that lives on the node rather
  *  than in the file -- whether the source is converted on each run -- which can be applied without reading a file again. */
-export interface TableFrame {step?:string; convertOnRun?:boolean; hasSource?:boolean; onConvertOnRun?:(on:boolean)=>boolean}
+export interface TableFrame {step?:string; convertOnRun?:boolean; hasSource?:boolean; onConvertOnRun?:(on:boolean)=>boolean;
+  /** The DHIS2 tokens in Credentials, by name, and one resolved for a server, for the DHIS2 tab. */
+  dhis2?:{tokens:()=>{ref:string;label:string}[];resolve:(ref:string,origin:string)=>string}}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
 export interface TableReopen extends TableSelection {wide?:WideChoice; distinctValuesFor?:string[]; valueColumn?:string;
   /** Where the table is published, shown in the URL box and the box opened, so a reopened step says where it reads from. */
@@ -159,6 +164,12 @@ interface CensusCountry {iso3:string;country:string;census:string;referenceDate:
 const CENSUS=censusCatalogue as {repository:string;commit:string;raw:string;countries:CensusCountry[]};
 const CENSUS_RAW='https://raw.githubusercontent.com/digital-twin-ph/census-tables/';
 const TAB_KEY='fieldwork:table-source-tab';
+/** DHIS2 ANALYTICS' COLUMNS, as the DHIS2 tab writes them (dhis2-source.ts). */
+const DHIS2_DICTIONARY=['variable,label,unit,description',
+  'data,Data,,"The data element or indicator, as the server names it"','data_id,Data ID,,"Its ID on the server"',
+  'period,Period,,"The period, as the server names it"','period_id,Period ID,,"The period in DHIS2\'s own notation: 2024, 202403, 2024W12"',
+  'org_unit,Organisation unit,,"The organisation unit, as the server names it"','org_unit_id,Organisation unit ID,,"Its ID on the server"',
+  'value,Value,,"The aggregate value DHIS2\'s analytics give for that data, period and unit"'].join('\n')+'\n';
 const AFTER_ROWS=12;
 /** One line per country: what census, how many rows, whose, under what terms, and when it is next reviewed. A table past
  *  its review date is still offered, and says so: an old count stays a count. */
@@ -188,7 +199,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<button type="button" role="tab" id="table-tab-file" data-table-tab="file" aria-controls="table-file-part">Your file</button>'
     +'<button type="button" role="tab" id="table-tab-remote" data-table-tab="remote" aria-controls="table-remote">From an address</button>'
     +'<button type="button" role="tab" id="table-tab-census" data-table-tab="census" aria-controls="table-census-part">Census tables</button>'
-    +'<button type="button" role="tab" id="table-tab-gauges" data-table-tab="gauges" aria-controls="table-gauges-part">Tide gauges</button></div>'
+    +'<button type="button" role="tab" id="table-tab-gauges" data-table-tab="gauges" aria-controls="table-gauges-part">Tide gauges</button>'
+    +'<button type="button" role="tab" id="table-tab-dhis2" data-table-tab="dhis2" aria-controls="table-dhis2-part">DHIS2</button></div>'
     +'<section id="table-file-part" role="tabpanel" aria-labelledby="table-tab-file">'
     +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta">'
     // ONLY FOR A FILE OF YOUR OWN (2026-11-20): a census table brings its dictionary, and a table from an address can be
@@ -211,6 +223,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<section id="table-census-part" role="tabpanel" aria-labelledby="table-tab-census" hidden>'+censusChoices()+'<p id="table-census-says" class="muted" role="status"></p></section>'
     // THE TIDE GAUGES, pinned at a commit of digital-twin-ph/coastal-sea-level: each country's index of its gauges.
     +'<section id="table-gauges-part" role="tabpanel" aria-labelledby="table-tab-gauges" hidden>'+gaugeChoices(esc)+'<p id="table-gauges-says" class="muted" role="status"></p></section>'
+    // A DHIS2 SERVER'S ANALYTICS, with a token from Credentials.
+    +'<section id="table-dhis2-part" role="tabpanel" aria-labelledby="table-tab-dhis2" hidden>'+dhis2Markup(esc)+'</section>'
     +'<label class="field-label" for="table-shape">Shape of the file</label><select id="table-shape">'
     +'<option value="wide">Wide \u00b7 one row per subject, a column per variable</option>'
     +'<option value="long">Long \u00b7 one row per observation, one value column</option></select>'
@@ -534,6 +548,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         status.textContent=`${table.rowCount} rows, ${Object.keys(table.rows[0]?.key??{}).length} key columns, ${table.missingValueCount} values absent.`;
       }
       result=imported;
+      if(serviceProvenance)result.provenance=serviceProvenance;
       renderDistinct(imported.keys);
       {const keys=imported.keys.filter(k=>distinctChosen.has(k));if(keys.length)result.distinctValuesFor=keys;}
       save.disabled=false;
@@ -632,11 +647,14 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   shapeAccept.onclick=()=>{shapeSelect.value='long';applyShape();};
   /** The saved step's choices, while the table read is the one it was saved with; otherwise undefined. */
   let own:TableReopen|undefined;
+  /** Where a table read from a service came from (DHIS2), until another source is read. */
+  let serviceProvenance:import('./input-provenance.js').InputProvenance|undefined;
   let remote:RemoteTableSource|undefined,archive:Uint8Array<ArrayBuffer>|undefined,archiveSha256:string|undefined;
   const urlInput=q<HTMLInputElement>('#table-url'),entrySelect=q<HTMLSelectElement>('#table-entry');
   // THE ADDRESS IT IS PUBLISHED AT, shown when the step is reopened (2026-11-14: NYC's Zenodo table read as if it had none).
   if(existing?.remote?.url)urlInput.value=existing.remote.url;
   const readFetched=async(bytes:Uint8Array<ArrayBuffer>,path:string)=>{
+    serviceProvenance=undefined;
     remote={url:urlInput.value.trim(),...(archive?{entry:path,archiveSha256}:{}),
       sha256:await contentHash(bytes),bytes:bytes.length};
     await load(asFile(bytes,path),true);
@@ -727,7 +745,18 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     try{await readFetched(archiveEntry(archive,entrySelect.value),entrySelect.value);}
     catch(e){fail(e);}
   };
-  fileInput.onchange=()=>{remote=undefined;sheet=undefined;dropCensusDictionary();void load(fileInput.files?.[0],false);};
+  fileInput.onchange=()=>{remote=undefined;sheet=undefined;serviceProvenance=undefined;dropCensusDictionary();void load(fileInput.files?.[0],false);};
+  // THE DHIS2 TAB: its table goes through this dialog's own reading, as a file does, with where it came from kept.
+  wireDhis2(dialog,{esc,tokens:()=>frame.dhis2?.tokens()??[],
+    resolve:(ref,origin)=>{if(!frame.dhis2)throw new Error('Credentials are not available here.');return frame.dhis2.resolve(ref,origin);},
+    read:async(csv,filename,provenance)=>{remote=undefined;sheet=undefined;dropCensusDictionary();serviceProvenance=provenance;
+      // WHAT DHIS2'S COLUMNS MEAN, proposed as a census table's dictionary is, for the person to accept.
+      const bytes=new TextEncoder().encode(DHIS2_DICTIONARY);
+      dictionaryFile={name:'DHIS2 analytics columns',bytes,sheets:dictionarySheets('columns.csv',bytes)};dictionaryFromCensus=true;
+      await load(new File([csv],filename,{type:'text/csv'}),false);
+      // LONG, AS DHIS2 GIVES IT: one row per data, period and unit, its value in "value". A year read as a period is not a
+      // variable, which the wide default would have made it.
+      shapeSelect.value='long';applyShape();}},fail);
   // ANOTHER SHEET of the same workbook is read as a fresh file would be, keys and all.
   sheetSelect.onchange=()=>{sheet=sheets?.find(s=>s.name===sheetSelect.value);if(file)void load(file,!!remote);};
   const load=async(chosen:File|undefined,fetched:boolean)=>{

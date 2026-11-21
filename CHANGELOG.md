@@ -15,6 +15,11 @@ shown in a local build is not a claim that it has been published.
   repository, the worked examples' ten (DR Congo's provinces and territories among them), pinned and checked by digest,
   and keeps it on this device, so choosing it again needs no network; geoBoundaries is asked for any other level, and
   when a held one cannot be read. Study area 0.11.0.
+- **DHIS2 in Tabular data.** A fifth tab reads a DHIS2 server's analytics with a personal access token from Credentials:
+  find data elements and indicators by name, choose the unit level and periods, and the table arrives long with a
+  dictionary of its columns; the step keeps the server, the request and when it was read. The server must list this
+  page's address in its CORS allowlist. Tried against DHIS2 2.41.11 with Sierra Leone's demonstration database, run in
+  Docker on this computer. Credentials accept plain `http` for a server on this computer's loopback only.
 - **Tabular data's long reads.** A long read can name its value, so DR Congo's census read long is *population* beside
   three models, not *total*; it reopens with the value column and keys it was saved with. **After** shows the rows as
   stored, then the crosstab. The column a wide read makes for the variables' names says so.

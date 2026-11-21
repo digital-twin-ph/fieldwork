@@ -182,6 +182,31 @@ Then press **Add and activate**, and **Download encrypted credentials** to keep 
 
 Before the key expires, make a new one on the same page (Esri lets a key hold two at once) and replace it here.
 
+## Make a DHIS2 personal access token
+
+1. Sign in to the DHIS2 server, open your profile (your initials, top right), then **Edit profile**, then **Personal
+   access tokens**.
+2. **Generate new token**: type **Server/script context**, an expiry date, and, if the server allows it, this page's
+   address as the only allowed origin.
+3. Copy the token: DHIS2 shows it once.
+
+The server must also list Fieldwork's address in its CORS allowlist (**System Settings**, **Access**), which its
+administrator sets. Without it the page cannot read the server, and DHIS2's own exports can be read under Your file
+instead.
+
+## Fill in the form for a DHIS2 token
+
+| Field | What to type | Example |
+| --- | --- | --- |
+| **Reference** | A short name of your own, unique in this file. | `dhis2-country` |
+| **Provider identifier** | Exactly `dhis2`, lower case. | `dhis2` |
+| **Label** | Optional: what you will recognise in a list. | `National DHIS2` |
+| **Allowed HTTPS origin** | The server's address up to the first slash after its name: no path, no slash at the end. Plain `http` is accepted only for `localhost`, `127.0.0.1` or `[::1]`, a server on this computer. | `https://dhis2.example.org` |
+| **Repository it is for** | Leave empty. | |
+| **API key** | Paste the token you copied. | |
+
+Then press **Add and activate**, and **Download encrypted credentials** to keep it.
+
 ## When something does not work
 
 - **"No repositories found" when choosing the repository on GitHub's token page**: the **Resource owner** at the top of
@@ -194,5 +219,8 @@ Before the key expires, make a new one on the same page (Esri lets a key hold tw
   `https://basemaps.cartocdn.com`. A key limited to Fieldwork's address works only there.
 - **Esri maps do not appear**: the key may have expired, or the free tiles for the month are used up. Check
   **Provider identifier** is `esri` and **Allowed HTTPS origin** is exactly `https://static-map-tiles-api.arcgis.com`.
+- **DHIS2 says it could not be reached**: the server does not list this page's address in its CORS allowlist. Ask its
+  administrator, or export a table from DHIS2 and read it under Your file.
+- **DHIS2 refuses the token**: it may have expired or been revoked. Make a new one in your DHIS2 profile.
 - **A lost laptop**: on GitHub, **Fine-grained tokens**, delete that laptop's token. The file on the laptop is then
   useless even to someone who learns its passphrase.

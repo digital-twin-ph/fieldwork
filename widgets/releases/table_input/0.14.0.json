@@ -31,18 +31,20 @@
  },
  "implementation": {
   "files": [
-   "src/data-table.ts",
-   "src/data-table-ui.ts",
-   "src/core.ts",
-   "src/column-metadata.ts",
-   "src/columns-dialog.ts",
-   "src/column-profile.ts",
-   "src/cell-edits.ts",
-   "src/data-quality-ui.ts",
    "examples/census-tables/catalogue.json",
+   "examples/coastal-sea-level/catalogue.json",
+   "src/cell-edits.ts",
+   "src/column-metadata.ts",
+   "src/column-profile.ts",
+   "src/columns-dialog.ts",
+   "src/core.ts",
+   "src/data-quality-ui.ts",
+   "src/data-table-ui.ts",
+   "src/data-table.ts",
+   "src/dhis2-source.ts",
+   "src/dhis2-tab.ts",
    "src/inspector-kit.ts",
-   "src/tide-gauges-ui.ts",
-   "examples/coastal-sea-level/catalogue.json"
+   "src/tide-gauges-ui.ts"
   ],
   "definition": "src/core.ts#TYPES"
  },
@@ -55,7 +57,7 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "Tide gauges, a fourth source: the coastal countries in digital-twin-ph/coastal-sea-level over a map of every gauge drawn with no network, each country's index of its gauges read with the shared data dictionary at a pinned commit and checked by digest. An index, not the archives' records. A column named id, or ending in _id, _code or _no, is offered as a key in a wide read though written in digits. A long read can name its value (\"total\" read as \"population\"), and reopens with its value column and keys as saved, where the guess had replaced them. After shows the rows as stored, then the same table as a crosstab. The column a wide read makes for the variables' names is said as made by the read."
+   "description": "Tide gauges, a fourth source: the coastal countries in digital-twin-ph/coastal-sea-level over a map of every gauge drawn with no network, each country's index of its gauges read with the shared data dictionary at a pinned commit and checked by digest. An index, not the archives' records. A column named id, or ending in _id, _code or _no, is offered as a key in a wide read though written in digits. A long read can name its value (\"total\" read as \"population\"), and reopens with its value column and keys as saved, where the guess had replaced them. After shows the rows as stored, then the same table as a crosstab. The column a wide read makes for the variables' names is said as made by the read. DHIS2, a fifth source: a server's analytics read with a personal access token from Credentials, by data, period and organisation unit, long, with a data dictionary of its columns, the step keeping the server, the request and when it was read."
   }
  ],
  "evidence": {

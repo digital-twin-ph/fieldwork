@@ -14,7 +14,7 @@ unknown, never read as zero.
 The Inspector says in one sentence what the step reads: the file, its shape, its value columns and its unit. **Configure…**
 opens the import.
 
-1. Choose where the table comes from, in the tabs **Your file**, **From an address**, **Census tables** or **Tide gauges**, and say
+1. Choose where the table comes from, in the tabs **Your file**, **From an address**, **Census tables**, **Tide gauges** or **DHIS2**, and say
    whether it is wide or long.
 2. Tick the key columns and choose the value column or columns.
 3. Under **What identifies a row?**, mark any primary and secondary keys.
@@ -99,6 +99,26 @@ few kilometres apart. A station on PSMSL's *metric* list is never to be used for
 Cite the archives when using a row: PSMSL (Holgate et al., 2013) and the date of its extraction; UHSLC (Caldwell et
 al., 2015); SONEL ULR7a (Gravelle et al., 2023), whose velocities are CC BY 4.0. The repository's README gives each
 citation in full.
+
+## DHIS2
+
+The tab **DHIS2** reads a DHIS2 server's analytics: aggregate values by data element or indicator, period and
+organisation unit, as a country's DHIS2 holds its routine surveillance.
+
+1. Type the server's address, and choose its token from **Credentials** (provider `dhis2`). The token is never typed
+   here and never kept in the project.
+2. **Connect.** The tab says which DHIS2 version answered and how many levels of organisation units it has.
+3. **Find** data elements and indicators by name, and tick those to read. Choose the level of the units, for example
+   *District*, and the periods, for example *the last 12 months, by month*.
+4. **Read the table.** It arrives long, one row per data, period and unit, with the names and DHIS2's IDs, its value
+   in `value`, and a short data dictionary of its columns for you to accept.
+
+The step keeps where the table came from: the server, the request and when it was read. The units read are the
+token's own: those its user is assigned to, and the level below them chosen.
+
+**The server must list this page's address** in its CORS allowlist, which its administrator sets; a public
+demonstration server does not. Without it, export a table from DHIS2's Data Visualizer and read it under **Your file**.
+
 The step reopens on the tab its table came through. A new step opens on the tab last used on this device.
 
 ## Keys
@@ -197,6 +217,9 @@ A long read can name its value, as a wide read could: DR Congo's census read lon
 *population*. A long read reopens with its value column and keys as saved, where the guess had replaced them. **After**
 shows the rows as stored, one per key with its value, then the same table as a crosstab. The column a wide read makes
 for the variables' names is said as made by the read wherever it is offered.
+
+**DHIS2**, a fifth source: a server's analytics read with a token from Credentials, long, with a dictionary of its
+columns, and the step keeping the server and the request.
 
 ### 2026-11-20 · Census tables in today's units; a step's choices for its own table (0.13.0)
 

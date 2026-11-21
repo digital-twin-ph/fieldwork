@@ -457,7 +457,7 @@
       "id": "urn:fieldwork:example:brazil-dengue-rj-2024",
       "title": "Dengue in Rio de Janeiro state, Brazil, 2024",
       "repository": "https://github.com/digital-twin-ph/example-2024-brazil-dengue",
-      "commit": "d5a74f503f429e17d1b9a579ff6ac4b7a4b5604a",
+      "commit": "ae9814856522910f24d27de544de3b3f1ed8e9e3",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2024-brazil-dengue",
       "licence": {
         "data": "CC-BY-4.0",
@@ -532,8 +532,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "67906d71568af90f4074c8fe151a40140dd9db89bdc24bb5fd377d777b4aeebd",
-          "bytes": 87814
+          "sha256": "d485d60d501ec00c68c1503efb447bd24bdc0994d2c2782a06f73b542ed2239d",
+          "bytes": 88152
         },
         {
           "path": "notes/what-aedes-mosquitoes-meet.md",
@@ -643,7 +643,7 @@
       "id": "urn:fieldwork:example:sierra-leone-measles",
       "title": "Measles in Sierra Leone, 2019 to 2023",
       "repository": "https://github.com/digital-twin-ph/example-2019-sierra-leone-measles",
-      "commit": "3579dbc43a8236cc3385841e9a9b0ffe0a7920b1",
+      "commit": "25bf86277baca4a93da2b047ac3022b48bc17207",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2019-sierra-leone-measles",
       "licence": {
         "data": "Used with the Sierra Leone FETP’s agreement for distributable training materials; modified for a public teaching repository",
@@ -679,8 +679,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "369cf2467539a050b0c188770d71ae521573e5e0145e54813745107c250205b3",
-          "bytes": 53485
+          "sha256": "5147e22ae6cbe230240f31c1c8f723ac806b0e47c764f2ebaf758de3f13d484f",
+          "bytes": 53772
         },
         {
           "path": "data/measles-sierra-leone-semisynthetic.csv",

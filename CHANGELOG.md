@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.160.0 — In development
+## 0.160.0 — 2026-11-21
 
 - **A worked example: syndromic surveillance.** 24,328 made-up emergency department visits with a seeded
   gastrointestinal outbreak: chief complaints sorted into syndromes by words, counted by day and syndrome, and each day

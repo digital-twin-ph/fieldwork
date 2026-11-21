@@ -27,7 +27,13 @@ test('the column naming each part is proposed, the table and parts shown Before,
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles({name:'join.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(workflow))});
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="join"]').click({timeout:45000});
+  // THE AREA'S PARTS, seen on the study area itself.
+  await page.locator('.react-flow__node[data-id="area"]').click({timeout:45000});
+  await expect(page.locator('[data-area-parts]')).toContainText('4 parts');
+  await page.locator('#area-view-parts').click();
+  await expect(page.locator('#table-viewer')).toContainText('Maniema');
+  await page.keyboard.press('Escape');await expect(page.locator('#table-viewer')).toHaveCount(0);
+  await page.locator('.react-flow__node[data-id="join"]').click();
   // THE INSPECTOR SAYS WHAT IS MISSING, before a run rather than as the run's refusal.
   await expect(page.locator('[data-join-missing]')).toContainText('Choose the column naming each part');
   await expect(page.locator('#inspector-content .standard-sentence')).toContainText('once the column naming each part is chosen');

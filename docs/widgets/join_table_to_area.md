@@ -1,6 +1,6 @@
 # Join a table to the study area
 
-_Created 2026-10-25 · Updated 2026-11-06_
+_Created 2026-10-25 · Updated 2026-11-20_
 
 **A join.** It takes a table of values and a study area whose parts are named, matches each row to
 the part it names, and hands on polygons that carry the value. A map downstream can then shade
@@ -34,10 +34,23 @@ a code, which matters where names repeat: 5 of Nigeria's LGA names belong to two
 
 ## How to use it
 
+Select the step. Its panel says what it will do, or, before a run, that the column naming each part is still to be
+chosen. Press **Configure…**:
+
 | Setting | What it decides |
 | --- | --- |
-| **Column naming each part** | Which of the table's key columns holds the part name. Offered from the connected table, not typed. |
-| **Match names** | *Ignoring punctuation and spacing*, or *Exactly as written*. |
+| **Column naming each part** | Which of the table's columns holds the part's name. Where none is chosen, the column naming the most parts is proposed, saying how many it names: a census from Census tables carries `geoboundaries_name`, which names a study area from geoBoundaries. |
+| **Match names** | *Ignoring capitals, punctuation and spacing*, or *Exactly as written, capitals aside*. |
+| **Frames from** | Optional: a column whose values are frames (below). |
+| **Shade by a class** | Optional: a column whose values are classes, not quantities. |
+
+**Before** shows the table as it reaches the step and the study area's parts by name. **After** shows each part with
+the value it takes, how many take one, the rows that name no part, and anything else found, such as a name given by
+two rows. Both change as the settings do; nothing reaches the workflow until **Apply**. The parts of a polygon layer
+are known once the workflow has run. The study area's own panel lists its parts too, under **View the parts**.
+
+**Show me how it works** walks three made-up parts and a table of three rows through the matching chosen: a row that
+matches as it is, one that matches only once punctuation is set aside, one that names no part, and a part no row names.
 
 ### Choosing how names are matched
 
@@ -108,3 +121,11 @@ is worth.
 **Frames from** names a key column whose values are frames, such as `measure` holding `dtp1_2005` to `dtp1_2024`.
 Each part then carries one value per frame, and an interactive map can play through them. The part's single value is
 the last frame's. A key repeated across frames is expected; a key repeated within a frame is reported.
+
+## History
+
+### 2026-11-20 · On the standard (0.4.0)
+
+Every setting moves to **Configure…**, with the table and the parts **Before** and each part's value **After**. The
+column naming the most parts is proposed where none is chosen, and the panel says before a run when none is: a run
+used to stop on an empty column name. **Show me how it works** is new.

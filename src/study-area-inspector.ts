@@ -8,6 +8,7 @@ import {countryName,countryOfArea} from './boundary-source.js';
 import {countriesOfArea} from './area-countries.js';
 import {openCountriesConfig} from './area-countries-ui.js';
 import {levelName} from './figure-words.js';
+import {openTableViewer} from './table-viewer.js';
 
 export interface StudyAreaKit extends StepKit {
   /** The map, to select or edit the area. */
@@ -76,6 +77,10 @@ export const studyAreaInspector:OwnInspector<'study_area'>={
           +`${repairs.filter(r=>r.kind==='repeated').length} repeated straight after themselves, ${repairs.filter(r=>r.kind==='spike').length} at the tip of a zero-width spike`
           +`${(()=>{const spiked=[...new Set(repairs.filter(r=>r.kind==='spike').map(r=>r.unit))];return spiked.length?` (${spiked.map(esc).join(', ')})`:'';})()}. `
           +'No outline encloses a different area; each vertex is listed in the evidence.</p>':'')
+        // ITS PARTS, BY NAME (2026-11-20): a boundary from geoBoundaries holds a table of its units, which a join matches
+        // against, and which was seen only downstream, once joined.
+        +(boundary?.units?.length?`<p data-area-parts>${boundary.units.length.toLocaleString('en')} parts, each named as its boundary names it. `
+          +'<button type="button" class="text-button" id="area-view-parts">View the parts</button></p>':'')
         +(geometry?'<button id="area-view-n3" class="text-button">Inspect N3 facts and rule \u2197</button>':'');
         if(n.params.source==='drawn'&&(n.params.revisions?.length??0)>1){
           const history=n.params.revisions!;
@@ -127,5 +132,10 @@ export const studyAreaInspector:OwnInspector<'study_area'>={
         if(v)q.unitName=v;else delete q.unitName;});});
     root.querySelector('#edit-study-area')?.addEventListener('click',()=>k.edit(n.id));
     root.querySelector('#area-view-n3')?.addEventListener('click',()=>k.viewN3());
+    root.querySelector('#area-view-parts')?.addEventListener('click',()=>{
+      const t=kit.workflow().nodes.find(x=>x.id===n.id);if(t?.type!=='study_area'||t.params.source!=='drawn')return;
+      const units=t.params.boundary?.units??[];
+      openTableViewer({title:`${t.params.label||'Study area'} \u00b7 its parts`,columns:['name','id'],rows:units.map(u=>({name:u.name,id:u.id})),
+        note:`${units.length.toLocaleString('en')} parts, named as ${t.params.boundary?.source??'its boundary'} names them. A table joined to this area matches these names.`},kit.esc);});
   },
 };

@@ -905,7 +905,7 @@
     {
       "id": "urn:fieldwork:widget:join_table_to_area",
       "nodeType": "join_table_to_area",
-      "currentVersion": "0.3.2",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -931,6 +931,11 @@
           "version": "0.3.2",
           "path": "widgets/releases/join_table_to_area/0.3.2.json",
           "sha256": "d8e445317f68c23993814277c756bde9908d47e4f77d5b97454475a38eab268f"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/join_table_to_area/0.4.0.json",
+          "sha256": "f1d6c3ba53306600f8959b8dfb46d9e2938d668b8964028d4d6a673bc02cfc28"
         }
       ]
     },
@@ -2297,7 +2302,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.11.0",
+      "currentVersion": "0.12.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2388,6 +2393,11 @@
           "version": "0.11.0",
           "path": "widgets/releases/study_area/0.11.0.json",
           "sha256": "ae723e683018ab6c47470c3c8d377b565ee87874d1509bb6454c29b59d0933cb"
+        },
+        {
+          "version": "0.12.0",
+          "path": "widgets/releases/study_area/0.12.0.json",
+          "sha256": "b9538341da615cfba423fc9ef9d0697bc3cb852827ad356426841a1fe99ddb95"
         }
       ],
       "previousNodeTypes": [

@@ -60,6 +60,10 @@ country reads the list.
 4. Press **Apply study area**.
 5. Give it a label that says what it is. The label travels into the receipts.
 
+**Its parts.** An area acquired as administrative units keeps each unit as a part, named as its boundary names it.
+The panel's Result says how many, and **View the parts** lists each part's name and id. A table joined to the area is
+matched against these names.
+
 **What a level holds.** geoBoundaries numbers its levels ADM1, ADM2 and so on, and the number says nothing of the units:
 in one country ADM2 holds counties, in another districts. **Check this level** says the level's own name where
 geoBoundaries states one, and, where Census tables holds the country's census, how many units each census level counts
@@ -149,6 +153,11 @@ and kept on this device, before geoBoundaries is asked. The study area records w
 
 **Check this level** says what the level holds: its own name where geoBoundaries states one, and its units beside each
 level of the country's census in Census tables, saying where none has as many.
+
+### 2026-11-20 · Its parts, by name (0.12.0)
+
+A study area acquired as administrative units says how many parts it holds, and **View the parts** lists each one's
+name and id: the names a table joined to the area is matched against.
 
 ---
 

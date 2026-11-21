@@ -5,7 +5,12 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.156.0 — In development
 
-- **Join a table to the study area on the standard; Comparison map retired into Map.** In progress.
+- **Join a table to the study area on the standard.** Every setting is in Configure…, with the table and the study
+  area's parts Before and each part's value After, drawn as the choices change. The column naming the most parts is
+  proposed where none is chosen, and the panel says before a run when none is, where a run used to stop on an empty
+  column name. Show me how walks three made-up parts and a table through the matching chosen.
+- **A study area's parts, by name.** An area acquired as administrative units says how many parts it holds, and View the
+  parts lists each one's name and id.
 
 ## 0.155.0 — 2026-11-20
 

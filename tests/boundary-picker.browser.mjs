@@ -20,6 +20,8 @@ const blob=(x,y)=>({type:'Polygon',coordinates:[[...Array.from({length:40},(_,i)
   return [x+r*Math.cos(a),y+r*Math.sin(a)];}),[x+0.3,y]]]});
 
 async function stub(page,{levelPayload=level(),units=2}={}){
+  // geoBoundaries stubbed here: the held copy is answered with a file not as pinned, so the picker falls back to the stub.
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/boundaries\//,r=>r.fulfill({status:200,contentType:'application/json',body:'{}'}));
   await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({
     status:levelPayload?200:404,contentType:'application/json',
     body:JSON.stringify(levelPayload??{})}));
@@ -263,6 +265,8 @@ test('a whole country of several parts, past the old 1 MB budget, is applied wit
   const errors=collectPageErrors(page);
   const ringOf=(n,x,y,r)=>{const pts=Array.from({length:n},(_,i)=>{const a=2*Math.PI*i/n;return [x+r*Math.cos(a),y+r*Math.sin(a)];});return [...pts,pts[0]];};
   const country={type:'MultiPolygon',coordinates:[[ringOf(36000,32.5,1.5,2)],[ringOf(300,29.5,-0.8,0.1)],[ringOf(200,29.8,-1.0,0.08)]]};
+  // geoBoundaries stubbed here: the held copy is answered with a file not as pinned, so the picker falls back to the stub.
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/boundaries\//,r=>r.fulfill({status:200,contentType:'application/json',body:'{}'}));
   await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({status:200,contentType:'application/json',
     body:JSON.stringify(level({boundaryID:'UGA-ADM0-62106908',boundaryISO:'UGA',boundaryType:'ADM0',boundaryName:'Uganda',
       admUnitCount:'1',meanVertices:'43116.0',maxVertices:'43116',gjDownloadURL:'https://example.invalid/uga-adm0.geojson'}))}));
@@ -301,6 +305,8 @@ test('a refused outline is said in the dialog\'s status line, not only under the
   const errors=collectPageErrors(page);
   // A bow tie: its edges cross, which no study area may.
   const bowtie={type:'Polygon',coordinates:[[[30,0],[31,1],[31,0],[30,1],[30,0]]]};
+  // geoBoundaries stubbed here: the held copy is answered with a file not as pinned, so the picker falls back to the stub.
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/boundaries\//,r=>r.fulfill({status:200,contentType:'application/json',body:'{}'}));
   await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({status:200,contentType:'application/json',
     body:JSON.stringify(level({boundaryISO:'UGA',boundaryType:'ADM0',boundaryName:'Uganda',admUnitCount:'1',
       gjDownloadURL:'https://example.invalid/bowtie.geojson'}))}));
@@ -317,5 +323,28 @@ test('a refused outline is said in the dialog\'s status line, not only under the
   await expect(feedback).toContainText('Crossed:');
   await expect(feedback).toHaveAttribute('role','alert');
   await expect(page.locator('#area-boundary-terms')).toContainText('Crossed:');
+  expect(errors).toEqual([]);
+});
+
+/** A LEVEL FIELDWORK HOLDS IS READ FROM THE BOUNDARIES REPOSITORY (2026-11-20): DR Congo's 26 provinces, from the pinned
+ *  parts, each checked by digest; geoBoundaries is never asked. */
+import {answerFromRecordedCopies} from './recorded-copies.mjs';
+import {readFileSync as readPinned} from 'node:fs';
+test('a held level is read from the boundaries Fieldwork holds, and geoBoundaries is not asked',async({page})=>{
+  const errors=collectPageErrors(page);
+  const held=JSON.parse(readPinned(new URL('../examples/boundaries/catalogue.json',import.meta.url),'utf8'));
+  await answerFromRecordedCopies(page);
+  const asked=[];page.on('request',r=>{if(/geoboundaries\.org|wmgeolab/.test(r.url()))asked.push(r.url());});
+  await openArea(page);
+  await page.locator('#area-iso').fill('Democratic Republic of the Congo');
+  await page.locator('#area-adm').selectOption('ADM1');
+  await page.locator('#area-boundary-check').click();
+  await expect(page.locator('#area-boundary-units')).toBeVisible({timeout:60000});
+  await expect(page.locator('#area-boundary-pick option')).toHaveCount(26);
+  expect(asked).toEqual([]);
+  await page.locator('#area-boundary-pick').selectOption([{index:0}]);
+  await page.locator('#area-boundary-use').click();
+  await page.locator('#area-apply').click();
+  await expect.poll(async()=>(await storedArea(page)).boundary?.retrievedFrom,{timeout:30000}).toBe(`${held.raw}COD/ADM1/parts/`);
   expect(errors).toEqual([]);
 });

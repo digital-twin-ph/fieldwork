@@ -11,6 +11,10 @@ shown in a local build is not a claim that it has been published.
   records, which are at PSMSL and UHSLC. Its manual section shows what a gauge measures with the datum diagram; a manual
   page can now carry a diagram from the project's images. A column named *id* or ending in *_id* is a key in a wide read.
   Tabular data 0.14.0.
+- **Boundaries Fieldwork holds are read from there first.** The study area picker reads a level held in the boundaries
+  repository, the worked examples' ten (DR Congo's provinces and territories among them), pinned and checked by digest,
+  and keeps it on this device, so choosing it again needs no network; geoBoundaries is asked for any other level, and
+  when a held one cannot be read. Study area 0.11.0.
 - **Tabular data's long reads.** A long read can name its value, so DR Congo's census read long is *population* beside
   three models, not *total*; it reopens with the value column and keys it was saved with. **After** shows the rows as
   stored, then the crosstab. The column a wide read makes for the variables' names says so.

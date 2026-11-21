@@ -10,6 +10,8 @@ test('a study area of 26 provinces and 195,000 vertices is drawn on a Map, with 
   const ring=(n,x,y,r)=>{const p=Array.from({length:n},(_,i)=>{const a=2*Math.PI*i/n,rr=r*(1+0.15*Math.sin(a*7));return [x+rr*Math.cos(a),y+rr*Math.sin(a)];});return [...p,p[0]];};
   const units=Array.from({length:26},(_,i)=>({properties:{shapeID:`COD-${i}`,shapeName:`Province ${i}`},
     geometry:{type:'Polygon',coordinates:[ring(7500,15+(i%6)*2.5,-10+Math.floor(i/6)*3,1.1)]}}));
+  // geoBoundaries stubbed here: the held copy is answered with a file not as pinned, so the picker falls back to the stub.
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/boundaries\//,r=>r.fulfill({status:200,contentType:'application/json',body:'{}'}));
   await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
     boundaryID:'COD-ADM1-1',boundaryISO:'COD',boundaryType:'ADM1',boundaryName:'Democratic Republic of the Congo',admUnitCount:'26',
     meanVertices:'7500.0',maxVertices:'7500',boundaryYearRepresented:'2020.0',boundaryLicense:'CC BY 3.0 IGO',gjDownloadURL:'https://example.invalid/cod-adm1.geojson'})}));

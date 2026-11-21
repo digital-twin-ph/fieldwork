@@ -82,6 +82,14 @@ rule, and lists each one by unit, kind and position. OCHA's districts of Sierra 
 
 A ring that touches itself anywhere else is not repaired, and is still refused, because that is a different shape.
 
+### Boundaries Fieldwork holds
+
+Some levels are held in [boundaries](https://github.com/digital-twin-ph/boundaries): those the worked examples use,
+among them DR Congo's provinces and territories, Rwanda's districts, Brazil's municipalities and the United States'
+counties. Choosing one reads it from there, as geoBoundaries published it, checked against what this version names, and
+keeps it on this device, so choosing it again needs no network. The status line says so. Any other level is asked of
+geoBoundaries, as is a held one that cannot be read.
+
 ### What its units are called
 
 Beside its countries, **Its units are called** says, once, what the area's units are: *provinces*, *districts*. Charts
@@ -127,6 +135,11 @@ DR Congo's 26 provinces are chosen, applied and reopened in about a second each,
 Chrome called the page unresponsive. Every receipt names the shape by the SHA-256 of its GeoJSON instead of writing out
 its coordinates, 4.3 MB for those provinces. The dialog's summary counts several polygons. **Its units are called** is
 new, read by figures as {units}; an edit on the map no longer drops the countries the area states.
+
+### 2026-11-20 · Boundaries Fieldwork holds (0.11.0)
+
+A level held in the boundaries repository, the worked examples' ten, is read from there, pinned and checked by digest,
+and kept on this device, before geoBoundaries is asked. The study area records where its shapes were read.
 
 ---
 

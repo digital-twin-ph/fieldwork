@@ -50,6 +50,8 @@ test('the largest published DRC province can be acquired, and every phase is tim
         new MutationObserver(()=>seen.push(el.textContent||'')).observe(el,{childList:true,subtree:true,characterData:true});};
     watch();
   });
+  // geoBoundaries stubbed here: the held copy is answered with a file not as pinned, so the picker falls back to the stub.
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/boundaries\//,r=>r.fulfill({status:200,contentType:'application/json',body:'{}'}));
   await page.route(/geoboundaries\.org\/api/,r=>r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(meta)}));
   await page.route(/example\.invalid/,r=>r.fulfill({status:200,contentType:'application/json',body:shapes}));
   await page.goto('/');await page.evaluate(()=>localStorage.clear());

@@ -30,8 +30,21 @@ export const RECORDED_SERVICES=[
 
 const readIndex=()=>existsSync(INDEX)?JSON.parse(readFileSync(INDEX,'utf8')):{copies:{}};
 
+/** THE BOUNDARIES FIELDWORK HOLDS (2026-11-20), answered from the boundaries checkout beside this repository at the commit
+ *  Fieldwork pins, never the network: what the picker reads first for a level held there. */
+const HELD=JSON.parse(readFileSync(new URL('../examples/boundaries/catalogue.json',import.meta.url),'utf8'));
+const BOUNDARIES=new URL('../../boundaries/',import.meta.url).pathname;
+async function answerHeldBoundaries(page){
+  if(!existsSync(BOUNDARIES))return;
+  const {execFileSync}=await import('node:child_process');
+  await page.route(url=>url.href.startsWith(HELD.raw),route=>route.fulfill({status:200,
+    headers:{'access-control-allow-origin':'*','content-type':'application/json'},
+    body:execFileSync('git',['-C',BOUNDARIES,'show',`${HELD.commit}:${route.request().url().slice(HELD.raw.length)}`],{maxBuffer:1<<28})}));
+}
+
 export async function answerFromRecordedCopies(page){
   if(process.env.FIELDWORK_LIVE)return;
+  await answerHeldBoundaries(page);
   const record=!!process.env.FIELDWORK_RECORD;
   for(const service of RECORDED_SERVICES)await page.route(service.pattern,async route=>{
     const url=new URL(route.request().url());

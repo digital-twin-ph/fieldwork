@@ -577,8 +577,14 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       +(near.length?` \u2014 note: ${near.join(', ')} also match what you typed.`:'');
     try{
       const {levelUrl,readLevel,selectionSummary}=await import('./boundary-source.js');
-      const response=await fetch(levelUrl(iso,adm));
-      const level=response.ok?readLevel(iso,adm,await response.json()):null;
+      // HELD IN THE BOUNDARIES REPOSITORY, read from there, pinned and checked, before geoBoundaries is asked (2026-11-20).
+      const {heldLevel,heldDescription,heldShapes,heldPartsUrl}=await import('./boundaries-held.js');
+      // Where the held copy cannot be read (GitHub unreachable, a file not as pinned), geoBoundaries is asked instead.
+      let held=heldLevel(iso,adm),heldPayload:unknown;
+      if(held)try{heldPayload=await heldDescription(held);}catch{held=undefined;}
+      const response=held?undefined:await fetch(levelUrl(iso,adm));
+      const described=held?readLevel(iso,adm,heldPayload):response!.ok?readLevel(iso,adm,await response!.json()):null;
+      const level=described&&held?{...described,geoJsonUrl:heldPartsUrl(held)}:described;
       if(!level){
         // Nigeria publishes no ADM3. An absent level is an ANSWER, not a failed request, and
         // saying so is what stops a practitioner retrying a thing that cannot work.
@@ -601,7 +607,10 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       const summary=selectionSummary(level,[]).replace(/^\d+ of /,'');
       const describe=(lead:string)=>`${lead} \u00b7 ${level.units} units \u00b7 ${level.meanVertices} vertices each on average \u00b7 ${summary}`;
       boundaryStatus.textContent=describe(`Downloading about ${(estimate/1e6).toFixed(1)} MB of shapes\u2026`);
-      const shapes=await fetchWithProgress(level.geoJsonUrl,estimate,read=>{
+      const shapes=held
+        ?await heldShapes(held,(read,total)=>{boundaryStatus.textContent=`Reading ${countryName(iso)} ${adm} from the boundaries Fieldwork holds \u2014 `
+          +`${(read/1e6).toFixed(1)} MB of ${(total/1e6).toFixed(1)} MB\u2026`;})
+        :await fetchWithProgress(level.geoJsonUrl,estimate,read=>{
         boundaryStatus.textContent=`Downloading ${countryName(iso)} ${adm} shapes \u2014 `
           +`${(read/1e6).toFixed(1)} MB of about ${(estimate/1e6).toFixed(1)} MB\u2026`;
       });

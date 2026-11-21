@@ -398,12 +398,12 @@
    "migrationFrom": []
   },
   "join_table_to_area": {
-   "version": "0.5.0",
+   "version": "0.6.0",
    "released": "2026-11-21",
    "changes": [
     {
      "kind": "changed",
-     "description": "Show me how shows the study area's parts and the table beside the drawing, each row marked; it is in Configure… only."
+     "description": "A census table at another level than the study area is said to be before a run; a column of the parts' IDs is joined on the IDs; a run with no column chosen joins on the proposed one where it names each part once, and stops where the table is finer than the study area."
     }
    ],
    "breaking": false,
@@ -422,12 +422,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.39.0",
-   "released": "2026-11-20",
+   "version": "0.40.0",
+   "released": "2026-11-21",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A Mean center connects to a point layer and is drawn as one point, named by its step: the geoprivacy example's Map shows the original and moved mean centres beside their points (Comparison map retired, docs/audits/comparison-map-retired.md)."
+     "kind": "changed",
+     "description": "The key's class ranges are as wide as the longest needs and never touch; where they do not fit across the map, each is said on two lines and the key's band is one line taller."
     }
    ],
    "breaking": false,

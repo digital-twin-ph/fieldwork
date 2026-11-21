@@ -2,18 +2,16 @@ import type {Workflow,WorkflowNode,Boundary} from './types.js';
 import type {RasterGrid} from './raster.js';
 import {clipRaster} from './raster.js';
 import {loadRasterAsset} from './raster-workflow.js';
-import {bufferedBoundary} from './area-buffer.js';
 
 export function previewArea(workflow:Workflow,nodeId:string):{node:WorkflowNode<'study_area'>;boundary:Boundary}{
-  const visited=new Set<string>(),buffers:number[]=[];let id=nodeId;
+  const visited=new Set<string>();let id=nodeId;
   while(!visited.has(id)){
     visited.add(id);const node=workflow.nodes.find(n=>n.id===id);
     if(node?.type==='study_area'){
       const boundary=node.params.geometry??null;
       if(!boundary)throw new Error('Define the connected Study area first.');
-      return {node,boundary:buffers.toReversed().reduce((shape,distance)=>bufferedBoundary(shape,distance),boundary)};
+      return {node,boundary};
     }
-    if(node?.type==='buffer_area')buffers.push(node.params.distanceM);
     const edge=workflow.edges.find(e=>e.to===id&&e.port==='area');
     if(!edge)break;id=edge.from;
   }

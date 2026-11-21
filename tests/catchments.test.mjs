@@ -9,7 +9,7 @@ import {executeWorkflow,validateWorkflow} from '../build/core.js';
 import {syncProjectManifest} from '../build/project-manifest.js';
 import * as cm from '../build/catchments.js';
 import {osmQuery,networkFromOSM,requestOSM,preferredEndpoint,OVERPASS_ENDPOINTS} from '../build/street-network.js';
-import {bufferedBoundary,bufferArea,dimensionedBox} from '../build/area-buffer.js';
+import {dimensionedBox} from '../build/area-buffer.js';
 import {geometryBounds} from '../build/study-area.js';
 const m=metric(30,'north'),origin=m.forward([-.136,51.513]),coord=(x,y)=>m.inverse([origin[0]+x,origin[1]+y]);
 const point=(id,x,y,DEATHS=1)=>({type:'Feature',id,properties:{name:id,DEATHS},geometry:x===null?null:{type:'Point',coordinates:coord(x,y)}});
@@ -321,10 +321,7 @@ test('OSM download retains request provenance and fails on HTTP or byte limits',
     &&/never read/.test(err.message)
     &&!/Raise the graph limit on this widget to about/.test(err.message));
 });
-test('buffer creates a distinct area and expands acquisition without carrying old area measurements',()=>{
-  const snapshot=structuredClone(boundary),source={boundary,label:'Reporting area',areaId:'urn:test:source',geometryId:'urn:test:shape',measurement:{squareMetres:100,value:100,unit:'m2',method:'fixture'}};
-  const node={id:'buffer',type:'buffer_area',params:{label:'Acquisition',distanceM:500},x:0,y:0};const result=bufferArea(node,source,'test');assert.deepEqual(boundary,snapshot);assert.notEqual(result.value.areaId,source.areaId);assert.equal(result.value.measurement,undefined);const before=geometryBounds(boundary),after=geometryBounds(result.value.boundary);assert.ok(after[0]<before[0]&&after[1]<before[1]&&after[2]>before[2]&&after[3]>before[3]);new Parser().parse(result.receipt.facts);
-  assert.deepEqual(bufferedBoundary(boundary,0),boundary);assert.throws(()=>bufferedBoundary(boundary,-1),/0–50,000/);
+test('a box of stated dimensions in metres is square on the ground',()=>{
   const box=geometryBounds(dimensionedBox([-.136,51.513],1000,1000)),width=(box[2]-box[0])*111195*Math.cos(51.513*Math.PI/180),height=(box[3]-box[1])*111195;assert.ok(Math.abs(width-height)<.001);assert.ok(Math.abs(width-1000)<.001);assert.throws(()=>dimensionedBox([0,89],1000,1000),/80/);
 });
 

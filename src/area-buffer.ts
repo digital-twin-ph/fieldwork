@@ -1,29 +1,19 @@
 import {buffer} from '@turf/buffer';
-import type {AreaValue,Receipt} from './results.js';
-import type {Boundary,Polygon,WorkflowNode,Position} from './types.js';
-import {geometryWKT,CRS84,bboxPolygon,geometryBounds,geometryByReference} from './study-area.js';
+import type {Polygon,Position} from './types.js';
+import {CRS84,bboxPolygon} from './study-area.js';
 /** The buffer distance is a knob, and its range was a second number with no reason behind it.
  *
  *  It capped at 5,000 m while the geometry helpers in this same module accept 50,000 — `circleAround`
  *  and the bbox dimensions both say 1 to 50,000 metres. So a practitioner could ask for a 50 km
  *  circle around a point and not a 6 km margin around a boundary, and nothing explained the
  *  difference. The substantive guards are separate and unchanged: a boundary spanning at most one
- *  degree, below 80° latitude, checked in `bufferedBoundary` below.
+ *  degree, below 80° latitude. Buffer study area, which used this range for a margin around a boundary, was retired
+ *  2026-11-06 and its code removed 2026-11-21 (0.158.0); Area around a point keeps it.
  *
  *  Raised to 50,000 on 2026-10-12 after the Old Naledi facility selection turned out to need 6 km.
  *  That selection is a 6 km circle at the boundary's bounding-box centre, and a 6 km margin around
  *  the boundary itself is what it was approximating — which this cap made impossible to express. */
 export function validateBuffer(distanceM:number){if(!Number.isFinite(distanceM)||distanceM<0||distanceM>50000)throw new Error('Study-area buffer must be 0–50,000 metres.');}
-export function bufferedBoundary(boundary:Boundary,distanceM:number):Boundary{
-  validateBuffer(distanceM);if(!distanceM)return structuredClone(boundary);
-  const bounds=geometryBounds(boundary);if(bounds[2]-bounds[0]>1||bounds[3]-bounds[1]>1||Math.abs(bounds[1])>80||Math.abs(bounds[3])>80)throw new Error('Buffer prototype supports local study areas spanning at most one degree, below 80 degrees latitude.');
-  const result=buffer(boundary,distanceM,{units:'meters',steps:8});if(!result||result.type!=='Feature')throw new Error('Study-area buffer did not produce a valid boundary.');return result.geometry;
-}
-export function bufferArea(node:WorkflowNode<'buffer_area'>,source:AreaValue,runId:string):{value:AreaValue;receipt:Receipt}{
-  const boundary=bufferedBoundary(source.boundary,node.params.distanceM),areaId=`urn:fieldwork:run:${runId}:output:${node.id}`,geometryId=areaId+':geometry',activity=areaId+':buffer';
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix geo: <http://www.opengis.net/ont/geosparql#>.\n@prefix qudt: <http://qudt.org/schema/qudt/>.\n<${activity}> a fw:AreaBuffer, prov:Activity; fw:method "Turf/JSTS local azimuthal equidistant metre buffer; 8 quadrant segments"; prov:used <${source.areaId}>; fw:bufferDistance [ a qudt:QuantityValue; qudt:numericValue ${node.params.distanceM}; qudt:unit <http://qudt.org/vocab/unit/M> ].\n<${areaId}> a fw:StudyArea, geo:Feature; prov:wasGeneratedBy <${activity}>; prov:wasDerivedFrom <${source.areaId}>; geo:hasGeometry <${geometryId}>.\n<${geometryId}> a geo:Geometry; ${geometryByReference(boundary)}.\n`;
-  return {value:{kind:'study-area',boundary,areaId,geometryId,label:node.params.label,bounds:geometryBounds(boundary),rows:[],centers:[],spatialReference:structuredClone(source.spatialReference)},receipt:{nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:'Turf/JSTS metre buffer using a local azimuthal equidistant projection, 8 quadrant segments; source reporting boundary unchanged.'}};
-}
 /** A circle of a stated radius around a centre, as a polygon.
  *
  *  The same construction `buffer_point` uses, and the same measured step count: Turf's `steps`

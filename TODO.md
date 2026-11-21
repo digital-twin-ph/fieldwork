@@ -75,7 +75,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 - **0.158.0, in development:** a join run with no column chosen joins on the proposal, and says when the table is
   finer than the study area; Hagelloch's periods from the record and probabilities fitted (199); a Zarr reader (227);
-  Buffer study area's remaining code to remove (retired in 0.37.0).
+  Buffer study area's remaining code removed (retired in 0.37.0); the levels said before a join, and IDs joined on;
+  long tables scroll in dialogs; Map's key ranges laid out.
 
 - **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);
   the practitioner, 2026-11-21). The spike reads a point by two byte ranges, checked against Planetary Computer at five

@@ -12,8 +12,8 @@ import {geometryWKT,CRS84,geometryBounds,geometryByReference} from './study-area
 import {validateBuffer} from './area-buffer.js';
 
 /** Turf's `steps` is per quadrant. Measured 2026-10-09 at a 5 km radius: 8 steps gives 32
- *  vertices and 99.36% of the true circle area, 32 gives 128 vertices and 99.96%. `buffer_area`
- *  uses 8, which is ample when expanding an existing boundary; here the edge decides membership,
+ *  vertices and 99.36% of the true circle area, 32 gives 128 vertices and 99.96%. Buffer study area, retired, used 8,
+ *  which was ample for expanding an existing boundary; here the edge decides membership,
  *  so the finer setting is used and the figure is recorded rather than implied. */
 export const BUFFER_POINT_STEPS=32;
 

@@ -30,7 +30,6 @@ import {combinedArea} from '../build/combined-area.js';
 import {voronoi,clipPolygons,summarizePolygons} from '../build/catchments.js';
 import {collectPolygonLayers} from '../build/polygon-layers.js';
 import {bufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
-import {bufferedBoundary} from '../build/area-buffer.js';
 import {aggregateHex} from '../build/geoprivacy.js';
 import {caseSeriesFromTable} from '../build/case-series.js';
 import {relateTable,relateShape,gapSignature} from '../build/relate-table.js';
@@ -534,28 +533,6 @@ const builders={
         vertexCount:point.value.boundary.coordinates[0].length-1,
         circleAreaFraction:fraction},
       note:'Check the vertex count against 4 x steps, the reported circle-area fraction against the closed form for an inscribed polygon, and every vertex against the stated radius.'
-    },files:{}};
-  },
-  'buffer-area-soho-001'(){
-    // 8 segments per quadrant, because this widget expands a boundary that already exists
-    // rather than deciding membership at an edge.
-    const example=johnSnowExample('snow-isochrone');
-    const boundary=example.nodes.find(n=>n.id==='study').params.geometry;
-    const distanceM=500;
-    const buffered=bufferedBoundary(boundary,distanceM);
-    return {fixture:{
-      ...base('buffer-area-soho-001','buffer_area','Buffer study area','src/area-buffer.ts#bufferedBoundary'),
-      declaredParameters:{
-        computationCRS:'OGC:CRS84',
-        projection:'Turf/JSTS local azimuthal equidistant, metres',
-        stepsPerQuadrant:8,
-        distanceMetres:distanceM,
-        semantics:'The buffered boundary is the acquisition extent, not the reporting extent. It exists so that a network or raster fetched for the study area reaches past its edge.',
-        toleranceNote:'An exact match is not available. Turf buffers in a local azimuthal equidistant projection and a reference buffering in UTM uses a different one, so areas are compared relatively and the quadrant count is declared.'
-      },
-      input:{boundary},
-      output:{boundary:buffered},
-      note:'Buffer the same boundary by the same distance at the same quadrant count in a metric projection and compare the areas relatively, and check that the result contains the original.'
     },files:{}};
   },
   'voronoi-soho-001'(){

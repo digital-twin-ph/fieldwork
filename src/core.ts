@@ -24,7 +24,7 @@ import {comparePointSets,comparisonReceipt,comparisonTable,validatePointComparis
 import type {PointComparison} from './point-comparison.js';
 import {computeMeanCenter,meanCenterReceipt,validateMeanCenterNode} from './mean-center.js';
 import type {MeanCenter} from './mean-center.js';
-import {bufferArea,validateBuffer} from './area-buffer.js';
+import {validateBuffer} from './area-buffer.js';
 import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,isochrone,clipPolygons,summarizePolygons,catchmentReceipt,unconnectedSites,offNetworkSites} from './catchments.js';
 import type {Polygons,Network} from './catchments.js';
 import {polygonDisplay,polygonPresentationReceipt} from './catchment-output.js';
@@ -131,6 +131,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   comparison_map:{title:'Comparison map',group:'Outputs',icon:'◈',color:'green',description:'Retired — connect the points to a Map, and Compare point sets to a Table',inputs:[['comparison','point-comparison']],output:null},
   donut_geomask:{title:'Move points in a donut',group:'Spatial operations',icon:'◎',color:'teal',description:'Shift points within a configured distance band; educational preview, not a privacy guarantee',inputs:[['points','points']],output:'points'},
   aggregate_points_to_h3_cell:{title:'Aggregate points to H3 cells',group:'Spatial operations',icon:'⬡',color:'teal',description:'Count points in hexagonal cells and omit sparse cells. Hexbinning, onto the fixed H3 index',inputs:[['points','points']],output:'polygons'},
+  // RETIRED 2026-11-06 (0.37.0); its code removed 2026-11-21 (0.158.0). Kept so a saved workflow holding one is refused by name.
   buffer_area:{title:'Buffer study area',group:'Spatial operations',icon:'◎',color:'teal',description:'Expand an acquisition boundary without changing the reporting area',inputs:[['area','area']],output:'area'},
   ...CATCHMENT_TYPES,
   map_image_input:{title:'Georeferenced map image',group:'Sources',icon:'\u25a6',color:'blue',
@@ -795,7 +796,6 @@ export function validateWorkflow(raw:unknown):Workflow {
     validatePointComparisonNode(n);
     validateMeanCenterNode(n);
     validateCatchmentNode(n);
-    if(n.type==='buffer_area'){validateBuffer(n.params.distanceM);if(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>100)throw new Error('Name the buffered area using 1–100 characters.');}
     if (!Object.hasOwn(TYPES,n.type) || !/^[a-zA-Z0-9_-]{1,80}$/.test(n.id) || ids.has(n.id)) throw new Error('Invalid or duplicate node.');
     ids.add(n.id);
     if (![n.x,n.y].every(Number.isFinite) || Math.abs(n.x)>10000 || Math.abs(n.y)>10000 || !n.params) throw new Error('Invalid node position or parameters.');
@@ -1556,7 +1556,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           points:workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,
           raster:workflow.edges.find(e=>e.to===node.id&&e.port==='raster')!.from}));break;
       }
-      case 'buffer_area':{const buffered=bufferArea(node,inputs.area,runId);value=buffered.value;receipts.push(buffered.receipt);break;}
 
       case 'network_input':case 'voronoi':case 'isochrone':case 'clip_polygons':case 'summarize_points_to_polygon':{
         if(node.type==='network_input'){

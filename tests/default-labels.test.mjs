@@ -26,7 +26,7 @@ for(const m of sources.matchAll(/type==='([a-z_0-9]+)'\?\{type:'[a-z_0-9]+' as c
 // for one example's input. This checks the DEFAULT a freshly added node carries, which is the one
 // in the constructor or the palette's add path.
 const CONSTRUCTED=['map_output','table_output','chart_output','point_input','study_area',
-  'coverage_check','measure_area','compare_point_sets','summarize_hull','stack_polygons','buffer_area'];
+  'coverage_check','measure_area','compare_point_sets','summarize_hull','stack_polygons'];
 
 test('a freshly added widget is named after the widget, not after one example',()=>{
   const wrong=[];

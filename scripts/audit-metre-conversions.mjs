@@ -22,7 +22,7 @@
  *
  * Usage: node scripts/audit-metre-conversions.mjs [--json]
  */
-import {circleAround,bufferedBoundary,dimensionedBox} from '../build/area-buffer.js';
+import {circleAround,dimensionedBox} from '../build/area-buffer.js';
 import {bufferPoint} from '../build/buffer-point.js';
 import {moveDonut} from '../build/geoprivacy.js';
 import {sampleLocations} from '../build/old-naledi.js';
@@ -90,17 +90,6 @@ const sites=[
    measure(centre){
      const ring=circleAround(centre,500).coordinates[0];
      return ring.slice(0,-1).map(v=>[500,geodesic(centre,v)]);
-   }},
-  {widget:'buffer_area',where:'src/area-buffer.ts#bufferedBoundary',how:'Turf buffer, 8 steps/quadrant',
-   measure(centre){
-     // A degenerate box, so the buffer's offset from each side is measurable directly.
-     const d=0.001,box={type:'Polygon',coordinates:[[[centre[0]-d,centre[1]-d],[centre[0]+d,centre[1]-d],
-       [centre[0]+d,centre[1]+d],[centre[0]-d,centre[1]+d],[centre[0]-d,centre[1]-d]]]};
-     const ring=ringOf(bufferedBoundary(box,500));
-     // North and east faces: distance from the box edge to the buffer edge along one axis.
-     const north=Math.max(...ring.map(p=>p[1])),east=Math.max(...ring.map(p=>p[0]));
-     return [[500,geodesic([centre[0],centre[1]+d],[centre[0],north])],
-             [500,geodesic([centre[0]+d,centre[1]],[east,centre[1]])]];
    }},
   {widget:'donut_geomask',where:'src/geoprivacy.ts#moveDonut',how:'great circle, mean radius 6371008.8 m',
    measure(centre){

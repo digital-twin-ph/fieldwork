@@ -5,6 +5,9 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.158.0 — In development
 
+- **Buffer study area's remaining code is removed.** It was retired in 0.37.0; a saved workflow holding one is still
+  refused by name. Its manual page, its run, its default and its tests go; the validation lab's check of it stays as the
+  record of what was checked.
 - **A long table in a dialog scrolls.** A Before or After table of more than 20 rows shows 20 at a time, its header
   held, in every configuration dialog and in Tabular data's; the previews that showed the first 5 or 12 rows, or
   pages of 6 to 12, show the whole table.

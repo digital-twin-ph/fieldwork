@@ -218,6 +218,9 @@ A long read can name its value, as a wide read could: DR Congo's census read lon
 shows the rows as stored, one per key with its value, then the same table as a crosstab. The column a wide read makes
 for the variables' names is said as made by the read wherever it is offered.
 
+Census tables gains Brazil (2022), Kenya (2019), Malawi (2018), Nigeria (2006) and Sierra Leone (2015), eight countries
+in all, each with its terms as found and its checks.
+
 **DHIS2**, a fifth source: a server's analytics read with a token from Credentials, long, with a dictionary of its
 columns, and the step keeping the server and the request.
 

@@ -20,6 +20,10 @@ shown in a local build is not a claim that it has been published.
   dictionary of its columns; the step keeps the server, the request and when it was read. The server must list this
   page's address in its CORS allowlist. Tried against DHIS2 2.41.11 with Sierra Leone's demonstration database, run in
   Docker on this computer. Credentials accept plain `http` for a server on this computer's loopback only.
+- **Five more countries in Census tables**, curated with stated provenance: Brazil 2022 (5,570 municipalities, IBGE's
+  first results), Kenya 2019 (349 sub-counties by sex), Malawi 2018 (districts and cities by sex), Nigeria 2006 (774 LGAs
+  by sex, the latest census) and Sierra Leone 2015 (14 districts and 164 chiefdoms by sex). Each states the copy read,
+  its terms as found and every check; Kenya's and Malawi's copies are from HDX, under HDX's labels.
 - **Tabular data's long reads.** A long read can name its value, so DR Congo's census read long is *population* beside
   three models, not *total*; it reopens with the value column and keys it was saved with. **After** shows the rows as
   stored, then the crosstab. The column a wide read makes for the variables' names says so.

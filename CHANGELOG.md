@@ -20,6 +20,9 @@ shown in a local build is not a claim that it has been published.
   dictionary of its columns; the step keeps the server, the request and when it was read. The server must list this
   page's address in its CORS allowlist. Tried against DHIS2 2.41.11 with Sierra Leone's demonstration database, run in
   Docker on this computer. Credentials accept plain `http` for a server on this computer's loopback only.
+- **What a boundary level holds.** Study area's Check this level says the level's own name where geoBoundaries states
+  one, and its units beside each level of the country's census in Census tables: Malawi's 32 ADM2 units are its 28
+  districts and 4 cities; where no census level has as many, it says to check what the level holds first.
 - **Five more countries in Census tables**, curated with stated provenance: Brazil 2022 (5,570 municipalities, IBGE's
   first results), Kenya 2019 (349 sub-counties by sex), Malawi 2018 (districts and cities by sex), Nigeria 2006 (774 LGAs
   by sex, the latest census) and Sierra Leone 2015 (14 districts and 164 chiefdoms by sex). Each states the copy read,

@@ -18,8 +18,13 @@ const countries=readdirSync(repo).filter(d=>/^[A-Z]{3}$/.test(d)&&existsSync(new
   const stem=p.offered?.table??'counts';
   const csv=stem==='counts'?'counts.csv':`${stem}.csv`,dict=stem==='counts'?'columns.csv':`${stem}-columns.csv`;
   const rows=readFileSync(new URL(`${iso}/${csv}`,repo),'utf8').trim().split('\n').length-1;
+  // THE LEVELS AS PRINTED, each with how many units it holds (2026-11-20), so a boundary level can be set beside them.
+  const levels=[];{const lines=readFileSync(new URL(`${iso}/counts.csv`,repo),'utf8').trim().split('\n');
+    const at=lines[0].split(',').indexOf('level');
+    if(at>=0)for(const line of lines.slice(1)){const name=line.split(',')[at];const seen=levels.find(l=>l.level===name);
+      if(seen)seen.units++;else levels.push({level:name,units:1});}}
   return {iso3:iso,country:p.country,census:p.census,referenceDate:p.reference_date,
-    publisher:p.source?.publisher??'',licence:p.licence?.stated??'',rows,
+    publisher:p.source?.publisher??'',licence:p.licence?.stated??'',rows,levels,
     reviewed:{last:p.reviewed?.last??'',nextDue:p.reviewed?.next_due??''},
     counts:file(`${iso}/${csv}`),
     ...(existsSync(new URL(`${iso}/${dict}`,repo))?{columns:file(`${iso}/${dict}`)}:{}),

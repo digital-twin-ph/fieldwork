@@ -49,7 +49,9 @@
    "src/figure-words.ts",
    "src/workflow-template.ts",
    "src/boundaries-held.ts",
-   "examples/boundaries/catalogue.json"
+   "examples/boundaries/catalogue.json",
+   "src/boundary-levels.ts",
+   "examples/census-tables/catalogue.json"
   ],
   "definition": "src/core.ts#TYPES"
  },
@@ -62,7 +64,7 @@
  "changes": [
   {
    "kind": "minor",
-   "description": "A level held in digital-twin-ph/boundaries is read from there, at the commit this version pins, each file checked by digest and kept on this device, before geoBoundaries is asked: the worked examples' ten levels, geoBoundaries' own description and features cut into parts of at most 1 MB. Where the held copy cannot be read, geoBoundaries is asked as before. The study area records where its shapes were read."
+   "description": "A level held in digital-twin-ph/boundaries is read from there, at the commit this version pins, each file checked by digest and kept on this device, before geoBoundaries is asked: the worked examples' ten levels, geoBoundaries' own description and features cut into parts of at most 1 MB. Where the held copy cannot be read, geoBoundaries is asked as before. The study area records where its shapes were read. Check this level says what the level holds: its own name where geoBoundaries states one (not \"Unknown\"), and its units beside each level of the country's census in Census tables, as printed, saying where no level, or two together, has as many."
   }
  ],
  "evidence": {

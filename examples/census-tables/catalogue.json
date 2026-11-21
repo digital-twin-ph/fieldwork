@@ -11,6 +11,20 @@
    "publisher": "Instituto Brasileiro de Geografia e Estatística (IBGE), Diretoria de Pesquisas, Coordenação Técnica do Censo Demográfico",
    "licence": "none found",
    "rows": 5598,
+   "levels": [
+    {
+     "level": "país",
+     "units": 1
+    },
+    {
+     "level": "UF",
+     "units": 27
+    },
+    {
+     "level": "município",
+     "units": 5570
+    }
+   ],
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
@@ -34,6 +48,16 @@
    "publisher": "Statistics Botswana",
    "licence": "Statistics Botswana's terms of use: use as the user wishes, acknowledging Statistics Botswana as the source of the basic data",
    "rows": 28,
+   "levels": [
+    {
+     "level": "country",
+     "units": 1
+    },
+    {
+     "level": "census district",
+     "units": 28
+    }
+   ],
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
@@ -61,6 +85,24 @@
    "publisher": "République du Zaïre, Ministère du Plan et Aménagement du Territoire, Institut National de la Statistique",
    "licence": "none stated",
    "rows": 26,
+   "levels": [
+    {
+     "level": "pays",
+     "units": 1
+    },
+    {
+     "level": "region",
+     "units": 9
+    },
+    {
+     "level": "sous-region",
+     "units": 31
+    },
+    {
+     "level": "ville",
+     "units": 13
+    }
+   ],
    "reviewed": {
     "last": "2026-11-19",
     "nextDue": "2027-05-19"
@@ -88,6 +130,16 @@
    "publisher": "Kenya National Bureau of Statistics (KNBS)",
    "licence": "Public Domain / No restrictions (CC0): HDX's licence label, chosen by the uploading account, not a KNBS statement",
    "rows": 350,
+   "levels": [
+    {
+     "level": "sub-county",
+     "units": 349
+    },
+    {
+     "level": "county",
+     "units": 1
+    }
+   ],
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
@@ -111,6 +163,24 @@
    "publisher": "National Statistical Office (NSO), Malawi",
    "licence": "none stated by the NSO; HDX labels the dataset 'Creative Commons Attribution International (CC BY)'",
    "rows": 36,
+   "levels": [
+    {
+     "level": "country",
+     "units": 1
+    },
+    {
+     "level": "region",
+     "units": 3
+    },
+    {
+     "level": "district",
+     "units": 28
+    },
+    {
+     "level": "city",
+     "units": 4
+    }
+   ],
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
@@ -134,6 +204,24 @@
    "publisher": "National Population Commission, Abuja, Nigeria, April 2010",
    "licence": "none stated",
    "rows": 813,
+   "levels": [
+    {
+     "level": "country",
+     "units": 1
+    },
+    {
+     "level": "state",
+     "units": 37
+    },
+    {
+     "level": "lga",
+     "units": 774
+    },
+    {
+     "level": "disputed areas",
+     "units": 1
+    }
+   ],
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
@@ -157,6 +245,20 @@
    "publisher": "National Institute of Statistics of Rwanda (NISR)",
    "licence": "CC BY 4.0",
    "rows": 30,
+   "levels": [
+    {
+     "level": "country",
+     "units": 1
+    },
+    {
+     "level": "province",
+     "units": 5
+    },
+    {
+     "level": "district",
+     "units": 30
+    }
+   ],
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
@@ -184,6 +286,24 @@
    "publisher": "Statistics Sierra Leone (Stats SL), Freetown, December 2016",
    "licence": "Statistics Sierra Leone's Open License Agreement: a \"non-exclusive, worldwide, royalty-free license to copy, modify, translate, publish, adapt, distribute\", for commercial and non-commercial use, on condition of the notice it prescribes. Not a named standard licence.",
    "rows": 183,
+   "levels": [
+    {
+     "level": "country",
+     "units": 1
+    },
+    {
+     "level": "province",
+     "units": 4
+    },
+    {
+     "level": "district",
+     "units": 14
+    },
+    {
+     "level": "chiefdom",
+     "units": 164
+    }
+   ],
    "reviewed": {
     "last": "2026-11-20",
     "nextDue": "2027-05-20"

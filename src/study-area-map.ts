@@ -592,6 +592,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
           +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'');return;
       }
       pickedLevel=level;
+      const checked=(await import('./boundary-levels.js')).levelCheck(iso,level);
       // The SIZE, before the wait rather than after it. The level check exists so a practitioner
       // can see how large a level is first, and it reported "189 units, 774 vertices each on
       // average" without ever turning that into megabytes. DRC ADM2 is 6,386,010 bytes and took
@@ -605,7 +606,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       // failure to find them.
       const estimate=level.units*level.meanVertices*ESTIMATED_BYTES_PER_VERTEX;
       const summary=selectionSummary(level,[]).replace(/^\d+ of /,'');
-      const describe=(lead:string)=>`${lead} \u00b7 ${level.units} units \u00b7 ${level.meanVertices} vertices each on average \u00b7 ${summary}`;
+      const describe=(lead:string)=>`${lead} \u00b7 ${level.units} units \u00b7 ${level.meanVertices} vertices each on average \u00b7 ${summary} ${checked}`;
       boundaryStatus.textContent=describe(`Downloading about ${(estimate/1e6).toFixed(1)} MB of shapes\u2026`);
       const shapes=held
         ?await heldShapes(held,(read,total)=>{boundaryStatus.textContent=`Reading ${countryName(iso)} ${adm} from the boundaries Fieldwork holds \u2014 `
@@ -637,7 +638,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       // and feedback nobody can read is not feedback. It belongs in the sentence that stays.
       boundaryStatus.textContent=`Downloaded ${(shapes.length/1e6).toFixed(1)} MB \u00b7 ${countryName(iso)} (${iso}) `
         +`\u00b7 ${pickedUnits.length} units ready. Choose the ones you need.`
-        +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'');
+        +(near.length?` Note: ${near.join(', ')} also match what you typed.`:'')+` ${checked}`;
     }catch{boundaryStatus.textContent='That boundary could not be reached. The study area can still be drawn.';}
   };
   // Each option's value is the unit's id where ids are unique, its position otherwise (`unitOptions`), so a choice

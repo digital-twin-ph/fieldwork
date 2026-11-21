@@ -60,6 +60,12 @@ country reads the list.
 4. Press **Apply study area**.
 5. Give it a label that says what it is. The label travels into the receipts.
 
+**What a level holds.** geoBoundaries numbers its levels ADM1, ADM2 and so on, and the number says nothing of the units:
+in one country ADM2 holds counties, in another districts. **Check this level** says the level's own name where
+geoBoundaries states one, and, where Census tables holds the country's census, how many units each census level counts
+beside this level's. Where no census level, or two together, has as many units, it says so: check what the level holds
+before relating the census to it.
+
 Changing the shape later keeps the old one: the Inspector lists every extent you have kept and
 restores any of them, which records a new extent carrying the old shape rather than overwriting
 anything.
@@ -140,6 +146,9 @@ new, read by figures as {units}; an edit on the map no longer drops the countrie
 
 A level held in the boundaries repository, the worked examples' ten, is read from there, pinned and checked by digest,
 and kept on this device, before geoBoundaries is asked. The study area records where its shapes were read.
+
+**Check this level** says what the level holds: its own name where geoBoundaries states one, and its units beside each
+level of the country's census in Census tables, saying where none has as many.
 
 ---
 

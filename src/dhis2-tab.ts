@@ -7,7 +7,7 @@ import {serverBase,systemVersion,searchItems,orgUnitLevels,analyticsTable,DHIS2_
 export interface Dhis2Kit {
   esc:(s:string)=>string;
   /** The DHIS2 tokens in Credentials, by name: never the secrets. Empty while Credentials are locked. */
-  tokens:()=>{ref:string;label:string}[];
+  tokens:()=>{ref:string;label:string;origin:string}[];
   /** One token's secret for a server's origin, to make a request; throws where none is held for it. */
   resolve:(ref:string,origin:string)=>string;
   /** The table read, handed to the dialog's own reading, with where it came from. */
@@ -36,7 +36,7 @@ export function wireDhis2(root:ParentNode,kit:Dhis2Kit,fail:(e:unknown)=>void):v
   const says=q<HTMLElement>('#dhis2-says'),token=q<HTMLSelectElement>('#dhis2-token'),address=q<HTMLInputElement>('#dhis2-address');
   const chosen=new Map<string,Dhis2Item>();let connection:Dhis2Connection|undefined;
   const fillTokens=()=>{const held=kit.tokens();
-    token.innerHTML=held.length?held.map(t=>`<option value="${kit.esc(t.ref)}">${kit.esc(t.label)}</option>`).join('')
+    token.innerHTML=held.length?held.map(t=>`<option value="${kit.esc(t.ref)}">${kit.esc(`${t.label} · ${t.origin}`)}</option>`).join('')
       :'<option value="">No DHIS2 token in Credentials, or they are locked</option>';};
   fillTokens();token.onfocus=fillTokens;
   const showItems=(found:Dhis2Item[])=>{
@@ -50,8 +50,16 @@ export function wireDhis2(root:ParentNode,kit:Dhis2Kit,fail:(e:unknown)=>void):v
   q<HTMLButtonElement>('#dhis2-connect').onclick=async()=>{
     try{
       const base=serverBase(address.value);
-      if(!token.value)throw new Error('Add a DHIS2 token in Credentials first: provider dhis2, origin the server’s address.');
-      const c={base,token:kit.resolve(token.value,new URL(base).origin)};
+      // THE TOKENS AS THEY ARE NOW (2026-11-20): one added or unlocked with this dialog open was not listed until the list
+      // was clicked, and Connect said there was none.
+      const was=token.value;fillTokens();if(was&&[...token.options].some(o=>o.value===was))token.value=was;
+      if(!token.value)throw new Error('No DHIS2 token to use. Open Credentials: unlock them, or add the token with provider dhis2 and, as its origin, '
+        +`${new URL(base).origin}.`);
+      // THE TOKEN IS FOR ONE ADDRESS: said plainly where it is for another, which Credentials only call "unavailable".
+      const held=kit.tokens().find(t=>t.ref===token.value),origin=new URL(base).origin;
+      if(held&&held.origin!==origin)throw new Error(`The token “${held.label}” is for ${held.origin}, not ${origin}. `
+        +`Type that address, or add the token in Credentials with ${origin} as its origin.`);
+      const c={base,token:kit.resolve(token.value,origin)};
       says.textContent=`Connecting to ${new URL(base).host}…`;
       const [version,levels]=await Promise.all([systemVersion(c),orgUnitLevels(c)]);
       connection=c;

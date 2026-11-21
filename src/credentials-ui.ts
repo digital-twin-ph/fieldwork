@@ -7,7 +7,7 @@ export interface CredentialAccess {
  resolve(ref:string,provider:string,origin:string):string;
  readonly unlocked:boolean;
  /** Reference and label only, for choosing in a node. Never the secret. */
- references():{ref:string;provider:string;label:string;repository?:string}[];
+ references():{ref:string;provider:string;label:string;origin:string;repository?:string}[];
  /** Records which repository a GitHub token is for. The file must be downloaded again to keep it. */
  setRepository(ref:string,repository:string):void;
  /** Milliseconds until they lock for want of use, or null while locked. */
@@ -131,7 +131,7 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
   resolve:(ref,provider,origin)=>{const secret=session.resolve(ref,provider,origin);
    if(session.lastUsed-extendedAt>30_000){extendedAt=session.lastUsed;void extend('credentials',session.lastUsed+session.idleMs);}return secret;},
   get unlocked(){return session.unlocked;},
-  references:()=>session.list().map(({ref,provider,label,repository})=>({ref,provider,label,...(repository?{repository}:{})})),
+  references:()=>session.list().map(({ref,provider,label,origin,repository})=>({ref,provider,label,origin,...(repository?{repository}:{})})),
   setRepository:(ref,repository)=>{session.setRepository(ref,repository);dirty=true;},
   get untilLock(){return session.unlocked?Math.max(0,session.lastUsed+session.idleMs-Date.now()):null;},
   keepOpen:()=>{expire();session.touch();if(session.unlocked){extendedAt=session.lastUsed;void extend('credentials',session.lastUsed+session.idleMs);}},

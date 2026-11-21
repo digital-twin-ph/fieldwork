@@ -6318,7 +6318,7 @@ function tableKit():TableKit{
     keepRows:data=>keepDataset(tableDataKey(data),data),keepDictionary:dictionary=>keepDataset(dictionaryKeyOf(dictionary.sha256),dictionary),
     keepSaved:edit=>change(edit,{requirePersistence:true})!==false,
     listDictionary:(id,dictionary,filename)=>listDictionary(id,dictionary,filename),
-    dhis2:{tokens:()=>credentials?.unlocked?credentials.references().filter(r=>r.provider==='dhis2').map(r=>({ref:r.ref,label:r.label})):[],
+    dhis2:{tokens:()=>credentials?.unlocked?credentials.references().filter(r=>r.provider==='dhis2').map(r=>({ref:r.ref,label:r.label,origin:r.origin})):[],
       resolve:(ref,origin)=>{if(!credentials?.unlocked)throw new Error('Unlock Credentials first.');return credentials.resolve(ref,'dhis2',origin);}}};
 }
 function prepareRasterStep(n:WorkflowNode<'raster_input'>){

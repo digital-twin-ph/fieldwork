@@ -39,7 +39,7 @@ export interface TableImport {data:DataTable; source:DataTableSource; keys:strin
  *  than in the file -- whether the source is converted on each run -- which can be applied without reading a file again. */
 export interface TableFrame {step?:string; convertOnRun?:boolean; hasSource?:boolean; onConvertOnRun?:(on:boolean)=>boolean;
   /** The DHIS2 tokens in Credentials, by name, and one resolved for a server, for the DHIS2 tab. */
-  dhis2?:{tokens:()=>{ref:string;label:string}[];resolve:(ref:string,origin:string)=>string}}
+  dhis2?:{tokens:()=>{ref:string;label:string;origin:string}[];resolve:(ref:string,origin:string)=>string}}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
 export interface TableReopen extends TableSelection {wide?:WideChoice; distinctValuesFor?:string[]; valueColumn?:string;
   /** Where the table is published, shown in the URL box and the box opened, so a reopened step says where it reads from. */

@@ -84,3 +84,15 @@ test('a server that refuses the token says so, naming where to fix it',async({pa
   await page.locator('#dhis2-connect').click();
   await expect(page.locator('#table-error')).toContainText('refused the token (401)');
 });
+
+test('a token for another address is named, with the address it is for',async({page})=>{
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());await page.goto('/?example=blank');
+  await addToken(page);
+  await page.locator('#node-library [data-add="table_input"]').click();
+  await page.locator('#configure-step').click();
+  await page.locator('#table-tab-dhis2').click();
+  await expect(page.locator('#dhis2-token')).toContainText(ORIGIN);
+  await page.locator('#dhis2-address').fill('http://127.0.0.1:8080');
+  await page.locator('#dhis2-connect').click();
+  await expect(page.locator('#table-error')).toContainText(`is for ${ORIGIN}, not http://127.0.0.1:8080`);
+});

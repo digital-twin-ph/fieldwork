@@ -21,7 +21,7 @@ import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,isWrittenDateTime,DIFFERENCE_UNITS,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
   type AuthoredOtherwise,bandRules,targetRules,isWordComparator} from './authored-rules.js';
-import {checkRulesetJson,rulesetText,autoBracket,type JsonProblem,type RulesetFile} from './ruleset-json.js';
+import {checkRulesetJson,rulesetText,autoBracket,highlightJson,type JsonProblem,type RulesetFile} from './ruleset-json.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import {openConfigDialog,type ConfigSections} from './config-dialog.js';
 import {DATE_FORMS,CLOCKS,type SubjectRecord} from './authored-application.js';
@@ -228,6 +228,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     // THE JSON VIEW (2026-11-21): the same ruleset as text, checked as it is typed. `jsonText` is the text being edited,
     // kept while it is invalid; undefined, the view writes it afresh from the rules.
     let view:'rules'|'json'='rules',jsonText:string|undefined,jsonProblems:JsonProblem[]=[],jsonScroll=0;
+    // COLOURS IN THE JSON VIEW, on unless a person turned them off on this device (a convenience, kept where it can be).
+    let colour=true;try{colour=localStorage.getItem('fieldwork-json-colour')!=='off';}catch{/* storage unavailable: colours on */}
     // EACH COLUMN'S DEFAULT, where no rule gave it a value (experiment 192).
     let otherwise:AuthoredOtherwise[]=structuredClone(authored.otherwise??[]);
     const kindOf=(predicate:string)=>choices.find(c=>c.predicate===predicate)?.kind??'term';
@@ -604,8 +606,10 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
             +jsonProblems.map(p=>`<li><button type="button" class="text-button" data-json-line="${p.line}">⚠ Line ${p.line}${p.column?`, column ${p.column}`:''}:</button> ${esc(p.says)}</li>`).join('')+'</ul>'
           :'<p class="json-ok">✓ Valid: these are the rules the Rules view shows.</p>';
         return {settings:`<p class="rule-title"><strong>${esc(authored.title)}</strong></p>${switcher}`
-          +`<div class="json-editor"><pre class="json-gutter" aria-hidden="true">${gutter}</pre>`
-          +`<textarea id="rule-json" spellcheck="false" autocomplete="off" aria-label="The ruleset as JSON" aria-describedby="rule-json-problems"${review?' readonly data-keep-enabled':''}>${esc(text)}</textarea></div>`
+          +`<label class="json-colour-toggle"><input type="checkbox" id="rule-json-colour" data-keep-enabled${colour?' checked':''}> Colours</label>`
+          +`<div class="json-editor${colour?' json-coloured':''}"><pre class="json-gutter" aria-hidden="true">${gutter}</pre><div class="json-stack">`
+          +(colour?`<div class="json-colour" aria-hidden="true">${highlightJson(text,bad)}</div>`:'')
+          +`<textarea id="rule-json" spellcheck="false" autocomplete="off" wrap="off" aria-label="The ruleset as JSON" aria-describedby="rule-json-problems"${review?' readonly data-keep-enabled':''}>${esc(text)}</textarea></div></div>`
           +`<div id="rule-json-problems" aria-live="polite">${said}</div>`,
           preview:previewMarkup(),...(jsonProblems.length?{message:{tone:'refusal' as const,text:`Line ${jsonProblems[0]!.line}: ${jsonProblems[0]!.says}`},blocked:true}:{})};
       }
@@ -657,8 +661,16 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;view='json';takeJson(await file.text());});
       const area=root.querySelector<HTMLTextAreaElement>('#rule-json'),gutter=root.querySelector<HTMLElement>('.json-gutter');
       if(area){
-        area.scrollTop=jsonScroll;if(gutter)gutter.scrollTop=jsonScroll;
-        area.addEventListener('scroll',()=>{jsonScroll=area.scrollTop;if(gutter)gutter.scrollTop=area.scrollTop;});
+        const layer=root.querySelector<HTMLElement>('.json-colour');
+        const follow=()=>{if(gutter)gutter.scrollTop=area.scrollTop;if(layer){layer.scrollTop=area.scrollTop;layer.scrollLeft=area.scrollLeft;}};
+        area.scrollTop=jsonScroll;follow();
+        area.addEventListener('scroll',()=>{jsonScroll=area.scrollTop;follow();});
+        // RECOLOURED ON EVERY KEY, checked after a pause: the colours follow the typing, the problems the text.
+        const recolour=()=>{if(layer){layer.innerHTML=highlightJson(area.value,new Set(jsonProblems.map(p=>p.line)));follow();}};
+        area.addEventListener('input',recolour);
+        root.querySelector<HTMLInputElement>('#rule-json-colour')?.addEventListener('change',e=>{
+          colour=(e.target as HTMLInputElement).checked;try{localStorage.setItem('fieldwork-json-colour',colour?'on':'off');}catch{/* kept for this dialog only */}
+          jsonText=area.value;render();});
         let pause:ReturnType<typeof setTimeout>|undefined;
         const typed=()=>{clearTimeout(pause);pause=setTimeout(()=>takeJson(area.value),400);};
         area.addEventListener('input',typed);
@@ -666,7 +678,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           if(review||e.metaKey||e.ctrlKey||e.altKey)return;
           const done=autoBracket(area.value,area.selectionStart,area.selectionEnd,e.key);
           if(!done)return;e.preventDefault();
-          area.value=done.text;area.setSelectionRange(done.caret,done.caretEnd??done.caret);typed();});
+          area.value=done.text;area.setSelectionRange(done.caret,done.caretEnd??done.caret);recolour();typed();});
         root.querySelectorAll<HTMLButtonElement>('[data-json-line]').forEach(b=>b.onclick=()=>{
           const line=Number(b.dataset.jsonLine),at=area.value.split('\n').slice(0,line-1).reduce((n,l)=>n+l.length+1,0);
           area.focus();area.setSelectionRange(at,at);

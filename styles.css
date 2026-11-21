@@ -1800,11 +1800,29 @@ tr.detect-signal-row td{font-weight:700}
 .rule-view-switch{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
 .json-editor{display:grid;grid-template-columns:auto 1fr;border:1px solid var(--line,#ccc);border-radius:6px;overflow:hidden;background:var(--surface-raised,#fff)}
 .json-gutter{margin:0;padding:10px 8px;text-align:right;font:16px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--text-muted,#555);
-  background:var(--surface-tint,#f2f4f2);overflow:hidden;max-height:32em;user-select:none;white-space:pre}
+  background:var(--surface-tint,#f2f4f2);overflow:hidden;height:0;min-height:100%;box-sizing:border-box;user-select:none;white-space:pre}
 .json-gutter .json-bad{color:var(--danger-1,#a32020);font-weight:700}
-#rule-json{display:block;justify-self:stretch;max-width:none;border-radius:0;margin:0;padding:10px;border:0;resize:vertical;min-height:24em;max-height:32em;width:100%;box-sizing:border-box;
+#rule-json{display:block;justify-self:stretch;max-width:none;border-radius:0;margin:0;padding:10px;border:0;resize:vertical;height:28em;min-height:12em;max-height:60em;width:100%;box-sizing:border-box;
   font:16px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--text,#111);background:transparent;white-space:pre;overflow:auto;tab-size:2}
 #rule-json:focus{outline:2px solid var(--accent,#176b59);outline-offset:-2px}
 .json-problems{margin:6px 0;padding-left:1.2em}
 .json-problems li,.json-problems .text-button{font-size:16px;line-height:1.5}
 .json-ok{font-size:16px;color:var(--accent,#176b59)}
+/* COLOUR-KEYED JSON (2026-11-21). Each colour meets 4.5:1 on the editor's ground and on a problem line's tint, in both
+   themes (tests/json-colours.test.mjs reads these lines). Names are bold as well, so the structure does not rest on colour. */
+:root{--json-key:#0b4f8a;--json-string:#0e6b3b;--json-number:#8a4000;--json-literal:#6b2fa0;--json-punct:#555555;--json-ground:#ffffff;--json-bad-ground:#fdecea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--json-key:#8cc8ff;--json-string:#93e0a8;--json-number:#ffbf80;--json-literal:#d2b0ff;--json-punct:#a9b3ae;--json-ground:#19211e;--json-bad-ground:#3a1f1c}}
+:root[data-theme="dark"]{--json-key:#8cc8ff;--json-string:#93e0a8;--json-number:#ffbf80;--json-literal:#d2b0ff;--json-punct:#a9b3ae;--json-ground:#19211e;--json-bad-ground:#3a1f1c}
+.json-colour-toggle{display:inline-flex;align-items:center;gap:6px;font-size:16px;margin:0 0 8px}
+.json-stack{position:relative;min-width:0}
+.json-colour{position:absolute;inset:0;box-sizing:border-box;margin:0;padding:10px;font:16px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre;overflow:hidden;
+  pointer-events:none;color:var(--text,#111);background:var(--json-ground);tab-size:2}
+.json-line{min-height:1.5em}
+.json-line-bad{background:var(--json-bad-ground)}
+.json-key{color:var(--json-key);font-weight:700}
+.json-string{color:var(--json-string)}
+.json-number{color:var(--json-number)}
+.json-literal{color:var(--json-literal)}
+.json-punct{color:var(--json-punct)}
+.json-coloured #rule-json{color:transparent;caret-color:var(--text,#111);background:transparent;position:relative}
+.json-coloured #rule-json::selection{background:rgba(23,107,89,.25);color:transparent}

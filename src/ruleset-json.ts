@@ -155,3 +155,26 @@ export function autoBracket(text:string,start:number,end:number,key:string):{tex
   if(key==='Tab'&&start===end)return {text:`${before}  ${after}`,caret:start+2};
   return undefined;
 }
+
+/** COLOUR-KEYED JSON (the practitioner, 2026-11-21: "color keyed JSON possible?"): the text as lines of marked tokens, drawn
+ *  behind the transparent text being typed. Names bold as well as coloured, so the structure does not rest on colour; a
+ *  line with a problem tinted, besides its sign in the margin. Pure, so it is tested without a page. */
+export function highlightJson(text:string,badLines:ReadonlySet<number>=new Set()):string{
+  const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const token=/("(?:\\.|[^"\\\n])*"?)(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b|([{}[\],:])/g;
+  return text.split('\n').map((line,k)=>{
+    let out='',last=0;
+    for(const m of line.matchAll(token)){
+      out+=esc(line.slice(last,m.index));
+      const [whole,str,colon,num,lit,punct]=m;
+      out+=str!==undefined
+        ?(colon!==undefined?`<span class="json-key">${esc(str)}</span><span class="json-punct">${esc(colon)}</span>`:`<span class="json-string">${esc(str)}</span>`)
+        :num!==undefined?`<span class="json-number">${num}</span>`
+        :lit!==undefined?`<span class="json-literal">${lit}</span>`
+        :`<span class="json-punct">${esc(punct!)}</span>`;
+      last=m.index!+whole.length;
+    }
+    out+=esc(line.slice(last));
+    return `<div class="json-line${badLines.has(k+1)?' json-line-bad':''}">${out||'​'}</div>`;
+  }).join('');
+}

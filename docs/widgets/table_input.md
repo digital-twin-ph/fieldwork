@@ -81,11 +81,16 @@ at in `level`. Their names are the census's spelling: a map's may differ, and Re
 
 ## Tide gauges
 
-The tab **Tide gauges** lists the coastal countries in
-[coastal-sea-level](https://github.com/digital-twin-ph/coastal-sea-level), with a map of every gauge above them: filled
-where PSMSL computes a long-term trend, hollow where it holds the record only. The map is drawn here, with no network.
+The tab **Tide gauges** holds the coastal countries in
+[coastal-sea-level](https://github.com/digital-twin-ph/coastal-sea-level), on a map of every gauge: filled where PSMSL
+computes a long-term trend, hollow where it holds the record only. The map is drawn here, with no network.
 
-Choose a country. Its index of its gauges is read, one row per station, with the data dictionary every country shares,
+Choose a country on the map, by its outline or one of its gauges, or from the **Country** list above it. The map closes
+in on the country, and the line beneath says how many gauges it has, how many with a trend, and its latest year;
+**The whole map** goes back. Cabo Verde, Mauritius, São Tomé and Príncipe and the Seychelles are too small to have an
+outline at this scale, so their gauges, or the list, choose them.
+
+Press **Read** for the country. Its index of its gauges is read, one row per station, with the data dictionary every country shares,
 fetched at the commit this version of Fieldwork names and checked against its digest. Each row gives the station's ID
 and name at PSMSL, its position, the years its record covers and how complete it is, the trend PSMSL computes where it
 computes one, its numbers at UHSLC, and how fast the land moves at the nearest GNSS station within 15 km, where one is.
@@ -210,6 +215,13 @@ after (`fw:CellEdit`). Experiment 214.
 It does not choose between rows that disagree. The table stays as read until a later step changes it.
 
 ## History
+
+### 2026-11-20 · Tide gauges chosen on the map; DHIS2 says what is missing (0.15.0)
+
+**Tide gauges**: a country is chosen on the map, by its outline or one of its gauges, or from a short list, where it
+was a long list beneath the map. **DHIS2**: an empty or partial server address is named, where it was "Invalid URL";
+the tokens are read again on **Connect**, each shown with the address it is for, and a token for another address is
+named with the address it is for.
 
 ### 2026-11-20 · Tide gauges (0.14.0)
 

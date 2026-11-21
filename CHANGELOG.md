@@ -5,6 +5,13 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.156.0 — In development
 
+- **Tide gauges chosen on the map.** Click a country's outline, or one of its gauges for an island too small to have one,
+  or choose it from a short list; the map closes in on it, and the line beneath offers to read its index. The long list
+  of countries beneath the map is gone.
+- **DHIS2 says what is missing.** An empty or partial server address is named, where it was "Invalid URL". Connect reads
+  the tokens again, each listed with the address it is for, and a token for another address is named. The Credentials
+  manual's token steps now say browser context, GET only, allowed referrers left empty.
+- **Delete removes a selected connection** every time; on 0.155.0 it could do nothing while the connection was selected.
 - **The live services checked weekly.** A workflow on GitHub runs the browser tests against the live services every
   Sunday and on demand, and opens an issue naming any test that fails. Pushes were already checked live by verify,
   which has no recorded copies; this covers the weeks a service changes and nothing is pushed.

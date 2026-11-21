@@ -897,12 +897,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.14.0",
+   "version": "0.15.0",
    "released": "2026-11-20",
    "changes": [
     {
      "kind": "minor",
-     "description": "Tide gauges, a fourth source: the coastal countries in digital-twin-ph/coastal-sea-level over a map of every gauge drawn with no network, each country's index of its gauges read with the shared data dictionary at a pinned commit and checked by digest. An index, not the archives' records. A column named id, or ending in _id, _code or _no, is offered as a key in a wide read though written in digits. A long read can name its value (\"total\" read as \"population\"), and reopens with its value column and keys as saved, where the guess had replaced them. After shows the rows as stored, then the same table as a crosstab. The column a wide read makes for the variables' names is said as made by the read. DHIS2, a fifth source: a server's analytics read with a personal access token from Credentials, by data, period and organisation unit, long, with a data dictionary of its columns, the step keeping the server, the request and when it was read. Census tables gains Brazil (2022), Kenya (2019), Malawi (2018), Nigeria (2006) and Sierra Leone (2015), offered as printed in the census's own units, each with its terms as found and its checks."
+     "description": "Tide gauges: a country is chosen on the map, by its outline from Natural Earth's countries or one of its gauges, or from a short list, and the map closes in on it, where it was a long list beneath the map. DHIS2: an empty or partial server address is named; the tokens are read again on Connect, each shown with the address it is for; a token for another address is named with the address it is for."
     }
    ],
    "breaking": false,

@@ -1662,12 +1662,25 @@ th .meaning{font-weight:400;white-space:normal}
 .gauges-map .gauge-dot{fill:#fff;stroke:#0f4a3d;stroke-width:1.6}
 .gauges-map .gauge-dot-trend{fill:#0f4a3d}
 .gauges-map figcaption{font-size:14px;margin-top:4px;color:var(--text-faint-1)}
+.gauges-map svg path,.gauges-map svg circle{vector-effect:non-scaling-stroke}
+.gauges-map .gauge-country{fill:#0f4a3d;fill-opacity:0;stroke:none;cursor:pointer}
+.gauges-map .gauge-country:hover{fill-opacity:.2}
+.gauges-map .gauge-country.gauge-chosen{fill-opacity:.3;stroke:#0f4a3d;stroke-width:1.5}
+.gauges-map .gauge-dot{cursor:pointer}
+.gauges-map .gauge-dot.gauge-chosen{stroke-width:2.4}
+.gauge-pick{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 12px}
+.gauge-pick select{max-width:100%}
+#gauge-chosen p{font-size:15px}
 :root[data-theme="dark"] .gauges-map .gauges-sea{fill:#1d2a30}
+:root[data-theme="dark"] .gauges-map .gauge-country{fill:#9fd8c4}
+:root[data-theme="dark"] .gauges-map .gauge-country.gauge-chosen{stroke:#9fd8c4}
 :root[data-theme="dark"] .gauges-map .gauge-dot{fill:#1d2a30;stroke:#9fd8c4}
 :root[data-theme="dark"] .gauges-map .gauge-dot-trend{fill:#9fd8c4}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .gauges-map .gauges-sea{fill:#1d2a30}
   :root:not([data-theme="light"]) .gauges-map .gauge-dot{fill:#1d2a30;stroke:#9fd8c4}
-  :root:not([data-theme="light"]) .gauges-map .gauge-dot-trend{fill:#9fd8c4}}
+  :root:not([data-theme="light"]) .gauges-map .gauge-dot-trend{fill:#9fd8c4}
+  :root:not([data-theme="light"]) .gauges-map .gauge-country{fill:#9fd8c4}
+  :root:not([data-theme="light"]) .gauges-map .gauge-country.gauge-chosen{stroke:#9fd8c4}}
 
 .identity-tabs button{font-size:15px;padding:7px 14px}
 .identity-tabs button.active{font-weight:700;border:1px solid var(--accent-4,var(--green))}

@@ -68,7 +68,8 @@ export function wireGauges(root:ParentNode,esc:(s:string)=>string,read:(c:GaugeC
     const c=GAUGES.countries.find(x=>x.iso3===iso);
     pick.value=c?iso:'';whole.hidden=!c;
     for(const el of svg.querySelectorAll<SVGElement>('[data-gauge-country]'))el.classList.toggle('gauge-chosen',el.dataset.gaugeCountry===iso);
-    if(!c){svg.setAttribute('viewBox',svg.dataset.whole!);chosen.innerHTML='';return;}
+    const size=(share:number)=>{for(const dot of svg.querySelectorAll<SVGCircleElement>('circle.gauge-dot'))dot.setAttribute('r',(3.2*share).toFixed(2));};
+    if(!c){svg.setAttribute('viewBox',svg.dataset.whole!);size(1);chosen.innerHTML='';return;}
     // Close in on the country and its gauges, with room around them, never narrower than a sixth of the whole map.
     const marks=[...svg.querySelectorAll<SVGGraphicsElement>(`[data-gauge-country="${iso}"]`)].map(el=>el.getBBox());
     const [,,W,H]=svg.dataset.whole!.split(' ').map(Number) as [number,number,number,number];
@@ -76,6 +77,8 @@ export function wireGauges(root:ParentNode,esc:(s:string)=>string,read:(c:GaugeC
     const w=Math.max(x1-x0,W/6)*1.3,h=Math.max(y1-y0,H/6)*1.3,cx=(x0+x1)/2,cy=(y0+y1)/2;
     const aspect=W/H,vw=Math.max(w,h*aspect),vh=vw/aspect;
     svg.setAttribute('viewBox',`${(cx-vw/2).toFixed(1)} ${(cy-vh/2).toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}`);
+    // The same size on screen at any closeness: a dot of the whole map's size, not six times it.
+    size(vw/W);
     chosen.innerHTML=`<p><strong>${esc(c.country)}</strong>: ${esc(count(c))} · ${c.withTrend} with a PSMSL trend · latest year ${c.lastYear}. `
       +`<span class="muted">${c.reviewed.nextDue&&c.reviewed.nextDue<today?'Review overdue since '+esc(c.reviewed.nextDue):'Next review '+esc(c.reviewed.nextDue)}.</span></p>`
       +`<p><button type="button" class="button" data-gauges="${esc(c.iso3)}">Read ${esc(c.country)}’s tide gauges</button></p>`;

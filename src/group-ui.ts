@@ -3,6 +3,7 @@
  *  and nothing reaches the workflow until Apply. The controls keep the ids they had in the Inspector, so a manual names
  *  the same control in its new place. */
 import type {DataTable} from './data-table.js';
+import {PREVIEW_ROWS} from './long-tables.js';
 import type {ParamsByType,Escape} from './types.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {groupWalkthrough} from './table-walkthroughs.js';
@@ -96,10 +97,10 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
         // BEFORE AND AFTER, as Apply ruleset's and Select rows' dialogs show them (2026-11-14: "the two total within
         // groups have no before and after preview"): the rows coming in, then the table these settings make.
         const preview=`<h4>Before: ${esc(view.sourceLabel)}, ${view.table.rows.length.toLocaleString()} rows</h4>`
-          +`<div class="group-before">${dataTableMarkup(view.table,esc,{pageSize:6})}</div>`
+          +`<div class="group-before">${dataTableMarkup(view.table,esc,{pageSize:PREVIEW_ROWS})}</div>`
           +`<h4>After</h4><p class="select-preview-count">${result.collapsedFrom.toLocaleString()} rows into <strong>${result.groups.toLocaleString()}</strong> groups`
           +`${result.shares?`, each with its ${esc(result.shares.name)}`:''}.</p>`
-          +`<div class="group-preview">${dataTableMarkup(result.table,esc,{pageSize:12})}</div>`;
+          +`<div class="group-preview">${dataTableMarkup(result.table,esc,{pageSize:PREVIEW_ROWS})}</div>`;
         const decisions=result.gaps.length&&!result.excluded
           ?`<p>${result.gaps.length} group${result.gaps.length===1?' holds':'s hold'} an empty cell and total${result.gaps.length===1?'s':''} to nothing known: `
             +result.gaps.slice(0,8).map(g=>`<strong>${esc(g.group)}</strong>`).join(', ')+(result.gaps.length>8?` and ${result.gaps.length-8} more`:'')
@@ -108,10 +109,10 @@ export function openGroupConfig(view:GroupConfigView,esc:Escape):void{
       }catch(error){return {settings,message:{tone:'refusal',text:error instanceof Error?error.message:String(error)},blocked:true};}
     },
     wire:(root,draft,redraw)=>{
-      if(shown)wireTablePages(root.querySelector<HTMLElement>('.group-preview'),shown,esc,{pageSize:12});
+      if(shown)wireTablePages(root.querySelector<HTMLElement>('.group-preview'),shown,esc,{pageSize:PREVIEW_ROWS});
       const showMe=root.querySelector<HTMLButtonElement>('#group-show-me');
       if(showMe)showMe.onclick=()=>openWalkthrough(groupWalkthrough({aggregate:draft.aggregate,excludeMissing:draft.excludeMissing}),esc,showMe);
-      if(shown&&view.table)wireTablePages(root.querySelector<HTMLElement>('.group-before'),view.table,esc,{pageSize:6});
+      if(shown&&view.table)wireTablePages(root.querySelector<HTMLElement>('.group-before'),view.table,esc,{pageSize:PREVIEW_ROWS});
       // THE KEPT COLUMNS ARE A LIST IN ORDER, and EVERY BOX IS READ ON ANY CHANGE, so several ticked at once -- as a
       // manual's step does -- are all kept: the order already kept, then any newly ticked in the order shown.
       const ticked=(attr:string)=>[...root.querySelectorAll<HTMLInputElement>(`[${attr}]`)].filter(b=>b.checked).map(b=>b.value);

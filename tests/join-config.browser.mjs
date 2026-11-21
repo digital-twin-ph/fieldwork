@@ -110,3 +110,29 @@ test('a table dropped on the area input is bound to the table input, and an area
   await expect.poll(async()=>(await saved()).some(e=>e.from==='area'&&e.to==='join'&&e.port==='area')).toBe(true);
   expect((await saved()).filter(e=>e.to==='join').length).toBe(2);
 });
+
+/** LONG TABLES SCROLL (the practitioner, 2026-11-21, on Nigeria's 774 LGAs): a table in a dialog of more than 20 rows
+ *  shows 20 at a time and scrolls with its header held, Before and After alike, rather than its first 12 rows. */
+test('a dialog’s Before and After tables of more than 20 rows show 20 at a time and scroll',async({page})=>{
+  const names=Array.from({length:30},(_,i)=>`District ${i+1}`);
+  const long=structuredClone(workflow);
+  const area=long.nodes.find(n=>n.id==='area'),census=long.nodes.find(n=>n.id==='census');
+  area.params.geometry={type:'MultiPolygon',coordinates:names.map((_,i)=>square(i))};
+  area.params.boundary={...area.params.boundary,unitID:names.join(', '),unitName:names.join(', '),units:names.map((name,i)=>({id:`D-${i}`,name}))};
+  census.params.data={...census.params.data,rowCount:30,rows:names.map((name,i)=>({key:{unit:name,geoboundaries_name:name},value:i}))};
+  await page.route(/tile\.openstreetmap\.org|basemaps|tiles/,route=>route.abort('failed'));
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'long.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(long))});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="join"]').click({timeout:45000});
+  await page.locator('#configure-step').click();
+  const boxes=page.locator('#join-config .table-rows-scroll');
+  await expect(boxes).toHaveCount(3);
+  for(const box of await boxes.all()){
+    const seen=await box.evaluate(el=>{const head=el.querySelector('thead').offsetHeight,row=el.querySelector('tbody tr').offsetHeight;
+      el.scrollTop=el.scrollHeight;
+      return {rows:el.querySelectorAll('tbody tr').length,inView:Math.round((el.clientHeight-head)/row),scrolls:el.scrollHeight>el.clientHeight,
+        headHeld:Math.abs(el.querySelector('th').getBoundingClientRect().top-el.getBoundingClientRect().top)<2};});
+    expect(seen).toEqual({rows:30,inView:20,scrolls:true,headHeld:true});
+  }
+});

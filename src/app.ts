@@ -1,5 +1,6 @@
 import {MAX_GROUND_LAYERS,groundPort,isGroundPort} from './core.js';
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
+import {PREVIEW_ROWS} from './long-tables.js';
 import {boundsOf} from './health-facilities.js';
 import {openMapImageConfig} from './georeference-ui.js';
 import {openCountriesConfig} from './area-countries-ui.js';
@@ -3546,7 +3547,7 @@ function openChainsConfig(node:WorkflowNode<'transmission_chains'>){
       try{
         const found=transmissionChains(table,{id:draft.id,parent:draft.parent,...(draft.none?{none:draft.none}:{}),...(draft.date?{date:draft.date}:{})});
         return {settings,preview:`<p class="select-preview-count">${esc(found.sentence)}</p>`
-          +`<div class="chains-preview">${dataTableMarkup(found.table,esc,{pageSize:8})}</div>`};
+          +`<div class="chains-preview">${dataTableMarkup(found.table,esc,{pageSize:PREVIEW_ROWS})}</div>`};
       }catch(error){return {settings,message:{tone:'refusal',text:errorMessage(error)},blocked:true};}
     },
     wire:(root,draft,redraw)=>{

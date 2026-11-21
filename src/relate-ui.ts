@@ -1,5 +1,6 @@
 import type {RelateShape,MeasureShare,RelateRequest,ShiftColumn,RelateOutcome} from './relate-table.js';
 import {rateMultiplier,machinedNotes,matchWords,isNumberLabel,relateShape,decisionMatches,relateAtShifts} from './relate-table.js';
+import {PREVIEW_ROWS} from './long-tables.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {DEFAULT_SPELLING_THRESHOLD,type SpellingSettings} from './spelling-match.js';
 import type {DataTable} from './data-table.js';
@@ -291,7 +292,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
             +`<td>${count(c.matched)}</td><td${c.empty?' class="profile-flag"':''}>${count(c.empty)}</td></tr>`).join('')
           +'</tbody></table>'
           +`<p class="muted">${count(planned.table.rowCount)} rows, every one kept. This is the table the next step reads.</p>`
-          +`<div class="relate-preview">${(()=>{shown={table:planned.table,options:{pageSize:12,
+          +`<div class="relate-preview">${(()=>{shown={table:planned.table,options:{pageSize:PREVIEW_ROWS,
             roles:Object.fromEntries([...keysOn.filter(Boolean).map(k=>[k,'key'] as const),...planned.columns.map(c=>[c.column,'brought'] as const)])}};
             return dataTableMarkup(shown.table,esc,shown.options);})()}</div>`;
         return {settings,preview,decisions:'<p>Every row is kept. A row with no value at a shift has that column '
@@ -342,7 +343,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         +`<h4>${keeping?'The table \u00b7 every row kept':'The table \u00b7 matched rows only'}</h4>`
         +`<p class="muted">${count(table.rowCount)} row${table.rowCount===1?'':'s'}. This is the table the next step reads.</p>`
         +(wideFrame(table)?'':`<p class="muted">This table has ${table.keys.length} key columns, so it is shown as stored, one value per row.</p>`)
-        +`<div class="relate-preview">${(()=>{shown={table,options:{pageSize:12,
+        +`<div class="relate-preview">${(()=>{shown={table,options:{pageSize:PREVIEW_ROWS,
           roles:{...Object.fromEntries(keysOn.filter(Boolean).map(k=>[k,'key'])),[draft.bringAs.trim()||draft.bring]:'brought'} as ColumnRoles}};return dataTableMarkup(table,esc,shown.options);})()}</div>`;
 
       // DECISIONS: what happens to the rows that did not match, which the step will not decide.

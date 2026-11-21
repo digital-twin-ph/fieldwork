@@ -4,6 +4,7 @@
  *  what they keep are here, and nothing reaches the workflow until Apply. The controls keep the ids they had in the
  *  Inspector, so a manual names the same control in its new place. */
 import type {DataTable} from './data-table.js';
+import {PREVIEW_ROWS} from './long-tables.js';
 import type {ParamsByType,Escape} from './types.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {selectWalkthrough} from './table-walkthroughs.js';
@@ -131,8 +132,8 @@ export function openSelectConfig(view:SelectConfigView,esc:Escape):void{
       if('refusal' in picked)return {settings,message:{tone:'refusal',text:picked.refusal},blocked:true};
       const preview=`<p class="select-preview-count">Keeps <strong>${count(picked.kept)}</strong> of `
         +`${count(picked.kept+picked.dropped)} rows; ${count(picked.dropped)} left out.</p>`
-        +`<div class="relate-preview">${dataTableMarkup(picked.table,esc,{pageSize:12,roles:{[draft.keyColumn]:'key'}})}</div>`;
-      shown={table:picked.table,options:{pageSize:12,roles:{[draft.keyColumn]:'key'}}};
+        +`<div class="relate-preview">${dataTableMarkup(picked.table,esc,{pageSize:PREVIEW_ROWS,roles:{[draft.keyColumn]:'key'}})}</div>`;
+      shown={table:picked.table,options:{pageSize:PREVIEW_ROWS,roles:{[draft.keyColumn]:'key'}}};
       const decisions=picked.absent.length
         ?`<p>${picked.absent.length===1?'This value is':'These values are'} named and not in the table: `
           +picked.absent.map(v=>`<strong>${esc(v)}</strong>`).join(', ')

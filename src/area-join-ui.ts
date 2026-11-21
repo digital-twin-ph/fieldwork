@@ -9,6 +9,7 @@ import type {DataTable} from './data-table.js';
 import {joinTableToAreas,proposeKeyColumn,type AreaJoinResult} from './area-join.js';
 export {proposeKeyColumn};
 import {openConfigDialog} from './config-dialog.js';
+import {PREVIEW_ROWS} from './long-tables.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {joinTableWalkthrough} from './spatial-walkthroughs.js';
 export {joinTableWalkthrough};
@@ -45,7 +46,7 @@ export interface JoinConfigView {
   initial:JoinDraft;
   apply:(draft:JoinDraft)=>void;
 }
-const ROWS_SHOWN=12;
+const ROWS_SHOWN=PREVIEW_ROWS;
 const scroll=(head:string[],rows:string[][],esc:Escape)=>'<div class="table-scroll join-scroll"><table><thead><tr>'
   +head.map(h=>`<th scope="col">${esc(h)}</th>`).join('')+'</tr></thead><tbody>'
   +rows.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>').join('')+'</tbody></table></div>';
@@ -78,7 +79,7 @@ export function openJoinConfig(view:JoinConfigView,esc:Escape):void{
       const before='<fieldset class="join-before"><legend>Before</legend>'
         +(t?`<details open><summary>${esc(view.tableName)} · ${n(t.rows.length)} rows</summary>`
           +scroll([...t.keys,t.valueField||'value'],t.rows.slice(0,ROWS_SHOWN).map(r=>[...t.keys.map(k=>String(r.key[k]??'')),r.value===null||r.value===undefined?'':String(r.value)]),esc)
-          +(t.rows.length>ROWS_SHOWN?`<p class="muted">The first ${ROWS_SHOWN} of ${n(t.rows.length)} rows.</p>`:'')+'</details>'
+          +(t.rows.length>ROWS_SHOWN?`<p class="muted">The first ${n(ROWS_SHOWN)} of ${n(t.rows.length)} rows.</p>`:'')+'</details>'
           :'<p class="muted">The table is known once it is read or the workflow has run.</p>')
         +(parts?`<details open><summary>${esc(view.areaName)} · ${n(parts.length)} parts</summary>`
           +scroll(['name','id'],parts.map(p=>[p.name,p.id]),esc)+'</details>'

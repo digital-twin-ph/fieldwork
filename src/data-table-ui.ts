@@ -1,5 +1,6 @@
 import {editedTitle,type EditedCells} from './cell-edits.js';
 import type {Escape,Workflow,WorkflowNode} from './types.js';
+import {PREVIEW_ROWS,scrollLongTables} from './long-tables.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {describableColumns,isDescribed,dictionaryKeyOf} from './column-metadata.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
@@ -173,7 +174,7 @@ const DHIS2_DICTIONARY=['variable,label,unit,description',
   'period,Period,,"The period, as the server names it"','period_id,Period ID,,"The period in DHIS2\'s own notation: 2024, 202403, 2024W12"',
   'org_unit,Organisation unit,,"The organisation unit, as the server names it"','org_unit_id,Organisation unit ID,,"Its ID on the server"',
   'value,Value,,"The aggregate value DHIS2\'s analytics give for that data, period and unit"'].join('\n')+'\n';
-const AFTER_ROWS=12;
+const AFTER_ROWS=PREVIEW_ROWS;
 /** One line per country: what census, how many rows, whose, under what terms, and when it is next reviewed. A table past
  *  its review date is still offered, and says so: an old count stays a count. */
 function censusChoices():string{
@@ -315,6 +316,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       +'<details class="after-crosstab"><summary>The same table as a crosstab</summary><div data-after-crosstab></div></details>';
     const host=afterPane.querySelector<HTMLElement>('[data-after-crosstab]')!;
     host.innerHTML=dataTableMarkup(table,esc);wireTablePages(host,table,esc);
+    scrollLongTables(afterPane);
   };
   const error=q<HTMLElement>('#table-error'),save=q<HTMLButtonElement>('#table-save'),cancel=q<HTMLButtonElement>('#table-cancel');
   if(existing?.unit)unitInput.value=existing.unit;
@@ -398,7 +400,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
    *  Every column carries its ROLE, because the one failure nobody notices is a column quietly
    *  left behind: value columns are named rather than inferred, so a column the file has and the
    *  selection does not is dropped by decision and said so here. */
-  const SHOWN_ROWS=5;
+  const SHOWN_ROWS=PREVIEW_ROWS;
   function renderBefore(keys:string[],valueFields:string[]):string[]{
     if(!parsed||!file)return [];
     const headers=parsed.headers.map(h=>h.trim());
@@ -418,6 +420,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       +(parsed.rows.length>shown.length
         ?`<p class="muted">${shown.length} of ${parsed.rows.length.toLocaleString()} rows shown.</p>`
         :'');
+    scrollLongTables(beforePane);
     return headers.filter(h=>role(h)==='untaken');
   }
 
@@ -1114,6 +1117,7 @@ export function wireTablePages(container:HTMLElement|null|undefined,table:DataTa
     if(!button||button.disabled||!container.contains(button))return;
     event.preventDefault();
     container.innerHTML=dataTableMarkup(table,esc,{...options,page:Number(button.dataset.tablePage)});
+    scrollLongTables(container);
   };
 }
 

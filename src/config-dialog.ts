@@ -9,6 +9,7 @@
  *  and ask first when the draft differs from what the step holds. */
 import type {Escape} from './types.js';
 import {errorMessage} from './guards.js';
+import {scrollLongTables} from './long-tables.js';
 
 export interface ConfigMessage {tone:'warning'|'refusal'; text:string}
 export interface ConfigSections {
@@ -129,6 +130,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     const discard=slot.querySelector<HTMLButtonElement>('#config-discard');
     if(discard)discard.onclick=close;
     spec.wire(body,draft,()=>{confirming=false;draw();});
+    scrollLongTables(body);
     // READ ONLY: shown exactly as it would be edited, every control disabled and nothing to add or remove.
     if(spec.readOnly){body.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>('input,select,textarea')
       .forEach(el=>{el.disabled=true;});body.querySelectorAll('button[data-part],button[data-editor-add]').forEach(el=>el.remove());}

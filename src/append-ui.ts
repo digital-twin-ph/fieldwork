@@ -4,6 +4,7 @@ import {wordsHint} from './figure-words.js';
  *  its labels, whether the labels are numbers, and a new key are here, with the stacked table as the preview, and
  *  nothing reaches the workflow until Apply. The controls keep the ids they had in the Inspector. */
 import type {DataTable} from './data-table.js';
+import {PREVIEW_ROWS} from './long-tables.js';
 import type {Escape,ParamsByType} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
 import {openWalkthrough} from './table-walkthrough.js';
@@ -130,15 +131,15 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
           +'<div class="table-scroll"><table><thead><tr>'+t.keys.map(k=>{const as=placedAs(i,k);
             return `<th scope="col">${esc(k)}${as!==k?`<span class="muted role-note">stacked as ${esc(as)}</span>`:''}</th>`;}).join('')
           +`<th scope="col">${esc(t.valueField)}</th></tr></thead><tbody>`
-          +t.rows.slice(0,5).map(row=>'<tr>'+t.keys.map(k=>`<td>${esc(row.key[k]??'')}</td>`).join('')+`<td>${row.value??''}</td></tr>`).join('')
+          +t.rows.slice(0,PREVIEW_ROWS).map(row=>'<tr>'+t.keys.map(k=>`<td>${esc(row.key[k]??'')}</td>`).join('')+`<td>${row.value??''}</td></tr>`).join('')
           +'</tbody></table></div></details>').join('')+'</fieldset>';
       try{
         const result=appendTables(tables as DataTable[],asParams(d),names);shown=result.table;
-        return {settings:settings.replace('<!--columns-->',lineUp),preview:`<p><strong>After: the stacked table.</strong> ${esc(appendSentence(result,asParams(d)))}</p><div class="append-preview">${dataTableMarkup(result.table,esc,{pageSize:12})}</div>`};
+        return {settings:settings.replace('<!--columns-->',lineUp),preview:`<p><strong>After: the stacked table.</strong> ${esc(appendSentence(result,asParams(d)))}</p><div class="append-preview">${dataTableMarkup(result.table,esc,{pageSize:PREVIEW_ROWS})}</div>`};
       }catch(error){return {settings:settings.replace('<!--columns-->',lineUp),message:{tone:'refusal',text:error instanceof Error?error.message:String(error)},blocked:true};}
     },
     wire:(root,d,redraw)=>{
-      if(shown)wireTablePages(root.querySelector<HTMLElement>('.append-preview'),shown,esc,{pageSize:12});
+      if(shown)wireTablePages(root.querySelector<HTMLElement>('.append-preview'),shown,esc,{pageSize:PREVIEW_ROWS});
       const showMe=root.querySelector<HTMLButtonElement>('#append-show-me');
       if(showMe)showMe.onclick=()=>openWalkthrough(appendWalkthrough({nameSource:d.nameSource,sourceColumn:d.sourceColumn,labels:d.labels}),esc,showMe);
       const on=(id:string,f:(el:HTMLInputElement)=>void,ev='change')=>root.querySelector<HTMLInputElement>(id)?.addEventListener(ev,e=>{f(e.target as HTMLInputElement);redraw();});

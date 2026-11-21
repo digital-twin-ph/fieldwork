@@ -821,6 +821,8 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 #table-before .role-untaken{opacity:.45;text-decoration:line-through}
 #table-before .role-untaken .role-note{text-decoration:none}
 .table-scroll{overflow-x:auto;max-width:100%}
+.table-rows-scroll{overflow-y:auto;max-height:44em;border:1px solid var(--border,#d6d6d0)}
+.table-rows-scroll thead th{position:sticky;top:0;z-index:1;background:var(--surface-raised,#fff)}
 .table-meta{font-size:14px;margin:0 0 4px}
 #table-after .crosstab,#table-after table{font-size:14px}
 #table-reconcile{margin:10px 0 0;padding-left:18px;font-size:14px;line-height:1.6}

@@ -164,3 +164,19 @@ test('closed from the first day, the school changes when the outbreak peaks more
   assert.ok(closedPeak>openPeak,`peak ${openPeak} open, ${closedPeak} closed`);
   assert.ok(closedSize<=openSize,`size ${openSize} open, ${closedSize} closed`);
 });
+
+/** EACH CLASS ITS OWN PROBABILITY (experiment 199, 2026-11-21): the structure declares a network per class, each over
+ *  only its own pupils, and its 1861 scenario shuts both on Sundays. */
+test('the structure with a probability for each class validates, and a class network reaches only its own pupils',async()=>{
+  const {validateResponseScenario,compileResponse}=await import('../build/disease-model.js');
+  const byClass=json('structures/measles-prodrome-rash-household-classes-village/1.0.0.json');
+  validateStructure(byClass);
+  assert.deepEqual(byClass.networks.map(n=>n.id),['household','class_1','class_2','village']);
+  validateResponseScenario(json('response-scenarios/hagelloch-as-in-1861-by-class/1.0.0.json'),byClass);
+  const set=json('parameter-sets/measles-hagelloch-from-the-record/1.0.0.json');
+  set.structure={id:byClass.id,version:byClass.version};set.values.p_class_1=set.values.p_class_2=set.values.p_class;delete set.values.p_class;
+  const pupils=[0,1,1,2,2,0];
+  const program=compile(byClass,set,{n:6,groups:{household:[0,1,2,3,4,5],class_1:pupils.map(c=>c===1?1:0),class_2:pupils.map(c=>c===2?1:0)}});
+  assert.equal(program.nets.length,4);
+  assert.ok(compileResponse(byClass,json('response-scenarios/hagelloch-as-in-1861-by-class/1.0.0.json'),30));
+});

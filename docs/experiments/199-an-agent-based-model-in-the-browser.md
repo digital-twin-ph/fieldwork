@@ -11,7 +11,8 @@ in [200](200-operational-epidemiology.md) on 2026-11-09, and the proposal went u
 recorded curve on 2026-11-21** (option 4, chosen 2026-11-19): the size and the timing of the bulk agree, the recorded
 peak is twice as sharp as the model's; not fitted. **The periods measured from the record the same day** (the practitioner's choice): the timing
 then agrees, the peak is still half the record's. **The three probabilities fitted, also 2026-11-21:** a better fit, the peak still not reached; the
-record's peak is class 1's burst, which one probability for both classes cannot make.
+record's peak is class 1's burst, which one probability for both classes cannot make. **A probability for each class,
+also 2026-11-21:** it does not make the peak either, even at 0.6 a day in class 1.
 
 ## The question
 
@@ -266,6 +267,45 @@ a gathering), would make the peak; that is a change to the structure, not to a v
 right in any other village: the household's is barely determined, and the deviance against a mean curve rewards a
 model whose runs agree on timing, not one whose runs are each sharp. The fit's last day is 41 (35 to 47), against the
 record's 82, which is one late child.
+
+## A probability for each class, 2026-11-21
+
+The practitioner, 2026-11-21, agreeing to try it first: *"Agree with probability suggestion"*. Declared as the structure
+`measles-prodrome-rash-household-classes-village`, a network for each class over its own pupils only, with
+`hagelloch-as-in-1861-by-class` shutting both on Sundays. The periods of `measles-hagelloch-from-the-record`; four
+probabilities fitted together by `scripts/abm-hagelloch-fit.mjs --by-class` (5 × 8 × 8 × 6 points at 100 runs, then
+5⁴ at 300; 199 s).
+
+| | One class probability | A probability for each class |
+| --- | --- | --- |
+| Household | 0.47 (0.25 to 0.9) | 0.10 (0.05 to 0.21) |
+| Class 1 | 0.0035 | 0.030 (0.011 to 0.043) |
+| Class 2 | 0.0035 | 0.015 (0.011 to 0.021) |
+| Village | 0.0052 | 0.0043 (0.0030 to 0.0043) |
+| Deviance | 154 | 152 |
+| Children on the peak day (recorded **26**) | 17 (14 to 21) | 16 (14 to 20) |
+| Three peak days, 95th percentiles (recorded 68) | 52 | 50 |
+
+Ranges as before: the fine grid's points within 4 of the best deviance (37 of 625).
+
+**Pushed by hand** (`--at`, 500 runs each), since a fit to the mean curve could pass over a sharp but late-or-early run:
+
+| Household, class 1, class 2, village | Deviance | Peak day, median (95th) |
+| --- | --- | --- |
+| 0.10, 0.03, 0.015, 0.0043 (the fit) | 153 | 16 (20) |
+| 0.10, **0.3**, 0.015, 0.0043 | 163 | 17 (20) |
+| 0.10, **0.6**, 0.015, 0.002 | 187 | 14 (18) |
+| 0.10, **0.6**, **0.1**, 0.002 | 277 | 15 (19) |
+
+**Found:** a probability for each class neither improves the fit nor makes the peak. With class 1 at 0.6 a day, every
+pupil is infected within a day or two of the first infectious classmate, and the peak still does not rise: the
+burst is made, but the next generation spreads out again over the periods. The fitted classes are close (0.03 and
+0.015, their ranges touching), so the record does not ask for two.
+
+**What this does not establish:** what does make the peak. Left: how infectious a child is across its prodrome (the
+model makes every infectious day alike; if most transmission falls on the prodrome's first days, a burst would stay
+a burst); a single shared exposure; and whether the record's dates are heaped. Nor is this a finding about measles: it is
+about this model against one record.
 
 ## Left for later, step by step, if the spike says yes
 

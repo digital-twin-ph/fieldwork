@@ -195,7 +195,8 @@ export interface ResponseScenario {
   schema:'fieldwork/response-scenario/1'; id:string; version:string; title:string;
   structure:{id:string;version:string};
   /** Day 0 of a run, and the days of the week each network does not meet (a school's Sunday). */
-  calendar?:{start:string;closed:Record<string,string[]>;note?:string};
+  /** `only`: the dates a network meets, and no others (a gathering: experiment 199, 2026-11-21). */
+  calendar?:{start:string;closed:Record<string,string[]>;only?:Record<string,string[]>;note?:string};
   /** Each a daily chance of a case being noticed: in a state (care sought), or on a network while it meets (a teacher). */
   detection:({id:string;label:string;chance:string}&({state:string}|{network:string}))[];
   /** Days from detection to notification; absent, nothing is notified and no action starts. */
@@ -234,6 +235,11 @@ export function validateResponseScenario(r:ResponseScenario,structure:ModelStruc
       if(!nets.has(net))fail(`${r.id}: the calendar closes a network ${structure.id} does not declare.`);
       for(const d of days)if(!WEEKDAYS.includes(d))fail(`${r.id}: ${d} is not a day of the week.`);
     }
+    for(const [net,dates] of Object.entries(r.calendar.only??{})){
+      if(!nets.has(net))fail(`${r.id}: the calendar names dates for a network ${structure.id} does not declare.`);
+      for(const d of dates)if(!/^\d{4}-\d{2}-\d{2}$/.test(d)||Number.isNaN(Date.parse(d))||d<r.calendar.start)
+        fail(`${r.id}: ${d} is not a date, YYYY-MM-DD, on or after the calendar's start.`);
+    }
   }
   return r;
 }
@@ -252,6 +258,11 @@ export function compileResponse(structure:ModelStructure,r:ResponseScenario,days
     for(const [net,closed] of Object.entries(r.calendar.closed)){
       const j=nets.indexOf(net);
       for(let day=0;day<days;day++)if(closed.includes(WEEKDAYS[(first+day)%7]!))open[day*nets.length+j]=0;
+    }
+    const start=Date.parse(`${r.calendar.start}T00:00:00Z`);
+    for(const [net,dates] of Object.entries(r.calendar.only??{})){
+      const j=nets.indexOf(net),on=new Set(dates.map(d=>Math.round((Date.parse(`${d}T00:00:00Z`)-start)/864e5)));
+      for(let day=0;day<days;day++)if(!on.has(day))open[day*nets.length+j]=0;
     }
   }
   const noticeNet=nets.map(()=>0),noticeState=states.map(()=>0);

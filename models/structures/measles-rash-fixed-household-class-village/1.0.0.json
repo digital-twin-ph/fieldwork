@@ -1,0 +1,266 @@
+{
+  "schema": "fieldwork/model-structure/1",
+  "id": "measles-rash-fixed-household-class-village",
+  "version": "1.0.0",
+  "title": "Measles over households, school classes and the village, the time from infection to the rash nearly fixed and the prodrome within it",
+  "step": "day",
+  "states": [
+    {
+      "id": "S",
+      "label": "Susceptible"
+    },
+    {
+      "id": "E",
+      "label": "Infected, not yet infectious"
+    },
+    {
+      "id": "P2",
+      "label": "Infectious before the rash, a prodrome of 2 days"
+    },
+    {
+      "id": "P3",
+      "label": "Infectious before the rash, a prodrome of 3 days"
+    },
+    {
+      "id": "P4",
+      "label": "Infectious before the rash, a prodrome of 4 days"
+    },
+    {
+      "id": "P5",
+      "label": "Infectious before the rash, a prodrome of 5 days"
+    },
+    {
+      "id": "P6",
+      "label": "Infectious before the rash, a prodrome of 6 days"
+    },
+    {
+      "id": "Q",
+      "label": "Infectious, with the rash"
+    },
+    {
+      "id": "R",
+      "label": "Recovered"
+    }
+  ],
+  "infection": {
+    "from": "S",
+    "to": "E",
+    "infectious": [
+      "P2",
+      "P3",
+      "P4",
+      "P5",
+      "P6",
+      "Q"
+    ],
+    "weights": {
+      "Q": "w_rash"
+    }
+  },
+  "course": [
+    {
+      "from": "E",
+      "to": "P2",
+      "duration": "latent_2",
+      "share": "share_2"
+    },
+    {
+      "from": "E",
+      "to": "P3",
+      "duration": "latent_3",
+      "share": "share_3"
+    },
+    {
+      "from": "E",
+      "to": "P4",
+      "duration": "latent_4",
+      "share": "share_4"
+    },
+    {
+      "from": "E",
+      "to": "P5",
+      "duration": "latent_5",
+      "share": "share_5"
+    },
+    {
+      "from": "E",
+      "to": "P6",
+      "duration": "latent_6",
+      "share": "rest"
+    },
+    {
+      "from": "P2",
+      "to": "Q",
+      "duration": "prodrome_2"
+    },
+    {
+      "from": "P3",
+      "to": "Q",
+      "duration": "prodrome_3"
+    },
+    {
+      "from": "P4",
+      "to": "Q",
+      "duration": "prodrome_4"
+    },
+    {
+      "from": "P5",
+      "to": "Q",
+      "duration": "prodrome_5"
+    },
+    {
+      "from": "P6",
+      "to": "Q",
+      "duration": "prodrome_6"
+    },
+    {
+      "from": "Q",
+      "to": "R",
+      "duration": "rash_infectious"
+    }
+  ],
+  "networks": [
+    {
+      "id": "household",
+      "label": "Household",
+      "groups": "household",
+      "probability": "p_household"
+    },
+    {
+      "id": "class",
+      "label": "School class",
+      "groups": "class",
+      "none": 0,
+      "probability": "p_class",
+      "states": [
+        "P2",
+        "P3",
+        "P4",
+        "P5",
+        "P6"
+      ]
+    },
+    {
+      "id": "village",
+      "label": "Village",
+      "everyone": true,
+      "probability": "p_village"
+    }
+  ],
+  "parameters": [
+    {
+      "id": "latent_2",
+      "label": "Infected, not yet infectious, before a prodrome of 2 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "latent_3",
+      "label": "Infected, not yet infectious, before a prodrome of 3 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "latent_4",
+      "label": "Infected, not yet infectious, before a prodrome of 4 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "latent_5",
+      "label": "Infected, not yet infectious, before a prodrome of 5 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "latent_6",
+      "label": "Infected, not yet infectious, before a prodrome of 6 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "prodrome_2",
+      "label": "A prodrome of 2 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "prodrome_3",
+      "label": "A prodrome of 3 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "prodrome_4",
+      "label": "A prodrome of 4 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "prodrome_5",
+      "label": "A prodrome of 5 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "prodrome_6",
+      "label": "A prodrome of 6 days",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "share_2",
+      "label": "Share with a prodrome of 2 days",
+      "kind": "probability",
+      "unit": "of those infected"
+    },
+    {
+      "id": "share_3",
+      "label": "Share with a prodrome of 3 days",
+      "kind": "probability",
+      "unit": "of those infected"
+    },
+    {
+      "id": "share_4",
+      "label": "Share with a prodrome of 4 days",
+      "kind": "probability",
+      "unit": "of those infected"
+    },
+    {
+      "id": "share_5",
+      "label": "Share with a prodrome of 5 days",
+      "kind": "probability",
+      "unit": "of those infected"
+    },
+    {
+      "id": "rash_infectious",
+      "label": "Infectious from the day of the rash",
+      "kind": "duration",
+      "unit": "day"
+    },
+    {
+      "id": "p_household",
+      "label": "Infection from one infectious housemate",
+      "kind": "probability",
+      "unit": "per day"
+    },
+    {
+      "id": "p_class",
+      "label": "Infection from one infectious classmate",
+      "kind": "probability",
+      "unit": "per day"
+    },
+    {
+      "id": "p_village",
+      "label": "Infection from one infectious child elsewhere in the village",
+      "kind": "probability",
+      "unit": "per day"
+    },
+    {
+      "id": "w_rash",
+      "label": "How infectious with the rash, against the prodrome",
+      "kind": "relative",
+      "unit": "times"
+    }
+  ]
+}

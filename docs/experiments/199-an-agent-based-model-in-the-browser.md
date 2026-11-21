@@ -15,7 +15,8 @@ record's peak is class 1's burst, which one probability for both classes cannot 
 also 2026-11-21:** it does not make the peak either, even at 0.6 a day in class 1. **Infectiousness across the illness, also
 2026-11-21:** the best fit yet, nearly all transmission in the prodrome's last days; the peak still not made. **The record's dates,
 also 2026-11-21:** its rashes are bunched far beyond what independent prodrome lengths allow, which every model
-so far assumes.
+so far assumes. **The time to the rash fixed, and one gathering, also 2026-11-21:** the first makes the
+sharpest peak of any model, the second does nothing; neither makes the record's.
 
 ## The question
 
@@ -383,6 +384,42 @@ rash is the more spread date. The record has it the other way.
 2 in the model: the time from infection to the rash nearly fixed, the prodrome drawn within it, declared by branches
 (an infection leads to one of five prodrome lengths, 2 to 6 days in the record's proportions, each with the latent period
 that keeps the total), which the kernel runs as it is.
+
+## The time to the rash nearly fixed, and one gathering, 2026-11-21
+
+The practitioner, 2026-11-21: *"All three"*: both models, then the release.
+
+**The time to the rash nearly fixed** (`measles-rash-fixed-household-class-village`, `measles-hagelloch-rash-fixed`):
+an infection leads by branches to one of five prodromes, 2 to 6 days in the record's shares (36, 31, 72, 25 and 24 of
+the 188, 0 and 1 taken as 2 and 7 or more as 6), each with the latent period that brings infection to the rash in 12
+to 13 days, the record's latent period and prodrome together. As the rule of 1863 has it, the rash's day is set by the
+infection's, and the prodrome is however much of the time came first. No change to the kernel: branches already run.
+Fitted with a weight for the rash (`--to-rash`; 142 s).
+
+| | Weighted by part of the illness (best before) | Time to the rash fixed |
+| --- | --- | --- |
+| Household, class, village | 0.33, 0.04, 0.016 | 0.03, 0.015, 0.0058 |
+| With the rash, against the prodrome | 0 | 0.5 |
+| Deviance | **143** | 157 |
+| Children on the peak day (recorded **26**) | 16 (14 to 21) | 18 (15 to 23) |
+| Three peak days, 95th percentiles (recorded 68) | 52 | **58** |
+| Recorded days inside the band | 76 of 83 | 77 of 83 |
+
+The time to the rash, at the fitted values (`--total`): 10 days a deviance of 385, 11 of 216, 12 to 13 of 157, 13 to 14
+of 203, 14 to 15 of 368. The record's intervals, not Pfeilsticker's 14, are what the curve asks for.
+
+**One gathering** (`measles-prodrome-rash-household-class-village-gathering`, `hagelloch-as-in-1861-gathering`): a
+village-wide network that only children in the prodrome attend, meeting on one day (the response scenario's calendar
+can now name the dates a network meets, `only`), its day (0 to 45) and probability fitted with the other three held at
+`measles-hagelloch-fitted`'s (`--gathering`). Best: day 31, 0.007; deviance 152 against 154 without it, the peak day 17.
+A strong gathering makes a peak (24, 95th 33, at 0.3 on day 20) and a far worse curve (326).
+
+**Found:** fixing the time to the rash makes the sharpest peak of any model, as the date check said it would, but not the
+record's, and its curve fits worse than weighting the prodrome's last days. A gathering explains nothing.
+
+**What this does not establish:** that the two could not be joined (a fixed time to the rash with the late prodrome
+weighted), which is the next model if the peak is pursued; whether the record's dates or the rule of 1863 make its rash
+dates bunched.
 
 ## Left for later, step by step, if the spike says yes
 

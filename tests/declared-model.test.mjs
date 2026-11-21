@@ -201,3 +201,24 @@ test('a structure weighting its infectious states validates, and a weight of 0 s
   assert.throws(()=>validateStructure({...split,infection:{...split.infection,weights:{E:'w_early'}}}),/not an infectious state/);
   assert.throws(()=>compile(split,{...set,values:{...set.values,w_rash:{value:-1,evidence:{basis:'assumed'}}}},people),/0 or more/);
 });
+
+/** THE TIME TO THE RASH NEARLY FIXED, AND ONE GATHERING (experiment 199, 2026-11-21, "All three"). */
+test('the structure with the prodrome within a fixed time to the rash validates, its branches in the record’s shares',()=>{
+  const fixed=json('structures/measles-rash-fixed-household-class-village/1.0.0.json'),set=json('parameter-sets/measles-hagelloch-rash-fixed/1.0.0.json');
+  validateStructure(fixed);validateParameterSet(set,fixed);
+  const program=compile(fixed,set,{n:3,groups:{household:[0,0,1],class:[1,1,0]}});
+  // Each branch's latent period and prodrome come to 12 or 13 days.
+  const at=id=>fixed.states.findIndex(s=>s.id===id);
+  for(const k of [2,3,4,5,6]){const latent=program.steps.find(s=>s[1]===at(`P${k}`)),pro=program.steps.find(s=>s[0]===at(`P${k}`));
+    assert.deepEqual([latent[2]+pro[2],latent[3]+pro[3]],[12,13]);}
+  assert.ok(Math.abs(program.shares.slice(0,5).reduce((a,b)=>a+b,0)-1)<1e-9);
+});
+test('a network met on given dates only is open those days and no others',async()=>{
+  const {validateResponseScenario,compileResponse}=await import('../build/disease-model.js');
+  const st=json('structures/measles-prodrome-rash-household-class-village-gathering/1.0.0.json'),sc=json('response-scenarios/hagelloch-as-in-1861-gathering/1.0.0.json');
+  validateResponseScenario(sc,st);
+  const r=compileResponse(st,sc,30),j=st.networks.findIndex(n=>n.id==='gathering'),nets=st.networks.length;
+  const open=Array.from({length:30},(_,d)=>r.open[d*nets+j]);
+  assert.deepEqual(open.flatMap((o,d)=>o?[d]:[]),[11]); // 10 November 1861 is day 11 from 30 October
+  assert.throws(()=>validateResponseScenario({...sc,calendar:{...sc.calendar,only:{gathering:['1861-10-01']}}},st),/on or after the calendar's start/);
+});

@@ -12,4 +12,7 @@ export async function openWorkflow(page,key){
   if(await page.locator('#project-select').inputValue()!==owner)
     await page.locator('#project-select').selectOption(owner);
   await page.locator('#workflow-select').selectOption(key);
+  // OPENED, not only chosen (2026-11-20): opens are queued, and "Run complete" can still be the last workflow's, so a test
+  // reading the saved workflow straight after read the one it had left.
+  await page.waitForFunction(wanted=>{try{return JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).exampleId===wanted;}catch{return false;}},key);
 }

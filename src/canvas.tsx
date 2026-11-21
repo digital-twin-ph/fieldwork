@@ -152,7 +152,7 @@ export function mountCanvas(container:HTMLElement,callbacks:CanvasCallbacks):Can
         // FOCUS SELECTS, BY KEYBOARD: a widget reached by Tab becomes the selected one, so the Inspector follows the
         // keyboard and the arrow keys move what has the focus (the Section 508 audit, 2026-11-16).
         const el=e.target as HTMLElement;const id=el.classList?.contains('react-flow__node')?el.getAttribute('data-id'):null;
-        if(id&&el.matches(':focus-visible')&&!el.classList.contains('selected'))callbacks.select(id);}} onPaneClick={()=>callbacks.clear()}
+        if(id&&el.matches(':focus-visible')&&!el.classList.contains('selected'))callbacks.select(id);}} onPaneClick={e=>{const id=edgeAt(e.clientX,e.clientY);if(id)callbacks.selectEdge(id);else callbacks.clear();}}
       onNodeDragStop={(_,n)=>callbacks.move(n.id,n.position)} onConnect={c=>callbacks.connect(c)} isValidConnection={callbacks.valid}
       onNodesDelete={ns=>callbacks.remove(ns.map(n=>n.id))} onEdgesDelete={es=>callbacks.removeEdges(es.map(e=>e.id))}
       onEdgeClick={(_,e)=>callbacks.selectEdge(e.id)} onMove={(_,v)=>callbacks.zoom(v.zoom)}
@@ -160,6 +160,16 @@ export function mountCanvas(container:HTMLElement,callbacks:CanvasCallbacks):Can
       connectionLineStyle={{stroke:'#176b59',strokeWidth:2}} fitViewOptions={{padding:.16}}>
       <Background color="#c8d3c1" gap={18} size={1}/>
     </ReactFlow>;
+  }
+  /** THE CONNECTION UNDER A CLICK ON THE CANVAS (gate 230, 2026-11-20). xyflow marks every connection `nopan`, so a drag
+   *  begun on one never panned: the canvas stood still under the pointer. Connections now take no pointer events, a drag
+   *  anywhere pans, and a click asks the browser which connection, if any, is under it. */
+  function edgeAt(x:number,y:number):string|undefined{
+    // The browser's own hit test, with connections taking the pointer for this one question: the same in every engine.
+    container.classList.add('edges-hit');
+    try{const g=document.elementFromPoint(x,y)?.closest('.react-flow__edge');
+      return g?.getAttribute('data-id')??g?.getAttribute('data-testid')?.replace('rf__edge-','')??undefined;}
+    finally{container.classList.remove('edges-hit');}
   }
   createRoot(container).render(<ReactFlowProvider><Flow/></ReactFlowProvider>);
   return api;

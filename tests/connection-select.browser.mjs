@@ -1,7 +1,7 @@
 import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
-/** A CONNECTION IS SELECTED BY A CLICK, NOT REMOVED (2026-11-20). On DR Congo's 37-step workflow two connections went
+/** A CONNECTION IS SELECTED BY A CLICK, NOT REMOVED, AND A DRAG FROM ONE PANS (2026-11-20). On DR Congo's 37-step workflow two connections went
  *  while the practitioner was trying to pan, because a click on a line removed it at once. Now a click selects it, the
  *  Inspector says what it joins and offers Remove connection, Delete removes a selected one, and Undo brings it back. */
 test.use({serviceWorkers:'block'});
@@ -41,13 +41,21 @@ test('a drag that starts on a connection pans the canvas and removes nothing',as
   await page.goto('/?example=hagelloch');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__edge').first().waitFor();
+  // STARTED AND STILL (gate 230): a drag begun while the canvas was still fitting itself moved it either way, which hid
+  // that a drag begun on a connection never panned.
+  await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
+  await page.waitForFunction(()=>document.getAnimations().length===0);
   const before=await saved(page);
   // A CONNECTION WHOSE MIDPOINT IS UNDER THE POINTER, in this window: the first one's can lie under a step or off the
   // canvas, and on CI's window it did, so the drag never started on a connection (2026-11-20).
   const ids=await page.locator('.react-flow__edge').evaluateAll(es=>es.map(e=>e.getAttribute('data-id')??e.getAttribute('data-testid')?.replace('rf__edge-','')));
   let id,at;
   for(const candidate of ids){const c=await centreOf(page,candidate);
-    const hit=await page.evaluate(({x,y,candidate})=>{const el=document.elementFromPoint(x,y)?.closest('.react-flow__edge');
+    // On the canvas, not under a step, and within the connection's stroke: connections take no pointer events, so the
+    // canvas is what is under the pointer, and a click there selects the connection it lands on.
+    const hit=await page.evaluate(({x,y,candidate})=>{if(!document.elementFromPoint(x,y)?.classList.contains('react-flow__pane'))return false;
+      const canvas=document.querySelector('.react-flow').parentElement;canvas.classList.add('edges-hit');
+      const el=document.elementFromPoint(x,y)?.closest('.react-flow__edge');canvas.classList.remove('edges-hit');
       return !!el&&(el.getAttribute('data-id')??el.getAttribute('data-testid')?.replace('rf__edge-',''))===candidate;},{...c,candidate});
     if(hit){id=candidate;at=c;break;}}
   expect(id,'a connection whose midpoint is visible and uncovered').toBeTruthy();

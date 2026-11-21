@@ -29,6 +29,9 @@ globalThis.fetch=async(input,init)=>{
   if(raw){try{return new Response(execFileSync('git',['-C',new URL(`../${raw[1]}/`,root).pathname,'show',`${raw[2]}:${decodeURIComponent(raw[3])}`],{maxBuffer:1<<30}));}
     catch{return new Response('',{status:404});}}
   if(/zenodo\.org\/api\/records\/22757330\//.test(url)&&process.env.NYC_PKG)return new Response(readFileSync(process.env.NYC_PKG));
+  // Logged where FIELDWORK_NETLOG names a file (gating audit, 2026-11-20): what this check fetches from outside.
+  if(process.env.FIELDWORK_NETLOG){const {appendFileSync}=await import('node:fs');const u=new URL(url);
+    appendFileSync(process.env.FIELDWORK_NETLOG,JSON.stringify({test:'validate:sentence-numbers',host:u.hostname,path:u.pathname.slice(0,160)})+'\n');}
   return fetchedFrom(input,init);
 };
 const STANDARD=/\b(?:ISO|EPSG|RFC|IEC|ICD|WGS|UTM|ISO\/IEC)[\s:-]*\d[\d:.-]*/g;

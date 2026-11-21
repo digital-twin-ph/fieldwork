@@ -6565,6 +6565,15 @@ function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id=
   if(c.targetHandle==='layer'&&(b.type==='map_output'||b.type==='table_output'))
     return nodeInputs(b).some(([,type])=>type===outputOf(a))||(b.type==='table_output'&&portAccepts('table',outputOf(a)));
   return portAccepts(nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1],outputOf(a));}
+// DELETE REMOVES THE SELECTED CONNECTION, by the application (0.155.0 CI, Chromium; one run in five by hand at four
+// workers): the connection was selected and said so in the Inspector, and the canvas library, whose own selection did not
+// always agree, removed nothing. Once the library has had the key, a connection still selected is removed, once.
+document.addEventListener('keydown',e=>{
+  if(busy||(e.key!=='Delete'&&e.key!=='Backspace')||typeof selected!=='string'||!selected.startsWith('edge:'))return;
+  if((e.target as HTMLElement|null)?.closest('input,textarea,select,[contenteditable="true"],dialog'))return;
+  const id=selected.slice(5);
+  setTimeout(()=>{if(!workflow.edges.some(x=>x.id===id))return;change(w=>{w.edges=w.edges.filter(x=>x.id!==id);});selected=null;render();},0);
+});
 mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},selectEdge(id){selected=`edge:${id}`;render();},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
 // Delegated, because the canvas redraws its nodes whenever anything changes and a listener bound
 // to a button would go with them.

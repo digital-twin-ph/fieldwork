@@ -186,8 +186,9 @@ Before the key expires, make a new one on the same page (Esri lets a key hold tw
 
 1. Sign in to the DHIS2 server, open your profile (your initials, top right), then **Edit profile**, then **Personal
    access tokens**.
-2. **Generate new token**: type **Server/script context**, an expiry date, and, if the server allows it, this page's
-   address as the only allowed origin.
+2. **Generate new token**: choose **Browser context**, since Fieldwork reads the server from your browser. Give it a name
+   and an expiry. Leave **Allowed referrers** empty, and tick **GET** only under **Allowed HTTP methods**: Fieldwork only
+   reads. (A server/script context token works too.)
 3. Copy the token: DHIS2 shows it once.
 
 The server must also list Fieldwork's address in its CORS allowlist (**System Settings**, **Access**), which its

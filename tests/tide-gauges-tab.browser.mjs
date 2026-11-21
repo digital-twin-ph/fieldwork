@@ -33,7 +33,19 @@ test('the tab maps every pinned gauge, reads a country’s index with its dictio
   await expect(page.locator('#table-gauges-part .gauges-map circle')).toHaveCount(total);
   await expect(page.locator('#table-gauges-part .gauges-map circle.gauge-dot-trend')).toHaveCount(trend);
   await expect(page.locator('#table-gauges-part')).toContainText('not their records');
+  // CHOSEN ON THE MAP (2026-11-20): a country's shape, or for an island too small to have one, one of its gauges. The map
+  // closes in on it, and the line beneath offers to read it.
+  const svg=page.locator('#table-gauges-part .gauges-map svg'),whole=await svg.getAttribute('viewBox');
+  await page.locator('#table-gauges-part [data-gauge-country="SYC"]').first().dispatchEvent('click');
+  await expect(page.locator('#gauge-country')).toHaveValue('SYC');
+  await expect(page.locator('#gauge-chosen')).toContainText('Seychelles');
+  expect(await svg.getAttribute('viewBox')).not.toBe(whole);
+  await page.locator('#gauge-whole').click();
+  await expect(svg).toHaveAttribute('viewBox',whole);
   const phl=catalogue.countries.find(c=>c.iso3==='PHL');
+  await page.locator('#table-gauges-part path.gauge-country[data-gauge-country="PHL"]').dispatchEvent('click');
+  await expect(page.locator('#table-gauges-part path.gauge-country[data-gauge-country="PHL"]')).toHaveClass(/gauge-chosen/);
+  await expect(page.locator('#gauge-chosen')).toContainText(`Philippines: ${phl.stations} gauges`);
   await page.locator('[data-gauges="PHL"]').click();
   // 22 columns: the column lists are summarised in the dialog (more than twenty), so the read is known by its status.
   await expect(page.locator('#table-status')).toContainText(`${phl.stations} subjects`,{timeout:60000});
@@ -54,6 +66,8 @@ test('a gauges table whose bytes differ from the pin is refused, and nothing is 
   await answer(page,(bytes,p)=>p===path?Buffer.concat([bytes,Buffer.from('9999,ADDED,rlr,0,0,2000,2001,2,100,,,,,,,,,,,,,\n')]):bytes);
   await open(page);
   await page.locator('#table-tab-gauges').click();
+  // CHOSEN FROM THE LIST, as the keyboard and a screen reader do.
+  await page.locator('#gauge-country').selectOption('NGA');
   await page.locator('[data-gauges="NGA"]').click();
   await expect(page.locator('#table-error')).toContainText('is not the file Fieldwork pinned');
   await expect(page.locator('#table-save')).toBeDisabled();

@@ -13,7 +13,11 @@ export const DHIS2_PERIODS:readonly {id:string;label:string}[]=[
 
 /** The server's address as typed, without a trailing slash or /api: "https://dhis2.example.org/dhis". */
 export function serverBase(typed:string):string{
-  const url=new URL(typed.trim());
+  // SAID, NOT "Invalid URL" (2026-11-20): an empty box, or an address without its https://, is named.
+  const said=typed.trim();
+  if(!said)throw new Error('Type the server’s address, for example https://dhis2.example.org, or http://127.0.0.1:8080 for a server on this computer.');
+  let url:URL;
+  try{url=new URL(said);}catch{throw new Error(`“${said}” is not a whole address: start it with https://, or http:// for a server on this computer.`);}
   if(!/^https?:$/.test(url.protocol))throw new Error('Give the server’s address, starting https://.');
   return url.href.replace(/\/+$/,'').replace(/\/api$/,'');
 }

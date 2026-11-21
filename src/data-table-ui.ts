@@ -11,7 +11,7 @@ import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSo
 import {contentHash} from './project-files.js';
 import {dictionarySheets} from './columns-dialog.js';
 import censusCatalogue from '../examples/census-tables/catalogue.json';
-import {GAUGES,GAUGES_RAW,gaugeChoices} from './tide-gauges-ui.js';
+import {GAUGES,GAUGES_RAW,gaugeChoices,wireGauges} from './tide-gauges-ui.js';
 import {dhis2Markup,wireDhis2} from './dhis2-tab.js';
 import {guessMapping,readDictionary,proposeFrom,checkDictionary,sameNames,fileRows,type TableDictionary,type DictionaryCheck,type ColumnDeclarations} from './column-metadata.js';
 
@@ -719,10 +719,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     await readPinned(CENSUS.raw,c.counts,c.columns,c.country,censusSays);
   };
   // A COUNTRY'S TIDE GAUGES: its stations table, and the dictionary every country's shares.
-  for(const button of dialog.querySelectorAll<HTMLButtonElement>('[data-gauges]'))button.onclick=async()=>{
-    const c=GAUGES.countries.find(x=>x.iso3===button.dataset.gauges);if(!c)return;
-    await readPinned(GAUGES.raw,c.table,GAUGES.columns,`${c.country}'s tide gauges`,gaugesSays);
-  };
+  wireGauges(dialog,esc,c=>{void readPinned(GAUGES.raw,c.table,GAUGES.columns,`${c.country}'s tide gauges`,gaugesSays);});
   // WHICH TAB: the one the table came through when a step is reopened, otherwise the one last used on this device.
   const tabs=[...dialog.querySelectorAll<HTMLButtonElement>('[data-table-tab]')];
   const showTab=(name:string,remember=true)=>{

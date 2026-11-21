@@ -16,6 +16,13 @@ test('a click on a connection selects it; the Inspector removes it; Undo and Del
   await page.goto('/?example=hagelloch');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__edge').first().waitFor();
+  // NOT WHILE IT RUNS (0.155.0 CI): the example runs as it opens, and Undo runs it again, and a running workflow's canvas
+  // takes no edit, Delete included. On a slower runner the key landed mid-run.
+  // AND STILL: the canvas fits itself to the workflow after a run, and a click computed before the fit lands elsewhere.
+  const view=()=>page.evaluate(()=>document.querySelector('.react-flow__viewport').style.transform);
+  const idle=async()=>{await expect(page.locator('#run-button')).toBeEnabled({timeout:60000});
+    await expect.poll(async()=>{const a=await view();await page.waitForTimeout(300);return a===await view();}).toBe(true);};
+  await idle();
   const before=await saved(page);
   const id=await page.locator('.react-flow__edge').first().getAttribute('data-id')
     ??(await page.locator('.react-flow__edge').first().getAttribute('data-testid')).replace('rf__edge-','');
@@ -28,6 +35,7 @@ test('a click on a connection selects it; the Inspector removes it; Undo and Del
   await expect.poll(()=>saved(page)).toBe(before-1);
   await page.locator('#undo-button').click();
   await expect.poll(()=>saved(page)).toBe(before);
+  await idle();
   // DELETE REMOVES A SELECTED ONE.
   const again=await centreOf(page,id);await page.mouse.click(again.x,again.y);
   await expect(page.locator('#remove-connection')).toBeVisible();

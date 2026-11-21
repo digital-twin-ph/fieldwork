@@ -1,6 +1,6 @@
 # Audit — the release gate
 
-_Created 2026-11-19 · Updated 2026-11-19_
+_Created 2026-11-19 · Updated 2026-11-20_
 
 Asked by the practitioner on 2026-11-19, while gate 219 ran: *"Why does gate 219 take that long?"*, then *"Maybe
 conditional gates, where things will likely fail given the updates?"*, and, on the proposal to write it up as an

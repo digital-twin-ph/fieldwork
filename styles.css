@@ -1464,7 +1464,10 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 #table-walkthrough .walk-shape-gone{stroke:var(--text-faint,#888);stroke-dasharray:2 4}
 #table-walkthrough .walk-point{fill:var(--surface-raised,#fff)}
 #table-walkthrough .walk-point.walk-shape-look,#table-walkthrough .walk-point.walk-shape-result{fill:var(--accent,#176b59)}
-#table-walkthrough .walk-key{font-size:16px;line-height:1.5;color:var(--text,#111);margin:4px 0 0;padding-left:1.2em}
+#table-walkthrough .walk-key{margin:4px 0 0;padding-left:1.2em}
+#table-walkthrough .walk-with-figure{align-items:center}
+#table-walkthrough .walk-with-figure .walk-figure{flex:2 1 22rem;margin:0}
+#table-walkthrough .walk-key li{font-size:16px;line-height:1.5;color:var(--text,#111)}
 #table-walkthrough .walk-shape-label{fill:var(--text,#111);font-size:14px;font-weight:700;paint-order:stroke;stroke:var(--surface-raised,#fff);stroke-width:3px;stroke-linejoin:round}
 #table-walkthrough tr.walk-fresh{animation:walk-in .4s ease-out}
 @keyframes walk-in{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}

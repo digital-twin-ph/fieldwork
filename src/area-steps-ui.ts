@@ -7,7 +7,7 @@ import type {WorkflowNode,AreaUnit,Boundary} from './types.js';
 import type {InspectorKit,OwnInspector} from './inspector-kit.js';
 import {openConfigDialog} from './config-dialog.js';
 import {openWalkthrough} from './table-walkthrough.js';
-import {bufferPointWalkthrough,bufferAreaWalkthrough,measureAreaWalkthrough,clipPolygonsWalkthrough} from './spatial-walkthroughs.js';
+import {bufferPointWalkthrough,measureAreaWalkthrough,clipPolygonsWalkthrough} from './spatial-walkthroughs.js';
 import {areaUnitOptions} from './area-measurement.js';
 import {calculateArea,formatArea} from './area-computation.js';
 type Measurement=ReturnType<typeof calculateArea>;
@@ -60,30 +60,6 @@ export const bufferPointInspector:OwnInspector<'buffer_point'>={
   },
 };
 
-export const bufferAreaInspector:OwnInspector<'buffer_area'>={
-  markup:(n,kit)=>{const k=kit as AreaStepKit,p=n.params;
-    return kit.section('Name',kit.name('buffer-label',p.label||'Buffer study area'))
-      +kit.section('Inputs',kit.inputs(n,{area:'The study area to widen'}))
-      +kit.section('Settings',sentence(kit,`The study area widened by ${p.distanceM.toLocaleString('en')} m on every side, for acquiring data around it; the reporting area does not change.`)+configure)
-      +kit.section('Result',areaResult(k,n,'The widened area'));},
-  wire:(n,kit,root)=>{
-    root.querySelector('#configure-step')?.addEventListener('click',()=>{
-      const node=nodeIn(kit,n);if(!node)return;
-      openConfigDialog({id:'buffer-area-dialog',widget:'Buffer study area',step:node.params.label||'',
-        draft:{distanceM:String(node.params.distanceM)},
-        sections:d=>{const m=Number(d.distanceM),ok=Number.isFinite(m)&&m>=0&&m<=50000;
-          return {settings:`<div class="field"><label class="field-label" for="buffer-distance">Buffer distance (metres)</label>`
-            +`<input id="buffer-distance" type="number" min="0" max="50000" value="${kit.esc(d.distanceM)}"></div>`,
-            preview:showMe,blocked:!ok,...(!ok?{message:{tone:'refusal' as const,text:'Give a distance from 0 to 50,000 metres.'}}:{})};},
-        wire:(root,d,redraw)=>{
-          root.querySelector<HTMLInputElement>('#buffer-distance')!.onchange=e=>{d.distanceM=(e.target as HTMLInputElement).value;redraw();};
-          showMeIn(root,kit,()=>bufferAreaWalkthrough(Number(d.distanceM)));},
-        apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='buffer_area')t.params.distanceM=Number(d.distanceM);}),
-      },kit.esc);
-    });
-  },
-};
-
 export const measureAreaInspector:OwnInspector<'measure_area'>={
   markup:(n,kit)=>{const k=kit as AreaStepKit,p=n.params;
     return kit.section('Name',kit.name('measure-label',p.label||'Calculate area'))
@@ -112,11 +88,21 @@ export const clipPolygonsInspector:OwnInspector<'clip_polygons'>={
     const k=kit as AreaStepKit,out=k.current()?k.output(n.id) as {features?:unknown[]}|undefined:undefined;
     return kit.section('Name',kit.name('clip-label',n.params.label||'Clip polygons'))
       +kit.section('Inputs',kit.inputs(n,{area:'The study area to clip to',polygons:'The polygons to clip'}))
-      +kit.section('Settings',sentence(kit,'Cuts each polygon to the study area: one inside is kept whole, one across its edge is cut along it, and one outside is left out. Nothing to set.')+showMe)
+      +kit.section('Settings',sentence(kit,'Cuts each polygon to the study area: one inside is kept whole, one across its edge is cut along it, and one outside is left out. Nothing to set.')+configure)
       +kit.section('Result',out?.features?`<div class="detail-row"><span>Polygons kept</span><strong>${out.features.length.toLocaleString('en')}</strong></div>`
         :'<p class="notice">Not run yet, or changed since the last run.</p>');},
-  wire:(_n,kit,root)=>{showMeIn(root,kit,()=>clipPolygonsWalkthrough());},
+  // SHOW ME HOW IN THE DIALOG, as every step's is (2026-11-21): nothing to set, as Table output's dialog says.
+  wire:(n,kit,root)=>{
+    root.querySelector('#configure-step')?.addEventListener('click',()=>{
+      const node=nodeIn(kit,n);if(!node)return;
+      openConfigDialog({id:'clip-polygons-dialog',widget:'Clip polygons',step:node.params.label||'',draft:{},
+        sections:()=>({settings:'<p class="muted">Nothing to set: each polygon is cut to the study area connected.</p>',preview:showMe}),
+        wire:root2=>{showMeIn(root2,kit,()=>clipPolygonsWalkthrough());},
+        apply:()=>{},
+      },kit.esc);
+    });
+  },
 };
 
-export const AREA_STEP_INSPECTORS={buffer_point:bufferPointInspector,buffer_area:bufferAreaInspector,
+export const AREA_STEP_INSPECTORS={buffer_point:bufferPointInspector,
   measure_area:measureAreaInspector,clip_polygons:clipPolygonsInspector} as const;

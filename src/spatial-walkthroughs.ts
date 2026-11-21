@@ -6,7 +6,6 @@
 import type {Boundary,Position,WorkflowNode,PointCollection} from './types.js';
 import type {Walkthrough,WalkStep} from './table-walkthrough.js';
 import {bufferPoint,BUFFER_POINT_STEPS} from './buffer-point.js';
-import {bufferedBoundary} from './area-buffer.js';
 import {calculateArea,formatArea,AREA_METHOD,AREA_UNITS} from './area-computation.js';
 import {clipPolygons,type Polygons} from './catchments.js';
 import type {AreaUnit} from './types.js';
@@ -35,7 +34,7 @@ function draw(shapes:Shape[],label:string):{svg:string;key:string[]}{
 }
 const ring=(points:Position[]):Position[][][]=>[[[...points,points[0]!]]];
 const partsOf=(g:Boundary):Position[][][]=>g.type==='MultiPolygon'?g.coordinates as Position[][][]:[g.coordinates as Position[][]];
-const step=(text:string,shapes:Shape[],final=false):WalkStep=>({text,marks:[],figure:draw(shapes,text),...(final?{final:true}:{})});
+const step=(text:string,shapes:Shape[],final=false,marks:WalkStep['marks']=[]):WalkStep=>({text,marks,figure:draw(shapes,text),...(final?{final:true}:{})});
 const metres=(m:number)=>`${m.toLocaleString('en')} m`;
 /** The dialog's distance, or 500 m where it is not one a step accepts, said in the walkthrough. */
 const usable=(m:number,max:number)=>Number.isFinite(m)&&m>0&&m<=max?m:500;
@@ -56,19 +55,6 @@ export function bufferPointWalkthrough(distanceM:number):Walkthrough{
 }
 
 const DISTRICT:Position[]=[[30,-1],[30.02,-0.995],[30.03,-1.01],[30.015,-1.025],[29.998,-1.018]];
-export function bufferAreaWalkthrough(distanceM:number):Walkthrough{
-  const d=usable(distanceM,50000);
-  const district:Boundary={type:'Polygon',coordinates:ring(DISTRICT)[0]!};
-  const made=bufferedBoundary(district,d);
-  const before=calculateArea(district,'km2'),after=calculateArea(made,'km2');
-  return {title:'Buffer study area, step by step',tables:[],resultColumns:[],steps:[
-    step('The study area it is given: one made-up district.',[{kind:'look',rings:partsOf(district),label:'District'}]),
-    step(`Every place within ${metres(d)} of its edge, outside it${d!==distanceM?' (shown with 500 m, because the distance set is not one the step accepts)':''}. `
-      +'The distance is measured in metres on the ground, not in degrees.',[{kind:'area',rings:partsOf(made)},{kind:'look',rings:partsOf(district),label:'District'}]),
-    step(`The district and that band together are the new study area: ${formatArea(after)}, against ${formatArea(before)} before.`,
-      [{kind:'result',rings:partsOf(made)},{kind:'input',rings:partsOf(district),label:'District'}],true)]};
-}
-
 export function measureAreaWalkthrough(unit:AreaUnit):Walkthrough{
   const district:Boundary={type:'Polygon',coordinates:ring(DISTRICT)[0]!};
   const measured=calculateArea(district,unit);
@@ -104,10 +90,17 @@ export function clipPolygonsWalkthrough():Walkthrough{
 /** JOIN A TABLE TO THE STUDY AREA, on three made-up parts and a table of three rows (2026-11-20). One row matches as it is,
  *  one only once punctuation is set aside, one names no part, and one part has no row; the last step is what the join
  *  itself makes of them, under the matching chosen in the dialog. */
-const PARTS:{id:string;name:string;ring:Position[]}[]=[
-  {id:'p1',name:'North',ring:[[30,-1],[30.02,-1],[30.02,-1.012],[30,-1.012]]},
-  {id:'p2',name:'St. Mary',ring:[[30.02,-1],[30.04,-1],[30.04,-1.012],[30.02,-1.012]]},
-  {id:'p3',name:'Riverside',ring:[[30,-1.012],[30.04,-1.012],[30.04,-1.024],[30,-1.024]]}];
+// THE PARTS DRAWN AS ADMINISTRATIVE UNITS (2026-11-21, the practitioner: "Can we make the study area in an example look
+// like an admin boundary?"): three districts sharing uneven borders, a river between the two above and Riverside below.
+const V:Record<string,Position>={A:[30,-1.002],B:[30.008,-0.999],C:[30.017,-1.001],D:[30.026,-0.998],E:[30.035,-1.003],
+  F:[30.041,-1.007],F2:[30.043,-1.011],G:[30.04,-1.014],L:[29.998,-1.007],W:[30.001,-1.012],R1:[30.006,-1.014],R2:[30.011,-1.011],
+  M1:[30.019,-1.006],M2:[30.016,-1.01],J:[30.02,-1.013],R3:[30.027,-1.015],R4:[30.033,-1.012],
+  S1:[30.042,-1.02],S2:[30.034,-1.026],S3:[30.022,-1.024],S4:[30.012,-1.027],S5:[30.003,-1.023],S6:[29.999,-1.017]};
+const at=(...k:string[])=>k.map(x=>V[x]!);
+const PARTS:{id:string;name:string;ring:Position[];at:Position}[]=[
+  {id:'p1',name:'North',ring:at('A','B','C','M1','M2','J','R2','R1','W','L'),at:[30.002,-1.0085]},
+  {id:'p2',name:'St. Mary',ring:at('C','D','E','F','F2','G','R4','R3','J','M2','M1'),at:[30.022,-1.0085]},
+  {id:'p3',name:'Riverside',ring:at('W','R1','R2','J','R3','R4','G','S1','S2','S3','S4','S5','S6'),at:[30.006,-1.02]}];
 const ROWS:{name:string;cases:number}[]=[{name:'north',cases:12},{name:'St Mary',cases:30},{name:'Lakeside',cases:5}];
 export function joinTableWalkthrough(normalisation:'exact'|'fuzzy'):Walkthrough{
   const table={kind:'data-table',keys:['name'],valueField:'cases',rows:ROWS.map(r=>({key:{name:r.name},value:r.cases})),
@@ -115,16 +108,31 @@ export function joinTableWalkthrough(normalisation:'exact'|'fuzzy'):Walkthrough{
   const joined=joinTableToAreas(PARTS.map(({id,name})=>({id,name})),table,{keyField:'name',normalisation});
   const part=(name:string)=>joined.parts.find(p=>p.name===name)!;
   const shape=(name:string)=>ring(PARTS.find(p=>p.name===name)!.ring);
-  const all=(look?:string,kind:Kind='look'):Shape[]=>PARTS.map(p=>({kind:p.name===look?kind:'input',rings:ring(p.ring),label:p.name,at:p.ring[3]}));
+  // A part already joined stays drawn as joined, so the join is seen building up step by step (the practitioner,
+  // 2026-11-21: "once a row and feature get joined, the shading should remain").
+  const filled=(name:string,value:number):Shape=>({kind:'result',rings:shape(name),label:`${name} · ${value}`,at:PARTS.find(p=>p.name===name)!.at});
+  const all=(look?:string,kind:Kind='look',done:Shape[]=[]):Shape[]=>[...PARTS.filter(p=>!done.some(d=>d.label?.startsWith(p.name+' ·'))).map(p=>
+    ({kind:p.name===look?kind:'input' as Kind,rings:ring(p.ring),label:p.name,at:p.at})),...done];
   const mary=part('St. Mary').matched;
-  return {title:'Join a table to the study area, step by step',tables:[],resultColumns:[],steps:[
-    step('Three made-up parts of a study area, and a table of three rows: north 12, St Mary 30, Lakeside 5. Each row names the part it is about in its "name" column.',all()),
-    step('"north" names North: the names are compared with capitals set aside, so the row’s 12 goes onto North.',[...all('North'),{kind:'result',rings:shape('North'),label:'North · 12',at:PARTS[0]!.ring[3]}]),
+  // THE TWO TABLES JOINED (2026-11-21): the study area's own table of parts, and the table brought to it, each step
+  // marking its rows in words. The practitioner: "The study area geometry also has a table which is what is being joined".
+  const gets=(row:number,value:number)=>({table:0,row,state:'matched' as const,word:`gets ${value}`});
+  const empty=(row:number)=>({table:0,row,state:'unmatched' as const,word:'no row names it'});
+  const onto=(row:number,name:string)=>({table:1,row,state:'matched' as const,word:`onto ${name}`});
+  const none=(row:number)=>({table:1,row,state:'unmatched' as const,word:'names no part'});
+  const maryMarks=mary?[gets(1,30),onto(1,'St. Mary')]:[empty(1),none(1)],northMarks=[gets(0,12),onto(0,'North')];
+  const north=[filled('North',12)],both=[...north,...(mary?[filled('St. Mary',30)]:[])];
+  return {title:'Join a table to the study area, step by step',
+    tables:[{label:"The study area's parts",columns:['id','name'],rows:PARTS.map(p=>[p.id,p.name])},
+      {label:'The table',columns:['name','cases'],rows:ROWS.map(r=>[r.name,String(r.cases)])}],resultColumns:[],steps:[
+    step('Two tables: the study area\'s three parts, each with its id and name, and a table of three rows: north 12, St Mary 30, Lakeside 5. The join matches the table\'s "name" to each part\'s name.',all()),
+    step('"north" names North: the names are compared with capitals set aside, so the row’s 12 goes onto North.',all(undefined,'look',north),false,northMarks),
     step(mary?'"St Mary" names St. Mary once the full stop is set aside, as the matching chosen does: its 30 goes onto St. Mary.'
       :'"St Mary" is not "St. Mary" written exactly, as the matching chosen requires: the row names no part, and St. Mary stays empty.',
-      [...all('St. Mary',mary?'look':'gone'),...(mary?[{kind:'result' as const,rings:shape('St. Mary'),label:'St. Mary · 30',at:PARTS[1]!.ring[3]}]:[])]),
-    step('"Lakeside" names no part of this area: the row is left out, and listed as naming no part.',all()),
-    step('No row names Riverside: it is drawn, and left empty, rather than left out of the map.',all('Riverside','gone')),
+      all('St. Mary',mary?'look':'gone',both),false,[...northMarks,...maryMarks]),
+    step('"Lakeside" names no part of this area: the row is left out, and listed as naming no part.',all(undefined,'look',both),false,[...northMarks,...maryMarks,none(2)]),
+    step('No row names Riverside: it is drawn, and left empty, rather than left out of the map.',all('Riverside','gone',both),false,[...northMarks,...maryMarks,none(2),empty(2)]),
     step(`What the step passes on: ${joined.counts.matchedParts} of 3 parts with a value, ${joined.counts.unmatchedRows} row naming no part.`,
-      joined.parts.map(p=>({kind:p.matched?'result' as const:'gone' as const,rings:shape(p.name),label:p.matched?`${p.name} · ${p.value}`:`${p.name} · empty`,at:PARTS.find(x=>x.name===p.name)!.ring[3]})),true)]};
+      joined.parts.map(p=>({kind:p.matched?'result' as const:'gone' as const,rings:shape(p.name),label:p.matched?`${p.name} · ${p.value}`:`${p.name} · empty`,at:PARTS.find(x=>x.name===p.name)!.at})),
+      true,[...northMarks,...maryMarks,none(2),empty(2)])]};
 }

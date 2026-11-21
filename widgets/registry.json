@@ -495,7 +495,7 @@
     {
       "id": "urn:fieldwork:widget:clip_polygons",
       "nodeType": "clip_polygons",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -506,6 +506,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/clip_polygons/0.2.0.json",
           "sha256": "6e565af609ce481c34d553062bc01cb3dafbb5c22f277da6626f1f39116a5bf1"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/clip_polygons/0.3.0.json",
+          "sha256": "19f46ae081ee1f779f04aec9bfac7c044aec00165d250938febdaf5e2ef38689"
         }
       ]
     },
@@ -915,7 +920,7 @@
     {
       "id": "urn:fieldwork:widget:join_table_to_area",
       "nodeType": "join_table_to_area",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.5.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -946,6 +951,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/join_table_to_area/0.4.0.json",
           "sha256": "f1d6c3ba53306600f8959b8dfb46d9e2938d668b8964028d4d6a673bc02cfc28"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/join_table_to_area/0.5.0.json",
+          "sha256": "e4ec5e5d4f462389763689de1cbd865908ac938d510506c2a4898db91f80694e"
         }
       ]
     },

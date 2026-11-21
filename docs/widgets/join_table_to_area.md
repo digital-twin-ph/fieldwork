@@ -49,8 +49,10 @@ the value it takes, how many take one, the rows that name no part, and anything 
 two rows. Both change as the settings do; nothing reaches the workflow until **Apply**. The parts of a polygon layer
 are known once the workflow has run. The study area's own panel lists its parts too, under **View the parts**.
 
-**Show me how it works** walks three made-up parts and a table of three rows through the matching chosen: a row that
-matches as it is, one that matches only once punctuation is set aside, one that names no part, and a part no row names.
+**Show me how it works**, in **Configure…**, walks three made-up parts and a table of three rows through the matching
+chosen: a row that matches as it is, one that matches only once punctuation is set aside, one that names no part, and a
+part no row names. The two tables joined, the study area's parts and the table, stand beside the drawing, each row
+marked in words with what happened to it.
 
 ### Choosing how names are matched
 
@@ -123,6 +125,12 @@ Each part then carries one value per frame, and an interactive map can play thro
 the last frame's. A key repeated across frames is expected; a key repeated within a frame is reported.
 
 ## History
+
+### 2026-11-21 · Show me how shows both tables (0.5.0)
+
+**Show me how it works** shows the study area's parts and the table beside the drawing, each row marked with what
+happened to it; it drew only the parts, all black. The parts are drawn as districts with uneven borders, and each
+part keeps its value as the next row is joined. It is in **Configure…** only, where it was also in the panel.
 
 ### 2026-11-20 · On the standard (0.4.0)
 

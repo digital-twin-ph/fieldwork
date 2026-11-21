@@ -20,8 +20,8 @@ the part that remains.
 
 ## How to use it
 
-Connect both inputs; there is nothing to set. **Show me how it works**, under Settings, clips three made-up units, one
-inside, one across the edge and one outside, step by step.
+Connect both inputs; there is nothing to set, and **Configure…** says so. **Show me how it works**, in that dialog, clips
+three made-up units, one inside, one across the edge and one outside, step by step.
 
 **Result** gives how many polygons the last run kept.
 
@@ -37,3 +37,10 @@ inside, one across the edge and one outside, step by step.
 ## Where it is used
 
 The John Snow examples clip their pump catchments to the illustrative Soho reporting rectangle.
+
+## History
+
+### 2026-11-21 · Configure…, with Show me how (0.3.0)
+
+**Configure…** says there is nothing to set and holds **Show me how it works**, which was in the panel; its drawing,
+all black, now shows each shape as its key says.

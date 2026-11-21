@@ -180,12 +180,12 @@
    "migrationFrom": []
   },
   "clip_polygons": {
-   "version": "0.2.0",
-   "released": "2026-11-20",
+   "version": "0.3.0",
+   "released": "2026-11-21",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The standard Inspector, with Show me how it works: a unit inside kept, one across the edge cut, one outside left out. The receipt names the clipping area by its GeoJSON's SHA-256."
+     "kind": "changed",
+     "description": "Configure… says there is nothing to set and holds Show me how, which was in the panel."
     }
    ],
    "breaking": false,
@@ -398,12 +398,12 @@
    "migrationFrom": []
   },
   "join_table_to_area": {
-   "version": "0.4.0",
-   "released": "2026-11-20",
+   "version": "0.5.0",
+   "released": "2026-11-21",
    "changes": [
     {
-     "kind": "minor",
-     "description": "On the standard (experiment 186): its own module, area-join-ui.ts, out of app.ts. The Inspector holds the name, the inputs, one sentence of what the step will do, saying before a run when the column naming each part is not chosen, Configure… and Show me how, and the last run's count of parts that took a value. Configure… holds every setting, with Before (the table, and the study area's parts by name) and After (each part with its value, the rows naming no part, and anything else found), drawn as the choices change. The column naming the most parts is proposed where none is chosen. Show me how walks three made-up parts and a table of three rows through the matching chosen, ending on what the join itself makes."
+     "kind": "changed",
+     "description": "Show me how shows the study area's parts and the table beside the drawing, each row marked; it is in Configure… only."
     }
    ],
    "breaking": false,

@@ -160,13 +160,9 @@ export const joinInspector:OwnInspector<'join_table_to_area'>={
     return kit.section('Name',kit.name('join-label',p.label||'Values on the study area'))
       +kit.section('Inputs',kit.inputs(n0,{records:'Table naming the parts',area:'Study area',polygons:'Or a polygon layer'}))
       +kit.section('Settings',`<p class="standard-sentence">${esc(joinSentence(p,table,area))}</p>${missing}`
-        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button>'
-        +'<button type="button" class="button" data-show-me>Show me how it works</button></div>')
+        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>')
       +kit.section('Result',`<p class="standard-result${why||(joined&&joined.counts.unmatchedParts)?' standard-result-warning':''}">${esc(line)}</p>`);},
   wire:(n0,kit,root)=>{const k=kit as JoinKit;
-    root.querySelector<HTMLButtonElement>('[data-show-me]')?.addEventListener('click',e=>{
-      const node=kit.workflow().nodes.find(x=>x.id===n0.id);
-      openWalkthrough(joinTableWalkthrough(node?.type==='join_table_to_area'?node.params.normalisation??'fuzzy':'fuzzy'),kit.esc,e.currentTarget as HTMLElement);});
     root.querySelector('#configure-step')?.addEventListener('click',()=>{
       const node=kit.workflow().nodes.find(x=>x.id===n0.id);
       if(node?.type!=='join_table_to_area')return;

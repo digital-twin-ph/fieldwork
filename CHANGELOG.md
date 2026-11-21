@@ -13,6 +13,11 @@ shown in a local build is not a claim that it has been published.
 - **Show me how draws its shapes again.** The spatial walkthroughs (Area around a point, Buffer study area, Calculate
   area, Clip polygons, Join a table to the study area) drew every shape black: their styles were never written. Each kind
   now looks as its key says, and the key is 16 px.
+- **Show me how for Join shows both tables.** The study area's parts and the table joined to them stand beside the
+  drawing, each row marked with what happened to it. Show me how is in the Configure… dialog for Join and Clip
+  polygons, as for every other step; Clip polygons' dialog says there is nothing to set.
+- **Buffer study area, retired in 0.37.0, is no longer standardized:** 0.154.0 gave it an Inspector and a walkthrough
+  that no workflow could reach.
 
 ## 0.156.0 — 2026-11-21
 

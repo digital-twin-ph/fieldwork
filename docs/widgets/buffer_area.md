@@ -20,7 +20,6 @@ area; the area you report on does not change.
 ## How to use it
 
 **Configure…** sets the **Buffer distance (metres)**, from 0 to 50,000, and nothing is written until **Apply**.
-**Show me how it works**, in the dialog, widens a made-up district step by step with the distance you have set.
 
 **Result** gives the size of the widened area at the last run.
 

@@ -1,5 +1,5 @@
 /** A TABLE STEP SHOWN ON A SMALL EXAMPLE (experiment 223), the player every table widget's walkthrough shares, and since
- *  2026-11-20 every spatial one: a step may carry a drawing in place of the tables.
+ *  2026-11-20 every spatial one: a step may carry a drawing, beside the tables where it has any (2026-11-21).
  *
  *  Back, Step and Play; it never starts by itself. Each step is one sentence, said to a screen reader too, and the rows
  *  it is about are outlined and labelled in words, never by colour alone. The result table fills as the steps go. A row
@@ -21,7 +21,7 @@ export interface WalkStep {
   stopped?:boolean;
   /** A problem found so far will stop the step once every row is checked: no table will come out. */
   willStop?:boolean;
-  /** A SPATIAL STEP'S DRAWING (2026-11-20), in place of the tables: made here from fixed shapes, never from a person's data.
+  /** A SPATIAL STEP'S DRAWING (2026-11-20), in place of the result table and beside the input tables: made here from fixed shapes, never from a person's data.
    *  `key` says in words what each kind of line in it is, so nothing is told by colour alone. */
   figure?:{svg:string;key:string[]};
 }
@@ -32,15 +32,18 @@ const SHAPE:Record<MarkState,string>={looking:'›',matched:'✓',unmatched:'✕
 /** The walkthrough at one step, as markup: the input tables with this step's rows marked, the result so far, the sentence. */
 export function walkthroughMarkup(walk:Walkthrough,at:number,esc:Escape):string{
   const step=walk.steps[at]!;
-  if(step.figure)return `<p class="walk-made-up">Made-up example</p><figure class="walk-figure">${step.figure.svg}`
-    +`<figcaption><ul class="walk-key">${step.figure.key.map(k=>`<li>${esc(k)}</li>`).join('')}</ul></figcaption></figure>`
-    +`<p class="walk-say" aria-live="polite"><span class="walk-count">Step ${at+1} of ${walk.steps.length}.</span> ${esc(step.text)}</p>`;
   const tableHtml=(t:WalkTable,ti:number)=>`<figure class="walk-table"><figcaption>${esc(t.label)}</figcaption><table><thead><tr>`
     +t.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')+'<th scope="col"><span class="visually-hidden">This step</span></th></tr></thead><tbody>'
     +t.rows.map((r,ri)=>{const m=step.marks.find(x=>x.table===ti&&x.row===ri);
       return `<tr${m?` class="walk-${m.state}" data-walk-state="${m.state}"`:''}>`+r.map(c=>`<td>${esc(c)}</td>`).join('')
         +`<td class="walk-word">${m?`<span aria-hidden="true">${SHAPE[m.state]}</span> ${esc(m.word)}`:''}</td></tr>`;}).join('')
     +'</tbody></table></figure>';
+  // A DRAWING, WITH ITS TABLE BESIDE IT where the step has one (2026-11-21: Join's showed the study area and never the
+  // table joined to it, so which row went where could not be seen).
+  if(step.figure)return `<p class="walk-made-up">Made-up example</p><div class="walk-tables walk-with-figure">${walk.tables.map(tableHtml).join('')}`
+    +`<figure class="walk-figure">${step.figure.svg}`
+    +`<figcaption><ul class="walk-key">${step.figure.key.map(k=>`<li>${esc(k)}</li>`).join('')}</ul></figcaption></figure></div>`
+    +`<p class="walk-say" aria-live="polite"><span class="walk-count">Step ${at+1} of ${walk.steps.length}.</span> ${esc(step.text)}</p>`;
   // THE RESULT SO FAR: every row the steps up to this one added, the newest marked; the final step replaces them with the step's own table.
   const final=walk.steps.slice(0,at+1).reverse().find(s=>s.final&&s.result);
   const so:{row:string[];fresh:boolean}[]=final?final.result!.map(row=>({row,fresh:at===walk.steps.indexOf(final)}))

@@ -37,12 +37,25 @@ test('the column naming each part is proposed, the table and parts shown Before,
   // THE INSPECTOR SAYS WHAT IS MISSING, before a run rather than as the run's refusal.
   await expect(page.locator('[data-join-missing]')).toContainText('Choose the column naming each part');
   await expect(page.locator('#inspector-content .standard-sentence')).toContainText('once the column naming each part is chosen');
-  // SHOW ME HOW, from the Inspector.
-  await page.locator('#inspector-content [data-show-me]').click();
+  // SHOW ME HOW, in Configure… only, as every step's (2026-11-21).
+  await expect(page.locator('#inspector-content [data-show-me]')).toHaveCount(0);
+  await page.locator('#configure-step').click();
+  await page.locator('#join-config #join-show-me').click();
   await expect(page.locator('#table-walkthrough')).toBeVisible();
   // EVERY STEP'S DRAWING IS STYLED (2026-11-21): the shapes had no styles from 0.154.0, so each filled black. A shape is
   // outlined or tinted, never black; a made part is filled.
   const walk=page.locator('#table-walkthrough');
+  // BOTH TABLES JOINED, beside the drawing (2026-11-21): the study area's parts and the table, each row marked in words.
+  await expect(walk.locator('.walk-table figcaption')).toHaveText(["The study area's parts",'The table']);
+  await walk.locator('[data-walk-step]').click();
+  await expect(walk.locator('tr[data-walk-state="matched"] .walk-word')).toHaveText([/gets 12/,/onto North/]);
+  // A JOIN STAYS MARKED as the next one is made (2026-11-21): North's 12 is still there when St. Mary takes its 30.
+  await walk.locator('[data-walk-step]').click();
+  await expect(walk.locator('tr[data-walk-state="matched"] .walk-word')).toHaveText([/gets 12/,/gets 30/,/onto North/,/onto St. Mary/]);
+  await expect(walk.locator('.walk-shape-result')).toHaveCount(2);
+  await walk.locator('[data-walk-back]').click().catch(async()=>{await walk.getByRole('button',{name:'Back'}).click();});
+  await walk.locator('[data-walk-back]').click().catch(async()=>{await walk.getByRole('button',{name:'Back'}).click();});
+  await expect(walk.locator('.walk-say')).toContainText('Step 1 of 6.');
   for(let i=0;;i++){
     const fills=await walk.locator('.walk-shape').evaluateAll(xs=>xs.map(x=>getComputedStyle(x).fill));
     expect(fills.length).toBeGreaterThan(0);
@@ -51,8 +64,7 @@ test('the column naming each part is proposed, the table and parts shown Before,
     await walk.locator('[data-walk-step]').click();if(i>8)break;
   }
   expect(await walk.locator('.walk-shape-result').evaluateAll(xs=>xs.map(x=>getComputedStyle(x).fill))).not.toContain('none');
-  await page.keyboard.press('Escape');await expect(page.locator('#table-walkthrough')).toHaveCount(0);
-  await page.locator('#configure-step').click();
+  await walk.locator('[data-walk-close]').click();await expect(page.locator('#table-walkthrough')).toHaveCount(0);
   const dialog=page.locator('#join-config');
   await expect(dialog.locator('#join-key')).toHaveValue('geoboundaries_name');
   await expect(dialog.locator('[data-join-proposed]')).toContainText('names 3 of 4 parts');

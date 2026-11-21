@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.155.0 — In development
+## 0.155.0 — 2026-11-20
 
 - **Tide gauges in Tabular data.** A fourth tab: the 26 coastal countries in coastal-sea-level over a map of their 131
   gauges, filled where PSMSL computes a trend, drawn with no network. Choosing a country reads its index of its gauges,

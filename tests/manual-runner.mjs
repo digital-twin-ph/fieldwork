@@ -88,7 +88,9 @@ export async function performManual(page,workflow,{timeout=120000,runTimeout=tim
       const own=page.locator(`.inspector [data-map-port="${step.connect.port}"]`);
       // A port shown under its group's one choice (src/port-names.ts PORT_GROUPS): Sample a raster's Raster and Read at.
       const type=(await saved(page)).nodes.find(n=>n.id===to)?.type;
-      const group=type==='sample_raster'?({raster:'read',files:'read',points:'at',areas:'at',area:'at'})[step.connect.port]:undefined;
+      // A port shown under its group (PORT_GROUPS): Sample a raster's, and Join's study area or polygon layer.
+      const group=type==='sample_raster'?({raster:'read',files:'read',points:'at',areas:'at',area:'at'})[step.connect.port]
+        :type==='join_table_to_area'?({area:'parts',polygons:'parts'})[step.connect.port]:undefined;
       const list=await own.count()?own.first():page.locator(`#connect-${group??step.connect.port}`);
       await expect(list,{message:where}).toBeVisible();
       await list.selectOption(from);

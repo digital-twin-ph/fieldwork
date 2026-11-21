@@ -65,3 +65,25 @@ test('the column naming each part is proposed, the table and parts shown Before,
   await expect(page.locator('#inspector-content .standard-result')).toContainText('3 of 4 parts took a value; 1 of 4 rows named no part.');
   expect(errors).toEqual([]);
 });
+
+test('a table dropped on the area input is bound to the table input, and an area to the area input',async({page})=>{
+  const w=structuredClone(workflow);w.edges=[{id:'e3',from:'join',to:'map',port:'polygons'}];
+  await page.goto('/?example=blank');
+  await page.locator('#workflow-file').setInputFiles({name:'join.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+  await page.locator('[data-view="workflow"]').click();
+  await expect(page.locator('.react-flow__node[data-id="join"] [data-handleid="parts"]')).toBeAttached({timeout:45000});
+  await expect(page.locator('.react-flow__node[data-id="join"] [data-handleid="polygons"]')).toHaveCount(0);
+  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).edges);
+  const drag=async(from,port)=>{
+    const a=await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox();
+    const b=await page.locator(`.react-flow__node[data-id="join"] [data-handleid="${port}"]`).boundingBox();
+    await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
+    await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();};
+  // The census dropped on "Study area or polygon layer": it is a table, so it goes to Table.
+  await drag('census','parts');
+  await expect.poll(async()=>(await saved()).some(e=>e.from==='census'&&e.to==='join'&&e.port==='records')).toBe(true);
+  // The study area dropped on "Table": it is an area, so it goes to the area input.
+  await drag('area','records');
+  await expect.poll(async()=>(await saved()).some(e=>e.from==='area'&&e.to==='join'&&e.port==='area')).toBe(true);
+  expect((await saved()).filter(e=>e.to==='join').length).toBe(2);
+});

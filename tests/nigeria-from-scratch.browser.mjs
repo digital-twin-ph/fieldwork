@@ -89,7 +89,7 @@ const joinAndMap=async(page,from,area,title)=>{
   await add(page,'join_table_to_area');
   const join=await idOf(page,'join_table_to_area');
   await tidy(page);await wire(page,from,join,'records');
-  await tidy(page);await wire(page,area,join,'polygons');
+  await tidy(page);await wire(page,area,join,'parts');
   await add(page,'map_output');
   const map=await idOf(page,'map_output');
   await tidy(page);await wire(page,join,map,'polygons');
@@ -184,7 +184,7 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await add(page,'join_table_to_area');
     const frames=(await saved(page)).nodes.filter(n=>n.type==='join_table_to_area')[1].id;
     await tidy(page);await wire(page,table,frames,'records');
-    await tidy(page);await wire(page,area,frames,'polygons');
+    await tidy(page);await wire(page,area,frames,'parts');
     await page.locator(`.react-flow__node[data-id="${frames}"]`).click();
     await configureJoin(page,{key:'ID',normalisation:'exact',frames:'measure'});
     await add(page,'map_output');
@@ -241,14 +241,14 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await add(page,'join_table_to_area');
     const first=await idOf(page,'join_table_to_area',0);
     await tidy(page);await wire(page,coverage,first,'records');
-    await tidy(page);await wire(page,area,first,'polygons');
+    await tidy(page);await wire(page,area,first,'parts');
     await page.locator(`.react-flow__node[data-id="${first}"]`).click();
     await configureJoin(page,{key:'ID',normalisation:'exact'});
     const burden=await importTable(page,'data/nga-lga-2024.csv','long','zd_est',['ID']);
     await add(page,'join_table_to_area');
     const second=await idOf(page,'join_table_to_area',1);
     await tidy(page);await wire(page,burden,second,'records');
-    await tidy(page);await wire(page,first,second,'polygons');
+    await tidy(page);await wire(page,first,second,'parts');
     await page.locator(`.react-flow__node[data-id="${second}"]`).click();
     await configureJoin(page,{key:'ID',normalisation:'exact'});
 

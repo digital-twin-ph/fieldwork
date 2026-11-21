@@ -108,7 +108,7 @@ import {pinnedRuleset} from './rule-application.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {PORT_NAMES,PORT_GROUPS} from './port-names.js';
+import {PORT_NAMES,PORT_GROUPS,groupFor} from './port-names.js';
 import {proposeChartForms,proposalOrder,type ChartForm,type ChartProposal} from './chart-proposals.js';
 import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
@@ -1370,6 +1370,9 @@ function setConnection(w:Workflow,from:string|null,to:string,port:string){
   const target=w.nodes.find(n=>n.id===to),map=['map_output','table_output'].includes(target?.type||'');
   // A GROUPED PORT (PORT_GROUPS) binds to the one of its ports the source fits, and replaces whatever else in the group was
   // connected: one raster or set of files, at one kind of place.
+  if(target&&from&&PORT_GROUPS[target.type]){const source=w.nodes.find(n=>n.id===from);
+    const chosen=source&&groupFor(target.type,port,p=>portAccepts(nodeInputs(target).find(([q])=>q===p)?.[1],outputOf(source)));
+    if(chosen)port=chosen;}
   const group=target?PORT_GROUPS[target.type]?.[port]:undefined;
   if(group){
     w.edges=w.edges.filter(e=>!(e.to===to&&group.includes(e.port)));
@@ -6560,8 +6563,8 @@ function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id=
   // The map's one configurable port accepts anything the map can draw; which declared port it
   // becomes is decided on connection, by what the source emits. Without this the drop is refused
   // before setConnection ever sees it, because `layer` is not a declared port.
-  const grouped=PORT_GROUPS[b.type]?.[c.targetHandle??''];
-  if(grouped)return nodeInputs(b).some(([p,type])=>grouped.includes(p)&&portAccepts(type,outputOf(a)));
+  if(PORT_GROUPS[b.type]?.[c.targetHandle??''])
+    return !!groupFor(b.type,c.targetHandle??'',p=>portAccepts(nodeInputs(b).find(([q])=>q===p)?.[1],outputOf(a)));
   if(c.targetHandle==='layer'&&(b.type==='map_output'||b.type==='table_output'))
     return nodeInputs(b).some(([,type])=>type===outputOf(a))||(b.type==='table_output'&&portAccepts('table',outputOf(a)));
   return portAccepts(nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1],outputOf(a));}

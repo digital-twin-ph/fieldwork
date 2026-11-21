@@ -10,6 +10,7 @@ import {bufferedBoundary} from './area-buffer.js';
 import {calculateArea,formatArea,AREA_METHOD,AREA_UNITS} from './area-computation.js';
 import {clipPolygons,type Polygons} from './catchments.js';
 import type {AreaUnit} from './types.js';
+import {joinTableToAreas} from './area-join.js';
 
 type Kind='input'|'area'|'look'|'result'|'gone';
 interface Shape {kind:Kind;rings?:Position[][][];point?:Position;label?:string;at?:Position}
@@ -98,4 +99,32 @@ export function clipPolygonsWalkthrough():Walkthrough{
     step(`"Outside" does not meet the area: nothing of it is inside, so it is left out.`,[{kind:'area',rings:ring(AREA)},{kind:'gone',rings:shape('Outside'),label:'Outside'}]),
     step(`What the step passes on: ${clipped.features.length} of 3 units, each cut to the area.`,
       [{kind:'area',rings:ring(AREA)},...clipped.features.map(f=>({kind:'result' as const,rings:partsOf(f.geometry as Boundary),label:(f.properties as {name?:string}).name??''}))],true)]};
+}
+
+/** JOIN A TABLE TO THE STUDY AREA, on three made-up parts and a table of three rows (2026-11-20). One row matches as it is,
+ *  one only once punctuation is set aside, one names no part, and one part has no row; the last step is what the join
+ *  itself makes of them, under the matching chosen in the dialog. */
+const PARTS:{id:string;name:string;ring:Position[]}[]=[
+  {id:'p1',name:'North',ring:[[30,-1],[30.02,-1],[30.02,-1.012],[30,-1.012]]},
+  {id:'p2',name:'St. Mary',ring:[[30.02,-1],[30.04,-1],[30.04,-1.012],[30.02,-1.012]]},
+  {id:'p3',name:'Riverside',ring:[[30,-1.012],[30.04,-1.012],[30.04,-1.024],[30,-1.024]]}];
+const ROWS:{name:string;cases:number}[]=[{name:'north',cases:12},{name:'St Mary',cases:30},{name:'Lakeside',cases:5}];
+export function joinTableWalkthrough(normalisation:'exact'|'fuzzy'):Walkthrough{
+  const table={kind:'data-table',keys:['name'],valueField:'cases',rows:ROWS.map(r=>({key:{name:r.name},value:r.cases})),
+    rowCount:ROWS.length,missingValueCount:0} as unknown as import('./data-table.js').DataTable;
+  const joined=joinTableToAreas(PARTS.map(({id,name})=>({id,name})),table,{keyField:'name',normalisation});
+  const part=(name:string)=>joined.parts.find(p=>p.name===name)!;
+  const shape=(name:string)=>ring(PARTS.find(p=>p.name===name)!.ring);
+  const all=(look?:string,kind:Kind='look'):Shape[]=>PARTS.map(p=>({kind:p.name===look?kind:'input',rings:ring(p.ring),label:p.name,at:p.ring[3]}));
+  const mary=part('St. Mary').matched;
+  return {title:'Join a table to the study area, step by step',tables:[],resultColumns:[],steps:[
+    step('Three made-up parts of a study area, and a table of three rows: north 12, St Mary 30, Lakeside 5. Each row names the part it is about in its "name" column.',all()),
+    step('"north" names North: the names are compared with capitals set aside, so the row’s 12 goes onto North.',[...all('North'),{kind:'result',rings:shape('North'),label:'North · 12',at:PARTS[0]!.ring[3]}]),
+    step(mary?'"St Mary" names St. Mary once the full stop is set aside, as the matching chosen does: its 30 goes onto St. Mary.'
+      :'"St Mary" is not "St. Mary" written exactly, as the matching chosen requires: the row names no part, and St. Mary stays empty.',
+      [...all('St. Mary',mary?'look':'gone'),...(mary?[{kind:'result' as const,rings:shape('St. Mary'),label:'St. Mary · 30',at:PARTS[1]!.ring[3]}]:[])]),
+    step('"Lakeside" names no part of this area: the row is left out, and listed as naming no part.',all()),
+    step('No row names Riverside: it is drawn, and left empty, rather than left out of the map.',all('Riverside','gone')),
+    step(`What the step passes on: ${joined.counts.matchedParts} of 3 parts with a value, ${joined.counts.unmatchedRows} row naming no part.`,
+      joined.parts.map(p=>({kind:p.matched?'result' as const:'gone' as const,rings:shape(p.name),label:p.matched?`${p.name} · ${p.value}`:`${p.name} · empty`,at:PARTS.find(x=>x.name===p.name)!.ring[3]})),true)]};
 }

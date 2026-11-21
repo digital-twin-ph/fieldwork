@@ -1,3 +1,4 @@
+import {configureJoin} from './configure-join.mjs';
 import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import {keepColumns,columnsOffered} from './keep-columns.mjs';
@@ -93,8 +94,7 @@ const joinAndMap=async(page,from,area,title)=>{
   const map=await idOf(page,'map_output');
   await tidy(page);await wire(page,join,map,'polygons');
   await page.locator(`.react-flow__node[data-id="${join}"]`).click();
-  await page.locator('#join-key').selectOption('ID');
-  await page.locator('#join-normalisation').selectOption('exact');
+  await configureJoin(page,{key:'ID',normalisation:'exact'});
   await page.locator(`.react-flow__node[data-id="${map}"]`).click();
   await page.locator('#map-label').fill(title);
   await page.locator('#map-label').press('Tab');
@@ -186,9 +186,7 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await tidy(page);await wire(page,table,frames,'records');
     await tidy(page);await wire(page,area,frames,'polygons');
     await page.locator(`.react-flow__node[data-id="${frames}"]`).click();
-    await page.locator('#join-key').selectOption('ID');
-    await page.locator('#join-normalisation').selectOption('exact');
-    await page.locator('#join-frames').selectOption('measure');
+    await configureJoin(page,{key:'ID',normalisation:'exact',frames:'measure'});
     await add(page,'map_output');
     const played=(await saved(page)).nodes.filter(n=>n.type==='map_output')[1].id;
     await tidy(page);await wire(page,frames,played,'polygons');
@@ -245,16 +243,14 @@ test('five questions about 774 LGAs, each its own short workflow',async({page})=
     await tidy(page);await wire(page,coverage,first,'records');
     await tidy(page);await wire(page,area,first,'polygons');
     await page.locator(`.react-flow__node[data-id="${first}"]`).click();
-    await page.locator('#join-key').selectOption('ID');
-    await page.locator('#join-normalisation').selectOption('exact');
+    await configureJoin(page,{key:'ID',normalisation:'exact'});
     const burden=await importTable(page,'data/nga-lga-2024.csv','long','zd_est',['ID']);
     await add(page,'join_table_to_area');
     const second=await idOf(page,'join_table_to_area',1);
     await tidy(page);await wire(page,burden,second,'records');
     await tidy(page);await wire(page,first,second,'polygons');
     await page.locator(`.react-flow__node[data-id="${second}"]`).click();
-    await page.locator('#join-key').selectOption('ID');
-    await page.locator('#join-normalisation').selectOption('exact');
+    await configureJoin(page,{key:'ID',normalisation:'exact'});
 
     await add(page,'apply_ruleset');
     const rules=await idOf(page,'apply_ruleset');

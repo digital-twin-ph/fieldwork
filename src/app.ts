@@ -53,6 +53,7 @@ import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
 import {orderSentence} from './rule-evaluation.js';
 import {relateInspector,type RelateKit} from './relate-ui.js';
+import {joinInspector,type JoinKit} from './area-join-ui.js';
 import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
 import {openGroupConfig,groupDraftOf,applyGroupDraft,groupSentence} from './group-ui.js';
 import {openConfigDialog} from './config-dialog.js';
@@ -1125,7 +1126,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','buffer_area','measure_area','clip_polygons']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','buffer_area','measure_area','clip_polygons','join_table_to_area']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -3740,46 +3741,7 @@ function renderInspector(){
   }else if(n.type==='table_input'){
     content+=tableInspector.markup(n,tableKit());
   }else if(n.type==='join_table_to_area'){
-    // THE KEY COLUMN IS OFFERED, NOT TYPED. The columns are on the connected table, so a
-    // practitioner picks one rather than spelling it and discovering the mismatch at the run.
-    const upstream=workflow.edges.find(edge=>edge.to===n.id&&edge.port==='records');
-    const source=upstream?workflow.nodes.find(node=>node.id===upstream.from):undefined;
-    const columns=tableKeyColumns(source);
-    content+=labelForm('join-label','Node label',n.params.label||'Values on the study area')
-      +`<label class="field-label" for="join-key">Column naming each part</label>`
-      +`<select id="join-key"${columns.length?'':' disabled'}>`
-      +`<option value="">${columns.length?'Choose a column…':'Connect a table first'}</option>`
-      +columns.map(column=>`<option value="${esc(column)}" ${n.params.keyField===column?'selected':''}>${esc(column)}</option>`).join('')
-      +`</select>`
-      +`<label class="field-label" for="join-normalisation">Match names</label>`
-      +`<select id="join-normalisation">`
-      +`<option value="fuzzy" ${n.params.normalisation==='fuzzy'?'selected':''}>Ignoring punctuation and spacing</option>`
-      +`<option value="exact" ${n.params.normalisation==='exact'?'selected':''}>Exactly as written</option>`
-      +`</select>`
-      +``
-      +`<div class="notice">A part no row names is drawn and left empty.</div>`
-      // SHADE BY A CLASS, which is a different question from the value and is asked separately.
-      // Offered from the same columns, less the one being matched on: classifying by the key
-      // would make every part its own class.
-      +`<label class="field-label" for="join-frames">Frames from (optional)</label>`
-      +`<select id="join-frames"${columns.length?'':' disabled'}>`
-      +`<option value="">No frames \u2014 one value per part</option>`
-      +columns.filter(column=>column!==n.params.keyField)
-        .map(column=>`<option value="${esc(column)}" ${n.params.frameField===column?'selected':''}>${esc(column)}</option>`).join('')
-      +`</select>`
-      +``
-      +`<label class="field-label" for="join-category">Shade by a class (optional)</label>`
-      +`<select id="join-category"${columns.length?'':' disabled'}>`
-      +`<option value="">No class \u2014 shade by the value</option>`
-      +columns.filter(column=>column!==n.params.keyField)
-        .map(column=>`<option value="${esc(column)}" ${n.params.categoryField===column?'selected':''}>${esc(column)}</option>`).join('')
-      +`</select>`
-      // Two sentences, because `validate:inspector-prose` holds a 240-character ceiling and this
-      // control was the fourth explanation past it. What came out is the REASON -- that a
-      // light-to-dark ramp would tell a reader to rank things that have no order -- which is
-      // recorded where the decision is, in `categoricalSteps`, with the practitioner's own words
-      // for it. A control says what the setting does; it is not where an argument is kept.
-      +``;
+    content+=joinInspector.markup(n,joinKit());
   }else if(n.type==='append_rows'){
     content+=appendInspector.markup(n,stepKit());
   }else if(n.type==='regression'){
@@ -4944,20 +4906,7 @@ function renderInspector(){
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   if(n.type==='table_input')tableInspector.wire(n,tableKit(),document);
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
-  optionalElement('#join-key')?.addEventListener('change',e=>
-    change(w=>{getNode(w,n.id,'join_table_to_area').params.keyField=control(e).value;}));
-  optionalElement('#join-normalisation')?.addEventListener('change',e=>
-    change(w=>{getNode(w,n.id,'join_table_to_area').params.normalisation=control(e).value as 'exact'|'fuzzy';}));
-  optionalElement('#join-frames')?.addEventListener('change',e=>
-    change(w=>{const value=control(e).value.trim();
-      const params=getNode(w,n.id,'join_table_to_area').params;
-      if(value)params.frameField=value;else delete params.frameField;}));
-  optionalElement('#join-category')?.addEventListener('change',e=>
-    change(w=>{const value=control(e).value.trim();
-      const params=getNode(w,n.id,'join_table_to_area').params;
-      // Deleted rather than set empty: a category exists only where one was asked for, and that
-      // is what keeps a figure from becoming categorical by accident.
-      if(value)params.categoryField=value;else delete params.categoryField;}));
+  if(n.type==='join_table_to_area')joinInspector.wire(n,joinKit(),document);
   // Clip raster's own download, of the masked grid; Raster input's is in its dialog (186, 2026-11-17).
   // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).
   if(n.type==='raster_input'||n.type==='clip_raster')rasterInspector.wire(n as never,rasterKit(),document);
@@ -6345,6 +6294,16 @@ function relateKit():RelateKit{
     relation:id=>result?.relations?.[id],shifted:id=>result?.relateShifts?.[id],
     keyColumns:(id,port)=>{const node=workflow.nodes.find(x=>x.id===id);return node?Object.keys(upstreamKeyValues(node,new Set(),port)??{}):[];},
     valueOn:(id,port)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return valueFieldOf(e&&workflow.nodes.find(m=>m.id===e.from));}};
+}
+/** JOIN'S KIT (area-join-ui.ts): the step kit, with what feeds each port, the table's columns, the parts joined to, and
+ *  what the last run joined. */
+function joinKit():JoinKit{
+  return {...stepKit(),sourceName:(id,port,fallback)=>portSourceName(workflow,id,port,fallback),
+    keyColumns:id=>{const e=workflow.edges.find(x=>x.to===id&&x.port==='records');return [...tableKeyColumns(e&&workflow.nodes.find(m=>m.id===e.from))];},
+    parts:id=>{const e=workflow.edges.find(x=>x.to===id&&(x.port==='area'||x.port==='polygons'));const from=e&&workflow.nodes.find(m=>m.id===e.from);
+      if(from?.type==='study_area')return from.params.boundary?.units?.length?from.params.boundary.units.map(u=>({id:u.id,name:u.name})):undefined;
+      const last=result?.joins?.[id];return last?last.parts.map(p=>({id:p.id,name:p.name})):undefined;},
+    joined:id=>result?.joins?.[id]};
 }
 /** SAMPLE A RASTER'S KIT (sample-raster-ui.ts): the step kit, with the receipt's facts, what the satellite reading said,
  *  a connection made from its dialog, and the satellite files' own sentence and dialog, which stay here with their readers. */

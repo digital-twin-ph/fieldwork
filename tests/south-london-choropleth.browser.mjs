@@ -34,8 +34,10 @@ test('a table of rates joins to named parts and draws a classed figure',async({p
   // THE COLUMN IS OFFERED, not typed. The rate upstream is not a table_input, and offering only
   // a table_input's keys left this control saying "Connect a table first" with a table connected.
   await page.locator('.react-flow__node[data-id="shaded"]').click();
-  await expect(page.locator('#join-key')).toHaveValue('group');
-  await expect(page.locator('#join-key option')).toHaveCount(2); // the prompt, and `group`
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#join-config #join-key')).toHaveValue('group');
+  await expect(page.locator('#join-config #join-key option')).toHaveCount(2); // the prompt, and `group`
+  await page.locator('#join-config #config-cancel').click();
 
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});

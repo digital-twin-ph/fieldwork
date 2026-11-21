@@ -1249,6 +1249,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // produced, so a step that silently halved a stratification looks exactly like one that did
   // not. See `relateOutcome` in src/relate-table.ts.
   const relations:Record<string,RelateOutcome>={};
+  const joins:Record<string,import('./area-join.js').AreaJoinResult>={};
   const relateShifts:Record<string,ShiftColumn[]>={};
   // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. Four producers:
   // `relate_table` reports what the join did, and `rate`, `rate_ratio` and `two_by_two` state
@@ -1587,6 +1588,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           inputs.records as unknown as import('./data-table.js').DataTable,
           {keyField:node.params.keyField,normalisation:node.params.normalisation,
             categoryField:node.params.categoryField,frameField:node.params.frameField});
+        joins[node.id]=joined;
         value=layer?joinedPolygons(undefined,joined,node.params.label,
           layer.features.map(f=>f.geometry as import('./types.js').Boundary),
           layer.features.map(f=>(f as unknown as {properties?:Record<string,Scalar>}).properties??{}))
@@ -2877,6 +2879,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     ...(unfinished.length?{unfinished}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),
+    ...(Object.keys(joins).length?{joins}:{}),
     ...(Object.keys(relateShifts).length?{relateShifts}:{}),
     ...(Object.keys(machined).length?{machined:signedByWidget(machined,workflow)}:{}),
     // THE SOURCES THIS WORKFLOW CITES, read back from what its inputs declare rather than asked

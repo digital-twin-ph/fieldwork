@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.157.0 — In development
+## 0.157.0 — 2026-11-21
 
 - **Sierra Leone, Malawi and Kenya by level, with the map's names.** Census tables offers Sierra Leone's 14 districts
   and its 164 chiefdoms and areas, Malawi's 28 districts with the city each holds added in, and Kenya's 47 counties

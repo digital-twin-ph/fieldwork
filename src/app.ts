@@ -1717,7 +1717,7 @@ function rulesList(rules:ShownRule[],
   esc:(text:string)=>string,
   otherwise:import('./authored-rules.js').AuthoredOtherwise[]=[]):string{
   const comparator=(c:string)=>({equals:'is',notEquals:'is not',greaterThan:'is more than',notGreaterThan:'is at most',
-    lessThan:'is less than',notLessThan:'is at least'}[c]??c);
+    lessThan:'is less than',notLessThan:'is at least',contains:'contains any of',notContains:'contains none of'}[c]??c);
   // The column, as the file spells it. Not a label somebody wrote over it: a reader checking
   // this rule against their data is looking for the column, and a rule that names something
   // the file does not contain makes them translate. 2026-10-16.

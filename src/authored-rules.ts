@@ -29,11 +29,18 @@
 /** `notEquals`, IS NOT (experiment 192): a recorded value other than this one. A value not recorded is not "not this":
  *  it has no value to differ, and matches only "is not recorded". N3's `log:notEqualTo` over a bound value says exactly
  *  that, so the reasoner and direct evaluation agree. */
-export type Comparator='equals'|'notEquals'|'greaterThan'|'notGreaterThan'|'lessThan'|'notLessThan';
+/** `contains` and `notContains` (2026-11-21, syndromic surveillance): a text column holds ANY of the words written, or
+ *  NONE of them, ignoring capitals; the words separated by commas ("vomit, diarrh, n/v"). Evaluated directly, never
+ *  compiled to N3: "none of these words" is a negation the monotonic subset cannot state. */
+export type Comparator='equals'|'notEquals'|'greaterThan'|'notGreaterThan'|'lessThan'|'notLessThan'|'contains'|'notContains';
+/** The words a contains condition looks for: split at commas, trimmed, lower case, empty ones dropped. */
+export const containedWords=(value:unknown):string[]=>typeof value==='string'
+  ?value.split(',').map(w=>w.trim().toLowerCase()).filter(Boolean):[];
+export const isWordComparator=(c:string)=>c==='contains'||c==='notContains';
 
 /** The N3 builtin each comparator compiles to. `equals` has none: it is a term match in the
  *  subject clause, which is why it is the only comparator that works on a non-numeric value. */
-const BUILTIN:Record<Exclude<Comparator,'equals'|'notEquals'>,string>={
+const BUILTIN:Record<Exclude<Comparator,'equals'|'notEquals'|'contains'|'notContains'>,string>={
   greaterThan:'math:greaterThan',
   notGreaterThan:'math:notGreaterThan',
   lessThan:'math:lessThan',
@@ -138,8 +145,9 @@ export function fieldsRead(rules:AuthoredRule[]):Set<string>{
 }
 /** Whether the rules are run directly, not by the reasoner: a value is computed, or a column has an otherwise, which N3
  *  cannot express because it concludes from absence. */
-export const evaluatedDirectly=(ruleset:{rules:{then:AuthoredConclusion[]}[]; otherwise?:AuthoredOtherwise[]}):boolean=>
-  computesValues(ruleset)||!!ruleset.otherwise?.length;
+export const evaluatedDirectly=(ruleset:{rules:{then:AuthoredConclusion[];any?:{all:{comparator:string}[]}[]}[]; otherwise?:AuthoredOtherwise[]}):boolean=>
+  computesValues(ruleset)||!!ruleset.otherwise?.length
+  ||ruleset.rules.some(r=>(r.any??[]).some(g=>g.all.some(c=>isWordComparator(c.comparator))));
 
 /** THE CONCLUDED COLUMNS EACH COLUMN'S RULES READ: what an otherwise waits for. */
 export function columnReads(rules:AuthoredRule[]):Map<string,Set<string>>{
@@ -271,7 +279,9 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
           builtins.get(variable)!.push(`log:notEqualTo ${term(condition.value)}`);
           continue;
         }
-        const builtin=BUILTIN[condition.comparator as Exclude<Comparator,'equals'|'notEquals'>];
+        if(isWordComparator(condition.comparator))throw new AuthoredRulesetError('Rules that look for words are evaluated directly, '
+          +'not compiled to N3: run them with evaluateAuthored instead.');
+        const builtin=BUILTIN[condition.comparator as Exclude<Comparator,'equals'|'notEquals'|'contains'|'notContains'>];
         if(!builtin)throw new AuthoredRulesetError(`Unknown comparator ${JSON.stringify(condition.comparator)}.`);
         if(typeof condition.value!=='number'&&!isPlaceholder(condition.value)&&!isSettingReference(condition.value))
           throw new AuthoredRulesetError(`${condition.comparator} compares numbers, so its value must be a number `
@@ -405,6 +415,16 @@ export function authoredUnitProblems(authored:{
           +`taken as midnight unless written so: write both as dates and times.`});
       else if(a==='datetime'&&!c.compute.per)
         problems.push({field:c.predicate,says:`Rule ${r+1}: a difference of two dates and times names its unit: days, hours or minutes.`});
+    }
+  // WORDS ARE LOOKED FOR IN TEXT, and there must be some (2026-11-21).
+  for(const [r,rule] of authored.rules.entries())
+    for(const group of rule.any??[])for(const condition of group.all??[]){
+      if(!isWordComparator(condition.comparator))continue;
+      const field=named(condition.field);
+      if(field&&field.kind!=='term')problems.push({field:condition.field,says:`Rule ${r+1}: ${field.attribute||condition.field} is a ${field.kind}, `
+        +'so it holds no words to look for. Words are looked for in a text column.'});
+      if(!containedWords(condition.value).length)problems.push({field:condition.field,says:`Rule ${r+1}: write the words to look for, `
+        +'separated by commas, such as vomit, diarrh, n/v.'});
     }
   for(const [r,rule] of authored.rules.entries())
     for(const group of rule.any??[])for(const condition of group.all??[])

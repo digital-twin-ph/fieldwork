@@ -20,7 +20,7 @@ import type {ParamsByType} from './types.js';
 import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,isWrittenDateTime,DIFFERENCE_UNITS,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
-  type AuthoredOtherwise,bandRules,targetRules} from './authored-rules.js';
+  type AuthoredOtherwise,bandRules,targetRules,isWordComparator} from './authored-rules.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import {openConfigDialog,type ConfigSections} from './config-dialog.js';
 import {DATE_FORMS,CLOCKS,type SubjectRecord} from './authored-application.js';
@@ -39,7 +39,7 @@ const COMPARATORS:Record<Field['kind'],{value:string;label:string}[]>={
   number:[{value:'equals',label:'is (=)'},{value:'notEquals',label:'is not (≠)'},{value:'greaterThan',label:'is more than (>)'},
     {value:'notLessThan',label:'is at least (≥)'},{value:'lessThan',label:'is less than (<)'},
     {value:'notGreaterThan',label:'is at most (≤)'}],
-  term:[{value:'equals',label:'is (=)'},{value:'notEquals',label:'is not (≠)'}],
+  term:[{value:'equals',label:'is (=)'},{value:'notEquals',label:'is not (≠)'},{value:'contains',label:'contains any of'},{value:'notContains',label:'contains none of'}],
   boolean:[{value:'equals',label:'is'}],
   // A DATE is a day, matched or not; it is compared through the days between two dates (experiment 200).
   date:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],
@@ -257,10 +257,11 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
       const unit=kind==='number'&&unitOf(condition.field)
         ?`<span class="rule-unit">${esc(unitOf(condition.field)!)}</span>`:'';
       // A term is shown as it was typed, without the namespace the rules write it in.
-      const shown=kind==='term'&&typeof condition.value==='string'?condition.value.replace(/^fwa:/,'').replace(/_/g,' '):String(condition.value??'');
+      const words=isWordComparator(condition.comparator);
+      const shown=words?String(condition.value??''):kind==='term'&&typeof condition.value==='string'?condition.value.replace(/^fwa:/,'').replace(/_/g,' '):String(condition.value??'');
       if(kind!=='number'||!settings.length)
-        return `<input ${where} data-part="value" aria-label="Value" value="${esc(shown)}" `
-          +`placeholder="${kind==='number'?'a number':'a value, such as clinic'}">`+unit;
+        return `<input ${where} data-part="value" aria-label="${words?'Words, separated by commas':'Value'}" value="${esc(shown)}" `
+          +`placeholder="${kind==='number'?'a number':words?'words, separated by commas: vomit, diarrh, n/v':'a value, such as clinic'}"${words?' class="rule-words"':''}>`+unit;
       const setting=settingNamed(condition.value);
       return `<select ${where} data-part="value-source" aria-label="Compared against">`
         +`<option value="" ${setting?'':'selected'}>a number</option>`
@@ -776,8 +777,14 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
             }else{
               const wasPresence=asksPresence(condition.field,fields);
               condition.field=base;
+              const fromWords=isWordComparator(condition.comparator);
               condition.comparator=value;
               if(wasPresence)condition.value=kindOf(base)==='boolean'?true:kindOf(base)==='number'?0:'';
+              // A TERM BECOMES WORDS and words a term, as the condition changes between them: fwa:N_V is "n v".
+              else if(isWordComparator(value)&&!fromWords&&typeof condition.value==='string')
+                condition.value=condition.value.replace(/^fwa:/,'').replace(/_/g,' ');
+              else if(!isWordComparator(value)&&fromWords&&kindOf(base)==='term'&&typeof condition.value==='string')
+                condition.value=condition.value.trim()?`fwa:${condition.value.split(',')[0]!.trim().replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'None'}`:'';
             }
           }
           // A CATEGORY IS A TERM, as the record's value becomes one (`termFor`): "Hillside" is fwa:Hillside. Stored as
@@ -786,6 +793,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           if(part==='value'&&condition)
             condition.value=kindOf(condition.field)==='boolean'?value==='true'
               :kindOf(condition.field)==='number'&&value.trim()&&!value.includes('{{')?Number(value)
+              // WORDS STAY AS TYPED (2026-11-21): "n/v, vomit" is looked for in the text, not made a term.
+              :isWordComparator(condition.comparator)?value
               :kindOf(condition.field)==='term'&&value.trim()&&!value.includes('{{')
                 ?`fwa:${value.trim().replace(/[^a-zA-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'None'}`
               :value;

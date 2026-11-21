@@ -15,7 +15,7 @@
  *  it none, and the conflict is reported, never settled by whichever rule came first.
  */
 import {dayNumber,minuteNumber,assembleDateTime,knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} from './authored-application.js';
-import {isComputed,isWrittenDateTime,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,columnReads,otherwiseProblems,
+import {isComputed,isWrittenDateTime,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,columnReads,otherwiseProblems,containedWords,
   type AuthoredRule,type ComputeOperator,type Operand,type AuthoredOrder,type AuthoredOtherwise} from './authored-rules.js';
 import {orderOf} from './select-rows.js';
 import type {Scalar} from './types.js';
@@ -123,7 +123,9 @@ export function orderRecords(records:SubjectRecord[],order:AuthoredOrder):{seque
 
 /** A fact as N3 would write it, so equality is the reasoner's term equality. */
 /** `day`: a date's day number, kept apart from `number` so a date is never compared with a number (experiment 200). */
-type Fact={text:string; number?:number; day?:number;
+type Fact={text:string;
+  /** The value as the record holds it, for words looked for in it (2026-11-21): the term drops punctuation, "N/V" is fwa:N_V. */
+  raw?:string; number?:number; day?:number;
   /** Minutes from 1970-01-01T00:00, for a date (its midnight) or a date and time, so a difference can be in hours. */
   minute?:number};
 
@@ -139,7 +141,7 @@ function factsOf(record:SubjectRecord,bindings:FieldBinding[]):Map<string,Fact>{
     else if(binding.kind==='date'){const day=dayNumber(raw);facts.set(binding.predicate,{text:JSON.stringify(String(raw).trim()),day,...(day!==undefined?{minute:day*1440}:{})});}
     else if(binding.kind==='datetime'){const minute=minuteNumber(raw);
       facts.set(binding.predicate,{text:JSON.stringify(String(raw).trim()),...(minute!==undefined?{minute,day:Math.floor(minute/1440)}:{})});}
-    else facts.set(binding.predicate,{text:termFor(raw as Scalar)});
+    else facts.set(binding.predicate,{text:termFor(raw as Scalar),raw:String(raw)});
   }
   return facts;
 }
@@ -158,6 +160,11 @@ function holds(condition:AuthoredRule['any'][number]['all'][number],facts:Map<st
   const fact=facts.get(condition.field);
   const against=valueTerm(condition.value,settings);
   if(!fact||!against)return false;
+  // WORDS (2026-11-21): any of them, or none, in the text as recorded, ignoring capitals.
+  if(condition.comparator==='contains'||condition.comparator==='notContains'){
+    const text=(fact.raw??fact.text).toLowerCase(),found=containedWords(condition.value).some(w=>text.includes(w));
+    return condition.comparator==='contains'?found:!found;
+  }
   if(condition.comparator==='equals')return fact.text===against.text;
   // IS NOT (experiment 192): a recorded value that differs. A value not recorded has no fact here, and returned above.
   if(condition.comparator==='notEquals')return fact.text!==against.text;

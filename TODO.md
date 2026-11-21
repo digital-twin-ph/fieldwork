@@ -73,9 +73,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 0.154.0 and 0.155.0 (2026-11-20), not yet ordered
 
-- **0.156.0, in development:** Join a table to the study area on the standard (its own module, the standard Inspector,
-  a configuration dialog with Before and After, the column naming each part proposed from the data, Show me how);
-  Study area showing its parts; Comparison map retired into Map and a Table (docs/audits/comparison-map-retired.md).
+- **0.157.0, in development:** Census tables offers Sierra Leone, Malawi and Kenya by level with geoBoundaries' names,
+  as Nigeria in 0.156.0; a dictionary chosen after its table proposes the values again.
 
 - **Private worked examples.** A worked example held in a private repository, listed only when the person's identity
   and a credential naming that repository (fine-grained, Contents: read) are both unlocked; read at its pinned commit

@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.157.0 — In development
+
+- **Sierra Leone, Malawi and Kenya by level, with the map's names.** Census tables offers Sierra Leone's 14 districts
+  and its 164 chiefdoms and areas, Malawi's 28 districts with the city each holds added in, and Kenya's 47 counties
+  summed from its sub-counties, each unit beside the name and ID geoBoundaries gives it. Malawi and Kenya are also
+  offered as printed. Brazil is still offered as printed only.
+- **A data dictionary chosen after its table** proposes the values again: the columns it gives a unit.
+
 ## 0.156.0 — 2026-11-21
 
 - **Nigeria's census by state or by LGA, with the map's names.** Census tables offers Nigeria as two tables, its 37

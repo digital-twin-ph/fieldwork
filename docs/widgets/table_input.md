@@ -1,6 +1,6 @@
 # Tabular data
 
-_Created 2026-11-02 · Updated 2026-11-20_
+_Created 2026-11-02 · Updated 2026-11-21_
 
 **A source.** It reads a CSV, Excel or Stata file into a table.
 
@@ -79,12 +79,21 @@ with geoBoundaries' names**. The volume prints "JIGAWA STATE" where geoBoundarie
 spelled differently in the two; `geoboundaries_name` gives each unit the map's spelling, and `geoboundaries_id` its ID.
 Choose the table at the level of your study area: the states for a map of states, the LGAs for a map of LGAs.
 
-Brazil's municipalities, Kenya's sub-counties, Malawi's districts and cities and Sierra Leone's districts and chiefdoms
-are offered as printed, in the census's own units, each with the level it is at in `level`. Their names are the
-census's spelling: a map's may differ, and Relate says which do not match.
+Sierra Leone is offered the same way, as its 14 districts and its 164 chiefdoms and areas. geoBoundaries cuts chiefdom
+names at 15 characters, and 41 are spelled differently; Kenema's Koya has no unit of its own there, so its
+`geoboundaries_name` is empty.
+
+Malawi's census counts its four cities apart from their districts, but geoBoundaries draws each city inside a district,
+so **Its 28 districts with their cities** adds each city to the district it lies in, and `with_city` names it. Kenya's
+workbook prints its sub-counties only, and geoBoundaries' level below the counties holds the 290 constituencies, not
+the 349 sub-counties, so **Its 47 counties, summed** adds each county's sub-counties. Each of the two is also offered
+**As printed**, in the census's own units.
+
+Brazil's states and municipalities are offered as printed, in the census's own units, each with the level it is at in
+`level`. Their names are the census's spelling: a map's may differ, and Relate says which do not match.
 
 Where the data dictionary gives some numeric columns a unit, those are proposed as the values and every other column as
-a key. Sierra Leone's `printed_page` is written in digits but has no unit: it is the page the row was read from, so it
+a key, whether the dictionary is chosen before the table or after it. Sierra Leone's `printed_page` is written in digits but has no unit: it is the page the row was read from, so it
 is a key, and men, women and total, in persons, are the values.
 
 
@@ -224,6 +233,12 @@ after (`fw:CellEdit`). Experiment 214.
 It does not choose between rows that disagree. The table stays as read until a later step changes it.
 
 ## History
+
+### 2026-11-21 · Sierra Leone, Malawi and Kenya by level (0.17.0)
+
+**Census tables** offers Sierra Leone's districts and chiefdoms, Malawi's districts with their cities and Kenya's
+counties, each with geoBoundaries' names and IDs; Malawi and Kenya also as printed. A data dictionary chosen after its
+table proposes the values again.
 
 ### 2026-11-21 · A table per level; the dictionary says which columns are counts (0.16.0)
 

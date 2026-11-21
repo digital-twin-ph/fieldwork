@@ -18,7 +18,8 @@ export function levelCheck(iso:string,level:{level:string;units:number;canonical
   const levels=(census?.levels??[]).filter(l=>l.units>1);
   if(!census||!levels.length)return said.join(' ');
   const counted=levels.map(l=>`${n(l.units)} ${l.level}`);
-  // Two levels together count too: Malawi's 32 ADM2 units are its census's 28 districts and 4 cities.
+  // Two levels together count too, where a boundary level draws two census levels as units of their own. (Malawi's gbOpen
+  // ADM2, 9469f09, is not one: its 28 units are the census's 28 districts, each drawn with the city inside it, if any.)
   const pairs=levels.flatMap((a,i)=>levels.slice(i+1).map(b=>({what:`its ${a.level} and ${b.level} together`,units:a.units+b.units})));
   const offered=[census,...(census.more??[])].flatMap(t=>t.derived?[{what:`the rows of “${t.derived.label}”`,units:t.rows}]:[]);
   const candidates=[...levels.map(l=>({what:`its ${l.level}`,units:l.units})),...offered];

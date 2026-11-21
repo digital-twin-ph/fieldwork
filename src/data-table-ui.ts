@@ -183,7 +183,7 @@ function censusChoices():string{
     +CENSUS.countries.map(c=>'<li>'+(c.more
         // ONE BUTTON PER TABLE where a country offers several: the country's name, then what each holds.
         ?'<p class="census-country">'+esc(c.country)+'</p><p class="census-tables">'+[c,...c.more].map((t,i)=>'<button type="button" class="button" data-census="'
-          +esc(c.iso3)+'" data-census-table="'+i+'">'+esc(t.derived?.label??c.country)+'</button>').join(' ')+'</p>'
+          +esc(c.iso3)+'" data-census-table="'+i+'">'+esc(t.derived?.label??`As printed, ${t.rows.toLocaleString('en')} rows`)+'</button>').join(' ')+'</p>'
           +'<p>'+esc(c.census)+' \u00b7 '+esc(c.publisher)+'</p>'
         :'<button type="button" class="button" data-census="'+esc(c.iso3)+'">'+esc(c.country)+'</button>'
           +'<p>'+esc(c.census)+' \u00b7 '+c.rows.toLocaleString('en')+' rows \u00b7 '+esc(c.publisher)+'</p>')
@@ -350,6 +350,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       if(!first?.headers.length)throw new Error(`${chosen.name} holds no table to read.`);
       dictionaryFile={name:chosen.name,bytes,sheets};
       dictionarySays.textContent=`${first.rows.length} variables in ${chosen.name}${sheets.length>1?`, the first of ${sheets.length} sheets`:''}. Kept with the table; what it says is proposed for you to accept.`;
+      // A DICTIONARY CHOSEN AFTER ITS TABLE proposes the values again (2026-11-21): the columns it gives a unit.
+      if(parsed&&shape()==='wide'&&!own?.wide){preselect();syncValueBoxes();refreshers.get(keysBox)?.();refreshers.get(valuesBox)?.();build();}
     }catch(e){dictionarySays.textContent=e instanceof Error?e.message:String(e);}
   };
   let sheets:Sheet[]|undefined,sheet:Sheet|undefined;

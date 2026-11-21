@@ -1,7 +1,7 @@
 {
  "repository": "https://github.com/digital-twin-ph/census-tables",
- "commit": "3b366d545b0b85785caba71a0d9c51cd7742fb89",
- "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/3b366d545b0b85785caba71a0d9c51cd7742fb89/",
+ "commit": "753697471452ce93d317afdf09f50cbd1a637efd",
+ "raw": "https://raw.githubusercontent.com/digital-twin-ph/census-tables/753697471452ce93d317afdf09f50cbd1a637efd/",
  "countries": [
   {
    "iso3": "BRA",
@@ -143,17 +143,36 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
-   "rows": 350,
+   "rows": 47,
    "counts": {
-    "path": "KEN/counts.csv",
-    "bytes": 29474,
-    "sha256": "87cf31f23026c6a61a800a3f677cd4204afdab7d8c383deb1b2d44af8e1d17d1"
+    "path": "KEN/counties.csv",
+    "bytes": 3067,
+    "sha256": "8d50588a713564809673eaf01d298da4c40f42f14fcfe9db566b5fd2af9df12e"
    },
    "columns": {
-    "path": "KEN/columns.csv",
-    "bytes": 1489,
-    "sha256": "23d28f452c980e5991f38939bf0c529ae56566989e42b58511f3ac2d536cc7fe"
-   }
+    "path": "KEN/counties-columns.csv",
+    "bytes": 796,
+    "sha256": "975d5d9ca59ee4be9f5ce77556bf2b5ea274376da79fe854d17c445aae850a15"
+   },
+   "derived": {
+    "label": "Its 47 counties, summed, with geoBoundaries' names",
+    "printed": "KEN/counts.csv"
+   },
+   "more": [
+    {
+     "rows": 350,
+     "counts": {
+      "path": "KEN/counts.csv",
+      "bytes": 29474,
+      "sha256": "87cf31f23026c6a61a800a3f677cd4204afdab7d8c383deb1b2d44af8e1d17d1"
+     },
+     "columns": {
+      "path": "KEN/columns.csv",
+      "bytes": 1489,
+      "sha256": "23d28f452c980e5991f38939bf0c529ae56566989e42b58511f3ac2d536cc7fe"
+     }
+    }
+   ]
   },
   {
    "iso3": "MWI",
@@ -184,17 +203,36 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
-   "rows": 36,
+   "rows": 28,
    "counts": {
-    "path": "MWI/counts.csv",
-    "bytes": 2080,
-    "sha256": "88784331286e67cc39f947cf6163d02f5253f3e0602f6794eec6ed6dff4f668e"
+    "path": "MWI/districts.csv",
+    "bytes": 2083,
+    "sha256": "41e94054d6fbb2e76af76822448c4067c462060b18fd9f87d93d15b3af8fda31"
    },
    "columns": {
-    "path": "MWI/columns.csv",
-    "bytes": 796,
-    "sha256": "4e17ce54a582b89a0bed72f7c9efcde45c343c04af51955e90fcc6a0576b6988"
-   }
+    "path": "MWI/districts-columns.csv",
+    "bytes": 846,
+    "sha256": "adee810c534bbcbc3eb90e5d73e0974abedd7d4625f8a0315e0d146ce87d4fa1"
+   },
+   "derived": {
+    "label": "Its 28 districts with their cities, with geoBoundaries' names",
+    "printed": "MWI/counts.csv"
+   },
+   "more": [
+    {
+     "rows": 36,
+     "counts": {
+      "path": "MWI/counts.csv",
+      "bytes": 2080,
+      "sha256": "88784331286e67cc39f947cf6163d02f5253f3e0602f6794eec6ed6dff4f668e"
+     },
+     "columns": {
+      "path": "MWI/columns.csv",
+      "bytes": 796,
+      "sha256": "4e17ce54a582b89a0bed72f7c9efcde45c343c04af51955e90fcc6a0576b6988"
+     }
+    }
+   ]
   },
   {
    "iso3": "NGA",
@@ -330,17 +368,40 @@
     "last": "2026-11-20",
     "nextDue": "2027-05-20"
    },
-   "rows": 183,
+   "rows": 14,
    "counts": {
-    "path": "SLE/counts.csv",
-    "bytes": 11615,
-    "sha256": "4d7e2b17dc554d1a5b265e214e70de67e9ef82341ce8f48511746562b2bdfb64"
+    "path": "SLE/districts.csv",
+    "bytes": 1071,
+    "sha256": "1edc6e1fbfeb79cc3bd570cf0ac461486a6455b75d693eacf862d850b631e34b"
    },
    "columns": {
-    "path": "SLE/columns.csv",
-    "bytes": 1460,
-    "sha256": "a518d7b49e03364efe60f8e0fab1eb1256878a9cfc943e2478f1697f9159b3ab"
-   }
+    "path": "SLE/districts-columns.csv",
+    "bytes": 555,
+    "sha256": "839231cb3ff0480b3c3f71e011a2ae33bb31c021424bc22ac6978cd232c7b9cf"
+   },
+   "derived": {
+    "label": "Its 14 districts, with geoBoundaries' names",
+    "printed": "SLE/counts.csv"
+   },
+   "more": [
+    {
+     "rows": 164,
+     "counts": {
+      "path": "SLE/chiefdoms.csv",
+      "bytes": 12677,
+      "sha256": "8921653479d5810b3a1cc66d286d4fc27b699f4662a78a9ec1281d1bd4b05090"
+     },
+     "columns": {
+      "path": "SLE/chiefdoms-columns.csv",
+      "bytes": 797,
+      "sha256": "a9393f0fc13b24ef9330cc85356b7141c73340f6e4ab990c240a8969fcced0b1"
+     },
+     "derived": {
+      "label": "Its 164 chiefdoms and areas, with geoBoundaries' names",
+      "printed": "SLE/counts.csv"
+     }
+    }
+   ]
   }
  ]
 }

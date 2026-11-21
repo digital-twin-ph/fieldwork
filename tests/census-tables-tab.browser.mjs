@@ -158,7 +158,7 @@ test('a wide read’s own measure column is said as made by the read',async({pag
   await expect(page.locator('#table-distinct label').filter({hasText:/^\s*measure/})).toContainText('made by this read');
 });
 
-test('a country offering a table per level has a button for each, and the dictionary says which columns are counts',async({page})=>{test.skip(!!skip,skip);
+test('a country offering a table per level has a button for each',async({page})=>{test.skip(!!skip,skip);
   const errors=collectPageErrors(page);
   await answer(page);
   await open(page);
@@ -174,11 +174,18 @@ test('a country offering a table per level has a button for each, and the dictio
   await page.locator('#table-save').click();
   await expect(page.locator('#table-save')).toBeHidden();
   await expect.poll(async()=>(await storedTable(page)).remote?.sha256).toBe(nga.more[0].counts.sha256);
-  // SIERRA LEONE'S PRINTED TABLE: printed_page is in digits, and its dictionary gives it no unit, so it is a key; men,
-  // women and total, in persons, are the values.
-  await page.locator('#configure-step').click();
-  await page.locator('[data-census="SLE"]').click();
-  await expect(page.locator('#table-census-says')).toContainText('SLE/columns.csv', {timeout:60000});
+  expect(errors).toEqual([]);
+});
+
+test('a numeric column its dictionary gives no unit is proposed as a key, whichever is chosen first',async({page})=>{test.skip(!!skip,skip);
+  // SIERRA LEONE'S PRINTED TABLE, as a file of one's own: printed_page is in digits, and its dictionary gives it no
+  // unit, so it is a key; men, women and total, in persons, are the values.
+  const errors=collectPageErrors(page);
+  await open(page);
+  await page.locator('#table-file').setInputFiles({name:'counts.csv',mimeType:'text/csv',buffer:atPin('SLE/counts.csv')});
+  await expect(page.locator('#table-values input[value="printed_page"]')).toBeChecked();
+  await page.locator('#table-dictionary-file').setInputFiles({name:'columns.csv',mimeType:'text/csv',buffer:atPin('SLE/columns.csv')});
+  await expect(page.locator('#table-dictionary-says')).toContainText('columns.csv');
   await expect(page.locator('#table-keys input[value="printed_page"]')).toBeChecked();
   await expect(page.locator('#table-values input[value="printed_page"]')).not.toBeChecked();
   for(const v of ['men','women','total'])await expect(page.locator(`#table-values input[value="${v}"]`)).toBeChecked();

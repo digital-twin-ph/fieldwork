@@ -897,12 +897,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.16.0",
+   "version": "0.17.0",
    "released": "2026-11-21",
    "changes": [
     {
      "kind": "changed",
-     "description": "Census tables offers a country's levels as separate tables where census-tables does (Nigeria's states and LGAs, with geoBoundaries' names); in a wide read, a numeric column the data dictionary gives no unit is proposed as a key."
+     "description": "Census tables offers Sierra Leone's districts and chiefdoms, Malawi's districts with their cities and Kenya's summed counties, with geoBoundaries' names; a data dictionary chosen after its table proposes the values again."
     }
    ],
    "breaking": false,

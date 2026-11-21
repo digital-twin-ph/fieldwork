@@ -14,12 +14,12 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-51 live widgets across 11 shipped examples and 11 pinned in its own repository.
+50 live widgets across 11 shipped examples and 11 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
 | Used by no workflow | **12** |
-| Used by exactly one | 13 |
+| Used by exactly one | 12 |
 | Used by two or more | **26** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
@@ -55,7 +55,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `summarize_hull` | snow-extent |
 | `aggregate_points_to_h3_cell` | snow-geoprivacy |
 | `compare_point_sets` | snow-geoprivacy |
-| `comparison_map` | snow-geoprivacy |
 | `donut_geomask` | snow-geoprivacy |
 | `mean_center` | snow-geoprivacy |
 | `isochrone` | snow-isochrone |
@@ -107,7 +106,7 @@ rows above `case_series` are the ones that have genuinely done both.
 
 | Example | Widgets it is the sole user of |
 | --- | --- |
-| snow-geoprivacy | **5** — `aggregate_points_to_h3_cell`, `compare_point_sets`, `comparison_map`, `donut_geomask`, `mean_center` |
+| snow-geoprivacy | **4** — `aggregate_points_to_h3_cell`, `compare_point_sets`, `donut_geomask`, `mean_center` |
 | snow-isochrone | **2** — `isochrone`, `network_input` |
 | sea-level-rise-philippines | **1** — `measure_distance` |
 | snow-deaths | **1** — `reproject` |
@@ -137,7 +136,7 @@ that does not can be rebuilt only by copying this file.
 | `snow-curve` | 3 | 1 | 0 | **1** — dates (table_input) | — | — |
 | `snow-voronoi` | 9 | 3 | 2 | — | 1 | — |
 | `snow-isochrone` | 12 | 5 | 3 | **1** — context-pumps (point_input) | 1 | — |
-| `snow-geoprivacy` | 15 | 3 | 2 | — | 1 | `comparison_map` |
+| `snow-geoprivacy` | 16 | 3 | 2 | — | 1 | — |
 | `snow-extent` | 4 | 2 | 2 | — | — | — |
 | `hagelloch` | 8 | 2 | 1 | — | 1 | — |
 | `hagelloch-chains` | 10 | 2 | 1 | — | 1 | — |
@@ -172,13 +171,13 @@ different things: an example can be four nodes and complete, or eighteen and not
 
 | Example | Nodes | Conditions met | Missing |
 | --- | ---: | ---: | --- |
+| `snow-geoprivacy` | 16 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch-chains` | 10 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-voronoi` | 9 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch` | 8 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch-people` | 8 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-deaths` | 6 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-extent` | 4 | 2 / 4 | published files, rebuilt from scratch |
-| `snow-geoprivacy` | 15 | 1 / 4 | unattached, published files, rebuilt from scratch |
 | `snow-isochrone` | 12 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `hagelloch-cluster` | 10 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `hagelloch-sheet` | 4 | 1 / 4 | sources, published files, rebuilt from scratch |
@@ -283,11 +282,9 @@ doing: that is a decision with a cost, and this file measures.
 
 **R3. Settle what a monolith and its decomposition owe each other.** Use propagates from a composition to its members and not from an equivalent monolith, so 4 widgets read as unreached while a workflow performs their work. It is a question about the admission criteria rather than about those widgets, and the count is deliberately left as it is until it is answered.
 
-**R4. Give a second workflow to the widgets one example carries alone.** `snow-geoprivacy` is the sole evidence for 5 widgets. Restructuring an example can take that evidence with it and nothing reports the loss. Closing it means a second workflow reaching those widgets, or recording the fragility as accepted.
+**R4. Give a second workflow to the widgets one example carries alone.** `snow-geoprivacy` is the sole evidence for 4 widgets. Restructuring an example can take that evidence with it and nothing reports the loss. Closing it means a second workflow reaching those widgets, or recording the fragility as accepted.
 
 **R5. Extend the from-scratch rebuild past one workflow.** `tests/recreate-from-scratch.browser.mjs` proves `south-london/ground` can be built from an empty canvas and published files. The other five South London workflows and all 11 shipped examples are unproven, and it is the only test that can show a parameter is reachable from its own panel.
 
 **R6. Check that a declared source resolves, not only that it exists.** This audit reads whether `sourceInfo` or `provenance` is present. `validate:examples` verifies the pinned bundle's per-file digests; nothing verifies a shipped example's declared source, so a dead URL or a moved file reads as declared.
-
-**R7. Resolve the 1 widgets attached to one example.** `snow-geoprivacy`: `comparison_map`. Each is already carried in `widgets/standardization.json` with the record that would remove it, and the exemption ceiling may fall and may never rise.
 

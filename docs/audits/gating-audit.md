@@ -141,6 +141,19 @@ Planetary Computer: it says *"Nothing else is fetched"*, but it held 27 connecti
 - **Conditional gating by coverage is not pursued.** Moving widgets out of `app.ts` makes rules by file finer at no
   cost; it is measured again after the three changes above.
 
+## Built 2026-11-20: the live services checked weekly on GitHub
+
+Found first: the verify job in `.github/workflows/pages.yml` has no recorded copies, since they are kept beside this
+repository and not in it. Every push has therefore been checked against the live services all along; only the local
+gate is answered from copies. What was missing was a check when nothing is pushed, and a record when one fails.
+
+`.github/workflows/live-check.yml` runs the browser tests in Chromium against the live services (`FIELDWORK_LIVE=1`),
+weekly on Sunday at 05:00 UTC and on demand, with the pinned repositories placed beside this one as verify places them.
+A failure opens an issue titled *Live services check failed*, or adds to the open one, listing the failed tests and
+linking the run; it never blocks a release. It does not run on a push, which verify already covers.
+
+**Not established:** that the weekly run passes; it has not run yet. Whether two workers fit a shared runner's time.
+
 ## What this does not establish
 
 - That the slow tests rarely catch defects. One window of 37 gates over four days is not a rate.

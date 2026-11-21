@@ -19,7 +19,7 @@
       ]
     },
     "compare_point_sets": {
-      "output": "point-comparison",
+      "output": "table",
       "contracts": [
         {
           "when": "default",

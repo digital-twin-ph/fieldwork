@@ -98,15 +98,6 @@
       "reviewedBy": null
     },
     {
-      "nodeType": "comparison_map",
-      "title": "Comparison map",
-      "group": "Outputs",
-      "fingerprint": "88bab83947ac",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
       "nodeType": "deduplicate_points",
       "title": "Deduplicate records",
       "group": "Comparisons and checks",

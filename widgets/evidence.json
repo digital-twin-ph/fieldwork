@@ -41,7 +41,7 @@
   "declared only": 2,
   "example only": 8,
   "parity only": 10,
-  "example, lab not applicable": 10,
+  "example, lab not applicable": 9,
   "example+parity": 21,
   "neither applies": 0
  },
@@ -182,17 +182,6 @@
    "labOwed": true,
    "fieldUse": [],
    "rung": "example only"
-  },
-  {
-   "nodeType": "comparison_map",
-   "exampleUses": [
-    "snow-geoprivacy"
-   ],
-   "exampleUseCount": 1,
-   "lab": "none",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example, lab not applicable"
   },
   {
    "nodeType": "deduplicate_points",

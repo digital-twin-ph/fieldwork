@@ -6,12 +6,12 @@
     "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
     "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
   },
-  "measuredAt": "2026-11-10",
+  "measuredAt": "2026-11-20",
   "counts": {
-    "widgets": 51,
+    "widgets": 50,
     "covered": 31,
     "awaiting": 9,
-    "none": 10,
+    "none": 9,
     "blocked": 1
   },
   "widgets": [
@@ -66,11 +66,6 @@
       "expectation": "parity",
       "check": null,
       "computes": "Computes the displacement between two point sets and the centre of each."
-    },
-    {
-      "nodeType": "comparison_map",
-      "expectation": "none",
-      "reason": "Draws what it is given and derives no value."
     },
     {
       "nodeType": "deduplicate_points",

@@ -4,7 +4,6 @@
  "kindVocabulary": [
   "added",
   "changed",
-  "enhancement",
   "feature",
   "fix",
   "initial",
@@ -205,31 +204,29 @@
    "migrationFrom": []
   },
   "compare_point_sets": {
-   "version": "0.2.0",
-   "released": "2026-10-07",
+   "version": "0.3.0",
+   "released": "2026-11-20",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Unweighted mean-center evaluation with shared pump context; see docs/experiments/35-cholera-geoprivacy-workflow.md."
-    },
-    {
-     "kind": "enhancement",
-     "description": "Explicit typed Mean center inputs on both branches; legacy three-input comparisons remain supported."
+     "kind": "major",
+     "description": "Hands on a table of what it found, in metres: how far the mean centre moved, each mean centre's distance to its nearest pump with the pump named, and how far a point moved, least, median and most. Comparison map, which read its result, retired into Map and a Table (docs/audits/comparison-map-retired.md). On the standard (experiment 186): its Inspector moves to point-comparison-ui.ts, the UTM zone into Configure…, and its Result says how far the mean centre moved.",
+     "breaking": true
     }
    ],
-   "breaking": false,
+   "breaking": true,
    "migrationFrom": []
   },
   "comparison_map": {
-   "version": "0.1.0",
-   "released": "2026-10-07",
+   "version": "1.0.0",
+   "released": "2026-11-20",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Unweighted mean-center evaluation with shared pump context; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+     "kind": "major",
+     "description": "Retired into Map and a Table. The practitioner, 2026-11-20: \"I also noticed comparison map widget is still in the palette. We should have retired it already.\" The geoprivacy example's comparison is now a Map of the original and moved points, both mean centres and the pumps as point layers, and a Table of the distances Compare point sets measures. Its representative donuts are given up; its caveat, that the view keeps original coordinates and is for teaching, not sharing, is in the example's notes. A saved workflow whose Comparison map is fed by Compare point sets opens rewritten that way. Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). docs/audits/comparison-map-retired.md.",
+     "breaking": true
     }
    ],
-   "breaking": false,
+   "breaking": true,
    "migrationFrom": []
   },
   "coverage_check": {
@@ -425,12 +422,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.38.0",
+   "version": "0.39.0",
    "released": "2026-11-20",
    "changes": [
     {
      "kind": "minor",
-     "description": "The receipt names a study area's shape by its GeoJSON's SHA-256 instead of writing it out. The title, subtitle and source note take {country}, {units}, {unit} and {census} from the workflow; a copy of a workflow leaves the subtitle empty."
+     "description": "A Mean center connects to a point layer and is drawn as one point, named by its step: the geoprivacy example's Map shows the original and moved mean centres beside their points (Comparison map retired, docs/audits/comparison-map-retired.md)."
     }
    ],
    "breaking": false,

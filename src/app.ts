@@ -184,7 +184,7 @@ import {readWorldFile,boundsFromWorldFile} from './map-image.js';
  *  the Inspector re-renders on every setting change and a file input cannot carry a selection
  *  across that. */
 const pendingPlateFiles=new Map<string,{image?:File;world?:File}>();
-import {openTableEditor,dataTableMarkup,tableFromFetched} from './data-table-ui.js';
+import {dataTableMarkup,tableFromFetched} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup,widgetIdentity} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
@@ -6354,57 +6354,15 @@ function sampleKit():SampleKit{
     connect:(w,from,to,port)=>setConnection(w,from,to,port),
     satelliteSentence:n=>satelliteSampleSentence(n),openSatellite:id=>openSatelliteSampleConfig(id)};
 }
-/** TABULAR DATA'S CONFIGURE…, kept here because it writes the rows and the dictionary to this device's store before
- *  the step points at them. data-table-ui.ts's Inspector opens it through its kit. */
-function openTableStep(nodeId:string):void{
-  const n=getNode(workflow,nodeId,'table_input');
-  {
-    const baseline=JSON.stringify(workflow),current=getNode(workflow,n.id,'table_input').params;
-    openTableEditor(async result=>{
-      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed. Close this and choose Configure\u2026 again.');
-      // THE ROWS ARE KEPT FIRST, as every other input keeps its data before the step points at it. The save then stores a
-      // reference to rows already written: found 2026-11-08, when a reload straight after Save found a reference to rows
-      // whose write had not committed, and the table was gone (CI, two runs of three).
-      if(result.data.rows.length&&!await keepDataset(tableDataKey(result.data),result.data))
-        throw new Error('This table could not be kept on this device, so it was not added. Export the project to keep it.');
-      // ITS DATA DICTIONARY, kept the same way and listed by the project (experiment 211).
-      if(result.dictionary&&!await keepDataset(dictionaryKeyOf(result.dictionary.sha256),result.dictionary))
-        throw new Error('The data dictionary could not be kept on this device, so the table was not added.');
-      const kept=change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;if(result.valueColumn)node.params.valueColumn=result.valueColumn;else delete node.params.valueColumn;if(result.provenance)node.params.provenance=result.provenance;node.params.unit=result.unit;node.params.source=result.source;
-        // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
-        // columns taken. Deleted rather than set undefined when a table is re-read as long: a
-        // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
-        // one that disagrees with the keys.
-        if(result.wide)node.params.wide=result.wide;else delete node.params.wide;
-        if(result.remote)node.params.remote=result.remote;else delete node.params.remote;
-        if(result.distinctValuesFor?.length)node.params.distinctValuesFor=result.distinctValuesFor;else delete node.params.distinctValuesFor;
-        // The file's own labels as proposals; what the practitioner has accepted is never replaced by them.
-        if(result.proposed){const held=node.params.columns??{};
-          node.params.columns={...result.proposed,...Object.fromEntries(Object.entries(held).filter(([,m])=>m.confirmed))};}
-        // The file as published, kept whenever it was read as wide, so `convertOnRun` has
-        // something to convert and the node can say what it was made from either way.
-        if(result.source_table){node.params.sourceTable=result.source_table;
-          if(result.source?.sha256)node.params.sourceRef=`source:${result.source.sha256}`;else delete node.params.sourceRef;}
-        else{delete node.params.sourceTable;delete node.params.sourceRef;delete node.params.convertOnRun;}
-        if(result.source_table){if(result.convertOnRun)node.params.convertOnRun=true;else delete node.params.convertOnRun;}
-        if(result.dictionary){node.params.dictionary=result.dictionary;node.params.dictionaryRef=dictionaryKeyOf(result.dictionary.sha256);}
-        if(result.dictionaryCheck)node.params.dictionaryCheck=result.dictionaryCheck;},{requirePersistence:true});
-      if(kept!==false&&result.dictionary)listDictionary(n.id,result.dictionary,result.source.filename);
-      return kept;
-    },current.keys.length?{keys:current.keys,valueField:current.valueField,...(current.valueColumn?{valueColumn:current.valueColumn}:{}),unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
-      ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{}),
-        ...(current.remote?{remote:current.remote}:{})}:undefined,
-    // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
-    {dhis2:{tokens:()=>credentials?.unlocked?credentials.references().filter(r=>r.provider==='dhis2').map(r=>({ref:r.ref,label:r.label})):[],
-        resolve:(ref,origin)=>{if(!credentials?.unlocked)throw new Error('Unlock Credentials first.');return credentials.resolve(ref,'dhis2',origin);}},
-      step:current.label||'Tabular data',convertOnRun:!!current.convertOnRun,hasSource:!!current.sourceTable,
-      onConvertOnRun:on=>change(w=>{const node=getNode(w,n.id,'table_input');if(on)node.params.convertOnRun=true;else delete node.params.convertOnRun;})});
-  }
-}
 /** TABULAR DATA'S KIT (data-table-ui.ts): the step kit, with where the rows came from this time, whether anything
- *  reads the table, and Configure…, which writes to this device's store. */
+ *  reads the table, this device's store for Configure… to keep the rows and dictionary in, and DHIS2's tokens. */
 function tableKit():TableKit{
-  return {...stepKit(),readFrom:id=>rowsReadFrom.get(id),feeds:id=>workflow.edges.some(e=>e.from===id),configure:id=>openTableStep(id)};
+  return {...stepKit(),readFrom:id=>rowsReadFrom.get(id),feeds:id=>workflow.edges.some(e=>e.from===id),
+    keepRows:data=>keepDataset(tableDataKey(data),data),keepDictionary:dictionary=>keepDataset(dictionaryKeyOf(dictionary.sha256),dictionary),
+    keepSaved:edit=>change(edit,{requirePersistence:true})!==false,
+    listDictionary:(id,dictionary,filename)=>listDictionary(id,dictionary,filename),
+    dhis2:{tokens:()=>credentials?.unlocked?credentials.references().filter(r=>r.provider==='dhis2').map(r=>({ref:r.ref,label:r.label})):[],
+      resolve:(ref,origin)=>{if(!credentials?.unlocked)throw new Error('Unlock Credentials first.');return credentials.resolve(ref,'dhis2',origin);}}};
 }
 function prepareRasterStep(n:WorkflowNode<'raster_input'>){
     let source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='area')?.from);const visited=new Set<string>();

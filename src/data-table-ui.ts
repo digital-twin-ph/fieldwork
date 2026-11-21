@@ -1,7 +1,7 @@
 import {editedTitle,type EditedCells} from './cell-edits.js';
-import type {Escape,WorkflowNode} from './types.js';
+import type {Escape,Workflow,WorkflowNode} from './types.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
-import {describableColumns,isDescribed} from './column-metadata.js';
+import {describableColumns,isDescribed,dictionaryKeyOf} from './column-metadata.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
 import {dataTable,wideDataTable,keyDomains,findingsSummary,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
 import {parseCSV} from './input-data.js';
@@ -1218,7 +1218,14 @@ export interface TableKit extends StepKit {
   readFrom:(nodeId:string)=>'device'|'source'|undefined;
   /** Whether any step reads the table. */
   feeds:(nodeId:string)=>boolean;
-  configure:(nodeId:string)=>void;
+  /** This device's store: the rows, then the dictionary, kept before the step points at them. */
+  keepRows:(data:DataTable)=>Promise<boolean>;
+  keepDictionary:(dictionary:TableDictionary)=>Promise<boolean>;
+  /** A change that must reach storage: false where it could not be kept. */
+  keepSaved:(edit:(w:Workflow)=>void)=>boolean;
+  /** The project lists a dictionary read with a table. */
+  listDictionary:(nodeId:string,dictionary:TableDictionary,filename:string)=>void;
+  dhis2:NonNullable<TableFrame['dhis2']>;
 }
 /** THE STANDARD INSPECTOR (experiment 186): what the step is called, one sentence of what it reads, Configure… for the
  *  import, and what it holds. A source step has no inputs. Fetch the table is a button of its own, not a word in a
@@ -1265,5 +1272,53 @@ export const tableInspector:OwnInspector<'table_input'>={
         +'<p class="description">A file already on this device is read from there, without downloading it.</p>':'')
       +'<p id="table-fetch-status" class="description" role="status"></p>');
     return html;},
-  wire:(n,kit,root)=>{root.querySelector('#configure-step')?.addEventListener('click',()=>(kit as TableKit).configure(n.id));},
+  wire:(n,kit,root)=>{root.querySelector('#configure-step')?.addEventListener('click',()=>openTableStep(n.id,kit as TableKit));},
 };
+/** TABULAR DATA'S CONFIGURE… (moved from app.ts 2026-11-20): it writes the rows and the dictionary to this device's
+ *  store, through the kit, before the step points at them. */
+export function openTableStep(nodeId:string,kit:TableKit):void{
+  const node=(w:Workflow)=>{const x=w.nodes.find(m=>m.id===nodeId);if(x?.type!=='table_input')throw new Error('This step is no longer in the workflow.');return x as WorkflowNode<'table_input'>;};
+  const n=node(kit.workflow());
+  {
+    const baseline=JSON.stringify(kit.workflow()),current=n.params;
+    openTableEditor(async result=>{
+      if(JSON.stringify(kit.workflow())!==baseline)throw new Error('The workflow changed. Close this and choose Configure\u2026 again.');
+      // THE ROWS ARE KEPT FIRST, as every other input keeps its data before the step points at it. The save then stores a
+      // reference to rows already written: found 2026-11-08, when a reload straight after Save found a reference to rows
+      // whose write had not committed, and the table was gone (CI, two runs of three).
+      if(result.data.rows.length&&!await kit.keepRows(result.data))
+        throw new Error('This table could not be kept on this device, so it was not added. Export the project to keep it.');
+      // ITS DATA DICTIONARY, kept the same way and listed by the project (experiment 211).
+      if(result.dictionary&&!await kit.keepDictionary(result.dictionary))
+        throw new Error('The data dictionary could not be kept on this device, so the table was not added.');
+      const kept=kit.keepSaved(w=>{const params=node(w).params;
+        params.data=result.data;params.keys=result.keys;params.valueField=result.valueField;if(result.valueColumn)params.valueColumn=result.valueColumn;else delete params.valueColumn;if(result.provenance)params.provenance=result.provenance;params.unit=result.unit;params.source=result.source;
+        // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
+        // columns taken. Deleted rather than set undefined when a table is re-read as long: a
+        // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
+        // one that disagrees with the keys.
+        if(result.wide)params.wide=result.wide;else delete params.wide;
+        if(result.remote)params.remote=result.remote;else delete params.remote;
+        if(result.distinctValuesFor?.length)params.distinctValuesFor=result.distinctValuesFor;else delete params.distinctValuesFor;
+        // The file's own labels as proposals; what the practitioner has accepted is never replaced by them.
+        if(result.proposed){const held=params.columns??{};
+          params.columns={...result.proposed,...Object.fromEntries(Object.entries(held).filter(([,m])=>m.confirmed))};}
+        // The file as published, kept whenever it was read as wide, so `convertOnRun` has
+        // something to convert and the node can say what it was made from either way.
+        if(result.source_table){params.sourceTable=result.source_table;
+          if(result.source?.sha256)params.sourceRef=`source:${result.source.sha256}`;else delete params.sourceRef;}
+        else{delete params.sourceTable;delete params.sourceRef;delete params.convertOnRun;}
+        if(result.source_table){if(result.convertOnRun)params.convertOnRun=true;else delete params.convertOnRun;}
+        if(result.dictionary){params.dictionary=result.dictionary;params.dictionaryRef=dictionaryKeyOf(result.dictionary.sha256);}
+        if(result.dictionaryCheck)params.dictionaryCheck=result.dictionaryCheck;});
+      if(kept&&result.dictionary)kit.listDictionary(n.id,result.dictionary,result.source.filename);
+      return kept;
+    },current.keys.length?{keys:current.keys,valueField:current.valueField,...(current.valueColumn?{valueColumn:current.valueColumn}:{}),unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
+      ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{}),
+        ...(current.remote?{remote:current.remote}:{})}:undefined,
+    // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
+    {dhis2:kit.dhis2,
+      step:current.label||'Tabular data',convertOnRun:!!current.convertOnRun,hasSource:!!current.sourceTable,
+      onConvertOnRun:on=>{kit.change(w=>{const p=node(w).params;if(on)p.convertOnRun=true;else delete p.convertOnRun;});return true;}});
+  }
+}

@@ -9,7 +9,8 @@ kernel in Fieldwork's own Rust crate gives the same tables natively and in WebAs
 as data rather than written in Rust, on 2026-11-17 in [220](220-a-disease-model-configured-from-its-evidence.md). The number was reserved
 in [200](200-operational-epidemiology.md) on 2026-11-09, and the proposal went unrecorded for a day. **Set beside the
 recorded curve on 2026-11-21** (option 4, chosen 2026-11-19): the size and the timing of the bulk agree, the recorded
-peak is twice as sharp as the model's; not fitted.
+peak is twice as sharp as the model's; not fitted. **The periods measured from the record the same day** (the practitioner's choice): the timing
+then agrees, the peak is still half the record's.
 
 ## The question
 
@@ -176,6 +177,43 @@ Median, with 5% to 95% over the 500 runs:
 is what a single shared exposure would give, but the three probabilities are assumed, not fitted, and a fit is the
 next question, not this one. Nor does it say whether the recorded dates are heaped, or how the model runs in a
 browser worker on a slower laptop.
+
+## The periods from the record, 2026-11-21
+
+The practitioner chose, of the two next steps, to read the periods from the record before fitting anything. The record
+gives each child's prodrome and rash, and an infector for 184 of the 188: the putative source, as the record gives it,
+not an observed transmission.
+
+- **The prodrome**, from prodrome to rash, all 188 children: 0 to 13 days, 10th centile 2, median 4, 90th 6, mean 3.95;
+  72 children had 4.
+- **From the infector's prodrome to the child's**, 184 pairs: 7 to 16 days, median 10; 10 in the 68 school-class pairs,
+  11 in the 77 household pairs, 10 in the other 39.
+- **The latent period** that leaves: a classmate can be infected only in the infector's prodrome, while the infector
+  is at school. Taking the middle of the infector's prodrome as the day of infection gives 6 days (10th centile), 8.5
+  (median) and 10.5 to 11 (90th), the same in each kind of pair. No single number fits: of the 68 class pairs, at
+  most 41 allow any one value (9 or 10 days).
+
+Declared as `measles-hagelloch-from-the-record`: latent 6 to 11 days, prodrome 2 to 6, drawn evenly (means 8.5 and
+4); the rash's 5 infectious days kept from the Pink Book, since nothing in the record marks when a child stopped
+being infectious; the three probabilities kept as assumed, so that only the periods change. Run as the prodrome-and-rash
+model was, as in 1861, 500 seeds:
+
+| | Recorded | Prodrome and rash, Pink Book's periods | Prodrome and rash, the record's periods |
+| --- | --- | --- | --- |
+| Half reached by day | 29 | 34 (32 to 41) | 30 (25 to 38) |
+| Peak day | 31 | 34 (31 to 41) | 30 (23 to 39) |
+| Children on the peak day | **26** | 16 (12 to 22) | 13 (11 to 17) |
+| Last day | 82 | 60 (52 to 70) | 54 (45 to 65) |
+| Recorded days inside the band | | 60 of 83 | 72 of 83 |
+
+**Found:** the record's periods bring the timing in: half the children by day 30 against the record's 29, and the
+recorded curve inside the band on 72 of 83 days. The peak does not come: the 95th percentiles of the three peak days
+sum to 40, against the 68 recorded. Shorter, spread periods widen each generation rather than narrow it. Whatever makes
+the record sharp is not in the periods.
+
+**What this does not establish:** that the infectors are right (they are the record's attribution); the shape of either
+period (drawn evenly, the model gives as many 2-day as 4-day prodromes, where the record has 29 against 72, a shape the
+structure cannot yet declare); or why the peak is sharp. That is the probabilities' question, and the fit's.
 
 ## Left for later, step by step, if the spike says yes
 

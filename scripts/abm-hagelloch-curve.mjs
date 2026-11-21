@@ -4,7 +4,8 @@
 //   - SEIR, the spike's set and the Pink Book's: children becoming infectious, against the recorded rash less 4 days
 //     (the Pink Book: "transmissible from 4 days before through 4 days after rash onset");
 //   - prodrome and rash, the prodrome-rash set, under the scenario hagelloch-as-in-1861 (the school shut on Sundays):
-//     children whose rash begins, against the recorded date of rash.
+//     children whose rash begins, against the recorded date of rash;
+//   - the same, with the periods measured from the record's dates and infectors (2026-11-21).
 // Each curve counts from the index child's own day (case 184): its first infectious day, or its rash.
 // node scripts/abm-hagelloch-curve.mjs [--json out.json]
 import {readFileSync,writeFileSync} from 'node:fs';
@@ -33,6 +34,8 @@ const COMPARISONS=[
    what:"SEIR, the Pink Book's periods: becoming infectious, against rash less 4 days"},
   {id:'prodrome-rash',structure:'measles-prodrome-rash-household-class-village',set:'measles-hagelloch-prodrome-rash',scenario:'hagelloch-as-in-1861',from:['Q','R'],against:0,
    what:'prodrome and rash, as in 1861 (school shut on Sundays): rash, against the recorded rash'},
+  {id:'from-the-record',structure:'measles-prodrome-rash-household-class-village',set:'measles-hagelloch-from-the-record',scenario:'hagelloch-as-in-1861',from:['Q','R'],against:0,
+   what:'prodrome and rash, the periods measured from the record, as in 1861: rash, against the recorded rash'},
 ];
 const out={recorded:{},comparisons:{}};
 for(const c of COMPARISONS){

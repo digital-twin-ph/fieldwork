@@ -1,6 +1,6 @@
 # Clip polygons
 
-_Created 2026-11-20 · Updated 2026-11-20_
+_Created 2026-11-20 · Updated 2026-11-21_
 
 **Polygons cut to the study area.** Catchments or districts that spill past the reporting area, kept only where
 they fall inside it.

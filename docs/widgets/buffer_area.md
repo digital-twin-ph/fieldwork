@@ -1,6 +1,6 @@
 # Buffer study area
 
-_Created 2026-11-20 · Updated 2026-11-20_
+_Created 2026-11-20 · Updated 2026-11-21_
 
 **A study area widened for acquiring data.** Streets, facilities or population just outside the district still
 shape what happens inside it.

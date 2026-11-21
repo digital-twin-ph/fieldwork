@@ -122,12 +122,30 @@ matched. The first 50 records are drawn; the counts are of all of them.
 | **is at least (≥)** | greater than or equal to | *days_to_detect* is at least *8* | 8 and over |
 | **is less than (<)** | less than | *age* is less than *5* | 4.9 and under; not 5 |
 | **is at most (≤)** | less than or equal to | *days_to_detect* is at most *7* | 7 and under: 7-1-7's target met |
+| **contains any of** | the text holds one of the words, ignoring capitals | *chief_complaint* contains any of *vomit, n/v, diarrh* | "N/V/D", "Vomitting x2" |
+| **contains none of** | the text holds none of the words | *chief_complaint* contains none of *pregnan* | every complaint not naming pregnancy |
 | **is recorded** | the column has a readable value | *dt_diag* is recorded | records with a diagnosis date |
 | **is not recorded** | the column is blank or unreadable | *dt_diag* is not recorded | records with no diagnosis date |
 
 The four comparisons of size, >, ≥, < and ≤, are offered for numbers, and for the days between two dates; *is* and
-*is not* for categories and for true or false too. A record whose column is not recorded matches none of the first
+*is not* for categories and for true or false too; *contains any of* and *contains none of* for text, the words
+separated by commas. A word matches inside a longer one: *diarrh* finds *diarrhea* and *diarrhoea*. A record whose column is not recorded matches none of the first
 six: it is neither more nor less than 7. Ask *is not recorded* for it.
+
+## The rules as JSON
+
+**JSON** beside **Rules** shows the same ruleset as text: its title, the columns it reads with their kinds, its
+settings, its rules and each column's default. Type in it, or **Upload (JSON)** a file; **Download (JSON)** keeps one.
+
+- **Checked as you type.** After a pause, the text is read and checked: where the JSON breaks (*line 20: a comma is
+  missing after the value of "comparator"*), then whether the rules can run (a field not declared, a comparison that
+  does not exist, words left out). Each problem is listed with its line and marked beside it; choosing one goes there.
+- **The two views are one ruleset.** Valid JSON is the rules, at once. While it has a problem, the rules stay as they
+  were last valid, Apply waits, and the Rules view says so.
+- **Brackets close themselves.** Typing `{`, `[` or `"` adds its partner; typing the partner steps over it; Backspace
+  between a pair removes both; Enter between them opens an indented line; selected text is wrapped.
+
+A file is a ruleset a person wrote: what it must not be read as goes with it.
 
 ## Combining conditions
 

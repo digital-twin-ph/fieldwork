@@ -1,0 +1,157 @@
+/** A RULESET AS JSON, READ AND CHECKED AS IT IS TYPED (the practitioner, 2026-11-21: *"we can also enable editing and
+ *  uploading of ruleset files in JSON"*, then *"So we can make the rule editor a specialized JSON editor. Editor also
+ *  validates in real time."*). The JSON is what a step stores, so this reads it back: a parser that says where JSON
+ *  breaks, by line and column, in words (a browser's own message names no line in Safari), and the checks a ruleset
+ *  must pass before it runs, each placed on the line it is about. */
+import {authoredUnitProblems,otherwiseProblems,computesValues,evaluatedDirectly,compileAuthoredRuleset,isWordComparator,
+  containedWords,type Comparator} from './authored-rules.js';
+
+export const RULESET_SCHEMA='fieldwork/authored-ruleset/1';
+export interface JsonProblem {line:number;column?:number;says:string;path?:string}
+/** Where each value starts, by its path: `rules.0.any.0.all.1.field`. */
+export type Positions=Map<string,{line:number;column:number}>;
+
+/** JSON.parse's grammar, with every value's line and column kept, and an error said in words where the text breaks. */
+export function parseJson(text:string):{value?:unknown;positions:Positions;error?:JsonProblem}{
+  let i=0,line=1,col=1;const positions:Positions=new Map();
+  const at=()=>({line,column:col});
+  const fail=(says:string,where=at()):never=>{throw Object.assign(new Error(says),{where});};
+  // WHERE A VALUE ENDED: a missing comma belongs at the end of the value before it, not where the next one starts.
+  let ended={line:1,column:1};
+  const next=()=>{const c=text[i++]!;if(c==='\n'){line++;col=1;}else col++;return c;};
+  const space=()=>{while(i<text.length&&/\s/.test(text[i]!))next();};
+  const shown=(c:string|undefined)=>c===undefined?'the end of the text':c==='\n'?'a line break':`"${c}"`;
+  const string=():string=>{next();let out='';
+    for(;;){if(i>=text.length)fail('A string is not closed: a " is missing.');
+      if(text[i]==='\n')fail('A string runs on to the next line: a " is missing at the end of it.');
+      const c=next();
+      if(c==='"')return out;
+      if(c==='\\'){const e=next();const map:Record<string,string>={'"':'"','\\':'\\','/':'/',b:'\b',f:'\f',n:'\n',r:'\r',t:'\t'};
+        if(e==='u'){const hex=text.slice(i,i+4);if(!/^[0-9a-fA-F]{4}$/.test(hex))fail('\\u is followed by four hexadecimal digits.');
+          out+=String.fromCharCode(parseInt(hex,16));for(let k=0;k<4;k++)next();}
+        else if(map[e]!==undefined)out+=map[e];else fail(`"\\${e}" is not an escape JSON knows.`);}
+      else out+=c;}};
+  const value=(path:string):unknown=>{
+    space();positions.set(path,at());const c=text[i];
+    if(c==='{'){next();const o:Record<string,unknown>={};space();
+      if(text[i]==='}'){next();return o;}
+      for(;;){space();if(text[i]==="'")fail('JSON writes names and strings in double quotes ", not single quotes.');
+        if(text[i]!=='"')fail(text[i]==='}'?'A comma is left before "}".':`A name in quotes is expected here, not ${shown(text[i])}.`);
+        const key=string();space();if(text[i]!==':')fail(`A ":" is missing after "${key}".`);next();
+        o[key]=value(path?`${path}.${key}`:key);ended=at();space();
+        if(text[i]===','){next();continue;}if(text[i]==='}'){next();return o;}
+        if(text[i]==='"')fail(`A comma is missing after the value of "${key}".`,ended);
+        fail(`A "," or "}" is expected after the value of "${key}", not ${shown(text[i])}.`);}}
+    if(c==='['){next();const a:unknown[]=[];space();
+      if(text[i]===']'){next();return a;}
+      for(;;){a.push(value(path?`${path}.${a.length}`:String(a.length)));ended=at();space();
+        if(text[i]==='{'||text[i]==='['||text[i]==='"')fail(`A comma is missing after item ${a.length}.`,ended);
+        if(text[i]===','){next();space();if(text[i]===']')fail('A comma is left before "]".');continue;}
+        if(text[i]===']'){next();return a;}
+        fail(`A "," or "]" is expected after item ${a.length}, not ${shown(text[i])}.`);}}
+    if(c==='"')return string();
+    const m=/^-?(0|[1-9]\d*)(\.\d+)?([eE][+-]?\d+)?/.exec(text.slice(i));
+    if(m&&m[0]!=='-'){for(let k=0;k<m[0].length;k++)next();return Number(m[0]);}
+    for(const [word,v] of [['true',true],['false',false],['null',null]] as const)
+      if(text.startsWith(word,i)){for(let k=0;k<word.length;k++)next();return v;}
+    if(c==="'")fail('JSON writes names and strings in double quotes ", not single quotes.');
+    return fail(`A value is expected here, not ${shown(c)}.`);
+  };
+  try{const v=value('');space();if(i<text.length)fail(`Nothing may follow the ruleset, but ${shown(text[i])} does.`);return {value:v,positions};}
+  catch(error){const where=(error as {where?:{line:number;column:number}}).where??{line,column:col};
+    return {positions,error:{line:where.line,column:where.column,says:(error as Error).message}};}
+}
+
+const COMPARATORS:Comparator[]=['equals','notEquals','greaterThan','notGreaterThan','lessThan','notLessThan','contains','notContains'];
+const KINDS=['number','boolean','term','date','datetime'];
+const CURIE=/^[a-zA-Z][a-zA-Z0-9_-]*:[a-zA-Z][a-zA-Z0-9_]*$/;
+const isObj=(v:unknown):v is Record<string,unknown>=>typeof v==='object'&&v!==null&&!Array.isArray(v);
+
+/** The authored ruleset a step stores, as a file: its title, what it must not be read as, the columns it reads with
+ *  their kinds and units, its settings, its rules, the order it reads records in and each column's default. */
+export interface RulesetFile {schema?:string;title:string;mustNotBeReadAs:string;fields:unknown[];parameters?:unknown[];
+  rules:unknown[];order?:unknown;otherwise?:unknown[]}
+
+/** Every problem with a ruleset as JSON, placed on its line: the text first, then its shape, then what it means. */
+export function checkRulesetJson(text:string):{ruleset?:RulesetFile;problems:JsonProblem[]}{
+  const parsed=parseJson(text);
+  if(parsed.error)return {problems:[parsed.error]};
+  const pos=parsed.positions,lineOf=(path:string)=>{let p=path;while(p&&!pos.has(p))p=p.replace(/\.?[^.]*$/,'');return pos.get(p)?.line??1;};
+  const problems:JsonProblem[]=[],say=(path:string,says:string)=>problems.push({line:lineOf(path),path,says});
+  const v=parsed.value;
+  if(!isObj(v))return {problems:[{line:1,says:'A ruleset is an object, { … }, with a title, fields and rules.'}]};
+  if(v.schema!==undefined&&v.schema!==RULESET_SCHEMA)say('schema',`"schema" is ${RULESET_SCHEMA}, or left out.`);
+  if(typeof v.title!=='string'||!v.title.trim())say('title','"title" names the ruleset, in words.');
+  if(typeof v.mustNotBeReadAs!=='string'||!v.mustNotBeReadAs.trim())say('mustNotBeReadAs','"mustNotBeReadAs" says what the rules must not be taken to mean.');
+  const fields=Array.isArray(v.fields)?v.fields:[];
+  if(!Array.isArray(v.fields))say('fields','"fields" is a list of the columns the rules read.');
+  const predicates=new Set<string>();
+  fields.forEach((f,k)=>{const p=`fields.${k}`;
+    if(!isObj(f)){say(p,`Field ${k+1} is an object: { "attribute", "predicate", "kind" }.`);return;}
+    if(typeof f.attribute!=='string'||!f.attribute)say(`${p}.attribute`,`Field ${k+1}: "attribute" is the column's name as the file spells it.`);
+    if(typeof f.predicate!=='string'||!CURIE.test(f.predicate))say(`${p}.predicate`,`Field ${k+1}: "predicate" is a name such as fwa:chief_complaint.`);
+    else predicates.add(f.predicate);
+    if(!KINDS.includes(String(f.kind)))say(`${p}.kind`,`Field ${k+1}: "kind" is one of ${KINDS.join(', ')}.`);
+  });
+  const rules=Array.isArray(v.rules)?v.rules:[];
+  if(!Array.isArray(v.rules))say('rules','"rules" is a list of rules.');
+  const concluded=new Set(rules.flatMap(r=>isObj(r)&&Array.isArray(r.then)?r.then.filter(isObj).map(c=>String(c.predicate)):[]));
+  rules.forEach((rule,r)=>{const p=`rules.${r}`;
+    if(!isObj(rule)){say(p,`Rule ${r+1} is an object: { "any": [ … ], "then": [ … ] }.`);return;}
+    if(!Array.isArray(rule.any)||!rule.any.length)say(`${p}.any`,`Rule ${r+1}: "any" lists one group of conditions or more.`);
+    (Array.isArray(rule.any)?rule.any:[]).forEach((group,g)=>{const q=`${p}.any.${g}`;
+      if(!isObj(group)||!Array.isArray(group.all)||!group.all.length){say(q,`Rule ${r+1}, group ${g+1}: "all" lists one condition or more.`);return;}
+      group.all.forEach((c,k)=>{const s=`${q}.all.${k}`;
+        if(!isObj(c)){say(s,`Rule ${r+1}, condition ${k+1} is an object: { "field", "comparator", "value" }.`);return;}
+        const field=String(c.field??''),base=field.replace(/Known$/,'');
+        if(!predicates.has(field)&&!predicates.has(base)&&!concluded.has(field))
+          say(`${s}.field`,`Rule ${r+1}, condition ${k+1}: ${field||'"field"'} is not a declared field, nor a column a rule concludes.`);
+        if(!COMPARATORS.includes(c.comparator as Comparator))say(`${s}.comparator`,`Rule ${r+1}, condition ${k+1}: "comparator" is one of ${COMPARATORS.join(', ')}.`);
+        else if(isWordComparator(String(c.comparator))&&!containedWords(c.value).length)
+          say(`${s}.value`,`Rule ${r+1}, condition ${k+1}: write the words to look for, separated by commas.`);
+        if(!('value' in c))say(s,`Rule ${r+1}, condition ${k+1}: "value" is missing.`);
+      });});
+    if(!Array.isArray(rule.then)||!rule.then.length)say(`${p}.then`,`Rule ${r+1}: "then" lists what the rule concludes.`);
+    else rule.then.forEach((t,k)=>{if(!isObj(t)||typeof t.predicate!=='string'||!CURIE.test(t.predicate))
+      say(`${p}.then.${k}.predicate`,`Rule ${r+1}, conclusion ${k+1}: "predicate" names the column it gives a value, such as fwa:syndrome.`);});
+  });
+  if(problems.length)return {problems};
+  // WHAT IT MEANS: the checks the editor and the run make, each placed on the first line naming what it is about.
+  const ruleset={...v} as unknown as RulesetFile;
+  const firstLine=(predicate:string)=>{const k=text.indexOf(`"${predicate}"`);return k<0?1:text.slice(0,k).split('\n').length;};
+  const authored={title:ruleset.title,mustNotBeReadAs:ruleset.mustNotBeReadAs,fields:ruleset.fields,parameters:ruleset.parameters??[],
+    rules:ruleset.rules,...(ruleset.order?{order:ruleset.order}:{}),otherwise:ruleset.otherwise??[]} as never;
+  for(const p of authoredUnitProblems(authored))problems.push({line:firstLine(p.field),says:p.says});
+  for(const says of otherwiseProblems({rules:ruleset.rules,otherwise:ruleset.otherwise??[]} as never,(x:string)=>x.replace(/^[^:]*:/,'')))
+    problems.push({line:1,says});
+  if(!problems.length&&!evaluatedDirectly(authored)&&!computesValues(authored)){
+    try{compileAuthoredRuleset({subject:'?s',rules:ruleset.rules} as never);}catch(error){problems.push({line:1,says:(error as Error).message});}
+  }
+  return problems.length?{problems}:{ruleset,problems};
+}
+
+/** A ruleset as the file a person downloads: two spaces, the schema first. */
+export const rulesetText=(r:RulesetFile)=>{const {schema:_,...rest}=r;void _;return JSON.stringify({schema:RULESET_SCHEMA,...rest},null,2)+'\n';};
+
+/** AUTO-CLOSING BRACKETS (the practitioner, 2026-11-21: "Auto bracket."): a key typed into the JSON view, and what the
+ *  text becomes. Undefined where the browser's own handling is right. Pure, so it is tested without a page. */
+export function autoBracket(text:string,start:number,end:number,key:string):{text:string;caret:number;caretEnd?:number}|undefined{
+  const pairs:Record<string,string>={'{':'}','[':']','"':'"'},before=text.slice(0,start),after=text.slice(end),selected=text.slice(start,end);
+  if(pairs[key]){
+    if(key==='"'&&start===end&&after[0]==='"')return {text,caret:start+1};
+    if(selected)return {text:before+key+selected+pairs[key]+after,caret:start+1,caretEnd:end+1};
+    if(key==='"'&&/[\w\\]$/.test(before))return undefined;
+    return {text:before+key+pairs[key]+after,caret:start+1};
+  }
+  if((key==='}'||key===']')&&start===end&&after[0]===key)return {text,caret:start+1};
+  if(key==='Backspace'&&start===end&&start>0){const open=text[start-1]!;
+    if(pairs[open]&&after[0]===pairs[open])return {text:text.slice(0,start-1)+after.slice(1),caret:start-1};return undefined;}
+  if(key==='Enter'&&start===end){
+    const indent=/[^\n]*$/.exec(before)![0].match(/^\s*/)![0],open=before.slice(-1),close=after[0];
+    if((open==='{'&&close==='}')||(open==='['&&close===']'))
+      return {text:`${before}\n${indent}  \n${indent}${after}`,caret:start+indent.length+3};
+    return {text:`${before}\n${indent}${/[{[]$/.test(before)?'  ':''}${after}`,caret:start+1+indent.length+(/[{[]$/.test(before)?2:0)};
+  }
+  if(key==='Tab'&&start===end)return {text:`${before}  ${after}`,caret:start+2};
+  return undefined;
+}

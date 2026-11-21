@@ -132,7 +132,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     spec.wire(body,draft,()=>{confirming=false;draw();});
     scrollLongTables(body);
     // READ ONLY: shown exactly as it would be edited, every control disabled and nothing to add or remove.
-    if(spec.readOnly){body.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>('input,select,textarea')
+    if(spec.readOnly){body.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>('input:not([data-keep-enabled]),select,textarea:not([data-keep-enabled])')
       .forEach(el=>{el.disabled=true;});body.querySelectorAll('button[data-part],button[data-editor-add]').forEach(el=>el.remove());}
 
     body.scrollTop=scroll;

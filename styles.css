@@ -1795,3 +1795,16 @@ th .meaning{font-weight:400;white-space:normal}
 .detect-axis-line{stroke:var(--text-muted,#555);stroke-width:1}
 .detect-chart .walk-key li{font-size:16px;line-height:1.5;color:var(--text,#111)}
 tr.detect-signal-row td{font-weight:700}
+/* THE RULE EDITOR'S JSON VIEW (2026-11-21): line numbers beside the text, a problem's line marked by a sign and its number,
+   not by colour alone; 16 px, as everything the practitioner reads. */
+.rule-view-switch{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 12px}
+.json-editor{display:grid;grid-template-columns:auto 1fr;border:1px solid var(--line,#ccc);border-radius:6px;overflow:hidden;background:var(--surface-raised,#fff)}
+.json-gutter{margin:0;padding:10px 8px;text-align:right;font:16px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--text-muted,#555);
+  background:var(--surface-tint,#f2f4f2);overflow:hidden;max-height:32em;user-select:none;white-space:pre}
+.json-gutter .json-bad{color:var(--danger-1,#a32020);font-weight:700}
+#rule-json{display:block;justify-self:stretch;max-width:none;border-radius:0;margin:0;padding:10px;border:0;resize:vertical;min-height:24em;max-height:32em;width:100%;box-sizing:border-box;
+  font:16px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--text,#111);background:transparent;white-space:pre;overflow:auto;tab-size:2}
+#rule-json:focus{outline:2px solid var(--accent,#176b59);outline-offset:-2px}
+.json-problems{margin:6px 0;padding-left:1.2em}
+.json-problems li,.json-problems .text-button{font-size:16px;line-height:1.5}
+.json-ok{font-size:16px;color:var(--accent,#176b59)}

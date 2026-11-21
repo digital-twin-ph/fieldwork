@@ -21,6 +21,7 @@ import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,isWrittenDateTime,DIFFERENCE_UNITS,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
   type AuthoredOtherwise,bandRules,targetRules,isWordComparator} from './authored-rules.js';
+import {checkRulesetJson,rulesetText,autoBracket,type JsonProblem,type RulesetFile} from './ruleset-json.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import {openConfigDialog,type ConfigSections} from './config-dialog.js';
 import {DATE_FORMS,CLOCKS,type SubjectRecord} from './authored-application.js';
@@ -224,6 +225,9 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     const isConcluded=(predicate:string)=>!fields.some(f=>f.predicate===predicate);
     const withConcluded=()=>[...readable(fields),...concludedChoices()];
     let recordsKind=options?.recordsKind;
+    // THE JSON VIEW (2026-11-21): the same ruleset as text, checked as it is typed. `jsonText` is the text being edited,
+    // kept while it is invalid; undefined, the view writes it afresh from the rules.
+    let view:'rules'|'json'='rules',jsonText:string|undefined,jsonProblems:JsonProblem[]=[],jsonScroll=0;
     // EACH COLUMN'S DEFAULT, where no rule gave it a value (experiment 192).
     let otherwise:AuthoredOtherwise[]=structuredClone(authored.otherwise??[]);
     const kindOf=(predicate:string)=>choices.find(c=>c.predicate===predicate)?.kind??'term';
@@ -588,7 +592,25 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         const units=review?[]:authoredUnitProblems({...authored,fields,parameters:settings,rules:rules as never});
         if(units.length)problem=units[0].says;
       }
-      const settingsHtml=`<p class="rule-title"><strong>${esc(authored.title)}</strong></p>`
+      const switcher=`<div class="rule-view-switch" role="group" aria-label="How the rules are shown">`
+        +(['rules','json'] as const).map(v=>`<button type="button" class="button${view===v?' primary':''}" data-rule-view="${v}" aria-pressed="${view===v}">${v==='rules'?'Rules':'JSON'}</button>`).join('')
+        +`<button type="button" class="button" id="rule-json-download">Download (JSON)</button>`
+        +(review?'':`<label class="button" for="rule-json-upload">Upload (JSON)</label><input type="file" id="rule-json-upload" accept=".json,application/json" hidden>`)+'</div>';
+      if(view==='json'){
+        const text=jsonText??rulesetText(currentFile()),lines=text.split('\n'),bad=new Set(jsonProblems.map(p=>p.line));
+        const gutter=lines.map((_,k)=>bad.has(k+1)?`<span class="json-bad">⚠ ${k+1}</span>`:String(k+1)).join('\n');
+        const said=jsonProblems.length
+          ?`<p><strong>${jsonProblems.length} problem${jsonProblems.length===1?'':'s'}.</strong> The rules stay as they were last valid until ${jsonProblems.length===1?'it is':'they are'} fixed.</p><ul class="json-problems">`
+            +jsonProblems.map(p=>`<li><button type="button" class="text-button" data-json-line="${p.line}">⚠ Line ${p.line}${p.column?`, column ${p.column}`:''}:</button> ${esc(p.says)}</li>`).join('')+'</ul>'
+          :'<p class="json-ok">✓ Valid: these are the rules the Rules view shows.</p>';
+        return {settings:`<p class="rule-title"><strong>${esc(authored.title)}</strong></p>${switcher}`
+          +`<div class="json-editor"><pre class="json-gutter" aria-hidden="true">${gutter}</pre>`
+          +`<textarea id="rule-json" spellcheck="false" autocomplete="off" aria-label="The ruleset as JSON" aria-describedby="rule-json-problems"${review?' readonly data-keep-enabled':''}>${esc(text)}</textarea></div>`
+          +`<div id="rule-json-problems" aria-live="polite">${said}</div>`,
+          preview:previewMarkup(),...(jsonProblems.length?{message:{tone:'refusal' as const,text:`Line ${jsonProblems[0]!.line}: ${jsonProblems[0]!.says}`},blocked:true}:{})};
+      }
+      const settingsHtml=`<p class="rule-title"><strong>${esc(authored.title)}</strong></p>`+switcher
+        +(jsonProblems.length?`<div class="notice notice-warning">The JSON has ${jsonProblems.length} problem${jsonProblems.length===1?'':'s'}: these are the rules as they were last valid.</div>`:'')
         +(review?`<div class="notice">${esc(review.note)}</div>`:'')
         +(review?'':fieldsMarkup())
         +(review&&!settings.length?'':settingsMarkup())
@@ -614,9 +636,44 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
     };
 
     const number=(el:HTMLElement,name:string)=>Number(el.dataset[name]);
+    function currentFile():RulesetFile{return {title:authored.title,mustNotBeReadAs:authored.mustNotBeReadAs,fields,parameters:settings,
+      rules:rules as unknown[],...(order?{order}:{}),otherwise};}
     // Redraws the frame from the state above; set once the frame is open.
     let render=()=>{};
     const wire=(root:HTMLElement)=>{
+      root.querySelectorAll<HTMLButtonElement>('[data-rule-view]').forEach(b=>b.onclick=()=>{
+        view=b.dataset.ruleView==='json'?'json':'rules';if(view==='json'&&!jsonProblems.length)jsonText=undefined;render();});
+      root.querySelector<HTMLButtonElement>('#rule-json-download')?.addEventListener('click',()=>{
+        const text=view==='json'&&jsonText!==undefined?jsonText:rulesetText(currentFile());
+        const url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');
+        a.href=url;a.download=`${(authored.title||'ruleset').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'ruleset'}.ruleset.json`;
+        a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+      // CHECKED AS TYPED: a pause, then the whole text read and checked; valid, it is the rules.
+      const takeJson=(text:string)=>{jsonText=text;const {ruleset,problems}=checkRulesetJson(text);jsonProblems=problems;
+        if(ruleset&&!review){rules=ruleset.rules as never;fields=ruleset.fields as Field[];choices=readable(fields);
+          settings=(ruleset.parameters??[]) as never;order=ruleset.order as never;otherwise=(ruleset.otherwise??[]) as never;}
+        render();};
+      root.querySelector<HTMLInputElement>('#rule-json-upload')?.addEventListener('change',async e=>{
+        const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;view='json';takeJson(await file.text());});
+      const area=root.querySelector<HTMLTextAreaElement>('#rule-json'),gutter=root.querySelector<HTMLElement>('.json-gutter');
+      if(area){
+        area.scrollTop=jsonScroll;if(gutter)gutter.scrollTop=jsonScroll;
+        area.addEventListener('scroll',()=>{jsonScroll=area.scrollTop;if(gutter)gutter.scrollTop=area.scrollTop;});
+        let pause:ReturnType<typeof setTimeout>|undefined;
+        const typed=()=>{clearTimeout(pause);pause=setTimeout(()=>takeJson(area.value),400);};
+        area.addEventListener('input',typed);
+        area.addEventListener('keydown',e=>{
+          if(review||e.metaKey||e.ctrlKey||e.altKey)return;
+          const done=autoBracket(area.value,area.selectionStart,area.selectionEnd,e.key);
+          if(!done)return;e.preventDefault();
+          area.value=done.text;area.setSelectionRange(done.caret,done.caretEnd??done.caret);typed();});
+        root.querySelectorAll<HTMLButtonElement>('[data-json-line]').forEach(b=>b.onclick=()=>{
+          const line=Number(b.dataset.jsonLine),at=area.value.split('\n').slice(0,line-1).reduce((n,l)=>n+l.length+1,0);
+          area.focus();area.setSelectionRange(at,at);
+          area.scrollTop=Math.max(0,(line-3)*parseFloat(getComputedStyle(area).lineHeight||'24'));});
+      }
+      // THE JSON VIEW draws none of the Rules view's controls, so none is wired.
+      if(view==='json')return;
       // A PUBLISHED RULESET is read, not written: the frame disables every control (readOnly).
       if(review)return;
       root.querySelector<HTMLSelectElement>('#ruleset-records')?.addEventListener('change',e=>{

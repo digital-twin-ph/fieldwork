@@ -73,12 +73,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.14.0",
-   "released": "2026-11-15",
+   "version": "0.15.0",
+   "released": "2026-11-21",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Dates and times: a column read as a date and time; a rule writes one from a date column in a declared form, the year where it has none, or one date for every record, and a time column on a declared clock, never guessing a value that does not fit; one date and time minus another in days, hours or minutes."
+     "kind": "changed",
+     "description": "Words in text: contains any of, contains none of. The rules as JSON beside the Rules view: checked as typed, problems placed on their lines, brackets that close themselves, uploaded and downloaded."
     }
    ],
    "breaking": false,

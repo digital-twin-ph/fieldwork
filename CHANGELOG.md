@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.160.0 — In development
+
+- **Apply ruleset reads words in text**: *contains any of* and *contains none of*, the words separated by commas,
+  ignoring capitals, so a chief complaint can be sorted into a syndrome ("N/V/D", "Vomitting x2").
+- **The rules as JSON**, beside the Rules view: checked as you type, each problem said in words and placed on its
+  line, Apply held until the text is valid; brackets that close themselves; **Upload** and **Download** a ruleset file.
+
 ## 0.159.1 — 2026-11-21
 
 - **Tabular data's import dialog no longer stalls on a wide table in Safari.** The crosstab under After is drawn when it

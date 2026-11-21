@@ -28,7 +28,7 @@ import {importNetwork} from './street-network.js';
 import {downloadOSMInTiles} from './network-tiles.js';
 import {johnSnowExample,snowExtentExample} from './john-snow.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
-import {pointComparisonMarkup} from './point-comparison-ui.js';
+import {compareInspector,type CompareKit} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
 import {mountCatchmentMap,mountDensityPanel,BASEMAP_OPTIONS,placeOnMap} from './catchment-map.js';
@@ -452,7 +452,6 @@ let incompleteShown=false;
 let workflow=EXAMPLE_TEMPLATES.hagelloch(),selected:string|null|undefined='cases',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,runIncomplete=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
 let tableSort:import('./table-output.js').TableSort|undefined;
-/** The run whose comparison result may expand the results pane, consumed the first time it does. */
 let lastRunMs:number|null=null;
 /** Nodes that finished within the last moment, so the canvas can show it happening.
  *  A run is otherwise silent until it ends, and on a slow step there is nothing to say
@@ -1126,7 +1125,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','buffer_area','measure_area','clip_polygons','join_table_to_area']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','buffer_area','measure_area','clip_polygons','join_table_to_area','compare_point_sets']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -3638,9 +3637,8 @@ function renderInspector(){
     content+=(AREA_STEP_INSPECTORS[n.type as keyof typeof AREA_STEP_INSPECTORS] as OwnInspector<NodeType>).markup(n as never,areaStepKit());
   }else if(n.type==='mean_center'){
     content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
-  }else if(n.type==='compare_point_sets'||n.type==='comparison_map'){
-    if(n.type==='compare_point_sets')content+=`<div class="notice">Connect a Mean center widget to each branch. Both centers must use this UTM CRS and have matching source counts. Original and moved locations stay private.</div><label class="field-label" for="comparison-zone">WGS84 UTM zone</label><input id="comparison-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="comparison-hemisphere">Hemisphere</label><select id="comparison-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
-    else content+='<div class="notice">Private evaluation map: both panels share one extent and scale. This view displays existing comparison results and includes original coordinates.</div>';
+  }else if(n.type==='compare_point_sets'){
+    content+=compareInspector.markup(n,compareKit());
   }else if(n.type==='donut_geomask'||n.type==='aggregate_points_to_h3_cell'){
     content+=`<div class="notice">Educational transformation only. The private source remains in the project and run evidence. No anonymity claim.</div>`;
     content+='<details><summary>How does this geoprivacy method work? (?)</summary><p>Map encryption and its calibration are planned, not executable here. See the <a href="https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library" target="_blank" rel="noopener noreferrer">geoprivacy notebooks</a>.</p></details>';
@@ -4529,8 +4527,7 @@ function renderInspector(){
     renderInspector();renderResults();
   });
   for(const key of ['innerM','outerM','seed','resolution','minOccupancy'])optionalElement(`#privacy-${key}`)?.addEventListener('change',e=>change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>)[key]=control(e).value===''?NaN:Number(control(e).value);}));
-  optionalElement('#comparison-zone')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.zone=control(e).value===''?NaN:Number(control(e).value)));
-  optionalElement('#comparison-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'compare_point_sets').params.hemisphere=control(e).value as 'north'|'south'));
+  if(n.type==='compare_point_sets')compareInspector.wire(n,compareKit(),document);
   optionalElement('#chart-panels-by')?.addEventListener('change',e=>change(w=>{
     const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
     if(raw===''){delete target.params.panelsBy;delete target.params.panelMarks;delete target.params.shade;}
@@ -5144,7 +5141,7 @@ function renderResults(){
     result=null;runWorkflow=null;activeOutputId=null;
   }
   disposeVegaChart();
-  const output=activeOutput();$('.results-panel').classList.toggle('catchment-results',!!output?.polygons);$('.results-panel').classList.toggle('comparison-results',!!output?.comparison);activeOutputId=output?.nodeId||null;
+  const output=activeOutput();$('.results-panel').classList.toggle('catchment-results',!!output?.polygons);activeOutputId=output?.nodeId||null;
   // A comparison used to take over the lower half of the split for one run. A tab needs no such
   // exception: the whole panel is the result when the practitioner asks for it, and nothing else
   // is competing for the height.
@@ -5184,7 +5181,6 @@ function renderResults(){
   $('#result-statement').hidden=!stated&&!instrument;
   if(output?.kind==='data-table'){const t=output as unknown as import('./data-table.js').DataTable;$('#result-metrics').innerHTML=`<span class="metric"><b>${t.rowCount}</b> rows</span><span class="metric unknown"><b>${t.missingValueCount}</b> values absent</span><span class="metric">${t.keys.length} key columns · value in ${esc(t.unit||'an unstated unit')}</span>`;}
   if(output?.kind==='point-table')$('#result-metrics').innerHTML=`<span class="metric"><b>${rows.length}</b> records</span><span class="metric"><b>${rows.filter(r=>!r.coordinates).length}</b> missing coordinates</span><span class="metric">CRS84 · longitude, latitude</span>`;
-  if(output?.comparison)$('#result-metrics').innerHTML=`<span class="metric"><b>${output.comparison.original.features.length}</b> locations in each set</span><span class="metric"><b>${output.comparison.pumps.features.length}</b> reference pumps</span><span class="metric"><b>${output.comparison.centerShiftM.toFixed(1)} m</b> mean-center shift</span>`;
   const table=output?.pointTable?{head:'',body:''}:output?.kind==='spatial-map'?{head:'<th>Record</th><th>Spatial relation</th>',body:rows.map(r=>`<tr data-place="${esc(r.id)}"><td>${esc(r.name)}</td><td>${esc(relationLabel(r.relation!))}</td></tr>`).join('')}:{head:'',body:''};$('#result-head').innerHTML=table.head;$('#result-rows').innerHTML=table.body;
   $('#result-search').value='';tablePage=0;tableAttributePage=0;tableSort=undefined;
   $('#result-search').placeholder=output?.pointTable?'Search all records and attributes…':'Name, evidence, or service…';
@@ -5307,7 +5303,6 @@ function renderResults(){
   const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};const panelsOf=(output as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;if(panelsOf?.length){const scalesNow=panelScalesOf(output,panelsOf);$('#result-metrics').textContent=`${panelsOf.length} rasters side by side · ${scalesNow.length===1?`${scalesNow[0]!.label} in each cell, one scale`:scalesNow.map(x=>`${x.label} for ${x.layers.join(', ')}`).join('; ')} · drawn cells about ${Math.round(Math.max(...panelsOf.map(p=>p.drawnCellM))).toLocaleString('en')} m across`;$('.map-legend').hidden=true;}else if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${validCells(raster.values).toLocaleString('en')} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
   if(output?.polygons){const p=output.polygons;$('.map-legend').hidden=true;$('#map-note').textContent=p.method;$('#result-metrics').textContent=p.kind==='hexbin'?`${p.features.length} released H3 cells / ${p.summary?.matched} locations represented / ${p.summary?.unmatched} locations in omitted sparse cells`:p.summary?`${p.summary.records} locations / ${p.summary.matched} matched / ${p.summary.unmatched} outside / ${p.summary.missingLocation} missing location / ${p.summary.multiple} multiple memberships`:p.features.length+' polygon'+(p.features.length===1?'':'s');$('#map-note').textContent=p.method+' / '+p.notes.join(' ');}
   if(exampleKey(workflow)==='snow-geoprivacy'&&output)$('#map-note').textContent=(output.nodeId.startsWith('before-')?'PRIVATE SOURCE · original coordinates. ':'DERIVED DISPLAY · educational transformation; no anonymity guarantee. ')+$('#map-note').textContent;
-  if(output?.comparison){$('#map-note').textContent='PRIVATE EVALUATION · original and moved coordinates, mean centers and pumps';$('.map-legend').hidden=true;}
   renderMap();
   if(result){$('#n3-preview').textContent=result.receipts.map(receiptText).join('\n\n');}
 }
@@ -5757,7 +5752,7 @@ function insetPicker(host:HTMLElement,mapNode:WorkflowNode<'map_output'>|undefin
 }
 function renderMap(){
   if(!resultsOnScreen())return;
-  disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#map-parts')?.remove();document.querySelector('#comparison-map-host')?.remove();
+  disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#map-parts')?.remove();
   const result=activeOutput(),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
   // PRESENTATION IS LIVE, NOT BAKED INTO THE RUN. The node is read from the current workflow and
   // not from the snapshot as run, because a title, a key, a basemap and a mark's size change
@@ -5862,7 +5857,6 @@ function renderMap(){
   // The static plot is what those checkboxes act on: they set display:none on its marks.
   $('#map-layer-list').hidden=!activeOutput()?.pointLayers?.length
     &&!groundImageFor(activeOutput()?.nodeId);
-  if(result?.comparison){svg.style.display='none';const host=document.createElement('div');host.id='comparison-map-host';host.innerHTML=pointComparisonMarkup(result.comparison,esc);$('#map-panel').append(host);return;}
   // INTERACTIVE IS FOR ANY MAP, and until 2026-10-17 it was unreachable without polygons.
   //
   // The inner condition was widened on 2026-10-15 with a comment saying so -- "a study area with
@@ -6294,6 +6288,10 @@ function relateKit():RelateKit{
     relation:id=>result?.relations?.[id],shifted:id=>result?.relateShifts?.[id],
     keyColumns:(id,port)=>{const node=workflow.nodes.find(x=>x.id===id);return node?Object.keys(upstreamKeyValues(node,new Set(),port)??{}):[];},
     valueOn:(id,port)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return valueFieldOf(e&&workflow.nodes.find(m=>m.id===e.from));}};
+}
+/** COMPARE POINT SETS' KIT (point-comparison-ui.ts): the step kit, with the table of distances its last run made. */
+function compareKit():CompareKit{
+  return {...stepKit(),made:id=>result?.tables?.[id]};
 }
 /** JOIN'S KIT (area-join-ui.ts): the step kit, with what feeds each port, the table's columns, the parts joined to, and
  *  what the last run joined. */

@@ -20,7 +20,7 @@ import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
 export type CredentialResolver=(ref:string,provider:string,origin:string)=>string;
 import {computeIsochrone} from './catchment-executor.js';
 import {moveDonut,aggregateHex,validatePrivacyNode,privacyReceipt} from './geoprivacy.js';
-import {comparePointSets,comparisonReceipt,comparisonMap,validatePointComparisonNode} from './point-comparison.js';
+import {comparePointSets,comparisonReceipt,comparisonTable,validatePointComparisonNode} from './point-comparison.js';
 import type {PointComparison} from './point-comparison.js';
 import {computeMeanCenter,meanCenterReceipt,validateMeanCenterNode} from './mean-center.js';
 import type {MeanCenter} from './mean-center.js';
@@ -124,8 +124,11 @@ export const groundPort=(index:number)=>index===0?'ground':`ground_${index+1}`;
 export const isGroundPort=(port:string)=>port==='ground'||/^ground_[2-4]$/.test(port);
 export const TYPES:Record<NodeType,NodeDefinition> = {
   mean_center:{title:'Mean center',group:'Spatial operations',icon:'⊙',color:'teal',description:'Compute the center of point locations in a metric CRS, optionally weighted by a record attribute',inputs:[['points','points']],output:'mean-center'},
-  compare_point_sets:{title:'Compare point sets',group:'Spatial operations',icon:'⊕',color:'teal',description:'Compare two mean centers and locate them against reference pumps',inputs:[['original','points'],['moved','points'],['pumps','points']],output:'point-comparison'},
-  comparison_map:{title:'Comparison map',group:'Outputs',icon:'◈',color:'green',description:'Show original and moved locations side by side with their mean centers and pumps',inputs:[['comparison','point-comparison']],output:null},
+  compare_point_sets:{title:'Compare point sets',group:'Spatial operations',icon:'⊕',color:'teal',description:'Compare two mean centers and locate them against reference pumps, as a table of distances',inputs:[['original','points'],['moved','points'],['pumps','points']],output:'table'},
+  // RETIRED 2026-11-20 into Map, which takes the original and moved points, their mean centres and the pumps as point
+  // layers, and a Table output of Compare point sets' distances (docs/audits/comparison-map-retired.md). Kept so a saved
+  // workflow naming it is migrated.
+  comparison_map:{title:'Comparison map',group:'Outputs',icon:'◈',color:'green',description:'Retired — connect the points to a Map, and Compare point sets to a Table',inputs:[['comparison','point-comparison']],output:null},
   donut_geomask:{title:'Move points in a donut',group:'Spatial operations',icon:'◎',color:'teal',description:'Shift points within a configured distance band; educational preview, not a privacy guarantee',inputs:[['points','points']],output:'points'},
   aggregate_points_to_h3_cell:{title:'Aggregate points to H3 cells',group:'Spatial operations',icon:'⬡',color:'teal',description:'Count points in hexagonal cells and omit sparse cells. Hexbinning, onto the fixed H3 index',inputs:[['points','points']],output:'polygons'},
   buffer_area:{title:'Buffer study area',group:'Spatial operations',icon:'◎',color:'teal',description:'Expand an acquisition boundary without changing the reporting area',inputs:[['area','area']],output:'area'},
@@ -301,7 +304,7 @@ const point = (id:string,name:string,coordinates:Position|null|undefined):PointF
 /** WHETHER A PORT TAKES A RESULT. The same type, or a distances result on a table port (experiment 197): one row per point,
  *  its nearest candidate and the distance, which is a table, and which Relate and Select rows can then read. */
 export function portAccepts(wanted:PortType|undefined,given:PortType|null):boolean{
-  return !!wanted&&!!given&&(wanted===given||(wanted==='table'&&(given==='distances'||given==='points'||given==='polygons')));
+  return !!wanted&&!!given&&(wanted===given||(wanted==='table'&&(given==='distances'||given==='points'||given==='polygons'))||(wanted==='points'&&given==='mean-center'));
 }
 
 /** A POINT LAYER AS A TABLE (experiment 200): one row per point, its id and its attributes as columns, and no geometry,
@@ -764,6 +767,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   migrateDeriveValue(w);
   migrateSatelliteSampler(w);
   migrateCollectedPolygons(w);
+  migrateComparisonMap(w);
   migrateChartSeriesPort(w);
   migrateHealthsitesNodes(w);
   migrateOutputNodes(w);
@@ -1324,6 +1328,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     const inputs=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>{
       const from=workflow.nodes.find(n=>n.id===e.from),value=values.get(e.from);
       const wanted=nodeInputs(node).find(([p])=>p===e.port)?.[1];
+      // A MEAN CENTRE ON A POINT INPUT is one point, named by its step (2026-11-20: Comparison map retired into Map, which
+      // shows the original and moved centres as point layers).
+      if(wanted==='points'&&from?.type==='mean_center'){const c=value as import('./mean-center.js').MeanCenter;
+        return [e.port,{type:'FeatureCollection',features:[{type:'Feature',id:`${from.id}-centre`,
+          properties:{name:from.params.label||'Mean center',count:c.count},geometry:{type:'Point',coordinates:c.coordinates}}]}];}
       return [e.port,wanted==='table'?asTableInput(from,value):value];
     })) as unknown as ExecutionInputs;
     // A MAP'S POLYGON LAYERS, collected as one value the way Collect polygon layers did: each feature keeps its layer's
@@ -1372,8 +1381,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     if(node.type==='map_output')validateLayerSettings(node);
     switch(node.type){
       case 'mean_center':{value=computeMeanCenter(inputs.points,node.params);receipts.push(meanCenterReceipt(node,value as MeanCenter,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from));break;}
-      case 'compare_point_sets':{value=comparePointSets(inputs.original,inputs.moved,inputs.pumps,node.params,node.params.centers?inputs.originalCenter:undefined,node.params.centers?inputs.movedCenter:undefined);const sources=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,e.from])) as {original:string;moved:string;pumps:string;originalCenter?:string;movedCenter?:string};receipts.push(comparisonReceipt(node,value as PointComparison,runId,sources));break;}
-      case 'comparison_map':{const shown=comparisonMap(node,inputs.comparison,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='comparison')!.from);value=shown.value;receipts.push(shown.receipt);break;}
+      case 'compare_point_sets':{const compared=comparePointSets(inputs.original,inputs.moved,inputs.pumps,node.params,node.params.centers?inputs.originalCenter:undefined,node.params.centers?inputs.movedCenter:undefined);const sources=Object.fromEntries(workflow.edges.filter(e=>e.to===node.id).map(e=>[e.port,e.from])) as {original:string;moved:string;pumps:string;originalCenter?:string;movedCenter?:string};value=comparisonTable(compared);receipts.push(comparisonReceipt(node,compared,runId,sources));break;}
       case 'donut_geomask':case 'aggregate_points_to_h3_cell':{
         value=node.type==='donut_geomask'?moveDonut(inputs.points,node.params):aggregateHex(inputs.points,node.params);
         receipts.push(privacyReceipt(node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='points')!.from,inputs.points.features.length,value as PointCollection|Polygons));break;
@@ -2946,6 +2954,30 @@ function migrateCollectedPolygons(w:Workflow):void{
     }
     w.edges=w.edges.filter(e=>e.from!==stack.id&&e.to!==stack.id);
     w.nodes=w.nodes.filter(n=>n.id!==stack.id);
+  }
+}
+/** COMPARISON MAP, RETIRED INTO MAP (2026-11-20; docs/audits/comparison-map-retired.md). A saved one fed by Compare point
+ *  sets opens rewritten: a Map in its place, with what the comparison compared as its point layers (the original and
+ *  moved points, their mean centres where connected, the pumps), and a Table of the comparison's distances beside it. */
+function migrateComparisonMap(w:Workflow):void{
+  for(const shown of w.nodes.filter(n=>n&&(n.type as string)==='comparison_map')){
+    const label=(shown.params as {label?:string}).label||'Comparison map';
+    const fed=w.edges.find(e=>e&&e.to===shown.id);
+    const compare=fed&&w.nodes.find(n=>n.id===fed.from&&n.type==='compare_point_sets');
+    w.edges=w.edges.filter(e=>e.to!==shown.id&&e.from!==shown.id);
+    if(!compare){w.nodes=w.nodes.filter(n=>n.id!==shown.id);continue;}
+    const from=(port:string)=>w.edges.find(e=>e.to===compare.id&&e.port===port)?.from;
+    const layers=['original','moved','originalCenter','movedCenter','pumps'].map(from).filter((id):id is string=>!!id);
+    const map={id:shown.id,type:'map_output' as const,x:shown.x,y:shown.y,params:{label,...(layers.length>1?{pointInputCount:layers.length}:{})},
+      sourceMigration:{fromType:'comparison_map' as RetiredNodeType,version:'1' as const}};
+    const table={id:`${shown.id}-distances`,type:'table_output' as const,x:shown.x,y:shown.y+180,params:{label:`${compare.params.label||'Compare point sets'}: distances`}};
+    w.nodes=w.nodes.map(n=>n.id===shown.id?map as unknown as WorkflowNode:n);
+    if(!w.nodes.some(n=>n.id===table.id))w.nodes.push(table as unknown as WorkflowNode);
+    // A Map places points against an area: the one the workflow's other maps use, or its study area.
+    const area=w.edges.find(e=>e.port==='area'&&w.nodes.find(n=>n.id===e.to)?.type==='map_output')?.from??w.nodes.find(n=>n.type==='study_area')?.id;
+    if(area)w.edges.push({id:`${map.id}-area-${area}`,from:area,to:map.id,port:'area'});
+    layers.forEach((id,i)=>w.edges.push({id:`${map.id}-${pointPort(i)}-${id}`,from:id,to:map.id,port:pointPort(i)}));
+    w.edges.push({id:`${table.id}-table-${compare.id}`,from:compare.id,to:table.id,port:'table'});
   }
 }
 function migrateSatelliteSampler(w:Workflow):void{

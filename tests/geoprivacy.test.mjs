@@ -64,20 +64,24 @@ test('connected example exposes private before and derived after tabs with valid
   const wrongCenter=geoprivacyExample();wrongCenter.edges.find(e=>e.to==='moved-center'&&e.port==='points').from='locations';
   assert.throws(()=>validateWorkflow(wrongCenter),/same point source/);
   const workflow=validateWorkflow(geoprivacyExample()),run=await executeWorkflow(workflow,ready);
-  assert.deepEqual(run.outputs.map(o=>o.nodeId),['before-map','before-table','after-move-map','after-move-table','comparison-map','after-group-map','after-group-table']);
-  assert.equal(run.outputs[2].rows.length,250);assert.equal(run.outputs[5].polygons.kind,'hexbin');
-  assert.equal(run.outputs[4].comparison.pumps.features.length,8);
+  // COMPARISON MAP RETIRED INTO MAP (2026-11-20): the comparison is a Map of five point layers and a Table of distances.
+  const ids=run.outputs.map(o=>o.nodeId);
+  for(const id of ['before-map','before-table','after-move-map','after-move-table','comparison-map','comparison-distances','after-group-map','after-group-table'])assert.ok(ids.includes(id),id);
+  const at=id=>run.outputs.find(o=>o.nodeId===id);
+  assert.equal(at('after-move-map').rows.length,250);assert.equal(at('after-group-map').polygons.kind,'hexbin');
+  assert.equal(at('comparison-map').rows.length,250+250+2+8);
+  assert.match(run.tables['compare'].rows[1].key.measure,/^original mean centre to its nearest pump, /);
+  assert.equal(run.tables['compare'].unit,'m');
   assert.match(run.receipts.find(r=>r.nodeId==='compare').facts,/fw:metricCRS "EPSG:32630"/);
   assert.match(run.receipts.find(r=>r.nodeId==='compare').facts,/fw:originalMeanCenter/);
   assert.match(run.receipts.find(r=>r.nodeId==='compare').facts,/fw:originalNearestPumpId/);
   assert.match(run.receipts.find(r=>r.nodeId==='original-center').facts,/fw:MeanCenterComputation/);
   assert.match(run.receipts.find(r=>r.nodeId==='moved-center').facts,/fw:MeanCenterResult/);
-  assert.equal(run.receipts.find(r=>r.nodeId==='comparison-map').kind,'presentation');
   assert.match(run.receipts.find(r=>r.nodeId==='move').facts,/fw:randomSeed 42/);
   assert.match(run.receipts.find(r=>r.nodeId==='group').facts,/fw:HexCellDataset/);
   assert.match(run.receipts.find(r=>r.nodeId==='group').facts,/geo:asWKT/);
-  assert.ok(run.outputs[2].rows.every(r=>r.recordId.startsWith('moved-')&&!('DEATHS' in r.attributes)));
-  assert.ok(run.outputs[5].rows.every(r=>!('siteId' in r.attributes)));
+  assert.ok(at('after-move-map').rows.every(r=>r.recordId.startsWith('moved-')&&!('DEATHS' in r.attributes)));
+  assert.ok(at('after-group-map').rows.every(r=>!('siteId' in r.attributes)));
   const audit=await auditRuntimeRun(run);assert.equal(audit.summary.conforms,true,JSON.stringify(audit.summary));
   const broken=structuredClone(run),receipt=broken.receipts.find(r=>r.nodeId==='group');receipt.facts=receipt.facts.replace(/fw:minimumOccupancy 2; /,'');receipt.input=receipt.facts;
   const negative=await auditRuntimeRun(broken);assert.equal(negative.summary.conforms,false);assert.match(JSON.stringify(negative.summary.shacl),/minimumOccupancy/);
@@ -85,4 +89,18 @@ test('connected example exposes private before and derived after tabs with valid
   const centerAudit=await auditRuntimeRun(missingCenter);assert.equal(centerAudit.summary.conforms,false);assert.match(JSON.stringify(centerAudit.summary.shacl),/movedMeanCenter/);
   const brokenMean=structuredClone(run),mean=brokenMean.receipts.find(r=>r.nodeId==='original-center');mean.facts=mean.facts.replace(/; fw:inputCount 250/,'');mean.input=mean.facts;
   const meanAudit=await auditRuntimeRun(brokenMean);assert.equal(meanAudit.summary.conforms,false);assert.match(JSON.stringify(meanAudit.summary.shacl),/inputCount/);
+});
+
+test('a saved Comparison map opens rewritten as a Map of what was compared and a Table of its distances',()=>{
+  // As the example was saved before 2026-11-20: Compare point sets feeding a Comparison map.
+  const saved=geoprivacyExample();
+  saved.nodes=saved.nodes.filter(n=>n.id!=='comparison-distances').map(n=>n.id==='comparison-map'?{...n,type:'comparison_map',params:{label:'PRIVATE · original vs moved centers'}}:n);
+  saved.edges=saved.edges.filter(e=>e.to!=='comparison-map'&&e.to!=='comparison-distances').concat({id:'old',from:'compare',to:'comparison-map',port:'comparison'});
+  const w=validateWorkflow(saved);
+  const map=w.nodes.find(n=>n.id==='comparison-map');
+  assert.equal(map.type,'map_output');assert.equal(map.sourceMigration.fromType,'comparison_map');assert.equal(map.params.pointInputCount,5);
+  assert.deepEqual(w.edges.filter(e=>e.to==='comparison-map').map(e=>`${e.port}:${e.from}`).sort(),
+    ['area:study','points:locations','points_2:move','points_3:original-center','points_4:moved-center','points_5:pumps']);
+  const table=w.nodes.find(n=>n.type==='table_output'&&w.edges.some(e=>e.to===n.id&&e.from==='compare'));
+  assert.ok(table,'a Table reads the distances');
 });

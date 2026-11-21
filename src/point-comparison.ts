@@ -3,6 +3,7 @@ import {metricCRSAssertion} from './metric-crs.js';
 import type {PointCollection,Position,WorkflowNode} from './types.js';
 import type {DisplayValue,Receipt} from './results.js';
 import {computeMeanCenter} from './mean-center.js';
+import {dataTable} from './data-table.js';
 import type {MeanCenter} from './mean-center.js';
 
 export interface PointComparison {
@@ -27,7 +28,7 @@ export interface PointComparison {
 }
 
 export function validatePointComparisonNode(node:WorkflowNode):void{
-  if(node.type!=='compare_point_sets'&&node.type!=='comparison_map')return;
+  if(node.type!=='compare_point_sets')return;
   if(typeof node.params.label!=='string'||!node.params.label.trim()||node.params.label.length>60)throw new Error('Name the point comparison using 1–60 characters.');
   if(node.type==='compare_point_sets'&&(!Number.isInteger(node.params.zone)||node.params.zone<1||node.params.zone>60||!['north','south'].includes(node.params.hemisphere)))throw new Error('Choose a WGS84 UTM zone 1–60 and hemisphere for mean-center comparison.');
 }
@@ -64,8 +65,17 @@ export function comparisonReceipt(node:WorkflowNode<'compare_point_sets'>,value:
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],method:value.method};
 }
 
-export function comparisonMap(node:WorkflowNode<'comparison_map'>,value:PointComparison,runId:string,source:string):{value:DisplayValue;receipt:Receipt}{
-  const activity=`urn:fieldwork:run:${runId}:output:${node.id}:view`,entity=`urn:fieldwork:run:${runId}:output:${node.id}`;
-  const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n<${activity}> a fw:MapView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:output:${source}>.\n<${entity}> a prov:Entity; prov:wasGeneratedBy <${activity}>.\n`;
-  return {value:{comparison:value,rows:[],centers:[],method:'Side-by-side presentation of computed point comparison; shared extent and scale.'},receipt:{nodeId:node.id,kind:'presentation',facts,input:facts,rules:'',conclusions:[],method:'Display existing comparison and source/context points without recomputing centers or distances.'}};
+
+/** WHAT THE COMPARISON FOUND, AS A TABLE (2026-11-20, Comparison map retired into Map): one row per measure, in metres,
+ *  each mean centre's nearest pump named in its measure. A Table output shows it, and the points themselves go to a Map. */
+export function comparisonTable(value:PointComparison):import('./data-table.js').DataTable{
+  const m=(x:number)=>x.toFixed(1);
+  const rows:string[][]=[
+    ['mean centre moved',m(value.centerShiftM)],
+    [`original mean centre to its nearest pump, ${value.originalNearestPump.name}`,m(value.originalNearestPump.distanceM)],
+    [`moved mean centre to its nearest pump, ${value.movedNearestPump.name}`,m(value.movedNearestPump.distanceM)],
+    ['a point moved, least',m(value.displacementBandM.minimum)],
+    ['a point moved, median',m(value.displacementBandM.median)],
+    ['a point moved, most',m(value.displacementBandM.maximum)]];
+  return dataTable({headers:['measure','metres'],rows},{keys:['measure'],valueField:'metres',unit:'m'});
 }

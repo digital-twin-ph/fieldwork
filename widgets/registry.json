@@ -574,7 +574,7 @@
     {
       "id": "urn:fieldwork:widget:compare_point_sets",
       "nodeType": "compare_point_sets",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -585,18 +585,28 @@
           "version": "0.2.0",
           "path": "widgets/releases/compare_point_sets/0.2.0.json",
           "sha256": "8ca048d03bed8498fd25498c6cbc2235cbfb15253b8d9ef99c4229e199688b8f"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/compare_point_sets/0.3.0.json",
+          "sha256": "3dd6cca8639268dca4c02e498a8fe06af2d475fd834a42efba2423b9d3d82f9b"
         }
       ]
     },
     {
       "id": "urn:fieldwork:widget:comparison_map",
       "nodeType": "comparison_map",
-      "currentVersion": "0.1.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/comparison_map/0.1.0.json",
           "sha256": "ce32e4f5b4a3942fda084e11bf36fd421484bb840890aea6a11cc6ec2b60d778"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/comparison_map/1.0.0.json",
+          "sha256": "3c43c8ecaa1b720feb42b2870f69b87ee41da7f327934f0866c8ea99f733bcea"
         }
       ]
     },
@@ -999,7 +1009,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.38.0",
+      "currentVersion": "0.39.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1315,6 +1325,11 @@
           "version": "0.38.0",
           "path": "widgets/releases/map_output/0.38.0.json",
           "sha256": "56c13c976125798222334dd7bb264a6b733496009f57e2891b2dd16e0d0795ec"
+        },
+        {
+          "version": "0.39.0",
+          "path": "widgets/releases/map_output/0.39.0.json",
+          "sha256": "96ca965751342867d628cf5247788026c32842fcf887873650542ed27378e4b0"
         }
       ]
     },

@@ -9,6 +9,12 @@ shown in a local build is not a claim that it has been published.
   area's parts Before and each part's value After, drawn as the choices change. The column naming the most parts is
   proposed where none is chosen, and the panel says before a run when none is, where a run used to stop on an empty
   column name. Show me how walks three made-up parts and a table through the matching chosen.
+- **Comparison map retired into Map and a Table.** The geoprivacy example's comparison is now a Map of the original and
+  moved points, both mean centres and the pumps, and a Table of the distances Compare point sets measures: how far the
+  mean centre moved, each centre to its nearest pump, and how far a point moved, least, median and most. The
+  representative donuts are given up; the caveat is in Compare point sets' manual. A saved workflow holding one opens
+  rewritten. A Mean center now connects to a point layer as one point. Compare point sets moves to the standard.
+  docs/audits/comparison-map-retired.md.
 - **A study area's parts, by name.** An area acquired as administrative units says how many parts it holds, and View the
   parts lists each one's name and id.
 

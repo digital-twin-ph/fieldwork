@@ -745,3 +745,9 @@ cases are densest, and does the static figure, whose marks have no names, still 
 
 Its Inspector and Configure dialog also moved out of `app.ts`, into `src/map-ui.ts`, with nothing a practitioner sees
 changed.
+
+### 2026-11-20 · A mean centre as a point (0.39.0)
+
+A Mean center connects to a point layer and is drawn as one point, named by its step. The geoprivacy example's map of
+the original and moved points shows both mean centres and the pumps beside them, where Comparison map, now retired,
+drew them.

@@ -120,7 +120,6 @@ export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'per
   numericCategory?:{unit:string};
   bins:{key:string; label:string; count:number; order?:number; panel?:string; missing?:true; lower?:number; upper?:number}[]}
 export interface DisplayValue {
-  comparison?:import('./point-comparison.js').PointComparison;
   polygonPresentation?:'plot'|'interactive';
   contextPoints?:PointCollection;
   polygons?:import('./catchments.js').Polygons;

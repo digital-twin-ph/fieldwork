@@ -1,0 +1,77 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:compare_point_sets",
+ "nodeType": "compare_point_sets",
+ "version": "0.3.0",
+ "title": "Compare point sets",
+ "released": "2026-11-20",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['compare_point_sets']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "original",
+    "type": "points"
+   },
+   {
+    "name": "moved",
+    "type": "points"
+   },
+   {
+    "name": "pumps",
+    "type": "points"
+   }
+  ],
+  "output": "table"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:PointSetComparison",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "PROV comparison consumes source and optional explicit Mean center entities, with matched UTM CRS and counts; GeoSPARQL center geometry and QUDT metre quantities.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/point-comparison.ts",
+   "src/mean-center.ts",
+   "src/core.ts",
+   "src/point-comparison-ui.ts",
+   "src/config-dialog.ts",
+   "src/inspector-kit.ts",
+   "src/data-table.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Hands on a table of what it found, in metres: how far the mean centre moved, each mean centre's distance to its nearest pump with the pump named, and how far a point moved, least, median and most. Comparison map, which read its result, retired into Map and a Table (docs/audits/comparison-map-retired.md). On the standard (experiment 186): its Inspector moves to point-comparison-ui.ts, the UTM zone into Configure…, and its Result says how far the mean centre moved."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Projection, count, display and SHACL checks; no privacy guarantee or independent scientific certification."
+ }
+}

@@ -1,0 +1,64 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:comparison_map",
+ "nodeType": "comparison_map",
+ "version": "1.0.0",
+ "title": "Comparison map",
+ "released": "2026-11-20",
+ "implementationStatus": "retired",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['comparison_map']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "comparison",
+    "type": "point-comparison"
+   }
+  ],
+  "output": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:MapView",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Map presentation of the comparison result; no center recomputation.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/point-comparison.ts",
+   "src/core.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "major",
+   "description": "Retired into Map and a Table. The practitioner, 2026-11-20: \"I also noticed comparison map widget is still in the palette. We should have retired it already.\" The geoprivacy example's comparison is now a Map of the original and moved points, both mean centres and the pumps as point layers, and a Table of the distances Compare point sets measures. Its representative donuts are given up; its caveat, that the view keeps original coordinates and is for teaching, not sharing, is in the example's notes. A saved workflow whose Comparison map is fed by Compare point sets opens rewritten that way. Retired outright, with no deprecation period, because nobody outside this project uses it (AGENTS.md). docs/audits/comparison-map-retired.md."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Projection, count, display and SHACL checks; no privacy guarantee or independent scientific certification."
+ }
+}

@@ -70,6 +70,15 @@
         "travel_time"
       ],
       "note": "Decomposed rather than replaced: a candidate filter knob on nearest, the shared nearest-neighbour search, and the travel_time primitive. Not replaceable by one widget, so a saved workflow holding it now refuses to open naming it -- which is the practitioner's rule, and the 2026-10-06 frozen fixture is what proves it."
+    },
+    {
+      "nodeType": "comparison_map",
+      "retiredAt": "2026-11-20",
+      "replacedBy": [
+        "map_output",
+        "table_output"
+      ],
+      "note": "One example's display of a point comparison. The geoprivacy example's points and mean centres now go to a Map, and Compare point sets hands on a table of distances. docs/audits/comparison-map-retired.md."
     }
   ],
   "generalisedSoFar": [
@@ -95,13 +104,6 @@
     "fourthRulesetFound": "2026-10-12, while thinking about spatial selection outputs. coverage_check carries six N3 rules as a template literal, concluding fw:coverageDecision over Accept, Review and Excluded. So the corpus is FOUR rulesets, not three, and the one found last is the one nobody was looking for -- it was never a candidate for the merge because coverage_check declares itself 'shared' and is not example-bound. A hidden ruleset is a different failure from an example-bound widget, and the exemption ratchet cannot see it. Recorded as its own blocker: coverage-check-ruleset-undeclared."
   },
   "deferred": [
-    {
-      "nodeType": "comparison_map",
-      "disposition": "composition",
-      "reason": "The practitioner's direction of 2026-10-12: comparison_map belongs in a communication, visualization and presentation stage as a composition, not as a widget. That stage does not exist yet. Note it declares standardization 'shared', so the exemption ratchet does not cover it; the widget audit's prose had listed it as example-bound, which the declaration contradicts.",
-      "gatedOn": "presentation-stage",
-      "record": "no experiment yet"
-    },
     {
       "nodeType": "slr_site_assignment",
       "disposition": "retire into `nearest`",

@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.159.1 — In development
+
+- **Tabular data's import dialog no longer stalls on a wide table in Safari.** The crosstab under After is drawn when it
+  is opened, not on every change: on the Salmonella study's 82 columns it held WebKit for seconds (0.159.0's checks on
+  GitHub, WebKit only).
+
 ## 0.159.0 — 2026-11-21
 
 - **Detect unusual counts**, a new step: each period of a table of counts held to a threshold set from the series'

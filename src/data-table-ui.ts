@@ -314,8 +314,12 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         +`<td>${r.value===null?'<span class="muted">unknown</span>':esc(String(r.value))}</td></tr>`).join('')+'</tbody></table></div>'
       +(table.rowCount>shown.length?`<p class="muted">${shown.length} of ${table.rowCount.toLocaleString('en')} rows shown.</p>`:'')
       +'<details class="after-crosstab"><summary>The same table as a crosstab</summary><div data-after-crosstab></div></details>';
-    const host=afterPane.querySelector<HTMLElement>('[data-after-crosstab]')!;
-    host.innerHTML=dataTableMarkup(table,esc,{pageSize:PREVIEW_ROWS});wireTablePages(host,table,esc,{pageSize:PREVIEW_ROWS});
+    // THE CROSSTAB IS DRAWN WHEN OPENED (2026-11-21): a page of up to 1,000 rows, drawn on every redraw while closed,
+    // held WebKit for seconds on the Salmonella study's 82 columns, and a test's choice never landed.
+    const host=afterPane.querySelector<HTMLElement>('[data-after-crosstab]')!,section=afterPane.querySelector<HTMLDetailsElement>('.after-crosstab')!;
+    const draw=()=>{if(host.childElementCount)return;host.innerHTML=dataTableMarkup(table,esc,{pageSize:PREVIEW_ROWS});
+      wireTablePages(host,table,esc,{pageSize:PREVIEW_ROWS});scrollLongTables(host);};
+    section.addEventListener('toggle',()=>{if(section.open)draw();});
     scrollLongTables(afterPane);
   };
   const error=q<HTMLElement>('#table-error'),save=q<HTMLButtonElement>('#table-save'),cancel=q<HTMLButtonElement>('#table-cancel');

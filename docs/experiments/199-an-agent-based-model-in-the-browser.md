@@ -13,7 +13,9 @@ peak is twice as sharp as the model's; not fitted. **The periods measured from t
 then agrees, the peak is still half the record's. **The three probabilities fitted, also 2026-11-21:** a better fit, the peak still not reached; the
 record's peak is class 1's burst, which one probability for both classes cannot make. **A probability for each class,
 also 2026-11-21:** it does not make the peak either, even at 0.6 a day in class 1. **Infectiousness across the illness, also
-2026-11-21:** the best fit yet, nearly all transmission in the prodrome's last days; the peak still not made.
+2026-11-21:** the best fit yet, nearly all transmission in the prodrome's last days; the peak still not made. **The record's dates,
+also 2026-11-21:** its rashes are bunched far beyond what independent prodrome lengths allow, which every model
+so far assumes.
 
 ## The question
 
@@ -346,6 +348,41 @@ That is what Pfeilsticker reports: the prodrome transmits, the rash-to-rash inte
 **What this does not establish:** the split of the prodrome, which is assumed (nothing in the record marks it); that the
 weights are measles's rather than this record's; why the peak is sharp. Of the three left on 2026-11-21, a single shared
 exposure and the record's dates heaped remain.
+
+## The record's dates, 2026-11-21
+
+The practitioner, 2026-11-21: *"Yes"*, to checking the record's dates before anything more is built.
+
+**No heaping by weekday.** Prodromes and rashes fall on each day of the week as chance would have them (chi-square 4.3
+and 4.0, 6 degrees of freedom; 12.6 at 5%). One date stands out: 20 prodromes on Sunday 1 December 1861, against 12 to
+13 on the days beside it.
+
+**The rashes are more bunched than the prodromes**: 68 in the busiest three days (5 to 7 December) against 48 prodromes
+(1 to 3 December); 26 on the busiest day against 20. A rash follows its prodrome by a varying number of days, so if that
+number were independent of the prodrome's date the rash curve would be the smoother. Each child's prodrome date kept and
+the 188 prodrome lengths shuffled among them, 10,000 times: the busiest three days hold a median of 43 rashes, 58 at
+most, never 68; 26 or more on one day in 0.15% of shuffles.
+
+The record's prodromes are shorter the later they begin: 4.7 days on average for those beginning 26 to 30 November,
+4.4 for 1 to 2 December, 3.1 for 3 to 4 December and for those after (correlation of date and length −0.15). So the
+rashes converge on 5 to 7 December.
+
+**Two readings, which the record alone cannot tell apart:**
+
+1. **How the dates were made**: rash dates set in batches, or prodrome dates recalled backwards from the rash and spread
+   by recall. Aaby, Thoma and Dietz (2022, J Infect 84:668–674, closed) distinguish children Pfeilsticker saw from
+   those recalled; their tables are not open.
+2. **The rule of 1863**: Pfeilsticker, with Panum, holds that the time from infection to the rash is a constant 14 days
+   (quoted in `measles-hagelloch-prodrome-rash`), the prodrome being however much of it came first. Children infected
+   together then come out in the rash together, whatever their prodromes.
+
+**Why no model so far made the peak:** each draws the prodrome after the latent period and independently of it, so the
+rash is the more spread date. The record has it the other way.
+
+**What this does not establish:** which reading is right; that measles works by the rule of 1863. What would test reading
+2 in the model: the time from infection to the rash nearly fixed, the prodrome drawn within it, declared by branches
+(an infection leads to one of five prodrome lengths, 2 to 6 days in the record's proportions, each with the latent period
+that keeps the total), which the kernel runs as it is.
 
 ## Left for later, step by step, if the spike says yes
 

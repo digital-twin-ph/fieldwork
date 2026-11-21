@@ -6370,7 +6370,7 @@ function openTableStep(nodeId:string):void{
       // ITS DATA DICTIONARY, kept the same way and listed by the project (experiment 211).
       if(result.dictionary&&!await keepDataset(dictionaryKeyOf(result.dictionary.sha256),result.dictionary))
         throw new Error('The data dictionary could not be kept on this device, so the table was not added.');
-      const kept=change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;node.params.unit=result.unit;node.params.source=result.source;
+      const kept=change(w=>{const node=getNode(w,n.id,'table_input');node.params.data=result.data;node.params.keys=result.keys;node.params.valueField=result.valueField;if(result.valueColumn)node.params.valueColumn=result.valueColumn;else delete node.params.valueColumn;node.params.unit=result.unit;node.params.source=result.source;
         // The shape the FILE was in, so the editor reopens in it and the receipt can cite the
         // columns taken. Deleted rather than set undefined when a table is re-read as long: a
         // stored `wide` block that no longer describes the table is a claim, and core.ts refuses
@@ -6391,7 +6391,7 @@ function openTableStep(nodeId:string):void{
         if(result.dictionaryCheck)node.params.dictionaryCheck=result.dictionaryCheck;},{requirePersistence:true});
       if(kept!==false&&result.dictionary)listDictionary(n.id,result.dictionary,result.source.filename);
       return kept;
-    },current.keys.length?{keys:current.keys,valueField:current.valueField,unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
+    },current.keys.length?{keys:current.keys,valueField:current.valueField,...(current.valueColumn?{valueColumn:current.valueColumn}:{}),unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
       ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{}),
         ...(current.remote?{remote:current.remote}:{})}:undefined,
     // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.

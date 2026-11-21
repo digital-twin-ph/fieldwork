@@ -120,3 +120,39 @@ test('a reopened step given another census table starts from that table\'s defau
   await expect(page.locator('#table-keys input[value="total"]')).not.toBeChecked();
   expect(errors).toEqual([]);
 });
+
+/** A LONG READ'S VALUE NAMED (2026-11-20): DR Congo's provinces read long, "total" named "population" as three models
+ *  name theirs, saved with the column it is read from, and named so again when the step reopens. */
+test('a census read long names its value, and the step reopens with the name',async({page})=>{test.skip(!!skip,skip);
+  const errors=collectPageErrors(page);
+  await answer(page);
+  await open(page);
+  await page.locator('#table-tab-census').click();
+  await page.locator('[data-census="COD"]').click();
+  await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
+  await page.locator('#table-shape').selectOption('long');
+  await page.locator('#table-value').selectOption('total');
+  for(const key of await page.locator('#table-keys input[type=checkbox]').all())await key.uncheck();
+  await page.locator('#table-keys input[value="geoboundaries_name"]').check();
+  await page.locator('#table-long-value-name').fill('population');await page.locator('#table-long-value-name').press('Tab');
+  await expect(page.locator('#table-after')).toContainText('population');
+  await page.locator('#table-save').click();
+  await expect(page.locator('#table-save')).toBeHidden();
+  await expect.poll(async()=>(await storedTable(page)).valueField).toBe('population');
+  expect((await storedTable(page)).valueColumn).toBe('total');
+  await page.locator('#configure-step').click();
+  await expect(page.locator('#table-long-value-name')).toHaveValue('population');
+  await expect(page.locator('#table-value')).toHaveValue('total');
+  expect(errors).toEqual([]);
+});
+
+/** THE COLUMN A WIDE READ MAKES (2026-11-20): "measure" is offered in the distinct-values list as what it is, the names of
+ *  the value columns taken, not as if it were one of the file's columns. */
+test('a wide read’s own measure column is said as made by the read',async({page})=>{test.skip(!!skip,skip);
+  await answer(page);
+  await open(page);
+  await page.locator('#table-tab-census').click();
+  await page.locator('[data-census="COD"]').click();
+  await expect(page.locator('#table-keys')).toBeVisible({timeout:60000});
+  await expect(page.locator('#table-distinct label').filter({hasText:/^\s*measure/})).toContainText('made by this read');
+});

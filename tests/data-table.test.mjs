@@ -114,3 +114,13 @@ test('a key value with spaces around it is read without them, and that is said, 
   const issues=tableIssues(t.findings,[],t.rows,()=>({total:0,missing:0,empty:0,mismatched:0}));
   assert.deepEqual(issues.filter(i=>i.kind==='ValueTrimmed').map(i=>[i.column,i.count,i.of]),[['exposure',2,4]]);
 });
+
+/** A LONG READ'S VALUE NAMED (2026-11-20): the column read is "total"; the table calls it "population". */
+import {dataTable as readLong} from '../build/data-table.js';
+test('a long read names its value as asked, and refuses a key\'s name',()=>{
+  const file={headers:['district','total'],rows:[['A','10'],['B','20']]};
+  const t=readLong(file,{keys:['district'],valueField:'total',valueAs:'population'});
+  assert.equal(t.valueField,'population');assert.deepEqual(t.rows.map(r=>r.value),[10,20]);
+  assert.equal(readLong(file,{keys:['district'],valueField:'total'}).valueField,'total');
+  assert.throws(()=>readLong(file,{keys:['district'],valueField:'total',valueAs:'district'}),/is a key column/);
+});

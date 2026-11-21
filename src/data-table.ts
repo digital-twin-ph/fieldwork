@@ -73,6 +73,9 @@ export interface DataTable {
   rowCount:number; missingValueCount:number; source?:DataTableSource;
 }
 export interface TableSelection {keys:string[]; valueField:string; unit?:string;
+  /** A LONG READ'S VALUE NAMED (2026-11-20): the column read is `valueField`; the table calls it this. DR Congo's census read
+   *  long gave "total" beside three models' "population", and only a wide read could name it. */
+  valueAs?:string;
   primaryKey?:string[]; secondaryKeys?:string[]}
 
 /** Rows sharing the columns that should identify one, gathered into one finding per value. */
@@ -127,6 +130,8 @@ export function dataTable(table:TableRows,selection:TableSelection):DataTable {
   if(new Set(keys).size!==keys.length)throw new Error('Key columns must be distinct.');
   if(!valueField)throw new Error('Choose the column holding the value.');
   if(keys.includes(valueField))throw new Error('The value column cannot also be a key column.');
+  const named=trimmed(selection.valueAs??"")||valueField;
+  if(keys.includes(named))throw new Error(`${JSON.stringify(named)} is a key column, so the value cannot be named it.`);
   for(const name of [...keys,valueField]){
     if(!headers.includes(name))throw new Error(`The file has no column named ${JSON.stringify(name)}.`);
   }
@@ -153,7 +158,7 @@ export function dataTable(table:TableRows,selection:TableSelection):DataTable {
   findings.push(...trimFindings(table.rows,keys,index));
   const declared=declaredKeys(selection,keys);
   findings.push(...repeatedKeys(rows.map(row=>row.key),declared.primaryKey??keys));
-  return {kind:'data-table',keys,valueField,...declared,...summed(findings),...(selection.unit?{unit:trimmed(selection.unit)}:{}),
+  return {kind:'data-table',keys,valueField:named,...declared,...summed(findings),...(selection.unit?{unit:trimmed(selection.unit)}:{}),
     rows,rowCount:rows.length,missingValueCount};
 }
 

@@ -193,6 +193,11 @@ The dialog's sources gain **Tide gauges**: the coastal countries in coastal-sea-
 country's index of its gauges read with the shared data dictionary at a pinned commit, checked by digest. A column
 named *id*, or ending in *_id*, *_code* or *_no*, is offered as a key in a wide read, though written in digits.
 
+A long read can name its value, as a wide read could: DR Congo's census read long gave *total* beside three models'
+*population*. A long read reopens with its value column and keys as saved, where the guess had replaced them. **After**
+shows the rows as stored, one per key with its value, then the same table as a crosstab. The column a wide read makes
+for the variables' names is said as made by the read wherever it is offered.
+
 ### 2026-11-20 · Census tables in today's units; a step's choices for its own table (0.13.0)
 
 DR Congo is offered as its 1984 counts summed to today's 26 provinces, with each province's name as geoBoundaries

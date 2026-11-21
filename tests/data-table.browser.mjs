@@ -54,7 +54,7 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await expect(page.locator('#table-before')).toContainText('psgc_code');
   await expect(page.locator('#table-before')).toContainText('value_m');
   // After: the table that will be imported.
-  await expect(page.locator('#table-after table')).toBeVisible();
+  await expect(page.locator('#table-after table.after-long')).toBeVisible();
   // And the reconciliation, in numbers a reader can check against the two panes.
   await expect(page.locator('#table-reconcile')).toContainText('6 rows');
   await expect(page.locator('#table-reconcile')).toContainText('already long');

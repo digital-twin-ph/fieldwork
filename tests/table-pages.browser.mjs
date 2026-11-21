@@ -18,8 +18,10 @@ test('the import dialog and Select rows turn their pages',async({page})=>{
   await page.locator('#table-file').setInputFiles({name:'days.csv',mimeType:'text/csv',buffer:Buffer.from(CSV)});
   await page.locator('#table-shape').selectOption('long');
   await page.locator('#table-value').selectOption('visits');
-  // AFTER, 60 rows at 40 a page.
-  const after=page.locator('#table-after');
+  // AFTER: the rows as stored first (2026-11-20), then the same table as a crosstab, 60 rows at 40 a page.
+  await expect(page.locator('#table-after')).toContainText('As stored: 60 rows');
+  await page.locator('#table-after .after-crosstab summary').click();
+  const after=page.locator('#table-after [data-after-crosstab]');
   await expect(after).toContainText('Page 1 of 2');
   await expect(after).not.toContainText('2023-06-15');
   await after.getByRole('button',{name:'Next rows'}).click();

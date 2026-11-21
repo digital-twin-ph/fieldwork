@@ -17,6 +17,8 @@ import {guessMapping,readDictionary,proposeFrom,checkDictionary,sameNames,fileRo
 const FILE_BYTES=MAX_TABLE_FILE_BYTES;
 export interface WideChoice {keys:string[]; valueFields:string[]; measureKey:string}
 export interface TableImport {data:DataTable; source:DataTableSource; keys:string[]; valueField:string;
+  /** In a long read whose value is named otherwise, the file's column it is read from. */
+  valueColumn?:string;
   /** Present when the file was fetched from a URL: the spec the project keeps in place of the rows. */
   remote?:RemoteTableSource;
   unit?:string; wide?:WideChoice;
@@ -34,7 +36,7 @@ export interface TableImport {data:DataTable; source:DataTableSource; keys:strin
  *  than in the file -- whether the source is converted on each run -- which can be applied without reading a file again. */
 export interface TableFrame {step?:string; convertOnRun?:boolean; hasSource?:boolean; onConvertOnRun?:(on:boolean)=>boolean}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
-export interface TableReopen extends TableSelection {wide?:WideChoice; distinctValuesFor?:string[];
+export interface TableReopen extends TableSelection {wide?:WideChoice; distinctValuesFor?:string[]; valueColumn?:string;
   /** Where the table is published, shown in the URL box and the box opened, so a reopened step says where it reads from. */
   remote?:RemoteTableSource}
 
@@ -157,6 +159,7 @@ interface CensusCountry {iso3:string;country:string;census:string;referenceDate:
 const CENSUS=censusCatalogue as {repository:string;commit:string;raw:string;countries:CensusCountry[]};
 const CENSUS_RAW='https://raw.githubusercontent.com/digital-twin-ph/census-tables/';
 const TAB_KEY='fieldwork:table-source-tab';
+const AFTER_ROWS=12;
 /** One line per country: what census, how many rows, whose, under what terms, and when it is next reviewed. A table past
  *  its review date is still offered, and says so: an old count stays a count. */
 function censusChoices():string{
@@ -225,7 +228,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'needs a column\u2019s values as a list, such as the sites Assign projection site assigns against.</p>'
     +'<div id="table-distinct-boxes"></div></fieldset>'
     +'<fieldset id="table-values" hidden><legend>Value columns</legend><p class="muted">The variables to take. Named rather than inferred, so a column the file gains later is absent from this analysis by decision rather than by accident.</p></fieldset>'
-    +'<div id="table-long-value"><label class="field-label" for="table-value">Value column</label><select id="table-value" disabled></select></div>'
+    +'<div id="table-long-value"><label class="field-label" for="table-value">Value column</label><select id="table-value" disabled></select>'
+    +'<label class="field-label" for="table-long-value-name">Name for the value column</label><input id="table-long-value-name" maxlength="40" placeholder="its column\u2019s own name"></div>'
     +'<div id="table-wide-names" hidden><label class="field-label" for="table-measure-key">Name for the column holding the variable names</label><input id="table-measure-key" maxlength="40" value="measure">'
     +'<label class="field-label" for="table-value-name">Name for the column holding variable values</label><input id="table-value-name" maxlength="40" value="value">'
     +'<p class="muted">Both are your words, because every downstream step names them: a Rate takes its measure key, and a derived value names two of its values.</p></div>'
@@ -275,13 +279,30 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   const sheetRow=q<HTMLElement>('#table-sheet-row'),sheetSelect=q<HTMLSelectElement>('#table-sheet'),workbookSays=q<HTMLElement>('#table-workbook');
   const check=q<HTMLElement>('#table-check'),beforePane=q<HTMLElement>('#table-before');
   const afterPane=q<HTMLElement>('#table-after'),reconcile=q<HTMLElement>('#table-reconcile');
+  // AFTER: THE ROWS AS STORED, then the same table as a crosstab, labelled (2026-11-20). The crosstab alone showed a long
+  // table as a grid it is not, so what the step holds, one row per key and value, was never seen before Apply.
+  const showAfter=(table:DataTable)=>{
+    const shown=table.rows.slice(0,AFTER_ROWS),cols=[...table.keys,table.valueField];
+    afterPane.innerHTML=`<p class="table-meta"><strong>As stored:</strong> ${table.rowCount.toLocaleString('en')} rows, one per `
+      +`${table.keys.map(k=>esc(k)).join(' and ')}, each with its ${esc(table.valueField)}.</p>`
+      +'<div class="table-scroll"><table class="after-long"><thead><tr>'+cols.map(c=>`<th scope="col">${esc(c)}</th>`).join('')+'</tr></thead><tbody>'
+      +shown.map(r=>'<tr>'+table.keys.map(k=>`<td>${esc(r.key[k]??'')}</td>`).join('')
+        +`<td>${r.value===null?'<span class="muted">unknown</span>':esc(String(r.value))}</td></tr>`).join('')+'</tbody></table></div>'
+      +(table.rowCount>shown.length?`<p class="muted">${shown.length} of ${table.rowCount.toLocaleString('en')} rows shown.</p>`:'')
+      +'<details class="after-crosstab"><summary>The same table as a crosstab</summary><div data-after-crosstab></div></details>';
+    const host=afterPane.querySelector<HTMLElement>('[data-after-crosstab]')!;
+    host.innerHTML=dataTableMarkup(table,esc);wireTablePages(host,table,esc);
+  };
   const error=q<HTMLElement>('#table-error'),save=q<HTMLButtonElement>('#table-save'),cancel=q<HTMLButtonElement>('#table-cancel');
   if(existing?.unit)unitInput.value=existing.unit;
   const distinctBox=q<HTMLFieldSetElement>('#table-distinct'),distinctBoxes=q<HTMLElement>('#table-distinct-boxes');
   let distinctChosen=new Set(existing?.distinctValuesFor??[]);
   const renderDistinct=(keys:string[])=>{
     distinctBox.hidden=!keys.length;
-    distinctBoxes.innerHTML=keys.map(k=>`<label class="check"><input type="checkbox" value="${esc(k)}"${distinctChosen.has(k)?' checked':''}> ${esc(k)}</label>`).join('');
+    // THE COLUMN A WIDE READ MAKES, SAID AS SUCH (2026-11-20): "measure" stood among the file's columns as if it were one.
+    const made=shape()==='wide'?(measureKeyInput.value.trim()||'measure'):undefined;
+    distinctBoxes.innerHTML=keys.map(k=>`<label class="check"><input type="checkbox" value="${esc(k)}"${distinctChosen.has(k)?' checked':''}> ${esc(k)}`
+      +(k===made?' <span class="muted">(made by this read: the names of the value columns taken)</span>':'')+'</label>').join('');
   };
   distinctBoxes.onchange=()=>{
     distinctChosen=new Set([...distinctBoxes.querySelectorAll<HTMLInputElement>('input:checked')].map(b=>b.value));
@@ -467,7 +488,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
           keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey},
           source_table:{headers:parsed.headers.map(h=>h.trim()),rows:parsed.rows}};
         const untaken=renderBefore(keys,valueFields);
-        afterPane.innerHTML=dataTableMarkup(table,esc);wireTablePages(afterPane,table,esc);
+        showAfter(table);
         renderReconcile([
           `<strong>${parsed.rows.length.toLocaleString()} subjects \u00d7 ${valueFields.length} `
             +`variable${valueFields.length===1?'':'s'} = `
@@ -490,11 +511,12 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       }else{
         const valueField=valueSelect.value;
         if(!valueField){status.textContent='Choose the value column: the one holding the numbers.';save.disabled=true;return;}
-        table=dataTable(parsed,{keys,valueField,...roles,...(unit?{unit}:{})});
+        const valueAs=q<HTMLInputElement>('#table-long-value-name').value.trim();
+        table=dataTable(parsed,{keys,valueField,...(valueAs&&valueAs!==valueField?{valueAs}:{}),...roles,...(unit?{unit}:{})});
         imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
-          keys,valueField,...(unit?{unit}:{})};
+          keys,valueField:table.valueField,...(table.valueField!==valueField?{valueColumn:valueField}:{}),...(unit?{unit}:{})};
         const untaken=renderBefore(keys,[valueField]);
-        afterPane.innerHTML=dataTableMarkup(table,esc);wireTablePages(afterPane,table,esc);
+        showAfter(table);
         const domains=keyDomains(table);
         renderReconcile([
           `<strong>${table.rowCount.toLocaleString()} rows</strong> read as they stand: this file `
@@ -578,6 +600,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       // Nothing guessed, nothing ticked: the keys follow from the value column the person chooses.
       keyNames=headers.length>MANY_COLUMNS||valueAt<0?[]:headers.filter((_,i)=>i!==valueAt);
       valueSelect.value=valueAt<0?'':headers[valueAt]!;
+      // A STEP'S OWN LONG READ, REOPENED, keeps its value column and keys (2026-11-20): the guess above replaced them, so a
+      // census read long reopened with no value chosen.
+      if(own&&!own.wide){const column=own.valueColumn??own.valueField;
+        if(headers.includes(column)){valueSelect.value=column;keyNames=own.keys.filter(k=>headers.includes(k));}}
     }
     const held=own?.wide;
     for(const box of keysBox.querySelectorAll<HTMLInputElement>('input[type=checkbox]'))
@@ -751,7 +777,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       keysBox.hidden=false;
       valueSelect.innerHTML='<option value="">Choose the value column</option>'+parsed.headers.map((header,i)=>{
         const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
-        const chosen=own?header.trim()===own.valueField:i===guessValue;
+        const chosen=own?header.trim()===(own.valueColumn??own.valueField):i===guessValue;
         return `<option value="${escaped}" ${chosen?'selected':''}>${escaped}</option>`;}).join('');
       valueSelect.disabled=false;
       // THE VALUE COLUMNS, for the wide reader. Preselected as everything that is not a chosen
@@ -774,6 +800,9 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     }catch(e){if(request===serial){status.textContent='The file could not be read.';fail(e);}}
   };
   rolesBox.onchange=build;
+  q<HTMLInputElement>('#table-long-value-name').onchange=build;
+  // A long read's value named otherwise is named so again when the step reopens.
+  if(existing&&!existing.wide&&existing.valueColumn)q<HTMLInputElement>('#table-long-value-name').value=existing.valueField;
   valueSelect.onchange=build;unitInput.onchange=()=>{unitTyped=!!unitInput.value.trim();unitFrom.hidden=true;build();};
   measureKeyInput.onchange=build;valueNameInput.onchange=build;
   cancel.onclick=()=>dialog.close();dialog.oncancel=e=>{if(busy)e.preventDefault();};

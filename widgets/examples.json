@@ -994,6 +994,65 @@
         }
       ],
       "workflowCount": 2
+    },
+    {
+      "id": "urn:fieldwork:example:syndromic-surveillance-2026",
+      "title": "Syndromic surveillance, 2026: a made-up district's emergency departments",
+      "repository": "https://github.com/digital-twin-ph/example-2026-syndromic-surveillance",
+      "commit": "7e167af05666ea91eff29e1093b7d10eea3478f8",
+      "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-syndromic-surveillance",
+      "licence": {
+        "data": "CC-BY-4.0",
+        "source": "Made up for this example by scripts/make_visits.py",
+        "note": "No record describes a person; the district, its facilities and the outbreak are invented."
+      },
+      "description": "24,328 made-up emergency department visits over 25 weeks, with a seeded gastrointestinal outbreak among school-age children at one facility: chief complaints sorted into syndromes by declared words, counted by day and syndrome, and each day held to a threshold from its own past by CUSUM.",
+      "carries": {
+        "workflow": true,
+        "data": true,
+        "geography": false
+      },
+      "notYet": "No map: the visits carry no place. The EARS methods and EWMA are compared in the README, not in a workflow of their own.",
+      "uses": [
+        "apply_ruleset",
+        "case_series",
+        "detect_unusual_counts",
+        "table_input",
+        "table_output"
+      ],
+      "files": [
+        {
+          "path": "fieldwork-project.json.gz",
+          "sha256": "eda512b1a658647596a13f4c274b7b37b92b3d781ff319dc824e75ff25596c6e",
+          "bytes": 510527
+        },
+        {
+          "path": "data/visits.csv",
+          "sha256": "389b665aaa05283551fa835027ec2b73cf2842957d37733bad1801132e1a3b14",
+          "bytes": 1425855
+        },
+        {
+          "path": "data/truth.csv",
+          "sha256": "fd5a8196e6c62e8b9dc279a69bfe2d507eb86b96c5988c3674605b0a256f54a4",
+          "bytes": 476438
+        },
+        {
+          "path": "data/visits-columns.csv",
+          "sha256": "da80b04e9be415c29193d0d3a537808da165997bbf40f54eb30ec25e49533448",
+          "bytes": 481
+        },
+        {
+          "path": "data/syndromes.ruleset.json",
+          "sha256": "279b7a00f970fae47053385aa2d5be48550043498da02ff9f6b037b3556eba83",
+          "bytes": 3211
+        },
+        {
+          "path": "data/syndromes-first-attempt.ruleset.json",
+          "sha256": "68128b4f94c30f8997c689e63e6918f1c0b6ac66eb89ecf7adad5704d42183a9",
+          "bytes": 2264
+        }
+      ],
+      "workflowCount": 2
     }
   ]
 }

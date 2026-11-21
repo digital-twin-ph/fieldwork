@@ -25,6 +25,7 @@
   "sea-level-rise-philippines",
   "sierra-leone-measles",
   "south-london-1854",
+  "syndromic-surveillance-2026",
   "workflows-rulesets"
  ],
  "ladder": [
@@ -38,8 +39,8 @@
  "weakest": "exampleUseCount 0 and a lab check still owed. That is the bottom of the ladder and the population the pending exemption is about.",
  "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows, the node types declared for each pinned worked example in widgets/examples.json, and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. A pinned example in its own repository counts as one example use like any other, and is read from the catalogue declaration rather than from a clone, so this file does not depend on what any machine happens to have checked out. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
  "counts": {
-  "declared only": 3,
-  "example only": 8,
+  "declared only": 2,
+  "example only": 9,
   "parity only": 10,
   "example, lab not applicable": 9,
   "example+parity": 21,
@@ -84,9 +85,10 @@
     "sea-level-rise-philippines",
     "sierra-leone-measles",
     "south-london-1854",
+    "syndromic-surveillance-2026",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 9,
+   "exampleUseCount": 10,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -110,9 +112,10 @@
     "mers-korea-2015",
     "oswego-1940",
     "sierra-leone-measles",
-    "snow-curve"
+    "snow-curve",
+    "syndromic-surveillance-2026"
    ],
-   "exampleUseCount": 7,
+   "exampleUseCount": 8,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -194,12 +197,14 @@
   },
   {
    "nodeType": "detect_unusual_counts",
-   "exampleUses": [],
-   "exampleUseCount": 0,
+   "exampleUses": [
+    "syndromic-surveillance-2026"
+   ],
+   "exampleUseCount": 1,
    "lab": "awaiting",
    "labOwed": true,
    "fieldUse": [],
-   "rung": "declared only"
+   "rung": "example only"
   },
   {
    "nodeType": "donut_geomask",
@@ -662,9 +667,10 @@
     "sierra-leone-measles",
     "snow-curve",
     "south-london-1854",
+    "syndromic-surveillance-2026",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 12,
+   "exampleUseCount": 13,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],
@@ -690,9 +696,10 @@
     "snow-isochrone",
     "snow-voronoi",
     "south-london-1854",
+    "syndromic-surveillance-2026",
     "workflows-rulesets"
    ],
-   "exampleUseCount": 18,
+   "exampleUseCount": 19,
    "lab": "none",
    "labOwed": false,
    "fieldUse": [],

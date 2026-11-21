@@ -73,8 +73,9 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 0.154.0 and 0.155.0 (2026-11-20), not yet ordered
 
-- **0.159.0, in development:** Polygon layer from connected study areas' parts, across a border; Point data's optional
-  study area. Next in it: Detect unusual counts (CUSUM, EWMA) and a syndromic surveillance worked example.
+- **0.160.0, in development:** Apply ruleset reads words in text, and its rules as JSON, checked as typed; the
+  syndromic surveillance worked example (pinned). Owed: Detect unusual counts' lab notebook against R, over several
+  series including a seasonal one; the name review of "Detect unusual counts".
 
 - **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);
   the practitioner, 2026-11-21). The spike reads a point by two byte ranges, checked against Planetary Computer at five

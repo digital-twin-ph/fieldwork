@@ -5,6 +5,11 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.160.0 — In development
 
+- **A worked example: syndromic surveillance.** 24,328 made-up emergency department visits with a seeded
+  gastrointestinal outbreak: chief complaints sorted into syndromes by words, counted by day and syndrome, and each day
+  held to a threshold from its own past by CUSUM, which signals from the outbreak's second day. Two sets of syndrome
+  definitions to upload and compare, and the truth kept apart to check them against
+  ([example-2026-syndromic-surveillance](https://github.com/digital-twin-ph/example-2026-syndromic-surveillance)).
 - **Apply ruleset reads words in text**: *contains any of* and *contains none of*, the words separated by commas,
   ignoring capitals, so a chief complaint can be sorted into a syndrome ("N/V/D", "Vomitting x2").
 - **The rules as JSON**, beside the Rules view: checked as you type, each problem said in words and placed on its

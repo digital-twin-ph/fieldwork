@@ -14,12 +14,12 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-51 live widgets across 11 shipped examples and 11 pinned in its own repository.
+51 live widgets across 11 shipped examples and 12 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
-| Used by no workflow | **13** |
-| Used by exactly one | 12 |
+| Used by no workflow | **12** |
+| Used by exactly one | 13 |
 | Used by two or more | **26** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
@@ -33,7 +33,6 @@ fixed — see experiment 64.
 - `clip_points_to_area`
 - `clip_raster`
 - `deduplicate_points`
-- `detect_unusual_counts`
 - `fill_interior_gaps`
 - `measure_area`
 - `point_grid`
@@ -61,6 +60,7 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `isochrone` | snow-isochrone |
 | `network_input` | snow-isochrone |
 | `voronoi` | snow-voronoi |
+| `detect_unusual_counts` | syndromic-surveillance-2026 |
 
 ### Used across examples — emerging as genuinely useful
 
@@ -71,16 +71,16 @@ evidence about that example.
 | Widget | Examples | Which |
 | --- | ---: | --- |
 | `map_output` | 20 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-sheet, mers-korea-2015, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-deaths, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
-| `table_output` | 18 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-deaths, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
+| `table_output` | 19 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-deaths, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, syndromic-surveillance-2026, workflows-rulesets |
 | `study_area` | 17 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-sheet, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, sea-level-rise-philippines, sierra-leone-measles, snow-deaths, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `point_input` | 16 | hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-people, hagelloch-sheet, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, sea-level-rise-philippines, snow-deaths, snow-extent, snow-geoprivacy, snow-isochrone, snow-voronoi, south-london-1854, workflows-rulesets |
 | `chart_output` | 14 | brazil-dengue-rj-2024, hagelloch, hagelloch-chains, hagelloch-cluster, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, sierra-leone-measles, snow-curve, snow-isochrone, snow-voronoi, south-london-1854 |
-| `table_input` | 12 | brazil-dengue-rj-2024, mers-korea-2015, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-curve, south-london-1854, workflows-rulesets |
+| `table_input` | 13 | brazil-dengue-rj-2024, mers-korea-2015, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, snow-curve, south-london-1854, syndromic-surveillance-2026, workflows-rulesets |
 | `group_table` | 11 | brazil-dengue-rj-2024, hagelloch-chains, hagelloch-people, mers-korea-2015, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sierra-leone-measles, south-london-1854, workflows-rulesets |
-| `apply_ruleset` | 9 | hagelloch-chains, mers-korea-2015, nigeria-immunization-2024, oswego-1940, population-models-census, sea-level-rise-philippines, sierra-leone-measles, south-london-1854, workflows-rulesets |
+| `apply_ruleset` | 10 | hagelloch-chains, mers-korea-2015, nigeria-immunization-2024, oswego-1940, population-models-census, sea-level-rise-philippines, sierra-leone-measles, south-london-1854, syndromic-surveillance-2026, workflows-rulesets |
 | `relate_table` | 9 | brazil-dengue-rj-2024, hagelloch-chains, mers-korea-2015, nyc-asthma-ozone-2016-2025, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
 | `select_rows` | 9 | brazil-dengue-rj-2024, nigeria-immunization-2024, nyc-asthma-ozone-2016-2025, oswego-1940, population-models-census, salmonella-germany-2021, sea-level-rise-philippines, sierra-leone-measles, south-london-1854 |
-| `case_series` | 7 | brazil-dengue-rj-2024, hagelloch, hagelloch-people, mers-korea-2015, oswego-1940, sierra-leone-measles, snow-curve |
+| `case_series` | 8 | brazil-dengue-rj-2024, hagelloch, hagelloch-people, mers-korea-2015, oswego-1940, sierra-leone-measles, snow-curve, syndromic-surveillance-2026 |
 | `join_table_to_area` | 6 | brazil-dengue-rj-2024, nigeria-immunization-2024, population-models-census, salmonella-germany-2021, sierra-leone-measles, south-london-1854 |
 | `sample_raster` | 4 | brazil-dengue-rj-2024, nyc-asthma-ozone-2016-2025, population-models-census, sea-level-rise-philippines |
 | `two_by_two` | 4 | mers-korea-2015, oswego-1940, salmonella-germany-2021, south-london-1854 |
@@ -109,6 +109,7 @@ rows above `case_series` are the ones that have genuinely done both.
 | --- | --- |
 | snow-geoprivacy | **4** — `aggregate_points_to_h3_cell`, `compare_point_sets`, `donut_geomask`, `mean_center` |
 | snow-isochrone | **2** — `isochrone`, `network_input` |
+| syndromic-surveillance-2026 | **1** — `detect_unusual_counts` |
 | sea-level-rise-philippines | **1** — `measure_distance` |
 | snow-deaths | **1** — `reproject` |
 | hagelloch-cluster | **1** — `space_time_scan` |
@@ -270,6 +271,7 @@ be read, selected and named inside the application, and claim B would hold for t
 - `urn:fieldwork:example:sea-level-rise-philippines` declares 12 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:mers-korea-2015` declares 12 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 - `urn:fieldwork:example:population-models-census` declares 13 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
+- `urn:fieldwork:example:syndromic-surveillance-2026` declares 5 node types. Its inputs are files in its own repository, and `geo/water-intakes.geojson` was written on 2026-10-29 because those four features existed only inside the bundle until then — the one input a reader could not download.
 
 ## 3 · Recommendations
 
@@ -279,7 +281,7 @@ doing: that is a decision with a cost, and this file measures.
 
 **R1. Give the 4 data-carrying nodes a declared source.** 4 shipped examples hold 4 nodes that carry data and name no origin: `snow-curve` (1), `snow-isochrone` (1), `hagelloch-cluster` (1), `hagelloch-sheet` (1). Closing it means either a `sourceInfo`/`provenance` block naming where the data came from, or a published file beside the example the way `geo/water-intakes.geojson` was written on 2026-10-29. Until then each is a payload a rebuild must copy rather than fetch.
 
-**R2. Ask D11 of the 9 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `clip_raster`, `deduplicate_points`, `detect_unusual_counts`, `fill_interior_gaps`, `measure_area`, `point_grid`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
+**R2. Ask D11 of the 8 widgets no workflow reaches.** `buffer_point`, `clip_points_to_area`, `clip_raster`, `deduplicate_points`, `fill_interior_gaps`, `measure_area`, `point_grid`, `summarize_combined_area`. Not a retirement list: D11 asks whether a residual function remains that nothing else performs, and a widget may be unreached because no example poses its problem. The answer is per widget and this audit does not have it.
 
 **R3. Settle what a monolith and its decomposition owe each other.** Use propagates from a composition to its members and not from an equivalent monolith, so 4 widgets read as unreached while a workflow performs their work. It is a question about the admission criteria rather than about those widgets, and the count is deliberately left as it is until it is answered.
 

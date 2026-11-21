@@ -10,7 +10,8 @@
  *
  *  node scripts/sentence-numbers.mjs [--json] [--strict] [--working] [--twice]
  *  --strict: exit 1 on any finding. --working: each example repository's working copy, not its pinned commit.
- *  --twice: run each workflow again and compare every output and table by digest (precision). */
+ *  --twice: run each workflow again and compare every output and table by digest (precision).
+ *  A workflow that searches a satellite catalog is run only with FIELDWORK_LIVE=1, as the weekly live check sets it. */
 import {readFileSync,existsSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {gunzipSync} from 'node:zlib';
@@ -73,13 +74,18 @@ function* workflows(){
   }
 }
 
-const findings=[],notRun=[],unequal=[];let steps=0,numbers=0;
+const findings=[],notRun=[],unequal=[],satellite=[];let steps=0,numbers=0;
 const digestOf=(value,runId)=>createHash('sha256').update(JSON.stringify(value??null)
   .replaceAll(runId,'RUN').replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z/g,'TIME')).digest('hex');
 for(const {example,make,notRun:why} of workflows()){
   if(why){notRun.push({example,why});continue;}
   const w=make();
   if(!w?.nodes){notRun.push({example,why:'no workflow in the saved document'});continue;}
+  // SATELLITE FILES ARE READ IN THE WEEKLY LIVE CHECK, NOT IN THE GATE (the practitioner, 2026-11-20, gating audit): a
+  // workflow searching a satellite catalog read 27,728 files from Planetary Computer's storage, most of this check's
+  // time. FIELDWORK_LIVE=1, as .github/workflows/live-check.yml sets it, runs them.
+  if(!process.env.FIELDWORK_LIVE&&w.nodes.some(n=>n.type==='search_satellite_catalog')){
+    satellite.push(example);continue;}
   const ready=w.nodes.filter(n=>n.type==='study_area').map(n=>({subject:'urn:fieldwork:area:'+n.id,predicate:'urn:fieldwork:readyForSpatialAnalysis',object:'true'}));
   // A TABLE FETCHED FROM WHERE IT IS PUBLISHED is read as the app reads it before a run: the pinned file, its digest
   // checked, its rows read with the table's own settings.
@@ -125,11 +131,12 @@ for(const {example,make,notRun:why} of workflows()){
       findings.push({example,step:r.nodeId,number:n.value,sentence:r.method.slice(0,240)});}
   }
 }
-if(process.argv.includes('--json'))console.log(JSON.stringify({steps,numbers,findings,notRun,...(process.argv.includes('--twice')?{unequal}:{})},null,1));
+if(process.argv.includes('--json'))console.log(JSON.stringify({steps,numbers,findings,notRun,satellite,...(process.argv.includes('--twice')?{unequal}:{})},null,1));
 else{
   console.log(`${steps} steps, ${numbers} numbers in their sentences, ${findings.length} found in no result of the step.`);
   for(const f of findings)console.log(`  ${f.example} · ${f.step} · ${f.number}  "${f.sentence}"`);
   if(process.argv.includes('--twice'))console.log(unequal.length?`Run twice, ${unequal.length} outputs differed:\n`+unequal.map(u=>`  ${u.example} · ${u.step}`).join('\n'):'Run twice, every output was identical.');
   if(notRun.length){console.log(`Not run (${notRun.length}):`);for(const n of notRun)console.log(`  ${n.example}: ${n.why}`);}
+  if(satellite.length)console.log(`Left to the weekly live check, since they read satellite files (${satellite.length}): ${satellite.join('; ')}.`);
 }
 if(process.argv.includes('--strict')&&(findings.length||unequal.length))process.exit(1);

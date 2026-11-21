@@ -154,6 +154,31 @@ linking the run; it never blocks a release. It does not run on a push, which ver
 
 **Not established:** that the weekly run passes; it has not run yet. Whether two workers fit a shared runner's time.
 
+## Measured 2026-11-20: what a gate asks of the outside world
+
+Every request leaving this computer during the Chromium browser suite (572 tests, four at a time) and
+`validate:sentence-numbers` was logged, with `FIELDWORK_NETLOG` naming a file (`tests/fixtures.mjs`,
+`scripts/sentence-numbers.mjs`).
+
+| Where | Requests | From |
+| --- | --- | --- |
+| Planetary Computer's storage (MODIS land surface temperature) | 27,728 | `validate:sentence-numbers` |
+| Planetary Computer's catalogue | 9 | `validate:sentence-numbers` |
+| OpenFreeMap tiles | 17 | 3 basemap tests |
+| Overpass, three servers | 6 | 1 accessibility scan |
+| GitHub, raw files | 3 | 2 accessibility scans |
+
+The browser suite is nearly self-contained already; the sentence check was the gate's outside dependency, and 5 min
+38 s of its time.
+
+**Decided by the practitioner, the same day:** the gate leaves the workflows that search a satellite catalog to the
+weekly live check, which runs the sentence check with `FIELDWORK_LIVE=1`. Four are left: NYC's NO₂ and Brazil's three
+temperature workflows. The gate's sentence check then took 21 s and made no outside request. Recording Planetary
+Computer's answers was the alternative, not taken: hundreds of MB, unmeasured.
+
+**Not established:** that the four pass in the weekly check before it has run; whether the 26 remaining outside
+requests in the browser suite ever fail a gate.
+
 ## What this does not establish
 
 - That the slow tests rarely catch defects. One window of 37 gates over four days is not a rate.

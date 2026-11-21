@@ -3,7 +3,8 @@ name: Live services check
 # THE OUTSIDE SERVICES, CHECKED WHEN NOTHING IS PUSHED (docs/audits/gating-audit.md, decided 2026-11-19). The local gate
 # answers geoBoundaries from recorded copies; the verify job in pages.yml has none, so every push is already checked
 # against the live services. A service can change with no change of ours, so this runs the browser tests against them
-# weekly, Sunday at 05:00 UTC (midnight in New York in winter, 1 a.m. in summer), and on demand. A failure opens an
+# weekly, Sunday at 05:00 UTC (midnight in New York in winter, 1 a.m. in summer), and on demand, with the sentence check
+# for the workflows that read satellite files from Planetary Computer, which the gate leaves to it. A failure opens an
 # issue, or adds to the open one, naming the tests that failed. It never blocks a release.
 on:
   schedule:
@@ -70,8 +71,15 @@ jobs:
           mv example-nyc-checkout ../example-2025-nyc-ozone
           mv example-london-checkout ../example-2002-london-ozone
       - run: npm run build
+      - id: sentences
+        name: Every sentence's numbers, with the satellite files read from Planetary Computer
+        if: always()
+        run: |
+          set -o pipefail
+          node scripts/sentence-numbers.mjs --strict 2>&1 | tee "$RUNNER_TEMP/sentences.log"
       - id: browser
         name: The browser tests, against the live services
+        if: always()
         run: |
           set -o pipefail
           npx playwright test --project=chromium --reporter=list 2>&1 | tee "$RUNNER_TEMP/live.log"
@@ -95,7 +103,11 @@ jobs:
             echo
             echo 'Failed, as the run listed them:'
             echo
-            grep -E '✘' "$RUNNER_TEMP/live.log" | sed -E 's/^ *✘ *[0-9]+ /- /' | sort -u | head -40 || true
+            grep -E '✘' "$RUNNER_TEMP/live.log" 2>/dev/null | sed -E 's/^ *✘ *[0-9]+ /- /' | sort -u | head -40 || true
+            if [ "${{ steps.sentences.outcome }}" = 'failure' ]; then
+              echo '- validate:sentence-numbers, with the satellite files read live:'
+              tail -20 "$RUNNER_TEMP/sentences.log" | sed 's/^/    /'
+            fi
             echo
             echo 'The same tests pass in the local gate, which answers geoBoundaries from recorded copies, so a failure here is a change in an outside service, or a test that reaches one. Screenshots and traces are attached to the run.'
           } > "$body"

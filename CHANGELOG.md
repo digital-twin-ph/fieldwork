@@ -14,7 +14,9 @@ shown in a local build is not a claim that it has been published.
 - **Delete removes a selected connection** every time; on 0.155.0 it could do nothing while the connection was selected.
 - **The live services checked weekly.** A workflow on GitHub runs the browser tests against the live services every
   Sunday and on demand, and opens an issue naming any test that fails. Pushes were already checked live by verify,
-  which has no recorded copies; this covers the weeks a service changes and nothing is pushed.
+  which has no recorded copies; this covers the weeks a service changes and nothing is pushed. It also checks the
+  sentences of the four workflows that read satellite files from Planetary Computer, which the local gate now leaves
+  to it: the gate's sentence check went from 5 min 38 s to 21 s, with no outside request.
 - **Join a table to the study area on the standard.** Every setting is in Configure…, with the table and the study
   area's parts Before and each part's value After, drawn as the choices change. The column naming the most parts is
   proposed where none is chosen, and the panel says before a run when none is, where a run used to stop on an empty

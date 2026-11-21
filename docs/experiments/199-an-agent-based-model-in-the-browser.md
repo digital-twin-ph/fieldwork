@@ -7,7 +7,9 @@ _Created 2026-11-11 · Updated 2026-11-17_
 kernel in Fieldwork's own Rust crate gives the same tables natively and in WebAssembly, and agrees with Starsim
 3.7.4 within run-to-run spread; nothing of it is in the application yet. Its measles periods were set from CDC's Pink Book, and the model declared
 as data rather than written in Rust, on 2026-11-17 in [220](220-a-disease-model-configured-from-its-evidence.md). The number was reserved
-in [200](200-operational-epidemiology.md) on 2026-11-09, and the proposal went unrecorded for a day.
+in [200](200-operational-epidemiology.md) on 2026-11-09, and the proposal went unrecorded for a day. **Set beside the
+recorded curve on 2026-11-21** (option 4, chosen 2026-11-19): the size and the timing of the bulk agree, the recorded
+peak is twice as sharp as the model's; not fitted.
 
 ## The question
 
@@ -131,6 +133,49 @@ be kept, pinned, in the Validation Lab, which is where an independent recomputat
 that the periods or probabilities fit Hagelloch, that the model reproduces the outbreak as recorded, or how it runs
 in a browser worker on a slower laptop. Comparing the model with the recorded curve is a calibration question, and
 the practitioner's to put.
+
+## The model beside the recorded curve, 2026-11-21
+
+The practitioner chose option 4 on 2026-11-19: compare the model with Hagelloch's recorded curve. Not a fit: each
+declared model in `models/` runs as declared, 500 seeds, on the 188 children in their households and classes, and its
+children per day are set beside the record's. `scripts/abm-hagelloch-curve.mjs`; 0.4 s for all three in Node.
+
+| Model run | Set beside | Its event |
+| --- | --- | --- |
+| SEIR, `measles-hagelloch-spike` | the recorded rash less 4 days | becoming infectious |
+| SEIR, `measles-hagelloch-pink-book` | the recorded rash less 4 days | becoming infectious |
+| Prodrome and rash, `measles-hagelloch-prodrome-rash`, scenario `hagelloch-as-in-1861` (school shut on Sundays) | the recorded rash | the rash |
+
+The rash less 4 days is the Pink Book's start of infectiousness ("transmissible from 4 days before through 4 days
+after rash onset", page dated 24 April 2024, read again 2026-11-21). Every curve counts from the index child's own day
+(case 184, earliest prodrome); one child's rash comes before the index's.
+
+Median, with 5% to 95% over the 500 runs:
+
+| | Recorded | SEIR, spike | SEIR, Pink Book | Prodrome and rash, 1861 |
+| --- | --- | --- | --- | --- |
+| Children reached | 187 + 1 | 187 (185 to 188) | 187 (185 to 188) | 187 (185 to 188) |
+| Half reached by day | 29 | 33 (30 to 37) | 31 (28 to 34) | 34 (32 to 41) |
+| Peak day | 31 | 29 (25 to 41) | 27 (22 to 37) | 34 (31 to 41) |
+| Children on the peak day | **26** | 13 (11 to 17) | 14 (11 to 18) | 16 (12 to 22) |
+| Last day | 82 | 60 (53 to 72) | 55 (49 to 66) | 60 (52 to 70) |
+| Children after day 60 | 1 | 0 (0 to 2) | 0 (0 to 1) | 0 (0 to 3) |
+| Recorded days inside the band | | 61 of 83 | 66 of 83 | 60 of 83 |
+
+**Found:**
+
+- **The size agrees**, as it must when nearly every child is reached.
+- **The timing of the bulk agrees for SEIR**: half the children by day 29 recorded, 31 (28 to 34) with the Pink Book's
+  periods. The prodrome-and-rash model, with Sunday closures, is later: 34 (32 to 41), the recorded day outside it.
+- **The recorded peak is twice as sharp as any model's.** 68 children came out in the rash on 5, 6 and 7 December
+  1861 (25, 17, 26): 33 of class 2's 68 children (aged 10 to 15) and 35 of the 90 not at school (aged 0 to 7), and none of class 1's 30 (mostly 8 to 10). The models'
+  95th percentiles for those three days sum to 29 to 36.
+- **The last day** is one late child (day 82); the models allow up to 3 after day 60, so it is not a tail they miss.
+
+**What this does not establish:** why the record is sharper. A burst in the older class and among the young children at home
+is what a single shared exposure would give, but the three probabilities are assumed, not fitted, and a fit is the
+next question, not this one. Nor does it say whether the recorded dates are heaped, or how the model runs in a
+browser worker on a slower laptop.
 
 ## Left for later, step by step, if the spike says yes
 

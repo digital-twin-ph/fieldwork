@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-11-20_
+_Created 2026-10-10 · Updated 2026-11-21_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -64,7 +64,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 2. **Done in 0.154.0.** Raster streaming for GHS-POP over DR Congo: [GHS-POP over DR Congo is refused](#ghs-pop-over-dr-congo-is-refused-8-byte-cells-found-2026-11-19-streaming-decided-the-same-day).
 3. Experiment 225, WebGPU as an accelerator (first finding, 2026-11-20: the slow part of an address read is the network,
    162 MB in 2,070 tiles, not computing): [WebGPU as an accelerator](#webgpu-as-an-accelerator-never-a-requirement-225-asked-2026-11-19).
-4. The agent-based model compared with Hagelloch's recorded curve (experiment 199, option 4, chosen 2026-11-19): [item 29](#29-an-agent-based-model-in-the-browser-checked-against-starsim).
+4. **Compared 2026-11-21:** the agent-based model beside Hagelloch's recorded curve (experiment 199, option 4): size and the bulk's timing agree; the recorded peak is twice as sharp (68 rashes on 5 to 7 December 1861). **Next, the practitioner's to choose:** fitting the three probabilities to the curve, or reading the record's `infector` column for the periods ([item 29](#29-an-agent-based-model-in-the-browser-checked-against-starsim)).
 5. The gate: recorded copies of live services, from-scratch tests on several workers, and a live-service check on GitHub ([gating audit](docs/audits/gating-audit.md), Decided 2026-11-19).
 6. Show-me-how walkthroughs for spatial steps (0.154.0 gave Area around a point, Buffer study area, Calculate area and Clip polygons theirs): batch 1, Join a table to the study area and Sample a raster; then batch 2, Keep points inside the area and Summarize points to polygons ([Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07)).
 7. Census tables, experiment 224: 8 of 15 countries in by 0.155.0 (Brazil, Botswana, DR Congo, Kenya, Malawi, Nigeria, Rwanda, Sierra Leone). **Left:** the USA (an API key, or a file from www2.census.gov, the practitioner's decision); Zambia, Tanzania, Ghana; then the Philippines, Korea, Uganda; the five new countries paired with geoBoundaries' names; the licences of Brazil (none found), Malawi and Kenya (HDX's label against the office's "All Rights Reserved") ([224](docs/experiments/224-census-counts-as-a-table-source.md)).

@@ -76,6 +76,9 @@ import h5wasm from 'h5wasm/node';
 import {mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
+// ANOTHER REPOSITORY'S GIT, without this one's: a git hook (pre-push) exports GIT_DIR and its kin, and a `git -C` into an
+// example's checkout then reads this repository instead (the MERS fixtures failed only under the hook, 0.169.0).
+const OWN_REPO_ENV=Object.fromEntries(Object.entries(process.env).filter(([k])=>!/^GIT_(DIR|WORK_TREE|INDEX_FILE|PREFIX|COMMON_DIR|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|NAMESPACE)$/.test(k)));
 
 // The reasoner in node, the same engine and version the browser worker runs. `vendor/eye-21.1.24.js`
 // is a webpack bundle assigning to `var eyereasoner`, so `runInThisContext` puts it in scope --
@@ -1404,7 +1407,7 @@ const builders={
     // CI checks out some examples and not this one: said in the words the dry run names and skips.
     if(!existsSync(repo))throw new Error('example-2015-mers-korea is not on this machine beside this repository.');
     const {execFileSync}=await import('node:child_process');
-    const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30});
+    const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30,env:OWN_REPO_ENV});
     const doc=JSON.parse(gunzipSync(at('fieldwork-project.json.gz')));
     const {validateWorkflow}=await import('../build/core.js');
     // The two workflows lab check 49 recomputes. The third, Where were the cases in hospital? (2026-11-12), maps the
@@ -1464,7 +1467,7 @@ const builders={
     const {existsSync}=await import('node:fs');
     if(!existsSync(repo))throw new Error('example-2015-mers-korea is not on this machine beside this repository.');
     const {execFileSync}=await import('node:child_process');
-    const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30});
+    const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30,env:OWN_REPO_ENV});
     const doc=JSON.parse(gunzipSync(at('fieldwork-project.json.gz')));
     const {validateWorkflow}=await import('../build/core.js');
     const named=name=>{const x=doc.workflows.find(x=>(x.document.workflow??x.document).name===name);if(!x)throw new Error(`The example has no workflow "${name}".`);return x.document.workflow??x.document;};

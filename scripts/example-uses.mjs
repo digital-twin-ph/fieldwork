@@ -8,6 +8,9 @@
 import {readFileSync,writeFileSync,existsSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {gunzipSync} from 'node:zlib';
+// ANOTHER REPOSITORY'S GIT, without this one's: a git hook (pre-push) exports GIT_DIR and its kin, and a `git -C` into an
+// example's checkout then reads this repository instead (the MERS fixtures failed only under the hook, 0.169.0).
+const OWN_REPO_ENV=Object.fromEntries(Object.entries(process.env).filter(([k])=>!/^GIT_(DIR|WORK_TREE|INDEX_FILE|PREFIX|COMMON_DIR|OBJECT_DIRECTORY|ALTERNATE_OBJECT_DIRECTORIES|NAMESPACE)$/.test(k)));
 const path=new URL('../widgets/examples.json',import.meta.url);
 const raw=readFileSync(path,'utf8'),catalog=JSON.parse(raw),write=process.argv.includes('--write');
 const changed=[],skipped=[];
@@ -17,7 +20,7 @@ for(const example of catalog.examples){
   if(!bundle){continue;}
   if(!existsSync(checkout)){skipped.push(name);continue;}
   let doc;
-  try{doc=JSON.parse(gunzipSync(execFileSync('git',['-C',checkout,'show',`${example.commit}:${bundle}`],{maxBuffer:1<<30})));}
+  try{doc=JSON.parse(gunzipSync(execFileSync('git',['-C',checkout,'show',`${example.commit}:${bundle}`],{maxBuffer:1<<30,env:OWN_REPO_ENV})));}
   catch(error){skipped.push(`${name} (${error.message.split('\n')[0]})`);continue;}
   const uses=[...new Set((doc.workflows??[]).flatMap(w=>((w.document?.workflow??w.document)?.nodes??[]).map(n=>n.type)))].sort();
   const workflowCount=(doc.workflows??[]).length;

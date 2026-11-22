@@ -85,12 +85,14 @@ test('a declared column that does not arrive, or arrives as text, is said on its
   assert.equal(closestColumn('chief_complain',['visit_id','chief_complaint','date']),'chief_complaint');
   assert.equal(closestColumn('Date',['visit_id','date']),'date');
   assert.equal(closestColumn('temperature',['visit_id','date']),undefined);
-  const arriving={source:'Visits',columns:[{attribute:'chief_complaint',kind:'term'},{attribute:'age_group',kind:'term'}]};
+  const arriving={source:'Visits',columns:[{attribute:'chief_complaint',kind:'term'},{attribute:'age_group',kind:'term',samples:['18-44','65+']}]};
   const bad=structuredClone(GOOD);bad.fields=[{attribute:'chief_complain',predicate:'fwa:chief_complaint',kind:'term'},{attribute:'age_group',predicate:'fwa:age',kind:'number'}];
   const text=JSON.stringify(bad,null,2),{problems}=checkRulesetJson(text,arriving),lines=text.split('\n');
   assert.match(problems[0].says,/"chief_complain" is not a column of Visits. Did you mean "chief_complaint"\? Its columns are chief_complaint, age_group\./);
   assert.ok(lines[problems[0].line-1].includes('"chief_complain"'));
-  assert.match(problems[1].says,/"age_group" arrives as text, not a number/);
+  assert.match(problems[1].says,/"age_group" arrives as text, not a number \("18-44", "65\+"\)/);
   assert.deepEqual(checkRulesetJson(rulesetText(GOOD),arriving).problems,[]);
   assert.deepEqual(arrivingProblems(bad.fields,{source:'x',columns:[]}),[]);
+  // A count kept as text of numerals ("12", as Point data keeps it) is a number to the run, so nothing is said.
+  assert.deepEqual(arrivingProblems([{attribute:'cases',kind:'number'}],{source:'Clinics',columns:[{attribute:'cases',kind:'term',samples:['12','30','7']}]}),[]);
 });

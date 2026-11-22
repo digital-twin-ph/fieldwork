@@ -11,7 +11,7 @@
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
-//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | qr-links-001 | qr-mark-001 | georef-001 | mers-korea-001 | mers-epi-001
+//                   | lag-models-brazil-001 | sea-level-heights-manila-001 | chains-hagelloch-001 | tree-hagelloch-001 | links-hagelloch-001 | scan-hagelloch-001 | detect-unusual-counts-001 | qr-links-001 | qr-mark-001 | georef-001 | mers-korea-001 | mers-epi-001
 //                   | population-districts-001 (needs POP_FILES)
 import {createHash} from 'node:crypto';
 import {readFile,writeFile} from 'node:fs/promises';
@@ -1580,6 +1580,62 @@ const builders={
         mark:'an odd number of modules near a fifth of the side, centred, with one module cleared around it'},
       input:{addresses},
       output:{codes:addresses.map(text=>{const d=qrDrawn(text,true);return {text,rows:d.rows.map(r=>r.map(x=>x?'1':'0').join('')),mark:d.mark};})},
+    },files:{}};
+  },
+  async 'detect-unusual-counts-001'(){
+    // DETECT UNUSUAL COUNTS (experiment 228), its methods run through Fieldwork's own `detect` on four series: the 40 days
+    // the unit test holds to R, the syndromic example's gastrointestinal days, three seasonal years, and a sparse series.
+    const {detect,DETECT_DEFAULTS}=await import('../build/aberration.js');
+    const r=JSON.parse(await readFile(new URL('../tests/fixtures/aberration-r-surveillance.json',import.meta.url),'utf8'));
+    const day=(start,i)=>new Date(Date.parse(start)+i*864e5).toISOString().slice(0,10);
+    // The syndromic example at the commit Fieldwork pins, beside this repository: each visit's date and generated syndrome.
+    const pin=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples
+      .find(e=>e.repository.endsWith('example-2026-syndromic-surveillance'));
+    const at=path=>readFileSync(new URL(`../../example-2026-syndromic-surveillance/${path}`,import.meta.url));
+    const csv=path=>at(path).toString('utf8').trim().split('\n').slice(1).map(line=>line.split(','));
+    const syndrome=new Map(csv('data/truth.csv').map(([id,s])=>[id,s]));
+    const gi=new Map();for(const [id,date] of csv('data/visits.csv'))if(syndrome.get(id)==='gastrointestinal')gi.set(date,(gi.get(date)??0)+1);
+    const giDays=Array.from({length:175},(_,i)=>day('2026-01-05',i));
+    // MADE UP, from a stated generator so the lab can see how: a linear congruential stream and Knuth's Poisson draw.
+    const stream=seed=>{let s=seed>>>0;return ()=>{s=(Math.imul(1664525,s)+1013904223)>>>0;return s/2**32;};};
+    const poisson=(u,mean)=>{const L=Math.exp(-mean);let k=0,p=1;do{k++;p*=u();}while(p>L);return k-1;};
+    const u1=stream(20261121);
+    const seasonal=Array.from({length:156},(_,w)=>poisson(u1,20+15*Math.cos(2*Math.PI*(w-2)/52)));
+    const u2=stream(53);
+    const sparse=Array.from({length:120},(_,d)=>poisson(u2,d>=80&&d<86?3:0.15));
+    const runs=(counts,list)=>list.map(([settings,label])=>{
+      try{return {...(label?{label}:{}),settings,rows:detect(counts,settings).map(({index,...row})=>(void index,row))};}
+      catch(error){return {...(label?{label}:{}),settings,refused:error.message};}
+    });
+    const methods=['ears-c1','ears-c2','ears-c3','cusum','ewma'].map(method=>[{method}]);
+    const series=[
+      {id:'made-up-40',description:'40 made-up days, five of excess (days 25 to 29): the series Fieldwork\'s unit test holds to R.',
+        periods:Array.from({length:40},(_,i)=>day('2026-10-01',i)),counts:r.series,runs:runs(r.series,methods)},
+      {id:'syndromic-gi-2026',description:'Gastrointestinal visits per day in the syndromic worked example, by the syndrome each visit was generated as; a seeded outbreak 13 to 22 April.',
+        source:{repository:pin.repository,commit:pin.commit,files:['data/visits.csv','data/truth.csv'].map(path=>({path,sha256:sha256(at(path))}))},
+        periods:giDays,counts:giDays.map(d=>gi.get(d)??0),
+        runs:runs(giDays.map(d=>gi.get(d)??0),[...methods,
+          [{method:'cusum',baselinePeriods:28,reset:true},'as the example runs it'],[{method:'ewma',baselinePeriods:28},'the first four weeks as baseline']])},
+      {id:'seasonal-weekly',description:'Three made-up years of weekly counts, Poisson about 20 + 15 cos(2 pi (week - 2)/52): a winter peak each year.',
+        generator:'Linear congruential stream (1664525, 1013904223, mod 2^32), seed 20261121; Knuth\'s Poisson draw.',
+        periods:Array.from({length:156},(_,w)=>`week ${w+1}`),counts:seasonal,
+        runs:runs(seasonal,[[{method:'ears-c1'}],[{method:'ears-c2'}],[{method:'ears-c3'}],
+          [{method:'cusum',baselinePeriods:52},'the first year as baseline'],[{method:'ewma',baselinePeriods:52},'the first year as baseline']])},
+      {id:'sparse-daily',description:'A made-up rare condition, about 0.15 a day, with six days at 3 (days 81 to 86).',
+        generator:'The same stream, seed 53.',
+        periods:Array.from({length:120},(_,i)=>day('2026-01-01',i)),counts:sparse,
+        runs:runs(sparse,[...methods,[{method:'cusum',baselinePeriods:28},'four weeks of baseline'],[{method:'ewma',baselinePeriods:28},'four weeks of baseline']])},
+    ];
+    return {fixture:{
+      ...base('detect-unusual-counts-001','detect_unusual_counts','Detect unusual counts: EARS C1, C2, C3, CUSUM and EWMA on four series','src/aberration.ts#detect'),
+      declaredParameters:{defaults:DETECT_DEFAULTS,
+        ears:'C1: the mean and sample standard deviation (n - 1) of the 7 periods before; C2 and C3: of the 7 ending 3 before. Threshold mean + z(1 - alpha) x max(sd, least sd); statistic (x - mean)/sd; a period signals above the threshold. A baseline that does not vary: no statistic, threshold its mean, a count above it signals.',
+        c3:'Over the period and the 2 before, the sum of max(0, C2 statistic - 1), the current period counted (Hutwagner 2003); signals above z(1 - 0.025). Threshold: the count that brings C3 to z, 0 when the 2 before already pass z. No value where any of the three has no statistic.',
+        cusum:'m the mean of the first baselinePeriods; S = max(0, S + (x - m)/sqrt(m) - k) from the first period after; signals where S >= h; threshold the least whole count reaching h from the S before; with reset, S starts again at 0 after a signal. Refused where m is 0.',
+        ewma:'m and sigma (n - 1) of the first baselinePeriods; Z from m, Z = lambda x + (1 - lambda) Z; limit m + L sigma sqrt(lambda/(2 - lambda) (1 - (1 - lambda)^(2i))), i from 1 at the first period watched; signals above the limit. Refused where sigma is 0.',
+        normalQuantile:'Fieldwork\'s own: an approximation refined against erfc, good to about 1e-7.'},
+      series,
+      rReference:{source:r.source,C1:r.C1,C2:r.C2,C3:r.C3,cusum:r.cusum},
     },files:{}};
   },
   async 'scan-hagelloch-001'(){

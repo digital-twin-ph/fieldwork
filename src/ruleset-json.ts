@@ -103,8 +103,10 @@ export function arrivingProblems(fields:readonly {attribute?:unknown;kind?:unkno
     const column=arriving.columns.find(c=>c.attribute===attribute);
     if(!column){const near=closestColumn(attribute,names);
       out.push({index,says:`"${attribute}" is not a column of ${arriving.source}.${near?` Did you mean "${near}"?`:''} Its columns are ${listed}.`});return;}
-    if(f.kind==='number'&&column.kind==='term')
-      out.push({index,says:`"${attribute}" arrives as text, not a number, so a rule comparing it with a number finds nothing. Declare it a term, or change the column.`});
+    // TEXT OF NUMERALS IS A NUMBER to the run (Point data keeps a count as "12"): only values that are not numbers say so.
+    const words=(column.samples??[]).filter(v=>!Number.isFinite(Number(String(v).trim()))||String(v).trim()==='');
+    if(f.kind==='number'&&column.kind==='term'&&words.length)
+      out.push({index,says:`"${attribute}" arrives as text, not a number (${words.slice(0,2).map(v=>`"${v}"`).join(', ')}), so a rule comparing it with a number finds nothing. Declare it a term, or change the column.`});
   });
   return out;
 }

@@ -2,7 +2,9 @@
 
 _Created 2026-11-18 · Updated 2026-11-18_
 
-**Status:** tried, and adopted 2026-11-18 as Fieldwork's one raster engine. The change is in progress (see *The adoption*).
+**Status:** validated. Adopted 2026-11-18 as Fieldwork's one raster engine; the change is complete: no application code
+reads cells with geotiff.js, which stays only as an independent writer of test files. Validated against geotiff.js
+(2026-11-18), GDAL (2026-11-21) and in WebKit on CI; live MODIS and Edge on Windows are not established (below).
 
 ## The question
 
@@ -168,7 +170,21 @@ cell after no data becomes NaN:
   means to check.
 - Unit suite: 1,807 passed, 0 failed, 4 skipped.
 
-**Not established:**
+**Not established (2026-11-18):**
 - A YCbCr JPEG-compressed picture GeoTIFF. The fixture sheet is uncompressed RGB, and none of the other kind was at hand.
 - WebKit and Edge on Windows.
 - Live MODIS files through `openImage`. The offline test reads files made in the test.
+
+**2026-11-21, the two that could be closed here** (the practitioner: finish terrio so this closes):
+
+- **A YCbCr JPEG-compressed picture GeoTIFF**, made rather than downloaded: 384 by 256 cells of three gradients, written
+  by GDAL 3.12.2 through rasterio 1.5.2 (PHOTOMETRIC=YCBCR, COMPRESS=JPEG, quality 95, 128-cell tiles), 10,348 bytes,
+  kept as `tests/fixtures/picture-ycbcr-jpeg.tif`. Fieldwork's header reads it as a picture (photometric 6), and terrio
+  decodes it to the same red, green and blue as GDAL, every byte of 294,912; `tests/picture-ycbcr.test.mjs` holds the
+  digest of GDAL's bytes.
+- **WebKit**: CI's WebKit run of 0.159.1 (GitHub Actions run 44955235026, 2026-11-21) passed every test that reads cells
+  through terrio: georeferencing a picture, a NetCDF window, Sample a raster over areas and its arrivals, and satellite
+  files read by range.
+
+**Still not established:** live MODIS files through `openImage` (they need an Earthdata sign-in, which is the
+practitioner's), and Edge on Windows. Neither is in reach from here; both are named rather than closed.

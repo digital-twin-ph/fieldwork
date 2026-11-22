@@ -2,9 +2,9 @@
 
 _Created 2026-11-21 · Updated 2026-11-21_
 
-**Status:** tried. Built 2026-11-21, its methods checked against R's `surveillance` package the same day; the syndromic
-worked example uses it (0.160.0; its charts, 0.162.0). Still open: a lab notebook against R over several series,
-a seasonal one among them, and the practitioner's review of the name.
+**Status:** validated. Built 2026-11-21, its methods checked against R's `surveillance` package the same day, and by the
+Validation Lab's check 53 (Python, numpy) on four series, a seasonal one among them; the syndromic worked example uses
+it (0.160.0; its charts, 0.162.0). The practitioner's review of the name is in the TODO.
 
 ## The question
 
@@ -60,8 +60,28 @@ refines an approximation against an erfc good to 1.2e-7.
 
 Platform: Node 22, macOS. Browser test: Chromium.
 
+## Validation record, 2026-11-21: the lab, in Python
+
+The practitioner asked for the lab notebook in Python, not R. Check 53 (`validation-lab`, notebook
+`53-detect-unusual-counts-vs-numpy`) writes each method again in numpy from its published definition, with scipy's
+normal quantile, reading none of Fieldwork's code. Fixture `detect-unusual-counts-001`, Fieldwork 0.162.0:
+
+| Series | Periods | Runs | Agrees |
+| --- | --- | --- | --- |
+| 40 made-up days, five of excess | 40 | 5 | all |
+| The syndromic example's gastrointestinal days | 175 | 7 (the five at defaults; CUSUM and EWMA as the example runs them) | all |
+| Three made-up years, weekly, a winter peak | 156 | 5 (CUSUM and EWMA on the first year) | all |
+| A made-up rare condition, most days 0 | 120 | 7, two of them refused alike (a baseline whose mean is 0; one that does not vary) | all |
+
+Expected count, threshold, statistic and limit within 1e-6, every period; the same signals. On the 40 days, R's
+recorded values read a third time: C1 and C2 thresholds and CUSUM's the same as Python's, the same signal days; C3
+differs on the first day of the rise, as above.
+
+**What the seasonal series shows.** CUSUM on the first year signals for weeks on end in each later winter (50 of 156
+weeks); EWMA, whose limit the season's spread widens, in none; the EARS methods on every autumn's rise (C1 7 weeks, C2
+15, C3 43). Platform: CPython 3.13.3, numpy 2.5.3, scipy 1.18.1; not yet run in the lab's browser kernel.
+
 ## What this does not establish
 
 That a signal is an outbreak, or that any threshold suits a given surveillance system: α, h and L are decisions about
-false alarms, stated, not findings. Seasonal baselines (Farrington, or a GLM baseline) are not here. No lab notebook yet:
-the check above is a unit test against R, run on one series.
+false alarms, stated, not findings. Seasonal baselines (Farrington, or a GLM baseline) are not here.

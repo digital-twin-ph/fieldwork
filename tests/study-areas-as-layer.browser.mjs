@@ -23,8 +23,10 @@ const flow={schema:'fieldwork/workflow/1',exampleId:'blank',name:'Across the bor
 test("two countries' study areas make one polygon layer, each part with its country and level",async({page})=>{
   const errors=collectPageErrors(page);
   await page.route(/tile\.openstreetmap\.org|basemaps|tiles/,route=>route.abort('failed'));
-  await page.goto('/');await page.evaluate(f=>{localStorage.clear();localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(f));},flow);
-  await page.goto('/');
+  // READY BEFORE AND AFTER THE RELOAD: once on CI (0.161.0, Chromium) the node was never drawn, the page read before it started.
+  await page.goto('/');await page.waitForSelector('html[data-ready]');
+  await page.evaluate(f=>{localStorage.clear();localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(f));},flow);
+  await page.goto('/');await page.waitForSelector('html[data-ready]');
   // BEFORE A RUN, the dialog lists the parts it will make, and says they are at different levels.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="parts"]').click({timeout:45000});

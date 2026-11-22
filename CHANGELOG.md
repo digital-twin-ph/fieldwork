@@ -16,6 +16,9 @@ shown in a local build is not a claim that it has been published.
 - **The syndromic surveillance example draws its charts**: visits by day per syndrome, gastrointestinal visits against
   the threshold, CUSUM's sum against *h*; and a third workflow, *How do the methods differ?*, runs CUSUM, EWMA and
   EARS C2 on the same days, each drawn as it computes.
+- **Checked:** Detect unusual counts in the Validation Lab, in Python (check 53: four series, a seasonal one among them,
+  every period the same as numpy's); a JPEG-compressed YCbCr picture GeoTIFF read through terrio, byte for byte as GDAL
+  reads it.
 - **Select rows reads the values of a step's table after a run**, so it can follow Detect unusual counts and other steps
   whose columns are known only once they run.
 

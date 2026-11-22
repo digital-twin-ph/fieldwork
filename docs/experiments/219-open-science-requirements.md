@@ -2,7 +2,9 @@
 
 _Created 2026-11-16 · Updated 2026-11-16_
 
-**Status:** asked. Nothing built. Interconnected with [202](202-one-record-several-products.md) (the products and their
+**Status:** asked. Nothing built under this record itself; it goes on through identity and credentials
+([218](218-an-identity-you-carry.md)), the Notes tab ([202](202-one-record-several-products.md)) and provenance (the
+practitioner, 2026-11-21). Interconnected with [202](202-one-record-several-products.md) (the products and their
 plan), [218](218-an-identity-you-carry.md) (who did what) and [150](150-can-several-authors-collaborate-in-a-project-repository.md)
 (several authors in a repository).
 

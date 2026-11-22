@@ -2,8 +2,10 @@
 
 _Created 2026-11-11 · Updated 2026-11-14_
 
-**Status:** asked; first methods chosen 2026-11-14. An analysis the practitioner brought on 2026-11-11, checked here against the palette as it stands;
-nothing built, and nothing placed in the order of work yet.
+**Status:** retired, 2026-11-22: closed into [228](228-detect-unusual-counts.md), which built what this asked for
+(Detect unusual counts: EARS C1 to C3, CUSUM and EWMA, checked against R's `surveillance` and in the lab in Python). The
+practitioner, the same day, chose to close it there. Its questions still open are 228's open items now, not here. The
+record below stands as it was written.
 
 ## The question
 

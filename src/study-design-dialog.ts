@@ -10,6 +10,7 @@
  *
  *  EVERY DESIGN SHOWS ITS CONSEQUENCE BEFORE IT IS CHOSEN, which answers the doubt 154 carried: a
  *  practitioner unsure which design they have can decide by reading what each would license. */
+import {openConfigDialog} from './config-dialog.js';
 import {DESIGN_LICENCES,STUDY_DESIGNS,includedMeasures,notEstimable} from './study-design.js';
 import {answerSentence,chosenOptions,designQuestions,inheritedFill,slotsIn,DESIGN_TABLES,cellDescribed,tableSentences} from './study-design-questions.js';
 import type {DeclaredCell,DeclaredTable,DesignQuestion} from './study-design-questions.js';
@@ -214,43 +215,30 @@ export function designMarkup(params:DesignParams,esc:Escape):string{
     +`</div>`;
 }
 
-/** Open the dialog. `onChange` gets the whole updated params, so the caller writes them through
- *  its own `change()` gate, the arrangement `openMappingDialog` keeps. */
+/** Open the dialog: the STANDARD DIALOG (experiment 186; the practitioner, 2026-11-22: yes to the draft-until-Apply
+ *  dialog). Every answer goes into a draft, page by page; Apply writes the whole of it through the caller's `change()`
+ *  gate, and Cancel, × and Escape leave the step as it was, asking first when something was answered. */
 export function openDesignDialog(params:DesignParams,esc:Escape,
-  onChange:(next:DesignParams)=>void,checklist:()=>ChecklistItem[]=()=>[]):void{
-  const dialog=document.createElement('dialog');
-  dialog.id='study-design-dialog';
-  dialog.setAttribute('aria-labelledby','study-design-dialog-title');
-  let current=params,page=0;
-  // NO SAVE BUTTON, because every change is written as it is made. The one thing not yet written
-  // is text still in a box: a box commits on `change`, which needs it to lose focus, and Escape
-  // and a WebKit button click do not guarantee that. So anything that leaves a page commits first.
-  const commit=()=>{
-    const active=document.activeElement;
-    if((active instanceof HTMLInputElement||active instanceof HTMLTextAreaElement)&&dialog.contains(active))active.blur();
-  };
-  const close=()=>{commit();dialog.close();dialog.remove();};
-  const apply=(next:DesignParams)=>{current=next;onChange(next);render();};
-  const go=(step:number)=>{
-    commit();
-    page=Math.min(designPageCount(current)-1,Math.max(0,page+step));
-    render();
-    dialog.scrollTop=0;
-  };
-  function render(){
-    const scrolled=dialog.scrollTop,last=designPageCount(current)-1;
-    page=Math.min(page,last);
-    dialog.innerHTML=`<div class="manual-head">`
-      +`<h2 id="study-design-dialog-title">Study design, and what it reports</h2>`
-      +`<span class="muted" id="design-page">Page ${page+1} of ${last+1}</span></div>`
-      +designPageMarkup(current,page,esc,checklist())
-      +`<div class="design-nav"><button class="button" id="design-back" ${page===0?'disabled':''}>Back</button>`
-      +`<button class="button primary" id="design-next" ${page===last?'disabled':''}>Next</button>`
-      +`<button class="button" id="design-close">Close</button></div>`;
-    dialog.scrollTop=scrolled;
+  onChange:(next:DesignParams)=>void,checklist:(draft:DesignParams)=>ChecklistItem[]=()=>[],step='Study design'):void{
+  let page=0;
+  openConfigDialog<DesignParams>({id:'study-design-dialog',widget:'Study design',step,draft:params,
+    sections:draft=>{const last=designPageCount(draft)-1;page=Math.min(page,last);
+      return {settings:`<p class="muted" id="design-page">Page ${page+1} of ${last+1}</p>`
+        +designPageMarkup(draft,page,esc,checklist(draft))
+        +`<div class="design-nav"><button type="button" class="button" id="design-back" ${page===0?'disabled':''}>Back</button>`
+        +`<button type="button" class="button" id="design-next" ${page===last?'disabled':''}>Next</button></div>`};},
+    wire:(root,draft,redraw)=>wireDesign(root,draft,redraw),
+    apply:draft=>onChange(structuredClone(draft))},esc);
+  /** The draft changed in place: the dialog compares only the draft with what the step holds. */
+  function set(draft:DesignParams,next:DesignParams){for(const k of Object.keys(draft))delete (draft as Record<string,unknown>)[k];Object.assign(draft,next);}
+  function wireDesign(dialog:HTMLElement,current:DesignParams,redraw:()=>void){
+    // A BOX COMMITS AS IT LOSES FOCUS, which Escape and a WebKit button click do not guarantee: leaving a page blurs first.
+    const commit=()=>{const active=document.activeElement;
+      if((active instanceof HTMLInputElement||active instanceof HTMLTextAreaElement)&&dialog.contains(active))active.blur();};
+    const apply=(next:DesignParams)=>{set(current,next);redraw();};
+    const go=(by:number)=>{commit();page=Math.min(designPageCount(current)-1,Math.max(0,page+by));redraw();dialog.scrollTop=0;};
     dialog.querySelector<HTMLButtonElement>('#design-back')!.onclick=()=>go(-1);
     dialog.querySelector<HTMLButtonElement>('#design-next')!.onclick=()=>go(1);
-    dialog.querySelector<HTMLButtonElement>('#design-close')!.onclick=close;
     dialog.querySelectorAll<HTMLInputElement>('[data-answer]').forEach(radio=>{
       const q=designQuestions(current).find(x=>x.id===radio.dataset.answer);
       radio.onchange=()=>apply('answerMulti' in radio.dataset&&q
@@ -262,8 +250,7 @@ export function openDesignDialog(params:DesignParams,esc:Escape,
       // then replaces the button under the mouse and the click is lost. Found by the page test.
       box.onchange=()=>{
         const id=box.dataset.slotQuestion!;
-        current=withFill(current,id,box.dataset.slot!,box.value);
-        onChange(current);
+        set(current,withFill(current,id,box.dataset.slot!,box.value));
         const q=designQuestions(current).find(x=>x.id===id);
         const line=dialog.querySelector('.design-sentence');
         if(q&&line)line.textContent=answerSentence(q,current.answers?.[id],current.table)??'';
@@ -276,18 +263,16 @@ export function openDesignDialog(params:DesignParams,esc:Escape,
     // NO REDRAW, for the reason the blanks above give: this commits as Next is pressed.
     dialog.querySelectorAll<HTMLInputElement>('[data-table-field]').forEach(box=>{
       const field=box.dataset.tableField as keyof DeclaredTable;
-      // SHOWN AS IT IS TYPED, COMMITTED ON LEAVING. A long name reflows the table and a new sentence
-      // grows the centred dialog, and doing either at blur moved the cell being clicked, so the
-      // click landed nowhere. Found by the page test. Nothing may change size on blur here.
+      // SHOWN AS IT IS TYPED, COMMITTED ON LEAVING. Nothing may change size on blur here: the click would land nowhere.
       box.oninput=()=>{
         dialog.querySelectorAll(`[data-table-show="${field}"]`)
           .forEach(el=>{if(box.value)el.textContent=box.value;});
         showTable(withTableField(current,field,box.value).table);
       };
-      box.onchange=()=>{current=withTableField(current,field,box.value);onChange(current);showTable();};
+      box.onchange=()=>{set(current,withTableField(current,field,box.value));showTable();};
     });
     const setCell=(key:string,change:Partial<DeclaredCell>)=>{
-      current=withCell(current,key,change);onChange(current);
+      set(current,withCell(current,key,change));
       const shown=dialog.querySelector(`[data-cell-summary="${CSS.escape(key)}"]`);
       if(shown)shown.textContent=cellSummary(current.table?.cells?.[key]);
       showTable();
@@ -312,10 +297,14 @@ export function openDesignDialog(params:DesignParams,esc:Escape,
         if(source)source.disabled=box.checked;
       };
     });
-    // NO REDRAW, for the reason the blanks above give: a box commits as Next or Close is pressed.
+    // NO REDRAW, for the reason the blanks above give: a box commits as Next or Apply is pressed.
     dialog.querySelectorAll<HTMLInputElement|HTMLTextAreaElement>('[data-design-field]').forEach(box=>{
-      box.onchange=()=>{current={...current,[box.dataset.designField!]:box.value.trim()};onChange(current);};
+      box.onchange=()=>{set(current,{...current,[box.dataset.designField!]:box.value.trim()});};
     });
+    // EVERY BOX INTO THE DRAFT AS IT IS TYPED, as well as on leaving: Apply in WebKit does not always take focus from a box,
+    // and a draft that missed the last words would apply without them.
+    dialog.querySelectorAll<HTMLInputElement|HTMLTextAreaElement>('[data-slot],[data-table-field],[data-cell-counts],[data-cell-source],[data-design-field]')
+      .forEach(box=>box.addEventListener('input',()=>box.onchange?.(new Event('change'))));
     dialog.querySelectorAll<HTMLInputElement>('[name="design-kind"]').forEach(radio=>{
       radio.onchange=()=>apply(withDesign(current,radio.value as StudyDesign));
     });
@@ -323,8 +312,4 @@ export function openDesignDialog(params:DesignParams,esc:Escape,
       box.onchange=()=>apply(withMeasure(current,box.dataset.designMeasure!,box.checked));
     });
   }
-  render();
-  document.body.append(dialog);
-  dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
-  dialog.showModal();
 }

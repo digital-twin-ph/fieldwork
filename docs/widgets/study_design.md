@@ -102,7 +102,7 @@ counts declares no design.
 
 For a cohort or an ecological study, the first page after the design is **the table**: you name the groups and the outcome and say what exposure is known for. The dialog draws the 2×2 in those words and marks the totals the study fixed. Select a cell to say what it counts and where it comes from, or that it was worked out from other cells. There are no numbers on this page: they come with the data, so it works for a study not yet begun. The other designs do not have this page yet.
 
-The dialog runs one page at a time with **Next**, **Back** and **Close**. There is no Save: every change is kept as you make it. Selecting a design sets its questions. Where the table already says where each cell comes from, the first asks only whether any of it comes from a surveillance system. A blank for the group is filled from the table page, and you can change it. For a case-control
+The dialog runs one page at a time with **Next** and **Back**. Your answers are kept as a draft until **Apply**, which writes them all to the step; **Cancel**, × or Escape leave the step as it was, and ask first when something was answered. Selecting a design sets its questions. Where the table already says where each cell comes from, the first asks only whether any of it comes from a surveillance system. A blank for the group is filled from the table page, and you can change it. For a case-control
 study that means how cases arose, when controls were sampled, whether they were matched, and where
 they came from. Each answer writes a sentence into **Methods**, and some carry a caveat. Answer
 *not sure / not stated* when that is the truth: nothing stops, and the note says what is unknown. A
@@ -160,6 +160,12 @@ admission review, and [the study-design audit](../audits/study-designs-and-our-c
 for how the designs were chosen.
 
 ## History
+
+### 2026-11-22 · Answers kept until Apply (0.8.0)
+
+The dialog wrote each answer to the step as it was made, with Close and no Save. It is now the standard dialog: the
+answers are a draft until Apply, and Cancel, × or Escape ask before discarding them. The checklist on the last page
+reads the draft, so it shows what has just been answered.
 
 ### 2026-11-22 · On the standard Inspector (0.7.0)
 

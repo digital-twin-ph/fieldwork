@@ -75,8 +75,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 - **Order set by the practitioner, 2026-11-22:** pins first, to close experiment 09; then 1a (stress tests of every table
   operation), 3 (WebGPU, experiment 225), 4 (Hagelloch's peak); then the rest of the Inspector move.
-- **Pins, experiment 09:** items 1 to 14 built in 0.166.0. **Left:** field order and groups (item 3), the one thing keeping
-  09 open; and checks on a real phone, a real GPS fix, a real phone photo (HEIC) and a real handheld's GPX.
+- **Pins, experiment 09: closed 2026-11-22** (0.166.0 and 0.167.0; field order built, groups judged not needed). **Left,
+  for the field:** a real phone, a real GPS fix, a real phone photo (HEIC) and a real handheld's GPX.
 - **A line layer** (the practitioner, 2026-11-22: *"That's an important gap no line layer"*, *"Line layer can be
   transportation routes"*, *"Perhaps we can also use line layers in microplanning? Team routes?"*). Fieldwork holds
   points, areas, rasters and street networks, and no lines of their own: a GPS export's tracks are counted and left out
@@ -91,10 +91,14 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   four applications and GNSS tracking beside them, with case claims only; WHO AFRO's RED guide (2008) asks for roads
   and rivers on the map, no routes. So the case study's line layer is **planned against actual**: a team's track over
   its settlements, the unreached ones found; optimised routes are a planning convenience, not a coverage claim.
-- **Study design's dialog** to the standard draft-until-Apply dialog (the practitioner, 2026-11-22: yes).
-- **206 closed into 228**, its five questions and the syndromic methods not yet offered (MEM, historical limits,
-  count-scale CUSUM, the regression/EWMA switch, several syndromes at once, and the lesser ones) as 228's open items
-  (the practitioner, 2026-11-22).
+  GPEI's *Best practices in microplanning for polio eradication* (2018) makes a route per team per day standard: maps
+  show where each team starts and finishes and the route from house to house, which vaccination follows. Gavi's
+  evidence briefs (2023): of 24 microplanning studies, six measured effect, and they compare enhancements (GIS, GPS
+  phones, community engagement) rather than microplanning against none; all eight GIS-mapping effectiveness studies were
+  positive and none had a comparison group, so GIS mapping is rated "promising". A planned route beside each team's
+  actual track is the case study's layer.
+- **Study design's dialog** on the standard draft-until-Apply dialog: done in 0.167.0 (Study design 0.8.0).
+- **206 closed into 228** (2026-11-22): its five questions and the syndromic methods not yet offered are 228's open items.
 
 ### Threads from 0.154.0 and 0.155.0 (2026-11-20), not yet ordered
 
@@ -109,9 +113,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   provenance); some missing or late. Apply ruleset gains *starts with*. Credited to CDC/NSSP with CDC's non-endorsement
   disclaimer. Before building: each NSSP query transcribed from its page, and every ICD-11 code checked in the current
   release.
-- **206, syndromic surveillance's first record:** retire it into 228? Its open questions, if so, come here: New York's
-  daily series as a test bed; a seasonal baseline; the day-of-week pattern; whether a real syndromic feed reads in as
-  published; EWMA's lower limit. Waiting on the practitioner.
+- **206** closed into 228 on 2026-11-22; its questions are 228's open items.
 
 - **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);
   the practitioner, 2026-11-21). The spike reads a point by two byte ranges, checked against Planetary Computer at five
@@ -131,7 +133,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **The rest of the Inspector move** (the practitioner, 2026-11-22: *"rest of the Inspector move for app.ts"*), in five
   batches, one release each. **A, done in 0.164.0:** Cases by period, Rate, Select rows, Total within groups, Two-by-two,
   Regression. **B, done in 0.165.0:** Transmission chains, Space-time scan, Study design (now on the standard Inspector;
-  its dialog is still the paged one that saves as it goes). **Left:** C, Deduplicate records, Find health
+  its dialog the standard one since 0.167.0). **Left:** C, Deduplicate records, Find health
   facilities, Project to UTM, Mean center, Donut and H3 geomasking; D, Table output, Polygon layer, Georeferenced map
   image, Find satellite products, and reading satellite files (its dialog and sentence, with their readers and caches);
   E, the three sea-level steps.

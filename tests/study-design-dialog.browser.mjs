@@ -46,7 +46,7 @@ test('a design with fewer measures offers fewer boxes, and says what it cannot e
   await dialog.locator('[value="case-control"]').check();
   await expect(dialog.locator('[data-design-measure]')).toHaveCount(1);
   await expect(dialog).toContainText('Not estimable under case-control: risk ratio, risk difference');
-  await dialog.locator('#design-close').click();
+  await dialog.locator('#config-apply').click();
   await expect(page.locator('#study-design-dialog')).toHaveCount(0);
   await page.locator('#run-button').click();
   await page.locator('[data-view="results"]').click();
@@ -57,7 +57,7 @@ test('unticking a measure removes it from the result of the next run',async({pag
   await open(page);
   const dialog=page.locator('#study-design-dialog');
   await dialog.locator('[data-design-measure="odds ratio"]').uncheck();
-  await dialog.locator('#design-close').click();
+  await dialog.locator('#config-apply').click();
   await expect(page.locator('#inspector-content .standard-sentence')).toContainText('reporting risk ratio, risk difference');
   await page.locator('#run-button').click();
   await page.locator('[data-view="results"]').click();
@@ -114,21 +114,26 @@ test('the dialog pages through a design, keeps text on Next, and ends on the che
   await expect(dialog.locator('[data-check="computation"]')).toHaveAttribute('data-status','done');
   await expect(dialog.locator('[data-check="SRC"]')).toHaveAttribute('data-status','done');
   await expect(dialog.locator('[data-check="CC3"]')).toHaveAttribute('data-status','open');
-  await dialog.locator('#design-close').click();
+  await dialog.locator('#config-apply').click();
   await expect(page.locator('#design-checklist-summary')).toContainText('Checklist:');
   await page.locator('#run-button').click();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('.two-by-two-estimates tbody th')).toHaveText(['odds ratio']);
 });
 
-test('Escape keeps text still in its box',async({page})=>{
+test('Escape asks first, and text still in its box is kept and applied',async({page})=>{
   await open(page);
   const dialog=page.locator('#study-design-dialog');
   await dialog.locator('[name="design-kind"][value="case-control"]').check();
   await dialog.locator('#design-next').click();
   await dialog.locator('input[value="SRC.2"]').check();
   await dialog.locator('[data-slot="survey"]').fill('NDHS');
+  // Escape asks first (the standard dialog, 2026-11-22); kept editing, the text is still there, and Apply keeps it.
   await page.keyboard.press('Escape');
+  await expect(dialog.locator('#config-keep-editing')).toBeVisible();
+  await dialog.locator('#config-keep-editing').click();
+  await expect(dialog.locator('[data-slot="survey"]')).toHaveValue('NDHS');
+  await dialog.locator('#config-apply').click();
   await expect(dialog).toHaveCount(0);
   await page.locator('#configure-step').click();
   await dialog.locator('#design-next').click();
@@ -175,4 +180,19 @@ test('the table page, read at dialog and phone width',async({page})=>{
   await expect(dialog.locator('[data-cell="a"] .design-cell-column')).toBeVisible();
   await expect(dialog.locator('[data-cell="b"] .design-cell-column')).toHaveText('no outcome');
   await page.screenshot({path:process.env.DESIGN_SHOT_NARROW||test.info().outputPath('narrow.png')});
+});
+
+// THE STANDARD DIALOG (the practitioner, 2026-11-22): answers are a draft until Apply. Cancel asks first, and Discard leaves
+// the step as it was; nothing was written while the questions were answered.
+test('a design changed and cancelled is asked about, and the step keeps what it had',async({page})=>{
+  await open(page);
+  const dialog=page.locator('#study-design-dialog');
+  await expect(dialog.locator('#study-design-dialog-title')).toContainText('Study design');
+  await dialog.locator('[value="case-control"]').check();
+  await expect(page.locator('#inspector-content .standard-sentence')).not.toContainText('case-control');
+  await dialog.locator('#config-cancel').click();
+  await expect(dialog.locator('#config-keep-editing')).toBeVisible();
+  await dialog.locator('#config-discard').click();
+  await expect(page.locator('#study-design-dialog')).toHaveCount(0);
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('cohort');
 });

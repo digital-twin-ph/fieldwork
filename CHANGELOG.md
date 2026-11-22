@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.167.0 — In development
+
+- **The order of a pin's form**, Point data 0.14.0: under Add a form field, each field moved up or down; every pin's
+  form follows. Experiment 09 is closed.
+- **Study design's answers are kept until Apply**, Study design 0.8.0: its paged dialog is the standard one; Cancel, ×
+  and Escape ask before discarding answers.
+- **206 closed into 228**: its open questions, and the syndromic methods not yet offered, are 228's open items.
+
 ## 0.166.0 — 2026-11-22
 
 - **Pins in the field**, Point data 0.13.0 (experiment 09):

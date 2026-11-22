@@ -213,3 +213,25 @@ test('waypoints from a GPS device: GPX and KMZ read as points, tracks counted an
   feature=source(await saved(page)).data.features[0];
   assert.equal(feature.properties.name,'Water point');assert.equal(feature.properties.functional,'yes');assert.equal(feature.properties.elevation_m,1002);
 });
+
+test('the form\'s fields in the order the questions are asked: a field moved up, the pin\'s form and the saved order follow',async({page})=>{
+  await open(page);
+  await page.getByText('Add a form field',{exact:true}).click();
+  await page.locator('#pin-field-key').fill('household_id');await page.locator('#pin-field-label').fill('Household ID');
+  await page.locator('#pin-add-field').click();
+  await expect(page.locator('#pin-field-order li')).toHaveCount(3);
+  await expect(page.locator('#pin-field-order li').nth(2)).toContainText('Household ID');
+  await page.getByRole('button',{name:'Move Household ID up'}).click();
+  await page.getByRole('button',{name:'Move Household ID up'}).click();
+  await expect(page.locator('#pin-field-order li').first()).toContainText('Household ID');
+  await expect(page.getByRole('button',{name:'Move Household ID up'})).toBeDisabled();
+  await page.locator('#pin-record').selectOption('inside');
+  const labels=await page.locator('#pin-form .pin-attribute > label.field-label').allTextContents();
+  expect(labels.slice(0,3)).toEqual(['Household ID','Category','Notes']);
+  // Undo puts it back where it was.
+  await page.locator('#pin-undo').click();
+  await expect(page.locator('#pin-field-order li').nth(1)).toContainText('Household ID');
+  await page.getByRole('button',{name:'Move Household ID up'}).click();
+  await page.locator('#config-apply').click();
+  expect(source(await saved(page)).fields.map(f=>f.key)).toEqual(['household_id','category','notes']);
+});

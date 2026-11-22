@@ -5509,7 +5509,7 @@ function outbreakKit():OutbreakKit{
       const records=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features??[];
       const ran=source?result?.pointColumns?.[source.id]?.map(c=>c.attribute)??[]:[];
       return [...new Set([...records.flatMap(f=>Object.keys(f.properties??{})),...ran])].sort();},
-    shape:id=>upstreamKeyValues(nodeOf(id))??{},checklist:id=>designChecklist(workflow,id)};
+    shape:id=>upstreamKeyValues(nodeOf(id))??{},checklist:(id,draft)=>designChecklist(draft?{...workflow,nodes:workflow.nodes.map(n=>n.id===id&&n.type==='study_design'?{...n,params:draft}:n)}:workflow,id)};
 }
 /** THE TABLE STEPS' KIT (table-steps-ui.ts): the step kit, with the last receipt, the step the records come from, the
  *  columns and values arriving, and the exposure columns a two-by-two could compare. */

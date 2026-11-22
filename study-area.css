@@ -106,3 +106,4 @@ body.focus-results #map-panel:not([hidden]) #map-communication{flex:none}
 .pin-photos{margin:12px 0;border:1px solid var(--line);border-radius:6px;padding:8px 12px}.pin-photo-list{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .pin-photo figure{margin:0}.pin-photo img{display:block;width:100%;height:120px;object-fit:cover;border-radius:4px}.pin-photo figcaption{font-size:15px}.pin-photo-add{display:inline-block;margin-top:8px;cursor:pointer}
 .pin-areas,.map-study-areas{display:flex;flex-wrap:wrap;gap:6px 16px;margin:8px 0;font-size:15px}.pin-areas label,.map-study-areas label{display:inline-flex;align-items:center;gap:6px}
+.pin-field-order{margin:4px 0 12px;padding-left:24px;font-size:15px}.pin-field-order li{display:flex;flex-wrap:wrap;align-items:center;gap:4px 12px;padding:2px 0}.pin-field-order li span{min-width:12em}

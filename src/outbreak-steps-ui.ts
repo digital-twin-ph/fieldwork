@@ -22,7 +22,7 @@ export interface OutbreakKit extends StepKit {
   /** The key columns arriving and their values. */
   shape:(nodeId:string)=>Record<string,string[]>;
   /** What the workflow has declared, item by item, for the study design's checklist. */
-  checklist:(nodeId:string)=>ChecklistItem[];
+  checklist:(nodeId:string,draft?:WorkflowNode<'study_design'>['params'])=>ChecklistItem[];
 }
 
 /** THE SPACE-TIME SCAN'S SETTINGS IN ONE SENTENCE (experiment 186). */
@@ -163,6 +163,6 @@ export const designInspector:OwnInspector<'study_design'>={
     // Replaced rather than merged: a design change removes `computations`, and `Object.assign` would leave the old
     // design's choice standing.
     openDesignDialog(node.params,kit.esc,next=>{k.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='study_design')t.params=next;});},
-      ()=>k.checklist(n.id));});},
+      draft=>k.checklist(n.id,draft),node.params.label||'Study design');});},
 };
 export const OUTBREAK_STEP_INSPECTORS={transmission_chains:chainsInspector,space_time_scan:scanInspector,study_design:designInspector} as const;

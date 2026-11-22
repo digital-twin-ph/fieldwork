@@ -63,7 +63,7 @@ const caseControl=async(page,tbt)=>{
   await page.locator(`.react-flow__node[data-id="${design}"]`).click();
   await page.locator('#configure-step').click();
   await page.locator('#study-design-dialog [value="case-control"]').check();
-  await page.locator('#design-close').click();
+  await page.locator('#config-apply').click();
 };
 const compare=async(page,tbt,label,columns,caseValue,nonCaseValue)=>{
   await page.locator(`.react-flow__node[data-id="${tbt}"]`).click();

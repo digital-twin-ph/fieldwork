@@ -2,10 +2,12 @@
 
 _Created 2026-10-06 · Updated 2026-11-22_
 
-**Status:** tried. Save Edits, Delete Pin and record IDs were built and checked on 2026-10-05 (A33 to A38). On
-2026-11-22 a review of what pins can do found twelve gaps, and the practitioner added photos and GPS exports, listed
-under [Open items](#open-items-2026-11-22). All fourteen were built or tried in 0.166.0 except field order and groups
-(item 3), which is what keeps this record open.
+**Status:** validated, 2026-11-22. Save Edits, Delete Pin and record IDs were built and checked on 2026-10-05 (A33 to
+A38). A review of what pins can do on 2026-11-22 found twelve gaps, and the practitioner added photos and GPS exports;
+all fourteen [open items](#open-items-2026-11-22) were built or tried in 0.166.0 and 0.167.0, or recorded as not built
+with the reason. Checked by `tests/pushpin-field.browser.mjs` (ten cases), `tests/pin-photos.test.mjs`, and the pin
+and input tests before them, in Chromium and WebKit. Not on a phone, with a real GPS fix, a real phone photo or a real
+handheld's file.
 
 Date: October 5, 2026. The user reported that entered key/value data did not persist and requested an explicit Save Edits button. They also requested a visible Delete Pin button, an option to generate UUIDs, and clarification of the Category/Notes fields.
 
@@ -44,7 +46,7 @@ practitioner chose to take them in this order, the first three first.
 | --- | --- | --- |
 | 1 | No "use my location". `docs/usage.md` said pins came with automatic location and time; only the time was automatic, and a pin was placed by eye | built 2026-11-22 (0.166.0): **Add a pin at my location** and **Move this pin to my location**, one fix at the device's best accuracy; usage.md corrected |
 | 2 | Where a position came from, and how accurate it is, is not recorded: a pin placed by eye and a GPS fix look the same | built 2026-11-22 (0.166.0): `positionSource` (device, map, typed), `positionAccuracyM` and `positionFixedAt`; a drag or a typed position clears the device's accuracy |
-| 3 | A field cannot be required, and fields have no order or groups | required built 2026-11-22 (0.166.0), flagged rather than refused (below); field order and groups still open |
+| 3 | A field cannot be required, and fields have no order or groups | required built 2026-11-22 (0.166.0), flagged rather than refused (below); field order built 2026-11-22 (0.167.0), Move up and Move down; groups not built (below) |
 | 4 | Date only: no field for a date and a time of day | built 2026-11-22 (0.166.0): **Date and time**, kept as entered with no time zone, `xsd:dateTime` in N3 |
 | 5 | No table of the pins in the editor: seeing them all needs a save and Data quality → Records | built 2026-11-22 (0.166.0): 25 a page, each row choosing its pin |
 | 6 | Every pin looks the same: Category does not change the marker (A35 said so on purpose) | built 2026-11-22 (0.166.0): eight colours with white text above 6:1, the category's first letter on the marker, a legend with counts; supersedes A35's "does not change marker styling" |
@@ -99,6 +101,14 @@ fold, so a test's click at 70% of the map landed on the footer; the tools were l
 read only where the browser decodes it, which Safari does and Chrome does not), or a real handheld's GPX. Nominatim was
 answered by the test, not asked. The line layer the tracks need is a gap of its own, in the TODO.
 
+## Field order, and groups not built (2026-11-22)
+
+The practitioner agreed, the same day: field order built, groups not. **Field order** (0.167.0): under Add a form field,
+the form's fields listed in order, each with Move up and Move down; every pin's form follows, and Undo takes a move
+back. `tests/pushpin-field.browser.mjs`: a field moved to the top, the pin's form and the saved order following, Undo;
+Chromium and WebKit. **Groups** (headed sections, as field-collection tools have) are not built: a pin's form holds at
+most 30 fields, and none here has grown long enough to need them. If one does, that is the reason to build them.
+
 ## What would close it
 
 Each open item built and checked in a browser test, or recorded here as not built with the reason, and the manual's
@@ -145,3 +155,4 @@ changed this file; a date stamp sweep is not an update._
 | 2026-11-22 | Pin review: twelve open items; status tried, with what would close it |
 | 2026-11-22 | Open items 1, 2, 4, 5 and 6 built, and 3's required fields; 0.166.0 |
 | 2026-11-22 | Items 7 to 14 built, the editor on the standard dialog; field order and groups left open |
+| 2026-11-22 | Field order built (0.167.0), groups recorded as not needed; validated, closed |

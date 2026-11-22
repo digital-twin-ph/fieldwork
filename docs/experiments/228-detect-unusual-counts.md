@@ -4,7 +4,8 @@ _Created 2026-11-21 · Updated 2026-11-21_
 
 **Status:** validated. Built 2026-11-21, its methods checked against R's `surveillance` package the same day, and by the
 Validation Lab's check 53 (Python, numpy) on four series, a seasonal one among them; the syndromic worked example uses
-it (0.160.0; its charts, 0.162.0). The practitioner's review of the name is in the TODO.
+it (0.160.0; its charts, 0.162.0). The practitioner's review of the name is in the TODO. 206 closed into this record
+on 2026-11-22; its open questions and the methods not yet offered are [open items](#open-items-2026-11-22).
 
 ## The question
 
@@ -80,6 +81,38 @@ differs on the first day of the rise, as above.
 **What the seasonal series shows.** CUSUM on the first year signals for weeks on end in each later winter (50 of 156
 weeks); EWMA, whose limit the season's spread widens, in none; the EARS methods on every autumn's rise (C1 7 weeks, C2
 15, C3 43). Platform: CPython 3.13.3, numpy 2.5.3, scipy 1.18.1; not yet run in the lab's browser kernel.
+
+## Open items (2026-11-22)
+
+Moved from [206](206-syndromic-surveillance-aberration-detection.md) when it closed into this record, and the methods
+not offered yet (the practitioner, 2026-11-22: "Add the above in 228 as open items"). Proposals, not decisions.
+
+**From 206**
+
+| # | Question | State |
+| --- | --- | --- |
+| 1 | New York's daily series (ten years of emergency-department visits) as the test bed the practitioner chose on 2026-11-14 | open |
+| 2 | A seasonal baseline: check 53 showed the methods here have none | open |
+| 3 | The day-of-week pattern: a pattern, not an aberration, and nothing here models it | open |
+| 4 | Whether a real syndromic feed (counts by syndrome and day) reads in as it is published | open |
+| 5 | EWMA's lower limit: whether a fall below it is said, and how | open |
+
+**Methods not yet offered**, ranked as proposed on 2026-11-22
+
+| # | Method | Why |
+| --- | --- | --- |
+| 6 | Moving Epidemic Method (Vega et al. 2013, open) | a season's start and intensity for ILI, which none of the five methods here can say |
+| 7 | Farrington flexible (Noufaily et al. 2013) with day-of-week terms | the seasonal baseline (2) and the weekly pattern (3) |
+| 8 | Historical limits: the last four weeks against the same weeks of five earlier years | what weekly notifiable tables used; computable by hand |
+| 9 | CUSUM on the count scale (Poisson or negative binomial) | the standardised CUSUM here behaves poorly at counts of 0 to 3, measles' usual range |
+| 10 | The regression/EWMA switch ESSENCE uses | a rule for choosing between two methods, mostly covered by 7 |
+| 11 | Several syndromes at once | four definitions run daily add up false alarms; at least said, perhaps corrected |
+| 12 | Lesser: MCUSUM and MEWMA; the Poisson space-time scan with a population; Holt-Winters or ARIMA; Bayesian methods such as boda | named, not ranked; Bayesian ones sit poorly with one browser tab on a laptop |
+
+Not proposed: machine-learning detectors, which would stand in for the reasoning trainees are to learn.
+
+**What would close these:** each built and checked against an independent implementation, or recorded as not built
+with the reason. Which NSSP definition documents recommend which method was not checked.
 
 ## What this does not establish
 

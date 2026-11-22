@@ -1648,7 +1648,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.13.0",
+      "currentVersion": "0.14.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1719,6 +1719,11 @@
           "version": "0.13.0",
           "path": "widgets/releases/point_input/0.13.0.json",
           "sha256": "87b44c5a3cef292937c6a6267b87ce98e0c1811251742137919a3b16a0055d70"
+        },
+        {
+          "version": "0.14.0",
+          "path": "widgets/releases/point_input/0.14.0.json",
+          "sha256": "cf9408594996eb2788a554ac4acd3f9087255268e178c45da3c513a2d1c747f8"
         }
       ],
       "previousNodeTypes": [
@@ -2839,7 +2844,7 @@
     {
       "id": "urn:fieldwork:widget:study_design",
       "nodeType": "study_design",
-      "currentVersion": "0.7.0",
+      "currentVersion": "0.8.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2875,6 +2880,11 @@
           "version": "0.7.0",
           "path": "widgets/releases/study_design/0.7.0.json",
           "sha256": "dd1d89a435b6e3b6474d6292bcf648c4ae0a331c42981ce184f20fc93b7f55f7"
+        },
+        {
+          "version": "0.8.0",
+          "path": "widgets/releases/study_design/0.8.0.json",
+          "sha256": "204cb1f687b7be491df791c4a3e5f93af1537375131747b402bf58a29e8325d3"
         }
       ]
     },

@@ -576,16 +576,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.13.0",
+   "version": "0.14.0",
    "released": "2026-11-22",
    "changes": [
     {
      "kind": "added",
-     "description": "Pins in the field: Add a pin at my location and Move this pin to my location, each pin saying where its position came from (this device with the accuracy it stated, the map, typed, or its photo); required form fields, named and never refused; a Date and time type; the pins as a table; markers coloured by Category with a legend; Find a place through Nominatim; degrees, minutes and seconds typed; a basemap choice, Esri imagery on the person's key among them; Undo before Apply; up to ten photos a pin, 2,048 px, location and camera details not kept, in encrypted backups only; GPX, KML and KMZ waypoints imported, tracks counted and not imported."
-    },
-    {
-     "kind": "changed",
-     "description": "Its editor is the standard configuration dialog (experiment 186): Cancel and Apply where Save Edits was, the standard refusal message, and the map opening on the study areas or the world."
+     "description": "Field order: under Add a form field, each field moved up or down, and every pin's form follows; Undo takes a move back. Experiment 09's last open item."
     }
    ],
    "breaking": false,
@@ -968,12 +964,12 @@
    "migrationFrom": []
   },
   "study_design": {
-   "version": "0.7.0",
+   "version": "0.8.0",
    "released": "2026-11-22",
    "changes": [
     {
      "kind": "changed",
-     "description": "On the standard Inspector: name, inputs, one sentence of the design, what it reports, its period and unit, Configure…, and the checklist under Result; the period, unit of analysis and note moved into the dialog's first page; out of app.ts into outbreak-steps-ui.ts."
+     "description": "Its paged dialog is the standard one (experiment 186): answers are a draft until Apply; Cancel, × and Escape ask before discarding them; the last page's checklist reads the draft."
     }
    ],
    "breaking": false,

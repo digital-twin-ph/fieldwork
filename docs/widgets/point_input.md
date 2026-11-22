@@ -81,6 +81,7 @@ In **Configure…**, choose **Place pushpins on map**.
 | Find a town or district | **Find a place** asks OpenStreetMap's Nominatim, only when you press Find; the words you type are sent there. A result moves the map; it does not place a pin |
 | See houses | **Basemap**: OpenStreetMap, OpenTopoMap, or a CARTO or Esri style on your own key, Esri's satellite imagery among them |
 | Take back a change | **Undo**, the last 30 changes, before Apply. Above 20,000 records Undo is off |
+| Put the form's questions in order | Under **Add a form field**, **Move up** and **Move down** beside each field; every pin's form follows |
 | Show some study areas, not all | **Study areas shown**: a checkbox for each study area's outline; **Fit pins and study area** fits the ones shown |
 
 **Where each position came from.** Every pin says how it was placed: from this device, on the map by eye, or typed. A
@@ -146,6 +147,11 @@ events is something your labels and your weights have to say.
 1861** loads a 188-case line list.
 
 ## History
+
+### 2026-11-22 · The form's order (0.14.0)
+
+A pin's form listed its fields in the order they were added. Each can now be moved up or down, and every pin's form
+follows. Experiment 09's last open item.
 
 ### 2026-11-22 · Pins in the field (0.13.0)
 

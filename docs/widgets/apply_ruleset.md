@@ -149,6 +149,10 @@ settings, its rules and each column's default. Type in it, or **Upload (JSON)** 
 - **Start from a template…** loads a small ruleset that runs as it is, on this step's own columns where it has the kind
   each needs: categories from words, bands from a number, days between two dates against a target, or one column
   divided by another.
+- **Arriving columns**, beside the text: each column the connected step sends, with its kind and a few of its values,
+  marked *declared* where `fields` names it. **Add to fields** writes its entry, spelled as the column is. A declared
+  column that does not arrive is listed under *Declared but not arriving*, and the check names it, with the nearest
+  arriving column.
 
 A file is a ruleset a person wrote: what it must not be read as goes with it.
 
@@ -288,6 +292,7 @@ A later rule can read a column an earlier one gave, by its name: here a band fir
 | *A comma is left before "]"* | Remove the comma after the last item |
 | *JSON writes names and strings in double quotes* | Change `'` to `"` |
 | *fwa:age is not a declared field* | Add the column to `fields`, or correct the name |
+| *"Age" is not a column of … Did you mean "age"?* | Spell `attribute` as the column arrives, or choose **Add to fields** |
 | *"comparator" is one of …* | Use one of the comparisons above |
 | *write the words to look for* | Give `contains` its words, separated by commas |
 | *… is a number, so it holds no words* | Look for words in a text column (`kind` `term`) |

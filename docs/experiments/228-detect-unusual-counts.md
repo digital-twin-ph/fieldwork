@@ -3,7 +3,8 @@
 _Created 2026-11-21 · Updated 2026-11-21_
 
 **Status:** tried. Built 2026-11-21, its methods checked against R's `surveillance` package the same day; the syndromic
-worked example that will use it is still to come (TODO).
+worked example uses it (0.160.0; its charts, 0.162.0). Still open: a lab notebook against R over several series,
+a seasonal one among them, and the practitioner's review of the name.
 
 ## The question
 
@@ -37,7 +38,7 @@ definitions (in `src/aberration.ts`).
 | **D7** | *Detect unusual counts*; port `records` in, `table` out; keys the period's column, the series' column if any, and `measure` (observed, expected, threshold, statistic, signal). |
 | **D8** | Unit tests against R's `surveillance` on a series with a known excess; refusals in words; a browser test from a table to its signals, the dialog's chart and Show me how. |
 | **D9** | One step where none could do it before. |
-| **D10** | The syndromic worked example, not yet built. |
+| **D10** | The syndromic worked example: built in 0.160.0 ([example-2026-syndromic-surveillance](https://github.com/digital-twin-ph/example-2026-syndromic-surveillance)), charted in 0.162.0. |
 
 ## Validation record, 2026-11-21
 

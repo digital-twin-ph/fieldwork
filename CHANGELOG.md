@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.162.0 — In development
+
+- **Chart draws series together**: several series on one scale in one panel, each with its own mark (bars, a line, a
+  dashed line), and a triangle where another series is 1, such as Detect unusual counts' *signal*.
+- **Detect unusual counts shows each method's computation**: its statistic against its limit (CUSUM's running sum
+  against *h*, EWMA's smoothed count against its widening limit, EARS's count against mean plus *z* standard
+  deviations), and the table gains a *limit* measure, so a chart can draw it.
+- **Apply ruleset's JSON view lists the arriving columns**: each with its kind and a few values, marked where the
+  ruleset declares it; **Add to fields** writes the entry; a declared column that does not arrive is named, with the
+  nearest arriving column.
+- **The syndromic surveillance example draws its charts**: visits by day per syndrome, gastrointestinal visits against
+  the threshold, CUSUM's sum against *h*; and a third workflow, *How do the methods differ?*, runs CUSUM, EWMA and
+  EARS C2 on the same days, each drawn as it computes.
+- **Select rows reads the values of a step's table after a run**, so it can follow Detect unusual counts and other steps
+  whose columns are known only once they run.
+
 ## 0.161.0 — 2026-11-21
 
 - **Writing rules as JSON, a guide** in Apply ruleset's manual: the parts of a ruleset, a rule, every comparison, a

@@ -73,12 +73,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.16.0",
+   "version": "0.17.0",
    "released": "2026-11-21",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The JSON view colour-keyed, names bold, every colour 4.5:1 in both themes; four templates that run as loaded; a JSON Schema for editors such as VS Code; a guide, Writing rules as JSON, whose examples are tested."
+     "kind": "added",
+     "description": "The JSON view lists the columns arriving from the connected step, with their kinds and a few values, marked where the ruleset declares them; Add to fields writes an entry spelled as the column is; a declared column that does not arrive is listed, and the check names the nearest arriving column."
     }
    ],
    "breaking": false,
@@ -150,12 +150,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.24.0",
-   "released": "2026-11-20",
+   "version": "0.25.0",
+   "released": "2026-11-21",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The title, subtitle, axis titles and source note take {country}, {units}, {unit} and {census} from the workflow (the study area's country and what its units are called, the census read), each said as not stated where the workflow does not state it. A copy of a workflow leaves the subtitle empty, as the original's finding."
+     "kind": "added",
+     "description": "Series together: the values of a column in one panel, on one scale, each as bars, a line or a dashed line; the periods where one series is 1 marked with triangles. Configure… moved into its own module."
     }
    ],
    "breaking": false,
@@ -1076,12 +1076,12 @@
    "migrationFrom": []
   },
   "detect_unusual_counts": {
-   "version": "0.1.0",
+   "version": "0.2.0",
    "released": "2026-11-21",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Flags the periods whose count passes a threshold set from the series' own past: EARS C1, C2 and C3 (Hutwagner et al. 2003), CUSUM (Page 1954, counts standardized as R's surveillance does) and EWMA (Roberts 1959). Experiment 228."
+     "kind": "added",
+     "description": "A limit measure, the decision limit on the statistic's own scale; the method's computation drawn in Configure…; Show me how for each method."
     }
    ],
    "breaking": false,

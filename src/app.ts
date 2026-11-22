@@ -1258,6 +1258,10 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     return kept.length?Object.fromEntries(kept.filter(name=>name in below)
       .map(name=>[name,below[name]])):below;
   }
+  // ANY OTHER STEP THAT MADE A TABLE, from the last run (2026-11-21): Detect unusual counts' measures, Cases by period's
+  // periods, read as the run left them, so Select rows after them is offered their columns and values.
+  const ran=result?.tables?.[up.id];
+  if(ran)return Object.fromEntries(ran.keys.map(key=>[key,[...new Set(ran.rows.map(row=>String(row.key[key]??'')))].slice(0,200)]));
   return undefined;
 }
 

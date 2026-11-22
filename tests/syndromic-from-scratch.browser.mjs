@@ -37,6 +37,41 @@ const show=async(page,from,text)=>{await add(page,'table_output');const shown=aw
   await tidy(page);await wire(page,from,shown,'table');await open(page,shown);
   await page.locator('#table-label').fill(text);await page.locator('#table-label').press('Tab');return shown;};
 
+/** A chart of a step, named; configured once the step has run, when its series are known. */
+const chartOf=async(page,from,name)=>{await add(page,'chart_output');const chart=await idOf(page,'chart_output');
+  await tidy(page);await wire(page,from,chart,'records');await open(page,chart);
+  await page.locator('#chart-label').fill(name);await page.locator('#chart-label').press('Tab');return chart;};
+/** Series together: a mark for each series named, and the days where `signal` is 1 marked on one of them. */
+const seriesChart=async(page,chart,{by,marks,on,title,curve=false})=>{
+  await open(page,chart);await page.locator('#configure-step').click();
+  const dialog=page.locator('#chart-config');
+  await dialog.locator(curve?'#chart-series-figure':'#chart-figure').selectOption('series');
+  if(by)await dialog.locator('#chart-series-by').selectOption(by);
+  for(const [series,mark] of Object.entries(marks??{}))await dialog.locator(`[data-series-mark="${series}"]`).selectOption(mark);
+  await dialog.locator('#chart-title').fill(title);await dialog.locator('#chart-title').press('Tab');
+  if(on){await dialog.locator('#chart-signal-from').selectOption('signal');await dialog.locator('#chart-signal-on').selectOption(on);
+    await dialog.locator('#chart-signal-label').fill('signal');await dialog.locator('#chart-signal-label').press('Tab');}
+  await dialog.locator('#config-apply').click();await expect(dialog).toBeHidden();
+};
+/** The gastrointestinal rows of a table. */
+const gastrointestinal=async(page,from)=>{await add(page,'select_rows');const select=await idOf(page,'select_rows');
+  await tidy(page);await wire(page,from,select,'records');await run(page);
+  await open(page,select);await page.locator('#configure-step').click();
+  await page.locator('#select-config #select-key').selectOption('syndrome');
+  await page.locator('#select-config [data-select-value="gastrointestinal"]').check();
+  await page.locator('#select-config #config-apply').click();
+  await label(page,select,'Gastrointestinal only');return select;};
+/** Detect unusual counts on one series, by a method. */
+const detectBy=async(page,from,method,name,settings={})=>{
+  await add(page,'detect_unusual_counts');const detect=await idOf(page,'detect_unusual_counts');
+  await tidy(page);await wire(page,from,detect,'records');await open(page,detect);await page.locator('#configure-step').click();
+  const dialog=page.locator('#detect-config');
+  await dialog.locator('#detect-time').selectOption('period');
+  await dialog.locator('#detect-method').selectOption(method);
+  for(const [id,value] of Object.entries(settings)){const el=dialog.locator(id);
+    if(value===true)await el.check();else{await el.fill(String(value));await el.press('Tab');}}
+  await dialog.locator('#config-apply').click();await label(page,detect,name);return detect;};
+
 /** The visits, read long: each column a key, age in years the value. */
 const visits=async page=>{
   await add(page,'table_input');const node=await idOf(page,'table_input');await open(page,node);
@@ -123,12 +158,49 @@ test('syndromic surveillance: syndromes from complaints, counted by day, each da
     await dialog.locator('#config-apply').click();
     await label(page,detect,'Unusual days, CUSUM over the first four weeks');
     await show(page,detect,'Each day, each syndrome: observed, expected, threshold and signal');
+    // THE CHARTS: every syndrome by day; gastrointestinal visits against the threshold; CUSUM's sum against h.
+    const byDay=await chartOf(page,series,'Visits by day, one line per syndrome');
+    const gi=await gastrointestinal(page,detect);
+    await seriesChart(page,byDay,{curve:true,title:'Emergency department visits by day and syndrome, January to June 2026'});
+    const against=await chartOf(page,gi,'Gastrointestinal visits against the threshold');
+    await seriesChart(page,against,{by:'measure',marks:{observed:'bar',threshold:'dashed'},on:'observed',title:'Gastrointestinal visits by day against the CUSUM threshold'});
+    const sum=await chartOf(page,gi,'CUSUM: the running sum against h');
+    await seriesChart(page,sum,{by:'measure',marks:{statistic:'line',limit:'dashed'},on:'statistic',title:'CUSUM of gastrointestinal visits against its limit h'});
+    await run(page);
+    await open(page,against);
+    await expect(page.locator('#inspector-content .standard-sentence')).toContainText('observed as bars, threshold as a dashed line, a triangle on observed where signal is 1');
+  }
+
+  // 3. HOW DO THE METHODS DIFFER? Gastrointestinal visits by day, through CUSUM, EWMA and EARS C2, each drawn as it computes.
+  await page.locator('#add-workflow').click();
+  await named(page,'How do the methods differ?');
+  {
+    const table=await visits(page),rules=await syndromes(page,table);
+    await add(page,'case_series');const series=await idOf(page,'case_series');await open(page,series);
+    await page.locator('#configure-step').click();await page.locator('#series-input').selectOption('table-case');await page.locator('#config-apply').click();
+    await tidy(page);await wire(page,rules,series,'cases');
+    await open(page,series);await page.locator('#configure-step').click();
+    await choose(page,'#series-date','date');await page.locator('#series-kind').selectOption('other');await page.locator('#series-period').selectOption('day');
+    await choose(page,'#series-case','visit_id');await choose(page,'#series-split','syndrome');
+    await page.locator('#config-apply').click();await label(page,series,'Visits by day and syndrome');
+    await show(page,series,'Visits by day and syndrome');
+    const gi=await gastrointestinal(page,series);await run(page);
+    const methods=[['cusum','CUSUM, the first four weeks as baseline',{'#detect-baseline-periods':28,'#detect-reset':true}],
+      ['ewma','EWMA, the first four weeks as baseline',{'#detect-baseline-periods':28}],
+      ['ears-c2','EARS C2, each day against the week before the two before it',{}]];
+    const detects=[];
+    for(const [method,name,settings] of methods)detects.push([await detectBy(page,gi,method,name,settings),name]);
+    await run(page);
+    for(const [detect,name] of detects){
+      const chart=await chartOf(page,detect,`${name.split(',')[0]}: its statistic against its limit`);
+      await seriesChart(page,chart,{by:'measure',marks:{statistic:'line',limit:'dashed'},on:'statistic',title:`${name.split(',')[0]} of gastrointestinal visits against its limit`});
+    }
     await run(page);
   }
 
   await page.locator('#storage-status').click();
   const block=page.locator('.project-view-block').filter({hasText:'Syndromic surveillance, 2026'}).first();
-  await expect(block).toContainText('2 workflows');
+  await expect(block).toContainText('3 workflows');
   if(process.env.SYNDROMIC_EXPORT){
     const download=page.waitForEvent('download');
     await block.locator('button[data-export-project]').click();

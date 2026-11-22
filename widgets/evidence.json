@@ -137,9 +137,10 @@
     "snow-curve",
     "snow-isochrone",
     "snow-voronoi",
-    "south-london-1854"
+    "south-london-1854",
+    "syndromic-surveillance-2026"
    ],
-   "exampleUseCount": 14,
+   "exampleUseCount": 15,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
@@ -554,9 +555,10 @@
     "salmonella-germany-2021",
     "sea-level-rise-philippines",
     "sierra-leone-measles",
-    "south-london-1854"
+    "south-london-1854",
+    "syndromic-surveillance-2026"
    ],
-   "exampleUseCount": 9,
+   "exampleUseCount": 10,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

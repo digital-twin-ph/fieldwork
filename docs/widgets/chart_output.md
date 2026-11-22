@@ -128,6 +128,17 @@ bottom; one group's counts run left and the other's right, and the axis reads as
 column is blank are not drawn, and the subtitle says how many. A column with other than two values is refused, naming
 them. Hagelloch's *Who fell ill?* draws its cases by age and gender this way.
 
+### Several series in one panel: series together
+
+**Draw → Series together** draws the values of one column as series in a single panel, on one scale: one line for each
+syndrome, or a day's count as bars with its threshold dashed over them. For each series choose **Bars**, **A line**,
+**A dashed line**, or leave it **Not drawn**; until one is chosen, every series is a line. **Mark the periods where a
+series is 1** puts a triangle on another series wherever that one is 1, with your label in the legend: Detect unusual
+counts' `signal` is 1 on the days it signals.
+
+One scale says the series measure the same thing. Draw a count with its threshold together; draw a count and a
+standardized statistic in panels (below), each on its own scale.
+
 ### Variables moving together through time: one panel each
 
 When a table carries several variables in one column — what Table input's **Wide** shape makes of a file with a
@@ -242,6 +253,12 @@ A chart's default source line read "Source: … · See N3 & evidence for method.
 someone in the application, was printed in every figure and draft. The default is now "Source: …" and nothing more. A
 source line written in Configure is printed as written. Found by the target outputs audit
 ([audit](../audits/target-outputs-audit.md)).
+
+### 2026-11-21 · Series together (0.25.0)
+
+The values of a column as series in one panel, each as bars, a line or a dashed line, and the periods where one series
+is 1 marked with triangles: what syndromic surveillance needs to show a day's count against its threshold, and its
+signals. Its settings moved, with the rest of Configure…, out of the application's main file into the widget's own.
 
 ### 2026-11-20 · Words from the workflow (0.24.0)
 

@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.163.0 — In development
+## 0.163.0 — 2026-11-22
 
 - **Show me how for every spatial step.** Sample a raster (at points, or over areas), Keep points inside the area and
   Summarize points to polygons each show what they do on made-up shapes from their Configure…, ending on what the step's

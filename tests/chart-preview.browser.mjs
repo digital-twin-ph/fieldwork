@@ -19,7 +19,7 @@ test('Configure… draws the chart as set, and Draw offers first the forms that 
   const dialog=page.locator('#chart-config');
   const draw=dialog.locator('#chart-figure');
   await expect(draw.locator('optgroup[label="Suits these data"] option')).toHaveText(['How are two groups spread across ages? Population pyramid','How do groups differ? Bars']);
-  await expect(draw.locator('optgroup[label="Needs other data"] option')).toHaveText(['Who infected whom? Transmission tree']);
+  await expect(draw.locator('optgroup[label="Needs other data"] option')).toHaveText(['Who infected whom? Transmission tree','How do several series move together? Series together']);
   await expect(dialog.locator('[data-draw-because]')).toContainText('Suits these data: age in bands, the two values of gender back to back.');
   const preview=dialog.locator('#chart-config-preview');
   await expect(preview.locator('svg.marks')).toContainText('f ← count → m',{timeout:30_000});
@@ -38,7 +38,7 @@ test('Configure… draws the chart as set, and Draw offers first the forms that 
   // THE CURVE BY SCHOOL CLASS: split, so the stacked curve suits it as well as the plain one.
   await page.locator('.react-flow__node[data-id="class-curve-chart"]').click();
   await page.locator('#configure-step').click();
-  await expect(dialog.locator('#chart-series-figure optgroup[label="Suits these data"] option')).toHaveText(['How did it unfold over time? Epidemic curve','When, and of which kind? Stacked epidemic curve']);
+  await expect(dialog.locator('#chart-series-figure optgroup[label="Suits these data"] option')).toHaveText(['How did it unfold over time? Epidemic curve','When, and of which kind? Stacked epidemic curve','How do the kinds move together? Series together']);
   await expect(dialog.locator('#chart-series-figure')).toHaveValue('stacked');
   await expect(dialog.locator('[data-draw-because]')).toContainText('the series is split by class');
   await expect(dialog.locator('#chart-config-preview svg.marks')).toBeVisible({timeout:30_000});

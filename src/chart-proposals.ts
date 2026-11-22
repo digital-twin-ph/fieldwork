@@ -10,7 +10,7 @@ import type {Scale} from './column-metadata.js';
 /** What the sources declared each column to be (experiment 211), read before the values. */
 type Scales=Record<string,{scale?:Scale}>;
 
-export type ChartForm='bars'|'pyramid'|'tree'|'curve'|'stacked';
+export type ChartForm='bars'|'pyramid'|'tree'|'curve'|'stacked'|'series';
 export interface ChartProposal {form:ChartForm; question:string; name:string; because:string; fits:boolean}
 export type ChartArrival=
   |{kind:'series'; splitBy?:string}
@@ -61,6 +61,9 @@ export function proposeChartForms(arrived:ChartArrival):ChartProposal[]{
     {form:'curve',question:'How did it unfold over time?',name:'Epidemic curve',because:'a count for each period',fits:true},
     {form:'stacked',question:'When, and of which kind?',name:'Stacked epidemic curve',
       because:arrived.splitBy?`the series is split by ${arrived.splitBy}`:'needs a series split by a column, in Cases by period',
+      fits:!!arrived.splitBy},
+    {form:'series',question:'How do the kinds move together?',name:'Series together',
+      because:arrived.splitBy?`one line for each value of ${arrived.splitBy}, on one scale`:'needs a series split by a column, in Cases by period',
       fits:!!arrived.splitBy}];
   if(arrived.kind==='polygons')return [
     {form:'bars',question:'How do the areas differ?',name:'Bars',because:'one bar for each area, as tall as its count or total',fits:true}];
@@ -73,6 +76,9 @@ export function proposeChartForms(arrived:ChartArrival):ChartProposal[]{
     {form:'pyramid',question:'How are two groups spread across ages?',name:'Population pyramid',
       because:pyramid?`${pyramid.bands} in ${pyramid.declared?'its declared order':'bands'}, the two values of ${pyramid.two} back to back`
         :'needs a column of ages or bands, and one with two values',fits:!!pyramid},
+    {form:'series',question:'How do several series move together?',name:'Series together',
+      because:date&&table.keys.length>1?`${date} along the bottom, one series for each value of another column, on one scale`
+        :'needs a date column and another column whose values are the series',fits:!!date&&table.keys.length>1},
     {form:'bars',question:'How do groups differ?',name:'Bars',because:'one bar for each category, as tall as its number',fits:true}];
 }
 

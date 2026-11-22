@@ -105,6 +105,7 @@ export function chartVegaSpec(chart:ChartSummary,given:ChartParams,context:{sour
   if(chartRenderer(params)!=='vega-lite')throw new Error('Vega-Lite rendering is not selected.');
   if(chart.panels?.length&&params.figure==='pyramid')return pyramidVegaSpec(chart,params,context);
   if(chart.panels?.length&&params.figure==='stacked')return stackedVegaSpec(chart,params,context);
+  if(chart.panels?.length&&params.figure==='series')return seriesVegaSpec(chart,params,context);
   if(chart.panels?.length)return panelVegaSpec(chart,params,context);
   if(chart.interval)return intervalVegaSpec(chart,params,context);
   // A LINE runs along the categories in their order, left to right (the practitioner, 2026-11-12: Chart offered no line).
@@ -356,6 +357,58 @@ export function stackedVegaSpec(chart:ChartSummary,given:ChartParams,context:{so
       legend:{labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,labelColor:FIGURE_ROLE.ink,titleColor:FIGURE_ROLE.ink},
       title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk,subtitlePadding:8,offset:12},
       bar:{binSpacing:1}},
+  };
+}
+
+/** SERIES TOGETHER (2026-11-21, syndromic surveillance: "add those charts and update the Chart widget"): the values of one
+ *  column as series in ONE panel, on one scale, each its own mark: bars, a line or a dashed line (a threshold over the
+ *  counts; one line per syndrome). Only the series given a mark are drawn, where any is. Where `signals` names a series of
+ *  0 and 1, each period it is 1 is marked by a triangle on the series named, and said in the legend; never by colour alone.
+ *  One scale is a claim that the series measure the same thing: a count and a standardized statistic are not drawn so. */
+export function seriesVegaSpec(chart:ChartSummary,given:ChartParams,context:{sourceId?:string;runId?:string;sourceLabel?:string}){
+  const params=filledParams(given,figureWords());
+  const by=params.panelsBy?.trim()||chart.groupedBy||'series',marks=params.seriesMarks??{};
+  const listed=Object.keys(marks).filter(k=>marks[k]);
+  const shown=(listed.length?listed:chart.panels!).filter(g=>chart.panels!.includes(g));
+  if(!shown.length)throw new Error(`None of the series named is a value of ${by}. Its values are ${chart.panels!.join(', ')}.`);
+  if(shown.length>FIGURE_PALETTE.length)throw new Error(`Series together give each value of ${by} its own colour, and ${shown.length} are drawn, more than the ${FIGURE_PALETTE.length} colours that can be told apart. Draw panels instead.`);
+  const labels=[...new Set(chart.bins.map(b=>b.label))];
+  const colour=(g:string)=>FIGURE_PALETTE[shown.indexOf(g)]!;
+  const values=chart.bins.filter(b=>shown.includes(b.panel??'')&&!b.missing).map(b=>({displayLabel:b.label,series:b.panel??'',count:b.count}));
+  const width=Math.min(640,Math.max(300,labels.length*8)),sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const x={field:'displayLabel',type:'nominal' as const,sort:labels,title:params.xAxisTitle?.trim()||chart.categoryTitle||null,
+    axis:{labelOverlap:'parity' as const,labelSeparation:4}};
+  const y={field:'count',type:'quantitative' as const,title:params.yAxisTitle?.trim()||chart.caption.split(' by ')[0]||'value'};
+  const color={field:'series',type:'nominal' as const,scale:{domain:shown,range:shown.map(colour)},legend:{title:by,orient:'top' as const}};
+  const tooltip=[{field:'displayLabel',type:'nominal' as const,title:chart.categoryTitle??'period'},{field:'series',type:'nominal' as const,title:by},{field:'count',type:'quantitative' as const,title:'value'}];
+  const layer:object[]=shown.map(g=>{const kind=marks[g]??'line';
+    return {transform:[{filter:{field:'series',equal:g}}],
+      mark:kind==='bar'?{type:'bar' as const,opacity:0.85}:{type:'line' as const,strokeWidth:kind==='dashed'?2:2.5,...(kind==='dashed'?{strokeDash:[6,4]}:{}),interpolate:'linear' as const},
+      encoding:{x,y,color,tooltip}};});
+  // SIGNALS, as triangles on the series named, at the periods where the signal series is 1.
+  const sig=params.signals;
+  if(sig?.from&&sig.on){
+    const on=new Map(chart.bins.filter(b=>b.panel===sig.on&&!b.missing).map(b=>[b.label,b.count]));
+    const points=chart.bins.filter(b=>b.panel===sig.from&&b.count===1&&on.has(b.label)).map(b=>({displayLabel:b.label,count:on.get(b.label)!,mark:sig.label?.trim()||'signal'}));
+    if(points.length)layer.push({data:{values:points},mark:{type:'point' as const,shape:'triangle-up',filled:true,size:110,color:FIGURE_ROLE.ink,yOffset:-10},
+      encoding:{x,y:{field:'count',type:'quantitative' as const},shape:{field:'mark',type:'nominal' as const,scale:{range:['triangle-up']},legend:{title:null,orient:'top' as const}},
+        tooltip:[{field:'displayLabel',type:'nominal' as const,title:chart.categoryTitle??'period'},{field:'mark',type:'nominal' as const,title:'marked'}]}});
+  }
+  // ITS OWN CAPTION, not the panels': the series drawn, and the gaps in those only.
+  const gaps=chart.bins.filter(b=>shown.includes(b.panel??'')&&b.missing).length;
+  const caption=`${chart.caption.split(' by ')[0]} by ${chart.categoryTitle??'period'}: ${shown.join(', ')}, one ${by} each`
+    +(gaps?` · ${gaps} point${gaps===1?'':'s'} with no value, left as gaps`:'');
+  return {
+    $schema:'https://vega.github.io/schema/vega-lite/v6.json',background:FIGURE_ROLE.background,description:caption,
+    data:{values},
+    title:{text:params.chartTitle?.trim()||caption,
+      subtitle:[params.subtitle?.trim(),sourceNote].filter((part):part is string=>!!part).flatMap(part=>wrapToWidth(part,width)),anchor:'start' as const},
+    width,height:280,layer:layer as never[],
+    config:{view:{stroke:null},font:FIGURE_TYPE.family,
+      axis:{...TUFTE_AXIS,labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,labelColor:FIGURE_ROLE.quietInk,titleColor:FIGURE_ROLE.ink},
+      axisQuantitative:{grid:true,gridColor:FIGURE_GRID,gridWidth:1},
+      legend:{labelFontSize:FIGURE_TYPE.tick,titleFontSize:FIGURE_TYPE.axisTitle,labelColor:FIGURE_ROLE.ink,titleColor:FIGURE_ROLE.ink},
+      title:{fontSize:FIGURE_TYPE.title,subtitleFontSize:FIGURE_TYPE.subtitle,color:FIGURE_ROLE.ink,subtitleColor:FIGURE_ROLE.quietInk,subtitlePadding:8,offset:12}},
   };
 }
 

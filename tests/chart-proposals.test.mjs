@@ -6,10 +6,11 @@ import {proposeChartForms,proposalOrder} from '../build/chart-proposals.js';
 const row=(key,value=1)=>({key,value});
 const fits=list=>proposalOrder(list).filter(p=>p.fits).map(p=>p.form);
 
-test('a case series proposes its curve, and the stacked curve only where it is split',()=>{
+test('a case series proposes its curve, and the stacked curve and series together only where it is split',()=>{
   assert.deepEqual(fits(proposeChartForms({kind:'series'})),['curve']);
   const split=proposeChartForms({kind:'series',splitBy:'class'});
-  assert.deepEqual(fits(split),['curve','stacked']);
+  assert.deepEqual(fits(split),['curve','stacked','series']);
+  assert.match(split.find(p=>p.form==='series').because,/one line for each value of class/);
   assert.match(split.find(p=>p.form==='stacked').because,/split by class/);
 });
 

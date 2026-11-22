@@ -701,7 +701,12 @@ export interface ParamsByType {
   chart_output:{label:string; section?:import('./notes.js').FigureSection|'none';
     /** WHAT IS DRAWN: bars (the default), or who infected whom as chains over time (experiment 200, step 5), with the
      *  columns naming each case, its infector and its date. */
-    figure?:'bars'|'tree'|'pyramid'|'stacked'; tree?:{id:string;parent:string;date:string;
+    figure?:'bars'|'tree'|'pyramid'|'stacked'|'series';
+    /** SERIES TOGETHER (2026-11-21): with figure 'series', each value of `panelsBy` drawn in one panel as bars, a line or a
+     *  dashed line; only those given a mark are drawn, where any is. `signals`: the periods where the series `from` is 1,
+     *  marked by a triangle on the series `on`, with a label in the legend. */
+    seriesMarks?:Record<string,'bar'|'line'|'dashed'|''>;signals?:{from:string;on:string;label?:string};
+    tree?:{id:string;parent:string;date:string;
       /** A written value meaning no source recorded, such as "none recorded" (2026-11-12). Empty is always none. */
       none?:string};
     /** ONE PANEL PER VALUE of this key column, stacked on a shared x axis, each with its own y scale (experiment 174).

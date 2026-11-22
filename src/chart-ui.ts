@@ -173,6 +173,9 @@ export function chartSentence(kit:ChartKit,n:WorkflowNode<'chart_output'>):strin
     ?`Draws who infected whom in ${source} as chains over time: each case at its ${p.tree.date}, joined to the case named in ${p.tree.parent}.`
     :`Draws who infected whom in ${source} as chains over time. Name the case, infector and date columns in Configure\u2026`;
   const marked=p.markedDates?.length?`, marking ${p.markedDates.map(m=>`${m.label||m.date} on ${m.date}`).join('; ')}`:'';
+  if(p.figure==='series'){const drawn=Object.entries(p.seriesMarks??{}).filter(([,m])=>m).map(([v,m])=>`${v} as ${m==='bar'?'bars':m==='dashed'?'a dashed line':'a line'}`);
+    return `Draws ${source} as series together on one scale${p.panelsBy?`, one per ${p.panelsBy}`:''}${drawn.length?`: ${drawn.join(', ')}`:''}`
+      +`${p.signals?.from&&p.signals.on?`, a triangle on ${p.signals.on} where ${p.signals.from} is 1`:''}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;}
   if(p.figure==='stacked')return `Draws ${source} as stacked bars, one per period, divided by the values the series is split by${marked}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
   if(p.figure==='pyramid')return p.panelsBy
     ?`Draws ${source} as a population pyramid: ${p.keyColumn||'each band'} up the middle, the two groups of ${p.panelsBy} back to back.`
@@ -198,9 +201,9 @@ export function openChartConfig(kit:ChartKit,nodeId:string){
   const declaredScales=scalesOf(declaredUpstream(kit.workflow().nodes,kit.workflow().edges,nodeId));
   const proposals=curve?proposeChartForms({kind:'series',splitBy:(upstream as WorkflowNode<'case_series'>).params.splitBy})
     :arrivedTable?proposeChartForms({kind:'table',table:arrivedTable,scales:declaredScales}):null;
-  const formValue=(f:ChartForm)=>curve?(f==='stacked'?'stacked':''):f;
+  const formValue=(f:ChartForm)=>curve?(f==='stacked'||f==='series'?f:''):f;
   const drawField=(draft:WorkflowNode<'chart_output'>['params'])=>{
-    const chosen:ChartForm=curve?(draft.figure==='stacked'?'stacked':'curve'):(draft.figure==='tree'||draft.figure==='pyramid'?draft.figure:'bars');
+    const chosen:ChartForm=curve?(draft.figure==='stacked'||draft.figure==='series'?draft.figure:'curve'):(draft.figure==='tree'||draft.figure==='pyramid'||draft.figure==='series'?draft.figure:'bars');
     const listed=proposals??proposeChartForms(curve?{kind:'series'}:{kind:'table',table:{keys:[],rows:[]}});
     const option=(p:ChartProposal)=>`<option value="${formValue(p.form)}" ${p.form===chosen?'selected':''}>${esc(p.question)} ${esc(p.name)}</option>`;
     const ordered=proposalOrder(listed),fit=ordered.filter(p=>p.fits),rest=ordered.filter(p=>!p.fits);
@@ -271,7 +274,7 @@ export function openChartConfig(kit:ChartKit,nodeId:string){
             // THE TREE'S TITLE AND SOURCE NOTE, as any chart's (2026-11-12: the tree offered neither, and drew its default).
             +`<div class="field"><label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(draft.chartTitle||'')}" placeholder="Who infected whom"></div>`+wordsHint(esc)
             +`<div class="field"><label class="field-label" for="chart-source-note">Source / method note</label><input id="chart-source-note" maxlength="300" value="${esc(draft.sourceNote||'')}"></div>`
-          :chartTableControls(kit,shown)+chartControls(kit,shown,{omitOrientation:curve})
+          :(draft.figure==='series'?seriesControls(kit,shown,curve):chartTableControls(kit,shown))+chartControls(kit,shown,{omitOrientation:curve||draft.figure==='series'})
             +(curve?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
               +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`
               +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:'')
@@ -287,8 +290,15 @@ export function openChartConfig(kit:ChartKit,nodeId:string){
     wire:(root,draft,redraw)=>{
       const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement)=>void)=>
         root.querySelectorAll<HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
-      on('#chart-series-figure',el=>{if(el.value==='stacked'){draft.figure='stacked';draft.renderer='vega-lite';}else delete draft.figure;});
-      on('#chart-figure',el=>{if(el.value==='tree'||el.value==='pyramid'){draft.figure=el.value;if(el.value==='pyramid')draft.renderer='vega-lite';}else delete draft.figure;});
+      on('#chart-series-figure',el=>{if(el.value==='stacked'||el.value==='series'){draft.figure=el.value;draft.renderer='vega-lite';}else delete draft.figure;});
+      on('#chart-figure',el=>{if(el.value==='tree'||el.value==='pyramid'||el.value==='series'){draft.figure=el.value;if(el.value!=='tree')draft.renderer='vega-lite';}else delete draft.figure;});
+      // SERIES TOGETHER: the column the series come from, a mark for each, and the periods to mark.
+      on('#chart-series-by',el=>{if(el.value)draft.panelsBy=el.value;else delete draft.panelsBy;delete draft.seriesMarks;delete draft.signals;});
+      on('[data-series-mark]',el=>{const marks={...(draft.seriesMarks??{})},name=el.dataset.seriesMark!;
+        if(el.value)marks[name]=el.value as 'bar'|'line'|'dashed';else delete marks[name];
+        if(Object.keys(marks).length)draft.seriesMarks=marks;else delete draft.seriesMarks;});
+      on('[data-series-signal]',el=>{const signals={from:'',on:'',...draft.signals,[el.dataset.seriesSignal!]:el.value.trim()};
+        if(signals.from||signals.on)draft.signals=signals;else delete draft.signals;});
       on('[data-tree]',el=>{draft.tree={id:'',parent:'',date:'',...draft.tree,[el.dataset.tree!]:el.value};});
       on('#chart-renderer',el=>{draft.renderer=el.value as 'html'|'vega-lite';if(draft.renderer==='html')draft.mark='bar';});
       on('#chart-mark',el=>{draft.mark=el.value as 'bar'|'point'|'line';});
@@ -338,3 +348,36 @@ export function openChartConfig(kit:ChartKit,nodeId:string){
   },esc);
 }
 
+
+/** SERIES TOGETHER'S SETTINGS (2026-11-21): the column whose values are the series (a split case series has its own), a
+ *  mark for each, bars, a line or a dashed line, or not drawn, and the periods to mark where one series is 1. */
+function seriesControls(kit:ChartKit,n:WorkflowNode<'chart_output'>,curve:boolean):string{
+  const p=n.params;
+  const records=kit.workflow().edges.find(e=>e.to===n.id&&e.port==='records');
+  const up=kit.workflow().nodes.find(x=>x.id===records?.from);
+  const columns=up?kit.tableKeyColumns(up):[];
+  const drawn=(kit.result()?.outputs.find(o=>o.nodeId===n.id) as {chart?:{panels?:string[]}}|undefined)?.chart?.panels;
+  const by=curve?(up?.type==='case_series'?up.params.splitBy:undefined):p.panelsBy;
+  const values=by?[...new Set([...(drawn??[]),...((kit.upstreamKeyValues(n)??{})[by]??[])])]:[];
+  const option=(value:string,label:string,current:string|undefined)=>`<option value="${esc(value)}"${(current??'')===value?' selected':''}>${esc(label)}</option>`;
+  let out=curve?(by?`<p class="description">One series for each value of ${esc(by)}, as Cases by period splits it.</p>`
+      :'<p class="notice">Split the series by a column in Cases by period to draw several together.</p>')
+    :`<div class="field"><label class="field-label" for="chart-series-by">One series per</label><select id="chart-series-by">`
+      +option('','Choose a column…',p.panelsBy)+columns.map(c=>option(c,c,p.panelsBy)).join('')+'</select>'
+      +'<small>Each value of the column a series, on one scale: draw together only what is measured in the same unit.</small></div>';
+  if(!values.length)return out+(by?'<p class="muted">Run the workflow once to list the series.</p>':'');
+  out+='<fieldset class="field"><legend class="field-label">How each series is drawn</legend>'
+    +values.map(v=>`<label class="field-label" for="chart-series-mark-${esc(v)}">${esc(v)}</label>`
+      +`<select id="chart-series-mark-${esc(v)}" data-series-mark="${esc(v)}">`
+      +option('',Object.keys(p.seriesMarks??{}).length?'Not drawn':'A line (every series, until one is chosen)',p.seriesMarks?.[v])
+      +option('bar','Bars',p.seriesMarks?.[v])+option('line','A line',p.seriesMarks?.[v])+option('dashed','A dashed line',p.seriesMarks?.[v])+'</select>').join('')
+    +'</fieldset>'
+    +'<fieldset class="field"><legend class="field-label">Mark the periods where a series is 1 (optional)</legend>'
+    +'<label class="field-label" for="chart-signal-from">Where this series is 1</label><select id="chart-signal-from" data-series-signal="from">'
+    +option('','No marks',p.signals?.from)+values.map(v=>option(v,v,p.signals?.from)).join('')+'</select>'
+    +'<label class="field-label" for="chart-signal-on">A triangle on</label><select id="chart-signal-on" data-series-signal="on">'
+    +option('','Choose a series…',p.signals?.on)+values.map(v=>option(v,v,p.signals?.on)).join('')+'</select>'
+    +`<label class="field-label" for="chart-signal-label">Its label, in your words</label><input id="chart-signal-label" data-series-signal="label" maxlength="40" value="${esc(p.signals?.label??'')}" placeholder="signal">`
+    +'<small>A signal from Detect unusual counts is 1 on the days it signals.</small></fieldset>';
+  return out;
+}

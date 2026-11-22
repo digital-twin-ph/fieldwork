@@ -245,6 +245,20 @@ differing by punctuation or case — the case you will actually meet — is neve
 
 ## History
 
+### 2026-11-22 · Keys proposed from their values, and an empty cell is one of a key's values (0.14.0)
+
+It matched a column only by its name.
+Now, with nothing chosen to match on, Configure… proposes the pair of columns whose values link most, one from each
+table, after the same folding the match uses: "LGA" in one table and "lga_name" in the other, where both name the same
+places. It says how many keys the pair links, and the choice stays yours. Every other pair sharing values is listed beside it, with the counts, and **Match on these** chooses one. Where no pair links anything and one column
+holds codes, such as P-codes, while the other holds names, it says so: relating them needs a table that holds both.
+
+
+Also found by the stress tests of the table operations: where the second table held North twice, once with 4 and once with
+an empty cell, North was related as 4: a choice nobody made. The empty cell now counts as one of North's values, so
+the step stops as it does for any key with two values, and says "4" and an empty cell. A key whose only values are
+empty still brings nothing.
+
 ### 2026-11-19 · Shown on a made-up example (0.13.0)
 
 **Show me how it works**, in Configure…, steps through a join of two made-up tables, with the choices made in the

@@ -125,6 +125,11 @@ export interface GroupResult {
   excluded?:{cells:number; groups:number; of:GroupGap[]};
   /** Present when shares were asked for: what they are shares of, and how many strata had no share to give. */
   shares?:{within:string[]; name:string; unknownStrata:number; zeroStrata:number};
+  /** ROWS WITH A BLANK KEY, totalled as their own group with nothing to name it (the table stress tests, 2026-11-22). */
+  blankKeys?:{rows:number; groups:number};
+  /** GROUPS WHOSE NAMES DIFFER ONLY IN CAPITALS OR SPACES, totalled apart: "South" and "south " are two groups unless
+   *  someone says they are one. Said, never merged (the table stress tests, 2026-11-22). */
+  nearKeys?:string[][];
 }
 
 /** How many decimals a number is written with, as JavaScript writes it: 2.8 one, 7 none, 1e-7 seven. */
@@ -136,8 +141,19 @@ const decimalsOf=(v:number):number=>{
 export function groupTable(table:DataTable,request:GroupRequest):GroupResult {
   const totalled=!!request.total&&request.total!==table.valueField&&(request.aggregate??'sum')!=='count';
   if(totalled)table=totalling(table,request.total!);
-  const result=groupTotals(table,request,totalled);
-  return request.share?withShares(result,request.by.map(n=>n.trim()).filter(Boolean),request.share.within):result;
+  const grouped=groupTotals(table,request,totalled);
+  const result=request.share?withShares(grouped,request.by.map(n=>n.trim()).filter(Boolean),request.share.within):grouped;
+  return {...result,...keyFindings(table,request.by.map(n=>n.trim()).filter(Boolean))};
+}
+/** What the key columns hold that a total hides: blank keys, and names that differ only in capitals or spaces. */
+export function keyFindings(table:DataTable,by:readonly string[]):Pick<GroupResult,'blankKeys'|'nearKeys'>{
+  const blank=table.rows.filter(r=>by.some(k=>(r.key[k]??'').trim()===''));
+  const blankGroups=new Set(blank.map(r=>by.map(k=>r.key[k]??'').join('\u0000'))).size;
+  const spelled=new Map<string,Set<string>>();
+  for(const r of table.rows){const label=by.map(k=>r.key[k]??'').join(' · ');if(by.some(k=>(r.key[k]??'').trim()===''))continue;
+    const norm=label.toLowerCase().replace(/\s+/g,' ').trim();(spelled.get(norm)??spelled.set(norm,new Set()).get(norm)!).add(label);}
+  const near=[...spelled.values()].filter(s=>s.size>1).map(s=>[...s]);
+  return {...(blank.length?{blankKeys:{rows:blank.length,groups:blankGroups}}:{}),...(near.length?{nearKeys:near}:{})};
 }
 
 /** The table with a key column as its value column: each cell read as a number, a blank as an empty cell. */

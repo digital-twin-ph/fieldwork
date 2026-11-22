@@ -1,6 +1,6 @@
 # 206 · Syndromic surveillance: detecting an aberration in a count over time
 
-_Created 2026-11-11 · Updated 2026-11-14_
+_Created 2026-11-11 · Updated 2026-11-22_
 
 **Status:** retired, 2026-11-22: closed into [228](228-detect-unusual-counts.md), which built what this asked for
 (Detect unusual counts: EARS C1 to C3, CUSUM and EWMA, checked against R's `surveillance` and in the lab in Python). The

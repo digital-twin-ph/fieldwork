@@ -135,6 +135,12 @@ offered, because this step cannot tell a count from a rate.
 
 ## History
 
+### 2026-11-22 · What the keys hide, said (0.7.0)
+
+Found by the stress tests of the table operations. Rows whose key was blank were totalled as a group with nothing to
+name it, and "South" and "south" were totalled apart without a word. Both are now said in the step's sentence of what
+it did, and nothing is merged or dropped: which spellings are one place is yours to say.
+
 ### 2026-11-19 · Shown on a made-up example (0.6.0)
 
 **Show me how it works**, in Configure…, steps through five made-up rows gathered into two regions under the summary you have chosen; a group with an empty cell has an unknown total unless empty cells are left out, and a count of rows counts the empty one. Back, Step and Play; nothing moves where reduced motion

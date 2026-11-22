@@ -95,6 +95,13 @@ An estimate's interval, declared by Regression, survives the stacking when every
 
 ## History
 
+### 2026-11-22 · Columns whose values match (0.5.0)
+
+Configure… now lists,
+for each table after the first, its columns whose values match a column of the first table under another name, with
+how many values they share, ignoring capitals, punctuation and spacing. **Stack under** puts the one under the other's
+name. The line-up made without asking, where every name matches, is unchanged.
+
 ### 2026-11-19 · Shown on a made-up example (0.3.0)
 
 **Show me how it works**, in Configure…, steps through two made-up tables stacked, one lacking a column the other has, so its rows are empty there, not zero, and a district appearing once from each; with rows naming their table if you have chosen that. Back, Step and Play; nothing moves where reduced motion

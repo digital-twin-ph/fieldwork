@@ -23,7 +23,8 @@ test('a run stopped at Append rows keeps its tables, so Columns can line the cen
   await page.locator('#workflow-file').setInputFiles({name:'stack.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(workflow()))});
   await expect(page.locator('#run-button')).toBeEnabled();
   await page.locator('#run-button').click();
-  await expect(page.locator('body')).toContainText('Workflow stopped',{timeout:30000});
+  // The step that stopped it is named (the table stress tests, 2026-11-22).
+  await expect(page.locator('body')).toContainText('“Both, row by row” stopped the workflow',{timeout:30000});
   await expect(page.locator('body')).toContainText('stack its "province" under "name"');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="stack"]').click();
@@ -45,7 +46,7 @@ test('a run stopped at Append rows keeps its tables, so Columns can line the cen
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:30000});
   const params=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='stack').params);
   expect(params.stackUnder).toEqual([{table:1,column:'province',as:'name'}]);
-  expect(errors.filter(e=>!/Workflow stopped/.test(e))).toEqual([]);
+  expect(errors.filter(e=>!/Workflow stopped|stopped the workflow/.test(e))).toEqual([]);
 });
 
 /** EVERY NAME MATCHING (2026-11-20): lined up without asking, said in the grid and the run, and changeable. */

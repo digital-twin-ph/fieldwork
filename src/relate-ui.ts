@@ -1,5 +1,6 @@
 import type {RelateShape,MeasureShare,RelateRequest,ShiftColumn,RelateOutcome} from './relate-table.js';
-import {rateMultiplier,machinedNotes,matchWords,isNumberLabel,relateShape,decisionMatches,relateAtShifts} from './relate-table.js';
+import {rateMultiplier,machinedNotes,matchWords,isNumberLabel,relateShape,decisionMatches,relateAtShifts,proposeRelateKeys} from './relate-table.js';
+import {columnMatches,columnMatchesMarkup} from './column-matches.js';
 import {PREVIEW_ROWS} from './long-tables.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {DEFAULT_SPELLING_THRESHOLD,type SpellingSettings} from './spelling-match.js';
@@ -202,6 +203,19 @@ export interface RelateConfigView {
  *  compare, what happens to unmatched rows) is one dialog, because they multiply: a different key or shift changes
  *  which rows match, and so what there is to decide. The preview is the join this draft would make. */
 export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
+  // THE KEYS PROPOSED FROM THEIR VALUES where none is chosen yet (2026-11-22): the pair of columns that links most.
+  let proposed:{on:string;text:string;warning?:boolean}|undefined;
+  const matches=view.left&&view.right?columnMatches(view.left,view.right,view.initial.normalisation):[];
+  if(!view.initial.on&&view.left&&view.right){
+    const found=proposeRelateKeys(view.left,view.right,view.initial.normalisation);
+    if(found.proposal){const p=found.proposal;
+      view={...view,initial:{...view.initial,on:p.on,rightOn:p.rightOn===p.on?'':p.rightOn}};
+      proposed={on:p.on,text:`Proposed from the values: "${p.on}"${p.rightOn===p.on?' in both tables':` with the second table's "${p.rightOn}"`}, `
+        +`which links ${p.linked} of the first table's ${p.leftDistinct} ${p.leftDistinct===1?'key':'keys'} to the second's ${p.rightDistinct}. Choose another column if these are not the same things.`};}
+    else if(found.codesAndNames)proposed={on:'',warning:true,text:`No column of one table holds the values of a column of the other. `
+      +`${found.codesAndNames.codes[0]!.toUpperCase()+found.codesAndNames.codes.slice(1)} looks like codes and ${found.codesAndNames.names} like names: `
+      +'relating them needs a table that holds both, related first.'};
+  }
   // Which pair the multiplier is stated for: a reading aid, not a setting, so it is not in the draft.
   let numerator='',denominator='';
   // The table the preview last drew, so its pages can turn.
@@ -234,7 +248,9 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         // SHOWN ON A MADE-UP EXAMPLE (experiment 223), with the choices made below, before they are applied.
         +'<p><button class="button" id="relate-show-me" data-show-me>Show me how it works</button></p>'
         +select('relate-on','Matched on, in the first table',here,draft.on,'Connect both tables first')
+        +(proposed&&(proposed.warning||draft.on===proposed.on)?`<p class="notice${proposed.warning?' notice-warning':''}" data-relate-proposed>${esc(proposed.text)}</p>`:'')
         +select('relate-right-on','The same, in the second table',there,rightOn,'Connect both tables first')
+        +columnMatchesMarkup(matches,{firstLabel:view.leftLabel,secondLabel:view.rightLabel,pick:'Match on these'},esc)
         +(draft.on&&shared.length>1
           ?`<fieldset class="field" id="relate-also"><legend class="field-label">And also matched on</legend>`
             +shared.filter(c=>c!==draft.on).map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}"`
@@ -384,6 +400,10 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         several:draft.several,decision:draft.decision,label:draft.label}),esc,showMe);
       const on=(id:string,fn:(el:HTMLSelectElement)=>void)=>{const el=root.querySelector<HTMLSelectElement>(`#${id}`);if(el)el.onchange=()=>{fn(el);redraw();};};
       on('relate-on',el=>{draft.on=el.value;draft.alsoOn=draft.alsoOn.filter(c=>c!==el.value);});
+      // A PAIR CHOSEN FROM THE COLUMNS WHOSE VALUES MATCH: both boxes set at once.
+      root.querySelectorAll<HTMLButtonElement>('[data-column-match]').forEach(b=>b.onclick=()=>{
+        const [first,second]=b.dataset.columnMatch!.split('\u001f');if(!first||!second)return;
+        draft.on=first;draft.rightOn=second===first?'':second;draft.alsoOn=draft.alsoOn.filter(c=>c!==first);redraw();});
       on('relate-right-on',el=>{draft.rightOn=el.value===draft.on?'':el.value;});
       on('relate-bring',el=>{draft.bring=el.value;});
       on('relate-several',el=>{draft.several=el.value==='each';});

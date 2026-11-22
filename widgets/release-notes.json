@@ -367,12 +367,12 @@
    "migrationFrom": []
   },
   "group_table": {
-   "version": "0.6.1",
+   "version": "0.7.0",
    "released": "2026-11-22",
    "changes": [
     {
-     "kind": "changed",
-     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
+     "kind": "added",
+     "description": "Says what its keys hide, in the step's sentence of what it did: rows with a blank key, totalled as a group of their own, and names differing only in capitals or spaces, totalled apart; nothing merged or dropped. Found by the table stress tests."
     }
    ],
    "breaking": false,
@@ -712,12 +712,16 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.13.2",
-   "released": "2026-11-20",
+   "version": "0.14.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "patch",
-     "description": "When no key matches, the message shows a few keys from each table and names both columns. The Inspector moves out of app.ts."
+     "kind": "added",
+     "description": "Keys proposed from their values: with no column chosen to match on, Configure… proposes the pair of key columns, one from each table, whose values link most after Relate's folding, though their names differ, and says how many keys it links; where nothing links and one column holds codes and the other names, it says so. Every pair of columns sharing values is listed in the dialog, with the counts, each with Match on these."
+    },
+    {
+     "kind": "changed",
+     "description": "An empty cell is one of a key's values: a key holding a value and an empty cell stops the step as any key with two values does, saying an empty cell. Found by the table stress tests."
     }
    ],
    "breaking": false,
@@ -748,12 +752,12 @@
    "migrationFrom": []
   },
   "append_rows": {
-   "version": "0.4.0",
-   "released": "2026-11-20",
+   "version": "0.5.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Columns are lined up in a grid: one row per column of the stacked table, the column of each table filling it or none, each changeable, and a stacked column renamed for every table (stackUnder). Each table is shown as read, before, and the stack after. A table holding the others' names under a column of its own is refused, naming the column to stack it under; the name most tables use is offered, whatever the order of the inputs. A run stopped there keeps the tables reaching it, so Columns can be used. A table whose value column or unit differs is named, with where to change it. The Inspector moves out of app.ts. A table whose every name matches the others' column is lined up without asking, and said in the grid and the run; Start again returns to that. \"persons\" and \"people\" are one unit. Labels take {census} and the other words from the workflow."
+     "kind": "added",
+     "description": "Columns whose values match: for each table after the first, its columns whose values match a column of the first under another name, with the counts, ignoring capitals, punctuation and spacing; Stack under puts one under the other's name."
     }
    ],
    "breaking": false,

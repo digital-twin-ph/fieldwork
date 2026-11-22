@@ -59,7 +59,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 ## Next, in order (2026-11-20)
 
 1. **Done in 0.153.0 to 0.155.0.** Tabular data's sources as tabs: Your file, From an address, Census tables, Tide gauges with its map of every gauge, and DHIS2; the census and tide-gauge manual sections; the study area picker reading the boundaries repository.
-1a. Stress tests of every table operation (2026-11-20): a battery of made-up tables, each built around one gotcha (names, values, shape, keys, chains), through all 21 table steps; refusals name the step, nothing missing reads as zero, nothing hangs.
+1a. **First pass done in 0.167.0** (`tests/table-stress.test.mjs`): six made-up tables, each around one trap (names, values, shape, keys), through eight table steps (Select rows, Total within groups, Append rows, Relate a column, Transmission chains, Two-by-two, Detect unusual counts, Regression; then Chart and Join a table to the study area, on each table's totals) and a chain of three. Nothing hung, no refusal was a programming error, nothing missing read as zero. Fixed: a refused run names its step; Total within groups says blank keys and names differing only in capitals or spaces; Relate a column counts an empty cell as a value. **Left:** the steps that read a table through other ports (Cases by period, Rate, Apply ruleset, Space-time scan, Deduplicate records, the sea-level steps), a wide read, and large tables. ~~Stress tests of every table operation (2026-11-20)~~
 1b. Experiment [226](docs/experiments/226-table-operations-as-challenges.md), table operations as challenges: `example-table-operations`, one challenge per workflow, Walk me through or Solve it, scored at each run.
 2. **Done in 0.154.0.** Raster streaming for GHS-POP over DR Congo: [GHS-POP over DR Congo is refused](#ghs-pop-over-dr-congo-is-refused-8-byte-cells-found-2026-11-19-streaming-decided-the-same-day).
 3. Experiment 225, WebGPU as an accelerator (first finding, 2026-11-20: the slow part of an address read is the network,
@@ -98,6 +98,12 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   positive and none had a comparison group, so GIS mapping is rated "promising". A planned route beside each team's
   actual track is the case study's layer.
 - **Study design's dialog** on the standard draft-until-Apply dialog: done in 0.167.0 (Study design 0.8.0).
+- **Columns whose values match** (the practitioner, 2026-11-22: "Can FW detect compatible keys between tables?", then
+  "show the user on the UI which columns from different tables have potential matches", "Is it the same with append
+  tables?"). Done in 0.167.0: Relate a column proposes the pair linking most and lists every pair sharing values;
+  Append rows lists each table's columns matching the first's under another name, Stack under. Join a table to the
+  study area already proposed its column. **Not done:** codes against names is only said, not bridged; "01" against
+  "1" and a year against a date are not folded.
 - **206 closed into 228** (2026-11-22): its five questions and the syndromic methods not yet offered are 228's open items.
 
 ### Threads from 0.154.0 and 0.155.0 (2026-11-20), not yet ordered

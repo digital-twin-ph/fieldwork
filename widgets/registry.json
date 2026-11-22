@@ -871,7 +871,7 @@
     {
       "id": "urn:fieldwork:widget:group_table",
       "nodeType": "group_table",
-      "currentVersion": "0.6.1",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -927,6 +927,11 @@
           "version": "0.6.1",
           "path": "widgets/releases/group_table/0.6.1.json",
           "sha256": "17376ed595a5b588a9c7a84724e46616879e02165ddd1e4d010dc2516402f13f"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/group_table/0.7.0.json",
+          "sha256": "5a85c1457a0ea33401193ff0b1c2723775898c2e03725743410f2793b9e06bf0"
         }
       ]
     },
@@ -2032,7 +2037,7 @@
     {
       "id": "urn:fieldwork:widget:relate_table",
       "nodeType": "relate_table",
-      "currentVersion": "0.13.2",
+      "currentVersion": "0.14.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2143,6 +2148,11 @@
           "version": "0.13.2",
           "path": "widgets/releases/relate_table/0.13.2.json",
           "sha256": "69333f03be192018fb5f8c3597ede31cd21144d3dcce6463ed9d3a8a6d895b8e"
+        },
+        {
+          "version": "0.14.0",
+          "path": "widgets/releases/relate_table/0.14.0.json",
+          "sha256": "97ff4df0c4248de8c80d0d1b4830ef86a114b6e6e380e7b032066dac3521a1eb"
         }
       ]
     },
@@ -2243,7 +2253,7 @@
     {
       "id": "urn:fieldwork:widget:append_rows",
       "nodeType": "append_rows",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.5.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2279,6 +2289,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/append_rows/0.4.0.json",
           "sha256": "c3f2aa34d14f93a5420433224b6dcfdbcd3187174aff9f717fc6a3e523827d6e"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/append_rows/0.5.0.json",
+          "sha256": "6fe83bc8c202395af9b350b67177a7f0f56e68f118efffa5fc0510ff8d9fe386"
         }
       ]
     },

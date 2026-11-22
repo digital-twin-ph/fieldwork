@@ -1917,7 +1917,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             +(result.shares?`; each group's share, ${result.shares.within.length?`of the total within ${result.shares.within.join(' and ')}`
               :'of the whole table'}, as a percentage to one decimal place`
               +(result.shares.unknownStrata?`, unknown in ${result.shares.unknownStrata} stratum${result.shares.unknownStrata===1?'':'s'} whose total is unknown`:'')
-              +(result.shares.zeroStrata?`, none in ${result.shares.zeroStrata} stratum${result.shares.zeroStrata===1?'':'s'} totalling zero`:''):''),
+              +(result.shares.zeroStrata?`, none in ${result.shares.zeroStrata} stratum${result.shares.zeroStrata===1?'':'s'} totalling zero`:''):'')
+            // WHAT THE KEYS HOLD THAT A TOTAL HIDES (the table stress tests, 2026-11-22): said, never merged or dropped.
+            +(result.blankKeys?`; ${result.blankKeys.rows} row${result.blankKeys.rows===1?'':'s'} with a blank ${node.params.by.join(' or ')}, totalled as a group of ${result.blankKeys.rows===1?'its':'their'} own`:'')
+            +(result.nearKeys?`; ${result.nearKeys.map(n=>n.map(x=>`“${x}”`).join(' and ')).join(', ')} differ only in capitals or spaces and were totalled apart`:''),
           groups:result.groups,collapsedFrom:result.collapsedFrom,
           dropped:result.dropped,gaps:result.gaps} as unknown as Receipt);
         break;}

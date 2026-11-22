@@ -69,7 +69,8 @@ test('a storage failure still applies the theme for this session',async({browser
     Storage.prototype.setItem=function(k,v){if(k==='fieldwork.theme.v1')throw new Error('Storage unavailable');return set.call(this,k,v);};});
   await page.goto('/?example=blank');
   await page.locator('#theme-select').selectOption('dark');
-  expect((await resolved(page)).surface,'the choice applies even when it cannot be stored').toBe(DARK_SURFACE);
+  // Polled, not read once: WebKit in CI read the light surface in the instant after choosing (0.166.0).
+  await expect.poll(async()=>(await resolved(page)).surface,{message:'the choice applies even when it cannot be stored'}).toBe(DARK_SURFACE);
   await expect(page.locator('.toast')).toContainText('would not store the theme');
   await context.close();
 });

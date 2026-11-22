@@ -7,6 +7,8 @@
  *  before. A drop that landed is never drawn twice, so no connection is doubled by the retry. */
 export async function dragConnection(page,from,to,landed,{tries=3,wait=4000}={}){
   for(let attempt=1;attempt<=tries;attempt++){
+    // A TOAST OVER A HANDLE takes the drag (0.165.0 and 0.166.0 CI, WebKit): dismissed before each attempt.
+    await page.evaluate(()=>document.querySelector('#toast button')?.click());
     const a=await from.boundingBox(),b=await to.boundingBox();
     const ax=a.x+a.width/2,ay=a.y+a.height/2,bx=b.x+b.width/2,by=b.y+b.height/2;
     await page.mouse.move(ax,ay);await page.mouse.down();

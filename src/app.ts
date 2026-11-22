@@ -5353,7 +5353,11 @@ async function run(){if(busy)return;
     const asset=needed?.name==='StreamedFileNeeded'?needed.asset:undefined;
     const sofar=(e as {tablesSoFar?:Record<string,import('./data-table.js').DataTable>}|null)?.tablesSoFar;
     if(sofar)stoppedTables={key:storageKey(workflow),tables:sofar};
-    toast(`Workflow stopped: ${errorMessage(e)}`,{tone:'failure',...(asset?{action:{
+    // THE STEP NAMED (the table stress tests, 2026-11-22): the canvas marked it, and the words did not say which.
+    const stoppedAt=Object.entries(statuses).find(([,state])=>state==='failed')?.[0];
+    const stoppedNode=stoppedAt?workflow.nodes.find(n=>n.id===stoppedAt):undefined;
+    const stoppedName=stoppedNode?((stoppedNode.params as {label?:string}).label||TYPES[stoppedNode.type].title):'';
+    toast(`${stoppedName?`“${stoppedName}” stopped the workflow`:'Workflow stopped'}: ${errorMessage(e)}`,{tone:'failure',...(asset?{action:{
       label:needed.remembered?`Allow reading ${asset.source.filename}`:`Choose ${asset.source.filename}\u2026`,
       run:()=>{void (async()=>{
         try{const {fileAgainByClick}=await import('./raster-workflow.js');

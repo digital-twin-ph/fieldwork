@@ -31,6 +31,7 @@
  *  inventing "unknown" for it would put a stratum in the table that the data never measured.
  */
 import {normaliseName} from './deduplicate-points.js';
+import {columnMatches,codesFacingNames} from './column-matches.js';
 import {linkNames,linkKey,LINK_WORDS,type LinkMatch,type SpellingSettings} from './spelling-match.js';
 // MachinedNote moved to notes.ts on 2026-10-28, beside the quoted note it is the sibling of.
 // This file's own comment said the move would happen when a second PRODUCER appeared; a second
@@ -380,9 +381,12 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
   const all=new Map<string,string[]>();
   const spellings=new Map<string,Set<string>>();
   const ambiguous=new Map<string,Set<string>>();
+  // AN EMPTY CELL IS ONE OF A KEY'S VALUES (the table stress tests, 2026-11-22): North's "4" and North's empty cell were
+  // related as 4, a choice nobody made. A key whose only values are empty still brings nothing, as before.
+  const emptyFor=new Set<string>();
   for(const row of right.rows){
     const raw=rightRawOf(row),value=broughtOf(row);
-    if(value===undefined)continue;
+    if(value===undefined){const k=rightKeyOf(row);if(k&&bringsValue&&row.value===null){emptyFor.add(k);(spellings.get(k)??spellings.set(k,new Set()).get(k)!).add(raw);}continue;}
     const key=rightKeyOf(row);
     // A row whose key cell is empty names no subject. Skipped rather than matched against every
     // other empty cell, which would relate unrelated rows to one another.
@@ -394,11 +398,12 @@ function planRelate(left:DataTable,right:DataTable,request:RelateRequest):Relate
     if(held===undefined){lookup.set(key,value);continue;}
     if(held!==value)(ambiguous.get(key)??ambiguous.set(key,new Set([held])).get(key)!).add(value);
   }
+  for(const key of emptyFor){const held=lookup.get(key);if(held!==undefined)(ambiguous.get(key)??ambiguous.set(key,new Set([held])).get(key)!).add('');}
   if(ambiguous.size&&request.several!=='each'){
     const [key,clashing]=[...ambiguous.entries()][0];
     const raws=[...(spellings.get(key)??new Set([key]))];
     throw new Error(`The second table gives "${raws[0]}" more than one "${bring}": `
-      +`${[...clashing].map(v=>`"${v}"`).join(' and ')}`
+      +`${[...clashing].map(v=>v===''?'an empty cell':`"${v}"`).join(' and ')}`
       +(ambiguous.size>1?`, and ${ambiguous.size-1} other ${ambiguous.size===2?'key does':'keys do'} the same`:'')
       +`. Relating cannot choose between them, and choosing would put a value on these rows that `
       +`the table does not support. `
@@ -850,4 +855,15 @@ export function relateReceiptFacts(
     +notes.map(note=>`;\n  fw:machinedNote [ a fw:MachinedNote; `
       +`fw:noteSection ${quote(note.section)}; fw:noteText ${quote(note.text)} ]`).join('')
     +'.\n';
+}
+
+/** THE KEY COLUMNS TO RELATE ON, PROPOSED FROM THEIR VALUES (2026-11-22): the first of `columnMatches`, the pair sharing
+ *  most values; where none shares any, codes facing names said. A proposal: the person chooses. */
+export interface KeyProposal {on:string; rightOn:string; linked:number; leftDistinct:number; rightDistinct:number}
+export interface KeyProposalResult {proposal?:KeyProposal; codesAndNames?:{codes:string;names:string}}
+export function proposeRelateKeys(left:DataTable,right:DataTable,normalisation:'exact'|'fuzzy'='fuzzy'):KeyProposalResult{
+  const best=columnMatches(left,right,normalisation)[0];
+  if(best)return {proposal:{on:best.first,rightOn:best.second,linked:best.shared,leftDistinct:best.firstDistinct,rightDistinct:best.secondDistinct}};
+  const codes=codesFacingNames(left,right);
+  return codes?{codesAndNames:codes}:{};
 }

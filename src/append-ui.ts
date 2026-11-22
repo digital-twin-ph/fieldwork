@@ -7,6 +7,7 @@ import type {DataTable} from './data-table.js';
 import {PREVIEW_ROWS} from './long-tables.js';
 import type {Escape,ParamsByType} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
+import {columnMatches,columnMatchesMarkup} from './column-matches.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {appendWalkthrough} from './table-walkthroughs.js';
 import {dataTableMarkup,wireTablePages} from './data-table-ui.js';
@@ -116,6 +117,10 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
         // START AGAIN (2026-11-20): undoing earlier choices cell by cell left DR Congo's models' names stacked elsewhere.
         +(auto&&under.length?`<p class="notice" data-append-automatic>Lined up without asking, every name matching: ${under.map(m=>`${esc(names[m.table]||name(m.table))}'s "${esc(m.column)}" under "${esc(m.as)}"`).join('; ')}. Change any of it below.</p>`:'')
         +(!auto?'<p><button type="button" class="button small" id="append-grid-reset">Start again from what the tables hold</button></p>':'')
+        // COLUMNS WHOSE VALUES MATCH THE FIRST TABLE'S, under another name (2026-11-22): each a button that stacks it there.
+        +ts.slice(1).map((t,j)=>columnMatchesMarkup(columnMatches(ts[0]!,t,'fuzzy').filter(m=>m.first!==m.second&&!t.keys.includes(m.first)
+            &&placedAs(j+1,m.second)!==m.first),
+          {firstLabel:names[0]||name(0),secondLabel:names[j+1]||name(j+1),pick:'Stack under',table:j+1},esc)).join('')
         +'<div class="table-scroll"><table><thead><tr><th scope="col">Stacked as</th>'
         +ts.map((_,i)=>`<th scope="col">${esc(names[i]||name(i))}</th>`).join('')+'</tr></thead><tbody>'
         +grid.map((row,r)=>`<tr><td><input data-grid-name="${r}" aria-label="Stacked column ${r+1}, named" maxlength="60" value="${esc(row.as)}"></td>`
@@ -158,6 +163,9 @@ export function openAppendConfig(view:AppendConfigView,esc:Escape):void{
         const under=lineUpOf(ts,asParams(d)),row=columnGrid(ts,under)[Number(el.dataset.gridRow)];if(!row)return;
         d.stackUnder=placeColumn(under,Number(el.dataset.gridTable),row.as,el.value||null);redraw();}));
       root.querySelector<HTMLButtonElement>('#append-grid-reset')?.addEventListener('click',()=>{delete d.stackUnder;redraw();});
+      root.querySelectorAll<HTMLButtonElement>('[data-column-match][data-match-table]').forEach(b=>b.addEventListener('click',()=>{
+        const [first,second]=b.dataset.columnMatch!.split('\u001f');if(!first||!second)return;
+        d.stackUnder=placeColumn(lineUpOf(ts,asParams(d)),Number(b.dataset.matchTable),first,second);redraw();}));
       root.querySelectorAll<HTMLInputElement>('[data-grid-name]').forEach(el=>el.addEventListener('change',()=>{
         const under=lineUpOf(ts,asParams(d)),row=columnGrid(ts,under)[Number(el.dataset.gridName)];if(!row)return;
         d.stackUnder=renameStacked(ts,under,row.as,el.value);redraw();}));

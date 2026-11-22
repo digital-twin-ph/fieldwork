@@ -10,6 +10,17 @@ shown in a local build is not a claim that it has been published.
 - **Study design's answers are kept until Apply**, Study design 0.8.0: its paged dialog is the standard one; Cancel, ×
   and Escape ask before discarding answers.
 - **206 closed into 228**: its open questions, and the syndromic methods not yet offered, are 228's open items.
+- **Stress tests of the table operations** (TODO 1a): six made-up tables, each built around one trap, through eight
+  table steps and a chain of them. No step hung, none refused with a programming error, and no missing or unreadable
+  value read as zero. Four things changed:
+  - A refused run names the step that stopped it: “Group” stopped the workflow.
+  - Total within groups 0.7.0 says rows with a blank key, and names differing only in capitals or spaces.
+  - Relate a column 0.14.0 counts an empty cell as one of a key's values, rather than relating the other one.
+- **Keys proposed from their values**, Relate a column 0.14.0: with nothing chosen to match on, the pair of columns whose
+  values link most is proposed, though their names differ ("LGA" and "lga_name"), with how many keys it links; codes
+  facing names are said.
+- **Columns whose values match**, shown in Relate a column and Append rows 0.5.0: every pair of columns across the
+  tables that share values, with the counts, each a button that chooses it (Match on these, Stack under).
 
 ## 0.166.0 — 2026-11-22
 

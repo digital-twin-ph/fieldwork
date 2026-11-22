@@ -1,6 +1,6 @@
 # 228 · Detect unusual counts: CUSUM, EWMA and the EARS methods
 
-_Created 2026-11-21 · Updated 2026-11-21_
+_Created 2026-11-21 · Updated 2026-11-22_
 
 **Status:** validated. Built 2026-11-21, its methods checked against R's `surveillance` package the same day, and by the
 Validation Lab's check 53 (Python, numpy) on four series, a seasonal one among them; the syndromic worked example uses

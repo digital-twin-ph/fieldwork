@@ -102,3 +102,9 @@ log likelihood ratio and the p-value. The case ids inside it are listed.
   for the question, before you look.
 
 Experiment 200.
+
+## History
+
+### 2026-11-22 · Out of the application's main file (0.6.2)
+
+Its Inspector and its dialog moved into a module of their own. Nothing it does changed.

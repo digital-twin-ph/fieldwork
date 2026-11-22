@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {dragConnection} from './canvas-drag.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** JOIN A TABLE TO THE STUDY AREA, ON THE STANDARD (2026-11-20). The practitioner's DR Congo census, joined to provinces
@@ -97,11 +98,8 @@ test('a table dropped on the area input is bound to the table input, and an area
   await expect(page.locator('.react-flow__node[data-id="join"] [data-handleid="parts"]')).toBeAttached({timeout:45000});
   await expect(page.locator('.react-flow__node[data-id="join"] [data-handleid="polygons"]')).toHaveCount(0);
   const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).edges);
-  const drag=async(from,port)=>{
-    const a=await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox();
-    const b=await page.locator(`.react-flow__node[data-id="join"] [data-handleid="${port}"]`).boundingBox();
-    await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
-    await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();};
+  const drag=(from,port)=>dragConnection(page,page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`),
+    page.locator(`.react-flow__node[data-id="join"] [data-handleid="${port}"]`),async()=>(await saved()).some(e=>e.from===from&&e.to==='join'));
   // The census dropped on "Study area or polygon layer": it is a table, so it goes to Table.
   await drag('census','parts');
   await expect.poll(async()=>(await saved()).some(e=>e.from==='census'&&e.to==='join'&&e.port==='records')).toBe(true);

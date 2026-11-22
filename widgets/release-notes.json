@@ -355,12 +355,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.6.1",
-   "released": "2026-11-15",
+   "version": "0.6.2",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A cluster at one place is marked to be drawn as a ring round it, so its 15 m circle is not read as an area; the manual says how to read the cluster map."
+     "kind": "changed",
+     "description": "Its Inspector and its Configure… dialog moved out of app.ts into outbreak-steps-ui.ts, reached through the kit; nothing it does changed."
     }
    ],
    "breaking": false,
@@ -960,12 +960,12 @@
    "migrationFrom": []
   },
   "study_design": {
-   "version": "0.6.0",
-   "released": "2026-11-02",
+   "version": "0.7.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Asks how the exposures were chosen: one named in advance, a few named in advance, everything available as a screen, or not sure. The answer writes a sentence into Methods. The checklist no longer compares several exposures with the one declared pair of groups, which raised a false difference for every exposure, and reports how many were compared instead. The wording of the new question rests on no evidence review yet."
+     "kind": "changed",
+     "description": "On the standard Inspector: name, inputs, one sentence of the design, what it reports, its period and unit, Configure…, and the checklist under Result; the period, unit of analysis and note moved into the dialog's first page; out of app.ts into outbreak-steps-ui.ts."
     }
    ],
    "breaking": false,
@@ -1061,12 +1061,12 @@
    ]
   },
   "transmission_chains": {
-   "version": "0.1.0",
-   "released": "2026-11-14",
+   "version": "0.1.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Each case's transmission chain handed on as columns, so a curve, a map or a table can use it. The practitioner, 2026-11-14, choosing a new step over a rule in Apply ruleset: \"New step: Transmission chains\". Experiment 216."
+     "kind": "changed",
+     "description": "Its Inspector and its Configure… dialog moved out of app.ts into outbreak-steps-ui.ts, reached through the kit; nothing it does changed."
     }
    ],
    "breaking": false,

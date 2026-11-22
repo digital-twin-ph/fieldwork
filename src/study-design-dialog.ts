@@ -201,6 +201,16 @@ export function designMarkup(params:DesignParams,esc:Escape):string{
     +(included.length<licence.estimates.length?`<p class="description">An unticked measure is `
       +`left out of the table, the note and the write-up, and the receipt records that it was `
       +`withheld.</p>`:'')
+    // THE PERIOD, THE UNIT AND THE NOTE, in the dialog with the design (2026-11-22, moved from the Inspector onto the
+    // standard). The period is the title's <time>, the one place it is read by machine; the unit is what one row counts.
+    +`<div class="field"><label class="field-label" for="design-period">Study period, as it should read in a title</label>`
+    +`<input id="design-period" data-design-field="period" maxlength="120" value="${esc(params.period)}" placeholder="1854">`
+    +`<small>“Cholera Mortality by Water Supply — South London, 1854”.</small></div>`
+    +`<div class="field"><label class="field-label" for="design-unit">Unit of analysis: what one row counts</label>`
+    +`<input id="design-unit" data-design-field="unitOfAnalysis" maxlength="60" value="${esc(params.unitOfAnalysis)}" placeholder="${esc(licence.unitOfAnalysis)}">`
+    +`<small>An ecological design counts groups and not people, and a measure over groups need not hold between individuals.</small></div>`
+    +`<div class="field"><label class="field-label" for="design-note">Note</label>`
+    +`<textarea spellcheck="true" id="design-note" data-design-field="note" rows="2" maxlength="400">${esc(params.note)}</textarea></div>`
     +`</div>`;
 }
 
@@ -217,7 +227,7 @@ export function openDesignDialog(params:DesignParams,esc:Escape,
   // and a WebKit button click do not guarantee that. So anything that leaves a page commits first.
   const commit=()=>{
     const active=document.activeElement;
-    if(active instanceof HTMLInputElement&&dialog.contains(active))active.blur();
+    if((active instanceof HTMLInputElement||active instanceof HTMLTextAreaElement)&&dialog.contains(active))active.blur();
   };
   const close=()=>{commit();dialog.close();dialog.remove();};
   const apply=(next:DesignParams)=>{current=next;onChange(next);render();};
@@ -301,6 +311,10 @@ export function openDesignDialog(params:DesignParams,esc:Escape,
         const source=dialog.querySelector<HTMLInputElement>(`[data-cell-source="${CSS.escape(key)}"]`);
         if(source)source.disabled=box.checked;
       };
+    });
+    // NO REDRAW, for the reason the blanks above give: a box commits as Next or Close is pressed.
+    dialog.querySelectorAll<HTMLInputElement|HTMLTextAreaElement>('[data-design-field]').forEach(box=>{
+      box.onchange=()=>{current={...current,[box.dataset.designField!]:box.value.trim()};onChange(current);};
     });
     dialog.querySelectorAll<HTMLInputElement>('[name="design-kind"]').forEach(radio=>{
       radio.onchange=()=>apply(withDesign(current,radio.value as StudyDesign));

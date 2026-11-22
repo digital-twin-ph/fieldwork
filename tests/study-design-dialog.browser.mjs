@@ -26,7 +26,7 @@ const open=async page=>{
     {name:'design.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="design"]').click();
-  await page.locator('#design-open').click();
+  await page.locator('#configure-step').click();
   await expect(page.locator('#study-design-dialog')).toBeVisible();
 };
 
@@ -58,7 +58,7 @@ test('unticking a measure removes it from the result of the next run',async({pag
   const dialog=page.locator('#study-design-dialog');
   await dialog.locator('[data-design-measure="odds ratio"]').uncheck();
   await dialog.locator('#design-close').click();
-  await expect(page.locator('body')).toContainText('reports risk ratio, risk difference');
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('reporting risk ratio, risk difference');
   await page.locator('#run-button').click();
   await page.locator('[data-view="results"]').click();
   await expect(estimates(page)).toHaveText(['risk ratio','risk difference']);
@@ -130,7 +130,7 @@ test('Escape keeps text still in its box',async({page})=>{
   await dialog.locator('[data-slot="survey"]').fill('NDHS');
   await page.keyboard.press('Escape');
   await expect(dialog).toHaveCount(0);
-  await page.locator('#design-open').click();
+  await page.locator('#configure-step').click();
   await dialog.locator('#design-next').click();
   await expect(dialog.locator('[data-slot="survey"]')).toHaveValue('NDHS');
 });

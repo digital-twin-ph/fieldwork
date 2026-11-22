@@ -61,7 +61,7 @@ const caseControl=async(page,tbt)=>{
   const design=(await saved(page)).nodes.filter(n=>n.type==='study_design').at(-1).id;
   await tidy(page);await wire(page,design,tbt,'design');
   await page.locator(`.react-flow__node[data-id="${design}"]`).click();
-  await page.locator('#design-open').click();
+  await page.locator('#configure-step').click();
   await page.locator('#study-design-dialog [value="case-control"]').check();
   await page.locator('#design-close').click();
 };

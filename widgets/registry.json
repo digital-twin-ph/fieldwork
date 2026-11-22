@@ -814,7 +814,7 @@
     {
       "id": "urn:fieldwork:widget:space_time_scan",
       "nodeType": "space_time_scan",
-      "currentVersion": "0.6.1",
+      "currentVersion": "0.6.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -860,6 +860,11 @@
           "version": "0.6.1",
           "path": "widgets/releases/space_time_scan/0.6.1.json",
           "sha256": "d41a3ae6840dd09be2c02a381a107f596dbf88bc5681d86baa94db3030ec3510"
+        },
+        {
+          "version": "0.6.2",
+          "path": "widgets/releases/space_time_scan/0.6.2.json",
+          "sha256": "feafafbbaedeba3daffd88924973708866288ac8ba91c1caf292641a9d4534f8"
         }
       ]
     },
@@ -2824,7 +2829,7 @@
     {
       "id": "urn:fieldwork:widget:study_design",
       "nodeType": "study_design",
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2855,6 +2860,11 @@
           "version": "0.6.0",
           "path": "widgets/releases/study_design/0.6.0.json",
           "sha256": "fc7bebbd6f10b58ad4d891268821fe98a9770cbdc45e0c47da44494317bc4ee8"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/study_design/0.7.0.json",
+          "sha256": "dd1d89a435b6e3b6474d6292bcf648c4ae0a331c42981ce184f20fc93b7f55f7"
         }
       ]
     },
@@ -3145,12 +3155,17 @@
     {
       "id": "urn:fieldwork:widget:transmission_chains",
       "nodeType": "transmission_chains",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.1.1",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/transmission_chains/0.1.0.json",
           "sha256": "69b252234aadabc2c04d1df5fc796c7cbcecf2c07b5daa3d9e28f4dfdcf1d40a"
+        },
+        {
+          "version": "0.1.1",
+          "path": "widgets/releases/transmission_chains/0.1.1.json",
+          "sha256": "aa224140736fb466051bcc7f1a2cc805444f98c6527ca0f050f8c9c8df55beba"
         }
       ]
     },

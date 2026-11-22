@@ -48,3 +48,9 @@ The preview shows what the last run's table makes with these settings.
   infection, and the step's note in Methods says so.
 
 Chart's **Who infected whom** tree is drawn by the same computation, so the tree and these columns agree.
+
+## History
+
+### 2026-11-22 · Out of the application's main file (0.1.1)
+
+Its Inspector and its dialog moved into a module of their own. Nothing it does changed.

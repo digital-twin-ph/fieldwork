@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {dragConnection} from './canvas-drag.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 /** STUDY AREAS ACROSS A BORDER (the practitioner, 2026-11-21: South Sudan and DR Congo on one map; "Point data does not take
@@ -70,11 +71,8 @@ test('study areas dropped on a polygon layer each take an input of their own',as
   await expect(page.locator('.react-flow__node[data-id="parts"]')).toBeVisible({timeout:45000});
   await page.locator('#toast button').click().catch(()=>{});
   const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
-  const drag=async from=>{
-    const a=await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox();
-    const b=await page.locator('.react-flow__node[data-id="parts"] [data-handleid="area"]').boundingBox();
-    await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
-    await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();};
+  const drag=from=>dragConnection(page,page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`),
+    page.locator('.react-flow__node[data-id="parts"] [data-handleid="area"]'),async()=>(await saved()).edges.some(e=>e.from===from&&e.to==='parts'));
   // Each drop lands before the next starts: the canvas redraws the node's inputs after a connection.
   for(const [i,id] of ['drc','ssd','uga'].entries()){await drag(id);
     await expect.poll(async()=>(await saved()).edges.filter(e=>e.to==='parts').length).toBe(i+1);}

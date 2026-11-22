@@ -47,7 +47,10 @@ const withStudyArea=async page=>{
   await page.locator('#workflow-file').setInputFiles(
     {name:'layer.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="layer-test"]').click();
+  // The node chosen once the imported workflow is drawn; chosen again where the first click came before its Inspector.
+  const layer=page.locator('.react-flow__node[data-id="layer-test"]');
+  await expect(layer).toBeVisible({timeout:45000});
+  await expect(async()=>{await layer.click();await expect(page.locator('#configure-step')).toBeVisible({timeout:3000});}).toPass({timeout:30000});
   // Its settings are in Configure… since 2026-11-11 (experiment 186).
   await page.locator('#configure-step').click();
 };

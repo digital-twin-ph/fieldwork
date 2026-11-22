@@ -105,7 +105,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **Done in 0.155.0.** Table leftovers from the DR Congo workflow: After shows the rows as stored, then the crosstab; a long read names its value; the `measure` column a wide read makes is said as made by the read wherever it is offered.
 - **The rest of the Inspector move** (the practitioner, 2026-11-22: *"rest of the Inspector move for app.ts"*), in five
   batches, one release each. **A, done in 0.164.0:** Cases by period, Rate, Select rows, Total within groups, Two-by-two,
-  Regression. **Left:** B, Transmission chains, Space-time scan, Study design; C, Deduplicate records, Find health
+  Regression. **B, done in 0.165.0:** Transmission chains, Space-time scan, Study design (now on the standard Inspector;
+  its dialog is still the paged one that saves as it goes). **Left:** C, Deduplicate records, Find health
   facilities, Project to UTM, Mean center, Donut and H3 geomasking; D, Table output, Polygon layer, Georeferenced map
   image, Find satellite products, and reading satellite files (its dialog and sentence, with their readers and caches);
   E, the three sea-level steps.

@@ -1,6 +1,5 @@
 import {MAX_GROUND_LAYERS,groundPort,isGroundPort} from './core.js';
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
-import {PREVIEW_ROWS} from './long-tables.js';
 import {boundsOf} from './health-facilities.js';
 import {openMapImageConfig} from './georeference-ui.js';
 import {openCountriesConfig} from './area-countries-ui.js';
@@ -124,7 +123,7 @@ import {TARGETS,projectOutline,outlineMarkup,slotsForNote} from './outline.js';
 import {planView,planMarkup,openPlanDialog,withPart,markedComplete,unmarked,type Plan} from './plan.js';
 import {auditTarget,openAuditDialog} from './notes-audit.js';
 import {publicationParts,promptFor,PRODUCT_KINDS,isProductKind,layoutKey,type ProductKind,type PublicationInput,type AttachableTable} from './publication.js';
-import {CHAIN_COLUMNS,transmissionChains} from './transmission-chains.js';
+import {CHAIN_COLUMNS} from './transmission-chains.js';
 import {boxInside,composeInset,insetWidth,focusDiameter} from './map-inset.js';
 import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // THE WRITE-UP IS THE PROJECT'S. A run contributes its notes to a store the Notes tab reads
@@ -136,6 +135,7 @@ import {tableInspector,type TableKit} from './data-table-ui.js';
 import {sampleInspector,type SampleKit} from './sample-raster-ui.js';
 import {caseSeriesInspector,rateInspector,type SeriesRateKit} from './series-rate-ui.js';
 import {TABLE_STEP_INSPECTORS,type TableStepKit} from './table-steps-ui.js';
+import {OUTBREAK_STEP_INSPECTORS,type OutbreakKit} from './outbreak-steps-ui.js';
 import {AREA_STEP_INSPECTORS,type AreaStepKit} from './area-steps-ui.js';
 import {zipSync,strToU8} from 'fflate';
 import {referenceList} from './references.js';
@@ -213,10 +213,7 @@ import {orderableBins} from './chart-output.js';
 import {AGGREGATES,type Aggregate} from './group-table.js';
 import type {BarOrder} from './results.js';
 import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
-import {DESIGN_LICENCES,includedMeasures} from './study-design.js';
-import {openDesignDialog} from './study-design-dialog.js';
-import {designChecklist,checklistSummary} from './study-design-checklist.js';
-import {investigatorAllocated} from './study-design-questions.js';
+import {designChecklist} from './study-design-checklist.js';
 import type {TwoByTwoResult} from './two-by-two.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 const KEY='fieldwork-workflow-v1';
@@ -2266,16 +2263,6 @@ function openSatelliteSampleConfig(nodeId:string){
   },esc);
 }
 
-/** THE SPACE-TIME SCAN'S SETTINGS IN ONE SENTENCE (experiment 186). */
-function scanSettingsSentence(p:import('./types.js').ParamsByType['space_time_scan']):string{
-  if(!p.dateField)return 'Choose the column holding each case\u2019s date in Configure\u2026';
-  return `${p.replay?`Replays the outbreak ${p.unit} by ${p.unit}, scanning each ${p.unit} for clusters still going on;`:'Scans'} circles over places and runs of ${p.unit}s of ${p.dateField}: circles up to ${Math.round(p.maxCaseShare*100)}% of the cases`
-    +`${p.maxRadiusKm?` and ${p.maxRadiusKm} km across`:''}, runs up to ${Math.round(p.maxTimeShare*100)}% of the study period`
-    +`${p.start||p.end?`, ${p.start??'the first date'} to ${p.end??'the last'}`:''}; tested by shuffling the dates ${p.replications.toLocaleString('en-US')} times, seed ${p.seed}.`;
-}
-
-/** THE SPACE-TIME SCAN'S CONFIGURATION DIALOG (experiments 186 and 200). The date column is nominated, never guessed;
- *  the limits are SaTScan's defaults until changed; the seed is shown, so a run can be repeated exactly. */
 /** THE POLYGON LAYER, CONFIGURED (experiment 186, 2026-11-11). Where the features come from, the study area to read
  *  inside, what to read, the file, and how to name them -- a draft until Apply, and Apply is the read. The file is held
  *  here, outside the controls, because a redraw would empty a file input; a read that fails leaves the dialog open
@@ -2456,56 +2443,6 @@ function openPolygonConfig(nodeId:string){
     },
   },esc);
 }
-function openScanConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'space_time_scan');
-  type Draft=WorkflowNode<'space_time_scan'>['params'];
-  const source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===nodeId&&e.port==='points')?.from);
-  const records=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features??[];
-  const ran=source?result?.pointColumns?.[source.id]?.map(c=>c.attribute)??[]:[];
-  const columns=[...new Set([...records.flatMap(f=>Object.keys(f.properties??{})),...ran])].sort();
-  openConfigDialog<Draft>({
-    id:'scan-config',widget:'Space-time scan',step:node.params.label||TYPES.space_time_scan.title,draft:structuredClone(node.params),
-    sections:draft=>({settings:''
-      +`<div class="field"><label class="field-label" for="scan-date">Each case\u2019s date</label><select id="scan-date">`
-        +`<option value="">Choose a column</option>`+columns.map(c=>`<option value="${esc(c)}" ${draft.dateField===c?'selected':''}>${esc(c)}</option>`).join('')+`</select>`
-        +(columns.length?'':'<p class="muted">Connect a point layer of cases first.</p>')+`</div>`
-      +`<div class="field"><label class="field-label" for="scan-mode">How to scan</label><select id="scan-mode">`
-        +`<option value="once" ${draft.replay?'':'selected'}>Once, over the whole period (retrospective)</option>`
-        +`<option value="replay" ${draft.replay?'selected':''}>Day by day, as the outbreak unfolded (prospective)</option></select>`
-        +`</div>`
-      +`<div class="field"><label class="field-label" for="scan-unit">Count by</label><select id="scan-unit">`
-        +`<option value="day" ${draft.unit==='day'?'selected':''}>Day</option><option value="week" ${draft.unit==='week'?'selected':''}>Week</option></select></div>`
-      +`<div class="field"><label class="field-label" for="scan-case-share">Largest circle, as a share of all cases</label>`
-        +`<input id="scan-case-share" type="number" min="0.01" max="0.5" step="0.01" value="${draft.maxCaseShare}"></div>`
-      +`<div class="field"><label class="field-label" for="scan-radius">Largest radius, in km (blank: no limit)</label>`
-        +`<input id="scan-radius" type="number" min="0.001" step="any" value="${draft.maxRadiusKm??''}"></div>`
-      +`<div class="field"><label class="field-label" for="scan-time-share">Longest run, as a share of the study period</label>`
-        +`<input id="scan-time-share" type="number" min="0.01" max="0.5" step="0.01" value="${draft.maxTimeShare}"></div>`
-      +`<div class="field"><label class="field-label" for="scan-start">Study period from (blank: the first date)</label><input id="scan-start" type="date" value="${draft.start??''}"></div>`
-      +`<div class="field"><label class="field-label" for="scan-end">Study period to (blank: the last date)</label><input id="scan-end" type="date" value="${draft.end??''}"></div>`
-      +`<div class="field"><label class="field-label" for="scan-replications">Shuffles of the dates</label>`
-        +`<input id="scan-replications" type="number" min="99" max="99999" step="1" value="${draft.replications}"></div>`
-      +`<div class="field"><label class="field-label" for="scan-seed">Seed of the shuffles</label>`
-        +`<input id="scan-seed" type="number" min="0" max="4294967295" step="1" value="${draft.seed}"></div>`
-      +``,
-      preview:`<p class="standard-sentence">${esc(scanSettingsSentence(draft))}</p>`}),
-    wire:(root,draft,redraw)=>{
-      const on=(id:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>root.querySelector<HTMLInputElement&HTMLSelectElement>(id)?.addEventListener('change',e=>{fn(e.target as never);redraw();});
-      on('#scan-date',el=>{draft.dateField=el.value;});
-      on('#scan-unit',el=>{draft.unit=el.value==='week'?'week':'day';});
-      on('#scan-mode',el=>{if(el.value==='replay')draft.replay=true;else delete draft.replay;});
-      on('#scan-case-share',el=>{draft.maxCaseShare=Number(el.value);});
-      on('#scan-time-share',el=>{draft.maxTimeShare=Number(el.value);});
-      on('#scan-radius',el=>{if(el.value)draft.maxRadiusKm=Number(el.value);else delete draft.maxRadiusKm;});
-      on('#scan-start',el=>{if(el.value)draft.start=el.value;else delete draft.start;});
-      on('#scan-end',el=>{if(el.value)draft.end=el.value;else delete draft.end;});
-      on('#scan-replications',el=>{draft.replications=Number(el.value);});
-      on('#scan-seed',el=>{draft.seed=Number(el.value);});
-    },
-    apply:draft=>{change(w=>{getNode(w,nodeId,'space_time_scan').params=draft;},{requirePersistence:true});},
-  },esc);
-}
-
 /** WHAT CLIP RASTER KEEPS, in one sentence. */
 
 /** WHAT SAMPLE RASTER WRITES, in one sentence. */
@@ -3005,40 +2942,6 @@ function tableOnPort(w:Workflow,nodeId:string,port:string):import('./data-table.
   if(from.type==='point_input')return pointsAsTable(from.params.data);
   return result?.tables?.[from.id]??(stoppedTables?.key===storageKey(w)?stoppedTables.tables[from.id]:undefined)??null;
 }
-/** TRANSMISSION CHAINS' SETTINGS (experiment 216), in the standard dialog: which column names each case, which names its
- *  recorded source, the value written for "no source", and the date that orders a case's children. The preview runs on
- *  the table the last run handed this step. */
-function openChainsConfig(node:WorkflowNode<'transmission_chains'>){
-  type Draft={id:string;parent:string;none:string;date:string};
-  const values=upstreamKeyValues(node)??{},table=tableOnPort(workflow,node.id,'records');
-  const columns=table?.keys??Object.keys(values);
-  const pick=(id:string,label:string,chosen:string,optional=false)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
-    +`<select id="${id}">${optional||!chosen?`<option value="">${optional?'None':'Choose a column'}</option>`:''}`
-    +columns.map(c=>`<option value="${esc(c)}" ${c===chosen?'selected':''}>${esc(c)}</option>`).join('')+`</select></div>`;
-  openConfigDialog<Draft>({id:'chains-dialog',widget:TYPES.transmission_chains.title,step:node.params.label||TYPES.transmission_chains.title,
-    draft:{id:node.params.id??'',parent:node.params.parent??'',none:node.params.none??'',date:node.params.date??''},
-    sections:draft=>{
-      const settings=pick('chains-id','Each case is named in',draft.id)+pick('chains-parent','Its recorded source is in',draft.parent)
-        +`<div class="field"><label class="field-label" for="chains-none">Written for "no source recorded"</label>`
-        +`<input id="chains-none" value="${esc(draft.none)}" placeholder="Leave empty if an empty cell means none"></div>`
-        +pick('chains-date','Order each case\u2019s children by',draft.date,true);
-      if(!draft.id||!draft.parent)return {settings,message:{tone:'warning',text:'Choose the column naming each case and the column naming its source.'},blocked:true};
-      if(!table)return {settings,preview:'<p>Run the workflow once to see the chains this finds.</p>'};
-      try{
-        const found=transmissionChains(table,{id:draft.id,parent:draft.parent,...(draft.none?{none:draft.none}:{}),...(draft.date?{date:draft.date}:{})});
-        return {settings,preview:`<p class="select-preview-count">${esc(found.sentence)}</p>`
-          +`<div class="chains-preview">${dataTableMarkup(found.table,esc,{pageSize:PREVIEW_ROWS})}</div>`};
-      }catch(error){return {settings,message:{tone:'refusal',text:errorMessage(error)},blocked:true};}
-    },
-    wire:(root,draft,redraw)=>{
-      for(const [id,key] of [['chains-id','id'],['chains-parent','parent'],['chains-date','date']] as const)
-        root.querySelector<HTMLSelectElement>('#'+id)?.addEventListener('change',e=>{draft[key]=(e.target as HTMLSelectElement).value;redraw();});
-      root.querySelector<HTMLInputElement>('#chains-none')?.addEventListener('change',e=>{draft.none=(e.target as HTMLInputElement).value.trim();redraw();});
-    },
-    apply:draft=>{change(w=>{const p=getNode(w,node.id,'transmission_chains').params;
-      for(const key of ['id','parent','none','date'] as const){if(draft[key])p[key]=draft[key];else delete p[key];}},{requirePersistence:true});},
-  },esc);
-}
 /** THE RULES' ACCOUNT IN THE INSPECTOR: the first three sentences, and every sentence saying what could not be given a
  *  value, which the first three can leave out (2026-11-15: Oswego's two unreadable onset times were the fifth sentence). */
 function rulesResultLine(method:string):string{
@@ -3237,65 +3140,9 @@ function renderInspector(){
     content+=(TABLE_STEP_INSPECTORS[n.type as keyof typeof TABLE_STEP_INSPECTORS] as OwnInspector<NodeType>).markup(n as never,tableStepKit());
   }else if(n.type==='relate_table'){
     content+=relateInspector.markup(n,relateKit());
-  }else if(n.type==='transmission_chains'){
-    // THE STANDARD INSPECTOR (experiment 186) for Transmission chains (experiment 216): the columns are in Configure…;
-    // here, what it follows, and what the last run found.
-    const p=n.params;
-    content+=standardSection('Name',labelForm('chains-label','Name',p.label||'Transmission chains'));
-    content+=standardSection('Inputs',standardInputs(n,{records:'Cases, each with its recorded source'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(p.id&&p.parent
-      ?`Follows ${p.parent} from each ${p.id} back to the case its chain starts with${p.none?`; "${p.none}" means no source`:''}.`
-      :'Choose the case id and infected-by columns in Configure\u2026')}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const receipt=result?.receipts.find(r=>r.nodeId===n.id) as unknown as {method?:string}|undefined;
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
-      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method??'Not run yet.')}</p>`);
-  }else if(n.type==='space_time_scan'){
-    // THE STANDARD INSPECTOR (experiment 186) for the space-time scan (experiment 200, Detect): the settings are in
-    // Configure…; here, one sentence of what it scans and what the last run found.
-    const p=n.params;
-    content+=standardSection('Name',labelForm('scan-label','Name',p.label||'Space-time scan'));
-    content+=standardSection('Inputs',standardInputs(n,{points:'Cases, with a date and a place'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(scanSettingsSentence(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const receipt=result?.receipts.find(r=>r.nodeId===n.id);
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
-      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method??'Not run yet.')}</p>`
-      +'<div data-standard-result></div>');
-  }else if(n.type==='study_design'){
-    // WHAT KIND OF STUDY, AND WHEN. Experiment 154. The design is a closed vocabulary of the five
-    // this application can actually serve, because offering a sixth that licenses no
-    // computation would be a declaration that does nothing. What each one licenses is shown
-    // beneath, so a practitioner can see what the choice buys before making it rather than
-    // discovering it when a measure goes missing.
-    const p=n.params,licence=DESIGN_LICENCES[p.design];
-    const reported=includedMeasures(p).join(', ')||'no measure';
-    content+='<p class="description">Declares what kind of study this workflow is, so the '
-      +'computations downstream are the ones its design can estimate. Declared and never inferred: '
-      +'nothing reads a design off a table.</p>'
-      +labelForm('design-label','Node label',p.label||'Study design')
-      +(investigatorAllocated(p)?`<p class="description"><b>No design declared</b>: investigators allocated exposure.</p>`
-        :`<p class="description"><b>${esc(p.design)}</b>: reports ${esc(reported)}.</p>`)
-      +`<button class="button" id="design-open">Choose the design and answer its questions\u2026</button>`
-      +`<p class="description" id="design-checklist-summary">${esc(checklistSummary(designChecklist(workflow,n.id)))}</p>`
-      +`<p class="description">${esc(licence.because)}</p>`
-      +`<div class="field"><label class="field-label" for="design-period">Study period</label>`
-      +`<input id="design-period" data-slr="period" maxlength="120" value="${esc(p.period)}" `
-      +`placeholder="1854"></div>`
-      // THE PERIOD IS THE TITLE'S <time>, which is the one place it is read by machine. Twelve
-      // MMWR titles were read on 2026-10-28 and none names a design, so the design reaches a
-      // title through its period rather than its name.
-      +`<p class="description">Written as it should read in a title: `
-      +`“Cholera Mortality by Water Supply — South London, 1854”.</p>`
-      +`<div class="field"><label class="field-label" for="design-unit">Unit of analysis</label>`
-      +`<input id="design-unit" data-slr="unitOfAnalysis" maxlength="60" `
-      +`value="${esc(p.unitOfAnalysis)}" placeholder="${esc(licence.unitOfAnalysis)}"></div>`
-      +`<p class="description">What one row counts. An ecological design counts groups and not `
-      +`people, and a measure over groups need not hold between individuals.</p>`
-      +`<div class="field"><label class="field-label" for="design-note">Note</label>`
-      +`<textarea spellcheck="true" id="design-note" data-slr="note" rows="2" maxlength="400">${esc(p.note)}</textarea></div>`;
+  }else if(n.type==='transmission_chains'||n.type==='space_time_scan'||n.type==='study_design'){
+    // MOVED OUT OF APP.TS (outbreak-steps-ui.ts, 2026-11-22).
+    content+=(OUTBREAK_STEP_INSPECTORS[n.type] as OwnInspector<NodeType>).markup(n as never,outbreakKit());
   }else if(n.type==='rate'||n.type==='case_series'){
     // MOVED OUT OF APP.TS (series-rate-ui.ts, 2026-11-22).
     content+=(n.type==='rate'?rateInspector.markup(n,seriesRateKit()):caseSeriesInspector.markup(n as WorkflowNode<'case_series'>,seriesRateKit()));
@@ -3665,13 +3512,7 @@ function renderInspector(){
     if(!id)return;
     change(w=>{getNode(w,id,'chart_output').params.barOrder=order;},{spatial:false});
   });
-  optionalElement('#design-open')?.addEventListener('click',()=>{
-    openDesignDialog(getNode(workflow,n.id,'study_design').params,esc,next=>{
-      // Replaced rather than merged: a design change removes `computations`, and `Object.assign`
-      // would leave the old design's choice standing.
-      change(w=>{getNode(w,n.id,'study_design').params=next;});
-    },()=>designChecklist(workflow,n.id));
-  });
+  if(Object.hasOwn(OUTBREAK_STEP_INSPECTORS,n.type))(OUTBREAK_STEP_INSPECTORS[n.type as keyof typeof OUTBREAK_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,outbreakKit(),document);
   if(n.type==='search_satellite_catalog')searchCatalogInspector.wire(n,inspectorKit(),document);
   if(Object.hasOwn(AREA_STEP_INSPECTORS,n.type))(AREA_STEP_INSPECTORS[n.type as keyof typeof AREA_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,areaStepKit(),document);
   optionalElement('#satellite-find')?.addEventListener('click',()=>{
@@ -3823,7 +3664,6 @@ function renderInspector(){
   if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
   if(n.type==='sample_raster')sampleInspector.wire(n,sampleKit(),document);
   if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(chartKit(),n.id));
-  if(n.type==='space_time_scan')optionalElement('#configure-step')?.addEventListener('click',()=>openScanConfig(n.id));
   if(n.type==='polygon_input')optionalElement('#configure-step')?.addEventListener('click',()=>openPolygonConfig(n.id));
   if(n.type==='map_image_input')optionalElement('#configure-step')?.addEventListener('click',()=>{
     const p=getNode(workflow,n.id,'map_image_input').params,placed=typeof p.data==='string'&&p.data.startsWith('data:');
@@ -3858,11 +3698,6 @@ function renderInspector(){
           if(fit)toast(`Placed from ${fit.points} points: errors ${Math.round(fit.rmsM)} m root mean square. Run the workflow to draw it.`);
         }catch(error){toast(errorMessage(error),{tone:'failure'});}
       })()});
-  });
-  if(n.type==='transmission_chains')optionalElement('#configure-step')?.addEventListener('click',()=>{
-    const node=workflow.nodes.find(x=>x.id===n.id);
-    if(node?.type!=='transmission_chains')return;
-    openChainsConfig(node as WorkflowNode<'transmission_chains'>);
   });
   // RELATE'S CONFIGURATION DIALOG (experiment 186). Given the columns each table declares and, where they resolve, the
   // tables themselves, so the preview is the join this draft would make. Only Apply writes.
@@ -5656,6 +5491,17 @@ function chartKit():ChartKit{
   return {...stepKit(),result:()=>result??undefined,tableKeyColumns:node=>[...tableKeyColumns(node)],
     upstreamKeyValues:(node,seen,port)=>upstreamKeyValues(node,seen??new Set(),port),writeUpSelect:n=>writeUpSelect(n as never),
     labelForm:(id,label,value)=>labelForm(id,label,value),standardInputs:(n,labels)=>standardInputs(n,labels)};
+}
+/** THE OUTBREAK STEPS' KIT (outbreak-steps-ui.ts): the step kit, with the columns of the cases arriving, the values a
+ *  table's keys hold, and the study design's checklist of what the workflow has declared. */
+function outbreakKit():OutbreakKit{
+  const nodeOf=(id:string)=>workflow.nodes.find(x=>x.id===id)!;
+  return {...stepKit(),receipt:id=>result?.receipts.find(r=>r.nodeId===id),
+    caseColumns:id=>{const source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===id&&e.port==='points')?.from);
+      const records=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features??[];
+      const ran=source?result?.pointColumns?.[source.id]?.map(c=>c.attribute)??[]:[];
+      return [...new Set([...records.flatMap(f=>Object.keys(f.properties??{})),...ran])].sort();},
+    shape:id=>upstreamKeyValues(nodeOf(id))??{},checklist:id=>designChecklist(workflow,id)};
 }
 /** THE TABLE STEPS' KIT (table-steps-ui.ts): the step kit, with the last receipt, the step the records come from, the
  *  columns and values arriving, and the exposure columns a two-by-two could compare. */

@@ -82,9 +82,9 @@ Three consequences worth knowing:
 
 1. **Add it before the computations it governs.** It takes no input, so it sits at the start of a
    branch the way a study area does.
-2. **Choose the design and its measures.** The dialog shows what each design licenses before you choose it. What it cannot estimate has no box; untick anything it can estimate that the write-up should not carry.
-3. **Write the study period** as it should read in a title: `1854`.
-4. **Say what one row counts** if it is not a person. An ecological study counts groups —
+2. **Press Configure…, and choose the design and its measures.** The dialog shows what each design licenses before you choose it. What it cannot estimate has no box; untick anything it can estimate that the write-up should not carry.
+3. **Write the study period**, on the dialog's first page, as it should read in a title: `1854`.
+4. **Say what one row counts**, on the same page, if it is not a person. An ecological study counts groups —
    sub-districts, wards, districts — and this is where that is said once instead of in every
    caption.
 5. **Connect it, or leave it upstream.** Wiring it to an epi widget's `design` port states which
@@ -158,6 +158,14 @@ period check `rate` performs today is string equality where the condition is cov
 See [experiment 154](../experiments/154-a-workflow-declares-how-as-well-as-where.md) for the
 admission review, and [the study-design audit](../audits/study-designs-and-our-computations.md)
 for how the designs were chosen.
+
+## History
+
+### 2026-11-22 · On the standard Inspector (0.7.0)
+
+The Inspector became the standard one: name, inputs, one sentence of the design, what it reports, its period and its
+unit, then **Configure…**, and the checklist under Result. The period, the unit of analysis and the note moved from the
+Inspector into the dialog's first page, beside the design.
 
 ## More than one exposure
 

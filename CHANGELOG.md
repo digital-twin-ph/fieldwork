@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.165.0 — In development
+
+- **Study design on the standard Inspector**: one sentence of the design, what it reports, its period and its unit, then
+  Configure…, and the checklist under Result. The period, the unit of analysis and the note moved from the Inspector into
+  the dialog's first page, beside the design.
+- **The Inspector move, batch B**: Transmission chains, Space-time scan and Study design now live with their dialogs in a
+  module of their own; nothing the first two do changed.
+
 ## 0.164.0 — 2026-11-22
 
 - **Six Inspectors out of the application's main file**, the first batch of the Inspector move: Cases by period, Rate,

@@ -77,7 +77,39 @@ export interface RulesetFile {schema?:string;title:string;mustNotBeReadAs:string
   rules:unknown[];order?:unknown;otherwise?:unknown[]}
 
 /** Every problem with a ruleset as JSON, placed on its line: the text first, then its shape, then what it means. */
-export function checkRulesetJson(text:string):{ruleset?:RulesetFile;problems:JsonProblem[]}{
+/** THE COLUMNS ARRIVING ON THE STEP'S INPUT (the practitioner, 2026-11-21: "Can the editor detect input variables coming in
+ *  from the port?"): each with the kind its values read as, a few of them, and the step they come from. */
+export interface ArrivingColumns {source:string;columns:{attribute:string;kind:string;samples?:string[]}[]}
+
+/** The nearest column name, by edits, for a name that does not arrive: "chief_complain" is "chief_complaint". */
+export function closestColumn(name:string,columns:readonly string[]):string|undefined{
+  const dist=(a:string,b:string)=>{const d=Array.from({length:a.length+1},(_,i)=>[i,...Array(b.length).fill(0)]);
+    for(let j=1;j<=b.length;j++)d[0]![j]=j;
+    for(let i=1;i<=a.length;i++)for(let j=1;j<=b.length;j++)
+      d[i]![j]=Math.min(d[i-1]![j]+1,d[i]![j-1]+1,d[i-1]![j-1]+(a[i-1]===b[j-1]?0:1));
+    return d[a.length]![b.length]!;};
+  const low=name.toLowerCase();let best:{c:string;d:number}|undefined;
+  for(const c of columns){const d=c.toLowerCase()===low?0:dist(low,c.toLowerCase());if(!best||d<best.d)best={c,d};}
+  return best&&best.d<=Math.max(2,Math.floor(name.length/4))?best.c:undefined;
+}
+
+/** Declared fields against what arrives: a column that does not arrive, or a number that arrives as text. Each problem
+ *  names the field's index, so the editor places it on its line and the run says it in its refusal. */
+export function arrivingProblems(fields:readonly {attribute?:unknown;kind?:unknown}[],arriving:ArrivingColumns):{index:number;says:string}[]{
+  if(!arriving.columns.length)return [];
+  const names=arriving.columns.map(c=>c.attribute),out:{index:number;says:string}[]=[];
+  const listed=names.length>8?`${names.slice(0,8).join(', ')} and ${names.length-8} more`:names.join(', ');
+  fields.forEach((f,index)=>{const attribute=String(f.attribute??'');if(!attribute)return;
+    const column=arriving.columns.find(c=>c.attribute===attribute);
+    if(!column){const near=closestColumn(attribute,names);
+      out.push({index,says:`"${attribute}" is not a column of ${arriving.source}.${near?` Did you mean "${near}"?`:''} Its columns are ${listed}.`});return;}
+    if(f.kind==='number'&&column.kind==='term')
+      out.push({index,says:`"${attribute}" arrives as text, not a number, so a rule comparing it with a number finds nothing. Declare it a term, or change the column.`});
+  });
+  return out;
+}
+
+export function checkRulesetJson(text:string,arriving?:ArrivingColumns):{ruleset?:RulesetFile;problems:JsonProblem[]}{
   const parsed=parseJson(text);
   if(parsed.error)return {problems:[parsed.error]};
   const pos=parsed.positions,lineOf=(path:string)=>{let p=path;while(p&&!pos.has(p))p=p.replace(/\.?[^.]*$/,'');return pos.get(p)?.line??1;};
@@ -122,6 +154,8 @@ export function checkRulesetJson(text:string):{ruleset?:RulesetFile;problems:Jso
     else rule.then.forEach((t,k)=>{if(!isObj(t)||typeof t.predicate!=='string'||!CURIE.test(t.predicate))
       say(`${p}.then.${k}.predicate`,`Rule ${r+1}, conclusion ${k+1}: "predicate" names the column it gives a value, such as fwa:syndrome.`);});
   });
+  // WHAT ARRIVES: each declared column against the step's input, where the input is known.
+  if(arriving)for(const p of arrivingProblems(fields as never,arriving))say(`fields.${p.index}.attribute`,p.says);
   if(problems.length)return {problems};
   // WHAT IT MEANS: the checks the editor and the run make, each placed on the first line naming what it is about.
   const ruleset={...v} as unknown as RulesetFile;

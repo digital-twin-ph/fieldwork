@@ -3257,9 +3257,14 @@ async function openAuthoredRules(nodeId:string){
   const was=node.params.ruleset?.output;
   // THE COLUMNS OF WHAT IS CONNECTED NOW, where the rules declare none: rules started before the records were wired had
   // no column to choose. Rules that have columns keep exactly those: an added number with no unit would stop them.
-  const candidates=candidateFields(workflow,nodeId);
-  const edited=await openRuleEditor(authored.fields.length?authored:{...authored,fields:candidates as never},esc,{settingValues:node.params.parameters,preview:rulePreview(nodeId),
-    unitIri:unitIriFor,candidates:candidates as never,step:node.params.label||TYPES.apply_ruleset.title,
+  const candidates=candidateFields(workflow,nodeId),preview=rulePreview(nodeId);
+  // THE COLUMNS ARRIVING, with three of each one's values, and the step they come from (2026-11-21).
+  const from=workflow.nodes.find(n=>n.id===workflow.edges.find(e=>e.to===nodeId)?.from);
+  const arriving=from&&candidates.length?{source:String(from.params.label||TYPES[from.type].title),
+    columns:candidates.map(c=>({attribute:c.attribute,kind:c.kind,
+      samples:[...new Set((preview?.records??[]).map(r=>r.properties[c.attribute]).filter(v=>v!==null&&v!==undefined&&v!=='').map(String))].slice(0,3)}))}:undefined;
+  const edited=await openRuleEditor(authored.fields.length?authored:{...authored,fields:candidates as never},esc,{settingValues:node.params.parameters,preview,
+    unitIri:unitIriFor,candidates:candidates as never,...(arriving?{arriving}:{}),step:node.params.label||TYPES.apply_ruleset.title,
     ...(was==='points'||was==='table'||was==='polygons'?{recordsKind:was}:{})});
   if(!edited)return;
   change(w=>{

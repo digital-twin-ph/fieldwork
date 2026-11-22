@@ -14,6 +14,7 @@
  *  a silence -- which is what lets a ruleset conclude Unknown instead of concluding nothing.
  */
 import type {PointCollection,PointFeature,Scalar} from './types.js';
+import {closestColumn} from './ruleset-json.js';
 import type {DataTable} from './data-table.js';
 import type {ReasonerQuad} from './worker-types.js';
 
@@ -243,8 +244,11 @@ export function authoredDataIssues(input:PointCollection|DataTable,bindings:Fiel
     const named=binding.label||binding.attribute;
     // A COLUMN THE RECORDS DO NOT HAVE is one finding about the data, not a missing value in every record.
     if(subjects.length&&!subjects.some(record=>Object.hasOwn(record.properties??{},binding.attribute))){
+      // THE NEAREST COLUMN, and what does arrive (2026-11-21): "chief_complain" was meant to be "chief_complaint".
+      const arriving=[...new Set(subjects.flatMap(r=>Object.keys(r.properties??{})))],near=closestColumn(binding.attribute,arriving);
       issues.push({field:binding.attribute,why:'absent',count:subjects.length,of:subjects.length,records:subjects.map((_,i)=>i),
-        says:`These records have no column ${binding.attribute}, so none has a value for ${named}.`});
+        says:`These records have no column ${binding.attribute}, so none has a value for ${named}.`
+          +(near?` Did you mean ${near}?`:'')+` Their columns are ${arriving.slice(0,8).join(', ')}${arriving.length>8?` and ${arriving.length-8} more`:''}.`});
       continue;
     }
     const readings=subjects.map(record=>readValue(record.properties?.[binding.attribute],binding.kind));

@@ -38,6 +38,21 @@ test('the rules as JSON, checked as typed, brackets closed, uploaded and downloa
   const area=editor.locator('#rule-json');
   await expect(area).toHaveValue(/"schema": "fieldwork\/authored-ruleset\/1"/);
   await expect(editor.locator('.json-ok')).toBeVisible();
+  // WHAT ARRIVES: the input's columns beside the JSON, declared ones marked; a misspelled one said on its line.
+  const panel=editor.locator('.json-arriving');
+  await expect(panel).toContainText('Arriving columns · 3 from Visits');
+  await expect(panel.locator('li',{hasText:'chief_complaint'})).toContainText('✓ declared');
+  await expect(panel.locator('li',{hasText:'visit'})).toContainText('“V1”');
+  const typo=(await area.inputValue()).replace('"attribute": "chief_complaint"','"attribute": "chief_complain"');
+  await area.fill(typo);
+  await expect(editor.locator('.json-problems')).toContainText('"chief_complain" is not a column of Visits. Did you mean "chief_complaint"?');
+  await expect(page.locator('#config-apply')).toBeDisabled();
+  await area.fill(typo.replace('"attribute": "chief_complain"','"attribute": "chief_complaint"'));
+  await expect(editor.locator('.json-ok')).toBeVisible();
+  // ADD TO FIELDS: the column's entry, spelled as it arrives.
+  await panel.locator('[data-json-add="visit"]').click();
+  await expect(area).toHaveValue(/"attribute": "visit",\n\s*"predicate": "fwa:visit",\n\s*"kind": "term"/);
+  await expect(editor.locator('.json-ok')).toBeVisible();
   // A TEMPLATE, on this step's own text column, valid as loaded.
   await editor.locator('#rule-json-template').selectOption('words');
   await expect(area).toHaveValue(/"title": "Categories from words"/);

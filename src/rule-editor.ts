@@ -21,7 +21,7 @@ import type {Escape} from './types.js';
 import {compileAuthoredRuleset,compiledRuleCount,RULE_CEILING,authoredUnitProblems,settingNamed,isComputed,isWrittenDateTime,DIFFERENCE_UNITS,computesValues,
   COMPUTE_OPERATORS,readsPrevious,readsPreviousRows,evaluatedDirectly,otherwiseProblems,type Operand,type AuthoredOrder,
   type AuthoredOtherwise,bandRules,targetRules,isWordComparator} from './authored-rules.js';
-import {checkRulesetJson,rulesetText,autoBracket,highlightJson,rulesetTemplate,RULESET_TEMPLATES,type JsonProblem,type RulesetFile,type TemplateId} from './ruleset-json.js';
+import {checkRulesetJson,rulesetText,autoBracket,highlightJson,rulesetTemplate,RULESET_TEMPLATES,arrivingProblems,parseJson,type JsonProblem,type RulesetFile,type TemplateId,type ArrivingColumns} from './ruleset-json.js';
 import {evaluateAuthored,OPERATOR_WORDS,localName,undescribedSentence,type Evaluation,type NoPrevious} from './rule-evaluation.js';
 import {openConfigDialog,type ConfigSections} from './config-dialog.js';
 import {DATE_FORMS,CLOCKS,type SubjectRecord} from './authored-application.js';
@@ -164,6 +164,8 @@ export interface EditorOptions extends Partial<ReviewOptions> {
    *  the connected records carry, offered where none is declared yet. */
   recordsKind?:'points'|'table'|'polygons';
   candidates?:Field[];
+  /** THE COLUMNS ARRIVING ON THE INPUT, with samples, and the step they come from (2026-11-21): checked against the fields. */
+  arriving?:ArrivingColumns;
   /** The step's name, for the dialog's heading. */
   step?:string;
 }
@@ -593,6 +595,8 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         // Not while reviewing a published ruleset: its rules passed the build's own check before they shipped.
         const units=review?[]:authoredUnitProblems({...authored,fields,parameters:settings,rules:rules as never});
         if(units.length)problem=units[0].says;
+        // WHAT ARRIVES, the same check the JSON view and the run make: a declared column the input does not carry.
+        else if(!review&&options?.arriving){const a=arrivingProblems(fields,options.arriving);if(a.length)problem=a[0]!.says;}
       }
       const switcher=`<div class="rule-view-switch" role="group" aria-label="How the rules are shown">`
         +(['rules','json'] as const).map(v=>`<button type="button" class="button${view===v?' primary':''}" data-rule-view="${v}" aria-pressed="${view===v}">${v==='rules'?'Rules':'JSON'}</button>`).join('')
@@ -613,7 +617,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
           +`<div class="json-editor${colour?' json-coloured':''}"><pre class="json-gutter" aria-hidden="true">${gutter}</pre><div class="json-stack">`
           +(colour?`<div class="json-colour" aria-hidden="true">${highlightJson(text,bad)}</div>`:'')
           +`<textarea id="rule-json" spellcheck="false" autocomplete="off" wrap="off" aria-label="The ruleset as JSON" aria-describedby="rule-json-problems"${review?' readonly data-keep-enabled':''}>${esc(text)}</textarea></div></div>`
-          +`<div id="rule-json-problems" aria-live="polite">${said}</div>`,
+          +`<div id="rule-json-problems" aria-live="polite">${said}</div>`+arrivingPanel(),
           preview:previewMarkup(),...(jsonProblems.length?{message:{tone:'refusal' as const,text:`Line ${jsonProblems[0]!.line}: ${jsonProblems[0]!.says}`},blocked:true}:{})};
       }
       const settingsHtml=`<p class="rule-title"><strong>${esc(authored.title)}</strong></p>`+switcher
@@ -642,6 +646,20 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         ...(problem?{message:{tone:'refusal' as const,text:problem},blocked:true}:{})};
     };
 
+    /** ARRIVING COLUMNS beside the JSON: each with its kind and a few values, marked ✓ where the ruleset declares it; the
+     *  declared ones that do not arrive marked ⚠. Add to fields puts in an entry spelled as the column is. */
+    function arrivingPanel():string{
+      const a=options?.arriving;
+      if(!a)return '<p class="muted json-arriving">Nothing is connected yet: connect the records to see their columns here.</p>';
+      const declared=new Set(fields.map(f=>f.attribute));
+      const kindWord=(k:string)=>k==='number'?'number':k==='term'?'text':k;
+      const missing=fields.filter(f=>!a.columns.some(c=>c.attribute===f.attribute));
+      return `<details class="json-arriving" open><summary>Arriving columns · ${a.columns.length} from ${esc(a.source)}</summary><ul>`
+        +a.columns.map(c=>`<li><code>${esc(c.attribute)}</code> <span class="muted">${kindWord(c.kind)}${c.samples?.length?`: ${c.samples.map(v=>`“${esc(v)}”`).join(', ')}`:''}</span> `
+          +(declared.has(c.attribute)?'<span class="json-declared">✓ declared</span>'
+            :review?'':`<button type="button" class="button small" data-json-add="${esc(c.attribute)}">Add to fields</button>`)+'</li>').join('')
+        +'</ul>'+(missing.length?`<p class="json-missing">⚠ Declared but not arriving: ${missing.map(f=>`<code>${esc(f.attribute)}</code>`).join(', ')}</p>`:'')+'</details>';
+    }
     const number=(el:HTMLElement,name:string)=>Number(el.dataset[name]);
     function currentFile():RulesetFile{return {title:authored.title,mustNotBeReadAs:authored.mustNotBeReadAs,fields,parameters:settings,
       rules:rules as unknown[],...(order?{order}:{}),otherwise};}
@@ -656,7 +674,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         a.href=url;a.download=`${(authored.title||'ruleset').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'ruleset'}.ruleset.json`;
         a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
       // CHECKED AS TYPED: a pause, then the whole text read and checked; valid, it is the rules.
-      const takeJson=(text:string)=>{jsonText=text;const {ruleset,problems}=checkRulesetJson(text);jsonProblems=problems;
+      const takeJson=(text:string)=>{jsonText=text;const {ruleset,problems}=checkRulesetJson(text,options?.arriving);jsonProblems=problems;
         if(ruleset&&!review){rules=ruleset.rules as never;fields=ruleset.fields as Field[];choices=readable(fields);
           settings=(ruleset.parameters??[]) as never;order=ruleset.order as never;otherwise=(ruleset.otherwise??[]) as never;}
         render();};
@@ -665,6 +683,17 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         // The columns this ruleset declares first, then the connected records' others, each kind as declared.
         const known=[...fields,...(options?.candidates??[]).filter(c=>!fields.some(f=>f.predicate===c.predicate))];
         view='json';takeJson(rulesetText(rulesetTemplate(id,known as never)));});
+      root.querySelectorAll<HTMLButtonElement>('[data-json-add]').forEach(b=>b.onclick=()=>{
+        const c=options?.arriving?.columns.find(x=>x.attribute===b.dataset.jsonAdd);if(!c)return;
+        const entry={attribute:c.attribute,predicate:`fwa:${c.attribute.replace(/[^A-Za-z0-9_]+/g,'_')}`,kind:c.kind==='number'?'number':'term'};
+        const area=root.querySelector<HTMLTextAreaElement>('#rule-json'),text=area?.value??jsonText??rulesetText(currentFile());
+        const parsed=parseJson(text);
+        // VALID: the entry goes into fields and the text is written afresh; NOT YET: it is put in at the cursor, as typed.
+        if(!parsed.error&&parsed.value&&typeof parsed.value==='object'&&Array.isArray((parsed.value as {fields?:unknown}).fields)){
+          const v=parsed.value as RulesetFile;v.fields=[...v.fields,entry];takeJson(rulesetText(v));return;}
+        if(area){const at=area.selectionStart,piece=`${JSON.stringify(entry)},`;
+          area.setRangeText(piece,at,area.selectionEnd,'end');takeJson(area.value);}
+      });
       root.querySelector<HTMLInputElement>('#rule-json-upload')?.addEventListener('change',async e=>{
         const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;view='json';takeJson(await file.text());});
       const area=root.querySelector<HTMLTextAreaElement>('#rule-json'),gutter=root.querySelector<HTMLElement>('.json-gutter');

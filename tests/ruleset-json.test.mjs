@@ -77,3 +77,20 @@ test('every example in the guide passes the checks and runs',()=>{
     assert.ok(Object.keys(e.records[0].values).length>0,`${ruleset.title} gave the record a value`);
   }
 });
+
+/** WHAT ARRIVES (2026-11-21): a declared column the input does not carry is said on its line, with the nearest name; a
+ *  number declared on a column that arrives as text is said too; nothing is said while nothing is connected. */
+import {arrivingProblems,closestColumn} from '../build/ruleset-json.js';
+test('a declared column that does not arrive, or arrives as text, is said on its line, with the nearest name',()=>{
+  assert.equal(closestColumn('chief_complain',['visit_id','chief_complaint','date']),'chief_complaint');
+  assert.equal(closestColumn('Date',['visit_id','date']),'date');
+  assert.equal(closestColumn('temperature',['visit_id','date']),undefined);
+  const arriving={source:'Visits',columns:[{attribute:'chief_complaint',kind:'term'},{attribute:'age_group',kind:'term'}]};
+  const bad=structuredClone(GOOD);bad.fields=[{attribute:'chief_complain',predicate:'fwa:chief_complaint',kind:'term'},{attribute:'age_group',predicate:'fwa:age',kind:'number'}];
+  const text=JSON.stringify(bad,null,2),{problems}=checkRulesetJson(text,arriving),lines=text.split('\n');
+  assert.match(problems[0].says,/"chief_complain" is not a column of Visits. Did you mean "chief_complaint"\? Its columns are chief_complaint, age_group\./);
+  assert.ok(lines[problems[0].line-1].includes('"chief_complain"'));
+  assert.match(problems[1].says,/"age_group" arrives as text, not a number/);
+  assert.deepEqual(checkRulesetJson(rulesetText(GOOD),arriving).problems,[]);
+  assert.deepEqual(arrivingProblems(bad.fields,{source:'x',columns:[]}),[]);
+});

@@ -11,6 +11,11 @@ shown in a local build is not a claim that it has been published.
   opens one with your identity or asks for the passphrase. Plain copies stay, named as readable by anyone with the
   file; *Backed up* says encrypted or not. An identity made before this gains its key the next time it is opened, and
   is given back to keep. Browser storage stays unencrypted. Export as repository is encrypted the same way.
+- **Shared projects are encrypted on GitHub by default.** Each file is sealed for the project's members, each with their
+  own identity; a member gives their key with This is me, or another member pastes it for them. A member with no key is
+  named at the save. Unticking *Encrypted on GitHub* makes a project open, for a worked example. A project shared
+  before stays as it is until someone chooses.
+- **Figures print the OpenStreetMap copyright address** in their basemap credit, as OpenStreetMap asks of print.
 - **Chart draws series together**: several series on one scale in one panel, each with its own mark (bars, a line, a
   dashed line), and a triangle where another series is 1, such as Detect unusual counts' *signal*.
 - **Detect unusual counts shows each method's computation**: its statistic against its limit (CUSUM's running sum

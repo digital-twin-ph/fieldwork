@@ -211,9 +211,15 @@ export interface ProjectRepository {
   remote?:Record<string,string>;
   syncedAt?:string;
   seenAt?:string;
+  /** ENCRYPTED ON GITHUB (the export encryption audit, 2026-11-21): the project's files are sealed for its members.
+   *  The default for a project shared from now on; a project meant to be public is open, and stays plain. */
+  sealed?:boolean;
+  /** This device's: the form the files were in on GitHub when last read or saved, and who they were sealed for. */
+  form?:'sealed'|'plain';
+  sealedFor?:string;
 }
 /** The fields a backup leaves behind: they describe this device, not the project. */
-export const DEVICE_REPOSITORY_FIELDS=['credential','commit','files','remote','syncedAt','seenAt'] as const;
+export const DEVICE_REPOSITORY_FIELDS=['credential','commit','files','remote','syncedAt','seenAt','form','sealedFor'] as const;
 
 /** GitHub's rule for a repository name: letters, digits, hyphen, underscore and period, at most
  *  100 characters, and never `.` or `..` alone. Narrower than the owner rule, which is a login. */
@@ -232,7 +238,8 @@ export function readRepository(raw:unknown):ProjectRepository|null{
   const digests=(key:'files'|'remote')=>{const v=raw[key];return isRecord(v)&&Object.values(v).every(x=>typeof x==='string')?{[key]:v as Record<string,string>}:{};};
   const files={...digests('files'),...digests('remote')};
   return {owner:raw.owner as string,repo:raw.repo as string,attachedAt,
-    ...text('credential'),...text('commit'),...files,...text('syncedAt'),...text('seenAt')};
+    ...text('credential'),...text('commit'),...files,...text('syncedAt'),...text('seenAt'),
+    ...(raw.sealed===true?{sealed:true}:{}),...(raw.form==='sealed'||raw.form==='plain'?{form:raw.form}:{}),...text('sealedFor')};
 }
 
 /** `owner/repo`, which is how GitHub writes it and how a practitioner will read it back. */

@@ -51,7 +51,7 @@ export interface IdentityProfile {name:string; login?:string; orcid?:string;
   /** An icon of Fieldwork's set on a colour (`avatars.ts`); initials where absent. */
   avatar?:AvatarChoice}
 /** An identity opened for this session: its profile, its public key, and a private key that cannot be exported; and,
- *  since 2026-11-21 (experiment 229), a key for files sealed to it, likewise. */
+ *  since 2026-11-21 (the export encryption audit), a key for files sealed to it, likewise. */
 export interface OpenIdentity {profile:IdentityProfile; algorithm:SigningAlgorithm; publicKey:string; privateKey:CryptoKey;
   sealing?:{publicKey:string;privateKey:CryptoKey}}
 
@@ -110,7 +110,7 @@ export async function createIdentityFile(profile:IdentityProfile,passphrase:stri
   return {file,identity:await openFrom(clean,algorithm,publicKey,privateKey,sealing)};
 }
 
-/** THE KEY FOR SEALED FILES (experiment 229): ECDH P-256, beside the signing key, sealed in the same file. */
+/** THE KEY FOR SEALED FILES (the export encryption audit): ECDH P-256, beside the signing key, sealed in the same file. */
 type SealingPair={publicKey:string;privateKey:string};
 interface Inner {profile:IdentityProfile; key:{algorithm:SigningAlgorithm;publicKey:string;privateKey:string}; sealing?:SealingPair}
 async function seal(inner:Inner,passphrase:string,iterations:number):Promise<string>{
@@ -138,7 +138,7 @@ export async function openIdentityFile(file:string,passphrase:string):Promise<Op
   const {inner}=await unseal(file,passphrase);
   return openFrom(inner.profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey,inner.sealing);
 }
-/** AN IDENTITY MADE BEFORE 2026-11-21 GAINS ITS KEY FOR SEALED FILES (experiment 229), the next time it is opened: the
+/** AN IDENTITY MADE BEFORE 2026-11-21 GAINS ITS KEY FOR SEALED FILES (the export encryption audit), the next time it is opened: the
  *  same profile and signing key, a new encryption key, sealed again with the same passphrase. Null where the file has
  *  one already. The person keeps the new file in place of the old. */
 export async function addSealingKey(file:string,passphrase:string):Promise<{file:string;identity:OpenIdentity}|null>{
@@ -163,7 +163,7 @@ export async function updateIdentityFile(file:string,passphrase:string,change:{a
   // An avatar left out of the change is kept; null removes it.
   const avatar=change.avatar===undefined?_was:change.avatar;
   const profile:IdentityProfile={...rest,...(orcid?{orcid}:{}),...(affiliations.length?{affiliations}:{}),...(avatar&&isAvatarChoice(avatar)?{avatar}:{})};
-  // A file without a key for sealed files gains one here too (experiment 229).
+  // A file without a key for sealed files gains one here too (the export encryption audit).
   const sealing=inner.sealing??await newSealingKeys();
   const next={profile,key:inner.key,sealing};
   return {file:await seal(next,passphrase,iterations),identity:await openFrom(profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey,sealing)};

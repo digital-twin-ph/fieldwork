@@ -17,7 +17,9 @@ const utf8Base64=(text:string)=>{const bytes=new TextEncoder().encode(text);let 
 
 /** `expected`, when given, is the commit this device last read or saved: if the branch has moved past it, someone saved
  *  since, and the save is refused before anything is written. */
-export async function saveToRepository(repository:string,files:Map<string,string>,message:string,token:string,fetchFn:Fetch=fetch,expected?:string):Promise<SaveResult>{
+export async function saveToRepository(repository:string,files:Map<string,string>,message:string,token:string,fetchFn:Fetch=fetch,expected?:string,
+  /** Paths to remove in the same commit: a project's files in the form it no longer takes (sealed or plain). */
+  remove:readonly string[]=[]):Promise<SaveResult>{
   const headers={Authorization:`Bearer ${token}`,Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'};
   const call=async(path:string,method='GET',body?:unknown)=>{
     const response=await fetchFn(`${GITHUB_API}/repos/${repository}${path}`,{method,headers,cache:'no-store',...(body?{body:JSON.stringify(body)}:{})});
@@ -37,7 +39,12 @@ export async function saveToRepository(repository:string,files:Map<string,string
   const commit=await call(`/git/commits/${parent}`);if(!commit.ok)return refused(commit.status,'reading the last commit');
   const baseTree=String((commit.json?.tree as {sha?:string})?.sha);
 
-  const tree:{path:string;mode:'100644';type:'blob';sha:string}[]=[];
+  // ONLY WHAT IS THERE IS REMOVED: the paths to remove are checked against the branch's own tree, so a file this device
+  // never read (a manifest, say) is found, and one that is not there is not asked for.
+  let present=new Set<string>();
+  if(remove.length){const listed=await call(`/git/trees/${baseTree}?recursive=1`);if(!listed.ok)return refused(listed.status,'reading the files');
+    present=new Set(((listed.json?.tree??[]) as {path?:string;type?:string}[]).filter(e=>e.type==='blob').map(e=>String(e.path)));}
+  const tree:{path:string;mode:'100644';type:'blob';sha:string|null}[]=remove.filter(p=>!files.has(p)&&present.has(p)).map(path=>({path,mode:'100644',type:'blob',sha:null}));
   for(const [path,text] of files){
     const blob=await call('/git/blobs','POST',{content:utf8Base64(text),encoding:'base64'});
     if(!blob.ok)return refused(blob.status,`writing ${path}`);

@@ -216,11 +216,13 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
     // different obligation from the ODbL one and is not discharged by the absence of a licence.
     basemap==='natural-earth-110m'
       ?'Ground: Natural Earth 1:110m, public domain · context only, generalised to kilometres':'',
-    basemap==='osm'?'Basemap © OpenStreetMap contributors, ODbL':'',
+    // THE COPYRIGHT ADDRESS PRINTED (2026-11-21): OpenStreetMap's attribution guidelines ask for openstreetmap.org/copyright
+    // to be printed where a figure cannot carry a link, and a figure travels as print.
+    basemap==='osm'?'Basemap © OpenStreetMap contributors, ODbL (openstreetmap.org/copyright)':'',
     // OpenTopoMap is a style over OSM data under a different licence, so crediting it as
     // OpenStreetMap alone -- which this did until 2026-10-14 -- under-credits the style.
-    basemap==='topo'?'Basemap style © OpenTopoMap, CC-BY-SA; data © OpenStreetMap contributors, ODbL':'',
-    keyedProvider(basemap)==='carto'?'Basemap © CARTO; data © OpenStreetMap contributors, ODbL':'',
+    basemap==='topo'?'Basemap style © OpenTopoMap, CC-BY-SA; data © OpenStreetMap contributors, ODbL (openstreetmap.org/copyright)':'',
+    keyedProvider(basemap)==='carto'?'Basemap © CARTO (carto.com/attribution); data © OpenStreetMap contributors, ODbL (openstreetmap.org/copyright)':'',
     keyedProvider(basemap)==='esri'?'Basemap powered by Esri; imagery and data as credited on the map':'',
   ].filter(Boolean);
   // EVERY INPUT'S OWN OBLIGATION, read from the node that incurs it.

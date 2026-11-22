@@ -2,7 +2,7 @@ import {test,expect} from './fixtures.mjs';
 import {readFileSync} from 'node:fs';
 import {collectPageErrors} from './page-errors.mjs';
 
-/** BACKUPS ENCRYPTED BY DEFAULT (experiment 229, 2026-11-21). The practitioner: *"I want to make sure that we are able to
+/** BACKUPS ENCRYPTED BY DEFAULT (the export encryption audit, 2026-11-21). The practitioner: *"I want to make sure that we are able to
  *  save workflows and projects encrypted by default"*, and *"How can others decrypt the project file if I send it to
  *  them?"*. A project backed up encrypted for the open identity, a colleague's key and a passphrase; the file holds no
  *  word of the project; it opens again with the identity, and with the passphrase once the identity is locked. */

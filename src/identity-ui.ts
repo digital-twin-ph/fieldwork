@@ -291,7 +291,7 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
       if(!pass){said('Enter the passphrase for this file.',false);$('#identity-passphrase').focus();return;}
       said('Opening…',true);
       try{const text=await file.text();let identity=await openIdentityFile(text,pass);justOpened='Opened from your file.';
-        // A FILE MADE BEFORE 2026-11-21 GAINS ITS KEY FOR ENCRYPTED BACKUPS (experiment 229), and is given back to keep.
+        // A FILE MADE BEFORE 2026-11-21 GAINS ITS KEY FOR ENCRYPTED BACKUPS (the export encryption audit), and is given back to keep.
         if(!identity.sealing){const added=await addSealingKey(text,pass);
           if(added){identity=added.identity;saveIdentityFile(added.file,identity.profile.name);
             justOpened=`Opened, and given a key for encrypted backups: keep the new ${identityFileName(identity.profile.name)} in place of the old one.`;}}

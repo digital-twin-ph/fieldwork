@@ -64,7 +64,13 @@ Both are kept outside every repository. This is a reading, not legal advice.
 **Decided by the practitioner, 2026-11-19** (*"Yes to ESRI. No ESRI in figures for now."*): Esri stays on the
 interactive map only, until Esri confirms in writing that published figures are allowed; and the Credentials manual
 says that a person using Esri is bound by their own Location Platform agreement (`docs/usage.md`, *Credentials*).
-**Open:** CARTO's terms on figures, not yet read.
+**CARTO's terms on figures, read 2026-11-21** (HTML only, no sign-up): the Basemaps Terms (*last updated 29 September
+2026*, carto.com/legal/basemap-terms) allow screenshots or static images of the basemaps for illustrative, editorial or
+documentary purposes, where the credit (© OpenStreetMap contributors, © CARTO) is legible in the image; keys are free for
+non-commercial use up to 5 million tile requests a month; since 25 September 2026 raster tiles are served only with a
+key. **Decided 2026-11-21, the practitioner:** *"CARTO basemaps are only for interactive maps, which publications,
+reports, summaries don't hold."* So a figure keeps drawing OpenStreetMap where CARTO was chosen, as built. Found on the
+way: a figure's credit lacked the address OpenStreetMap's guidelines ask to be printed; it now reads *(openstreetmap.org/copyright)*.
 
 ## Observed: a colleague followed the manual, 2026-11-19
 

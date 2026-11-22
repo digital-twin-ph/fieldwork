@@ -35,7 +35,7 @@ export async function readProjectAt(repository:string,token:string,fetchFn:Fetch
   const commit=await getJSON(repository,`/git/commits/${sha}`,token,fetchFn);
   const tree=await getJSON(repository,`/git/trees/${String((commit.tree as {sha?:string})?.sha)}?recursive=1`,token,fetchFn);
   const entries=(tree.tree as {path:string;type:string;sha:string}[]??[])
-    .filter(e=>e.type==='blob'&&(e.path==='project.json'||/^(workflows|notes)\/[^/]+\.json$/.test(e.path)));
+    .filter(e=>e.type==='blob'&&(/^(project\.json|(workflows|notes)\/[^/]+\.json)(\.fwsealed)?$/.test(e.path)));
   const files=new Map<string,string>();
   for(const entry of entries){
     const blob=await getJSON(repository,`/git/blobs/${entry.sha}`,token,fetchFn);

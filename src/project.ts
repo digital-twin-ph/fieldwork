@@ -70,7 +70,7 @@ export interface Project {
    *  download machinery and loses sight of it, unable to read the filesystem or tell whether the
    *  file was kept, moved or deleted. This ages the process, not the file. */
   exportedAt?:string;
-  /** Whether that export was encrypted (experiment 229): said beside Backed up. */
+  /** Whether that export was encrypted (the export encryption audit): said beside Backed up. */
   exportedSealed?:boolean;
   /** THE PEOPLE WHO AUTHORED THE INVESTIGATION, in the order a publication would list them.
    *

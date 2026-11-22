@@ -51,7 +51,11 @@ export async function checkRepository(repository:string,token:string,fetchFn:Fet
   const project=await get(`/repos/${repository}/contents/project.json`,'application/vnd.github.raw+json');
   if(project.ok){const p=await project.json().catch(()=>null) as {name?:unknown;workflows?:unknown[]}|null;
     add('project','yes',p?.name?`Its project is "${String(p.name)}", with ${Array.isArray(p.workflows)?p.workflows.length:0} workflow${Array.isArray(p.workflows)&&p.workflows.length===1?'':'s'}.`:'Its project.json has no name yet: the empty template.');}
-  else add('project','no','It has no project.json.');
+  else{
+    // ENCRYPTED (the export encryption audit, 2026-11-21): its project is there, readable by its members only.
+    const sealed=await get(`/repos/${repository}/contents/project.json.fwsealed`,'application/vnd.github.raw+json');
+    if(sealed.ok)add('project','yes','Its project is encrypted: only its members can read its name and its workflows.');
+    else add('project','no','It has no project.json.');}
 
   if(!about.has_discussions)add('discussions','no','Discussions is off. Turn it on under Settings, Features.');
   else{

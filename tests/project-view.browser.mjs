@@ -127,7 +127,7 @@ test('Back up is one control, and says which combination does not exist',async({
   await page.locator('#backup-button').click();
   await expect(page.locator('#backup-project')).toBeEnabled();
   await expect(page.locator('#backup-project-note')).toContainText('Ituri health zones');
-  // A project is backed up encrypted first (experiment 229, 2026-11-21); the plain copy follows.
+  // A project is backed up encrypted first (the export encryption audit, 2026-11-21); the plain copy follows.
   await expect(page.locator('#backup-project-sealed')).toBeVisible();
 
   const download=page.waitForEvent('download');

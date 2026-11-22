@@ -38,9 +38,13 @@ export interface ProjectMember {
   name?:string;
   orcid?:string;
   affiliations?:{name:string;ror?:string}[];
-  /** Their identity's key for sealed files (experiment 229), so a project backup opens for them. In the statement they
+  /** Their identity's key for sealed files (the export encryption audit), so a project backup opens for them. In the statement they
    *  sign, so nobody can put another key in their place. */
   sealKey?:string;
+  /** A key another member pasted for them, before they could open the project to give their own: used to seal the
+   *  project for them, and said to be given by someone else. Their own signed key replaces it. */
+  givenKey?:string;
+  givenBy?:string;
   /** Their key's signature over login, name, ORCID iD and affiliations, and the key it verifies against. */
   publicKey?:string;
   algorithm?:string;
@@ -60,7 +64,7 @@ export function readMembers(raw:unknown):ProjectMember[]{
     const text=(k:string)=>typeof r[k]==='string'&&r[k]?{[k]:r[k] as string}:{};
     const affiliations=Array.isArray(r.affiliations)?(r.affiliations as unknown[]).flatMap(a=>{const x=a as Record<string,unknown>|null;
       return x&&typeof x.name==='string'&&x.name?[{name:x.name,...(typeof x.ror==='string'&&x.ror?{ror:x.ror}:{})}]:[];}):[];
-    out.push({login:r.login,role:r.role as ProjectRole,since:r.since,...text('name'),...text('orcid'),...text('sealKey'),...(affiliations.length?{affiliations}:{}),
+    out.push({login:r.login,role:r.role as ProjectRole,since:r.since,...text('name'),...text('orcid'),...text('sealKey'),...text('givenKey'),...text('givenBy'),...(affiliations.length?{affiliations}:{}),
       ...(typeof r.signature==='string'&&typeof r.publicKey==='string'&&typeof r.algorithm==='string'
         ?{publicKey:r.publicKey,algorithm:r.algorithm,signature:r.signature}:{})});
   }

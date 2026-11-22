@@ -1,4 +1,4 @@
-/** A SEALED FILE (experiment 229, 2026-11-21): a backup encrypted for the people who should open it.
+/** A SEALED FILE (the export encryption audit, 2026-11-21): a backup encrypted for the people who should open it.
  *
  *  The practitioner: *"I want to make sure that we are able to save workflows and projects encrypted by default"*, and
  *  then *"How can others decrypt the project file if I send it to them?"*. So the content is encrypted once, with

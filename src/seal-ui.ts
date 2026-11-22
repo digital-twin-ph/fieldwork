@@ -1,4 +1,4 @@
-/** WHO CAN OPEN IT (experiment 229, 2026-11-21): the dialog before an encrypted backup is written, and the one that
+/** WHO CAN OPEN IT (the export encryption audit, 2026-11-21): the dialog before an encrypted backup is written, and the one that
  *  opens a sealed file on import.
  *
  *  The practitioner chose backups encrypted by default, to their identity, and asked *"How can others decrypt the

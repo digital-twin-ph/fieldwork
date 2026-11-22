@@ -4,7 +4,7 @@ import {sealBytes,openSealed,readSealedHeader,isSealed,whoCanOpen,newSealingKeys
 import {createIdentityFile,openIdentityFile,addSealingKey,updateIdentityFile} from '../build/identity-file.js';
 import {memberStatement,readMembers} from '../build/project-roles.js';
 
-/** SEALED FILES (experiment 229, 2026-11-21): a backup encrypted for the people who should open it, each with their own
+/** SEALED FILES (the export encryption audit, 2026-11-21): a backup encrypted for the people who should open it, each with their own
  *  key, or a passphrase. */
 const bytes=new TextEncoder().encode('{"schema":"fieldwork/project-document/1","project":{"name":"Measles, Ituri"}}');
 const content={name:'measles-ituri-project.json.gz',mediaType:'application/gzip'};

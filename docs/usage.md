@@ -1,6 +1,6 @@
 # Using Fieldwork
 
-_Created 2026-10-08 · Updated 2026-11-19_
+_Created 2026-10-08 · Updated 2026-11-21_
 
 The practitioner detail that used to live in the README. The
 [README](../README.md) keeps the overview, the published links and the current
@@ -20,7 +20,7 @@ passphrase you tell them another way. **Import** opens a sealed file with your o
 passphrase. If you lose your identity file or its passphrase, a file sealed only for you cannot be opened. **Plain
 copies** follow, readable by anyone who has the file: for a worked example to publish. **Export as repository** is
 encrypted the same way, with a plain ZIP as its other button. Browser storage stays unencrypted. See
-[experiment 229](experiments/229-backups-encrypted-by-default.md).
+[the export encryption audit](audits/export-encryption-audit.md).
 
 **The password ZIP** (*This workflow with its PDFs and raster windows*) creates a password-protected project containing the workflow, referenced PDFs and retained raster windows as binary files. Enter and confirm a long passphrase, then use **Import** to restore the ZIP on another device. Generic archive entry names, counts and sizes remain visible; original PDF filenames and citations are inside encrypted content. There is no password recovery. Browser storage and the existing JSON export/run receipts remain unencrypted. The prototype supports PDFs and bounded GeoTIFF windows, with a 20 MB archive limit; original national rasters and arbitrary attachments are not embedded. See the [encrypted-package design](experiments/24-encrypted-project-packages.md).
 

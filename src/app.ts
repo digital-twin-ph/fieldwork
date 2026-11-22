@@ -149,7 +149,8 @@ import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachine
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel,DEVICE_REPOSITORY_FIELDS,readRepository} from './identity.js';
 import {installIdentity,openIdentity,identityUntilLock,signingIdentity,identityKeepOpen} from './identity-ui.js';
 import {openSealDialog,openSealedFile,type SealMember} from './seal-ui.js';
-import {isSealed} from './sealed-file.js';
+import {isSealed,readKeyText} from './sealed-file.js';
+import {openRepositoryFiles,sealRepositoryFiles,recipientsDigest,holdsSealed,sealable,SEALED_SUFFIX} from './repository-seal.js';
 import {signStatement,verifyStatement} from './identity-file.js';
 import {affiliationLabel} from './affiliations-ui.js';
 import {noteVersion} from './identity-file.js';
@@ -8379,7 +8380,7 @@ function renderProjectView():void{
       // Same class: exportProject opens with the same guard, and this button is rebuilt by
       // render() on every state change, so it carries the state rather than being set once.
       backup.className='button small';backup.dataset.exportProject=project.id;backup.disabled=busy;
-      // ENCRYPTED FIRST (experiment 229): the default, with its own button; the plain copy beside it, named as one.
+      // ENCRYPTED FIRST (the export encryption audit): the default, with its own button; the plain copy beside it, named as one.
       const sealed=document.createElement('button');
       sealed.className='button small primary';sealed.dataset.sealProject=project.id;sealed.disabled=busy;
       sealed.textContent='\u2193 Back up, encrypted';
@@ -8509,7 +8510,7 @@ function renderProjectSafety():void{
   control.type='button';
   control.id='project-safety';
   control.className='link-button';
-  // ENCRYPTED OR PLAIN, said beside it (experiment 229): a plain copy in a downloads folder is readable by anyone.
+  // ENCRYPTED OR PLAIN, said beside it (the export encryption audit): a plain copy in a downloads folder is readable by anyone.
   control.textContent=safety==='Not backed up'?safety:`${safety}${project.exportedSealed?', encrypted':', not encrypted'}`;
   control.title=safety==='Backed up'
     ?'A copy of this project exists outside this browser. Open the Workspace to make another.'
@@ -8685,7 +8686,7 @@ async function projectRepositoryZip(project:Project):Promise<{blob:Blob;name:str
     for(const [path,text] of files)await zip.add(path,new TextReader(text));
     return {blob:await zip.close(),name:`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-repository.zip`,files:files.size};
 }
-/** EXPORT AS REPOSITORY, ENCRYPTED BY DEFAULT (experiment 229); the plain ZIP is the dialog's other button. */
+/** EXPORT AS REPOSITORY, ENCRYPTED BY DEFAULT (the export encryption audit); the plain ZIP is the dialog's other button. */
 async function sealRepository(id:string){
   if(busy)return;
   const project=readProjects().find(p=>p.id===id);
@@ -8713,7 +8714,7 @@ async function exportProjectRepository(id:string){
  *  Export and Encrypted ZIP are both workflow-scoped, so four workflows about one province moved
  *  as four unrelated files with nothing recording that they belonged together. */
 /** THE PROJECT'S BACKUP FILE, made and not written: the plain backup writes it, and the encrypted one seals it first
- *  (experiment 229). */
+ *  (the export encryption audit). */
 async function projectBackupFile(project:Project):Promise<{blob:Blob;name:string;text:string;held:string[];loose:number}>{
     save();
     const saved=readSavedWorkflows();
@@ -8775,7 +8776,20 @@ async function sealMembers(project:Project):Promise<{members:SealMember[];withou
   }
   return {members,without};
 }
-/** A PROJECT BACKED UP ENCRYPTED, the default (experiment 229): who can open it, then the sealed file. */
+/** WHO A SHARED PROJECT IS SEALED FOR ON GITHUB: the person saving, each member's own signed key, and a key another
+ *  member gave for someone who could not yet open the project. Those with neither are named, so the save says who
+ *  cannot read it yet. */
+async function repositoryRecipients(project:Project,mine:string):Promise<{keys:string[];without:string[]}>{
+  const keys=[mine],without:string[]=[];
+  for(const m of project.members??[]){
+    const signed=m.sealKey&&m.signature&&m.publicKey&&m.algorithm
+      &&await verifyStatement(m.algorithm,m.publicKey,memberStatement(m),m.signature)?m.sealKey:undefined;
+    const key=signed??m.givenKey;
+    if(key)keys.push(key);else without.push(m.name??m.login);
+  }
+  return {keys:[...new Set(keys)],without};
+}
+/** A PROJECT BACKED UP ENCRYPTED, the default (the export encryption audit): who can open it, then the sealed file. */
 async function sealProject(id:string){
   if(busy)return;
   const project=readProjects().find(p=>p.id===id);
@@ -8836,7 +8850,7 @@ async function importProjectDocument(raw:unknown):Promise<string[]>{
   if(authors.length)project.authors=authors;
   // WHERE IT IS SHARED COMES WITH IT, and nothing of the device that backed it up: the token is chosen again here.
   const shared=readRepository((document.project as {repository?:unknown}).repository);
-  if(shared)project.repository={owner:shared.owner,repo:shared.repo,attachedAt:shared.attachedAt};
+  if(shared)project.repository={owner:shared.owner,repo:shared.repo,attachedAt:shared.attachedAt,...(shared.sealed?{sealed:true}:{})};
   // IMPORTED INTO A SHARED REPOSITORY (2026-11-16): Open shared GitHub project, Import project from backup. Taken once,
   // and only within two minutes of the press, so a picker closed without a file does not share a later import.
   if(pendingShare&&Date.now()-pendingShare.at<120_000)project.repository=pendingShare.repository;
@@ -9118,7 +9132,9 @@ function describeChanges(changed:string[]){
 /** Opened, or got again: the repository's project made into a project here, by the importer a backup uses. */
 async function openSharedProject(repository:string,credential:string,replacing?:Project):Promise<void>{
   const token=tokenFor(credential);
-  const {commit,files}=await readProjectAt(repository,token);
+  const {commit,files:held}=await readProjectAt(repository,token);
+  // SEALED FILES OPENED WITH THIS PERSON'S IDENTITY; everything after works on the plain text.
+  const sealed=holdsSealed(held.keys()),files=await openRepositoryFiles(held,openIdentity()?.sealing);
   const keys=await importProjectDocument(projectDocumentFromFiles(files));
   const made=readProjects().find(p=>p.workflows.includes(keys[0]));
   if(!made)throw new Error('The project was read and could not be recorded on this device.');
@@ -9126,7 +9142,8 @@ async function openSharedProject(repository:string,credential:string,replacing?:
   const [owner,repo]=repository.split('/');
   const now=new Date().toISOString();
   writeProjects(readProjects().map(p=>p.id!==made.id?p:{...p,repository:{owner,repo,attachedAt:replacing?.repository?.attachedAt??now,
-    credential,commit,syncedAt:now,...(replacing?.repository?.seenAt?{seenAt:replacing.repository.seenAt}:{})}}));
+    credential,commit,syncedAt:now,...(replacing?.repository?.seenAt?{seenAt:replacing.repository.seenAt}:{}),
+    ...(sealed?{sealed:true}:{}),form:sealed?'sealed':'plain'}}));
   const fresh=readProjects().find(p=>p.id===made.id)!;
   updateRepository(made.id,{files:await fileDigests(await projectRepositoryFileMap(fresh)),remote:await fileDigests(files)});
   renderProjectOptions();renderProjectDetails();
@@ -9134,7 +9151,8 @@ async function openSharedProject(repository:string,credential:string,replacing?:
 /** The repository's latest, merged with this device's project (`mergeLatest`), made into the project here. */
 async function getLatest(current:Project,credential:string):Promise<Merge>{
   const token=tokenFor(credential),repository=repositoryOf(current);
-  const {commit,files:github}=await readProjectAt(repository,token);
+  const {commit,files:held}=await readProjectAt(repository,token);
+  const form=holdsSealed(held.keys())?'sealed' as const:'plain' as const,github=await openRepositoryFiles(held,openIdentity()?.sealing);
   const here=await projectRepositoryFileMap(current);
   const merge=await mergeLatest(current.repository?.files??{},current.repository?.remote??{},here,github,async path=>{
     const what=path.replace(/^workflows\/|^notes\/|\.json$/g,'');
@@ -9146,7 +9164,8 @@ async function getLatest(current:Project,credential:string):Promise<Merge>{
   removeProjectQuietly(current.id);
   const now=new Date().toISOString();
   writeProjects(readProjects().map(p=>p.id!==made.id?p:{...p,repository:{owner:current.repository!.owner,repo:current.repository!.repo,
-    attachedAt:current.repository!.attachedAt,credential,commit,syncedAt:now,...(current.repository?.seenAt?{seenAt:current.repository.seenAt}:{})}}));
+    attachedAt:current.repository!.attachedAt,credential,commit,syncedAt:now,...(current.repository?.seenAt?{seenAt:current.repository.seenAt}:{}),
+    ...(current.repository?.sealed?{sealed:true}:{}),form,...(current.repository?.sealedFor?{sealedFor:current.repository.sealedFor}:{})}}));
   // WHAT WAS KEPT FROM HERE STAYS "CHANGED HERE": its baseline is GitHub's version, or none, so the next save sends it.
   const fresh=readProjects().find(p=>p.id===made.id)!;
   const baseline=await fileDigests(await projectRepositoryFileMap(fresh)),theirs=await fileDigests(github);
@@ -9193,7 +9212,8 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
         if(refusal){out.innerHTML=`<strong>No.</strong> ${esc(refusal)}`;return;}
         const [owner,repo]=name.split('/');
         rememberRepository(name,pick.value);
-        writeProjects(readProjects().map(p=>p.id!==project.id?p:{...p,repository:{owner,repo,attachedAt:new Date().toISOString(),credential:pick.value}}));
+        // ENCRYPTED ON GITHUB BY DEFAULT (the export encryption audit, 2026-11-21); open is the panel's switch.
+        writeProjects(readProjects().map(p=>p.id!==project.id?p:{...p,repository:{owner,repo,attachedAt:new Date().toISOString(),credential:pick.value,sealed:true}}));
         renderProjectOptions();renderProjectDetails();}
       catch(e){out.innerHTML=`<strong>No.</strong> ${esc(errorMessage(e))}`;}};
     return;
@@ -9204,6 +9224,8 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
     +` ${r.syncedAt?`Last read or saved here ${esc(new Date(r.syncedAt).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}))}.`:'Not yet saved to it.'}</p>`
     +`<ul id="shared-state" class="repo-check-result" aria-live="polite"></ul>`
     +`<label class="field-label" for="shared-credential">GitHub token</label><select id="shared-credential">${credentialOptions(r.credential)}</select>`
+    +`<p class="shared-sealed"><label><input type="checkbox" id="shared-sealed"${r.sealed?' checked':''}> <strong>Encrypted on GitHub</strong>: only members with a key can read the project's files; GitHub's pages cannot show them.</label>`
+    +` <span class="muted" id="shared-sealed-said">${r.sealed?'':'Open: anyone who can see the repository can read its files, as a worked example should be.'}</span></p>`
     +`<label class="field-label" for="shared-message">What this save is</label><input id="shared-message" maxlength="200">`
     +`<div class="project-detail-actions"><button id="shared-save" class="button" type="button">Save to the repository</button>`
     +`<button id="shared-latest" class="button" type="button">Get the latest</button>`
@@ -9228,6 +9250,10 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
     try{const {changed}=await localChanges(current);
       lines.push(changed.length?line('no',`Changed here since last read or saved: ${describeChanges(changed)}.`):line('yes','Nothing changed here since last read or saved.'));}
     catch(e){lines.push(line('no',errorMessage(e)));}
+    // ENCRYPTED OR OPEN ON GITHUB, as last saved here (the export encryption audit).
+    const r=current.repository;
+    if(r.form)lines.push(r.form==='sealed'?line('yes','Encrypted on GitHub: only members with a key can read the project\'s files.')
+      :line(r.sealed?'no':'unknown',r.sealed?'Open on GitHub until the next save, which encrypts it.':'Open on GitHub: anyone who can see the repository can read the project\'s files.'));
     if(remote){
       try{const token=tokenFor(pick.value||current.repository.credential);
         const head=await headCommit(repository,token);
@@ -9276,13 +9302,18 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
         +(member.affiliations??[]).map(a=>` · ${affiliationLabel(a,esc)}`).join('')+`${verified?' · signed by them':' · not signed'}`
         :'<span class="muted">Has not said who they are yet.</span>';
       const shortfall=member&&collaborators?roleShortfall(member.role,known):null;
+      // THEIR KEY FOR AN ENCRYPTED PROJECT: their own, signed; or one another member pasted for them, said as such.
+      const keyLine=!current.repository?.sealed||!member?'':member.sealKey?' · <span class="is-yes">can read it encrypted</span>'
+        :member.givenKey?` · <span class="muted">can read it encrypted, with a key given by ${esc(member.givenBy??'another member')}</span>`
+        :`<br><span class="muted">Cannot read the encrypted project yet. Paste their key (they find it under Identity → Your key for encrypted files):</span>`
+          +` <input class="member-key" data-member-key="${esc(login)}" placeholder="fwkey1:…" spellcheck="false" aria-label="Key for ${esc(login)}"> <button type="button" class="button small" data-member-key-add="${esc(login)}">Add</button>`;
       const options=`<option value="">Not in the project</option>`+PROJECT_ROLES.map(r=>`<option value="${r}"${member?.role===r?' selected':''}>${PROJECT_ROLE_LABEL[r]}</option>`).join('');
       const proposal=!member&&known?` <span class="muted">(${PROJECT_ROLE_LABEL[proposedProjectRole(known)]} would fit)</span>`:'';
       const mine=myLogin&&myLogin.toLowerCase()===login.toLowerCase();
       rows.push(`<li><strong>${esc(login)}</strong> <span class="muted">on GitHub: ${esc(repo??'no access listed')}</span><br>${who}`
         +`<br><label class="field-label" for="member-${esc(login)}">Project role</label><select id="member-${esc(login)}" data-member="${esc(login)}">${options}</select>${proposal}`
         +(mine?` <button class="button small" type="button" data-member-me="${esc(login)}">This is me</button><span class="field-check" data-member-me-says="${esc(login)}" aria-live="polite"></span>`:'')
-        +(shortfall?`<br><span class="is-no"><strong>No.</strong> ${esc(shortfall)}</span>`:'')+'</li>');
+        +keyLine+(shortfall?`<br><span class="is-no"><strong>No.</strong> ${esc(shortfall)}</span>`:'')+'</li>');
     }
     $('#shared-people').innerHTML=(peopleNote?`<p class="muted">${esc(peopleNote)}</p>`:'')
       +(rows.length?`<ul class="shared-people-list">${rows.join('')}</ul>`:'')
@@ -9294,6 +9325,15 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
         const was=(p.members??[]).find(m=>m.login.toLowerCase()===login.toLowerCase());
         const members=role?[...rest,{...(was??{login,since:new Date().toISOString()}),role}]:rest;
         const {members:_m,...without}=p;return members.length?{...without,members}:without as Project;}));
+      void refresh(false);});
+    $('#shared-people').querySelectorAll<HTMLButtonElement>('[data-member-key-add]').forEach(button=>button.onclick=async()=>{
+      const login=button.dataset.memberKeyAdd!;
+      const input=$('#shared-people').querySelector<HTMLInputElement>(`[data-member-key="${CSS.escape(login)}"]`)!;
+      const key=await readKeyText(input.value);
+      if(!key){input.setCustomValidity('Not a key: a key starts fwkey1:');input.reportValidity();return;}
+      const by=openIdentity()?.profile.name??deviceLogin()??'another member';
+      writeProjects(readProjects().map(p=>p.id!==project.id?p:{...p,members:(p.members??[]).map(m=>
+        m.login.toLowerCase()!==login.toLowerCase()?m:{...m,givenKey:key,givenBy:by})}));
       void refresh(false);});
     $('#shared-people').querySelectorAll<HTMLButtonElement>('[data-member-me]').forEach(button=>button.onclick=async()=>{
       const login=button.dataset.memberMe!;
@@ -9327,18 +9367,44 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
     catch(e){result.innerHTML=`<strong>No.</strong> ${esc(errorMessage(e))}`;}
     finally{send.disabled=false;}};
   ($('#shared-check') as HTMLButtonElement).onclick=()=>void refresh(true);
+  // ENCRYPTED OR OPEN, the project's choice; it takes effect at the next save, which writes every file in the new form
+  // and removes the old one in the same commit.
+  ($('#shared-sealed') as HTMLInputElement).onchange=()=>{const on=($('#shared-sealed') as HTMLInputElement).checked;
+    updateRepository(project.id,{sealed:on});
+    $('#shared-sealed-said').textContent=on?'The next save writes every file encrypted, and removes the plain ones.'
+      :'Open: the next save writes every file plain, readable by anyone who can see the repository, and removes the encrypted ones.';};
   ($('#shared-save') as HTMLButtonElement).onclick=async()=>{
     const message=($('#shared-message') as HTMLInputElement).value.trim();
     if(!message){out.textContent='Say what this save is first.';return;}
     const current=readProjects().find(p=>p.id===project.id)!;
     try{const token=tokenFor(pick.value||current.repository?.credential);
       const {files,changed}=await localChanges(current);
-      if(current.repository?.commit&&!changed.length){out.textContent='Nothing changed here since last read or saved, so there is nothing to save.';return;}
+      // ENCRYPTED ON GITHUB (the export encryption audit): sealed for the members with a key. Recipients changed, or the
+      // files were plain before: every file sealed again. Otherwise only what changed, so a commit shows what changed.
+      const repo=current.repository!,sealing=repo.sealed;
+      let send=files,remove:string[]=[],sealedFor:string|undefined,unread:string[]=[];
+      if(sealing){
+        const me=openIdentity()?.sealing;
+        if(!me){out.innerHTML='<strong>No.</strong> This project is encrypted on GitHub. Open your identity to save it.';$('#identity-button').click();return;}
+        const {keys,without}=await repositoryRecipients(current,me.publicKey);
+        unread=without;sealedFor=await recipientsDigest(keys);
+        const everything=repo.form!=='sealed'||repo.sealedFor!==sealedFor;
+        if(repo.commit&&!changed.length&&!everything){out.textContent='Nothing changed here since last read or saved, so there is nothing to save.';return;}
+        const picked=new Map([...files].filter(([path])=>everything||changed.includes(path)));
+        send=new Map([...await sealRepositoryFiles(new Map([...picked].filter(([p])=>sealable(p))),keys),...[...picked].filter(([p])=>!sealable(p))]);
+        // THE PLAIN FORM REMOVED in the same commit, whatever this device last saw: what is not there is not asked for.
+        remove=[...new Set([...files.keys(),...Object.keys(repo.remote??{})])].filter(sealable);
+      }else{
+        if(repo.commit&&!changed.length&&repo.form!=='sealed'){out.textContent='Nothing changed here since last read or saved, so there is nothing to save.';return;}
+        remove=[...new Set([...files.keys(),...Object.keys(repo.remote??{})])].filter(sealable).map(p=>`${p}${SEALED_SUFFIX}`);
+      }
       out.textContent='Saving…';
-      const done=await saveToRepository(repository,files,message,token,fetch,current.repository?.commit);
+      const done=await saveToRepository(repository,send,message,token,fetch,repo.commit,remove);
       if(!done.ok){out.innerHTML=`<strong>No.</strong> ${esc(done.text)}`;return;}
       const sent=await fileDigests(files);
-      updateRepository(project.id,{commit:done.sha,files:sent,remote:sent,syncedAt:new Date().toISOString(),credential:pick.value||current.repository?.credential});
+      updateRepository(project.id,{commit:done.sha,files:sent,remote:sent,syncedAt:new Date().toISOString(),credential:pick.value||current.repository?.credential,
+        form:sealing?'sealed':'plain',...(sealedFor?{sealedFor}:{})});
+      if(unread.length)toast(`Saved encrypted. Not yet able to read it: ${unread.join(', ')}. A member gives their key with This is me, or another member adds it under People.`,{tone:'warning'});
       ($('#shared-message') as HTMLInputElement).value='';
       renderProjectDetails();
       $('#shared-result').innerHTML=`<strong>Saved.</strong> ${esc(describeChanges(changed))} in one commit: <a href="${esc(done.url)}" target="_blank" rel="noopener">open it on GitHub</a>.`
@@ -9470,7 +9536,8 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
    finally{button.disabled=false;}};
  nameInput.addEventListener('input',()=>{checked=null;next(null);});
  const sharing=():NonNullable<Project['repository']>|null=>{if(!checked)return null;const [owner,repo]=checked.repository.split('/');
-   return {owner:owner!,repo:repo!,attachedAt:new Date().toISOString(),...(pick.value?{credential:pick.value}:{})};};
+   // ENCRYPTED ON GITHUB BY DEFAULT (the export encryption audit, 2026-11-21).
+   return {owner:owner!,repo:repo!,attachedAt:new Date().toISOString(),...(pick.value?{credential:pick.value}:{}),sealed:true};};
  ($('#github-create') as HTMLButtonElement).onclick=()=>{
    const repository=sharing();if(!repository)return;
    const made=createProject({name:($('#github-name') as HTMLInputElement).value,subject:($('#github-subject') as HTMLTextAreaElement).value,
@@ -9523,7 +9590,7 @@ if(new URLSearchParams(location.search).get('catalog')==='1'||location.hash==='#
  *  backed up encrypted, because the encrypted package takes one workflow. That is said in the
  *  dialog rather than left as an option a practitioner hunts for and does not find.
  *
- *  CLOSED 2026-11-21 (experiment 229): a project is backed up encrypted, as a sealed file, and encrypted comes first in
+ *  CLOSED 2026-11-21 (the export encryption audit): a project is backed up encrypted, as a sealed file, and encrypted comes first in
  *  the dialog; the plain copies follow, named as readable by anyone with the file. */
 function openBackupDialog(){
   if(busy)return;
@@ -9566,7 +9633,7 @@ function discardPreviousRun():void{
   renderResults();
 }
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');discardPreviousRun();renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
-/** THIS WORKFLOW, ENCRYPTED (experiment 229): sealed for the open identity and anyone added. */
+/** THIS WORKFLOW, ENCRYPTED (the export encryption audit): sealed for the open identity and anyone added. */
 async function workflowBackupFile():Promise<{bytes:Uint8Array;name:string;mediaType:string}>{
   const exported=await workflowDocument(workflow);
   const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
@@ -9587,7 +9654,7 @@ $('#export-button').onclick=async()=>{try{if($('#backup-dialog').open)$('#backup
   const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
   downloadBlob(name,await gzipText(text));}catch(error){toast(errorMessage(error),{tone:'failure'});}};$('#import-button').onclick=()=>$('#workflow-file').click();
 $('#workflow-file').onchange=async e=>{let file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{
-  // A SEALED BACKUP (experiment 229) is opened first, with the open identity or a passphrase, and then goes the way a
+  // A SEALED BACKUP (the export encryption audit) is opened first, with the open identity or a passphrase, and then goes the way a
   // plain file does. Known by its first bytes, not its name.
   if(isSealed(new Uint8Array(await file.slice(0,16).arrayBuffer()))){
     const opened=await openSealedFile(new Uint8Array(await file.arrayBuffer()),openIdentity(),()=>$('#identity-button').click(),esc);

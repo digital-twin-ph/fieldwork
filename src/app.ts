@@ -21,6 +21,7 @@ import {manualButton,openManual,hasManual,renderManualPage} from './manual.js';
 import {projectWidgets,projectWidgetsMarkup} from './project-widgets.js';
 import {appendInspector} from './append-ui.js';
 import {detectInspector} from './detect-ui.js';
+import {chartSentence,openChartConfig,type ChartKit} from './chart-ui.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {setupLabEvaluation} from './lab-evaluation-ui.js';
 import {canvasN3} from './canvas-semantics.js';
@@ -218,55 +219,6 @@ import {designChecklist,checklistSummary} from './study-design-checklist.js';
 import {investigatorAllocated} from './study-design-questions.js';
 import type {TwoByTwoResult} from './two-by-two.js';
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-function chartControls(n:WorkflowNode<'chart_output'>,options:{omitOrientation?:boolean}={}){
-  const p=n.params;
-  // AN ESTIMATE WITH ITS INTERVAL is a point and a whisker: no mark or orientation to choose (experiment 181).
-  const interval=!!result?.outputs.find(o=>o.nodeId===n.id)?.chart?.interval;
-  return `<div class="field"><label class="field-label" for="chart-renderer">Chart enhancement</label><select id="chart-renderer"><option value="html" ${chartRenderer(p)!=='vega-lite'?'selected':''}>Classic bars</option><option value="vega-lite" ${chartRenderer(p)==='vega-lite'?'selected':''}>Vega-Lite (experimental)</option></select></div>`+
-    (chartRenderer(p)==='vega-lite'?`${interval?'':`<label class="field-label" for="chart-mark">Mark</label><select id="chart-mark"><option value="bar" ${!p.mark||p.mark==='bar'?'selected':''}>Bars</option><option value="point" ${p.mark==='point'?'selected':''}>Dots</option><option value="line" ${p.mark==='line'?'selected':''}>Line</option></select>`}
-    ${options.omitOrientation||p.panelsBy||interval||p.mark==='line'?'':`<label class="field-label" for="chart-orientation">Orientation</label><select id="chart-orientation"><option value="horizontal" ${p.orientation!=='vertical'?'selected':''}>Horizontal</option><option value="vertical" ${p.orientation==='vertical'?'selected':''}>Vertical</option></select>`}
-    ${(()=>{
-      // AN ESTIMATE WITH ITS INTERVAL (experiment 181): for a ratio, the log scale and the line at 1 are on unless
-      // turned off here. Read off the last run, as the bar order is, since the table's shape arrives with it.
-      const drawn=result?.outputs.find(o=>o.nodeId===n.id)?.chart;
-      if(!drawn?.interval)return '';
-      return drawn.interval.ratio
-        ?`<label class="check"><input type="checkbox" id="chart-log-scale" ${p.ratioScale!=='linear'?'checked':''}> Log scale for the ${esc(drawn.interval.estimate)}</label>`
-          +`<label class="check"><input type="checkbox" id="chart-reference-line" ${p.referenceLine!==false?'checked':''}> A dashed line at 1, no association</label>`
-          +''
-        :'';
-    })()}
-    ${p.panelsBy||interval?'':(()=>{
-      // BAR ORDER, and the control is offered only where it could act. Not with panels (experiment 174): they run
-      // along time, which is the order they mean. A chart whose bins carry
-      // an `order` is a SEQUENCE -- an epidemic curve's days, a band's thresholds -- and sorting
-      // it by size destroys the one thing the figure is for. The last run says which this is,
-      // so the control appears when the chart can be re-ordered and says why when it cannot:
-      // "a control that cannot act must not look like one".
-      const drawn=result?.outputs.find(o=>o.nodeId===n.id)?.chart;
-      const sequence=drawn&&!orderableBins(drawn.bins);
-      const option=(value:string,label:string)=>
-        `<option value="${esc(value)}" ${(p.barOrder||'category')===value?'selected':''}>${esc(label)}</option>`;
-      return `<label class="field-label" for="chart-bar-order">Bar order</label>`
-        +`<select id="chart-bar-order"${sequence?' disabled':''}>`
-        +option('category','In the table\u2019s order, numbers rising')
-        +option('largest','Largest first')
-        +option('smallest','Smallest first')
-        +`</select>`
-        +(sequence
-          ?`<p class="description">These categories are a sequence, so they stay in it. Sorting an
-             epidemic curve by size would lose the one thing it shows.</p>`
-          :'');
-    })()}
-    <label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(p.chartTitle||'')}" placeholder="Default: result caption">
-    <label class="field-label" for="chart-subtitle">Subtitle / context</label><input id="chart-subtitle" maxlength="280" value="${esc(p.subtitle||'')}" placeholder="What this figure shows, in your words">
-    ${wordsHint(esc)}
-    <label class="field-label" for="chart-x-axis">Horizontal axis label</label><input id="chart-x-axis" maxlength="80" value="${esc(p.xAxisTitle||'')}" placeholder="Default from data">
-    ${p.panelsBy?'':`<label class="field-label" for="chart-y-axis">Vertical axis label</label><input id="chart-y-axis" maxlength="80" value="${esc(p.yAxisTitle||'')}" placeholder="Default from data">`}
-    <label><input id="chart-legend" type="checkbox" ${p.colorByCategory?'checked':''}> Color categories and show legend</label>
-    <label class="field-label" for="chart-source-note">Source / method note</label><textarea spellcheck="true" id="chart-source-note" maxlength="500" rows="2" placeholder="Default: connected result and run">${esc(p.sourceNote||'')}</textarea>
-    `:'');
-}
 const KEY='fieldwork-workflow-v1';
 $('#app-version').textContent=`v${appPackage.version}`;
 $('#app-version').addEventListener('click',()=>void openChangelog(appPackage.version,esc));
@@ -2290,111 +2242,6 @@ function openSatelliteSampleConfig(nodeId:string){
   },esc);
 }
 
-/** CHART'S TABLE CONTROLS: which key column the bars run along, and panels with their marks and a shaded period
- *  (experiment 174). Moved into Configure… on 2026-11-09 with the same ids. */
-/** THE DATES A CHART'S AXIS RUNS OVER (experiment 210), from its last run's bins where it has run, else whether it will be
- *  dated at all: a case series by day, week or month is; by day of the week or month of the year it is a cycle, not dates. */
-function datedRange(nodeId:string,draft:WorkflowNode<'chart_output'>['params']):{first:string;last:string}|null|'later'{
-  const bins=(result?.outputs.find(o=>o.nodeId===nodeId) as {chart?:{bins:{key:string}[]}}|undefined)?.chart?.bins;
-  if(bins?.length){const keys=bins.map(b=>b.key);if(!keys.every(k=>/^\d{4}-\d{2}(-\d{2})?$/.test(k)))return null;
-    const pad=(k:string)=>k.length===7?`${k}-01`:k;return {first:pad(keys[0]!),last:pad(keys.at(-1)!)};}
-  const up=workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===nodeId)?.from);
-  if(up?.type==='case_series')return ['weekday','month-of-year'].includes(up.params.period)?null:'later';
-  return null;
-}
-function markedDatesControls(nodeId:string,draft:WorkflowNode<'chart_output'>['params']):string{
-  const range=datedRange(nodeId,draft);
-  if(!range)return '';
-  const bounds=range==='later'?'':` min="${esc(range.first)}" max="${esc(range.last)}"`;
-  const marks=draft.markedDates??[];
-  return `<div class="config-group"><span class="inspector-section">Marked dates</span>`
-    +marks.map((m,i)=>`<div class="field"><label class="field-label" for="chart-mark-date-${i}">Date</label>`
-      +`<input id="chart-mark-date-${i}" type="date" data-mark-date="${i}" value="${esc(m.date)}"${bounds}>`
-      +`<label class="field-label" for="chart-mark-label-${i}">Label, in your words</label>`
-      +`<input id="chart-mark-label-${i}" data-mark-label="${i}" maxlength="80" value="${esc(m.label)}" placeholder="for example Pump handle removed">`
-      +`<button type="button" class="button small" data-mark-remove="${i}">Remove</button></div>`).join('')
-    +`<button type="button" class="button small" id="chart-mark-add">+ Add a date</button>`
-    +`<small>A line at each date, with its label, over the chart and in its figure, as the enhanced renderer draws it; the classic bars do not.${range==='later'?' The dates the chart covers are known after a run.':''}</small></div>`;
-}
-function chartTableControls(n:WorkflowNode<'chart_output'>):string{
-  let out='';
-      // WHICH COLUMN, only where there is a choice to make. A rate keys on `group` alone, so
-      // asking would be asking a question with one answer.
-      const table=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
-      const columns=table?tableKeyColumns(workflow.nodes.find(x=>x.id===table.from)):[];
-      if(columns.length>1)
-        out+=`<div class="field"><label class="field-label" for="chart-key-column">Category column</label>`
-          +`<select id="chart-key-column"><option value="">First column \u00b7 ${esc(columns[0])}</option>`
-          +columns.map(name=>`<option value="${esc(name)}" ${n.params.keyColumn===name?'selected':''}>${esc(name)}</option>`).join('')
-          +`</select><small>This table keys on ${esc(columns.join(', '))}. One bar per row either way; the column chosen is the one the bars are labelled by.</small></div>`;
-      // PANELS, for variables moving together through time (experiment 174): one per value of another key column,
-      // stacked on the shared axis, each on its own scale. A mark per panel, and a period shaded across them all.
-      if(columns.length>1){
-        const p=n.params,held=upstreamKeyValues(n)??{};
-        const axis=p.keyColumn||columns[0]!;
-        const panels=p.panelsBy?held[p.panelsBy]??[]:[];
-        const dates=held[axis]??[],temporal=orderOf(dates)==='date'&&dates.every(d=>d.length===10);
-        const sorted=[...dates].sort();
-        const pyramid=p.figure==='pyramid';
-        out+=`<div class="field"><label class="field-label" for="chart-panels-by">${pyramid?'Back to back, the two groups of':'One panel per'}</label>`
-          +`<select id="chart-panels-by"><option value="">${pyramid?'Choose a column with two values\u2026':'No panels \u00b7 one chart'}</option>`
-          +columns.filter(name=>name!==axis).map(name=>`<option value="${esc(name)}" ${p.panelsBy===name?'selected':''}>${esc(name)}</option>`).join('')
-          +`</select><small>${pyramid?`Its two values sit left and right of the ${esc(axis)} bands; rows where it is blank are counted and said, not drawn.`
-            :`Each value of the column gets its own panel and scale, on one shared ${esc(axis)} axis, so a count and a concentration are never drawn on one scale.`}</small></div>`
-          +(panels.length&&!pyramid
-            ?panels.map(panel=>`<div class="field"><label class="field-label" for="chart-panel-mark-${esc(panel)}">Mark for ${esc(panel)}</label>`
-              +`<select id="chart-panel-mark-${esc(panel)}" data-panel-mark="${esc(panel)}"><option value="">Automatic</option>`
-              +`<option value="bar" ${p.panelMarks?.[panel]==='bar'?'selected':''}>Bars</option>`
-              +`<option value="line" ${p.panelMarks?.[panel]==='line'?'selected':''}>Line</option></select></div>`).join('')
-              +(temporal
-                ?`<div class="field"><span class="inspector-section">Shade a period</span>`
-                  +`<label class="field-label" for="chart-shade-from">From</label><input id="chart-shade-from" type="date" data-chart-shade="from" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.from??'')}">`
-                  +`<label class="field-label" for="chart-shade-to">To</label><input id="chart-shade-to" type="date" data-chart-shade="to" min="${esc(sorted[0]??'')}" max="${esc(sorted.at(-1)??'')}" value="${esc(p.shade?.to??'')}">`
-                  +`<small>Shaded behind every panel, both days included. Leave both empty for none.</small></div>`
-                :'')
-            :'')
-          // OR ONE PANEL PER COLUMN (2026-11-15): several number columns of the table, each on its own scale along the
-          // same axis, and a dashed line at a stated value in any of them (p = 0.05 on a p-value).
-          +(!p.panelsBy&&!pyramid?(()=>{
-            const numeric=columns.filter(name=>name!==axis&&(held[name]??[]).length>0&&(held[name]??[]).every(v=>v.trim()!==''&&Number.isFinite(Number(v))));
-            const chosen=p.panelColumns??[];
-            if(!numeric.length&&!chosen.length)return '';
-            return `<fieldset class="field"><legend class="field-label">Or one panel per column</legend>`
-              +[...new Set([...chosen,...numeric])].map(name=>{const on=chosen.includes(name),line=p.panelLines?.[name];
-                return `<label class="check"><input type="checkbox" data-panel-column="${esc(name)}" ${on?'checked':''}> ${esc(name)}</label>`
-                  +(on?`<div class="panel-column-settings"><label class="field-label" for="chart-panel-mark-${esc(name)}">Mark for ${esc(name)}</label>`
-                    +`<select id="chart-panel-mark-${esc(name)}" data-panel-mark="${esc(name)}"><option value="">Automatic</option>`
-                    +`<option value="bar" ${p.panelMarks?.[name]==='bar'?'selected':''}>Bars</option>`
-                    +`<option value="line" ${p.panelMarks?.[name]==='line'?'selected':''}>Line</option></select>`
-                    +`<label class="field-label" for="chart-panel-line-${esc(name)}">A dashed line at</label>`
-                    +`<input id="chart-panel-line-${esc(name)}" type="number" step="any" data-panel-line-value="${esc(name)}" value="${line?esc(String(line.value)):''}" placeholder="None">`
-                    +`<label class="field-label" for="chart-panel-line-label-${esc(name)}">Its label</label>`
-                    +`<input id="chart-panel-line-label-${esc(name)}" maxlength="60" data-panel-line-label="${esc(name)}" value="${esc(line?.label??'')}" placeholder="The value"></div>`:'');}).join('')
-              +`<small>Each column its own panel and scale, on one shared ${esc(axis)} axis. A column with a blank or a word in it is not offered.</small></fieldset>`;
-          })():'');
-      }
-  return out;
-}
-
-/** WHAT THIS CHART DRAWS, in one sentence (experiment 186). */
-function chartSentence(n:WorkflowNode<'chart_output'>):string{
-  const p=n.params,from=(port:string)=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);const up=e&&workflow.nodes.find(m=>m.id===e.from);
-    return up?(up.params.label||TYPES[up.type].title):'';};
-  const source=from('records')||from('series')||from('polygons');
-  if(!source)return 'Nothing is connected yet, so this chart has nothing to draw.';
-  if(p.figure==='tree')return p.tree?.id&&p.tree.parent&&p.tree.date
-    ?`Draws who infected whom in ${source} as chains over time: each case at its ${p.tree.date}, joined to the case named in ${p.tree.parent}.`
-    :`Draws who infected whom in ${source} as chains over time. Name the case, infector and date columns in Configure\u2026`;
-  const marked=p.markedDates?.length?`, marking ${p.markedDates.map(m=>`${m.label||m.date} on ${m.date}`).join('; ')}`:'';
-  if(p.figure==='stacked')return `Draws ${source} as stacked bars, one per period, divided by the values the series is split by${marked}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
-  if(p.figure==='pyramid')return p.panelsBy
-    ?`Draws ${source} as a population pyramid: ${p.keyColumn||'each band'} up the middle, the two groups of ${p.panelsBy} back to back.`
-    :`Draws ${source} as a population pyramid. Name the column whose two groups sit back to back in Configure\u2026`;
-  return `Draws ${source} as ${chartRenderer(p)==='vega-lite'&&p.mark==='point'?'dots':chartRenderer(p)==='vega-lite'&&p.mark==='line'?'a line':'bars'}${p.panelsBy?`, one panel per ${p.panelsBy}`:p.panelColumns?.length?`, one panel each for ${p.panelColumns.join(' and ')}`:''}${Object.entries(p.panelLines??{}).map(([c,l])=>`, a dashed line at ${l.value} on ${c}`).join('')}${marked}${p.chartTitle?`, titled \u201c${p.chartTitle}\u201d`:''}.`;
-}
-
-/** CHART'S CONFIGURATION DIALOG (experiment 186, 2026-11-09): what is drawn (bars, or a transmission tree), and every
- *  setting the old panels held, with their ids, on a draft written by Apply. */
 /** THE SPACE-TIME SCAN'S SETTINGS IN ONE SENTENCE (experiment 186). */
 function scanSettingsSentence(p:import('./types.js').ParamsByType['space_time_scan']):string{
   if(!p.dateField)return 'Choose the column holding each case\u2019s date in Configure\u2026';
@@ -2632,160 +2479,6 @@ function openScanConfig(nodeId:string){
       on('#scan-seed',el=>{draft.seed=Number(el.value);});
     },
     apply:draft=>{change(w=>{getNode(w,nodeId,'space_time_scan').params=draft;},{requirePersistence:true});},
-  },esc);
-}
-
-function openChartConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'chart_output');
-  type Draft=WorkflowNode<'chart_output'>['params']&{view?:'map'|'table'|'bars'};
-  const records=workflow.edges.find(e=>e.to===nodeId&&e.port==='records');
-  // A CASE SERIES ON TABLE is drawn as a curve by its periods; the bars, pyramid and tree are for other tables.
-  const curve=workflow.nodes.find(x=>x.id===records?.from)?.type==='case_series';
-  // DRAW, QUESTION FIRST (experiment 210's proposer, 2026-11-13): the forms that suit what arrived at the last run come
-  // first, each named by the question it answers, and the reason for the one chosen is said beneath.
-  const upstream=workflow.nodes.find(x=>x.id===records?.from);
-  const arrivedTable=records?result?.tables?.[records.from] as import('./data-table.js').DataTable|undefined:undefined;
-  // What the sources declared about these columns, followed here by name (experiment 211).
-  const declaredScales=scalesOf(declaredUpstream(workflow.nodes,workflow.edges,nodeId));
-  const proposals=curve?proposeChartForms({kind:'series',splitBy:(upstream as WorkflowNode<'case_series'>).params.splitBy})
-    :arrivedTable?proposeChartForms({kind:'table',table:arrivedTable,scales:declaredScales}):null;
-  const formValue=(f:ChartForm)=>curve?(f==='stacked'?'stacked':''):f;
-  const drawField=(draft:WorkflowNode<'chart_output'>['params'])=>{
-    const chosen:ChartForm=curve?(draft.figure==='stacked'?'stacked':'curve'):(draft.figure==='tree'||draft.figure==='pyramid'?draft.figure:'bars');
-    const listed=proposals??proposeChartForms(curve?{kind:'series'}:{kind:'table',table:{keys:[],rows:[]}});
-    const option=(p:ChartProposal)=>`<option value="${formValue(p.form)}" ${p.form===chosen?'selected':''}>${esc(p.question)} ${esc(p.name)}</option>`;
-    const ordered=proposalOrder(listed),fit=ordered.filter(p=>p.fits),rest=ordered.filter(p=>!p.fits);
-    const said=listed.find(p=>p.form===chosen);
-    return `<div class="field"><label class="field-label" for="${curve?'chart-series-figure':'chart-figure'}">Draw</label>`
-      +`<select id="${curve?'chart-series-figure':'chart-figure'}">`
-      +(proposals?`<optgroup label="Suits these data">${fit.map(option).join('')}</optgroup>`
-        +(rest.length?`<optgroup label="Needs other data">${rest.map(option).join('')}</optgroup>`:'')
-        :listed.map(option).join(''))
-      +`</select><small data-draw-because>${proposals&&said?esc(said.fits?`Suits these data: ${said.because}.`:`This ${said.because}.`)
-        :'Run the workflow once to see which of these suit the data.'}</small></div>`;
-  };
-  // ONE PREVIEW AT A TIME: each redraw finalizes the last, which would otherwise keep its listeners.
-  let previewView:{finalize:()=>void}|undefined;
-  const drawChartPreview=async(host:HTMLElement,draft:WorkflowNode<'chart_output'>['params'])=>{
-    previewView?.finalize();previewView=undefined;
-    const drawn=result?.outputs.find(o=>o.nodeId===nodeId) as {chart?:import('./results.js').ChartSummary;tree?:import('./transmission-tree.js').TransmissionTree}|undefined;
-    const sourceId=workflow.edges.find(e=>e.to===nodeId)?.from;
-    const context={sourceId,runId:result?.runId,sourceLabel:workflow.nodes.find(n=>n.id===sourceId)?.params.label};
-    let spec:object;
-    if(draft.figure==='tree'){
-      const t=draft.tree;
-      if(!t?.id||!t.parent||!t.date||!arrivedTable){host.innerHTML='<p class="muted">Choose the case id, infected-by and date columns to see the tree.</p>';return;}
-      const {transmissionTree}=await import('./transmission-tree.js');
-      const {treeVegaSpec}=await import('./chart-vega.js');
-      spec=treeVegaSpec(transmissionTree(arrivedTable,t),draft,context);
-    }else{
-      // What a setting changes in the counting itself, the key column or the panels, is recounted from the last run's
-      // table; everything else is drawn from the chart the run made.
-      let chart=drawn?.chart;
-      const recount=!curve&&arrivedTable&&!(arrivedTable as {chart?:unknown}).chart
-        &&(draft.keyColumn!==node.params.keyColumn||draft.panelsBy!==node.params.panelsBy
-          ||(draft.panelColumns??[]).join('\u0000')!==(node.params.panelColumns??[]).join('\u0000')||!chart);
-      if(recount)chart=tableChart(arrivedTable!,draft.keyColumn,draft.panelsBy,declaredScales,draft.panelColumns);
-      if(!chart){host.innerHTML='<p class="muted">Run the workflow to preview this chart here.</p>';return;}
-      if(draft.barOrder&&draft.barOrder!=='category')chart={...chart,barOrder:draft.barOrder};
-      if(chartRenderer(draft)==='html'){host.innerHTML=chartMarkup(chart,esc,chartOrientation(draft));return;}
-      spec=chartVegaSpec(chart,draft,context);
-    }
-    const {default:embed}=await import('vega-embed');
-    if(!host.isConnected)return;
-    const view=await embed(host,spec as never,{mode:'vega-lite',renderer:'svg',actions:false,tooltip:true});
-    if(!host.isConnected){view.finalize();return;}
-    previewView=view;
-  };
-  const columns=records?[...new Set([...tableKeyColumns(workflow.nodes.find(x=>x.id===records.from)),
-    ...((result?.tables?.[records.from] as import('./data-table.js').DataTable|undefined)?.keys??[]),
-    ...Object.keys(upstreamKeyValues(node,new Set(),'records')??{})])]:[];
-  openConfigDialog<Draft>({
-    id:'chart-config',widget:'Chart',step:node.params.label||TYPES.chart_output.title,draft:structuredClone(node.params),
-    sections:draft=>{
-      const shown={...node,params:draft} as WorkflowNode<'chart_output'>;
-      const tree=draft.figure==='tree';
-      const pick=(id:string,key:'id'|'parent'|'date',label:string,hint:string)=>
-        `<div class="field"><label class="field-label" for="${id}">${label}</label><select id="${id}" data-tree="${key}">`
-        +`<option value="">Choose a column\u2026</option>`
-        +columns.map(c=>`<option value="${esc(c)}" ${draft.tree?.[key]===c?'selected':''}>${esc(c)}</option>`).join('')
-        +`</select><small>${hint}</small></div>`;
-      const settings=(records?drawField(draft):'')
-        +(tree
-          ?(columns.length?'':'<p class="notice">Run the workflow once to list the table\u2019s columns.</p>')
-            +pick('chart-tree-id','id','Case id','One row per case.')
-            +pick('chart-tree-parent','parent','Infected by','The case id of the infector; empty where none is recorded.')
-            +pick('chart-tree-date','date','Date','Year-month-day, such as the date of onset.')
-            +`<div class="field"><label class="field-label" for="chart-tree-none">Written where no source is recorded (optional)</label>`
-            +`<input id="chart-tree-none" data-tree="none" value="${esc(draft.tree?.none??'')}" placeholder="for example none recorded">`
-            +`<small>An empty cell always means none.</small></div>`
-            // THE TREE'S TITLE AND SOURCE NOTE, as any chart's (2026-11-12: the tree offered neither, and drew its default).
-            +`<div class="field"><label class="field-label" for="chart-title">Chart title</label><input id="chart-title" maxlength="120" value="${esc(draft.chartTitle||'')}" placeholder="Who infected whom"></div>`+wordsHint(esc)
-            +`<div class="field"><label class="field-label" for="chart-source-note">Source / method note</label><input id="chart-source-note" maxlength="300" value="${esc(draft.sourceNote||'')}"></div>`
-          :chartTableControls(shown)+chartControls(shown,{omitOrientation:curve})
-            +(curve?`<div class="field"><label class="field-label" for="series-orientation">Bars</label>`
-              +`<select id="series-orientation"><option value="vertical" ${chartOrientation(draft)==='vertical'?'selected':''}>Vertical \u00b7 periods along the bottom</option>`
-              +`<option value="horizontal" ${chartOrientation(draft)==='horizontal'?'selected':''}>Horizontal \u00b7 periods down the side</option></select></div>`:'')
-            +markedDatesControls(nodeId,draft))
-        ;
-      // THE CHART ITSELF, AS IT WILL LOOK (the practitioner, 2026-11-13: "The ability to preview the Chart would be extremely
-      // useful"). The last run, drawn with the settings being edited, as Map's preview is; nothing is run again.
-      const preview=result?.outputs.some(o=>o.nodeId===nodeId)||arrivedTable
-        ?'<div id="chart-config-preview" class="chart-config-preview"></div><p class="muted">The last run, drawn with the settings above. Apply keeps them; nothing is run again.</p>'
-        :'<p class="muted">Run the workflow to preview this chart here. It is drawn in Results when the workflow runs.</p>';
-      return {settings,preview};
-    },
-    wire:(root,draft,redraw)=>{
-      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement)=>void)=>
-        root.querySelectorAll<HTMLInputElement&HTMLSelectElement&HTMLTextAreaElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
-      on('#chart-series-figure',el=>{if(el.value==='stacked'){draft.figure='stacked';draft.renderer='vega-lite';}else delete draft.figure;});
-      on('#chart-figure',el=>{if(el.value==='tree'||el.value==='pyramid'){draft.figure=el.value;if(el.value==='pyramid')draft.renderer='vega-lite';}else delete draft.figure;});
-      on('[data-tree]',el=>{draft.tree={id:'',parent:'',date:'',...draft.tree,[el.dataset.tree!]:el.value};});
-      on('#chart-renderer',el=>{draft.renderer=el.value as 'html'|'vega-lite';if(draft.renderer==='html')draft.mark='bar';});
-      on('#chart-mark',el=>{draft.mark=el.value as 'bar'|'point'|'line';});
-      on('#chart-orientation',el=>{draft.orientation=el.value as 'horizontal'|'vertical';});
-      on('#series-orientation',el=>{draft.orientation=el.value as 'horizontal'|'vertical';});
-      on('#chart-key-column',el=>{if(el.value)draft.keyColumn=el.value;else delete draft.keyColumn;});
-      on('#chart-panels-by',el=>{if(el.value)draft.panelsBy=el.value;else{delete draft.panelsBy;delete draft.panelMarks;delete draft.shade;}});
-      on('[data-panel-mark]',el=>{const marks={...(draft.panelMarks||{})};if(el.value)marks[el.dataset.panelMark!]=el.value as 'bar'|'line';else delete marks[el.dataset.panelMark!];
-        if(Object.keys(marks).length)draft.panelMarks=marks;else delete draft.panelMarks;});
-      on('[data-panel-column]',el=>{const name=el.dataset.panelColumn!,held=new Set(draft.panelColumns??[]);
-        if((el as HTMLElement as HTMLInputElement).checked)held.add(name);else{held.delete(name);
-          if(draft.panelLines){const {[name]:_,...rest}=draft.panelLines;if(Object.keys(rest).length)draft.panelLines=rest;else delete draft.panelLines;}}
-        if(held.size)draft.panelColumns=[...held];else delete draft.panelColumns;});
-      on('[data-panel-line-value]',el=>{const name=el.dataset.panelLineValue!,raw=el.value.trim(),lines={...(draft.panelLines||{})};
-        if(raw===''||!Number.isFinite(Number(raw)))delete lines[name];else lines[name]={value:Number(raw),label:lines[name]?.label??''};
-        if(Object.keys(lines).length)draft.panelLines=lines;else delete draft.panelLines;});
-      on('[data-panel-line-label]',el=>{const name=el.dataset.panelLineLabel!,at=draft.panelLines?.[name];
-        if(at)draft.panelLines={...draft.panelLines,[name]:{...at,label:el.value.trim()}};});
-      on('[data-chart-shade]',el=>{const shade={from:'',to:'',...draft.shade,[el.dataset.chartShade!]:el.value};
-        if(shade.from||shade.to)draft.shade=shade;else delete draft.shade;});
-      on('#chart-log-scale',el=>{if(el.checked)delete draft.ratioScale;else draft.ratioScale='linear';});
-      on('#chart-reference-line',el=>{if(el.checked)delete draft.referenceLine;else draft.referenceLine=false;});
-      on('#chart-bar-order',el=>{draft.barOrder=el.value as BarOrder;});
-      for(const [selector,key] of [['#chart-title','chartTitle'],['#chart-subtitle','subtitle'],['#chart-x-axis','xAxisTitle'],['#chart-y-axis','yAxisTitle'],['#chart-source-note','sourceNote']] as const)
-        on(selector,el=>{draft[key]=el.value.trim();});
-      on('#chart-legend',el=>{draft.colorByCategory=el.checked;});
-      on('#output-view',el=>{draft.view=el.value as Draft['view'];});
-      // MARKED DATES (experiment 210): each a day and the practitioner's own label; added and removed here, kept on Apply.
-      on('[data-mark-date]',el=>{const at=Number(el.dataset.markDate),list=[...(draft.markedDates??[])];list[at]={...list[at]!,date:el.value};draft.markedDates=list;});
-      on('[data-mark-label]',el=>{const at=Number(el.dataset.markLabel),list=[...(draft.markedDates??[])];list[at]={...list[at]!,label:el.value.trim()};draft.markedDates=list;});
-      root.querySelectorAll<HTMLButtonElement>('[data-mark-remove]').forEach(b=>b.addEventListener('click',()=>{
-        const list=(draft.markedDates??[]).filter((_m,i)=>i!==Number(b.dataset.markRemove));
-        if(list.length)draft.markedDates=list;else delete draft.markedDates;redraw();}));
-      const previewHost=root.querySelector<HTMLElement>('#chart-config-preview');
-      if(previewHost)void drawChartPreview(previewHost,draft).catch(e=>{if(previewHost.isConnected)previewHost.textContent=`The preview could not be drawn: ${errorMessage(e)}`;});
-      root.querySelector<HTMLButtonElement>('#chart-mark-add')?.addEventListener('click',()=>{
-        const range=datedRange(nodeId,draft);draft.markedDates=[...(draft.markedDates??[]),{date:range&&range!=='later'?range.first:'',label:''}];redraw();});
-    },
-    apply:draft=>{
-      const {view,...params}=draft;
-      if(view&&view!=='bars'){change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
-        w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
-      // A date added and left empty is not kept: a marked date is a day.
-      if(params.markedDates){params.markedDates=params.markedDates.filter(m=>/^\d{4}-\d{2}-\d{2}$/.test(m.date));if(!params.markedDates.length)delete params.markedDates;}
-      change(w=>{getNode(w,nodeId,'chart_output').params=params;});
-    },
   },esc);
 }
 
@@ -3725,7 +3418,7 @@ function renderInspector(){
     content+=standardSection('Name',labelForm('chart-label','Results tab name',n.params.label||'Chart')
       +writeUpSelect(n));
     content+=standardSection('Inputs',standardInputs(n,{decisions:'Reasoning result'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(chartSentence(n))}</p>`
+    content+=standardSection('Settings',`<p class="standard-sentence">${esc(chartSentence(chartKit(),n))}</p>`
       +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
     const drawn=result?.outputs.find(o=>o.nodeId===n.id);
     const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
@@ -4486,7 +4179,7 @@ function renderInspector(){
   // resolves without a run, the table, so the preview is the table the draft would make. Only Apply writes.
   if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
   if(n.type==='sample_raster')sampleInspector.wire(n,sampleKit(),document);
-  if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(n.id));
+  if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(chartKit(),n.id));
   if(n.type==='space_time_scan')optionalElement('#configure-step')?.addEventListener('click',()=>openScanConfig(n.id));
   if(n.type==='polygon_input')optionalElement('#configure-step')?.addEventListener('click',()=>openPolygonConfig(n.id));
   if(n.type==='map_image_input')optionalElement('#configure-step')?.addEventListener('click',()=>{
@@ -6342,6 +6035,13 @@ function areaStepKit():AreaStepKit{
   return {...inspectorKit(),output:id=>result?.outputs.find(o=>o.nodeId===id) as ReturnType<AreaStepKit['output']>,current:()=>!dirty};
 }
 /** THE KIT OF A STEP MOVED OUT OF APP.TS WITH ITS LAST RUN (inspector-kit.ts). */
+/** CHART'S KIT (chart-ui.ts): the step kit, with the last run, the columns read up the workflow, and the controls the
+ *  application draws for every output. */
+function chartKit():ChartKit{
+  return {...stepKit(),result:()=>result??undefined,tableKeyColumns:node=>[...tableKeyColumns(node)],
+    upstreamKeyValues:(node,seen,port)=>upstreamKeyValues(node,seen??new Set(),port),writeUpSelect:n=>writeUpSelect(n as never),
+    labelForm:(id,label,value)=>labelForm(id,label,value),standardInputs:(n,labels)=>standardInputs(n,labels)};
+}
 function stepKit():StepKit{
   return {...inspectorKit(),method:id=>result?.receipts.find(r=>r.nodeId===id)?.method,
     unfinished:id=>result?.unfinished?.find(u=>u.nodeId===id)?.message,

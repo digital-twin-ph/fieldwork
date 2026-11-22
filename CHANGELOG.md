@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.166.0 — In development
+## 0.166.0 — 2026-11-22
 
 - **Pins in the field**, Point data 0.13.0 (experiment 09):
   - **Add a pin at my location** and **Move this pin to my location**. Each pin says where its position came from: this

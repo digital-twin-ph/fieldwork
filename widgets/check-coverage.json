@@ -6,10 +6,10 @@
     "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
     "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
   },
-  "measuredAt": "2026-11-21",
+  "measuredAt": "2026-11-22",
   "counts": {
-    "widgets": 51,
-    "covered": 32,
+    "widgets": 50,
+    "covered": 31,
     "awaiting": 9,
     "none": 9,
     "blocked": 1
@@ -187,12 +187,6 @@
       "expectation": "parity",
       "computes": "A key column brought from a second table onto these rows, matched on a shared column. An independent implementation -- a pandas left merge of Snow's Table VIII onto Table XII on `sub_district` -- recomputes which rows receive which category, how many are dropped for keys the second table does not carry, and that the row count is unchanged. The arithmetic is none; what is worth recomputing is the MATCHING, and in particular that an ambiguous key is refused rather than resolved to whichever row came first, which is the failure a merge implementation would silently commit.",
       "check": "28-relate-table"
-    },
-    {
-      "nodeType": "reproject",
-      "expectation": "parity",
-      "check": "24-project-forward",
-      "note": "Two checks cover this widget. 01-reproject recomputes the INVERSE transform, which the widget performed until release 0.1.0; 24-project-forward recomputes the FORWARD projection it performs from 0.2.0. The check named here is the one covering the current release, because this field answers whether what ships is checked. The validator reads one check per widget from parity.json and keeps the last entry, so a widget with two checks is recorded accurately in parity.json and narrowed to the live one here."
     },
     {
       "nodeType": "sample_raster",

@@ -2,9 +2,9 @@ import type {Workflow,WorkflowNode} from './types.js';
 
 /** One projection per run, stated once and queryable.
  *
- *  Nine widgets compute in metres and each carries its own `zone` and `hemisphere`:
+ *  Eight widgets compute in metres (nine until Reproject points retired into Table output, 0.169.0) and each carries its own `zone` and `hemisphere`:
  *  mean_center, compare_point_sets, summarize_combined_area, summarize_hull, snap_to_network,
- *  reachable_corridor, voronoi, isochrone and reproject. Projecting inside the operation is the
+ *  reachable_corridor, voronoi and isochrone. Projecting inside the operation is the
  *  right design -- the choice is part of that computation's method and belongs in its receipt --
  *  but nothing required the choices to agree.
  *
@@ -27,7 +27,7 @@ import type {Workflow,WorkflowNode} from './types.js';
 
 /** Widgets that project to metres and declare which projection they used. */
 export const METRIC_NODE_TYPES=['mean_center','compare_point_sets','summarize_combined_area',
-  'summarize_hull','snap_to_network','reachable_corridor','voronoi','isochrone','reproject'] as const;
+  'summarize_hull','snap_to_network','reachable_corridor','voronoi','isochrone'] as const;
 
 export interface MetricChoice {zone:number; hemisphere:'north'|'south'}
 

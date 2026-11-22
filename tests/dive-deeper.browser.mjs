@@ -22,16 +22,15 @@ test('a widget with a notebook offers it in the Inspector, above the fold',async
   // Collapsed: reference material beside the knob, not a notice competing with it.
   assert.equal(await panel.evaluate(el=>el.open),false);
 
-  // It must be reachable without scrolling past the evidence and definition blocks, which is
-  // where it was and why it went unseen. Asserted against the Evidence section's position
-  // rather than a pixel count, so the check survives the Inspector growing.
-  const order=await page.evaluate(()=>{
-    const body=document.querySelector('#inspector-content');
-    const dive=body.querySelector('details.dive-deeper');
-    const evidence=[...body.querySelectorAll('*')].find(el=>/^Evidence references/.test(el.textContent?.trim()||'')&&el.children.length===0);
-    return evidence?dive.compareDocumentPosition(evidence)&Node.DOCUMENT_POSITION_FOLLOWING?'before':'after':'no-evidence-block';
-  });
-  assert.equal(order,'before','the Dive Deeper panel must come before the evidence block');
+  // It must be reachable without scrolling past the evidence and definition blocks, which is where it was and why it went
+  // unseen. On the standard Inspector (Voronoi's since 0.169.0) it sits in Learn and record, beside the Manual and the
+  // Evidence button, above the step's actions.
+  const section=page.locator('#inspector-content .standard-section',{has:page.locator('#manage-references')});
+  await expect(section.locator('details.dive-deeper')).toHaveCount(1);
+  const below=await page.evaluate(()=>{const dive=document.querySelector('#inspector-content details.dive-deeper'),
+    actions=document.querySelector('#inspector-content #duplicate-node');
+    return !!actions&&!!(dive.compareDocumentPosition(actions)&Node.DOCUMENT_POSITION_FOLLOWING);});
+  assert.ok(below,'the Dive Deeper panel must come before the step actions');
 
   await panel.locator('summary').click();
   // The Voronoi offers two: its own section, and the projection one because it measures in metres.

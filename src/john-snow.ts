@@ -143,15 +143,13 @@ export function snowDeathsExample():Workflow{
       showLegend:true}},
     // WHERE THE PUMPS WERE MEASURED: the frame, EPSG:32630, in which every catchment, area and distance of this project
     // is computed, shown as the coordinates themselves (kept here at the practitioner's choice, 2026-11-12).
-    {id:'projected',type:'reproject',x:400,y:400,params:{label:'Pump locations in UTM 30N',zone:30,hemisphere:'north'}},
-    {id:'projected-table',type:'table_output',x:720,y:400,params:{label:'Pump coordinates as measured',inputMode:'spatial'}},
+    {id:'projected-table',type:'table_output',x:400,y:400,params:{label:'Pump coordinates in metres',inputMode:'spatial',coordinates:{zone:30,hemisphere:'north'}}},
   ];
   return {schema:'fieldwork/workflow/1',exampleId:'snow-deaths',name:'Where were the deaths? Soho, London, 1854',nodes,edges:[
     {id:'spot-area',from:'study',to:'spot-map',port:'area'},
     {id:'spot-points',from:'locations',to:'spot-map',port:'points'},
     {id:'spot-pumps',from:'pumps',to:'spot-map',port:'points_2'},
-    {id:'pumps-projected',from:'pumps',to:'projected',port:'points'},
-    {id:'projected-projected-table',from:'projected',to:'projected-table',port:'points'},
+    {id:'pumps-projected-table',from:'pumps',to:'projected-table',port:'points'},
   ]};
 }
 

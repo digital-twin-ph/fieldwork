@@ -2204,7 +2204,7 @@
     {
       "id": "urn:fieldwork:widget:reproject",
       "nodeType": "reproject",
-      "currentVersion": "0.3.0",
+      "currentVersion": "1.0.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2220,6 +2220,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/reproject/0.3.0.json",
           "sha256": "31290a73b0354327cc8c02febf2f91dc026706c3fa5afb556d2aee35842723ad"
+        },
+        {
+          "version": "1.0.0",
+          "path": "widgets/releases/reproject/1.0.0.json",
+          "sha256": "7d3e6ff2974d611244f754e752b46d802d2c8fbf2d86f6579b6ea2a031040e3d"
         }
       ]
     },
@@ -2783,7 +2788,7 @@
     {
       "id": "urn:fieldwork:widget:table_output",
       "nodeType": "table_output",
-      "currentVersion": "0.13.2",
+      "currentVersion": "0.14.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2874,6 +2879,11 @@
           "version": "0.13.2",
           "path": "widgets/releases/table_output/0.13.2.json",
           "sha256": "e848435742ee7029638cddb05c92295ebba8d2864db0876cdfb1c36a4f395ff8"
+        },
+        {
+          "version": "0.14.0",
+          "path": "widgets/releases/table_output/0.14.0.json",
+          "sha256": "167d0ad19a7274dc24c34dbbd30418be83dee1e0d4850a6eddd8349d06f455d4"
         }
       ]
     },

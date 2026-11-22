@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Parser} from 'n3';
 import {projectFromCRS84,reprojectToCRS84} from '../build/reproject.js';
-import {executeWorkflow,validateWorkflow,executionPlan,TYPES} from '../build/core.js';
+import {executeWorkflow,validateWorkflow} from '../build/core.js';
 import {johnSnowExample} from '../build/john-snow.js';
 import {blankWorkflow} from '../build/study-area.js';
 import {syncProjectManifest} from '../build/project-manifest.js';
@@ -10,11 +10,12 @@ import {syncProjectManifest} from '../build/project-manifest.js';
 const ready=async()=>[{subject:'urn:fieldwork:area:study',predicate:'urn:fieldwork:readyForSpatialAnalysis',object:'true'}];
 const point=(id,lon,lat)=>({type:'Feature',id,properties:{name:id},geometry:{type:'Point',coordinates:[lon,lat]}});
 const collection=(...features)=>({type:'FeatureCollection',features});
-// With `reproject` connected to the pumps and nothing consuming it yet.
-const withTransform=()=>{
+// Reproject points as it was saved before it retired into Table output (0.169.0): connected to the pumps, feeding a table.
+const savedWithReproject=()=>{
   const w=JSON.parse(JSON.stringify(johnSnowExample('snow-voronoi')));
   w.nodes.push({id:'proj',type:'reproject',x:600,y:700,params:{label:'Pumps in UTM',zone:30,hemisphere:'north'}});
-  w.edges.push({id:'pumps-proj',from:'pumps',to:'proj',port:'points'});
+  w.nodes.push({id:'utmtable',type:'table_output',x:900,y:700,params:{label:'Pumps in UTM',inputMode:'spatial'}});
+  w.edges.push({id:'pumps-proj',from:'pumps',to:'proj',port:'points'},{id:'proj-table',from:'proj',to:'utmtable',port:'points'});
   return w;
 };
 
@@ -41,32 +42,26 @@ test('the forward projection agrees with the inverse it replaced, and refuses it
   assert.throws(()=>projectFromCRS84(c,1,'north'),/zone|guard/i);
 });
 
-test('projected points are refused by every widget that assumes degrees',async()=>{
-  const w=withTransform();
-  w.edges=w.edges.filter(e=>!(e.to==='catchments'&&e.port==='sites'));
-  w.edges.push({id:'proj-catch',from:'proj',to:'catchments',port:'sites'});
-  syncProjectManifest(w);
-  assert.throws(()=>executionPlan(validateWorkflow(w)),error=>{
-    assert.match(error.message,/needs longitude and latitude/);
-    assert.ok(error.message.includes(TYPES.voronoi.title),'names the consumer');
-    assert.ok(error.message.includes(TYPES.reproject.title),'names the producer');
-    return true;
-  });
+test('a saved Reproject points opens as its table, reading the source in metres in the same zone',async()=>{
+  const w=savedWithReproject();syncProjectManifest(w);
+  const opened=validateWorkflow(JSON.parse(JSON.stringify(w)));
+  assert.ok(!opened.nodes.some(n=>n.type==='reproject'),'the retired step is gone');
+  const table=opened.nodes.find(n=>n.id==='utmtable');
+  assert.deepEqual(table.params.coordinates,{zone:30,hemisphere:'north'});
+  assert.deepEqual(table.sourceMigration,{fromType:'reproject',version:'1'});
+  assert.ok(opened.edges.some(e=>e.from==='pumps'&&e.to==='utmtable'&&e.port==='points'),'the table reads the pumps');
 });
 
-test('a table may show projected points, and its receipt states the frame they are in',async()=>{
-  const w=withTransform();
-  w.nodes.push({id:'utmtable',type:'table_output',x:900,y:700,params:{label:'Pumps in UTM',inputMode:'spatial'}});
-  w.edges.push({id:'proj-table',from:'proj',to:'utmtable',port:'points'});
-  syncProjectManifest(w);
-  const run=await executeWorkflow(validateWorkflow(w),ready);
+test('a table showing coordinates in metres states the frame they are in',async()=>{
+  const w=savedWithReproject();syncProjectManifest(w);
+  const run=await executeWorkflow(validateWorkflow(JSON.parse(JSON.stringify(w))),ready);
   const receipt=run.receipts.find(r=>r.nodeId==='utmtable');
   const wkt=[...new Parser().parse(receipt.facts)]
     .filter(q=>q.predicate.value==='http://www.opengis.net/ont/geosparql#asWKT').map(q=>q.object.value);
   assert.ok(wkt.length>0,'the table receipt carries no geometry');
   for(const literal of wkt){
     assert.match(literal,/^<http:\/\/www\.opengis\.net\/def\/crs\/EPSG\/0\/32630> POINT /,
-      `a projected table must not label its metres CRS84: ${literal}`);
+      `a table in metres must not label its metres CRS84: ${literal}`);
     const [easting,northing]=literal.replace(/^[^(]*\(|\)$/g,'').split(' ').map(Number);
     assert.ok(easting>100_000&&easting<900_000,`${easting} is not a UTM easting`);
     assert.ok(northing>5_000_000&&northing<6_000_000,`${northing} is not a northing for London`);

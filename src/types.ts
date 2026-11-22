@@ -701,7 +701,10 @@ export interface ParamsByType {
     partLabel?:string;
     /** What a frame is, written by the practitioner: "Birth cohort". The frame's own name is the data's. */
     frameCaption?:string;
-    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';/** How many map images the map draws as ground, each its own port (TODO 35). */ groundInputCount?:number;presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean};
+    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';/** How many map images the map draws as ground, each its own port (TODO 35). */ groundInputCount?:number;presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean;
+    /** POINTS' COORDINATES IN METRES, in this UTM zone, where set; longitude and latitude as recorded otherwise. What
+     *  Reproject points did as a step until it retired into this choice (0.169.0, docs/audits/reproject-retired.md). */
+    coordinates?:{zone:number;hemisphere:'north'|'south'}};
   chart_output:{label:string; section?:import('./notes.js').FigureSection|'none';
     /** WHAT IS DRAWN: bars (the default), or who infected whom as chains over time (experiment 200, step 5), with the
      *  columns naming each case, its infector and its date. */
@@ -745,7 +748,7 @@ export type NodeType = keyof ParamsByType;
 export type NodeSpec<K extends NodeType = NodeType> = {[T in K]:{type:T; params:ParamsByType[T] & {label?:string}}}[K];
 /** The node types a saved workflow may still name and no canvas may still hold. A retired widget
  *  never runs, so loading one is a rewrite that must say so, or a refusal that names it. */
-export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check'|'rate_ratio'|'derive_value'|'sample_satellite_files_at_points'|'stack_polygons'|'comparison_map';
+export type RetiredNodeType='places'|'centers'|'output'|'policy'|'access_policy'|'xpert'|'coverage_check'|'rate_ratio'|'derive_value'|'sample_satellite_files_at_points'|'stack_polygons'|'comparison_map'|'reproject';
 /** A node type that still exists but whose contract changed, so a node saved under the old one is
  *  migrated to a different type. `reproject` was a Source holding an imported file; from
  *  2026-10-13 it is a points-to-points transform, and the saved nodes become the `point_input`

@@ -292,16 +292,6 @@
       "note": "a classic analysis package's own word, kept deliberately: RELATE is one of its three join commands and the one this matches, while MERGE and MATCH do different things. The tension for review is that a practitioner asking for this would probably say \"join\" -- and `join_table_to_area` already uses that word for putting a value onto a boundary, which is a different operation. The title is long and says what the row count does not do. ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"), with the tension above left standing rather than resolved: \"join\" stays the word a practitioner would reach for, and this keeps a classic analysis package's narrower one because the operation is the narrow one. If the general join is ever built, MERGE is the name waiting for it and nothing has been spent."
     },
     {
-      "nodeType": "reproject",
-      "title": "Reproject points",
-      "group": "Spatial operations",
-      "fingerprint": "0717fdbb9716",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "Re-pinned 2026-10-13 after the split in experiment 111 changed the contract: the widget stopped importing its own data and became a points-to-points transform, so it moved from Sources to Spatial operations and the title gained the object it acts on. Both mechanical naming violations cleared with it and the ceiling went 6 -> 4. STILL PENDING review: the row was never accepted under the old name either, and re-pinning records what the palette now says, not that anyone has agreed with it."
-    },
-    {
       "nodeType": "sample_raster",
       "title": "Sample a raster at points or over areas",
       "group": "Spatial operations",

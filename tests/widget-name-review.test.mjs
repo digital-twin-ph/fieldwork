@@ -143,7 +143,8 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 50 on 2026-11-20: comparison_map retired into Map and a Table (docs/audits/comparison-map-retired.md).
   // 51 on 2026-11-21: detect_unusual_counts, a series' periods held to a threshold from its own past (experiment 228); its
   // name pending the practitioner's review.
-  assert.equal(review.reviews.length,51);
+  // 50 on 2026-11-22: reproject retired into Table output (docs/audits/reproject-retired.md).
+  assert.equal(review.reviews.length,50);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

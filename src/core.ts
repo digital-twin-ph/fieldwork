@@ -222,7 +222,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   slr_extract_import:{title:'Sea-level projection extract',group:'Sources',icon:'≈',color:'blue',description:'Declare an imported long-format table as a bounded extract of published AR6 projections',inputs:[['projections','table']],output:'table'},
   slr_site_assignment:{title:'Assign projection site',group:'Spatial operations',icon:'⊕',color:'teal',description:'Assign each point its nearest published projection site and record the distance',inputs:[['points','points'],['sites','points'],['projections','table']],output:'table'},
   slr_threshold_comparison:{title:'Compare level to elevation',group:'Comparisons and checks',icon:'⋚',color:'purple',description:'Compare one projected change against a supplied elevation on a stated datum',inputs:[['assignments','table']],output:'decisions'},
-  reproject:{title:'Reproject points',group:'Spatial operations',icon:'⇄',color:'blue',description:'Project longitude/latitude points into a UTM zone, in metres',inputs:[['points','points']],output:'points'},
+  reproject:{title:'Reproject points',group:'Spatial operations',icon:'⇄',color:'blue',description:'Retired: connect the points to a Table and choose coordinates in metres',inputs:[['points','points']],output:'points'},
   deduplicate_points:{title:'Deduplicate records',group:'Comparisons and checks',icon:'⧉',color:'purple',
     description:'Find records that are the same, in two point sources or within one table, and merge the ones that agree',
     inputs:[['points','points'],['points_2','points'],['records','table']],output:'points'},
@@ -782,6 +782,7 @@ export function validateWorkflow(raw:unknown):Workflow {
   migrateSatelliteSampler(w);
   migrateCollectedPolygons(w);
   migrateComparisonMap(w);
+  migrateReproject(w);
   migrateChartSeriesPort(w);
   migrateHealthsitesNodes(w);
   migrateOutputNodes(w);
@@ -978,7 +979,6 @@ export function validateWorkflow(raw:unknown):Workflow {
       if(t.rows.length>MAX_TABLE_ROWS)throw new Error(`Tabular input supports at most ${MAX_TABLE_ROWS.toLocaleString()} rows.`);
     }
     // Reproject stores the already-converted CRS84 collection, so it is validated as geographic here.
-    if(n.type==='reproject'){utmDefinition(n.params.zone,n.params.hemisphere);n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
     if(n.type==='point_input'&&n.params.fromTable!==undefined){const m=n.params.fromTable as unknown as Record<string,unknown>;if(!m||typeof m.x!=='string'||typeof m.y!=='string'||['id','name'].some(k=>m[k]!==undefined&&typeof m[k]!=='string'))throw new Error('A table mapping names its x (longitude) and y (latitude) columns as text.');}
     if(n.type==='point_input'){validateAttributeSchema(n.params.data,n.params.fields,n.params.attributeRules);if(n.params.pinIdStrategy!==undefined&&!['sequential','uuid'].includes(n.params.pinIdStrategy))throw new Error('Choose sequential or UUID identifiers for new pins.');
       // A PIN'S PHOTOS are read back as what they can be, and nothing else (experiment 09, 2026-11-22).
@@ -1165,26 +1165,6 @@ export function executionPlan(workflow:Workflow) {
       for(const e of w.edges.filter(e=>e.to===node.id))visit(required(w.nodes.find(n=>n.id===e.from)));
       done.add(node.id);result.push(node);}
   outputs.forEach(visit);
-  // Projected points are not geographic points. `reproject` emits easting and northing in metres,
-  // and 23 of the 24 widgets that accept a `points` port assume degrees: a buffer would read metres
-  // as degrees, a haversine distance would return a finite nonsense number, and a map would plot
-  // the Atlantic. That is the silent failure src/input-data.ts documents for a UTM CSV, moved
-  // mid-workflow where there is no file to re-read.
-  //
-  // Enforced here as a HARD STOP at plan time rather than discovered at run time, because the
-  // practitioner can still change the connection. The allowed consumers are the ones that show
-  // coordinates as values rather than computing with them.
-  const PROJECTED_CONSUMERS=new Set(['table_output']);
-  for(const edge of w.edges){
-    const from=w.nodes.find(n=>n.id===edge.from);
-    if(from?.type!=='reproject')continue;
-    const to=w.nodes.find(n=>n.id===edge.to);
-    if(!to||!result.some(n=>n.id===to.id))continue;
-    if(!PROJECTED_CONSUMERS.has(to.type))throw new Error(
-      `${TYPES[to.type]?.title||to.type} needs longitude and latitude, and ${TYPES[from.type].title} gives it easting and northing in metres. `
-      +`Connect it to the source points instead; ${[...PROJECTED_CONSUMERS].map(t=>TYPES[t as NodeType]?.title||t).join(' and ')} can show projected coordinates. `
-      +`Every widget that measures projects for itself and states the zone it used.`);
-  }
   // One RUN, one projection. Nine widgets project to metres and each carries its own zone, with
   // nothing requiring them to agree -- and two plausible zones differ by 0.58% on the same points.
   //
@@ -1260,6 +1240,18 @@ export function summarizeStep(node:WorkflowNode,value:unknown):StepSummary|undef
       ...(c.weight?{weightField:c.weight.field,weightTotal:c.weight.total}:{})};}
     default:return undefined;
   }
+}
+/** A TABLE'S POINTS IN METRES where it asks for them (its `coordinates`): each layer still in longitude and latitude is
+ *  projected into the zone, as Reproject points did until it retired into this (0.169.0). A layer already in metres, read
+ *  from a UTM file, is shown as it is. */
+function inMetres(node:WorkflowNode<'table_output'>,points:{layers:import("./types.js").PointLayer[]}):{layers:import("./types.js").PointLayer[]}{
+  const c=node.params.coordinates;if(!c)return points;
+  if(!Number.isInteger(c.zone)||c.zone<1||c.zone>60||!['north','south'].includes(c.hemisphere))
+    throw new Error('Choose a UTM zone from 1 to 60 and a hemisphere for the coordinates in metres.');
+  const {crs}=utmDefinition(c.zone,c.hemisphere);
+  return {layers:points.layers.map(layer=>isProjectedReference(layer.spatialReference)?layer:{...layer,
+    ...projectFromCRS84(layer,c.zone,c.hemisphere).collection,
+    spatialReference:{datum:'WGS84',geodeticCRS:'EPSG:4326',geometryCRS:crs,axisOrder:'easting-northing',units:'metre'}})};
 }
 export function tablesOfRun(workflow:Workflow,values:Map<string,unknown>):Record<string,DataTable>{
   const tables:Record<string,DataTable>={};
@@ -2266,13 +2258,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           ...(node.params.showExcluded!==false&&clipped.excluded.length?{excludedPoints:clipped.excluded}:{}),
         } as unknown as DisplayValue;
         break;}
-      case 'reproject':{
-        const source=inputs.points;
-        if(isProjectedReference(source.spatialReference))throw new Error(`${TYPES[node.type].title} projects longitude and latitude into a UTM zone. Its input is already projected into ${source.spatialReference.geometryCRS}; projecting twice is not a conversion between zones.`);
-        const projected=projectFromCRS84(source,node.params.zone,node.params.hemisphere);
-        const {crs}=utmDefinition(node.params.zone,node.params.hemisphere);
-        value={...projected.collection,sourceNodeId:node.id,sourceKind:'input-points',sourceInfo:{format:'projected-points',...structuredClone(projected.provenance)},
-          spatialReference:{datum:'WGS84',geodeticCRS:'EPSG:4326',geometryCRS:crs,axisOrder:'easting-northing',units:'metre'}};break;}
       case 'alert':value=node.params;break;
       case 'measure_distance':{
         const searched=nearestPlaces(inputs.points,inputs.candidates,node.params.unit,node.params.candidateFilter);
@@ -2736,7 +2721,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           +`rest of this workflow uses will do.`);
         const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);value=mapped.value;if(mapped.receipt)receipts.push(mapped.receipt);break;}
       // The renderer follows the connections, not a stored mode: shownMode.
-      case 'table_output':{const shown=shownMode(node,workflow.edges);if(shown==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(shown==='polygons'){value={...polygonsAsTable(inputs.polygons as never),centers:[],pointTable:true} as unknown as DisplayValue;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}const table=tableOutput(node,{points:pointInputs()},runId);value=table.value;receipts.push(table.receipt);break;}
+      case 'table_output':{const shown=shownMode(node,workflow.edges);if(shown==='table'){value={...structuredClone(inputs.table),centers:[],pointTable:true} as unknown as DisplayValue;const viewFacts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n<urn:fieldwork:run:${runId}:view:${node.id}> a fw:TableView, prov:Activity; prov:used <urn:fieldwork:run:${runId}:table:${workflow.edges.find(e=>e.to===node.id&&e.port==='table')!.from}>.\n`;receipts.push({nodeId:node.id,kind:'presentation',facts:viewFacts,rules:'',input:viewFacts,conclusions:[]});break;}if(shown==='polygons'){value={...polygonsAsTable(inputs.polygons as never),centers:[],pointTable:true} as unknown as DisplayValue;receipts.push(polygonPresentationReceipt(node,workflow.edges.find(e=>e.to===node.id&&e.port==='polygons')!.from,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='context')?.from));break;}const table=tableOutput(node,{points:inMetres(node,pointInputs())},runId);value=table.value;receipts.push(table.receipt);break;}
       case 'measure_area':{const computed=measureArea(node,inputs.area,runId);value=computed.value;receipts.push(computed.receipt);break;}
       case 'study_area':{
         if(node.params.source!=='drawn')throw new Error('This study area names a dataset rather than drawing or acquiring its outline. That form was Old Naledi\'s and retired with it on 2026-11-11; draw the area, or pick administrative units.');
@@ -3044,6 +3029,23 @@ function migrateComparisonMap(w:Workflow):void{
     if(area)w.edges.push({id:`${map.id}-area-${area}`,from:area,to:map.id,port:'area'});
     layers.forEach((id,i)=>w.edges.push({id:`${map.id}-${pointPort(i)}-${id}`,from:id,to:map.id,port:pointPort(i)}));
     w.edges.push({id:`${table.id}-table-${compare.id}`,from:compare.id,to:table.id,port:'table'});
+  }
+}
+/** REPROJECT POINTS, RETIRED INTO TABLE OUTPUT (0.169.0; docs/audits/reproject-retired.md). Only a Table could take its
+ *  points, so each Table it fed reads Reproject's source directly, with Reproject's zone as its coordinates. */
+function migrateReproject(w:Workflow):void{
+  for(const step of w.nodes.filter(n=>n&&(n.type as string)==='reproject')){
+    const p=step.params as {zone?:number;hemisphere?:'north'|'south'};
+    const source=w.edges.find(e=>e&&e.to===step.id)?.from;
+    for(const out of w.edges.filter(e=>e&&e.from===step.id)){
+      const table=w.nodes.find(n=>n.id===out.to);
+      if(table?.type!=='table_output'||!source)continue;
+      if(Number.isInteger(p.zone)&&(p.hemisphere==='north'||p.hemisphere==='south'))table.params.coordinates={zone:p.zone!,hemisphere:p.hemisphere};
+      table.sourceMigration={fromType:'reproject',version:'1'};
+      w.edges.push({...out,id:`${out.id}-from-${source}`,from:source});
+    }
+    w.edges=w.edges.filter(e=>e.from!==step.id&&e.to!==step.id);
+    w.nodes=w.nodes.filter(n=>n.id!==step.id);
   }
 }
 function migrateSatelliteSampler(w:Workflow):void{

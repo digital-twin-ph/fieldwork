@@ -43,7 +43,7 @@
   "example only": 8,
   "parity only": 10,
   "example, lab not applicable": 9,
-  "example+parity": 22,
+  "example+parity": 21,
   "neither applies": 0
  },
  "compositionsUsedByNoExample": [
@@ -502,17 +502,6 @@
     "south-london-1854"
    ],
    "exampleUseCount": 9,
-   "lab": "parity",
-   "labOwed": false,
-   "fieldUse": [],
-   "rung": "example+parity"
-  },
-  {
-   "nodeType": "reproject",
-   "exampleUses": [
-    "snow-deaths"
-   ],
-   "exampleUseCount": 1,
    "lab": "parity",
    "labOwed": false,
    "fieldUse": [],

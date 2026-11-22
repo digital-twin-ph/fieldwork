@@ -24,8 +24,9 @@ test('a role word in the identifier is not required in the title', ()=>{
 });
 
 test('a transform verb cannot be grouped under Sources, but an acquisition verb can', ()=>{
-  assert.deepEqual(rules(run({reproject:widget({title:'Reproject points',group:'Sources'})})),
-    ['reproject:transform-in-sources']);
+  // Clip polygons, live, for Reproject points, retired 2026-11-22: a retired widget is not named-checked at all.
+  assert.deepEqual(rules(run({clip_polygons:widget({title:'Clip polygons',group:'Sources'})})),
+    ['clip_polygons:transform-in-sources']);
   assert.deepEqual(rules(run({find_health_facilities:widget({title:'Find health facilities',group:'Sources'})})),[]);
   assert.equal(TRANSFORM_VERBS.some(v=>ACQUISITION_VERBS.includes(v)),false,
     'a verb cannot be both a transform and an acquisition');

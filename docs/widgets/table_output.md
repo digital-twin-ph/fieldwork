@@ -1,6 +1,6 @@
 # Table
 
-_Created 2026-10-27 · Updated 2026-11-19_
+_Created 2026-10-27 · Updated 2026-11-22_
 
 ## What it does
 
@@ -10,7 +10,8 @@ It takes four different things, and it works out which it is showing from what y
 
 - a **keyed table** from any step that produces one — Relate a column, Total within groups, a rate,
   a two-by-two, an imported table;
-- **point data**, with coordinates and attributes;
+- **point data**, with coordinates and attributes: longitude and latitude as recorded, or easting and northing in
+  metres in a UTM zone you choose;
 - **a polygon layer**: catchments, districts, clusters, with what each carries.
 
 A polygon layer is shown as a plain table, whichever input it arrives at: one row per polygon, its id, its name and
@@ -39,6 +40,7 @@ shows, **Configure…**, and what the last run showed.
 | In Configure… | When it is offered |
 | --- | --- |
 | **Show totals: these values count the same thing** | A keyed table that states no unit. Tick it only where every cell counts the same thing; the figure says you asserted it |
+| **Coordinates**: longitude and latitude, or in metres in a UTM zone | Point data. The dialog suggests the zone that fits the workflow's coordinates and says how far the chosen one stretches distances. Points read from a UTM file are shown as they are |
 
 Nothing is required. A table with nothing connected is **unfinished**, not broken, and says so.
 
@@ -98,6 +100,12 @@ inherited and is recorded as open in
 [experiment 21](../experiments/21-shared-result-outputs.md).
 
 ## History
+
+### 2026-11-22 · Coordinates in metres (0.14.0)
+
+**Configure…** offers point data's coordinates in metres, as easting and northing in a UTM zone, with the zone the
+workflow's coordinates suggest. This was the one job of **Reproject points**, which retired into it: nothing computed
+with its points, and every step that measures projects for itself. The table's receipt states the frame.
 
 ### 2026-11-22 · Moved out of the application's main file (0.13.2)
 

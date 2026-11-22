@@ -27,6 +27,12 @@ shown in a local build is not a claim that it has been published.
   where it falls, and the two units shaded by their totals at the end, with the house on the shared edge counted in both.
 - **A dialog no longer throws when a field it is redrawing still has focus.** A redraw asked for during a redraw now runs
   after it.
+- **Reproject points is retired into Table output.** No step computed with its points: every step that measures in
+  metres projects for itself and states its zone. A Table now shows point data in metres where asked, as easting and
+  northing in a UTM zone, chosen in Configure… with the zone the workflow's coordinates suggest. John Snow's deaths
+  example shows the pumps that way, and a saved workflow opens with each Table Reproject fed reading its source in the
+  same zone. docs/audits/reproject-retired.md.
+- **The Inspector move:** the three sea-level steps are retired, so no batch E; Find health facilities is what is left.
 
 ## 0.168.0 — 2026-11-22
 

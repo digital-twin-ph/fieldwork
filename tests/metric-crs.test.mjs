@@ -106,6 +106,11 @@ test('every widget with a zone knob is a metric widget, and every metric widget 
   // and forgotten here would escape the one-projection refusal entirely.
   const types=readFileSync(new URL('../src/types.ts',import.meta.url),'utf8');
   const zoned=[...types.matchAll(/^  ([a-z_]+):\{[^\n]*\bzone:number\b/gm)].map(m=>m[1]);
+  // A RETIRED widget keeps its params type so a saved workflow naming it can be read and rewritten; it never runs, so it
+  // projects nothing (reproject, 2026-11-22).
+  const retired=new Set(JSON.parse(readFileSync(new URL('../widgets/classification.json',import.meta.url),'utf8')).widgets
+    .filter(w=>w.retired).map(w=>w.nodeType));
+  zoned.splice(0,zoned.length,...zoned.filter(t=>!retired.has(t)));
   assert.ok(zoned.length>0,'found no widget with a zone knob; the check proved nothing');
   assert.deepEqual([...zoned].sort(),[...METRIC_NODE_TYPES].sort(),
     'src/types.ts and METRIC_NODE_TYPES disagree about which widgets take a projection');

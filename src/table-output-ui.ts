@@ -8,6 +8,7 @@ import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {openConfigDialog} from './config-dialog.js';
 import {nodeInputs,portAccepts,outputOf,shownMode} from './core.js';
 import {MAX_POINT_LAYERS} from './point-layers.js';
+import {zoneFields,wireZone,type ZoneAdvice} from './metric-steps-ui.js';
 
 export interface TableOutputKit extends StepKit {
   /** The unit the table's rows state, where they state one, so the totals claim is not offered over it. */
@@ -20,6 +21,8 @@ export interface TableOutputKit extends StepKit {
   renderResults:()=>void;
   /** Whether the last run showed this table. */
   shown:(nodeId:string)=>boolean;
+  /** The UTM zone the workflow's coordinates suggest, for coordinates shown in metres. */
+  zoneAdvice:ZoneAdvice;
 }
 
 /** WHAT A TABLE OUTPUT SHOWS, in one sentence, from what is wired. */
@@ -28,7 +31,8 @@ export function tableOutputSentence(kit:TableOutputKit,n:WorkflowNode<'table_out
     return up?(up.params.label||kit.title(up.type)):'';};
   if(mode==='table')return `Shows the rows of ${from('table')||'the table connected'} as they stand${n.params.totalsAsserted?', with totals you asserted':''}.`;
   if(mode==='polygons')return 'Shows the polygon layers connected and their summaries.';
-  return workflow.edges.some(e=>e.to===n.id)?'Shows the point records connected, with their coordinates and every attribute.'
+  const c=n.params.coordinates;
+  return workflow.edges.some(e=>e.to===n.id)?`Shows the point records connected, with ${c?`their coordinates in metres, as easting and northing in UTM zone ${c.zone}${c.hemisphere==='north'?'N':'S'},`:'their longitude and latitude'} and every attribute.`
     :'Nothing is connected yet, so this table has nothing to show.';
 }
 
@@ -36,31 +40,44 @@ export function tableOutputSentence(kit:TableOutputKit,n:WorkflowNode<'table_out
  *  written by Apply. Turning a reasoning table into a map or a chart changes the step itself. */
 function openTableConfig(kit:TableOutputKit,nodeId:string){
   const esc=kit.esc,workflow=kit.workflow(),node=workflow.nodes.find(x=>x.id===nodeId) as WorkflowNode<'table_output'>|undefined;if(!node)return;
-  type Draft=WorkflowNode<'table_output'>['params']&{view?:'map'|'table'|'bars'};
+  type Draft=WorkflowNode<'table_output'>['params']&{view?:'map'|'table'|'bars';coord:{metres:boolean;zone:string;hemisphere:'north'|'south'}};
   const mode=shownMode(node,workflow.edges);
+  const points=mode!=='table'&&mode!=='polygons';
+  const held=node.params.coordinates,suggested=kit.zoneAdvice(30,'north');
   openConfigDialog<Draft>({
-    id:'table-config',widget:'Table',step:node.params.label||kit.title('table_output'),draft:structuredClone(node.params),
+    id:'table-config',widget:'Table',step:node.params.label||kit.title('table_output'),draft:{...structuredClone(node.params),coord:{metres:!!held,zone:String(held?.zone??suggested?.zone??30),hemisphere:held?.hemisphere??suggested?.hemisphere??'north'}},
     sections:draft=>{
       let settings='';
       // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them (2026-10-26). Offered only for a table,
       // and only where the table does not already state its unit.
       if(mode==='table'&&!kit.unitFor(node))settings+=`<label class="check"><input type="checkbox" id="output-totals" ${draft.totalsAsserted?'checked':''}> Show totals: these values count the same thing</label>`
         +'<p class="description">Tick it only where every cell counts the same thing.</p>';
+      // COORDINATES IN METRES, where a partner or a lesson wants easting and northing: what Reproject points did as a step
+      // until it retired into this choice (0.169.0).
+      if(points)settings+=`<div class="field"><label class="field-label" for="output-coordinates">Coordinates</label>`
+        +`<select id="output-coordinates"><option value="degrees"${draft.coord.metres?'':' selected'}>Longitude and latitude, as recorded</option>`
+        +`<option value="metres"${draft.coord.metres?' selected':''}>In metres: easting and northing in a UTM zone</option></select></div>`
+        +(draft.coord.metres?zoneFields(kit,draft.coord,'output'):'');
       if(!settings)settings='<p class="muted">Nothing to set: what you connect decides how it is shown.</p>';
       const shows={table:'Rows are shown as imported, an absent value as unknown.',
-        other:'Every point with its coordinates and attributes, missing ones included.'};
+        other:`Every point with its ${draft.coord.metres?'easting and northing in metres':'longitude and latitude'} and attributes, missing ones included.`};
       return {settings,preview:`<p class="muted">${mode==='table'?shows.table:shows.other}</p>`};
     },
     wire:(root,draft,redraw)=>{
       root.querySelector<HTMLSelectElement>('#output-view')?.addEventListener('change',e=>{draft.view=(e.target as HTMLSelectElement).value as Draft['view'];redraw();});
+      root.querySelector<HTMLSelectElement>('#output-coordinates')?.addEventListener('change',e=>{draft.coord.metres=(e.target as HTMLSelectElement).value==='metres';redraw();});
+      if(draft.coord.metres)wireZone(root,draft.coord,redraw,'output');
       root.querySelector<HTMLInputElement>('#output-totals')?.addEventListener('change',e=>{
         if((e.target as HTMLInputElement).checked)draft.totalsAsserted=true;else delete draft.totalsAsserted;redraw();});
     },
     apply:draft=>{
-      const {view,...params}=draft;
+      const {view,coord,...params}=draft;
+      if(coord.metres)params.coordinates={zone:Number(coord.zone),hemisphere:coord.hemisphere};else delete params.coordinates;
       if(view&&view!=='table'){kit.change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
         w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
-      kit.presentation(w=>{const t=w.nodes.find(x=>x.id===nodeId) as WorkflowNode<'table_output'>|undefined;if(t)t.params=params;});
+      // Coordinates in metres are computed, so a change to them asks for a run; the rest is presentation.
+      const edit=(w:Workflow)=>{const t=w.nodes.find(x=>x.id===nodeId) as WorkflowNode<'table_output'>|undefined;if(t)t.params=params;};
+      if(JSON.stringify(params.coordinates)!==JSON.stringify(node.params.coordinates))kit.change(edit);else kit.presentation(edit);
       kit.renderResults();
     },
   },esc);

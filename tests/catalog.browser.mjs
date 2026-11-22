@@ -50,18 +50,19 @@ test('the widget catalog lists the widgets that can be used and the worked examp
   await expect(dialog).toBeHidden();
 
   // The step's identity stays where the step is: on the selected node.
-  const reproject=registry.widgets.find(w=>w.nodeType==='reproject');
+  // Convex hull, for Reproject points, retired into Table output on 2026-11-22.
+  const hull=registry.widgets.find(w=>w.nodeType==='summarize_hull');
   await page.locator('[data-view="workflow"]').click();
-  if(!await page.locator('[data-add="reproject"]').count()){
+  if(!await page.locator('[data-add="summarize_hull"]').count()){
     await page.locator('[data-add="point_input"]').click();
     await page.locator('[data-view="workflow"]').click();
   }
-  await page.locator('[data-add="reproject"]').click();
-  await expect(page.locator('.inspector')).toContainText(`reproject ${reproject.currentVersion}`);
+  await page.locator('[data-add="summarize_hull"]').click();
+  await expect(page.locator('.inspector')).toContainText(`summarize_hull ${hull.currentVersion}`);
   await expect(page.locator('.inspector')).toContainText('Compiled into this build');
-  if(parity.entries.some(e=>e.widget.endsWith(':reproject'))){
+  if(parity.entries.some(e=>e.widget.endsWith(':summarize_hull'))){
     await page.locator('.inspector details',{hasText:'What was checked'}).first().click();
-    await expect(page.locator('.inspector')).toContainText('maximum separation');
+    await expect(page.locator('.inspector details',{hasText:'What was checked'}).first()).toHaveAttribute('open','');
   }
 
   // A link opens it directly; at phone width it fits, and it opens offline.

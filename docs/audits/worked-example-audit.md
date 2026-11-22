@@ -14,12 +14,12 @@ asset shows up.
 
 ## 1 · Widget utilization
 
-51 live widgets across 11 shipped examples and 12 pinned in its own repository.
+50 live widgets across 11 shipped examples and 12 pinned in its own repository.
 
 | Reach | Widgets |
 | --- | --- |
 | Used by no workflow | **12** |
-| Used by exactly one | 13 |
+| Used by exactly one | 12 |
 | Used by two or more | **26** |
 
 `isochrone` and `compute_walking_catchment` are a special case the practitioner ruled on
@@ -51,7 +51,6 @@ Each of these has one workflow's worth of evidence. If that example changes, it 
 | `space_time_scan` | hagelloch-cluster |
 | `transmission_chains` | mers-korea-2015 |
 | `measure_distance` | sea-level-rise-philippines |
-| `reproject` | snow-deaths |
 | `summarize_hull` | snow-extent |
 | `aggregate_points_to_h3_cell` | snow-geoprivacy |
 | `compare_point_sets` | snow-geoprivacy |
@@ -111,7 +110,6 @@ rows above `case_series` are the ones that have genuinely done both.
 | snow-isochrone | **2** — `isochrone`, `network_input` |
 | syndromic-surveillance-2026 | **1** — `detect_unusual_counts` |
 | sea-level-rise-philippines | **1** — `measure_distance` |
-| snow-deaths | **1** — `reproject` |
 | hagelloch-cluster | **1** — `space_time_scan` |
 | snow-extent | **1** — `summarize_hull` |
 | mers-korea-2015 | **1** — `transmission_chains` |
@@ -134,7 +132,7 @@ that does not can be rebuilt only by copying this file.
 
 | Example | Nodes | Carry data | Declare a source | Data with no source | Drawn extents | Attached widgets |
 | --- | ---: | ---: | ---: | --- | ---: | --- |
-| `snow-deaths` | 6 | 3 | 2 | — | 1 | — |
+| `snow-deaths` | 5 | 3 | 2 | — | 1 | — |
 | `snow-curve` | 3 | 1 | 0 | **1** — dates (table_input) | — | — |
 | `snow-voronoi` | 9 | 3 | 2 | — | 1 | — |
 | `snow-isochrone` | 12 | 5 | 3 | **1** — context-pumps (point_input) | 1 | — |
@@ -178,7 +176,7 @@ different things: an example can be four nodes and complete, or eighteen and not
 | `snow-voronoi` | 9 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch` | 8 | 2 / 4 | published files, rebuilt from scratch |
 | `hagelloch-people` | 8 | 2 / 4 | published files, rebuilt from scratch |
-| `snow-deaths` | 6 | 2 / 4 | published files, rebuilt from scratch |
+| `snow-deaths` | 5 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-extent` | 4 | 2 / 4 | published files, rebuilt from scratch |
 | `snow-isochrone` | 12 | 1 / 4 | sources, published files, rebuilt from scratch |
 | `hagelloch-cluster` | 10 | 1 / 4 | sources, published files, rebuilt from scratch |

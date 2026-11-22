@@ -25,8 +25,9 @@ const metres=(m:number)=>m>=1000?`${(m/1000).toLocaleString('en',{maximumFractio
 const squareMetres=(m2:number)=>m2>=1e5?`${(m2/1e6).toLocaleString('en',{maximumSignificantDigits:3})} km²`:`${Math.round(m2).toLocaleString('en')} m²`;
 
 /** THE ZONE FIELDS, with what the workflow's coordinates suggest and what the chosen zone costs. */
-function zoneFields(kit:InspectorKit,d:Zoned,prefix:string):string{
-  const advice=(kit as AreaStepKit).zoneAdvice(Number(d.zone),d.hemisphere);
+export type ZoneAdvice=AreaStepKit['zoneAdvice'];
+export function zoneFields(kit:InspectorKit&{zoneAdvice:ZoneAdvice},d:Zoned,prefix:string):string{
+  const advice=kit.zoneAdvice(Number(d.zone),d.hemisphere);
   return `<div class="field"><label class="field-label" for="${prefix}-zone">UTM zone it measures in</label>`
     +`<input id="${prefix}-zone" type="number" min="1" max="60" step="1" value="${kit.esc(d.zone)}"></div>`
     +`<div class="field"><label class="field-label" for="${prefix}-hemisphere">Hemisphere</label>`
@@ -48,7 +49,7 @@ function zoneMismatch(kit:InspectorKit,p:{zone:number;hemisphere:Hemisphere}):st
   return `<p class="notice" data-utm-mismatch>${kit.esc(`This workflow's coordinates are in UTM zone ${zoneName(advice.zone,advice.hemisphere)}, not ${zoneName(p.zone,p.hemisphere)}`
     +(Number.isFinite(advice.stretch)?`, which stretches distances here by up to ${advice.stretch.toFixed(3)}%.`:'.'))}</p>`;
 }
-function wireZone(root:ParentNode,d:Zoned,redraw:()=>void,prefix:string){
+export function wireZone(root:ParentNode,d:Zoned,redraw:()=>void,prefix:string){
   root.querySelector<HTMLInputElement>(`#${prefix}-zone`)!.onchange=e=>{d.zone=(e.target as HTMLInputElement).value;redraw();};
   root.querySelector<HTMLSelectElement>(`#${prefix}-hemisphere`)!.onchange=e=>{d.hemisphere=(e.target as HTMLSelectElement).value as Hemisphere;redraw();};
   root.querySelector<HTMLButtonElement>('[data-suggested-zone]')?.addEventListener('click',e=>{
@@ -73,7 +74,7 @@ export const hullInspector:OwnInspector<'summarize_hull'>={
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog<Zoned>({id:'hull-dialog',widget:'Convex hull',step:node.params.label||'',
         draft:{zone:String(node.params.zone),hemisphere:node.params.hemisphere},
-        sections:d=>({settings:zoneFields(kit,d,'hull'),
+        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'hull'),
           ...refusal(()=>validateHullNode({...node,params:{...node.params,...zoneOf(d)}}))}),
         wire:(r,d,redraw)=>wireZone(r,d,redraw,'hull'),
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='summarize_hull')Object.assign(t.params,zoneOf(d));}),
@@ -94,7 +95,7 @@ export const voronoiInspector:OwnInspector<'voronoi'>={
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog<Zoned>({id:'voronoi-dialog',widget:'Voronoi catchments',step:node.params.label||'',
         draft:{zone:String(node.params.zone),hemisphere:node.params.hemisphere},
-        sections:d=>({settings:zoneFields(kit,d,'voronoi'),
+        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'voronoi'),
           ...refusal(()=>validateCatchmentNode({...node,params:{...node.params,...zoneOf(d)}}))}),
         wire:(r,d,redraw)=>wireZone(r,d,redraw,'voronoi'),
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='voronoi')Object.assign(t.params,zoneOf(d));}),
@@ -144,7 +145,7 @@ export const isochroneInspector:OwnInspector<'isochrone'>={
             +num('bufferM','Last walk off the street, to a door (metres)',1,100)
             +num('maxSnapM','Snap limit: a site further from a street is marked (metres)',0,1000)
             +`<label class="field-option"><input type="checkbox" id="isochrone-fillHoles"${d.fillHoles?' checked':''}> Fill holes inside each region</label>`
-            +zoneFields(kit,d,'isochrone'),
+            +zoneFields(kit as AreaStepKit,d,'isochrone'),
             preview:(()=>{const q=isoParams(d),far=q.minutes*q.speedMPerMin;
               return far>0?`<p>${kit.esc(`${q.thresholds?'The longest time goes':'That goes'} up to ${metres(far)} along the streets at ${q.speedMPerMin} metres a minute.`)}</p>`:'';})(),
             ...refusal(()=>validateCatchmentNode({...node,params:{...p,...isoParams(d)}}))};},
@@ -184,7 +185,7 @@ export const meanCenterInspector:OwnInspector<'mean_center'>={
             +[...new Set([...fields,...(d.weightField&&!fields.includes(d.weightField)?[d.weightField]:[])])].map(f=>`<option value="${kit.esc(f)}"${f===d.weightField?' selected':''}>${kit.esc(f)}</option>`).join('')+'</select>'
             :`<input id="mean-center-weight" maxlength="60" value="${kit.esc(d.weightField)}" placeholder="for example deaths">`)
           +'<small>250 addresses carrying 489 deaths have two different centres.</small></div>'
-          +zoneFields(kit,d,'mean-center'),
+          +zoneFields(kit as AreaStepKit,d,'mean-center'),
           ...refusal(()=>validateMeanCenterNode({...node,params:{...node.params,...zoneOf(d),weightField:d.weightField}}))}),
         wire:(r,d,redraw)=>{
           r.querySelector<HTMLInputElement|HTMLSelectElement>('#mean-center-weight')!.onchange=e=>{d.weightField=(e.target as HTMLInputElement).value.trim();redraw();};

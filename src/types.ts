@@ -26,9 +26,11 @@ export {BASEMAP_CHOICES,VECTOR_BASEMAP_CHOICES,isVectorBasemapChoice,basemapsFor
 // further down this file.
 import type {BasemapChoice} from './basemaps.js';
 
-export type AttributeType = 'text' | 'number' | 'integer' | 'boolean' | 'date';
+export type AttributeType = 'text' | 'number' | 'integer' | 'boolean' | 'date' | 'datetime';
 export interface AttributeDefinition {key:string; type:AttributeType; allowedValues?:Scalar[]; defaultValue?:Scalar; label?:string}
-export interface FormField extends AttributeDefinition {label:string}
+export interface FormField extends AttributeDefinition {label:string; required?:boolean}
+/** A photo on a pin: a JPEG of at most 2,048 px, kept by its digest; no location or camera details are in it. */
+export interface PinPhoto {sha256:string; mime:'image/jpeg'; bytes:number; width:number; height:number; addedAt:string; caption?:string}
 export interface PointFeature {type:'Feature'; id:string; properties:Record<string,Scalar> & {name:string}; geometry:Point|null}
 export interface PointCollection {type:'FeatureCollection'; features:PointFeature[]}
 export interface SpatialReference {datum:'WGS84'; geodeticCRS:'EPSG:4326'; geometryCRS:'OGC:CRS84'; axisOrder:'longitude-latitude'; units:'degree'}
@@ -68,6 +70,8 @@ export interface ObservationParams extends PointParams {
   /** Read from a connected table at run time: x (longitude) and y (latitude) columns, CRS84. Experiment 178. */
   fromTable?:import('./table-points.js').TableMapping;
   fields?:FormField[]; attributeRules?:AttributeDefinition[]; sourceInfo?:SourceInfo; pinIdStrategy?:'uuid'|'sequential'; repairs?:ColumnRepair[];
+  /** Each pin's photos, by the pin's record ID (experiment 09, 2026-11-22): digests and captions; the bytes are on the device. */
+  pinPhotos?:Record<string,PinPhoto[]>;
   /** Values edited by hand in Data quality (experiment 214), applied after the repairs, to a copy. */
   edits?:import('./cell-edits.js').EditEntry[];
   /** WHAT THE POINTS ARE AND WHERE THEY CAME FROM, as Tabular data and Polygon input record it: a source note in Methods
@@ -643,7 +647,7 @@ export interface ParamsByType {
    *  parameters stay so the registry entry resolves and a saved workflow that still names the type
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
   coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
-  map_output:{label:string; section?:import('./notes.js').FigureSection|'none';
+  map_output:{label:string; /** Study areas left out of this map, by name (2026-11-22): a Polygon layer of study areas keeps them all. */ leftOutAreas?:string[]; section?:import('./notes.js').FigureSection|'none';
     /** An enlarged part, or a locator, on the static figure (Map's manual, History: the inset), its box picked on the interactive map. */
     inset?:import('./map-inset.js').InsetSettings; pointInputCount?:number;
     /** How many polygon layers it takes, as `polygons`, `polygons_2` … (2026-11-13: Collect polygon layers retired). */

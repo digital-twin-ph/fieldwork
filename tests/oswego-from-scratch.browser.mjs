@@ -124,7 +124,7 @@ test('Oswego is two short workflows: which food, and where',async({page})=>{test
   await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('geojson');
   await page.locator('#input-file').setInputFiles(CHURCH);
-  await page.locator('#input-apply').click();
+  await page.locator('#config-apply').click();
   await expect(page.locator('#input-dialog')).not.toBeVisible();
   await add(page,'map_output');
   const where=await idOf(page,'map_output');

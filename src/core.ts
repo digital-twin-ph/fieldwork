@@ -1,3 +1,4 @@
+import {readPinPhotos} from './pin-photos.js';
 import {setFigureWords,figureWordsOf} from './figure-words.js';
 ﻿import {sampleRaster,sampleReceipt,validateSampleNode} from './sample-raster.js';
 import {computeSpaceTimeScan,computeSpaceTimeReplay,scanValue,replayValue,validateScanParams} from './space-time-scan.js';
@@ -979,7 +980,9 @@ export function validateWorkflow(raw:unknown):Workflow {
     // Reproject stores the already-converted CRS84 collection, so it is validated as geographic here.
     if(n.type==='reproject'){utmDefinition(n.params.zone,n.params.hemisphere);n.params.spatialReference??=defaultSpatialReference();validateSpatialReference(n.params.spatialReference);}
     if(n.type==='point_input'&&n.params.fromTable!==undefined){const m=n.params.fromTable as unknown as Record<string,unknown>;if(!m||typeof m.x!=='string'||typeof m.y!=='string'||['id','name'].some(k=>m[k]!==undefined&&typeof m[k]!=='string'))throw new Error('A table mapping names its x (longitude) and y (latitude) columns as text.');}
-    if(n.type==='point_input'){validateAttributeSchema(n.params.data,n.params.fields,n.params.attributeRules);if(n.params.pinIdStrategy!==undefined&&!['sequential','uuid'].includes(n.params.pinIdStrategy))throw new Error('Choose sequential or UUID identifiers for new pins.');}
+    if(n.type==='point_input'){validateAttributeSchema(n.params.data,n.params.fields,n.params.attributeRules);if(n.params.pinIdStrategy!==undefined&&!['sequential','uuid'].includes(n.params.pinIdStrategy))throw new Error('Choose sequential or UUID identifiers for new pins.');
+      // A PIN'S PHOTOS are read back as what they can be, and nothing else (experiment 09, 2026-11-22).
+      if(n.params.pinPhotos!==undefined){const photos=readPinPhotos(n.params.pinPhotos);if(photos)n.params.pinPhotos=photos;else delete n.params.pinPhotos;}}
     if((n.type==='map_output'||n.type==='table_output')&&n.params.inputMode!==undefined&&!(n.type==='map_output'?['spatial','decisions','raster','polygons','network']:['spatial','decisions','polygons','table']).includes(n.params.inputMode))throw new Error('Choose spatial inputs or reasoning results.');
     if(n.type==='map_output'&&((n.params.presentation!==undefined&&!['plot','interactive'].includes(n.params.presentation))||(n.params.contextPoints!==undefined&&typeof n.params.contextPoints!=='boolean')))throw new Error('Invalid polygon map presentation.');
     // The subtitle and source-note limits were raised on 2026-10-13, measured against the first
@@ -1031,6 +1034,7 @@ export function validateWorkflow(raw:unknown):Workflow {
       throw new Error(`A map draws between 1 and ${MAX_GROUND_LAYERS} map images as ground.`);
     if(n.type==='map_output'&&n.params.rasterInputCount!==undefined&&!(Number.isInteger(n.params.rasterInputCount)&&n.params.rasterInputCount>=1&&n.params.rasterInputCount<=MAX_RASTER_LAYERS))
       throw new Error(`A map takes 1 to ${MAX_RASTER_LAYERS} rasters.`);
+    if(n.type==='map_output'&&n.params.leftOutAreas!==undefined&&!(Array.isArray(n.params.leftOutAreas)&&n.params.leftOutAreas.length<=50&&n.params.leftOutAreas.every(a=>typeof a==='string'&&a.length<=120)))throw new Error('Name the study areas left out of the map as a list.');
     if(n.type==='map_output'&&n.params.polygonInputCount!==undefined&&!(Number.isInteger(n.params.polygonInputCount)&&n.params.polygonInputCount>=1&&n.params.polygonInputCount<=MAX_POLYGON_LAYERS))
       throw new Error(`A map takes 1 to ${MAX_POLYGON_LAYERS} polygon layers.`);
     if(n.type==='map_output'&&n.params.rasterShading!==undefined&&!validRasterShading(n.params.rasterShading))
@@ -1141,7 +1145,9 @@ export function executionPlan(workflow:Workflow) {
         +`N3 facts can be inspected.)`);
     outputs.push(...w.nodes);
   }
-  for(const n of w.nodes)if(n.type==='study_area'&&n.params.source==='drawn'&&!n.params.geometry)throw new IncompleteWorkflow('Select a study area on the map before running.');
+  // THE AREA NAMED (2026-11-22): with four study areas on the canvas, "Select a study area" did not say which one was empty.
+  {const empty=w.nodes.filter(n=>n.type==='study_area'&&n.params.source==='drawn'&&!n.params.geometry).map(n=>`"${n.params.label||'Study area'}"`);
+   if(empty.length)throw new IncompleteWorkflow(`${empty.join(', ')} ${empty.length===1?'has':'have'} no area yet. Select ${empty.length===1?'it':'each'} on the map before running.`);}
   // Same shape as the line above: a node may be on the canvas before it has been told what to do,
   // and the refusal names the node rather than the type, because a workflow can hold several.
   for(const n of w.nodes)if(n.type==='apply_ruleset'&&!n.params.ruleset)

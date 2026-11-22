@@ -41,3 +41,9 @@ test('each output requires connected dependencies and a supported display',()=>{
   w.nodes.at(-1).type='output';w.nodes.at(-1).params.view='chart';
   assert.throws(()=>validateWorkflow(w),/map, table/);
 });
+
+test('a study area with no area yet is named in the run\'s refusal',()=>{
+  const w=exampleWorkflow();const area=w.nodes.find(n=>n.type==='study_area');
+  area.params={...area.params,source:'drawn',label:'Rwanda',geometry:null};
+  assert.throws(()=>executionPlan(w),error=>error instanceof IncompleteWorkflow&&/"Rwanda" has no area yet\. Select it on the map before running\./.test(error.message));
+});

@@ -50,6 +50,10 @@ export interface ConfigDialog<D> {
   /** A REPORT, NOT SETTINGS: the body is shown without the Settings, Preview and Decisions headings (what a run found
    *  on a step, 2026-11-12). Used with `readOnly`. */
   report?:boolean;
+  /** THE BODY BUILT ONCE, never rebuilt: for a body that holds its own working state, a map and what is typed but not yet
+   *  added (the pin editor, experiment 09, 2026-11-22). Asking to discard then changes the message, not the body; `wire`
+   *  keeps the draft current, since only the draft is compared with what the step holds. */
+  bodyOnce?:boolean;
 }
 
 export const CONFIG_APPLY='config-apply', CONFIG_CANCEL='config-cancel', CONFIG_CLOSE='config-close';
@@ -106,6 +110,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     applyButton.textContent=was;applyButton.disabled=false;cancelButton.disabled=false;
   };
 
+  let built=false;
   function draw(){
     // WHERE THE PERSON WAS, kept across the rebuild: the element with focus by id, and the caret in a text box.
     const active=document.activeElement as HTMLInputElement|null;
@@ -113,9 +118,10 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     const caret=focusId&&typeof active?.selectionStart==='number'?active.selectionStart:null;
     const scroll=body.scrollTop;
 
-    spec.beforeRedraw?.();
     const parts=spec.sections(draft);
-    body.innerHTML=spec.report?`<section class="config-section" data-config-section="report">${parts.settings}</section>`
+    const rebuild=!(spec.bodyOnce&&built);built=true;
+    if(rebuild)spec.beforeRedraw?.();
+    if(rebuild)body.innerHTML=spec.report?`<section class="config-section" data-config-section="report">${parts.settings}</section>`
       :section('Settings',parts.settings)+section('Preview',parts.preview)+section('Decisions',parts.decisions);
     slot.innerHTML=confirming
       ?`<div class="config-message config-message-warning" role="alert"><p>These changes are not applied. Discard them?</p>`
@@ -129,6 +135,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     if(keep){keep.onclick=()=>{confirming=false;draw();};keep.focus();}
     const discard=slot.querySelector<HTMLButtonElement>('#config-discard');
     if(discard)discard.onclick=close;
+    if(!rebuild)return;
     spec.wire(body,draft,()=>{confirming=false;draw();});
     scrollLongTables(body);
     // READ ONLY: shown exactly as it would be edited, every control disabled and nothing to add or remove.

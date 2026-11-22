@@ -71,6 +71,31 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 8. **Done in 0.155.0:** DHIS2 as a fifth tab of Tabular data, a token from Credentials, tried against the Docker server (DHIS2 2.41.11, Sierra Leone's demonstration database). **Left:** synthetic vaccine-preventable-disease data on the test server ([DHIS2 as a table source](#dhis2-as-a-table-source-with-a-test-server-in-docker-asked-2026-11-19-widened-2026-11-20)).
 
 
+### Threads from 2026-11-22
+
+- **Order set by the practitioner, 2026-11-22:** pins first, to close experiment 09; then 1a (stress tests of every table
+  operation), 3 (WebGPU, experiment 225), 4 (Hagelloch's peak); then the rest of the Inspector move.
+- **Pins, experiment 09:** items 1 to 14 built in 0.166.0. **Left:** field order and groups (item 3), the one thing keeping
+  09 open; and checks on a real phone, a real GPS fix, a real phone photo (HEIC) and a real handheld's GPX.
+- **A line layer** (the practitioner, 2026-11-22: *"That's an important gap no line layer"*, *"Line layer can be
+  transportation routes"*, *"Perhaps we can also use line layers in microplanning? Team routes?"*). Fieldwork holds
+  points, areas, rasters and street networks, and no lines of their own: a GPS export's tracks are counted and left out
+  of Point data. Uses named: transportation routes; vaccination teams' routes in microplanning, which ties it to the
+  Nigeria immunization case study (teams' GPS tracks checked against the settlements they were to reach). Before any new
+  widget, the closest existing one examined: **Street network** already reads OpenStreetMap ways as a graph and Map
+  draws it, so a line layer may begin as Street network reading a GPX track or a KML line. Not yet designed.
+  **What the evidence supports (read 2026-11-22):** no study isolates route planning; GPS tracking of teams against their
+  assigned settlements consistently finds settlements never reached (Touray et al. 2016, northern Nigeria; Gali et al.
+  2016, Kano; Atagbaza et al. 2021, Chad; all open, none controlled, all bundled with new maps and settlement lists).
+  The WHO-UNICEF Geo-enabled Microplanning Handbook (2023) lists route optimisation and travel-time models among its
+  four applications and GNSS tracking beside them, with case claims only; WHO AFRO's RED guide (2008) asks for roads
+  and rivers on the map, no routes. So the case study's line layer is **planned against actual**: a team's track over
+  its settlements, the unreached ones found; optimised routes are a planning convenience, not a coverage claim.
+- **Study design's dialog** to the standard draft-until-Apply dialog (the practitioner, 2026-11-22: yes).
+- **206 closed into 228**, its five questions and the syndromic methods not yet offered (MEM, historical limits,
+  count-scale CUSUM, the regression/EWMA switch, several syndromes at once, and the lesser ones) as 228's open items
+  (the practitioner, 2026-11-22).
+
 ### Threads from 0.154.0 and 0.155.0 (2026-11-20), not yet ordered
 
 - **Detect unusual counts:** checked in the lab in Python (check 53, 0.162.0). Owed: the name review of "Detect unusual

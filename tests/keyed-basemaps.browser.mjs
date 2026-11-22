@@ -59,3 +59,21 @@ test('a CARTO style chosen while the credentials are locked shows OpenStreetMap 
   await expect(page.locator('.catchment-map-toolbar')).toContainText('needs your CARTO key',{timeout:30000});
   await expect(page.locator('.catchment-map-toolbar')).toContainText('OpenStreetMap is shown meanwhile');
 });
+
+// A KEY CARTO REFUSES (2026-11-22): the practitioner's key, locked to Fieldwork's published address, was refused with 403
+// on a local server, and the map said only that CARTO "did not answer". It now says what CARTO answered.
+test('a key CARTO refuses: the map says CARTO answered 403 and why, without the key',async({page})=>{
+  await page.route(/basemaps\.cartocdn\.com/,r=>r.fulfill({status:403,contentType:'text/plain',headers:{'access-control-allow-origin':'*'},
+    body:'Forbidden: a valid, authorized API key is required. See https://carto.com/basemaps/apikey'}));
+  await page.goto('/?example=snow-isochrone');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await addKey(page,'carto','https://basemaps.cartocdn.com',KEY);
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="interactive"]').click();
+  await inMapSettings(page,async dialog=>{
+    await dialog.locator('#map-basemap').selectOption('carto-voyager');
+    await expect(dialog).toContainText('CARTO answered 403, “Forbidden: a valid, authorized API key is required.',{timeout:20000});
+    await expect(dialog).toContainText("A key locked to Fieldwork's published address is refused on any other");
+    await expect(dialog).not.toContainText(KEY);
+  });
+});

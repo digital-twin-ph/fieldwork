@@ -1064,7 +1064,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.40.0",
+      "currentVersion": "0.41.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1390,6 +1390,11 @@
           "version": "0.40.0",
           "path": "widgets/releases/map_output/0.40.0.json",
           "sha256": "ad6dee21e98f4f91d1f80ecdb947259332ec5915910a4cc22013752b8fe752e9"
+        },
+        {
+          "version": "0.41.0",
+          "path": "widgets/releases/map_output/0.41.0.json",
+          "sha256": "bf7eb8f305c11ecfd6528cdb44c39f9bd1cac7fcb330614e7a4fbaa575d5b335"
         }
       ]
     },
@@ -1643,7 +1648,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.12.0",
+      "currentVersion": "0.13.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1709,6 +1714,11 @@
           "version": "0.12.0",
           "path": "widgets/releases/point_input/0.12.0.json",
           "sha256": "12a85fb2803e047478199f940e77943d7797c831ee2cdffe6900a6e8350c6f52"
+        },
+        {
+          "version": "0.13.0",
+          "path": "widgets/releases/point_input/0.13.0.json",
+          "sha256": "87b44c5a3cef292937c6a6267b87ce98e0c1811251742137919a3b16a0055d70"
         }
       ],
       "previousNodeTypes": [

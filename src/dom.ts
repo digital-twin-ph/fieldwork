@@ -81,7 +81,6 @@ export interface SelectorElements {
   '#pins-fit':HTMLButtonElement;
   '#pin-add-field':HTMLButtonElement;
   '#input-cancel':HTMLButtonElement;
-  '#input-apply':HTMLButtonElement;
   '#input-keep-editing':HTMLButtonElement;
   '#input-discard-edits':HTMLButtonElement;
   '#pin-save':HTMLButtonElement;
@@ -127,7 +126,6 @@ export interface SelectorElements {
   '#synthetic-outside':HTMLInputElement;
   '#synthetic-seed':HTMLInputElement;
   '#input-file':HTMLInputElement;
-  '#pins-online':HTMLInputElement;
   '#pin-use-uuid':HTMLInputElement;
   '#pin-field-key':HTMLInputElement;
   '#pin-field-label':HTMLInputElement;

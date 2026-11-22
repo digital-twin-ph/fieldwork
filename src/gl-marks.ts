@@ -69,7 +69,7 @@ export class GlMarks {
     if(!this.map.getPane(this.options.pane)){const pane=this.map.createPane(this.options.pane);pane.style.zIndex='450';}
     Promise.all([import('maplibre-gl'),import('@maplibre/maplibre-gl-leaflet')]).then(([maplibre])=>{
       if(this.disposed)return;
-      if(!workerSet){maplibre.setWorkerUrl(new URL('./maplibre-gl-worker.mjs',import.meta.url).href);workerSet=true;}
+      if(!workerSet){maplibre.setWorkerUrl(new URL('./build/maplibre-gl-worker.mjs',document.baseURI).href);workerSet=true;}
       // PAST THE LIMIT FOR ICONS, every mark is a circle, in its colour and fill, and the map says so.
       const icons=this.marks.filter(m=>m.shape!=='circle').length;
       this.asCircles=icons>INTERACTIVE_MARKS_LIMIT;

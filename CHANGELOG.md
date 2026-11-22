@@ -3,6 +3,26 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.166.0 — In development
+
+- **Pins in the field**, Point data 0.13.0 (experiment 09):
+  - **Add a pin at my location** and **Move this pin to my location**. Each pin says where its position came from: this
+    device with the accuracy it stated, the map, typing, or its photo.
+  - A form field can be **required**: a pin lacking it is named, and still saved. A **Date and time** field type.
+  - The pins as a **table** in the editor, and markers **coloured by Category** with a legend.
+  - **Find a place** by name, through OpenStreetMap's Nominatim, only when Find is pressed. Positions typed in degrees,
+    minutes and seconds.
+  - A **Basemap** choice in the editor, Esri's satellite imagery on your own key among them. **Undo** before Apply.
+  - **Photos** on a pin, up to ten with captions, 2,048 px, the photo's location and camera details not kept. Photos
+    go into encrypted backups only.
+  - **GPX, KML and KMZ** waypoints import; tracks, routes and shapes are counted and not imported.
+  - The editor is now the **standard dialog**: Cancel and Apply where Save Edits was.
+- **A study area with no area yet is named** when a run stops for it: "Rwanda" has no area yet.
+- **Study areas left out of a map**, Map 0.41.0: a checkbox for each study area a map's polygon layers are made of;
+  unchecked, it is not drawn in Results, the preview or the write-up. The pin editor's map has one for each outline.
+- **A basemap key that is refused says why**, Map 0.41.0: the provider's status and words, such as CARTO's 403 for a key
+  locked to Fieldwork's published address when used on a local server. Before, the map said the provider did not answer.
+
 ## 0.165.0 — 2026-11-22
 
 - **Study design on the standard Inspector**: one sentence of the design, what it reports, its period and its unit, then

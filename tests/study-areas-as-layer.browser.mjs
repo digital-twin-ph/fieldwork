@@ -87,3 +87,42 @@ test('study areas dropped on a polygon layer each take an input of their own',as
   await expect(page.locator('#inspector-content .standard-sentence')).toContainText('The parts of 3 connected study areas');
   expect(errors).toEqual([]);
 });
+
+// A CHECKBOX FOR EACH STUDY AREA (the practitioner, 2026-11-22: "there is no way to filter which study area is being used",
+// and, asked, "Leave it out of the map"). In Map's settings, unchecked, a study area is left out of the map in Results and
+// the preview, and the map says so; the layer keeps it. In Point data's pin editor, each study area's outline can be hidden.
+test('a study area unchecked in Map is left out of the map; in the pin editor its outline is hidden',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org|basemaps|tiles/,route=>route.abort('failed'));
+  await page.goto('/');await page.waitForSelector('html[data-ready]');
+  await page.evaluate(f=>{localStorage.clear();localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(f));},flow);
+  await page.goto('/');await page.waitForSelector('html[data-ready]');
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:30000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="map"]').click({timeout:45000});
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#map-config');
+  await expect(dialog.locator('[data-map-area]')).toHaveCount(2);
+  await dialog.locator('[data-map-area="DRC"]').uncheck();
+  // Both unchecked is refused, in words, and the last one stays.
+  await dialog.locator('[data-map-area="South Sudan"]').click();
+  await expect(dialog).toContainText('Keep at least one study area on the map.');
+  await expect(dialog.locator('[data-map-area="South Sudan"]')).toBeChecked();
+  await dialog.locator('#config-apply').click();
+  const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='map').params.leftOutAreas);
+  expect(saved).toEqual(['DRC']);
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('#map path[data-catchment]')).toHaveCount(1);
+  // The pin editor: an outline per study area, each with a checkbox.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="pts"]').click();
+  await page.locator('#configure-step').click();
+  await page.locator('#input-mode').selectOption('pins');await page.locator('#pins-basemap').selectOption('none');
+  await expect(page.locator('#pin-areas [data-pin-area]')).toHaveCount(2);
+  const outlines=page.locator('#pin-map path.leaflet-interactive, #pin-map svg path');
+  const before=await outlines.count();
+  await page.locator('#pin-areas [data-pin-area]').first().uncheck();
+  await expect(outlines).toHaveCount(before-1);
+  expect(errors).toEqual([]);
+});

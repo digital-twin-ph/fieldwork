@@ -203,7 +203,7 @@ import {openPackageDialog} from './package-ui.js';
 import {syncProjectManifest} from './project-manifest.js';
 import {withDictionary,BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,projectById,siblingAreas,newProject,validateProject,siblingInputs,payloadDigest,tableDataKey,dataPayloadKey,INLINE_DATA_LIMIT,areaPayloadKey,searchPayloadKey,payloadsOf,heldPayloadsOf,reconcilePayloadRefs,dehydrateWorkflow,hydrateWorkflow,projectSafety,unexportedWork,exportPredatesWork,type Project,type ProjectWork} from './project.js';
 import {mountPanelLayout} from './panel-layout.js';
-import {newMapOutput,mapEvidence} from './map-output.js';
+import {newMapOutput,mapEvidence,withoutLeftOutAreas} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
 import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
@@ -4122,7 +4122,8 @@ function renderInspector(){
   });
   optionalElement('#catchment-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
   if(n.type==='point_input'&&workflow.edges.some(e=>e.to===n.id&&e.port==='records'))optionalElement('#configure-step')?.addEventListener('click',()=>openPointsFromTableConfig(n.id));
-  else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),generationAreas(n.id),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;}));
+  else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),generationAreas(n.id),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;},
+    {read:sha=>readNoteImagePayload(cachedPayload(noteImageKey(sha))),keep:(sha,payload)=>keepDataset(noteImageKey(sha),payload)}));
   document.querySelectorAll<HTMLSelectElement>('[data-coverage-port]').forEach(el=>el.onchange=()=>{const from=el.value,port=el.dataset.coveragePort!;change(w=>{w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===port));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port});});});
   document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
   // A committed geometry is stamped, so the receipt can say WHEN the area was revised. Only a
@@ -4800,6 +4801,7 @@ const roundTo=(v:number|undefined)=>v===undefined?'':Number(Math.abs(v)>=100?v.t
  *  the Results tab gained. Returns once the ground is drawn, or false where there is no static figure to draw. */
 async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:WorkflowNode<'map_output'>|undefined,
   o:{selected?:string|null;hidden?:Set<string>;offPage?:{workflow:Workflow}}={}):Promise<boolean>{
+  result=withoutLeftOutAreas(result,mapNode?.params.leftOutAreas);
   const rows=result.rows||[],arranged=mapNode?.params.arrangement;
   // THE MAP'S OWN WORKFLOW: in Notes a figure may come from a workflow other than the one open (2026-11-18: MERS's
   // inset unnamed while another workflow was open).
@@ -4953,10 +4955,16 @@ function insetPicker(host:HTMLElement,mapNode:WorkflowNode<'map_output'>|undefin
   // ON THE MAP, as a control: a bar under it took 40 px from the map at full screen.
   placeOnMap(map,bar,'topleft');
 }
+/** A map's output as it is to be drawn: without the study areas its Map leaves out (2026-11-22). */
+function leftOutApplied<T extends Output|undefined>(out:T):T{
+  if(!out)return out;
+  const node=workflow.nodes.find(n=>n.id===out.nodeId&&n.type==='map_output') as WorkflowNode<'map_output'>|undefined;
+  return withoutLeftOutAreas(out,node?.params.leftOutAreas) as T;
+}
 function renderMap(){
   if(!resultsOnScreen())return;
   disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#map-parts')?.remove();
-  const result=activeOutput(),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
+  const result=leftOutApplied(activeOutput()),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
   // PRESENTATION IS LIVE, NOT BAKED INTO THE RUN. The node is read from the current workflow and
   // not from the snapshot as run, because a title, a key, a basemap and a mark's size change
   // nothing the run computed -- so they must show the moment they are chosen, and demanding a
@@ -8190,7 +8198,7 @@ async function exportProjectRepository(id:string){
  *  as four unrelated files with nothing recording that they belonged together. */
 /** THE PROJECT'S BACKUP FILE, made and not written: the plain backup writes it, and the encrypted one seals it first
  *  (the export encryption audit). */
-async function projectBackupFile(project:Project):Promise<{blob:Blob;name:string;text:string;held:string[];loose:number}>{
+async function projectBackupFile(project:Project,options:{photos?:boolean}={}):Promise<{blob:Blob;name:string;text:string;held:string[];loose:number}>{
     save();
     const saved=readSavedWorkflows();
     const held=project.workflows.filter(key=>Object.hasOwn(saved,key));
@@ -8206,6 +8214,9 @@ async function projectBackupFile(project:Project):Promise<{blob:Blob;name:string
     }
     // THE PICTURES IN ITS NOTES go in the file with it, by digest; one this device does not hold is left out and said.
     const pictured=readNotes((project as {notes?:unknown}).notes).notes.flatMap(n=>n.kind==='authored'&&n.image?[n.image.sha256]:[]);
+    // PINS' PHOTOS go only in an encrypted backup (experiment 09, 2026-11-22): a plain copy names each by digest and caption.
+    if(options.photos)for(const w of validated)for(const n of w.nodes)if(n.type==='point_input')
+      for(const list of Object.values(n.params.pinPhotos??{}))for(const p of list)pictured.push(p.sha256);
     const images=Object.fromEntries(pictured.flatMap(sha=>{const p=readNoteImagePayload(cachedPayload(noteImageKey(sha)));return p?[[sha,p]]:[];}));
     // A BACKUP CARRIES WHERE THE PROJECT IS SHARED, NOT THIS DEVICE'S HOLD ON IT: the credential, the commit and the
     // digests describe this laptop, and on another one they would point at nothing.
@@ -8273,7 +8284,7 @@ async function sealProject(id:string){
   let made:{held:string[];loose:number}|null=null;
   openSealDialog({what:`the project ${project.name}`,identity:openIdentity(),members,membersWithoutKey:without,
     openIdentity:()=>$('#identity-button').click(),
-    make:async()=>{const file=await projectBackupFile(project);made=file;
+    make:async()=>{const file=await projectBackupFile(project,{photos:true});made=file;
       return {bytes:new Uint8Array(await file.blob.arrayBuffer()),name:file.name,mediaType:'application/gzip'};},
     plain:()=>exportProject(id),
     done:(name,recipients)=>{if(made)backupWritten(project,made.held.length,made.loose,{name,recipients});}},esc);

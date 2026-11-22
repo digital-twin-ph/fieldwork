@@ -32,13 +32,13 @@ test('legacy point inputs use shared editors, preserve labels and save attribute
   await page.locator('[data-view="workflow"]').click();
     await page.locator(`.react-flow__node[data-id="${id}"]`).click();
     await page.locator('#configure-step').click();
-    await expect(page.locator('#input-mode option')).toHaveCount(5);
+    await expect(page.locator('#input-mode option')).toHaveCount(7);
     await page.locator('#input-mode').selectOption('pins');
-    await page.locator('#pins-online').uncheck();
+    await page.locator('#pins-basemap').selectOption('none');
     await page.locator('#pin-record').selectOption(record);
     await page.locator('#pin-pair-key').fill('review_note');
     await page.locator('#pin-pair-value').fill('Retained');
-    await page.locator('#input-apply').click();
+    await page.locator('#config-apply').click();
     await expect(page.locator('#input-dialog')).not.toBeVisible();
   }
   const w=await saved(page);

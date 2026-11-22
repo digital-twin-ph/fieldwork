@@ -10,7 +10,7 @@ test('blank workflow has no hidden nodes and requires a selection to run',()=>{
   const w=blankWorkflow();assert.equal(validateWorkflow(w).nodes.length,0);
   assert.throws(()=>executionPlan(w),/This canvas is empty/,'an empty canvas is told to add an input, not an output');
   w.nodes.push({...newStudyArea(),id:'area-1',x:0,y:0});
-  assert.throws(()=>executionPlan(w),/Select a study area/);
+  assert.throws(()=>executionPlan(w),/"My study area" has no area yet\. Select it on the map before running\./);
   w.nodes[0].params.geometry=bboxPolygon(25.89,-24.7,25.91,-24.68);
   assert.equal(executionPlan(w).length,1);
 });

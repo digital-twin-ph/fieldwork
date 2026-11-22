@@ -99,3 +99,27 @@ export function mapOutput(node:WorkflowNode<'map_output'>,inputs:MapInputs,runId
     ...(Object.keys(pinClasses).length?{pinClasses}:{}),markHalo:node.params.markHalo!==false,fillEncoding:SPATIAL_RELATION_FILL,sourceNodeId:layers.length===1?layers[0].sourceNodeId:null},receipt:{nodeId:node.id,kind:'computation',input:facts,facts,rules:'',conclusions:[],method}};
 }
 export function mapEvidence(row:MapRow,dirty:boolean,esc:Escape){return `<div class="inspector-body"><span class="inspector-section">Map record ${dirty?'· previous run':''}</span><h2>${esc(row.name)}</h2><p class="muted">${esc(row.layerLabel)} · record ${esc(row.recordId)}</p><div class="source-card"><h3>${esc(relationLabel(row.relation))}</h3><p>${row.coordinates?row.coordinates.map(v=>v.toFixed(6)).join(', '):'No coordinates supplied; this record cannot be plotted.'}</p></div><p class="description">Outside the boundary is a spatial mismatch, not proof of a data-quality problem. Connect Check spatial coverage to this Map for exclusion and boundary-review actions.</p>${Object.entries(row.attributes).map(([key,value])=>`<div class="detail-row"><span>${esc(key)}</span><strong>${esc(value===null?'Not supplied':value)}</strong></div>`).join('')}</div>`;}
+
+/** STUDY AREAS LEFT OUT OF A MAP (the practitioner, 2026-11-22: a checkbox for each study area, and unchecked means left out
+ *  of the map). A presentation, applied where the map is drawn, never in the run: the parts whose `study_area` is named
+ *  are not drawn, in Results, the preview and the write-up alike, and the map's notes say which were left out. */
+export function withoutLeftOutAreas<T extends {polygons?:import('./catchments.js').Polygons}>(output:T,leftOut:readonly string[]|undefined):T{
+  if(!output?.polygons||!leftOut?.length)return output;
+  const out=new Set(leftOut);
+  const features=output.polygons.features.filter(f=>!out.has(String((f as {properties?:{study_area?:unknown}}).properties?.study_area??'')));
+  if(features.length===output.polygons.features.length)return output;
+  return {...output,polygons:{...output.polygons,features,notes:[...(output.polygons.notes??[]),`Left out of this map: ${[...out].join(', ')}.`]}};
+}
+/** The study areas a map's polygon layers are made of, by name, from the workflow: each Polygon layer of study areas wired
+ *  to the map, and the study areas wired to it. */
+export function mapStudyAreas(w:{nodes:readonly {id:string;type:string;params:unknown}[];edges:readonly {from:string;to:string;port:string}[]},mapId:string):string[]{
+  const names:string[]=[];
+  for(const e of w.edges.filter(e=>e.to===mapId&&/^polygons(_\d+)?$/.test(e.port))){
+    const layer=w.nodes.find(n=>n.id===e.from);
+    if(layer?.type!=='polygon_input'||(layer.params as {inputMethod?:string}).inputMethod!=='areas')continue;
+    for(const a of w.edges.filter(x=>x.to===layer.id&&/^area(_\d+)?$/.test(x.port))){
+      const area=w.nodes.find(n=>n.id===a.from);const label=(area?.params as {label?:string}|undefined)?.label?.trim();
+      if(area?.type==='study_area'&&label&&!names.includes(label))names.push(label);}
+  }
+  return names;
+}

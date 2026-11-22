@@ -79,6 +79,16 @@ function keyedSource(choice:BasemapChoice,key:string):KeyedSource|undefined{
     tileSize:512,zoomOffset:-1,credit:`${ESRI_STATIC}/${style}/static?f=json&token=${k}`};
   return undefined;
 }
+/** WHY A TILE ON A KEY FAILED, asked once of the provider for the same address (2026-11-22: CARTO "did not answer for this
+ *  key" for the practitioner; CARTO had answered 403, the key being locked to Fieldwork's published address). The HTTP
+ *  status and the provider's own words, or that the browser could not reach it; never the key. */
+export async function tileFailure(src:string,provider:string):Promise<string>{
+  try{const r=await fetch(src,{referrerPolicy:'origin',cache:'no-store'});
+    if(r.ok)return `${provider} answered, but the browser did not draw the picture`;
+    let said='';try{said=(await r.text()).replace(/\s+/g,' ').replace(/[A-Za-z0-9_\-]{24,}/g,'…').slice(0,160).trim();}catch{/* no body */}
+    return `${provider} answered ${r.status}${said?`, “${said}”`:''}${r.status===403?`. A key locked to Fieldwork's published address is refused on any other, such as ${location.origin}`:''}`;}
+  catch{return `the browser could not reach ${provider}: offline, or blocked by a browser extension or the network`;}
+}
 /** The provider's own words for whose imagery and data these are, after "Powered by Esri". */
 async function esriCredit(url:string):Promise<string|null>{
   try{const r=await fetch(url,{referrerPolicy:'origin'});if(!r.ok)return null;const j=await r.json() as {copyrightText?:unknown};
@@ -862,7 +872,9 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         if(generation!==pending)return;
         if(!packed||!tileExtract?.digest){
           status.textContent='No tiles on this device. Import them in Configure…, under Basemap, while connected.';return;}
-        if(!workerReady){maplibre.setWorkerUrl(new URL('./maplibre-gl-worker.mjs',import.meta.url).href);workerReady=true;}
+        // AGAINST THE PAGE, as every other worker is, not against this module: bundled into a shared chunk (2026-11-22,
+        // when the pin editor began to draw basemaps) `import.meta.url` named build/chunks/, where the worker is not.
+        if(!workerReady){maplibre.setWorkerUrl(new URL('./build/maplibre-gl-worker.mjs',document.baseURI).href);workerReady=true;}
         if(!extractProtocol){extractProtocol=true;maplibre.addProtocol('fieldwork-tiles',async params=>{
           const [digest,...tile]=params.url.replace('fieldwork-tiles://','').split('/');
           const held=await tilesOnDevice(digest);
@@ -895,7 +907,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       Promise.all([import('maplibre-gl'),import('@maplibre/maplibre-gl-leaflet')]).then(([maplibre])=>{
         // Told where its worker is, once, before any map exists. Without this MapLibre resolves
         // the URL against its own bundle and fails under the chunk layout -- see build.mjs.
-        if(!workerReady){maplibre.setWorkerUrl(new URL('./maplibre-gl-worker.mjs',import.meta.url).href);workerReady=true;}
+        if(!workerReady){maplibre.setWorkerUrl(new URL('./build/maplibre-gl-worker.mjs',document.baseURI).href);workerReady=true;}
         // The practitioner may have changed basemap while this was loading. A style that
         // arrives late must not draw itself over the one they chose instead, nor credit itself.
         if(generation!==pending)return;
@@ -926,12 +938,13 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       const layer=L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution,
         ...(source.tileSize?{tileSize:source.tileSize,zoomOffset:source.zoomOffset??0}:{}),detectRetina:false});
       tiles=layer;
-      let loaded=0,failed=0;
+      let loaded=0,failed=0,why='';
       const say=()=>{status.textContent=!failed?`${source.label} online \u00b7 viewed area sent to ${PROVIDER_NAMES[provider]}`
-        :!loaded?`${source.label} unavailable: ${PROVIDER_NAMES[provider]} did not answer for this key. Local layers remain visible.`
-        :`${source.label} online \u00b7 ${failed} of ${loaded+failed} tiles in view could not be fetched; local layers remain visible.`;};
+        :!loaded?`${source.label} unavailable: ${why||`${PROVIDER_NAMES[provider]} did not answer for this key`}. Local layers remain visible.`
+        :`${source.label} online \u00b7 ${failed} of ${loaded+failed} tiles in view could not be fetched${why?` (${why})`:''}; local layers remain visible.`;};
       layer.on('tileload',()=>{loaded++;if(failed)say();});
-      layer.on('tileerror',()=>{failed++;say();});
+      layer.on('tileerror',event=>{failed++;say();
+        if(failed===1){const src=(event as unknown as {tile?:HTMLImageElement}).tile?.src;if(src)void tileFailure(src,PROVIDER_NAMES[provider]).then(text=>{why=text;if(tiles===layer)say();});}});
       layer.on('loading',()=>{loaded=0;failed=0;});
       layer.addTo(map);layer.bringToBack();say();
       if(source.credit)void esriCredit(source.credit).then(credit=>{
@@ -1029,4 +1042,24 @@ export function placeOnMap(map:L.Map,element:HTMLElement,position:L.ControlPosit
   control.onAdd=()=>{L.DomEvent.disableClickPropagation(element);L.DomEvent.disableScrollPropagation(element);return element;};
   control.addTo(map);
   return ()=>control.remove();
+}
+
+/** A RASTER BASEMAP for a map other than this one (the pin editor's, experiment 09, 2026-11-22): OpenStreetMap,
+ *  OpenTopoMap, or a style on the person's own CARTO or Esri key, Esri's satellite imagery among them. `null` with the
+ *  reason where the choice draws nothing here: none chosen, a key not unlocked, or a vector or static-only style. */
+export const PIN_BASEMAPS:readonly BasemapChoice[]=['none','osm','topo','esri-imagery','carto-voyager','carto-positron'];
+export function rasterBasemap(choice:BasemapChoice):{layer:L.TileLayer|null;said:string;provider?:string}{
+  if(choice==='none')return {layer:null,said:'Basemap off · pins stay on this device'};
+  const provider=keyedProvider(choice);
+  if(provider){
+    const key=basemapKey(provider),source=key?keyedSource(choice,key):undefined;
+    if(!source)return {layer:null,said:`${BASEMAP_LABELS[choice].split(' · ')[0]} needs your ${PROVIDER_NAMES[provider]} key: unlock your credentials, then choose it again.`};
+    const layer=L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution,
+      ...(source.tileSize?{tileSize:source.tileSize,zoomOffset:source.zoomOffset??0}:{}),detectRetina:false});
+    return {layer,said:`${source.label} online · viewed area sent to ${PROVIDER_NAMES[provider]}`,provider:PROVIDER_NAMES[provider]};
+  }
+  if(!Object.hasOwn(BASEMAPS,choice))return {layer:null,said:`${BASEMAP_LABELS[choice]} cannot be drawn here.`};
+  const source=BASEMAPS[choice as keyof typeof BASEMAPS];
+  return {layer:L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution}),
+    said:`${source.label} online`};
 }

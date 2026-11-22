@@ -140,7 +140,7 @@ test('the worked example is rebuilt from an empty canvas and the published input
   await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('geojson');
   await page.locator('#input-file').setInputFiles(file('geo/water-intakes.geojson'));
-  await page.locator('#input-apply').click();
+  await page.locator('#config-apply').click();
   await expect(page.locator('#input-dialog')).not.toBeVisible();
 
   // 5. DRAWN, each polygon layer on a map input of its own (2026-11-13: Collect polygon layers retired into Map). The
@@ -216,7 +216,7 @@ test('the water intakes can be made with pushpins and a form, from Snow’s text
   await page.locator(`.react-flow__node[data-id="${intakes}"]`).click();
   await page.locator('#configure-step').click();
   await page.locator('#input-mode').selectOption('pins');
-  await page.locator('#pins-online').uncheck();
+  await page.locator('#pins-basemap').selectOption('none');
 
   // A FIELD SNOW'S TEXT FILLS, declared before the pins so each one takes it by default. This is
   // the part a name-and-position pin could not do.
@@ -234,7 +234,7 @@ test('the water intakes can be made with pushpins and a form, from Snow’s text
   for(const [dx,dy] of [[.3,.4],[.45,.35],[.6,.55],[.7,.45]])
     await page.mouse.click(box.x+box.width*dx,box.y+box.height*dy);
 
-  await page.getByRole('button',{name:'Save Edits',exact:true}).click();
+  await page.locator('#config-apply').click();
   await expect(page.locator('#input-dialog')).not.toBeVisible();
 
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));

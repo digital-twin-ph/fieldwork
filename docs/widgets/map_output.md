@@ -375,6 +375,20 @@ Methods as a limitation, by itself. Natural Earth is bundled and writes no such 
 How the panels and the inset came to be: what was asked, designed, built, checked and found, dated. Each was
 once an experiment record (212 and 213).
 
+### Study areas left out, and a refused key says why (0.41.0)
+
+_2026-11-22._ A map of four countries' study areas, made into one Polygon layer, had no way to show some and not
+others. Where a map's polygon layers are made of two or more study areas, Configure… now lists them with a checkbox
+each. Unchecked, a study area is left out of the map in Results, the preview and the write-up, and the map's notes
+name it; the layer still holds it. One stays checked: the last cannot be left out.
+
+
+A CARTO style on the practitioner's own key drew nothing on a local server, and the map said CARTO "did
+not answer for this key". CARTO had answered: 403, because the key was locked to Fieldwork's published address. When a
+tile on a key fails, the map now asks the provider once for the same tile and says its status and its own words, and
+that a key locked to the published address is refused on any other; never the key. The pin editor's basemap says the
+same.
+
 ### The key's ranges, laid out so none touches (0.40.0)
 
 _2026-11-21._ Nigeria's 774 LGAs in five quantile classes printed their ranges over one another: each class had 90 px,

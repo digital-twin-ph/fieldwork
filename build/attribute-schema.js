@@ -1,2 +1,2 @@
-import{a,b,c,d,e,f,g}from"./chunks/chunk-6EGW5NQH.js";import"./chunks/chunk-KVMUXFPB.js";export{a as ATTRIBUTE_TYPES,g as attributeLiteral,c as parseAttributeValue,d as parseValueSet,b as validAttributeKey,f as validateAttributeSchema,e as validateAttributeValue};
+import{a,b,c,d,e,f,g,h}from"./chunks/chunk-IG6645KR.js";import"./chunks/chunk-KVMUXFPB.js";export{a as ATTRIBUTE_TYPES,b as PIN_RESERVED,h as attributeLiteral,d as parseAttributeValue,e as parseValueSet,c as validAttributeKey,g as validateAttributeSchema,f as validateAttributeValue};
 //# sourceMappingURL=attribute-schema.js.map

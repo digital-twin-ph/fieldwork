@@ -81,7 +81,11 @@ test('an identity made here signs a note, the signature checks, and storage keep
   const download=await saving;
   expect(download.suggestedFilename()).toBe('FWID-Ada-Lovelace.fwid');
   const file=readFileSync(await download.path(),'utf8');
-  expect(file).not.toContain('Ada');
+  // THE READABLE PART names nobody. The ciphertext is base64, and once (0.165.0 CI) it held the letters "Ada" by chance,
+  // so it is read as what it is: decoded bytes that are not the name.
+  const {data,...readable}=JSON.parse(file);
+  expect(JSON.stringify(readable)).not.toContain('Ada');
+  expect(Buffer.from(data,'base64').toString('latin1')).not.toContain('Ada Lovelace');
   await expect(dialog.locator('#identity-status')).toContainText(`Open: Ada Lovelace · @ada · ORCID 0000-0002-1825-0097 · Harvard University. Notes you save now are signed (${ed25519?'Ed25519':'ECDSA-P256'})`);
   await expect(page.locator('#identity-button')).toHaveAttribute('aria-label','Identity: Ada Lovelace');
   await expect(dialog.locator('#identity-avatar svg.fw-avatar')).toHaveCount(1);

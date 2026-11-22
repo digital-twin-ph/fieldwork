@@ -30,7 +30,7 @@ test('a CSV of UTM easting and northing imports as CRS84 without a second widget
   // Read as degrees first: the columns are found by their easting/northing aliases, and the
   // import refuses the values rather than accepting metres as degrees.
   await expect(page.locator('#csv-frame')).toHaveValue('degree');
-  await expect(page.locator('#input-apply')).toBeDisabled();
+  await expect(page.locator('#config-apply')).toBeDisabled();
 
   await page.locator('#csv-frame').selectOption('metre');
   await expect(page.locator('#csv-zone-label')).toBeVisible();
@@ -40,7 +40,7 @@ test('a CSV of UTM easting and northing imports as CRS84 without a second widget
   await expect(page.locator('#csv-frame-note')).toContainText('EPSG:32630');
   await expect(page.locator('#csv-x-label')).toContainText('Easting');
   await expect(page.locator('#input-summary')).toContainText('2 draft');
-  await page.locator('#input-apply').click();
+  await page.locator('#config-apply').click();
 
   // The two imported points are in UTM zone 30, off West Africa, and the exercise's study area is
   // a box in Gaborone -- so the `clip_points_to_area` the Spatial coverage exercise gained on
@@ -103,8 +103,8 @@ test('a wrong zone cannot be caught from the numbers, and the import does not pr
   await page.locator('#csv-hemisphere').selectOption('north');
   await page.locator('#csv-preview').click();
   await expect(page.locator('#csv-frame-note')).toContainText('EPSG:32601');
-  await expect(page.locator('#input-apply')).toBeEnabled();
-  await page.locator('#input-apply').click();
+  await expect(page.locator('#config-apply')).toBeEnabled();
+  await page.locator('#config-apply').click();
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   const got=saved.nodes.find(n=>n.id==='observations').params.data.features[0].geometry.coordinates;
   assert.ok(Math.abs(got[0]-(-174.1365))<1e-6,`longitude ${got[0]} should be the zone-1 reading`);

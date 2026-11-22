@@ -1,6 +1,6 @@
 # Transmission chains
 
-_Created 2026-11-14 · Updated 2026-11-14_
+_Created 2026-11-14 · Updated 2026-11-22_
 
 **Each case its chain.** It takes a table of cases, each naming its recorded source, follows the sources back to the
 case each chain starts with, and hands on every row with four more columns.

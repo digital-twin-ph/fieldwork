@@ -10,8 +10,8 @@ position and whatever attributes came with it.
 It holds a set of points and the values attached to them: cases, households, facilities, pumps,
 sample sites. Everything downstream that works on points starts here.
 
-Records arrive three ways. **Import a file** — GeoJSON, or a CSV with longitude and latitude
-columns. **Place pins** by clicking a map, for a handful of locations you know. **Connect a
+Records arrive three ways. **Import a file** — GeoJSON, a CSV with longitude and latitude
+columns, a GeoPackage, or the waypoints a GPS device exports as GPX, KML or KMZ. **Place pins** by clicking a map, for a handful of locations you know. **Connect a
 source** that produces points, such as a facility search.
 
 **Coordinates in degrees** may be written as decimal numbers, such as `-5.9333`, or as degrees, minutes and seconds,
@@ -47,7 +47,7 @@ The step's panel holds its **Name**, its input, one sentence saying what it hold
 
 | In Configure… | What it does |
 | --- | --- |
-| **Points held here** | the Input data editor: import a CSV, GeoPackage or GeoJSON file, generate synthetic points, or place pins on the map |
+| **Points held here** | import a CSV, GeoPackage, GeoJSON, GPX, KML or KMZ file, generate synthetic points, or place pins on the map |
 | **Points from a table** | when a table is connected: the columns holding **x (longitude)** and **y (latitude)**, named, never guessed; a **Record ID** and a **Label**, optional |
 
 Then check the column kinds, open **Data quality** to see what is missing or malformed, and name the step for what
@@ -65,6 +65,58 @@ are in order is yours to say.
 **Where the points came from.** Points can carry a provenance record, as Tabular data does: what they are, the work or
 authority they came from, its address and its licence. A step with one writes a source note in Methods, and its work
 is listed in References. Hagelloch's cases cite Pfeilsticker's 1863 thesis this way.
+
+## Placing pins
+
+In **Configure…**, choose **Place pushpins on map**.
+
+| To | Do this |
+| --- | --- |
+| Add a pin where you are standing | **Add a pin at my location**. The browser asks first whether this page may know your location |
+| Move the chosen pin to where you are | **Move this pin to my location** |
+| Add a pin by eye | Click the map |
+| Move a pin | Drag it, or type its longitude and latitude |
+| Choose a pin | Click it, pick it from the list, or choose its row in the table under the map |
+| Type a position | Decimal degrees, such as -5.9333, or degrees, minutes and seconds, such as 5° 56' 00" S |
+| Find a town or district | **Find a place** asks OpenStreetMap's Nominatim, only when you press Find; the words you type are sent there. A result moves the map; it does not place a pin |
+| See houses | **Basemap**: OpenStreetMap, OpenTopoMap, or a CARTO or Esri style on your own key, Esri's satellite imagery among them |
+| Take back a change | **Undo**, the last 30 changes, before Apply. Above 20,000 records Undo is off |
+| Show some study areas, not all | **Study areas shown**: a checkbox for each study area's outline; **Fit pins and study area** fits the ones shown |
+
+**Where each position came from.** Every pin says how it was placed: from this device, on the map by eye, or typed. A
+position from the device keeps the accuracy the device stated, in metres, and when it was taken. Dragging or typing the
+position again replaces both, because the device's accuracy no longer describes it. The three are kept with the pin as
+`positionSource`, `positionAccuracyM` and `positionFixedAt`, and reach the tables and the evidence like any other value.
+The stated accuracy is the device's own estimate; it is not checked.
+
+**Fields on every pin.** **Add a form field** gives each pin the same question: a key, a label, a type (text, number,
+whole number, yes/no, date, or date and time), an optional default and an optional list of allowed values, which become
+a dropdown. **Required on every pin** marks the field as one each pin should answer. A pin without it is named in the
+summary and in the table; the pins are still saved, because a pin with a missing answer is still a place someone
+recorded. A date and time is kept as it was entered, to the minute, with no time zone.
+
+**Photos.** Each pin can hold up to ten photos, each with a caption. On a phone, **Add photos** can open the camera.
+A photo is reduced to 2,048 px on its long side and kept as a JPEG; the original is not kept. Where a phone wrote the
+place a photo was taken, and the pin has no position yet, the editor offers to place the pin there, and the pin then
+says its position came from its photo. Otherwise it says how far from the pin the photo was taken. Either way the
+location, and the camera's details, are not in the copy kept. Photos stay on this device and go into encrypted
+backups only: a plain copy and a shared project name each photo by its digest and caption, without the picture.
+
+**Pins on homes identify people.** Back the project up encrypted, and mask the points with **Donut geomasking**
+before sharing a map of them.
+
+**The table and the markers.** The table under the map lists every pin, 25 a page: its label, Category, position,
+where the position came from, and any required value it lacks. Markers are coloured by **Category**, each category its
+own colour with its first letter, and a pin with no category is grey. The legend names each category and how many pins
+it has. Beyond eight categories, the rest share the grey.
+
+## Waypoints from a GPS device
+
+Choose **Import GPX from a GPS device** or **Import KML or KMZ**. Each waypoint, or each placemark that is a point,
+becomes a record with its name, and its time, elevation (`elevation_m`), description and symbol where the file gives
+them; a KML placemark's extended data become columns. Both formats are longitude and latitude on WGS84, so nothing is
+converted. Tracks, routes and shapes are lines or areas: the editor counts them and says they were not imported,
+because Point data holds points.
 
 ## Editing a value by hand
 
@@ -94,6 +146,18 @@ events is something your labels and your weights have to say.
 1861** loads a 188-case line list.
 
 ## History
+
+### 2026-11-22 · Pins in the field (0.13.0)
+
+A pin was placed by eye on the map or typed, and nothing said which. Now a pin can be added where the device is, and
+every pin says where its position came from, with the device's stated accuracy. A form field can be required, a field
+can hold a date and a time, the editor lists the pins as a table, and markers are coloured by Category. A position can
+be typed in degrees, minutes and seconds, a place found by name, a satellite basemap chosen, and a change undone. Pins
+hold photos. GPX, KML and KMZ waypoints import. The editor is the standard dialog: Cancel and Apply where Save Edits
+was. Experiment 09's open items 1 to 14.
+
+**What it does not establish:** not tried on a phone, with a real GPS fix, a real phone photo or a real handheld's
+GPX; the tests give the browser a position, a photo and a file.
 
 ### 2026-11-21 · A study area connected to generate in (0.12.0)
 

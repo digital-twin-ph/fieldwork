@@ -423,12 +423,16 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.40.0",
-   "released": "2026-11-21",
+   "version": "0.41.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The key's class ranges are as wide as the longest needs and never touch; where they do not fit across the map, each is said on two lines and the key's band is one line taller."
+     "kind": "added",
+     "description": "Study areas: where the map's polygon layers are made of two or more study areas, a checkbox for each; unchecked, a study area is left out of the map in Results, the preview and the write-up, and the map's notes say so. The layer keeps it."
+    },
+    {
+     "kind": "fixed",
+     "description": "When a tile on the person's own key fails, the map asks the provider once for the same tile and says its HTTP status and its own words, and that a key locked to Fieldwork's published address is refused on any other; never the key. Before, it said the provider did not answer."
     }
    ],
    "breaking": false,
@@ -572,12 +576,16 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.12.0",
-   "released": "2026-11-21",
+   "version": "0.13.0",
+   "released": "2026-11-22",
    "changes": [
     {
      "kind": "added",
-     "description": "An optional study-area input: the connected area is offered first to generate points in, including an area another step made, such as a Combined area, after a run."
+     "description": "Pins in the field: Add a pin at my location and Move this pin to my location, each pin saying where its position came from (this device with the accuracy it stated, the map, typed, or its photo); required form fields, named and never refused; a Date and time type; the pins as a table; markers coloured by Category with a legend; Find a place through Nominatim; degrees, minutes and seconds typed; a basemap choice, Esri imagery on the person's key among them; Undo before Apply; up to ten photos a pin, 2,048 px, location and camera details not kept, in encrypted backups only; GPX, KML and KMZ waypoints imported, tracks counted and not imported."
+    },
+    {
+     "kind": "changed",
+     "description": "Its editor is the standard configuration dialog (experiment 186): Cancel and Apply where Save Edits was, the standard refusal message, and the map opening on the study areas or the world."
     }
    ],
    "breaking": false,

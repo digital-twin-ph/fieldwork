@@ -5,6 +5,7 @@ import {wordsHint} from './figure-words.js';
 import type {Workflow,WorkflowNode,BasemapChoice} from './types.js';
 import type {WorkflowRun,Output} from './results.js';
 import type {InspectorKit} from './inspector-kit.js';
+import {withoutLeftOutAreas,mapStudyAreas} from './map-output.js';
 import {TYPES,nodeInputs,outputOf} from './core.js';
 import {openConfigDialog} from './config-dialog.js';
 import {errorMessage,required} from './guards.js';
@@ -134,7 +135,7 @@ export function openMapConfig(nodeId:string){
         // The symbols re-resolved from the DRAFT, as renderMap re-resolves them from the live node.
         const layerSymbols=Object.fromEntries((drawn.pointLayers||[]).map((layer,index)=>
           [layer.sourceNodeId,resolveLayerSymbol(index,draft.layerSymbols?.[layer.sourceNodeId])]));
-        const shown={...drawn,layerSymbols,markHalo:draft.markHalo!==false} as typeof drawn;
+        const shown=withoutLeftOutAreas({...drawn,layerSymbols,markHalo:draft.markHalo!==false} as typeof drawn,draft.leftOutAreas);
         // One frame later: Leaflet fits the map to its box, and the box has no size until the dialog has laid it out.
         let cancelled=false;
         const frame=requestAnimationFrame(()=>{if(cancelled||!previewHost.isConnected)return;
@@ -152,6 +153,11 @@ export function openMapConfig(nodeId:string){
         if(typeof picked==='string')note=picked;else{note='';draft.inset={...(draft.inset??{}),box:picked};}
         redraw();});
       // THE INSET (Map's manual, History: the inset): its box is kept; which frame is large, the corner and the width are chosen here.
+      on('[data-map-area]',el=>{const area=el.dataset.mapArea!,out=new Set(draft.leftOutAreas??[]);
+        if(el.checked)out.delete(area);else out.add(area);
+        const all=mapStudyAreas(ctx.workflow(),nodeId);
+        if(all.length&&all.every(a=>out.has(a))){note='Keep at least one study area on the map.';out.delete(area);}
+        if(out.size)draft.leftOutAreas=[...out];else delete draft.leftOutAreas;});
       on('#map-inset-arrange',el=>{if(!draft.inset)return;if(!el.value){delete draft.inset;return;}draft.inset={...draft.inset,arrange:el.value as 'inset'|'locator'};});
       on('#map-inset-corner',el=>{if(!draft.inset)return;const next={...draft.inset};if(el.value)next.corner=el.value as Corner;else delete next.corner;draft.inset=next;});
       on('#map-inset-size',el=>{if(!draft.inset)return;draft.inset={...draft.inset,size:el.value as 'third'|'half'};});
@@ -297,6 +303,14 @@ function mapRasterSection(n:WorkflowNode<'map_output'>):string{
     +select('raster-classes','Classes',[['','Quantiles: about as many cells in each'],['equal','Equal steps from lowest to highest']],r.classes==='equal'?'equal':'')
     +`<p class="muted">Used when the map draws rasters in panels. Panels in the same unit share one scale and one key.</p>`;
 }
+/** EACH STUDY AREA, a checkbox: unchecked, it is left out of the map (2026-11-22). */
+function mapStudyAreasSection(n:WorkflowNode<'map_output'>):string{
+  const areas=mapStudyAreas(ctx.workflow(),n.id);if(areas.length<2)return '';
+  const out=new Set(n.params.leftOutAreas??[]);
+  return `<span class="inspector-section">Study areas</span><div class="map-study-areas" data-map-study-areas>`
+    +areas.map(a=>`<label><input type="checkbox" data-map-area="${esc(a)}" ${out.has(a)?'':'checked'}> ${esc(a)}</label>`).join('')
+    +`</div><p class="muted">Unchecked, a study area is left out of this map, the figure and the write-up; its layer keeps it.</p>`;
+}
 function mapArrangeSection(n:WorkflowNode<'map_output'>):string{
   const names=drawnPolygonLayers(n.id),a=n.params.arrangement;
   const layers=[...new Set([...names,...(a?.panels??[]).map(p=>p.layer)])];
@@ -329,7 +343,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       // potential point layer in the map gets a configurable/selectable symbol." Only the point
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
-      +mapBasemapControls(n)+mapArrangeSection(n)+mapRasterSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
+      +mapBasemapControls(n)+mapStudyAreasSection(n)+mapArrangeSection(n)+mapRasterSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
       +`<p class="muted">Order, name and group the layers.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{

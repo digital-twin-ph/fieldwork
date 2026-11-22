@@ -20,20 +20,20 @@ const input=async mode=>{await select('observations');await page.locator('#confi
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
   await page.locator('[data-view="results"]').click();
-  await input('synthetic');await page.locator('#synthetic-inside').fill('3');await page.locator('#synthetic-outside').fill('1');await page.locator('#generate-input').click();await page.locator('#input-apply').click();await run();await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
+  await input('synthetic');await page.locator('#synthetic-inside').fill('3');await page.locator('#synthetic-outside').fill('1');await page.locator('#generate-input').click();await page.locator('#config-apply').click();await run();await expect(page.locator('#result-rows [data-place]')).toHaveCount(4);
   await input('csv');await page.locator('#input-file').setInputFiles({name:'points.csv',mimeType:'text/csv',buffer:Buffer.from('id,name,longitude,latitude,notes\na,"Clinic, A",25.90,-24.69,example\nb,Outside CSV,25.94,-24.69,review\n')});
-  await expect(page.locator('#input-summary')).toContainText('2 draft');await page.locator('#input-apply').click();await run();
+  await expect(page.locator('#input-summary')).toContainText('2 draft');await page.locator('#config-apply').click();await run();
   // Both CSV records reach the map: the one with coordinates is drawn, and the one without is
   // listed as unplaceable under the id the clip carried it out with.
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows [data-place]')).toHaveCount(2);assert.equal((await saved()).nodes.find(n=>n.id==='observations').params.data.features[0].properties.notes,'example');
   const gpkg=await pointGeoPackage();await input('gpkg');await page.locator('#input-file').setInputFiles({name:'points.gpkg',mimeType:'application/geopackage+sqlite3',buffer:Buffer.from(gpkg.bytes)});
-  await expect(page.locator('#input-summary')).toContainText('2 draft');await expect(page.locator('#input-apply')).toBeEnabled();await page.locator('#input-apply').click();await run();
+  await expect(page.locator('#input-summary')).toContainText('2 draft');await expect(page.locator('#config-apply')).toBeEnabled();await page.locator('#config-apply').click();await run();
   // 'Review required' was the coverage check's word for a record outside the area. The map says
   // where the record stands and leaves the judgement to the reader.
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-rows')).toContainText('Outside study area');assert.equal((await saved()).nodes.find(n=>n.id==='observations').params.data.features[0].properties.case_count,3);
-  await input('pins');await page.locator('#pins-online').uncheck();const map=await page.locator('#pin-map').boundingBox();await page.mouse.click(map.x+map.width*.7,map.y+map.height*.7);
+  await input('pins');await page.locator('#pins-basemap').selectOption('none');await page.locator('#pin-map').scrollIntoViewIfNeeded();const map=await page.locator('#pin-map').boundingBox();await page.mouse.click(map.x+map.width*.7,map.y+map.height*.7);
   await page.locator('#pin-name').fill('Field pin');await page.locator('#pin-longitude').fill('25.9');await page.locator('#pin-latitude').fill('-24.69');await page.locator('#pin-attr-0').fill('Community visit');await page.locator('[data-pin-key="notes"]').fill('First line\nSecond line');
   await page.getByText('Add a form field',{exact:true}).click();await page.locator('#pin-field-key').fill('household_size');await page.locator('#pin-field-label').fill('Household size');await page.locator('#pin-field-type').selectOption('number');await page.locator('#pin-field-default').fill('1');await page.locator('#pin-add-field').click();
   await page.locator('[data-pin-key="household_size"]').fill('5');await page.locator('#pin-save').click();
@@ -46,7 +46,7 @@ const input=async mode=>{await select('observations');await page.locator('#confi
   await page.locator('#pin-pair-value').fill('Planned');await page.locator('#pin-add-pair').click();await expect(page.locator('select[data-pin-key="visit_phase"]')).toHaveValue('Planned');await page.locator('[data-pin-key="visit_phase"]').selectOption('Completed');
   await page.locator('#pin-pair-key').fill('visit_date');await page.locator('#pin-pair-type').selectOption('date');await page.locator('#pin-pair-value').fill('2026-10-05');await page.locator('#pin-add-pair').click();await expect(page.locator('[data-pin-key="visit_date"]')).toHaveAttribute('type','date');
   await page.locator('#pin-field-key').fill('priority');await page.locator('#pin-field-label').fill('Priority');await page.locator('#pin-field-type').selectOption('integer');await page.locator('#pin-field-values').fill('1\n2\n3');await page.locator('#pin-field-default').fill('1');await page.locator('#pin-add-field').click();await page.locator('[data-pin-key="priority"]').selectOption('2');
-  await page.screenshot({path:'test-results/pushpin-form.png',fullPage:true});await page.locator('#input-apply').click();await run();
+  await page.screenshot({path:'test-results/pushpin-form.png',fullPage:true});await page.locator('#config-apply').click();await run();
   const pin=(await saved()).nodes.find(n=>n.id==='observations').params.data.features.find(f=>f.properties.name==='Field pin');assert.equal(pin.properties.household_size,5);assert.equal(pin.properties.category,'Community visit');assert.match(pin.properties.capturedAt,/^\d{4}-\d{2}-\d{2}T/);assert.deepEqual(pin.geometry.coordinates,[25.9,-24.69]);
   // The pin reached the output under its own id; which rows are SHOWN depends on the tab and any
   // search in force, which is not what this test is about.
@@ -60,7 +60,7 @@ const input=async mode=>{await select('observations');await page.locator('#confi
   const receiptDownload=page.waitForEvent('download');await page.locator('#download-evidence').click();const receipt=JSON.parse(await readFile(await (await receiptDownload).path(),'utf8'));assert.equal(receipt.outputs[0].rows.length,3);
   const typed=[receipt.provenanceN3,...receipt.receipts.map(r=>r.input||'')].join('\n');
   assert.match(typed,/XMLSchema#date/);assert.match(typed,/XMLSchema#integer/);
-  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await done();await input('gpkg');await page.locator('#input-file').setInputFiles({name:'offline.gpkg',mimeType:'application/geopackage+sqlite3',buffer:Buffer.from(gpkg.bytes)});await expect(page.locator('#input-summary')).toContainText('2 draft');await expect(page.locator('#input-apply')).toBeEnabled();await page.locator('#input-cancel').click();await page.locator('#input-discard-edits').click();
+  await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready');await context.setOffline(true);await page.reload();await done();await input('gpkg');await page.locator('#input-file').setInputFiles({name:'offline.gpkg',mimeType:'application/geopackage+sqlite3',buffer:Buffer.from(gpkg.bytes)});await expect(page.locator('#input-summary')).toContainText('2 draft');await expect(page.locator('#config-apply')).toBeEnabled();await page.locator('#config-cancel').click();await page.locator('#config-discard').click();
   assert.equal((await saved()).nodes.find(n=>n.id==='observations').params.data.features.length,3);
   await input('pins');await page.locator('#pin-record').selectOption(pin.id);await expect(page.locator('select[data-pin-key="visit_phase"]')).toHaveValue('Completed');await expect(page.locator('[data-pin-key="visit_date"]')).toHaveValue('2026-10-05');await expect(page.locator('[data-pin-key="priority"]')).toHaveValue('2');
   await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);assert.equal(await page.locator('#input-dialog').evaluate(e=>e.scrollWidth>e.clientWidth),false);await page.screenshot({path:'test-results/input-mobile.png',fullPage:true});

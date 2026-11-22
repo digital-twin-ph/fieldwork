@@ -2,7 +2,10 @@
 
 _Created 2026-11-19 · Updated 2026-11-20_
 
-**Status:** asked. No spike run. Placed after raster streaming (TODO), 2026-11-19.
+**Status:** tried, 2026-11-22: the spike ran on four browsers. WebGPU is offered on every one tried, including the gate's
+Chromium with one flag; the density surface agrees with the kernel to 3 in a million at 100,000 points and is about 40
+times faster on the Mac's GPU at 1,000,000; at 1,000,000 points Apple's GPU misses the agreement set beforehand by 1.5%.
+Not used by any widget.
 
 ## The question
 
@@ -59,7 +62,59 @@ offers WebGPU and the two have been shown to agree. A laptop without WebGPU gets
 **Practitioner observation, which can come out badly:** told which path ran in a receipt, does the practitioner read
 the result as equally trustworthy either way?
 
+## The spike, run 2026-11-22
+
+**Built.** `kernel/src/density.rs`, the reference: each point adds 3 / (π h²) · (1 − (d/h)²)² to every cell centre
+within the bandwidth, in 64-bit. `src/density.ts`: the kernel's surface, and the WebGPU path, in WGSL, which bins the
+points on the CPU into squares one bandwidth wide and gives each grid cell a GPU thread summing the nine bins around it,
+in 32-bit, with no atomics. `tests/density.test.mjs` (Node): one point sums to its weight; a point just outside the grid
+reaches its edge; an unreadable point adds nothing. The spike's own runner is not in the repository.
+
+**1. Where WebGPU is.** On the development Mac:
+
+| Browser | WebGPU adapter |
+| --- | --- |
+| Playwright's Chromium, headless, as the gate runs it | none |
+| The same, with `--enable-unsafe-webgpu` | SwiftShader, a software adapter on the CPU |
+| Chromium's newer headless mode, with that flag | the Mac's GPU (Apple, Metal 3) |
+| Playwright's WebKit, headless | the Mac's GPU |
+| The practitioner's Chrome 157 | the Mac's GPU, storage buffers of 128 MB |
+
+So the WebGPU path can be checked in the gate and in CI on the software adapter, by one flag, and on a GPU only on a
+device. Edge on Windows and a field laptop were not tried.
+
+**2. One computation, both ways.** 1,000 × 1,000 grid, bandwidth 20 cells, points seeded, half around ten centres. Times
+are the second WebGPU run; the first, which compiles the shader, took 80 to 470 ms.
+
+| Points | Largest difference, of the peak | Kernel | Mac GPU (Chromium / WebKit / Chrome) | SwiftShader |
+| --- | --- | --- | --- | --- |
+| 10,000 | 8.2 × 10⁻⁷ | 31–170 ms | 8 / 12 / 15 ms | 73 ms |
+| 100,000 | 3.1 × 10⁻⁶ | 216–232 ms | 16 / 18 / 21 ms | 238 ms |
+| 1,000,000 | 1.01 × 10⁻⁵ | 2.1–2.3 s | 47 / 49 / 89 ms | 1.8 s |
+
+**Against what was written before the result.** Agreement within 1 × 10⁻⁵ of the largest cell: met at 10,000 and
+100,000; **not met at 1,000,000 on Apple's GPU, by 1.5%**. With compensated (Kahan) summation in the shader, SwiftShader
+came to 6.7 × 10⁻⁸ at 1,000,000; Apple's Metal compiler, free to reorder floating-point arithmetic, removed the
+compensation, and a second attempt to shield it (through the sum's bits) was removed as well. Time: reported above; no
+threshold had been set.
+
+**Found by the spike.** The first WebGPU surface was 6% off at 100,000 points on every adapter alike: its bins started
+at the grid's edge, so points just outside it, which the kernel lets reach the edge cells, were dropped. The bins now
+start one bandwidth before the grid. A disagreement identical on hardware and software is the algorithm's, not
+precision's.
+
+**3. What decides which runs.** `densityGpu` returns nothing where WebGPU is not offered, an adapter or device is
+refused, or the work fails; the kernel's surface is then the answer. Checked with WebGPU absent (Chromium without the
+flag): the kernel ran at every size. No widget uses either yet, so no receipt says which ran.
+
+**What this does not establish.** That the 1,000,000-point surface on Apple's GPU is close enough: 1.01 × 10⁻⁵ of the
+peak is far below what a map shows, but it is past the line drawn beforehand, and the line is kept. A WebGPU path to
+use at that size needs summation the compiler cannot reorder (two-float arithmetic, or partial sums per bin), or the
+line moved by a decision, not by this result. Nothing on Windows, Android or a field laptop. The practitioner observation
+(whether a receipt naming the GPU reads as equally trustworthy) is not reached until a widget uses it.
+
 ## What it does not establish
 
-Anything yet. That a density surface is the first place WebGPU will be needed is a guess; streaming rasters and the
-agent-based model may need it first. Which laptops in the field have WebGPU is not known.
+That a density surface is the first place WebGPU will be needed is a guess; streaming rasters and the agent-based model
+may need it first. Which laptops in the field have WebGPU is not known. The spike's results are above, with their own
+limits.

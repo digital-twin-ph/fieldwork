@@ -41,6 +41,9 @@ export interface Kernel {
   zonal_prepare(areas:number,edges:number,width:number,strip:number,bins:number,collect:number):number;
   zonal_ptr(which:number):number; zonal_begin(mode:number):number;
   zonal_rows(first:number,rows:number,values:number,mode:number,noData:number,hasNoData:number):number;
+  // A kernel density surface (experiment 225's spike, src/density.ts): points (x, y, weight) at density_ptr(0), the grid at
+  // density_ptr(1); density_run's count comes back signed, read with >>>0, where 4294967295 means the bandwidth was refused.
+  density_prepare(points:number,width:number,height:number):number; density_ptr(which:number):number; density_run(bandwidth:number):number;
 }
 const bytes=Uint8Array.from(atob(KERNEL_BASE64),character=>character.charCodeAt(0));
 export const kernel=(await WebAssembly.instantiate(bytes,{})).instance.exports as unknown as Kernel;

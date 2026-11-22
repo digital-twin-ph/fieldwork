@@ -12,6 +12,8 @@ shown in a local build is not a claim that it has been published.
   - Rate 0.5.0: a denominator of zero gives no rate, with the reason, rather than a refusal about proportions.
   - Deduplicate records 0.4.0: two rows blank in a compared column wait for a person rather than merging. Its
     Inspector and dialog moved out of the application's main file, the first of the Inspector move's batch C.
+- **A density surface computed on the graphics card, as a spike** (experiment 225): the same kernel density surface in
+  the Rust kernel and in WebGPU, compared cell by cell on four browsers. Not used by any widget yet.
 
 ## 0.167.0 — 2026-11-22
 

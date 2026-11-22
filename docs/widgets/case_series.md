@@ -1,6 +1,6 @@
 # Cases by period
 
-_Created 2026-11-07 · Updated 2026-11-14_
+_Created 2026-11-07 · Updated 2026-11-22_
 
 **An epidemic curve's counts.** Cases per day, week or month, or by day of the week or month of the year, by a date whose kind you state: onset, report, death,
 specimen collection, or a date of unstated kind.

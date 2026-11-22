@@ -52,3 +52,40 @@ test("two countries' study areas make one polygon layer, each part with its coun
   await expect(page.locator('#synthetic-boundary option').first()).toHaveText('South Sudan');
   expect(errors).toEqual([]);
 });
+
+// DROPPED, NOT CONFIGURED (2026-11-22; the practitioner: "The polygon input port also does not automatically take in more
+// than one study area, but it does from the configuration dialog, which adds friction"). A study area dropped on the input
+// another holds goes to the next one, and a new input is added when all are held.
+test('study areas dropped on a polygon layer each take an input of their own',async({page})=>{
+  const errors=collectPageErrors(page);
+  // All in view, the layer to the right of the three areas, so each drag is a short one across open canvas.
+  const at=(n,y)=>({...n,x:20,y});
+  const three={...flow,nodes:[at(area('drc','DRC','COD-ADM1-TEST',['Ituri','Nord-Kivu'],100),20),at(area('ssd','South Sudan','SSD-ADM2-TEST',['Yei'],400),170),
+    at(area('uga','Uganda','UGA-ADM0-TEST',['Uganda'],700),320),
+    {id:'parts',type:'polygon_input',x:380,y:170,params:{label:'Across the border',data:{features:[]}}}],edges:[]};
+  await page.goto('/');await page.waitForSelector('html[data-ready]');
+  await page.evaluate(f=>{localStorage.clear();localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(f));},three);
+  await page.goto('/');await page.waitForSelector('html[data-ready]');
+  await page.locator('[data-view="workflow"]').click();
+  await expect(page.locator('.react-flow__node[data-id="parts"]')).toBeVisible({timeout:45000});
+  await page.locator('#toast button').click().catch(()=>{});
+  const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
+  const drag=async from=>{
+    const a=await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox();
+    const b=await page.locator('.react-flow__node[data-id="parts"] [data-handleid="area"]').boundingBox();
+    await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
+    await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();};
+  // Each drop lands before the next starts: the canvas redraws the node's inputs after a connection.
+  for(const [i,id] of ['drc','ssd','uga'].entries()){await drag(id);
+    await expect.poll(async()=>(await saved()).edges.filter(e=>e.to==='parts').length).toBe(i+1);}
+  await expect.poll(async()=>(await saved()).edges.filter(e=>e.to==='parts').map(e=>`${e.from}:${e.port}`).sort())
+    .toEqual(['drc:area','ssd:area_2','uga:area_3']);
+  const node=(await saved()).nodes.find(n=>n.id==='parts');
+  expect(node.params.inputMethod).toBe('areas');expect(node.params.areaInputCount).toBe(3);
+  // The same area dropped again is not added twice.
+  await drag('ssd');
+  await expect.poll(async()=>(await saved()).edges.filter(e=>e.to==='parts').length).toBe(3);
+  await page.locator('.react-flow__node[data-id="parts"]').click();
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('The parts of 3 connected study areas');
+  expect(errors).toEqual([]);
+});

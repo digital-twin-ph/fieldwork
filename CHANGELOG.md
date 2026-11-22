@@ -9,6 +9,11 @@ shown in a local build is not a claim that it has been published.
   repository, which GitHub's runner does not have, so the checks stopped before any browser test ran. It now says the
   example is not there and the rest go on, as every other fixture does.
 - **Detect unusual counts' lab check is recorded** as its evidence (check 53), and the lab is pinned at it.
+- **A second study area's boundary can be chosen again.** The area dialog, reused for every study area, kept the last one's
+  country, units and terms on screen with nothing behind them, so a unit chosen there was refused and the area stayed
+  unconfigured (found adding Rwanda after three others). Each opening now starts the picker empty. Study area 0.12.1.
+- **Study areas dropped on a Polygon layer each take an input of their own**, a new one added when all are held, up to
+  six; no trip to Configure…. Polygon layer 0.8.0.
 
 ## 0.162.0 — 2026-11-21
 

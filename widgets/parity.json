@@ -962,7 +962,8 @@
         "That any alpha, h or L suits a surveillance system: they are decisions about false alarms.",
         "A seasonal baseline (Farrington, or a GLM): Fieldwork has none, and seasonal-weekly shows what follows.",
         "Fieldwork's reading of a table into a series (periods put in order, a missing period counted as 0): the fixture carries the series as Fieldwork read them, so that step is checked by Fieldwork's own tests."
-      ]
+      ],
+      "notebook": "53-detect-unusual-counts-vs-numpy.ipynb"
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

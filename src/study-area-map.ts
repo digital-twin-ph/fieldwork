@@ -546,6 +546,12 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
 
   const boundaryStatus=$('#area-boundary-status'),unitsBox=$('#area-boundary-units');
   const unitPick=$('#area-boundary-pick') as HTMLSelectElement;
+  // EVERY OPENING STARTS THE PICKER EMPTY (2026-11-22). The dialog is reused, and the last study area's country, units
+  // and terms stayed on screen with none of the state behind them: a unit chosen from that list belonged to no level, so
+  // Use answered "Select at least one unit" and the area could not be applied. Found by the practitioner adding a
+  // fourth study area (Rwanda) after South Sudan, DR Congo and Uganda.
+  unitPick.replaceChildren();unitsBox.hidden=true;boundaryStatus.textContent='';$('#area-boundary-terms').textContent='';
+  ($('#area-iso') as HTMLInputElement).value='';
   // The list is filled from the bundled snapshot the moment the dialog opens, so typing
   // "Congo" offers both Congos and the practitioner picks the one they mean.
   void import('./boundary-source.js').then(({COUNTRIES,ALSO_CALLED,countryName})=>{

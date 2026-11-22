@@ -1,6 +1,6 @@
 # Export encryption audit: which of Fieldwork's exported files are encrypted
 
-_Created 2026-11-22 · Updated 2026-11-22_
+_Created 2026-11-21 · Updated 2026-11-21_
 
 **Status:** in progress. Every exported asset inventoried 2026-11-21; backups and Export as repository encrypted by
 default the same day; shared projects encrypted on GitHub by default the same day (below). Browser storage stays plain

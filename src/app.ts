@@ -1346,6 +1346,26 @@ function setConnection(w:Workflow,from:string|null,to:string,port:string){
     if(!bound)return;
     port=bound;
   }
+  // ANOTHER STUDY AREA DROPPED ON A POLYGON LAYER takes the next area input (2026-11-22; the practitioner: "The polygon input
+  // port also does not automatically take in more than one study area, but it does from the configuration dialog, which
+  // adds friction"). Where the layer is made of study areas' parts, or reads nothing yet, a study area dropped on an input
+  // another one holds goes to the next free one, a new one added when all are held, as a Map's layers do. A layer read
+  // from a file or an extract keeps its one area: there the area is where to read, and a second would replace it.
+  if(from&&target?.type==='polygon_input'&&/^area(_\d+)?$/.test(port)){
+    const node=target as WorkflowNode<'polygon_input'>,source=w.nodes.find(n=>n.id===from);
+    const holder=(p:string)=>w.edges.find(e=>e.to===to&&e.port===p);
+    const reads=node.params.inputMethod==='extract'||(node.params.inputMethod!=='areas'&&!!node.params.data?.features?.length);
+    const held=holder(port);
+    if(source&&outputOf(source)==='area'&&held&&held.from!==from&&!reads){
+      if(w.edges.some(e=>e.to===to&&e.from===from&&/^area(_\d+)?$/.test(e.port)))return;
+      node.params.inputMethod='areas';
+      const count=Math.max(1,node.params.areaInputCount??1);
+      const free=Array.from({length:count},(_,i)=>i?`area_${i+1}`:'area').find(p=>!holder(p));
+      if(free)port=free;
+      else if(count<MAX_AREA_INPUTS){node.params.areaInputCount=count+1;port=`area_${count+1}`;}
+      else{toast(`A polygon layer takes up to ${MAX_AREA_INPUTS} study areas.`,{tone:'warning'});return;}
+    }
+  }
   // The map's and the table's single "add" port binds to a declared one by what the source emits (Table, 2026-11-09).
   if(from&&port==='layer'&&(target?.type==='map_output'||target?.type==='table_output')){
     const source=w.nodes.find(n=>n.id===from);

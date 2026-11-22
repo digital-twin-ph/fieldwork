@@ -6,6 +6,7 @@
   "changed",
   "feature",
   "fix",
+  "fixed",
   "initial",
   "major",
   "minor",
@@ -607,12 +608,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "polygon_input": {
-   "version": "0.7.0",
-   "released": "2026-11-21",
+   "version": "0.8.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "added",
-     "description": "A third source, the parts of connected study areas: each part of up to six study areas a feature with its name, geoBoundaries ID, country and level, one layer across a border."
+     "kind": "changed",
+     "description": "A study area dropped on an input another one holds takes the next input, a new one added when all are held, up to six; a layer read from a file or an extract keeps its one area."
     }
    ],
    "breaking": false,
@@ -841,12 +842,12 @@
    ]
   },
   "study_area": {
-   "version": "0.12.0",
-   "released": "2026-11-20",
+   "version": "0.12.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Its parts, by name: the Result says how many parts a boundary's study area holds, and View the parts shows each one's name and id, which a table joined to the area matches."
+     "kind": "fixed",
+     "description": "Each opening of the area dialog starts the boundary picker empty; the last study area's country, units and terms no longer stay on screen with nothing behind them, which refused a unit chosen there."
     }
    ],
    "breaking": false,

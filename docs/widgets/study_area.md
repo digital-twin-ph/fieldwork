@@ -132,6 +132,12 @@ London** workflows each use their own Soho extent, which is why three of them di
 
 ## History
 
+### 2026-11-22 · A second study area's picker starts empty (0.12.1)
+
+Adding a fourth study area, Rwanda, after South Sudan, DR Congo and Uganda, the boundary could not be applied: the dialog,
+reused for every study area, still showed the last one's country, units and terms, with none of what was behind them,
+so a unit chosen there answered "Select at least one unit". Each opening now starts the picker empty.
+
 ### 2026-11-19 · Holes that touch are accepted (0.9.4)
 
 Rwanda, chosen by a colleague as a study area, was refused with "Interior rings must not contain one another". Two holes

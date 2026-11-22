@@ -1720,7 +1720,7 @@
     {
       "id": "urn:fieldwork:widget:polygon_input",
       "nodeType": "polygon_input",
-      "currentVersion": "0.7.0",
+      "currentVersion": "0.8.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1751,6 +1751,11 @@
           "version": "0.7.0",
           "path": "widgets/releases/polygon_input/0.7.0.json",
           "sha256": "9fc4d5dc3e9b09ec8bbee3b8a40806202cb3ee96525e790002ba814d7f38e4cd"
+        },
+        {
+          "version": "0.8.0",
+          "path": "widgets/releases/polygon_input/0.8.0.json",
+          "sha256": "42d80c4537cc2b1f1f4254589a08a8c1afacb6b4ecb0d531ab3588963b8985a9"
         }
       ]
     },
@@ -2367,7 +2372,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.12.0",
+      "currentVersion": "0.12.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -2463,6 +2468,11 @@
           "version": "0.12.0",
           "path": "widgets/releases/study_area/0.12.0.json",
           "sha256": "b9538341da615cfba423fc9ef9d0697bc3cb852827ad356426841a1fe99ddb95"
+        },
+        {
+          "version": "0.12.1",
+          "path": "widgets/releases/study_area/0.12.1.json",
+          "sha256": "4ea5566b5ea173424f5af857775a12362a2d7e4b10e53c4b62c9118c4204bf1b"
         }
       ],
       "previousNodeTypes": [

@@ -21,7 +21,8 @@ the widget reads those, within your study area's bounds.
 
 **The parts of connected study areas.** No file: each part of each study area you connect is a feature, named, with
 its geoBoundaries ID, and with the country and level its boundary states (`COD-ADM2-…`). Connect one study area per
-country, each at the level you want, with **+ Add a study area** for the next: DR Congo's provinces and South Sudan's
+country, each at the level you want, with **+ Add a study area** for the next, or drop each study area onto the layer's
+input on the canvas, where each takes the next input: DR Congo's provinces and South Sudan's
 counties become one layer across the border. **After** lists the parts before anything runs. A table of cases by unit
 can then be joined onto the layer on the IDs, which are unique across countries where names are not. Parts at different
 levels are said to be: a count compares only units at one level, and a rate compares across them. To make one study
@@ -171,6 +172,12 @@ reaches of the Thames as layers inside one study area, which is what lets the ti
 reaches be drawn as separate exposures.
 
 ## History
+
+### 2026-11-22 · Study areas dropped on the canvas (0.8.0)
+
+A second study area connected on the canvas replaced the first, so a layer of several areas could be made only in
+Configure…. Now a study area dropped on an input another one holds takes the next input, a new one added when all are
+held, up to six. A layer read from a file or an extract keeps its one area, which says where to read.
 
 ### 2026-11-21 · The parts of connected study areas (0.7.0)
 

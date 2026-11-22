@@ -348,3 +348,40 @@ test('a held level is read from the boundaries Fieldwork holds, and geoBoundarie
   await expect.poll(async()=>(await storedArea(page)).boundary?.retrievedFrom,{timeout:30000}).toBe(`${held.raw}COD/ADM1/parts/`);
   expect(errors).toEqual([]);
 });
+
+// A SECOND STUDY AREA STARTS THE PICKER EMPTY (2026-11-22). The dialog is reused, and the first area's country, units and
+// terms stayed on screen with none of the state behind them: a unit chosen there belonged to no level, so Use answered
+// "Select at least one unit". Found by the practitioner adding Rwanda after South Sudan, DR Congo and Uganda.
+test('a second study area opens with an empty picker, and its own units apply',async({page})=>{
+  const errors=collectPageErrors(page);
+  await stub(page);
+  await openArea(page);
+  await page.locator('#area-iso').fill('Democratic Republic of the Congo');
+  await page.locator('#area-adm').selectOption('ADM3');
+  await page.locator('#area-boundary-check').click();
+  await page.locator('#area-boundary-pick').selectOption([{index:0}]);
+  await page.locator('#area-boundary-use').click();
+  await page.locator('#area-apply').click();
+  await expect(page.locator('#area-dialog')).not.toHaveAttribute('open','');
+  // The second area, added and opened.
+  const before=await page.locator('.react-flow__node').count();
+  await page.locator('#node-library [data-add="study_area"]').click();
+  await expect(page.locator('.react-flow__node')).toHaveCount(before+1);
+  await page.locator('.react-flow__node').nth(before).click();
+  await page.locator('#edit-study-area').click();
+  await page.locator('#area-boundary-source summary').click();
+  await expect(page.locator('#area-boundary-pick option')).toHaveCount(0);
+  await expect(page.locator('#area-boundary-units')).toBeHidden();
+  await expect(page.locator('#area-iso')).toHaveValue('');
+  await expect(page.locator('#area-boundary-terms')).toHaveText('');
+  await page.locator('#area-iso').fill('Democratic Republic of the Congo');
+  await page.locator('#area-adm').selectOption('ADM3');
+  await page.locator('#area-boundary-check').click();
+  await page.locator('#area-boundary-pick').selectOption([{index:1}]);
+  await page.locator('#area-boundary-use').click();
+  await expect(page.locator('#area-boundary-terms')).toContainText('Nyiragongo');
+  await expect(page.locator('#area-apply')).toBeEnabled();
+  await page.locator('#area-apply').click();
+  await expect(page.locator('.react-flow__node').nth(before)).not.toContainText('Not configured');
+  expect(errors).toEqual([]);
+});

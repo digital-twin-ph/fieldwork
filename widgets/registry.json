@@ -503,12 +503,17 @@
     {
       "id": "urn:fieldwork:widget:clip_points_to_area",
       "nodeType": "clip_points_to_area",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/clip_points_to_area/0.1.0.json",
           "sha256": "7a3f988398c6b35badcbc89ad6c92df0a58323acf379b3bc30d52eeb31a6abc4"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/clip_points_to_area/0.2.0.json",
+          "sha256": "7e095e060939f46e46830e43dd1f53d9a3884bbcd09c501a7d351b366cdd7907"
         }
       ]
     },
@@ -2131,7 +2136,7 @@
     {
       "id": "urn:fieldwork:widget:sample_raster",
       "nodeType": "sample_raster",
-      "currentVersion": "0.9.0",
+      "currentVersion": "0.10.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2192,6 +2197,11 @@
           "version": "0.9.0",
           "path": "widgets/releases/sample_raster/0.9.0.json",
           "sha256": "6d94cad0a3d29fb29cd0c484192b6c096fde22231e83ab1494e83869c66ec869"
+        },
+        {
+          "version": "0.10.0",
+          "path": "widgets/releases/sample_raster/0.10.0.json",
+          "sha256": "744dd5c732fc8b3f22b34bbbb05bc87ecffbe599aadb76f9b523728aae79d56d"
         }
       ]
     },
@@ -2511,7 +2521,7 @@
     {
       "id": "urn:fieldwork:widget:summarize_points_to_polygon",
       "nodeType": "summarize_points_to_polygon",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2522,6 +2532,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/summarize_points_to_polygon/0.2.0.json",
           "sha256": "7863083d0e013f60c9fb186f7b3ffd2e775ce8bcec5a556b9ef2556da57d7aff"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/summarize_points_to_polygon/0.3.0.json",
+          "sha256": "64156490f346b028a9ff89d61510afb2fbda08b9751c7cdd7ab1549e4d46d624"
         }
       ],
       "previousNodeTypes": [

@@ -59,7 +59,11 @@ test('John Snow examples use shared primitives, persist parameters and replay of
   await page.locator('[data-view="workflow"]').click();
   await page.locator('[data-view="results"]').click();
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="summary"]').click();await page.locator('#catchment-valueField').fill('');await page.locator('#catchment-valueField').blur();await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete');await expect(page.locator('#bars-panel')).toContainText('Location memberships');
+  await page.locator('.react-flow__node[data-id="summary"]').click();
+  // ON THE STANDARD (0.163.0): the number to add up is chosen in Configure…, from the arriving points' numeric columns.
+  await page.locator('#configure-step').click();{const v=page.locator('#summarize-points-dialog #summarize-value');
+    if(await v.evaluate(el=>el.tagName==='SELECT'))await v.selectOption('');else await v.fill('');await v.dispatchEvent('change');}
+  await page.locator('#summarize-points-dialog #config-apply').click();await page.locator('#run-button').click();await expect(page.locator('#workflow-state')).toContainText('Run complete');await expect(page.locator('#bars-panel')).toContainText('Location memberships');
   const before=await saved(page);await openWorkflow(page,'snow-isochrone');await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   // Opening another workflow leaves the view where it was, and the map is drawn when its tab is.
   await page.locator('[data-view="results"]').click();

@@ -7,7 +7,12 @@ import type {Boundary,Position,WorkflowNode,PointCollection} from './types.js';
 import type {Walkthrough,WalkStep} from './table-walkthrough.js';
 import {bufferPoint,BUFFER_POINT_STEPS} from './buffer-point.js';
 import {calculateArea,formatArea,AREA_METHOD,AREA_UNITS} from './area-computation.js';
-import {clipPolygons,type Polygons} from './catchments.js';
+import {clipPolygons,summarizePolygons,type Polygons} from './catchments.js';
+import {clipPointsToArea} from './clip-points.js';
+import {sampleRaster,cellAt} from './sample-raster.js';
+import {totalOver} from './raster-areas.js';
+import {pointRelation} from './spatial-predicates.js';
+import type {RasterGrid} from './raster.js';
 import type {AreaUnit} from './types.js';
 import {joinTableToAreas} from './area-join.js';
 
@@ -21,8 +26,10 @@ function draw(shapes:Shape[],label:string):{svg:string;key:string[]}{
   const all=shapes.flatMap(s=>[...(s.rings??[]).flat(2),...(s.point?[s.point]:[])]);
   const xs=all.map(p=>p[0]),ys=all.map(p=>p[1]);
   const w=Math.min(...xs),e=Math.max(...xs),south=Math.min(...ys),n=Math.max(...ys);
-  const scale=Math.min(320/((e-w)||1e-3),200/((n-south)||1e-3));
-  const x=(lon:number)=>20+(lon-w)*scale+(320-(e-w)*scale)/2,y=(lat:number)=>20+(n-lat)*scale+(200-(n-south)*scale)/2;
+  // ROOM FOR A LABEL on the right and above: a label is drawn up and to the right of its shape, and one on the widest
+  // shape's edge was cut off (Summarize's "H6", 2026-11-22). The shapes take 260 by 180 of the 360 by 240 box.
+  const scale=Math.min(260/((e-w)||1e-3),180/((n-south)||1e-3));
+  const x=(lon:number)=>20+(lon-w)*scale+(260-(e-w)*scale)/2,y=(lat:number)=>40+(n-lat)*scale+(180-(n-south)*scale)/2;
   const path=(rings:Position[][][])=>rings.map(poly=>poly.map(r=>'M'+r.map(p=>`${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('L')+'Z').join(' ')).join(' ');
   const body=shapes.map(s=>s.rings
     ?`<path class="walk-shape walk-shape-${s.kind}" d="${path(s.rings)}" fill-rule="evenodd"/>`
@@ -135,4 +142,116 @@ export function joinTableWalkthrough(normalisation:'exact'|'fuzzy'):Walkthrough{
     step(`What the step passes on: ${joined.counts.matchedParts} of 3 parts with a value, ${joined.counts.unmatchedRows} row naming no part.`,
       joined.parts.map(p=>({kind:p.matched?'result' as const:'gone' as const,rings:shape(p.name),label:p.matched?`${p.name} · ${p.value}`:`${p.name} · empty`,at:PARTS.find(x=>x.name===p.name)!.at})),
       true,[...northMarks,...maryMarks,none(2),empty(2)])]};
+}
+
+/** SAMPLE A RASTER, on a made-up grid of 4 by 3 cells (2026-11-22, TODO 6's first batch). At points: each takes the value
+ *  of the cell it falls in, or of the four nearest cell centres where bilinear is chosen; a cell with no data and a point
+ *  off the grid give no value, each counted apart. Over areas: the cells whose centre is inside are added, each whole. The
+ *  last step is what `sampleRaster` or `totalOver` makes of these cells. */
+const GRID={origin:[30,-1] as [number,number],resolution:[0.01,-0.01] as [number,number],width:4,height:3,
+  values:[12,40,7,0, 25,90,33,5, NaN,18,60,2]};
+function walkGrid(){
+  const metadata={width:GRID.width,height:GRID.height,origin:GRID.origin,resolution:GRID.resolution,crs:'EPSG:4326',noData:null,
+    bands:1,rasterType:'PixelIsArea'} as unknown as RasterGrid['metadata'];
+  return {metadata,values:Float64Array.from(GRID.values),asset:{} as RasterGrid['asset']} as unknown as RasterGrid;
+}
+const cellRing=(c:number,r:number):Position[]=>{const [ox,oy]=GRID.origin,[rx,ry]=GRID.resolution;
+  return [[ox+c*rx,oy+r*ry],[ox+(c+1)*rx,oy+r*ry],[ox+(c+1)*rx,oy+(r+1)*ry],[ox+c*rx,oy+(r+1)*ry]];};
+const cellCentre=(c:number,r:number):Position=>[GRID.origin[0]+(c+0.5)*GRID.resolution[0],GRID.origin[1]+(r+0.5)*GRID.resolution[1]];
+const cellValue=(c:number,r:number)=>{const v=GRID.values[r*GRID.width+c]!;return Number.isFinite(v)?String(v):'no data';};
+const gridShapes=(kind:Kind='input',only?:(c:number,r:number)=>boolean):Shape[]=>{const out:Shape[]=[];
+  for(let r=0;r<GRID.height;r++)for(let c=0;c<GRID.width;c++)if(!only||only(c,r))
+    out.push({kind,rings:ring(cellRing(c,r)),label:cellValue(c,r),at:[cellCentre(c,r)[0]-0.004,cellCentre(c,r)[1]+0.001]});
+  return out;};
+export function sampleRasterWalkthrough(over:'points'|'areas',method:'cell'|'bilinear'='cell'):Walkthrough{
+  const grid=walkGrid();
+  if(over==='areas'){
+    const AREA2:Position[]=[[30.006,-1.004],[30.027,-1.002],[30.031,-1.024],[30.002,-1.029]];
+    const area:Boundary={type:'Polygon',coordinates:ring(AREA2)[0]!};
+    const sums=totalOver(area,grid);
+    const centreIn=(c:number,r:number)=>pointRelation(cellCentre(c,r),area)!=='Outside';
+    const counted=(c:number,r:number)=>centreIn(c,r)&&Number.isFinite(GRID.values[r*GRID.width+c]!);
+    const centres=():Shape[]=>{const out:Shape[]=[];for(let r=0;r<GRID.height;r++)for(let c=0;c<GRID.width;c++)
+      out.push({kind:centreIn(c,r)?'result':'gone',point:cellCentre(c,r)});return out;};
+    return {title:'Sample a raster over areas, step by step',tables:[],resultColumns:[],steps:[
+      step('A made-up raster of 12 cells, each holding a count (people, say), and one area. One cell has no data.',[...gridShapes(),{kind:'area',rings:ring(AREA2),label:'Area'}]),
+      step('Each cell is tested by its centre: is the centre inside the area, or on its edge? Filled dots are inside.',[...gridShapes(),{kind:'area',rings:ring(AREA2)},...centres()]),
+      step('A cell whose centre is inside is counted whole, even where part of it lies outside; a cell whose centre is outside adds nothing, even where part of it lies inside. Nothing is split.',
+        [...gridShapes('gone',(c,r)=>!centreIn(c,r)),...gridShapes('look',(c,r)=>centreIn(c,r)),{kind:'area',rings:ring(AREA2)}]),
+      step(`What the step passes on: the area, carrying its total, ${sums.total.toLocaleString('en')}, from ${sums.cells} cells; `
+        +`${sums.noData?`the ${sums.noData===1?'cell':`${sums.noData} cells`} with no data inside it ${sums.noData===1?'adds':'add'} nothing and ${sums.noData===1?'is':'are'} counted apart, never as 0.`:'every cell inside had a value.'}`,
+        [...gridShapes('result',counted),...gridShapes('gone',(c,r)=>!counted(c,r)),{kind:'area',rings:ring(AREA2),label:`Total ${sums.total.toLocaleString('en')}`}],true)]};
+  }
+  const P:{name:string;at:Position}[]=[{name:'Clinic A',at:[30.013,-1.006]},{name:'Clinic B',at:[30.004,-1.024]},{name:'Clinic C',at:[30.047,-1.012]}];
+  const points:PointCollection={type:'FeatureCollection',features:P.map(p=>({type:'Feature',id:p.name,properties:{name:p.name},geometry:{type:'Point',coordinates:p.at}}))};
+  const made=sampleRaster(points,grid,{label:'Walk',attribute:'people',...(method==='bilinear'?{method:'bilinear'}:{})} as never);
+  const got=(name:string)=>(made.value.features.find(f=>f.properties?.name===name)?.properties as Record<string,unknown>|undefined)?.people;
+  const shown=(v:unknown)=>typeof v==='number'?(Number.isInteger(v)?String(v):v.toFixed(1)):'no value';
+  const a=P[0]!.at,cA=cellAt(grid.metadata,a as [number,number])!;
+  const near=(c:number,r:number)=>{const fx=(a[0]-GRID.origin[0])/GRID.resolution[0]-0.5,fy=(a[1]-GRID.origin[1])/GRID.resolution[1]-0.5;
+    const c0=Math.floor(fx),r0=Math.floor(fy);return (c===c0||c===c0+1)&&(r===r0||r===r0+1);};
+  const pts=(kind:Kind,names?:string[]):Shape[]=>P.filter(p=>!names||names.includes(p.name)).map(p=>({kind,point:p.at,label:p.name}));
+  return {title:'Sample a raster at points, step by step',tables:[],resultColumns:[],steps:[
+    step('A made-up raster of 12 cells, each holding a count, and three clinics. One cell has no data; Clinic C lies off the raster.',[...gridShapes(),...pts('input')]),
+    method==='bilinear'
+      ?step(`Clinic A takes a value between the four nearest cell centres, each weighted by how close it is: ${shown(got('Clinic A'))}.`,
+        [...gridShapes('look',near),...gridShapes('gone',(c,r)=>!near(c,r)),...pts('result',['Clinic A'])])
+      :step(`Clinic A takes the value of the cell it falls in: ${cellValue(cA[0],cA[1])}. The value is the cell's, not a measurement at the point.`,
+        [...gridShapes('look',(c,r)=>c===cA[0]&&r===cA[1]),...gridShapes('gone',(c,r)=>!(c===cA[0]&&r===cA[1])),...pts('result',['Clinic A'])]),
+    step(method==='bilinear'?'Clinic B has a cell with no data among its four nearest: it gets no value, never a guess, and is counted apart.'
+      :'Clinic B falls in the cell with no data: it gets no value, never 0, and is counted apart.',[...gridShapes(),...pts('look',['Clinic B'])]),
+    step('Clinic C is off the raster: it gets no value, and is counted as outside, a question about coverage, not about the data.',[...gridShapes(),...pts('gone',['Clinic C'])]),
+    step(`What the step passes on: the three clinics, each with "people" where it has a value: A ${shown(got('Clinic A'))}, B ${shown(got('Clinic B'))}, C ${shown(got('Clinic C'))}. `
+      +`${made.counts.sampled} read, ${made.counts.noData} with no data, ${made.counts.outside} outside.`,[...gridShapes(),...pts('result',['Clinic A']),...pts('gone',['Clinic B','Clinic C'])],true)]};
+}
+
+/** KEEP POINTS INSIDE THE AREA, on four made-up points (2026-11-22): one inside, one on the outline, one outside, and one
+ *  with no location. The last step is what `clipPointsToArea` makes of them, with the outline rule chosen. */
+export function clipPointsWalkthrough(keepBoundary:boolean):Walkthrough{
+  const area:Boundary={type:'Polygon',coordinates:ring(AREA)[0]!};
+  const P:{name:string;at:Position|null}[]=[{name:'Inside',at:[30.012,-1.012]},{name:'On the outline',at:[30.04,-1.02]},
+    {name:'Outside',at:[30.052,-1.006]},{name:'No location',at:null}];
+  const points:PointCollection={type:'FeatureCollection',features:P.map(p=>({type:'Feature',id:p.name,properties:{name:p.name},
+    geometry:p.at?{type:'Point',coordinates:p.at}:null})) as PointCollection['features']};
+  const made=clipPointsToArea(points,area,keepBoundary);
+  const pt=(kind:Kind,name:string):Shape=>({kind,point:P.find(p=>p.name===name)!.at!,label:name});
+  return {title:'Keep points inside the area, step by step',tables:[],resultColumns:[],steps:[
+    step('A study area and four made-up points. The fourth, "No location", has no coordinates, so it cannot be drawn.',[{kind:'area',rings:ring(AREA)},pt('input','Inside'),pt('input','On the outline'),pt('input','Outside')]),
+    step('"Inside" lies within the area: it is kept.',[{kind:'area',rings:ring(AREA)},pt('result','Inside'),pt('input','On the outline'),pt('input','Outside')]),
+    step(`"On the outline" sits exactly on the area's edge: ${keepBoundary?'kept, as set':'set aside, as set'}. A facility on a boundary is in that area's edge, so keeping it is the default; the other choice is a strict "within".`,
+      [{kind:'area',rings:ring(AREA)},pt(keepBoundary?'result':'gone','On the outline'),pt('input','Inside'),pt('input','Outside')]),
+    step('"Outside" does not fall in the area: set aside. It can still be drawn on a connected map, faint, so you can judge whether losing it was right.',
+      [{kind:'area',rings:ring(AREA)},pt('gone','Outside'),pt('input','Inside'),pt('input','On the outline')]),
+    step(`"No location" cannot be placed: it is not outside, it is a record nobody could place, and it is counted on its own. `
+      +`What the step passes on: ${made.collection.features.length} of 4 points. Inside ${made.inside}, on the outline ${made.boundary}, outside ${made.outside}, no location ${made.missing}.`,
+      [{kind:'area',rings:ring(AREA)},...made.collection.features.map(f=>pt('result',String(f.properties?.name)))],true)]};
+}
+
+/** SUMMARIZE POINTS TO POLYGONS, on two made-up units sharing an edge and five points with deaths (2026-11-22): each unit
+ *  counts the points in it and adds their deaths; a point on the shared edge, one outside and one with no value show what
+ *  is counted where. The last step is what `summarizePolygons` makes of them, with the edge rule chosen. */
+export function summarizePointsWalkthrough(boundary:'include'|'exclude',valueField:string):Walkthrough{
+  const NORTH:Position[]=[[30,-1],[30.04,-1],[30.04,-1.015],[30,-1.015]],SOUTH:Position[]=[[30,-1.015],[30.04,-1.015],[30.04,-1.03],[30,-1.03]];
+  const field=valueField.trim()||'deaths';
+  const P:{name:string;at:Position;v:number|null}[]=[{name:'H1',at:[30.01,-1.006],v:3},{name:'H2',at:[30.028,-1.009],v:1},
+    {name:'H3',at:[30.015,-1.023],v:2},{name:'H4',at:[30.025,-1.015],v:4},{name:'H5',at:[30.032,-1.024],v:null},{name:'H6',at:[30.05,-1.02],v:5}];
+  const input={features:[{type:'Feature',properties:{name:'North'},geometry:{type:'Polygon',coordinates:ring(NORTH)[0]!}},
+    {type:'Feature',properties:{name:'South'},geometry:{type:'Polygon',coordinates:ring(SOUTH)[0]!}}],sites:[],method:'',crs:'CRS84',notes:[]} as unknown as Polygons;
+  const points:PointCollection={type:'FeatureCollection',features:P.map(p=>({type:'Feature',id:p.name,
+    properties:{name:p.name,...(p.v===null?{}:{[field]:p.v})},geometry:{type:'Point',coordinates:p.at}}))};
+  const made=summarizePolygons(input,points,{label:'Walk',boundary,valueField:field});
+  const unit=(name:string)=>made.features.find(f=>(f.properties as {name?:string}).name===name) as unknown as {count:number;total:number;missingValues:number};
+  const n=unit('North'),s=unit('South');
+  const units=(kind:Kind,label=false):Shape[]=>[{kind,rings:ring(NORTH),...(label?{label:`North · ${n.count} · ${field} ${n.total}`}:{label:'North'}),at:[30.001,-1.001]},
+    {kind,rings:ring(SOUTH),...(label?{label:`South · ${s.count} · ${field} ${s.total}`}:{label:'South'}),at:[30.001,-1.028]}];
+  const pt=(kind:Kind,name:string):Shape=>{const p=P.find(x=>x.name===name)!;return {kind,point:p.at,label:`${name}${p.v===null?' · no value':` · ${p.v}`}`};};
+  return {title:'Summarize points to polygons, step by step',tables:[],resultColumns:[],steps:[
+    step(`Two made-up units, North and South, sharing an edge, and six households, each with its ${field}. H5 has no value recorded.`,[...units('input'),...P.map(p=>pt('input',p.name))]),
+    step(`North counts the points inside it, H1 and H2, and adds their ${field}: 3 + 1.`,[...units('input'),pt('look','H1'),pt('look','H2'),...['H3','H4','H5','H6'].map(x=>pt('gone',x))]),
+    step(`South counts H3 and H5. H5 has no ${field}: it is counted as a location, and its missing value is counted apart, never as 0.`,[...units('input'),pt('look','H3'),pt('look','H5'),...['H1','H2','H4','H6'].map(x=>pt('gone',x))]),
+    step(boundary==='include'?`H4 sits on the edge both units share. As set, a point on an edge is counted in every unit it touches: in North and in South, and said as counted twice.`
+      :`H4 sits on the edge both units share. As set, a point on an edge is counted in neither.`,[...units('input'),pt(boundary==='include'?'look':'gone','H4')]),
+    step('H6 lies in neither unit: it is counted as outside every unit, not in either.',[...units('input'),pt('gone','H6')]),
+    step(`What the step passes on: the two units, each carrying its count and its total. North ${n.count} points, ${field} ${n.total}; South ${s.count} points, ${field} ${s.total}.`,
+      [...units('result',true),...P.map(p=>pt('input',p.name))],true)]};
 }

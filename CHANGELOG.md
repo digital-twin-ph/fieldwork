@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.163.0 — In development
+
+- **Show me how for every spatial step.** Sample a raster (at points, or over areas), Keep points inside the area and
+  Summarize points to polygons each show what they do on made-up shapes from their Configure…, ending on what the step's
+  own function makes of them, as Area around a point, Calculate area, Clip polygons and Join a table to the study area
+  already did. A test steps through all seven.
+- **Keep points inside the area and Summarize points to polygons on the standard Inspector**: name, inputs, one sentence,
+  Configure…, and what the last run said; Summarize offers the arriving points' numeric columns to add up, and has a
+  manual page.
+
 ## 0.162.1 — 2026-11-21
 
 - **The checks on GitHub run again.** 0.162.0's new validation fixture read the syndromic example from a copy beside the

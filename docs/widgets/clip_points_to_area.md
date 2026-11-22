@@ -29,8 +29,9 @@ changed, or recorded.
 
 1. Connect the study area to the **area** port and the point layer to the **points** port. Both
    are required: the question is about these points against that area.
-2. Leave **Keep points that sit exactly on the outline** ticked unless you need strict
-   containment.
+2. In **Configure…**, leave **Keep points that sit exactly on the outline** ticked unless you need strict
+   containment. **Show me how it works** shows a point inside, one on the outline, one outside and one with no
+   location, and what happens to each.
 3. Run. The step reports how many were inside, how many sat on the boundary and how many fell
    outside, and passes the kept points on to whatever you wire next.
 
@@ -74,3 +75,10 @@ It does not clip polygons or rasters. Those have their own widgets.
 ## Worked examples that use it
 
 None yet. It was built on 2026-10-20, from a defect found in a real study area.
+
+## History
+
+### 2026-11-22 · On the standard, with Show me how (0.2.0)
+
+Its two settings moved into **Configure…**, with **Show me how it works**, and its Inspector became the standard one:
+name, inputs, one sentence, and what the last run counted.

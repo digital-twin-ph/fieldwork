@@ -7,7 +7,7 @@ import type {WorkflowNode,AreaUnit,Boundary} from './types.js';
 import type {InspectorKit,OwnInspector} from './inspector-kit.js';
 import {openConfigDialog} from './config-dialog.js';
 import {openWalkthrough} from './table-walkthrough.js';
-import {bufferPointWalkthrough,measureAreaWalkthrough,clipPolygonsWalkthrough} from './spatial-walkthroughs.js';
+import {bufferPointWalkthrough,measureAreaWalkthrough,clipPolygonsWalkthrough,clipPointsWalkthrough,summarizePointsWalkthrough} from './spatial-walkthroughs.js';
 import {areaUnitOptions} from './area-measurement.js';
 import {calculateArea,formatArea} from './area-computation.js';
 type Measurement=ReturnType<typeof calculateArea>;
@@ -17,6 +17,10 @@ export interface AreaStepKit extends InspectorKit {
   output:(nodeId:string)=>{boundary?:Boundary;measurement?:Measurement}|undefined;
   /** False when the workflow has changed since the last run, so a result shown would be stale. */
   current:()=>boolean;
+  /** The method the last run's receipt states for the step, if it ran. */
+  method:(nodeId:string)=>string|undefined;
+  /** The numeric columns of the points arriving on a port, where their source holds them. */
+  numericFields:(nodeId:string,port:string)=>string[];
 }
 const showMe='<p><button type="button" class="button" data-show-me>Show me how it works</button></p>';
 const configure='<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>';
@@ -104,5 +108,64 @@ export const clipPolygonsInspector:OwnInspector<'clip_polygons'>={
   },
 };
 
+/** KEEP POINTS INSIDE THE AREA AND SUMMARIZE POINTS TO POLYGONS ON THE STANDARD (2026-11-22), moved here from app.ts and
+ *  catchment-ui.ts when Show me how was added to each (TODO 6, the practitioner's rule for any widget touched). */
+const ran=(kit:InspectorKit,n:WorkflowNode)=>{const k=kit as AreaStepKit,said=k.current()?k.method(n.id):undefined;
+  return said?`<p class="standard-result">${kit.esc(said)}</p>`:'<p class="notice">Not run yet, or changed since the last run.</p>';};
+export const clipPointsInspector:OwnInspector<'clip_points_to_area'>={
+  markup:(n,kit)=>{const p=n.params,keep=p.keepBoundary!==false;
+    return kit.section('Name',kit.name('clip-points-label',p.label||'Points inside the area'))
+      +kit.section('Inputs',kit.inputs(n,{area:'The study area',points:'The points to keep or set aside'}))
+      +kit.section('Settings',sentence(kit,`Keeps the points inside the study area${keep?', and those exactly on its outline':'; those exactly on its outline are set aside'}. `
+        +`Points outside, and records with no location, are counted apart${p.showExcluded!==false?', and those outside are drawn faint on a connected map':''}.`)+configure)
+      +kit.section('Result',ran(kit,n));},
+  wire:(n,kit,root)=>{
+    root.querySelector('#configure-step')?.addEventListener('click',()=>{
+      const node=nodeIn(kit,n);if(!node)return;
+      openConfigDialog({id:'clip-points-dialog',widget:'Keep points inside the area',step:node.params.label||'',
+        draft:{keepBoundary:node.params.keepBoundary!==false,showExcluded:node.params.showExcluded!==false},
+        sections:d=>({settings:`<label class="field-option"><input type="checkbox" id="clip-points-boundary"${d.keepBoundary?' checked':''}> Keep points that sit exactly on the outline</label>`
+          +`<label class="field-option"><input type="checkbox" id="clip-points-excluded"${d.showExcluded?' checked':''}> Show the points set aside, faint, on a connected map</label>`,preview:showMe}),
+        wire:(root2,d,redraw)=>{
+          root2.querySelector<HTMLInputElement>('#clip-points-boundary')!.onchange=e=>{d.keepBoundary=(e.target as HTMLInputElement).checked;redraw();};
+          root2.querySelector<HTMLInputElement>('#clip-points-excluded')!.onchange=e=>{d.showExcluded=(e.target as HTMLInputElement).checked;redraw();};
+          showMeIn(root2,kit,()=>clipPointsWalkthrough(d.keepBoundary));},
+        apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='clip_points_to_area'){t.params.keepBoundary=d.keepBoundary;t.params.showExcluded=d.showExcluded;}}),
+      },kit.esc);
+    });
+  },
+};
+export const summarizePointsInspector:OwnInspector<'summarize_points_to_polygon'>={
+  markup:(n,kit)=>{const p=n.params,field=p.valueField?.trim();
+    return kit.section('Name',kit.name('summarize-label',p.label||'Summarize points to polygons'))
+      +kit.section('Inputs',kit.inputs(n,{polygons:'The polygons to count in',points:'The points to count'}))
+      +kit.section('Settings',sentence(kit,`Counts the points in each polygon${field?` and adds their ${field}`:''}. `
+        +(p.boundary==='include'?'A point on an edge is counted in every polygon it touches.':'A point on an edge is counted in none.')
+        +(field?` A point with no ${field} is counted, its value counted apart.`:''))+configure)
+      +kit.section('Result',ran(kit,n));},
+  wire:(n,kit,root)=>{const k=kit as AreaStepKit;
+    root.querySelector('#configure-step')?.addEventListener('click',()=>{
+      const node=nodeIn(kit,n);if(!node)return;
+      const fields=k.numericFields(n.id,'points');
+      openConfigDialog({id:'summarize-points-dialog',widget:'Summarize points to polygons',step:node.params.label||'',
+        draft:{boundary:node.params.boundary,valueField:node.params.valueField??''},
+        sections:d=>({settings:`<div class="field"><label class="field-label" for="summarize-boundary">A point on a polygon's edge</label>`
+          +`<select id="summarize-boundary"><option value="include"${d.boundary==='include'?' selected':''}>Counted in every polygon it touches</option>`
+          +`<option value="exclude"${d.boundary==='exclude'?' selected':''}>Counted in none</option></select></div>`
+          +`<div class="field"><label class="field-label" for="summarize-value">A number to add up (optional)</label>`
+          +(fields.length?`<select id="summarize-value"><option value="">None: count the points only</option>${[...new Set([...fields,...(d.valueField&&!fields.includes(d.valueField)?[d.valueField]:[])])].map(f=>`<option value="${kit.esc(f)}"${f===d.valueField?' selected':''}>${kit.esc(f)}</option>`).join('')}</select>`
+            :`<input id="summarize-value" maxlength="100" value="${kit.esc(d.valueField)}" placeholder="for example deaths">`)
+          +'<small>A missing or non-numeric value is counted apart, never as 0.</small></div>',preview:showMe}),
+        wire:(root2,d,redraw)=>{
+          root2.querySelector<HTMLSelectElement>('#summarize-boundary')!.onchange=e=>{d.boundary=(e.target as HTMLSelectElement).value as 'include'|'exclude';redraw();};
+          root2.querySelector<HTMLInputElement|HTMLSelectElement>('#summarize-value')!.onchange=e=>{d.valueField=(e.target as HTMLInputElement).value.trim();redraw();};
+          showMeIn(root2,kit,()=>summarizePointsWalkthrough(d.boundary,d.valueField));},
+        apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='summarize_points_to_polygon'){t.params.boundary=d.boundary;t.params.valueField=d.valueField;}}),
+      },kit.esc);
+    });
+  },
+};
+
 export const AREA_STEP_INSPECTORS={buffer_point:bufferPointInspector,
-  measure_area:measureAreaInspector,clip_polygons:clipPolygonsInspector} as const;
+  measure_area:measureAreaInspector,clip_polygons:clipPolygonsInspector,
+  clip_points_to_area:clipPointsInspector,summarize_points_to_polygon:summarizePointsInspector} as const;

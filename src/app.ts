@@ -1086,7 +1086,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','detect_unusual_counts','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','measure_area','clip_polygons','join_table_to_area','compare_point_sets']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','detect_unusual_counts','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','measure_area','clip_polygons','join_table_to_area','compare_point_sets','clip_points_to_area','summarize_points_to_polygon']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -3707,13 +3707,6 @@ function renderInspector(){
       +'</section>'
       +'<p class="description">Projects connected longitude/latitude points into this UTM zone, in metres.</p>';
     content+=nodeInputs(n).map(([port])=>`<div class="field"><label class="field-label" for="reproject-port-${port}">Points input</label><select id="reproject-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select></div>`).join('');
-  }else if(n.type==='clip_points_to_area'){
-    content+=labelForm('clip-points-label','Node label',n.params.label||'Points inside the area')
-      +`<p class="description">Keeps the points that fall inside the connected study area.</p>`
-      +`<label class="field-option"><input type="checkbox" data-param="keepBoundary"${n.params.keepBoundary!==false?' checked':''}> Keep points that sit exactly on the outline</label>`
-      +``
-      +`<label class="field-option"><input type="checkbox" data-param="showExcluded"${n.params.showExcluded!==false?' checked':''}> Show the excluded points on a connected map</label>`
-      +``;
   }else if(n.type==='deduplicate_points'){
     // THE STANDARD INSPECTOR (experiments 186 and 193): the name, the inputs, one sentence of what it compares or links,
     // Configure…, and what the last run did -- the pairs counted, and the review, one button away.
@@ -6059,7 +6052,14 @@ const PORT_LABELS:Record<string,string>={area:'Study area',points:'Points',polyg
  *  `change`, the one way to edit it. */
 /** THE AREA STEPS' KIT (area-steps-ui.ts): the standard one, with what the last run made and whether it is current. */
 function areaStepKit():AreaStepKit{
-  return {...inspectorKit(),output:id=>result?.outputs.find(o=>o.nodeId===id) as ReturnType<AreaStepKit['output']>,current:()=>!dirty};
+  return {...inspectorKit(),output:id=>result?.outputs.find(o=>o.nodeId===id) as ReturnType<AreaStepKit['output']>,current:()=>!dirty,
+    method:id=>result?.receipts.find(r=>r.nodeId===id)?.method,
+    // THE NUMBERS ARRIVING, read from the source's own records where it holds them (Point data, a pinned layer).
+    numericFields:(id,port)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port),source=e&&workflow.nodes.find(n=>n.id===e.from);
+      const features=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features??[];
+      const keys=new Set<string>();for(const f of features.slice(0,500))for(const [k,v] of Object.entries(f.properties??{}))
+        if(typeof v==='number'&&Number.isFinite(v)||typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v)))keys.add(k);
+      return [...keys];}};
 }
 /** THE KIT OF A STEP MOVED OUT OF APP.TS WITH ITS LAST RUN (inspector-kit.ts). */
 /** CHART'S KIT (chart-ui.ts): the step kit, with the last run, the columns read up the workflow, and the controls the

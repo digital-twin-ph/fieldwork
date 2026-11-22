@@ -7,6 +7,8 @@ import type {RasterAsset} from './raster.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {openConfigDialog} from './config-dialog.js';
 import {rasterUnitsOf} from './raster-units.js';
+import {openWalkthrough} from './table-walkthrough.js';
+import {sampleRasterWalkthrough} from './spatial-walkthroughs.js';
 
 export interface SampleKit extends StepKit {
   /** The facts of the step's last receipt. */
@@ -97,8 +99,12 @@ function openSampleConfig(kit:SampleKit,nodeId:string){
       +`<option value="cell"${draft.method!=='bilinear'?' selected':''}>the cell containing the point</option>`
       +`<option value="bilinear"${draft.method==='bilinear'?' selected':''}>between the four nearest cells (bilinear)</option></select></div>`
       +''),
-      preview:`<p class="muted">${esc(sampleSentence({...node,params:draft}))}</p>`}),
+      // SHOW ME HOW (TODO 6, 2026-11-22): the chosen reading on a made-up grid of 12 cells, at points or over an area.
+      preview:`<p class="muted">${esc(sampleSentence({...node,params:draft}))}</p>`
+        +'<p><button type="button" class="button" data-show-me>Show me how it works</button></p>'}),
     wire:(root,draft,redraw)=>{
+      root.querySelector<HTMLButtonElement>('[data-show-me]')?.addEventListener('click',event=>
+        openWalkthrough(sampleRasterWalkthrough(draft.over==='areas'?'areas':'points',draft.method==='bilinear'?'bilinear':'cell'),esc,event.currentTarget as HTMLElement));
       root.querySelector<HTMLInputElement>('#sample-attribute')?.addEventListener('change',e=>{draft.attribute=(e.target as HTMLInputElement).value.trim();redraw();});
       root.querySelector<HTMLInputElement>('#sample-unit')?.addEventListener('change',e=>{draft.valueUnit=(e.target as HTMLInputElement).value.trim();redraw();});
       root.querySelector<HTMLSelectElement>('#sample-method')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;

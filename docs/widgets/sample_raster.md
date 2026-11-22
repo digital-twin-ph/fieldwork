@@ -244,6 +244,11 @@ dengue and New York ozone read satellite files with it.
 
 ## History
 
+### 2026-11-22 · Show me how (0.10.0)
+
+**Configure…** offers **Show me how it works**: the reading chosen, at points (the cell's value, or between the four
+nearest) or over areas, on a made-up grid of 12 cells with one cell of no data and a point off the raster.
+
 ### 2026-11-18 · Vegetation (0.7.0)
 
 MODIS NDVI and EVI (MOD13Q1 and MYD13Q1,

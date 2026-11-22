@@ -169,12 +169,12 @@
    ]
   },
   "clip_points_to_area": {
-   "version": "0.1.0",
-   "released": "2026-10-20",
+   "version": "0.2.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Keeps the points of a layer that fall inside the connected study area, and counts what fell outside. The predicate existed -- pointRelation, used by five modules -- and the OPERATION did not: eleven widgets emit a point layer and none of them answered \"keep the ones inside this area\", so the decision was made privately inside whichever widget needed it, with no node on the canvas and no receipt. A point exactly on the outline is kept by default and the choice is a parameter, because strict containment is what GeoSPARQL's sfWithin means and the two give different counts on the data where it matters. The points it sets aside are carried for DRAWING, not for passing on: a connected map shows them in the colour it already uses for outside, while every widget downstream receives only what is in the area. A count says how many were lost; seeing them says whether losing them was right, because a cluster across one border reads differently from a scatter in every direction."
+     "kind": "changed",
+     "description": "On the standard Inspector: the two settings in Configure…, with Show me how it works on four made-up points (inside, on the outline, outside, no location); its Inspector code out of app.ts."
     }
    ],
    "breaking": false,
@@ -732,12 +732,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.9.0",
-   "released": "2026-11-20",
+   "version": "0.10.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Over areas, the unit stated reaches the table it makes, so Append rows can compare it with a census that states one. The Inspector and the points-and-areas dialog move out of app.ts."
+     "kind": "added",
+     "description": "Show me how it works in Configure…: the chosen reading, at points or over areas, on a made-up grid of 12 cells with one of no data."
     }
    ],
    "breaking": false,
@@ -882,16 +882,12 @@
    "migrationFrom": []
   },
   "summarize_points_to_polygon": {
-   "version": "0.2.0",
-   "released": "2026-10-19",
+   "version": "0.3.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Renamed from `summarize_polygons` to `summarize_points_to_polygon`. The old identifier keeps resolving: a saved workflow naming `summarize_polygons` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. The node type named its grouping as if it were the object: the operation reduces POINTS, and the polygons are the areal units it reduces them to. summarize_combined_area is the widget that genuinely summarizes polygons. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "initial",
-     "description": "Reusable local catchment primitive; see docs/experiments/32-john-snow-primitives.md. Bounded prototype, not an exact notebook replay."
+     "kind": "changed",
+     "description": "On the standard Inspector: the edge rule and the number to add up in Configure…, the arriving points' numeric columns offered, with Show me how it works on two made-up units sharing an edge; a manual page."
     }
    ],
    "breaking": false,

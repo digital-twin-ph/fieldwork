@@ -98,6 +98,12 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   positive and none had a comparison group, so GIS mapping is rated "promising". A planned route beside each team's
   actual track is the case study's layer.
 - **Study design's dialog** on the standard draft-until-Apply dialog: done in 0.167.0 (Study design 0.8.0).
+- **Conditional gating, replayed again after the Inspector move** (the practitioner, 2026-11-22: yes). The gating audit
+  (docs/audits/gating-audit.md) set it aside while `app.ts` was 11,024 lines and named by most widgets; it is 9,512 on
+  2026-11-22. When batches C to E are done: replay the audit's rules over every release since 2026-11-19, say whether
+  rules by changed file now tell the from-scratch tests apart, what they save and what they would have missed, and
+  write it into the audit. With it, check what of item 5 is in place: recorded copies in the gate, from-scratch tests on
+  several workers.
 - **Columns whose values match** (the practitioner, 2026-11-22: "Can FW detect compatible keys between tables?", then
   "show the user on the UI which columns from different tables have potential matches", "Is it the same with append
   tables?"). Done in 0.167.0: Relate a column proposes the pair linking most and lists every pair sharing values;

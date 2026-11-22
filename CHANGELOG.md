@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.167.0 — In development
+## 0.167.0 — 2026-11-22
 
 - **The order of a pin's form**, Point data 0.14.0: under Add a form field, each field moved up or down; every pin's
   form follows. Experiment 09 is closed.

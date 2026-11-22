@@ -58,7 +58,43 @@ export function detectChart(found:DetectTableResult,series:string,esc:Escape):st
 }
 
 /** SHOW ME HOW: EARS C1 on ten made-up days, with a baseline of 3 so each step fits on the screen. */
-export function detectWalkthrough():Walkthrough{
+/** THE METHOD'S OWN COMPUTATION, drawn (the practitioner, 2026-11-21: "don't we need algorithmic computation charts?"):
+ *  its statistic over time against its decision limit, on the statistic's own scale, each day that signals marked with a
+ *  triangle and said in the key. */
+const COMPUTATION:Record<DetectMethod,[string,string]>={
+  'ears-c1':['each day’s count, in standard deviations above the mean of the days before it','z(1−α), the line a day must pass'],
+  'ears-c2':['each day’s count, in standard deviations above the mean of the days before the 2 left out','z(1−α), the line a day must pass'],
+  'ears-c3':['C2’s excess over 1, added over the day and the 2 before it','z(1−α), the line the sum must pass'],
+  cusum:['the CUSUM sum: each day’s excess over the expected level, added up, never below 0','h, the decision interval'],
+  ewma:['the smoothed level: each day weighted with the level before it','its limit, narrow at first, widening to steady'],
+};
+export function detectMethodChart(found:DetectTableResult,series:string,method:DetectMethod,esc:Escape):string{
+  const rows=found.table.rows.filter(r=>found.table.keys.length===2||String(r.key[found.table.keys[1]!])===series);
+  const per=(m:string)=>rows.filter(r=>r.key.measure===m).map(r=>r.value);
+  const stat=per('statistic'),limit=per('limit'),signal=per('signal'),N=stat.length;
+  if(!N||stat.every(v=>v===null))return '';
+  const values=[...stat,...limit].filter((v):v is number=>v!==null&&Number.isFinite(v));
+  const lo=Math.min(0,...values),hi=Math.max(1,...values),W=760,H=200,L=48,B=28,top=12;
+  const x=(i:number)=>L+(i+0.5)*(W-L-8)/N,y=(v:number)=>H-B-((v-lo)/(hi-lo))*(H-B-top);
+  const line=(vals:(number|null)[])=>{const runs:string[]=[];let run:string[]=[];
+    vals.forEach((v,i)=>{if(v===null){if(run.length)runs.push(run.join(' '));run=[];}else run.push(`${x(i).toFixed(1)},${y(v).toFixed(1)}`);});
+    if(run.length)runs.push(run.join(' '));return runs;};
+  const marks=signal.map((v,i)=>v===1&&stat[i]!==null?`<path d="M${x(i).toFixed(1)},${(y(stat[i]!)-11).toFixed(1)} l6,10 h-12 z" class="detect-signal-mark"><title>${esc(found.periods[i]!)}: signals</title></path>`:'').join('');
+  const ticks=[lo,(lo+hi)/2,hi].map(v=>`<text x="${L-6}" y="${(y(v)+5).toFixed(1)}" text-anchor="end" class="detect-axis">${num(v,1)}</text>`).join('');
+  const labels=[0,Math.floor((N-1)/2),N-1].filter((v,i,a)=>a.indexOf(v)===i)
+    .map(i=>`<text x="${(i===0?L:i===N-1?W-8:x(i)).toFixed(1)}" y="${H-8}" text-anchor="${i===0?'start':i===N-1?'end':'middle'}" class="detect-axis">${esc(found.periods[i]!)}</text>`).join('');
+  const [what,limitWhat]=COMPUTATION[method],signals=signal.filter(v=>v===1).length;
+  return `<figure class="detect-chart detect-computation"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(METHOD_NAMES[method])}: the statistic against its limit">`
+    +`<line x1="${L}" y1="${y(0).toFixed(1)}" x2="${W-8}" y2="${y(0).toFixed(1)}" class="detect-axis-line"/>${ticks}${labels}`
+    +line(limit).map(pts=>`<polyline points="${pts}" class="detect-threshold"/>`).join('')
+    +line(stat).map(pts=>`<polyline points="${pts}" class="detect-statistic"/>`).join('')+marks+'</svg>'
+    +`<figcaption><ul class="walk-key"><li>Solid line: ${esc(what)}.</li><li>Dashed line: ${esc(limitWhat)}.</li>`
+    +`<li>Triangles: the ${n(signals)} day${signals===1?'':'s'} where the line passes the limit, which signal.</li></ul></figcaption></figure>`;
+}
+
+/** SHOW ME HOW, for the method chosen: EARS C1 day by day against the days before it, or the others' computation. */
+export function detectWalkthrough(method:DetectMethod='ears-c1'):Walkthrough{
+  if(method!=='ears-c1')return computationWalkthrough(method);
   const counts=[3,4,2,3,5,3,4,9,4,3],days=counts.map((_,i)=>`day ${i+1}`);
   const rows=detect(counts,{method:'ears-c1',baseline:3,alpha:0.001});
   const steps:Walkthrough['steps']=[{text:'A made-up example: ten days of counts. EARS C1 holds each day to the days just before it: their mean, '
@@ -77,6 +113,29 @@ export function detectWalkthrough():Walkthrough{
     +'outbreak is for the person who looks at the cases behind it.',marks:[],
     result:rows.filter(r=>r.signal!==null).map(r=>[days[r.index]!,num(r.expected),num(r.threshold),r.signal?'yes':'no']),final:true});
   return {title:'Detect unusual counts, on a made-up example',resultColumns:['day','expected','threshold','signal'],steps,
+    tables:[{label:'Cases by day',columns:['day','cases'],rows:counts.map((c,i)=>[days[i]!,String(c)])}]};
+}
+
+/** The other methods on the same ten made-up days: the statistic each day, its limit, and whether it signals. */
+function computationWalkthrough(method:Exclude<DetectMethod,'ears-c1'>):Walkthrough{
+  const counts=[3,4,2,3,5,3,4,9,8,3],days=counts.map((_,i)=>`day ${i+1}`);
+  const settings={method,...(method.startsWith('ears')?{baseline:3}:{baselinePeriods:4})};
+  const rows=detect(counts,settings);
+  const intro:Record<Exclude<DetectMethod,'ears-c1'>,string>={
+    'ears-c2':'EARS C2 holds each day to the 3 days ending 3 before it: the 2 days just before are left out, so the start of a rise does not lift its own threshold. Its statistic is the count in standard deviations above that mean; it signals past z(1−α) = 3.09.',
+    'ears-c3':'EARS C3 adds up, over the day and the 2 before it, how far C2’s statistic passes 1, and signals where the sum passes z(1−α) = 1.96. Slower to start, steadier once it does.',
+    cusum:`CUSUM takes the mean of the first 4 days as the expected level, ${num(rows[0]!.expected)}. Each day after, it adds the day’s excess, standardized and less k = 1.04, to a running sum that never falls below 0; it signals where the sum reaches h = 2.26.`,
+    ewma:`EWMA takes the mean and spread of the first 4 days, then smooths: each day counts 0.3, the level before it 0.7. It signals where the smoothed level passes its limit, which starts narrow and widens.`};
+  const steps:Walkthrough['steps']=[{text:`A made-up example: ten days of counts. ${intro[method]} Short baselines so each step fits.`,marks:[]}];
+  const watched=rows.filter(r=>r.signal!==null);
+  for(const r of watched)steps.push({text:`${days[r.index]}: ${num(r.observed)} cases; the statistic is ${num(r.statistic)} against a limit of ${num(r.limit)}, `
+      +(r.signal?'which it passes: it signals.':'which it does not pass.'),
+    marks:[{table:0,row:r.index,state:r.signal?'matched' as const:'unused' as const,word:r.signal?'signals':'no signal'}],
+    result:[[days[r.index]!,num(r.statistic),num(r.limit),r.signal?'yes':'no']]});
+  const signalled=watched.filter(r=>r.signal).map(r=>days[r.index]);
+  steps.push({text:`${signalled.length?`${signalled.join(' and ')} signal.`:'No day signals.'} The chart of the method’s computation draws the same: the statistic as a line, the limit dashed.`,
+    marks:[],result:watched.map(r=>[days[r.index]!,num(r.statistic),num(r.limit),r.signal?'yes':'no']),final:true});
+  return {title:`${METHOD_NAMES[method]}, on a made-up example`,resultColumns:['day','statistic','limit','signal'],steps,
     tables:[{label:'Cases by day',columns:['day','cases'],rows:counts.map((c,i)=>[days[i]!,String(c)])}]};
 }
 
@@ -126,17 +185,17 @@ export function openDetectConfig(view:DetectView,esc:Escape):void{
       try{found=detectTable(t,{...d});}catch(error){return {settings,preview:before,message:{tone:'refusal' as const,text:error instanceof Error?error.message:String(error)},blocked:true};}
       const first=found.series[0]?.name??'';
       const wide=found.periods.map((p,i)=>{const at=(m:string)=>found.table.rows.find(r=>r.key[d.timeField]===p&&(!d.groupField||r.key[d.groupField]===first)&&r.key.measure===m)?.value;
-        return [p,num(at('observed')),num(at('expected')),num(at('threshold')),num(at('statistic')),at('signal')===1?'yes':at('signal')===0?'no':'—'];void i;});
+        return [p,num(at('observed')),num(at('expected')),num(at('threshold')),num(at('statistic')),num(at('limit')),at('signal')===1?'yes':at('signal')===0?'no':'—'];void i;});
       const after=`<fieldset class="detect-after"><legend>After</legend><p data-detect-sentence>${esc(detectSentence(found,{...d}))}</p>`
-        +detectChart(found,first,esc)
-        +'<div class="table-scroll"><table><thead><tr>'+[d.timeField,'observed','expected','threshold','statistic','signal'].map(c=>`<th scope="col">${esc(c)}</th>`).join('')
-        +'</tr></thead><tbody>'+wide.map(r=>`<tr${r[5]==='yes'?' class="detect-signal-row"':''}>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')+'</tbody></table></div>'
+        +detectChart(found,first,esc)+detectMethodChart(found,first,d.method,esc)
+        +'<div class="table-scroll"><table><thead><tr>'+[d.timeField,'observed','expected','threshold','statistic','limit','signal'].map(c=>`<th scope="col">${esc(c)}</th>`).join('')
+        +'</tr></thead><tbody>'+wide.map(r=>`<tr${r[6]==='yes'?' class="detect-signal-row"':''}>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')+'</tbody></table></div>'
         +(found.series.length>1?`<p class="muted">The first of ${found.series.length} series shown; the step hands on every series, each period’s five measures.</p>`:'')+'</fieldset>';
       return {settings,preview:before+after};
     },
     wire:(root,d,redraw)=>{
       const show=root.querySelector<HTMLButtonElement>('#detect-show-me');
-      if(show)show.onclick=()=>openWalkthrough(detectWalkthrough(),esc,show);
+      if(show)show.onclick=()=>openWalkthrough(detectWalkthrough(d.method),esc,show);
       const on=(id:string,f:(el:HTMLInputElement&HTMLSelectElement)=>void)=>root.querySelector<HTMLInputElement&HTMLSelectElement>(id)?.addEventListener('change',e=>{f(e.target as HTMLInputElement&HTMLSelectElement);redraw();});
       const numeric=(id:string,key:keyof DetectDraft)=>on(id,el=>{const raw=el.value.trim();if(raw==='')delete d[key];else (d as Record<string,unknown>)[key]=Number(raw);});
       on('#detect-time',el=>{d.timeField=el.value;if(d.groupField===el.value)delete d.groupField;});

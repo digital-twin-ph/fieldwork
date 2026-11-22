@@ -31,12 +31,20 @@ test('the run hands on each period’s measures; the dialog draws the counts and
   const dialog=page.locator('#detect-config');
   await expect(dialog.locator('[data-detect-sentence]')).toContainText('EARS C1 over 40 periods: 2 of 33 periods signal');
   await expect(dialog.locator('.detect-chart rect.detect-bar-signal')).toHaveCount(2);
-  await expect(dialog.locator('.detect-chart rect')).toHaveCount(40);
+  await expect(dialog.locator('.detect-chart:not(.detect-computation) rect')).toHaveCount(40);
+  // THE METHOD'S OWN COMPUTATION: its statistic against z(1−α), the two signalling days marked by triangles.
+  await expect(dialog.locator('.detect-computation .detect-signal-mark')).toHaveCount(2);
+  await expect(dialog.locator('.detect-computation figcaption')).toContainText('z(1−α), the line a day must pass');
   // ANOTHER METHOD, SEEN BEFORE APPLY: CUSUM on the first 7 days signals from the second day of the excess on.
   await dialog.locator('#detect-method').selectOption('cusum');
   await expect(dialog.locator('[data-detect-sentence]')).toContainText('CUSUM over 40 periods: 14 of 33 periods signal');
   await dialog.locator('#detect-reset').check();
   await expect(dialog.locator('[data-detect-sentence]')).not.toContainText('14 of 33');
+  await expect(dialog.locator('.detect-computation figcaption')).toContainText('h, the decision interval');
+  // SHOW ME HOW FOLLOWS THE METHOD: CUSUM's running sum on the made-up days.
+  await dialog.locator('#detect-show-me').click();
+  await expect(page.locator('#table-walkthrough')).toContainText('CUSUM, on a made-up example');
+  await page.locator('#table-walkthrough [data-walk-close]').click();
   await dialog.locator('#detect-method').selectOption('ears-c1');
   // SHOW ME HOW: ten made-up days, the baseline marked, day 8 signalling.
   await dialog.locator('#detect-show-me').click();

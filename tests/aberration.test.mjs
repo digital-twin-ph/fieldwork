@@ -44,3 +44,12 @@ test('the normal quantile, and settings refused in words',()=>{
   assert.throws(()=>detect([0,0,0,0,0,0,0,1],{method:'cusum'}),/mean is 0/);
   assert.throws(()=>detect([1,-1,2],{method:'ears-c1'}),/0 or more/);
 });
+
+test("each method states its decision limit on the statistic's own scale",()=>{
+  const at=(s)=>detect(x,s).find(r=>r.limit!==null);
+  assert.ok(Math.abs(at({method:'ears-c1'}).limit-3.0902)<1e-3);
+  assert.ok(Math.abs(at({method:'ears-c3'}).limit-1.95996)<1e-3);
+  assert.equal(at({method:'cusum',baselinePeriods:7}).limit,2.26);
+  const e=detect(x,{method:'ewma',baselinePeriods:7}).filter(r=>r.limit!==null);
+  assert.ok(e.every(r=>r.limit===r.threshold)&&e[0].limit<e.at(-1).limit,'EWMA\'s limit widens');
+});

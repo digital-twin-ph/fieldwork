@@ -29,6 +29,9 @@ export interface DetectRow {
   /** What the baseline expects; null before there is a baseline. */ expected:number|null;
   /** The count, or for EWMA the smoothed level, above which a period signals. */ threshold:number|null;
   /** C1 or C2's standardized count, C3's sum, CUSUM's sum, EWMA's smoothed level. */ statistic:number|null;
+  /** THE DECISION LIMIT ON THE STATISTIC'S OWN SCALE (2026-11-21): z(1−α) for EARS, h for CUSUM, the widening limit for
+   *  EWMA. A period signals where the statistic passes it; the chart of a method's computation draws the two. */
+  limit:number|null;
   signal:boolean|null;
 }
 
@@ -60,7 +63,7 @@ function erfc(x:number):number{
 const mean=(xs:readonly number[])=>xs.reduce((a,b)=>a+b,0)/xs.length;
 /** The sample standard deviation, n − 1, as R's sd. */
 const sd=(xs:readonly number[])=>{const m=mean(xs);return Math.sqrt(xs.reduce((t,x)=>t+(x-m)**2,0)/(xs.length-1));};
-const empty=(index:number,observed:number):DetectRow=>({index,observed,expected:null,threshold:null,statistic:null,signal:null});
+const empty=(index:number,observed:number):DetectRow=>({index,observed,expected:null,threshold:null,statistic:null,limit:null,signal:null});
 
 /** Validates the settings and says what is wrong in words; returns them with the defaults filled. */
 export function detectSettings(s:DetectSettings):Required<Omit<DetectSettings,'reset'>>&{reset:boolean}{
@@ -92,7 +95,7 @@ export function detect(series:readonly number[],settings:DetectSettings):DetectR
     return series.map((x,t)=>{
       const here=c2(t);if(!here)return empty(t,x);
       if(s.method!=='ears-c3'){
-        return {index:t,observed:x,expected:here.mean,threshold:here.mean+z*here.sig,statistic:here.stat,
+        return {index:t,observed:x,expected:here.mean,threshold:here.mean+z*here.sig,statistic:here.stat,limit:z,
           signal:here.sig>0?x>here.mean+z*here.sig:x>here.mean};
       }
       // C3: over this period and the two before, how far each C2 exceeds 1; the threshold is the count that brings it to z.
@@ -101,7 +104,7 @@ export function detect(series:readonly number[],settings:DetectSettings):DetectR
       const carried=before.reduce((a,b)=>a+Math.max(0,b!.stat!-1),0),c3=carried+Math.max(0,here.stat-1);
       // Past z already from the two before, any count signals: the threshold is 0.
       const threshold=carried>z?0:Math.max(0,here.mean+here.sig*(1+z-carried));
-      return {index:t,observed:x,expected:here.mean,threshold,statistic:c3,signal:c3>z};
+      return {index:t,observed:x,expected:here.mean,threshold,statistic:c3,limit:z,signal:c3>z};
     });
   }
   const b=series.slice(0,s.baselinePeriods);
@@ -114,7 +117,7 @@ export function detect(series:readonly number[],settings:DetectSettings):DetectR
       if(t<s.baselinePeriods)return {...empty(t,x),expected:m};
       const previous=S;S=Math.max(0,S+(x-m)/Math.sqrt(m)-s.k);
       const signal=S>=s.h,threshold=Math.ceil(Math.sqrt(m)*(s.h+s.k-previous)+m);
-      const row={index:t,observed:x,expected:m,threshold:Math.max(0,threshold),statistic:S,signal};
+      const row={index:t,observed:x,expected:m,threshold:Math.max(0,threshold),statistic:S,limit:s.h,signal};
       if(signal&&s.reset)S=0;
       return row;
     });
@@ -126,13 +129,13 @@ export function detect(series:readonly number[],settings:DetectSettings):DetectR
     if(t<s.baselinePeriods)return {...empty(t,x),expected:m};
     const i=t-s.baselinePeriods+1;Z=s.lambda*x+(1-s.lambda)*Z;
     const limit=m+s.L*sigma*Math.sqrt(s.lambda/(2-s.lambda)*(1-(1-s.lambda)**(2*i)));
-    return {index:t,observed:x,expected:m,threshold:limit,statistic:Z,signal:Z>limit};
+    return {index:t,observed:x,expected:m,threshold:limit,statistic:Z,limit,signal:Z>limit};
   });
 }
 
 /** THE NAMES THE PRACTITIONER READS, in the dialog, the table and the receipt. */
 export const METHOD_NAMES:Record<DetectMethod,string>={'ears-c1':'EARS C1','ears-c2':'EARS C2','ears-c3':'EARS C3',cusum:'CUSUM',ewma:'EWMA'};
-export const MEASURES=['observed','expected','threshold','statistic','signal'] as const;
+export const MEASURES=['observed','expected','threshold','statistic','limit','signal'] as const;
 
 export interface DetectTableSettings extends DetectSettings {timeField:string;groupField?:string}
 export interface DetectTableResult {
@@ -175,7 +178,7 @@ export function detectTable(table:import('./data-table.js').DataTable,s:DetectTa
   const keys=[s.timeField,...(s.groupField?[s.groupField]:[]),'measure'];
   return {periods,series,table:{kind:'data-table',keys,valueField:'value',rows,rowCount:rows.length,
     missingValueCount:rows.filter(r=>r.value===null).length,primaryKey:keys,
-    columns:{measure:{label:'Measure',description:`observed, expected, threshold, statistic, and signal (1 where the period signals) by ${METHOD_NAMES[s.method]}`,origin:'file',confirmed:true}}} as import('./data-table.js').DataTable};
+    columns:{measure:{label:'Measure',description:`observed, expected, threshold (a count), statistic and limit (the method's own scale), and signal (1 where the period signals) by ${METHOD_NAMES[s.method]}`,origin:'file',confirmed:true}}} as import('./data-table.js').DataTable};
 }
 
 /** One sentence of what a detection found, for the Inspector, the receipt and Notes. */

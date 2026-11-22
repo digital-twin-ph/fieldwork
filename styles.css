@@ -1835,3 +1835,5 @@ tr.detect-signal-row td{font-weight:700}
 .json-arriving code{font:16px ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .json-declared{color:var(--accent,#176b59);font-weight:700}
 .json-missing{color:var(--danger-1,#a32020);font-size:16px}
+.detect-statistic{fill:none;stroke:var(--accent,#176b59);stroke-width:2.5}
+.detect-signal-mark{fill:var(--text,#111)}

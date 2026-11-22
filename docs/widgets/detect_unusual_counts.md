@@ -19,9 +19,9 @@ so that a slow shift signals; the EARS methods react to a sudden rise within day
 | --- | --- |
 | **records** | a table of counts: one row per period, or per period and series |
 
-Its output is a table: for each period (and series), five rows under a `measure` column: **observed**, **expected**,
-**threshold**, **statistic** and **signal** (1 where the period signals, 0 where it does not, empty before there is a
-baseline). A Chart draws it; a Table lists it; Select rows keeps the signals.
+Its output is a table: for each period (and series), six rows under a `measure` column: **observed**, **expected**,
+**threshold** (in counts), **statistic** and **limit** (on the method's own scale), and **signal** (1 where the period
+signals, 0 where it does not, empty before there is a baseline). A Chart draws it; a Table lists it; Select rows keeps the signals.
 
 ## How to use it
 
@@ -40,7 +40,11 @@ In **Configure…**:
 | **CUSUM** | the mean of the first periods; each period's excess over it is added up | baseline periods (7), slack k (1.04), signal at h (2.26), start again after a signal |
 | **EWMA** | the mean and spread of the first periods; a weighted average leaning on recent periods | baseline periods (7), λ (0.3), L (3) |
 
-**Show me how it works** walks EARS C1 through ten made-up days.
+Beneath it, **the method's own computation**: its statistic over time as a solid line, its decision limit dashed, and a
+triangle on each day that signals. For CUSUM the line is the running sum against h; for EWMA the smoothed level against
+a limit that widens from narrow; for the EARS methods the day's count in standard deviations against z(1−α).
+
+**Show me how it works** walks the chosen method through ten made-up days.
 
 ## What it will not do
 
@@ -61,6 +65,11 @@ formula. Sources: Hutwagner and colleagues, J Urban Health 2003 (EARS, open at P
 (CUSUM); Roberts, Technometrics 1959 (EWMA).
 
 ## History
+
+### 2026-11-21 · The method's computation drawn (0.2.0)
+
+A `limit` measure, the decision limit on the statistic's own scale, and a chart of the statistic against it in
+Configure…; Show me how for each method.
 
 ### 2026-11-21 · First release (0.1.0)
 

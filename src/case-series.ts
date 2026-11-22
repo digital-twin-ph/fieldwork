@@ -148,7 +148,13 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
     let weight=1;
     if(weightField){
       const raw=properties[weightField];
-      weight=typeof raw==='number'?raw:Number(String(raw??'').trim());
+      // A BLANK WEIGHT IS NOT ZERO (the table stress tests, 2026-11-22): Number('') is 0, and a row with no count made its
+      // period's total 0 rather than unknown.
+      if(raw===null||raw===undefined||String(raw).trim()===''){
+        const blank=points.features.filter(f=>{const r=(f.properties as Record<string,unknown>)[weightField];return r===null||r===undefined||String(r).trim()==='';}).length;
+        throw new Error(`Record ${feature.id} has no case weight in "${weightField}"${blank>1?`, and ${blank-1} other record${blank===2?' has':'s have'} none either`:''}. `
+          +'A weight is not guessed, and a blank is not zero: fill it in, or select the rows that have one.');}
+      weight=typeof raw==='number'?raw:Number(String(raw).trim());
       if(!Number.isFinite(weight)||weight<0)
         throw new Error(`Record ${feature.id} has a case weight of "${String(raw)}" in "${weightField}". A weight must be a number of at least zero; it is not guessed.`);
     }
@@ -171,7 +177,7 @@ export function caseSeries(points:PointCollection,options:SeriesOptions):CaseSer
   // empty periods would compress the time axis and misstate the shape.
   for(let key=keys[0];key!==undefined&&key<=keys[keys.length-1];key=nextKey(key,period)){
     bins.push({key,label:label(key,period),count:counts.get(key)??0});
-    if(bins.length>5000)throw new Error('This date range produces more than 5,000 periods. Choose a longer period.');
+    if(bins.length>5000)throw new Error(`This date range, ${keys[0]} to ${keys[keys.length-1]}, produces more than 5,000 periods. Choose a longer period, or check the earliest and latest dates: one may be a typing error.`);
   }
   return {kind:'case-series',...splitBins(bins,splitBy,byGroup),total,period,dateKind,dateField,weightField,
     datedRecords,undatedRecords:undated.length,undated:undated.slice(0,50),
@@ -227,7 +233,9 @@ export function seriesReceipt(node:{id:string},series:CaseSeries,runId:string,so
     facts+=`${entity} fw:seriesBin <${base}output:${node.id}:period:${index}>.\n<${base}output:${node.id}:period:${index}> a fw:SeriesBin; fw:periodKey ${quote(bin.key)}; fw:caseCount "${bin.count}"^^xsd:decimal`
       +(bin.group!==undefined?`; fw:seriesGroup ${quote(bin.group)}`:'')+'.\n';
   return {nodeId:node.id,kind:'computation',facts,input:facts,rules:'',conclusions:[],
-    method:`Cases per ${PERIOD_WORDS[series.period]} by ${series.dateKind} date${series.weightField?`, weighted by ${series.weightField}`:series.caseId?`, each ${series.caseId} once (${series.rowsRead} rows read)`:', one case per record'}${series.splitBy?`, for each value of ${series.splitBy} (${(series.groups??[]).map(g=>g||'blank').join(', ')})`:''}. Zero-count periods are retained; records without an ISO 8601 date are excluded and counted, never redistributed.`};
+    method:`Cases per ${PERIOD_WORDS[series.period]} by ${series.dateKind} date${series.weightField?`, weighted by ${series.weightField}`:series.caseId?`, each ${series.caseId} once (${series.rowsRead} rows read)`:', one case per record'}${series.splitBy?`, for each value of ${series.splitBy} (${(series.groups??[]).map(g=>g||'blank').join(', ')})`:''}. Zero-count periods are retained; records without an ISO 8601 date are excluded and counted, never redistributed`
+      // HOW MANY, AND WHAT THEY HELD (the table stress tests, 2026-11-22): "excluded and counted" gave no count.
+      +(series.undatedRecords?`: ${series.undatedRecords} of ${series.datedRecords+series.undatedRecords} here, such as ${[...new Set(series.undated.map(u=>u.value))].slice(0,3).map(v=>`“${v||'empty'}”`).join(', ')}`:'')+'.'};
 }
 
 export function validateCaseSeriesNode(node:WorkflowNode):void{

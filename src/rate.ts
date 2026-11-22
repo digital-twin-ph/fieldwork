@@ -86,10 +86,13 @@ export function computeRate(records:{id:string;properties:Record<string,Scalar>}
     .sort((a,b)=>bandWidth?a[1].sort-b[1].sort:a[0].localeCompare(b[0]))
     .map(([group,bucket])=>{
       const {numerator,denominator}=bucket;
+      // A DENOMINATOR OF ZERO FIRST (the table stress tests, 2026-11-22): checked after the proportion, it was refused as
+      // a proportion above one, which is not what is wrong with it.
+      if(denominator===0)return {group,label:bucket.label,numerator,denominator,rate:null,
+        reason:numerator?`No denominator, so no rate: ${numerator} counted against a population of 0, and a count without a population at risk is not a rate. Check that the two columns describe the same place and time.`
+          :'No denominator, so no rate. A count without a population at risk is not a rate.'};
       if(rateKind==='proportion'&&numerator>denominator)
         throw new Error(`Group ${bucket.label} has ${numerator} in the numerator and ${denominator} in the denominator. A proportion cannot exceed one: either this is a ratio of events per unit, or the two columns do not describe the same thing.`);
-      if(denominator===0)return {group,label:bucket.label,numerator,denominator,rate:null,
-        reason:'No denominator, so no rate. A count without a population at risk is not a rate.'};
       if(denominator<minimumDenominator)return {group,label:bucket.label,numerator,denominator,rate:null,
         reason:`Denominator ${denominator} is below the stated minimum of ${minimumDenominator}; a rate from so few units would be unstable, so none is reported.`};
       return {group,label:bucket.label,numerator,denominator,rate:numerator/denominator*multiplier};

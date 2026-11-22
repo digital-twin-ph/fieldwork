@@ -119,3 +119,11 @@ The contracts are those of an earlier record-linkage command — blocking before
 rather than a blended score, three classes rather than merge-or-not, and a missing value that never
 agrees with another missing value. This widget adds the spatial comparison and the merge the
 thresholds licence.
+
+## History
+
+### 2026-11-22 · Blank on both sides is not agreement (0.4.0)
+
+Found by the stress tests of the table operations. Two rows with no name, in the same district, were merged as one
+record entered twice. A pair whose compared column is empty in both now waits for you, and the review says the column is
+empty in both. Its Inspector and dialog moved out of the application's main file, unchanged.

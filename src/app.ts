@@ -136,6 +136,7 @@ import {sampleInspector,type SampleKit} from './sample-raster-ui.js';
 import {caseSeriesInspector,rateInspector,type SeriesRateKit} from './series-rate-ui.js';
 import {TABLE_STEP_INSPECTORS,type TableStepKit} from './table-steps-ui.js';
 import {OUTBREAK_STEP_INSPECTORS,type OutbreakKit} from './outbreak-steps-ui.js';
+import {dedupInspector,type DedupKit} from './deduplicate-step-ui.js';
 import {AREA_STEP_INSPECTORS,type AreaStepKit} from './area-steps-ui.js';
 import {zipSync,strToU8} from 'fflate';
 import {referenceList} from './references.js';
@@ -160,8 +161,6 @@ import {resolveLayerSymbol,markPath,FIGURE_ROLE} from './presentation.js';
 import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
 import {templateFrom} from './workflow-template.js';
-import {pairSignature} from './deduplicate-points.js';
-import {openDeduplicateReview} from './deduplicate-ui.js';
 import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal,STORAGE_QUOTA_BYTES} from './study-area.js';
 import {loadPayloads,putPayload,dropPayload,cachedPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
 import {openStudyAreaEditor} from './study-area-map.js';
@@ -2500,94 +2499,6 @@ function writeUpSelect(n:WorkflowNode<'map_output'|'table_output'|'chart_output'
     +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}`
     +`<option value="${LEFT_OUT}" ${at===LEFT_OUT?'selected':''}>Not in the write-up</option></select></div>`;
 }
-/** DEDUPLICATE RECORDS' ONE SENTENCE (experiment 186). */
-function dedupSentence(p:import('./types.js').ParamsByType['deduplicate_points']):string{
-  if(p.format==='table')return `Finds rows of one table that are one record entered twice, by ${(p.blockColumns?.length?p.blockColumns:['its primary key']).join(', ')}.`;
-  return `Finds records in two or more point layers that are the same place: names ${p.nameMatch==='fuzzy'?`within ${p.fuzzyThreshold}`:'equal'} and within ${p.nearDistanceM} m.`;
-}
-
-/** DEDUPLICATE RECORDS' SETTINGS, for its dialog: the way in, and what that way compares. Built from a draft. */
-function dedupSettings(n:WorkflowNode<'deduplicate_points'>,p:import('./types.js').ParamsByType['deduplicate_points']):string{
-  const tabular=p.format==='table';
-  let html=`<div class="field"><label class="field-label" for="dedup-format">The records are</label>`
-    +`<select id="dedup-format"><option value="points" ${!tabular?'selected':''}>Points, in two or more sources</option>`
-    +`<option value="table" ${tabular?'selected':''}>Rows of one table</option></select></div>`;
-    const offered=tabular?Object.keys(upstreamKeyValues(n)??{}):[];
-    const upTable=(()=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
-      const up=edge?workflow.nodes.find(m=>m.id===edge.from):undefined;
-      return up?.type==='table_input'?up.params.data:undefined;})();
-    const tableColumns=upTable?[...upTable.keys,upTable.valueField]:offered;
-    const pick=(key:'blockColumns'|'compareColumns',legend:string,fallback:string[])=>
-      `<fieldset class="field exposure-list"><legend class="field-label">${legend}</legend>`
-      +tableColumns.map(name=>`<label class="check"><input type="checkbox" data-dedup-columns="${key}" value="${esc(name)}" `
-        +`${(p[key]?.length?p[key]:fallback).includes(name)?'checked':''}> ${esc(name)}</label>`).join('')+`</fieldset>`;
-    if(tabular){
-      const block=p.blockColumns?.length?p.blockColumns:upTable?.primaryKey??[];
-      html+=`<p class="description">Compares rows that share the columns identifying a row, by default the table's primary key. `
-        +`Rows identical on every compared column are one record entered twice and merge on their own. Any disagreement comes to you, and you choose which row to keep.</p>`
-        +(tableColumns.length?pick('blockColumns','Rows are the same record only if they share',upTable?.primaryKey??[])
-          +pick('compareColumns','Compare these columns',tableColumns.filter(c=>!block.includes(c)))
-          :'<p class="description">Connect a table to choose its columns.</p>')
-        +`<label class="field-label" for="dedup-name-match">Text comparison</label>`
-        +`<select id="dedup-name-match" data-dedup="nameMatch">`
-        +`<option value="exact" ${p.nameMatch==='exact'?'selected':''}>Exact, after normalising</option>`
-        +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option></select>`
-        +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
-          +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'');
-    }else html+=`<p class="description">Finds records in two or more sources that are the same place.</p>`
-    if(!tabular)html+=`<label class="field-label" for="dedup-name-field">Name attribute</label>`
-      +`<input id="dedup-name-field" data-dedup="nameField" maxlength="60" value="${esc(p.nameField)}">`
-      +`<label class="field-label" for="dedup-name-match">Name comparison</label>`
-      +`<select id="dedup-name-match" data-dedup="nameMatch">`
-      +`<option value="fuzzy" ${p.nameMatch==='fuzzy'?'selected':''}>Jaro-Winkler similarity</option>`
-      +`<option value="exact" ${p.nameMatch==='exact'?'selected':''}>Exact, after normalising</option>`
-      +`</select>`
-      +(p.nameMatch==='fuzzy'?`<label class="field-label" for="dedup-fuzzy">Similarity at or above</label>`
-        +`<input id="dedup-fuzzy" data-dedup="fuzzyThreshold" type="number" min="0.5" max="1" step="0.01" value="${p.fuzzyThreshold}">`:'')
-      +`<label class="field-label" for="dedup-block">Compare pairs within (m)</label>`
-      +`<input id="dedup-block" data-dedup="blockDistanceM" type="number" min="1" max="50000" step="10" value="${p.blockDistanceM}">`
-      +``
-      +`<label class="field-label" for="dedup-near">Count as the same place within (m)</label>`
-      +`<input id="dedup-near" data-dedup="nearDistanceM" type="number" min="1" max="50000" step="5" value="${p.nearDistanceM}">`
-      +``
-      +`<label class="field-label" for="dedup-match">Merge automatically at a score of</label>`
-      +`<input id="dedup-match" data-dedup="matchThreshold" type="number" min="1" max="2" step="1" value="${p.matchThreshold}">`
-      +`<label class="field-label" for="dedup-review">Ask me at a score of</label>`
-      +`<input id="dedup-review" data-dedup="reviewThreshold" type="number" min="0" max="2" step="1" value="${p.reviewThreshold}">`
-      +``;
-  return html;
-}
-
-/** DEDUPLICATE RECORDS' DIALOG (experiment 186): every setting on a draft. What a run found, and the pairs that wait
- *  for a person, stay in the Inspector's Result and the review dialog. */
-function openDedupConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'deduplicate_points');
-  type Draft=import('./types.js').ParamsByType['deduplicate_points'];
-  openConfigDialog<Draft>({
-    id:'dedup-config',widget:'Deduplicate records',step:node.params.label||TYPES.deduplicate_points.title,draft:structuredClone(node.params),
-    sections:draft=>{
-      const settings=dedupSettings(node,draft);
-      return {settings,preview:'<p class="muted">The pairs are compared when the workflow runs; what it found, and the pairs that wait for you, are in the Inspector\u2019s Result.</p>'};
-    },
-    wire:(root,draft,redraw)=>{
-      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
-        root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
-      on('#dedup-format',el=>{const f=el.value as Draft['format'];draft.format=f;
-        // Text in a table is compared exactly unless somebody asks otherwise; names across sources are not.
-        draft.nameMatch=f==='points'?'fuzzy':'exact';});
-      on('[data-dedup]',el=>{(draft as unknown as Record<string,unknown>)[el.dataset.dedup!]=(el as HTMLElement as HTMLInputElement).type==='number'?Number(el.value):el.value;});
-      on('[data-dedup-columns]',el=>{const key=el.dataset.dedupColumns as 'blockColumns'|'compareColumns';
-        draft[key]=[...root.querySelectorAll<HTMLInputElement>(`[data-dedup-columns="${key}"]:checked`)].map(b=>b.value);});
-    },
-    apply:draft=>{
-      change(w=>{const target=getNode(w,nodeId,'deduplicate_points');const was=target.params.format??'points';
-        target.params=draft;
-        // WHAT THE RECORDS ARE decides the ports, so the edges that no longer fit are removed with it.
-        if((draft.format??'points')!==was){const ports=new Set(nodeInputs(target).map(([port])=>port));
-          w.edges=w.edges.filter(edge=>edge.to!==nodeId||ports.has(edge.port));}});
-    },
-  },esc);
-}
 
 
 /** THE INSPECTOR'S ONE SENTENCE for Apply ruleset (experiment 186). */
@@ -3191,52 +3102,7 @@ function renderInspector(){
       +'<p class="description">Projects connected longitude/latitude points into this UTM zone, in metres.</p>';
     content+=nodeInputs(n).map(([port])=>`<div class="field"><label class="field-label" for="reproject-port-${port}">Points input</label><select id="reproject-port-${port}" data-map-port="${port}"><option value="">Select input</option>${workflow.nodes.filter(x=>x.id!==n.id&&outputOf(x)==='points').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.port===port&&e.from===x.id)?'selected':''}>${esc(x.params.label||x.id)}</option>`).join('')}</select></div>`).join('');
   }else if(n.type==='deduplicate_points'){
-    // THE STANDARD INSPECTOR (experiments 186 and 193): the name, the inputs, one sentence of what it compares or links,
-    // Configure…, and what the last run did -- the pairs counted, and the review, one button away.
-    const p=n.params,linkage=result?.linkages?.[n.id];
-    content+=standardSection('Name',labelForm('dedup-label','Name',p.label||'Deduplicated records'));
-    content+=standardSection('Inputs',standardInputs(n));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(dedupSentence(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    let summary='';
-    if(linkage){
-      const waiting=linkage.candidates.filter(c=>c.classification==='review'&&!c.decided);
-      const review=linkage.candidates.filter(c=>c.classification==='review').length;
-      const considered=linkage.compared+linkage.blocked;
-      // EVERY OUTCOME IN ONE TABLE, each against the two denominators that mean something: how
-      // much of the whole comparison it was, and how much of what was actually compared. The
-      // practitioner, 2026-10-21, with 48 pairs waiting outside the summary that reported the run:
-      // *"the 48 review pairs should be included in the THIS RUN summary ... as a table with
-      // percentage over total and percentage over pairs compared."* 379 matched reads differently
-      // at 69% of what was compared than at 0.3% of what was considered, and both are true.
-      // Two decimals only where one would read as zero: 0.29% of 132,317 pairs is a real
-      // quantity and "0.3%" hides how small it is, while a plain zero is a zero.
-      const share=(n:number,of:number)=>!of?'—':!n?'0%':`${(n/of*100).toFixed(n/of<0.01?2:1)}%`;
-      const row=(label:string,count:number,{compared=true,emphasis=false}={})=>
-        `<tr${emphasis?' class="emphasis"':''}><th scope="row">${label}</th><td>${count.toLocaleString()}</td>`
-        +`<td>${share(count,considered)}</td><td>${compared?share(count,linkage.compared):'—'}</td></tr>`;
-      summary+=`<span class="inspector-section">This run</span>`
-        +`<table class="dedup-summary"><thead><tr><th>Pairs</th><th>Count</th><th title="Of every pair considered">% all</th><th title="Of the pairs actually compared">% compared</th></tr></thead><tbody>`
-        +row('Considered',considered,{compared:false})
-        +row('Never compared',linkage.blocked,{compared:false})
-        +row('Compared',linkage.compared)
-        +row('Matched',linkage.matched,{emphasis:true})
-        +row('In review',review)
-        +row('Awaiting you',waiting.length,{emphasis:!!waiting.length})
-        +row('Not a match',linkage.compared-linkage.matched-review)
-        +`</tbody></table>`
-        +`<table class="dedup-summary"><thead><tr><th>Records</th><th>Count</th><th title="Of the records that came in">% all</th><th></th></tr></thead><tbody>`
-        +`<tr><th scope="row">Came in</th><td>${linkage.inputCount.toLocaleString()}</td><td>100%</td><td></td></tr>`
-        +`<tr class="emphasis"><th scope="row">Merged away</th><td>${linkage.merged.toLocaleString()}</td><td>${share(linkage.merged,linkage.inputCount)}</td><td></td></tr>`
-        +`<tr><th scope="row">Came out</th><td>${(linkage.inputCount-linkage.merged).toLocaleString()}</td><td>${share(linkage.inputCount-linkage.merged,linkage.inputCount)}</td><td></td></tr>`
-        +`</tbody></table>`;
-      if(waiting.length)summary+=`<button id="dedup-review-open" class="button primary">Review ${waiting.length} ${waiting.length===1?'pair':'pairs'}</button>`
-        +``;
-      if(p.decisions.length)summary+=`<p class="muted">${p.decisions.length} ${p.decisions.length===1?'decision':'decisions'} recorded. Editing either record lapses the one made about it.</p>`;
-    }
-    content+=standardSection('Result',(why||!linkage?`<p class="standard-result${why?' standard-result-warning':''}">`
-      +`${esc(why?`The last run could not compute this step: ${why}`:'Not run yet.')}</p>`:'')+summary);
+    content+=dedupInspector.markup(n,dedupKit());
     }else if(n.type==='find_health_facilities'){
     // THE STANDARD INSPECTOR (experiments 186 and 190): name, inputs, one sentence of what it finds and from where, the
     // fetch that acquisition needs, Configure…, and what it holds. Every setting is in the dialog.
@@ -3512,6 +3378,7 @@ function renderInspector(){
     if(!id)return;
     change(w=>{getNode(w,id,'chart_output').params.barOrder=order;},{spatial:false});
   });
+  if(n.type==='deduplicate_points')dedupInspector.wire(n,dedupKit(),document);
   if(Object.hasOwn(OUTBREAK_STEP_INSPECTORS,n.type))(OUTBREAK_STEP_INSPECTORS[n.type as keyof typeof OUTBREAK_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,outbreakKit(),document);
   if(n.type==='search_satellite_catalog')searchCatalogInspector.wire(n,inspectorKit(),document);
   if(Object.hasOwn(AREA_STEP_INSPECTORS,n.type))(AREA_STEP_INSPECTORS[n.type as keyof typeof AREA_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,areaStepKit(),document);
@@ -4132,57 +3999,6 @@ function renderInspector(){
   // did not. Experiment 01 calls this step "Correct, save, and revisit"; until 2026-10-17 it left
   // no trace at all, because the study area's IRI is node-scoped while every other area in this
   // application mints per run.
-  // The knobs, and the decisions the review band asks for. A decision is stored WITH a signature
-  // of the pair it was made about, so editing either record lapses it rather than letting a stale
-  // judgement ride on changed data -- the device the retired coverage check used, in the place
-  // where a judgement is genuinely required.
-  $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-dedup]').forEach(el=>
-    el.addEventListener('change',()=>change(w=>{
-      const node=getNode(w,n.id,'deduplicate_points');
-      const key=required(el.dataset.dedup) as 'nameField';
-      const value=(el as HTMLInputElement).type==='number'?Number(el.value):el.value;
-      (node.params as unknown as Record<string,unknown>)[key]=value;
-    })));
-  // WHAT THE RECORDS ARE decides the ports, so the edges that no longer fit are removed with it.
-  optionalElement('#dedup-format')?.addEventListener('change',e=>change(w=>{
-    const node=getNode(w,n.id,'deduplicate_points');
-    node.params.format=control(e).value==='table'?'table':'points';
-    // Text in a table is compared exactly unless somebody asks otherwise; names across sources are not.
-    node.params.nameMatch=node.params.format==='table'?'exact':'fuzzy';
-    const ports=new Set(nodeInputs(node).map(([port])=>port));
-    w.edges=w.edges.filter(edge=>edge.to!==n.id||ports.has(edge.port));
-  }));
-  $('#inspector-content').querySelectorAll<HTMLInputElement>('[data-dedup-columns]').forEach(el=>
-    el.addEventListener('change',()=>change(w=>{
-      const node=getNode(w,n.id,'deduplicate_points');
-      const key=el.dataset.dedupColumns as 'blockColumns'|'compareColumns';
-      node.params[key]=[...document.querySelectorAll<HTMLInputElement>(`[data-dedup-columns="${key}"]:checked`)].map(box=>box.value);
-    })));
-  if(n.type==='deduplicate_points')optionalElement('#configure-step')?.addEventListener('click',()=>openDedupConfig(n.id));
-  optionalElement('#dedup-review-open')?.addEventListener('click',()=>{
-    const linkage=result?.linkages?.[n.id];
-    if(!linkage)return;
-    const node=workflow.nodes.find(x=>x.id===n.id);
-    if(node?.type!=='deduplicate_points')return;
-    const waiting=linkage.candidates.filter(c=>c.classification==='review');
-    const decided=new Map(node.params.decisions.map(d=>[d.key,{decision:d.decision,reason:d.reason}]));
-    openDeduplicateReview({
-      title:node.params.label,candidates:waiting,decided,
-      onDecide:(key,decision,reason,keep)=>{
-        const candidate=waiting.find(c=>c.key===key);
-        if(!candidate)return;
-        change(w=>{
-          const target=getNode(w,n.id,'deduplicate_points');
-          target.params.decisions=[...target.params.decisions.filter(d=>d.key!==key),
-            {key,decision,reason,signature:pairSignature(candidate),...(keep?{keep}:{})}];
-        });
-      },
-      onClear:key=>change(w=>{
-        const target=getNode(w,n.id,'deduplicate_points');
-        target.params.decisions=target.params.decisions.filter(d=>d.key!==key);
-      }),
-    },esc);
-  });
   $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
   // Reading, not editing: these redraw the Inspector and touch nothing that is saved, so they
   // go through renderInspector rather than change().
@@ -5506,6 +5322,11 @@ function chartKit():ChartKit{
 }
 /** THE OUTBREAK STEPS' KIT (outbreak-steps-ui.ts): the step kit, with the columns of the cases arriving, the values a
  *  table's keys hold, and the study design's checklist of what the workflow has declared. */
+/** DEDUPLICATE RECORDS' KIT (deduplicate-step-ui.ts): the step kit, with what its last run found and the keys arriving. */
+function dedupKit():DedupKit{
+  return {...stepKit(),linkage:id=>result?.linkages?.[id],
+    upstreamKeys:id=>{const node=workflow.nodes.find(x=>x.id===id);return node?Object.keys(upstreamKeyValues(node)??{}):[];}};
+}
 function outbreakKit():OutbreakKit{
   const nodeOf=(id:string)=>workflow.nodes.find(x=>x.id===id)!;
   return {...stepKit(),receipt:id=>result?.receipts.find(r=>r.nodeId===id),

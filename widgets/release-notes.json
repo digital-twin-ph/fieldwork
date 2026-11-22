@@ -126,12 +126,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.7.1",
+   "version": "0.8.0",
    "released": "2026-11-22",
    "changes": [
     {
      "kind": "changed",
-     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
+     "description": "A blank weight is refused, not counted as zero, saying how many rows have none; the sentence gives how many records without an ISO 8601 date were left out, of how many, and what they held; a range too long to draw names its first and last date."
     }
    ],
    "breaking": false,
@@ -246,12 +246,12 @@
    "replacementCandidate": "urn:fieldwork:widget:clip_points_to_area"
   },
   "deduplicate_points": {
-   "version": "0.3.1",
-   "released": "2026-11-11",
+   "version": "0.4.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Release text no longer names another product; nothing about the widget changed."
+     "kind": "changed",
+     "description": "A pair whose compared column is empty in both waits for a person rather than merging, and the review says so; its Inspector and dialog moved to deduplicate-step-ui.ts."
     }
    ],
    "breaking": false,
@@ -636,12 +636,12 @@
    "migrationFrom": []
   },
   "rate": {
-   "version": "0.4.1",
+   "version": "0.5.0",
    "released": "2026-11-22",
    "changes": [
     {
      "kind": "changed",
-     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
+     "description": "A denominator of zero gives no rate, saying how many were counted against it, rather than a refusal about proportions."
     }
    ],
    "breaking": false,

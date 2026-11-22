@@ -63,9 +63,12 @@ export function deduplicateTable(table:DataTable,sourceNodeId:string,sourceLabel
         if(!left&&!right)return raw(a.attributes[c])!==raw(b.attributes[c]);
         return params.nameMatch==='exact'||!left||!right?left!==right:jaroWinkler(left,right)<params.fuzzyThreshold;
       });
+      // BLANK ON BOTH SIDES IS NOT AGREEMENT (the table stress tests, 2026-11-22): two records with no name were merged as
+      // one. A pair whose compared column is empty in both waits for a person, the column named.
+      const blank=comparing.filter(c=>{const v=(x:unknown)=>x===null||String(x).trim()==='';return v(a.attributes[c])&&v(b.attributes[c]);});
       const candidate:Candidate={key:`${sourceNodeId}:${a.id}|${sourceNodeId}:${b.id}`,a,b,
         nameSimilarity:null,metres:0,nameAgrees:true,nearAgrees:true,
-        score:comparing.length-differs.length,classification:differs.length?'review':'match',differs};
+        score:comparing.length-differs.length-blank.length,classification:differs.length||blank.length?'review':'match',differs,...(blank.length?{blank}:{})};
       const decision=byKey.get(candidate.key);
       if(decision&&decision.signature===pairSignature(candidate)&&candidate.classification==='review'){
         candidate.decided=decision.decision;candidate.reason=decision.reason;

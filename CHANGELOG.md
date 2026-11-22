@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.168.0 — In development
+
+- **Stress tests of the table operations, second pass** (TODO 1a): the steps that read a table through other ports, a
+  wide read, and 250,000-row tables (Select rows, Total within groups and Relate a column each within 2 seconds here).
+  - Cases by period 0.8.0: a blank count is refused, not counted as zero; the dates it cannot read are counted in its
+    sentence, with what they held; a range too long to draw names its first and last date.
+  - Rate 0.5.0: a denominator of zero gives no rate, with the reason, rather than a refusal about proportions.
+  - Deduplicate records 0.4.0: two rows blank in a compared column wait for a person rather than merging. Its
+    Inspector and dialog moved out of the application's main file, the first of the Inspector move's batch C.
+
 ## 0.167.0 — 2026-11-22
 
 - **The order of a pin's form**, Point data 0.14.0: under Add a form field, each field moved up or down; every pin's

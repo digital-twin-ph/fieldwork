@@ -63,9 +63,9 @@ export function openDeduplicateReview(view:DeduplicateReviewView,esc:Escape):voi
     const shown=(v:unknown)=>v===null||v===undefined||v===''?'<span class="absent" aria-label="no value">—</span>':esc(String(v));
     dialog.innerHTML=`<h2 id="dedup-review-title">Are these the same record?</h2>
       <p class="muted">${index+1} of ${view.candidates.length} waiting · both rows share ${esc(candidate.a.name||'')}, and
-        ${candidate.differs?.length} compared ${candidate.differs?.length===1?'column differs':'columns differ'}.</p>
+        ${candidate.differs?.length} compared ${candidate.differs?.length===1?'column differs':'columns differ'}${candidate.blank?.length?`, and ${candidate.blank.map(c=>esc(c)).join(' and ')} ${candidate.blank.length===1?'is':'are'} empty in both, which says nothing about whether they are one record`:''}.</p>
       <table class="dedup-fields"><thead><tr><th>Column</th><th>Row ${esc(candidate.a.id)}</th><th>Row ${esc(candidate.b.id)}</th></tr></thead>
-        <tbody>${columns.map(c=>`<tr class="${candidate.differs?.includes(c)?'':'agrees'}"><th scope="row">${esc(c)}</th>`
+        <tbody>${columns.map(c=>`<tr class="${candidate.differs?.includes(c)||candidate.blank?.includes(c)?'':'agrees'}"><th scope="row">${esc(c)}</th>`
           +`<td>${shown(candidate.a.attributes[c])}</td><td>${shown(candidate.b.attributes[c])}</td></tr>`).join('')}</tbody></table>
       <label class="field-label" for="dedup-review-reason">Why</label>
       <input id="dedup-review-reason" maxlength="200" value="${esc(already?.reason||'')}"

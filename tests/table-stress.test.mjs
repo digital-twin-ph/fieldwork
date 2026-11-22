@@ -157,3 +157,75 @@ test('Relate proposes the key columns whose values link most, across names that 
   assert.equal(r.proposal,undefined);
   assert.deepEqual(r.codesAndNames,{codes:'the second table\'s "pcode"',names:'the first table\'s "district"'});
 });
+
+// THE SECOND PASS (2026-11-22): the steps that read a table through other ports, a wide read, and large tables.
+import {wideDataTable} from '../build/data-table.js';
+async function one(t,value,type,params,port,extra=[],extraEdges=[]){
+  const w={schema:'fieldwork/workflow/1',name:'Stress',nodes:[
+    {id:'src',type:'table_input',x:0,y:0,params:{label:'Made-up',keys:t.keys,valueField:value,data:t}},...extra,
+    {id:'step',type,x:300,y:0,params},{id:'out',type:'table_output',x:600,y:0,params:{label:'Table'}}],
+    edges:[...(extraEdges.length?extraEdges:[{id:'a',from:'src',to:'step',port}]),{id:'b',from:'step',to:'out',port:type==='space_time_scan'?'polygons':'table'}]};
+  const r=await Promise.race([executeWorkflow(validateWorkflow(w),reason),
+    new Promise((_,reject)=>setTimeout(()=>reject(new Error('HANG: no answer in 30 s')),30000))]);
+  return {rows:rowsOf(r),receipt:receiptOf(r)};
+}
+const T=(lines,keys,value)=>dataTable(parseCSV(lines.join('\n'),1e6,1e9),{keys,valueField:value});
+const series=t=>one(t,'cases','case_series',{label:'Cases by period',source:'table',dateField:'onset',dateKind:'onset',period:'day',weightField:'cases'},'cases');
+
+test('Cases by period: a blank weight is refused, not zero; dates it cannot read are counted; a stray date\'s range is named',async()=>{
+  await assert.rejects(series(T(['id,onset,cases','1,2026-01-05,1','2,2026-01-05,'],['id','onset'],'cases')),
+    /Record row-2 has no case weight in "cases"\. A weight is not guessed, and a blank is not zero/);
+  const mixed=await series(T(['id,onset,cases','1,2026-01-05,1','2,06/01/2026,1','3,14 Jan 2026,1'],['id','onset'],'cases'));
+  assert.match(mixed.receipt.method,/excluded and counted, never redistributed: 2 of 3 here, such as “06\/01\/2026”, “14 Jan 2026”/);
+  await assert.rejects(series(T(['id,onset,cases','1,2026-01-05,1','2,2099-01-05,1'],['id','onset'],'cases')),
+    /This date range, 2026-01-05 to 2099-01-05, produces more than 5,000 periods\..*one may be a typing error/);
+});
+
+test('Rate: a denominator of zero gives no rate and says so, rather than a refusal about proportions',async()=>{
+  const t=T(['district,measure,value','North,cases,4','North,population,0','South,cases,5','South,population,200'],['district','measure'],'value');
+  const {rows}=await one(t,'value','rate',{label:'Rate',source:'table',tableForm:'long',measureKey:'measure',numeratorField:'cases',denominatorField:'population',
+    groupBy:'district',denominatorUnit:'people',rateKind:'proportion',multiplier:100,minimumDenominator:20,numeratorPeriod:'2026',denominatorVintage:'2026'},'records');
+  assert.equal(rows.find(r=>r.key.group==='North').value,null);
+  assert.equal(rows.find(r=>r.key.group==='South').value,2.5);
+});
+
+test('Deduplicate records: two rows blank in a compared column wait for a person rather than being merged',async()=>{
+  const params={label:'Dedupe',format:'table',nameField:'name',blockColumns:['district'],compareColumns:[],nameMatch:'fuzzy',fuzzyThreshold:0.88,
+    blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]};
+  const blank=await one(T(['name,district,n',',North,1',',North,1','St Anne,South,1'],['name','district'],'n'),'n','deduplicate_points',params,'records');
+  assert.equal(blank.rows.length,3);assert.match(blank.receipt.method,/0 identical on every compared column and merged, 1 awaiting a decision/);
+  const same=await one(T(['name,district,n','Mercy Clinic,North,1','Mercy  clinic,North,1'],['name','district'],'n'),'n','deduplicate_points',params,'records');
+  assert.equal(same.rows.length,1);
+});
+
+test('Space-time scan, through Point data made from a table: no coordinates, one place, one day are refused in words',async()=>{
+  const scan=lines=>{const t=T(lines,['id','lon','lat','onset'],'n');
+    return one(t,'n','space_time_scan',{label:'Scan',dateField:'onset',unit:'day',maxCaseShare:0.5,maxTimeShare:0.5,replications:99,seed:1},'points',
+      [{id:'pts',type:'point_input',x:150,y:0,params:{label:'Cases',data:{type:'FeatureCollection',features:[]},fromTable:{x:'lon',y:'lat',id:'id'}}}],
+      [{id:'a',from:'src',to:'pts',port:'records'},{id:'c',from:'pts',to:'step',port:'points'}]);};
+  await assert.rejects(scan(['id,lon,lat,onset,n','1,,,2026-01-05,1','2,30,-1,2026-01-05,1','3,abc,-1,2026-01-06,1']),/needs at least 4 cases with a date and a location; 1 have both/);
+  await assert.rejects(scan(['id,lon,lat,onset,n',...Array.from({length:20},(_,i)=>`${i},30,-1,2026-01-${String(1+i%10).padStart(2,'0')},1`)]),/at 1 place over 10 days/);
+  await assert.rejects(scan(['id,lon,lat,onset,n',...Array.from({length:20},(_,i)=>`${i},${30+i*0.01},-1,2026-01-05,1`)]),/at 20 places over 1 day/);
+});
+
+test('a wide read keeps its gaps: a blank year is unknown, "NA" and "2,5" are said as unreadable, and a total over them is unknown',()=>{
+  const t=wideDataTable(parseCSV('district,2022,2023,2024\nNorth,10,,12\nSouth,5,6,NA\nWest,1,"2,5",3'),
+    {keys:['district'],valueFields:['2022','2023','2024'],measureKey:'year',valueField:'cases'});
+  assert.equal(t.rows.find(r=>r.key.district==='North'&&r.key.year==='2023').value,null);
+  assert.deepEqual((t.findings??[]).filter(f=>f.kind==='unreadable-value').map(f=>f.value).sort(),['2,5','NA']);
+});
+
+test('250,000 rows through Select rows, Total within groups and Relate a column, each within 10 seconds',async()=>{
+  const N=250_000;
+  const big=T(['id,district,week,cases',...Array.from({length:N},(_,i)=>`${i},D${i%774},2026-W${1+i%52},${i%7}`)],['id','district','week'],'cases');
+  const lookup=T(['district,population',...Array.from({length:774},(_,i)=>`D${i},${1000+i}`)],['district'],'population');
+  for(const [type,params] of [['select_rows',{label:'Select',keyColumn:'district',values:['D1','D2']}],['group_table',{label:'Group',by:['district']}]]){
+    const began=Date.now();const {rows}=await one(big,'cases',type,params,'records');
+    assert.ok(Date.now()-began<10_000,`${type}: ${Date.now()-began} ms`);assert.ok(rows.length>0);
+  }
+  const began=Date.now();
+  const {rows}=await one(big,'cases','relate_table',{label:'Relate',on:'district',bring:'population'},'records',
+    [{id:'lk',type:'table_input',x:0,y:200,params:{label:'Population',keys:lookup.keys,valueField:'population',data:lookup}}],
+    [{id:'a',from:'src',to:'step',port:'records'},{id:'l',from:'lk',to:'step',port:'related'}]);
+  assert.ok(Date.now()-began<10_000,`relate_table: ${Date.now()-began} ms`);assert.equal(rows.length,N);
+});

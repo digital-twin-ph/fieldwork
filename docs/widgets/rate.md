@@ -59,3 +59,11 @@ once the table can be read.
 
 South London (deaths per 1,000 people, by sub-district), Brazil (notified cases per 100,000 residents, by
 municipality), and Sierra Leone (cases per 100,000 people by district, over the 2021 census).
+
+## History
+
+### 2026-11-22 · A denominator of zero gives no rate (0.5.0)
+
+Found by the stress tests of the table operations. A group counted against a population of 0 was refused as a
+proportion above one, which is not what is wrong with it. It now has no rate, and says how many were counted against
+the zero, so the two columns can be checked.

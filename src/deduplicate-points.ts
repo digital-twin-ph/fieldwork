@@ -62,6 +62,8 @@ export interface Candidate {
   nearAgrees:boolean;
   score:number;
   classification:CandidateClass;
+  /** Columns blank in both records (2026-11-22): no evidence they are one record, so the pair waits for a person. */
+  blank?:string[];
   /** A person's answer, when the band asked for one. */
   decided?:'match'|'non-match';
   reason?:string;

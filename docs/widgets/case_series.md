@@ -93,3 +93,12 @@ count is complete: late notifications reach the last weeks after the data were t
 date with no time cannot be placed in an hour, so it is listed with the records without a usable date, as written,
 never put at midnight. Oswego's *When did they fall ill?* counts 44 cases from 3 PM on 18 April to 10 AM on 19 April,
 the date and time put together from the line list's two columns by Apply ruleset.
+
+## History
+
+### 2026-11-22 · A blank count is not zero, and what is left out is counted (0.8.0)
+
+Found by the stress tests of the table operations. A row with an empty count made its period's total 0; it is now
+refused, saying how many rows have none, since a count is not guessed. Dates it cannot read as ISO 8601 were said to be
+excluded and counted, without the count: the sentence now gives how many, of how many, and what they held, such as
+"06/01/2026". And a date range too long to draw, which one mistyped year can make, names its first and last date.

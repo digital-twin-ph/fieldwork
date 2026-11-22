@@ -1,6 +1,6 @@
 # Keep points inside the area
 
-_Created 2026-10-20 · Updated 2026-10-20_
+_Created 2026-10-20 · Updated 2026-11-22_
 
 **A spatial operation.** It takes a layer of points and a study area, and passes on the points
 that are in the area.

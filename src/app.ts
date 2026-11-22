@@ -40,8 +40,8 @@ import {catchmentPlot,polygonSvg,polygonPanelsSvg,panelColumns,catchmentFrame,po
 import {rasterPanelsSvg,densityImage,rampFor,scaleWords,drawnWords} from './raster-image.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
-import {RATE_TABLE_KEYS,computeRate,fromTable,fromWideTable} from './rate.js';
-import {SERIES_TABLE_KEYS,PERIOD_WORDS,DATE_KINDS} from './case-series.js';
+import {RATE_TABLE_KEYS} from './rate.js';
+import {SERIES_TABLE_KEYS} from './case-series.js';
 import {SITE_ASSIGNMENT_TABLE_KEYS} from './sea-level.js';
 import {installCredentials} from './credentials-ui.js';
 import {saveToRepository} from './repository-save.js';
@@ -58,8 +58,6 @@ import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type T
 import {orderSentence} from './rule-evaluation.js';
 import {relateInspector,type RelateKit} from './relate-ui.js';
 import {joinInspector,type JoinKit} from './area-join-ui.js';
-import {openSelectConfig,selectDraftOf,applySelectDraft,selectSentence} from './select-ui.js';
-import {openGroupConfig,groupDraftOf,applyGroupDraft,groupSentence} from './group-ui.js';
 import {openConfigDialog} from './config-dialog.js';
 import {ISSUE_LABEL,unreadHeadline} from './data-issues.js';
 import {openFacilitiesConfig,facilitiesDraftOf,applyFacilitiesDraft,facilitiesSentence} from './facilities-ui.js';
@@ -76,8 +74,6 @@ import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
 import {productFor} from './satellite-products.js';
 import {onRunDetail} from './run-progress.js';
 import {appendLabel,appendPort,appendTableCount} from './append-rows.js';
-/** Regression's strata as a list, as `strataOf` in regression.ts reads them; kept here so the Inspector does not load the model's kernel. */
-const strataOf=(strata:string|string[]|undefined):string[]=>(Array.isArray(strata)?strata:strata?[strata]:[]).map(c=>c.trim()).filter(Boolean);
 import {GRID_KEYS,gridReaderFor,clearGridCache,layerKeyOf,ruleOf,rulesOf,layerPhrase,reportUnit} from './satellite-grid-sample.js';
 import {clearFileCache} from './satellite-sample-reader.js';
 import {treeSvg} from './transmission-tree.js';
@@ -138,6 +134,8 @@ import type {InspectorKit,OwnInspector,StepKit} from './inspector-kit.js';
 import {setFigureWords,figureWordsOf,fillWords,figureWords,wordsHint} from './figure-words.js';
 import {tableInspector,type TableKit} from './data-table-ui.js';
 import {sampleInspector,type SampleKit} from './sample-raster-ui.js';
+import {caseSeriesInspector,rateInspector,type SeriesRateKit} from './series-rate-ui.js';
+import {TABLE_STEP_INSPECTORS,type TableStepKit} from './table-steps-ui.js';
 import {AREA_STEP_INSPECTORS,type AreaStepKit} from './area-steps-ui.js';
 import {zipSync,strToU8} from 'fflate';
 import {referenceList} from './references.js';
@@ -210,7 +208,6 @@ import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output
 import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
 import {exposureColumnsOffered} from './two-by-two-mapping.js';
-import {openTwoByTwoConfig,twoByTwoDraftOf,applyTwoByTwoDraft,twoByTwoSettingsSentence} from './two-by-two-ui.js';
 import {repositoryFiles} from './project-repository.js';
 import {orderableBins} from './chart-output.js';
 import {AGGREGATES,type Aggregate} from './group-table.js';
@@ -2566,299 +2563,6 @@ function writeUpSelect(n:WorkflowNode<'map_output'|'table_output'|'chart_output'
     +`<select id="output-section">${FIGURE_SECTIONS.map(s=>`<option value="${s}" ${s===at?'selected':''}>${s}${s===fallback?' (default)':''}</option>`).join('')}`
     +`<option value="${LEFT_OUT}" ${at===LEFT_OUT?'selected':''}>Not in the write-up</option></select></div>`;
 }
-/** WHAT REGRESSION WILL FIT, in one sentence (experiment 186). */
-function regressionPlan(p:import('./types.js').ParamsByType['regression']):string{
-  if(!p.outcome||!p.exposure.column)return 'Not set up yet: choose the outcome and the exposure in Configure\u2026';
-  const model=p.family==='logistic'?'Logistic regression':'Poisson regression',strata=strataOf(p.strata);
-  const several=(p.exposureColumns?.length??0)>1?`, once for each of ${p.exposureColumns!.length} exposure columns`:'';
-  const intervals={profile:'likelihood-ratio',wald:'Wald',overdispersed:'Wald, scaled for overdispersion',hac:`HAC with ${p.hacLag??0} lags`}[p.errors];
-  return `${model} of ${p.outcome} on ${p.exposure.column} (${p.exposure.as})${several}`
-    +(p.adjust.length?`, adjusted for ${p.adjust.map(t=>t.column).join(', ')}`:', unadjusted')
-    +(strata.length?`, within strata of ${strata.join(', ')}`:'')+(p.offset?`, offset by ${p.offset}`:'')
-    +`, with ${intervals} intervals.`;
-}
-/** REGRESSION'S CONFIGURATION DIALOG (experiments 167 and 186, 2026-11-12): the model, the outcome and its cases, the
- *  exposure and the columns fitted one model each, what it is adjusted for, strata and offset, and the intervals, on a
- *  draft that changes the step only on Apply. */
-function openRegressionConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'regression');
-  type Draft=import('./types.js').ParamsByType['regression'];
-  openConfigDialog<Draft>({
-    id:'regression-config',widget:'Regression',step:node.params.label||TYPES.regression.title,draft:structuredClone(node.params),
-    sections:d=>{
-      const p=d,held=upstreamKeyValues(node)??{},valueField=upstreamValueField(node);
-      const columns=[...Object.keys(held),...(valueField&&!(valueField in held)?[valueField]:[])];
-      const option=(value:string,label:string,selected:boolean)=>`<option value="${esc(value)}" ${selected?'selected':''}>${esc(label)}</option>`;
-      const columnSelect=(id:string,label:string,current:string|undefined,none?:string)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
-        +`<select id="${id}"${columns.length?'':' disabled'}>${none!==undefined?option('',none,!current):option('','Choose a column…',!current)}`
-        +columns.map(c=>option(c,c,current===c)).join('')+`</select></div>`;
-      const kinds=(current:string)=>[['numeric','Numeric'],['categorical','Categorical'],['spline','Spline, 4 df']].map(([v,l])=>option(v!,l!,current===v)).join('');
-      const values=(column:string)=>held[column]??[];
-      const settings=''
-        +`<div class="field"><label class="field-label" for="reg-family">Model</label><select id="reg-family">`
-          +option('logistic','Logistic regression · odds ratios',p.family==='logistic')+option('poisson','Poisson regression · rate ratios',p.family==='poisson')+`</select></div>`
-        +columnSelect('reg-outcome','Outcome',p.outcome)
-        +(p.family==='logistic'&&p.outcome&&values(p.outcome).length
-          ?`<div class="field"><span class="inspector-section">Cases and controls</span><p class="description">Values of ${esc(p.outcome)} that are cases and that are controls. Rows with any other value are left out.</p>`
-            +values(p.outcome).map(v=>`<div class="reg-outcome-value"><code>${esc(v)}</code>`
-              +`<label class="check"><input type="checkbox" data-reg-case="${esc(v)}" ${p.cases?.includes(v)?'checked':''}> case</label>`
-              +`<label class="check"><input type="checkbox" data-reg-control="${esc(v)}" ${p.controls?.includes(v)?'checked':''}> control</label></div>`).join('')+`</div>`
-          :'')
-        +columnSelect('reg-exposure','Exposure',p.exposure.column)
-        +(p.exposure.column
-          ?`<div class="field"><label class="field-label" for="reg-exposure-as">Exposure is</label><select id="reg-exposure-as">${kinds(p.exposure.as)}</select></div>`
-            +(p.exposure.as==='categorical'&&values(p.exposure.column).length
-              ?`<div class="field"><label class="field-label" for="reg-exposure-reference">Reference value</label><select id="reg-exposure-reference">`
-                +values(p.exposure.column).map(v=>option(v,v,(p.exposure.reference??[...values(p.exposure.column)].sort()[0])===v)).join('')+`</select></div>`:'')
-            +(()=>{
-              // ONE MODEL PER COLUMN (experiment 185): Relate's shift columns, or any others, each fitted on its own rows.
-              const several=p.exposureColumns??[],taken=new Set([p.outcome,p.exposure.column,...p.adjust.flatMap(t=>[t.column,...(t.perModel??[])]),
-                ...strataOf(p.strata),...(p.offset?[p.offset]:[])]);
-              const offered=columns.filter(c=>!taken.has(c)||(several.includes(c)&&c!==p.exposure.column));
-              if(!offered.length)return '';
-              return `<fieldset class="field" id="reg-exposures"><legend class="field-label">Also fit, one model each, with</legend>`
-                +``
-                +offered.map(c=>`<label class="check"><input type="checkbox" value="${esc(c)}" data-reg-also="${esc(c)}" ${several.includes(c)?'checked':''}> ${esc(c)}</label>`).join('')
-                +`</fieldset>`;})()
-          :'')
-        +`<span class="inspector-section">Adjusted for</span>`
-        +(p.adjust.length?p.adjust.map(term=>`<div class="reg-term"><label class="field-label" for="reg-kind-${esc(term.column)}">${esc(term.column)} as</label>`
-            +`<select id="reg-kind-${esc(term.column)}" data-reg-adjust-kind="${esc(term.column)}">${kinds(term.as)}</select>`
-            +`<button type="button" class="button small" data-reg-adjust-remove="${esc(term.column)}">Remove</button></div>`
-            // AN ADJUSTMENT THAT FOLLOWS THE SHIFT (experiment 185): with several models, model k may be adjusted for its
-            // own column, the rain at its own lag beside the temperature at that lag. One choice per model, in view.
-            +((p.exposureColumns?.length??0)>1
-              ?`<label class="check"><input type="checkbox" data-reg-follow="${esc(term.column)}" ${term.perModel?'checked':''}> ${esc(term.column)} follows the shift: each model is adjusted for its own column</label>`
-                +(term.perModel?p.exposureColumns!.map((exposure,k)=>`<div class="field"><label class="field-label" for="reg-follow-${esc(term.column)}-${k}">For the model of ${esc(exposure)}</label>`
-                  +`<select id="reg-follow-${esc(term.column)}-${k}" data-reg-follow-column="${esc(term.column)}" data-reg-follow-model="${k}">`
-                  +columns.map(c=>option(c,c,term.perModel![k]===c)).join('')+`</select></div>`).join(''):'')
-              :'')).join('')
-          :'<p class="muted">Nothing: the estimate is unadjusted.</p>')
-        +`<div class="field"><label class="field-label" for="reg-adjust-add">Add a variable</label><select id="reg-adjust-add">${option('','Choose a column…',true)}`
-          +columns.filter(c=>c!==p.outcome&&c!==p.exposure.column&&!p.adjust.some(t=>t.column===c)).map(c=>option(c,c,false)).join('')+`</select></div>`
-        +(p.family==='poisson'
-          // SEVERAL STRATA COLUMNS TOGETHER (experiment 182): each chosen column gets its own select, and one more is
-          // offered empty, so municipality, year and month are three choices in a row. The first keeps its saved id.
-          ?(()=>{const chosen=strataOf(p.strata);
-            return [...chosen,''].map((c,i)=>columnSelect(i===0?'reg-strata':`reg-strata-${i+1}`,
-              i===0?'Strata, as fixed effects':'Together with',c||undefined,i===0?'None':'Nothing more')).join('')
-              +(chosen.length>1?`<p class="description">One stratum for each combination of ${chosen.map(esc).join(', ')}: rows are compared only within it.</p>`:'');})()
-            +columnSelect('reg-offset','Offset (log of person-time or population)',p.offset,'None'):'')
-        +`<div class="field"><label class="field-label" for="reg-errors">Intervals</label><select id="reg-errors">`
-          +option('profile','Likelihood-ratio (profile)',p.errors==='profile')+option('wald','Wald, from the model',p.errors==='wald')
-          +(p.family==='poisson'?option('overdispersed','Wald, scaled for overdispersion',p.errors==='overdispersed')+option('hac','Wald, HAC (Newey-West) for serial correlation',p.errors==='hac'):'')
-          +`</select></div>`
-        +(p.errors==='hac'
-          ?`<div class="field"><label class="field-label" for="reg-hac-lag">Lags</label><input id="reg-hac-lag" type="number" min="0" max="60" value="${esc(String(p.hacLag??0))}"></div>`
-            +columnSelect('reg-order','Rows in the order of',p.order,'The table\'s order'):'')
-        +'';
-      return {settings,preview:`<p class="description">${esc(regressionPlan(d))}</p>`,
-        ...(columns.length?{}:{message:{tone:'warning' as const,text:'Connect a table first: its columns are the choices here.'}})};
-    },
-    wire:(root,d,redraw)=>{
-      const reg=(edit:(params:Draft)=>void)=>{edit(d);redraw();};
-    root.querySelector<HTMLElement>('#reg-family')?.addEventListener('change',e=>reg(p=>{p.family=control(e).value as 'logistic'|'poisson';
-      if(p.family==='logistic'){delete p.strata;delete p.offset;if(p.errors==='hac'||p.errors==='overdispersed')p.errors='profile';}}));
-    root.querySelector<HTMLElement>('#reg-outcome')?.addEventListener('change',e=>reg(p=>{p.outcome=control(e).value;delete p.cases;delete p.controls;}));
-    root.querySelectorAll<HTMLInputElement>('[data-reg-case],[data-reg-control]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-      const key=el.dataset.regCase!==undefined?'cases':'controls',value=required(el.dataset.regCase??el.dataset.regControl);
-      const list=(p[key]??[]).filter(v=>v!==value);if(el.checked)list.push(value);
-      if(list.length)p[key]=list;else delete p[key];})));
-    root.querySelector<HTMLElement>('#reg-exposure')?.addEventListener('change',e=>reg(p=>{const column=control(e).value,held=upstreamKeyValues(node)?.[column];
-      p.exposure={column,as:held&&orderOf(held)==='number'&&held.length>2?'numeric':held?'categorical':'numeric'};
-      p.adjust=p.adjust.filter(t=>t.column!==p.exposure.column);
-      if(p.exposureColumns){const also=p.exposureColumns.slice(1).filter(c=>c!==column);
-        if(also.length)p.exposureColumns=[column,...also];else delete p.exposureColumns;}}));
-    root.querySelectorAll<HTMLInputElement>('[data-reg-also]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-      const also=[...root.querySelectorAll<HTMLInputElement>('[data-reg-also]:checked')].map(b=>b.value)
-        .filter(c=>c!==p.exposure.column);
-      if(also.length)p.exposureColumns=[p.exposure.column,...also];else delete p.exposureColumns;
-      // An adjustment that follows the shift keeps one column per model: refilled in Relate's order, or dropped with the
-      // list.
-      const held=Object.keys(upstreamKeyValues(node)??{}),shiftless=(c:string)=>c.replace(/_[+-]?\d+d$/,'');
-      p.adjust=p.adjust.map(t=>{if(!t.perModel)return t;const {perModel,...rest}=t;
-        if(!p.exposureColumns)return {...rest,column:perModel[0]!};
-        const family=held.filter(c=>shiftless(c)===shiftless(t.column)&&/_[+-]?\d+d$/.test(c));
-        return {...rest,perModel:p.exposureColumns.map((_c,k)=>perModel[k]??family[k]??t.column)};});})));
-    root.querySelector<HTMLElement>('#reg-exposure-as')?.addEventListener('change',e=>reg(p=>{p.exposure={column:p.exposure.column,as:control(e).value as 'numeric'};}));
-    root.querySelector<HTMLElement>('#reg-exposure-reference')?.addEventListener('change',e=>reg(p=>{p.exposure={...p.exposure,reference:control(e).value};}));
-    // A COLUMN OF NUMBERS IS ADDED AS NUMERIC, as R treats a numeric column; anything else as categorical. Changed by a
-    // click either way.
-    root.querySelector<HTMLElement>('#reg-adjust-add')?.addEventListener('change',e=>{
-      const column=control(e).value,held=upstreamKeyValues(node)?.[column];
-      const as=held&&orderOf(held)==='number'?'numeric' as const:held?'categorical' as const:'numeric' as const;
-      reg(p=>{if(column&&!p.adjust.some(t=>t.column===column))p.adjust=[...p.adjust,{column,as}];});});
-    root.querySelectorAll<HTMLSelectElement>('[data-reg-adjust-kind]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-      p.adjust=p.adjust.map(t=>t.column===el.dataset.regAdjustKind?{column:t.column,as:el.value as 'numeric'}:t);})));
-    // FOLLOWING THE SHIFT, pre-filled in Relate's order: the columns that share this one's name without its shift, the
-    // k-th for model k. Each is a choice in view, and can be changed.
-    root.querySelectorAll<HTMLInputElement>('[data-reg-follow]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-      const column=required(el.dataset.regFollow),models=p.exposureColumns??[];
-      const held=Object.keys(upstreamKeyValues(node)??{}),base=column.replace(/_[+-]?\d+d$/,'');
-      const family=held.filter(c=>c.replace(/_[+-]?\d+d$/,'')===base&&/_[+-]?\d+d$/.test(c));
-      p.adjust=p.adjust.map(t=>{if(t.column!==column)return t;const {perModel:_,...rest}=t;
-        return el.checked?{...rest,perModel:models.map((_m,k)=>family[k]??column)}:rest;});})));
-    root.querySelectorAll<HTMLSelectElement>('[data-reg-follow-column]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-      const k=Number(el.dataset.regFollowModel);
-      p.adjust=p.adjust.map(t=>{if(t.column!==el.dataset.regFollowColumn||!t.perModel)return t;
-        const perModel=[...t.perModel];perModel[k]=el.value;return {...t,column:perModel[0]!,perModel};});})));
-    root.querySelectorAll<HTMLButtonElement>('[data-reg-adjust-remove]').forEach(el=>el.addEventListener('click',()=>reg(p=>{
-      p.adjust=p.adjust.filter(t=>t.column!==el.dataset.regAdjustRemove);})));
-    root.querySelectorAll<HTMLSelectElement>('[id^="reg-strata"]').forEach(el=>el.addEventListener('change',()=>reg(p=>{
-      const at=el.id==='reg-strata'?0:Number(el.id.slice('reg-strata-'.length))-1,list=strataOf(p.strata);
-      if(el.value)list[at]=el.value;else list.splice(at);
-      const clean=list.filter((c,i)=>c&&list.indexOf(c)===i);
-      if(!clean.length)delete p.strata;else p.strata=clean.length===1?clean[0]!:clean;})));
-    for(const [id,key] of [['#reg-offset','offset'],['#reg-order','order']] as const)
-      root.querySelector<HTMLElement>(id)?.addEventListener('change',e=>reg(p=>{const v=control(e).value;if(v)p[key]=v;else delete p[key];}));
-    root.querySelector<HTMLElement>('#reg-errors')?.addEventListener('change',e=>reg(p=>{p.errors=control(e).value as 'profile';}));
-    root.querySelector<HTMLElement>('#reg-hac-lag')?.addEventListener('change',e=>reg(p=>{p.hacLag=Math.max(0,Math.round(Number(control(e).value)||0));}));
-    },
-    apply:d=>{change(w=>{getNode(w,nodeId,'regression').params=d;});},
-  },esc);
-}
-/** RATE'S ONE SENTENCE (experiment 186). */
-function rateSentence(p:import('./types.js').ParamsByType['rate']):string{
-  if(!p.numeratorField||!p.denominatorField)return 'Not set up yet: choose what is counted and the population at risk, in Configure…';
-  return `Divides ${p.numeratorField} by ${p.denominatorField} (${p.denominatorUnit}), per ${p.multiplier.toLocaleString()}`
-    +`${p.groupBy?`, by ${p.groupBy}`:''}, as a ${p.rateKind}`
-    +`${p.source==='table'?`, from a table with ${p.tableForm==='wide'?'both numbers on each row':'one row per measure'}`:''}.`;
-}
-
-/** RATE'S DIALOG (experiment 186): every setting on a draft, and the rates this draft gives, before Apply. */
-/** WHAT CASES BY PERIOD COUNTS, in one sentence (experiment 186). */
-function seriesSentence(p:import('./types.js').ParamsByType['case_series']):string{
-  if(!p.dateField)return 'Name the column holding each case\u2019s date in Configure\u2026';
-  return `Counts cases by ${PERIOD_WORDS[p.period]} of ${p.dateField}, a date of ${p.dateKind}`
-    +(p.splitBy?`, for each value of ${p.splitBy}`:'')
-    +(p.source==='table'?(p.rowAsCase?(p.caseId?`, each ${p.caseId} once.`:', one case per row.'):', each row as many cases as its value.'):p.weightField?`, each record as many cases as its ${p.weightField}.`:', one case per record.');
-}
-/** CASES BY PERIOD'S CONFIGURATION DIALOG (experiments 186 and 206, 2026-11-12): how the records arrive, the date column
- *  and its kind, the period (day of the week among them), and the weight. Changing how records arrive disconnects
- *  what was wired, as Rate does. */
-function openSeriesConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'case_series');
-  type Draft=import('./types.js').ParamsByType['case_series'];
-  const columns=[...new Set(candidateFields(workflow,nodeId).map(f=>(f as {attribute:string}).attribute))];
-  openConfigDialog<Draft>({
-    id:'series-config',widget:'Cases by period',step:node.params.label||TYPES.case_series.title,draft:structuredClone(node.params),
-    sections:d=>{
-      const pick=(id:string,label:string,key:'dateField'|'weightField'|'splitBy'|'caseId',placeholder:string,optional=false)=>{
-        const held=String(d[key]??'');
-        return `<div class="field"><label class="field-label" for="${id}">${label}</label>`+(columns.length
-          ?`<select id="${id}" data-series="${key}"><option value="">${optional?(key==='splitBy'?'Not split: one count per period':key==='caseId'?'Not named: every row a case':'Not used: one case per record'):'Choose…'}</option>`
-            +columns.map(c=>`<option value="${esc(c)}" ${c===held?'selected':''}>${esc(c)}</option>`).join('')+'</select>'
-          :`<input id="${id}" data-series="${key}" maxlength="60" value="${esc(held)}" placeholder="${esc(placeholder)}">`)+'</div>';};
-      const settings=`<div class="field"><label class="field-label" for="series-input">Records arrive as</label><select id="series-input">`
-        +[['points','points, one per record'],['table','a table, each row a count'],['table-case','a table, each row one case']]
-          .map(([v,t])=>`<option value="${v}" ${(d.source==='table'?(d.rowAsCase?'table-case':'table'):'points')===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
-        +pick('series-date','Date column','dateField','onset_date')
-        +`<div class="field"><label class="field-label" for="series-kind">Which date is it?</label><select id="series-kind" data-series="dateKind">`
-        +DATE_KINDS.map(k=>`<option value="${k}" ${d.dateKind===k?'selected':''}>${k}</option>`).join('')+'</select></div>'
-        +`<div class="field"><label class="field-label" for="series-period">Period</label><select id="series-period" data-series="period">`
-        +([['hour','hour, for dates and times'],['day','day'],['week','week, starting Monday (ISO 8601)'],['week-sunday','week, starting Sunday (epidemiological week)'],['month','month'],['weekday','day of the week'],['month-of-year','month of the year']] as const)
-          .map(([v,t])=>`<option value="${v}" ${d.period===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
-        +(d.source==='table'?'':pick('series-weight','Cases per record (optional)','weightField','',true))
-        // SPLIT BY A COLUMN (experiment 210): each period counted for each of its values, for a curve stacked by them.
-        // A CASE IN SEVERAL ROWS, one per recorded source, counted once (MERS, 2026-11-15).
-        +(d.rowAsCase?pick('series-case','Each case is named in (optional)','caseId','',true):'')
-        +(d.source==='table'&&!d.rowAsCase?'':pick('series-split','Count each value of (optional)','splitBy','',true));
-      return {settings,preview:`<p class="description">${esc(seriesSentence(d))}</p>`,
-        // SAID, NOT BLOCKED: the input is chosen before it is connected, and the columns come with the connection; the
-        // run refuses a missing date, as it did before (the Sierra Leone manual, 2026-11-12).
-        ...(d.dateField?{}:{message:{tone:'warning' as const,text:'Choose the date column, once the records are connected.'}})};
-    },
-    wire:(root,d,redraw)=>{
-      root.querySelector<HTMLSelectElement>('#series-input')?.addEventListener('change',e=>{
-        const v=(e.target as HTMLSelectElement).value;
-        if(v==='table'||v==='table-case'){d.source='table';delete d.weightField;if(v==='table-case')d.rowAsCase=true;else{delete d.rowAsCase;delete d.splitBy;delete d.caseId;}}
-        else{delete d.source;delete d.rowAsCase;delete d.caseId;}redraw();});
-      root.querySelectorAll<HTMLInputElement&HTMLSelectElement>('[data-series]').forEach(el=>el.addEventListener('change',()=>{
-        const key=el.dataset.series as 'dateField'|'weightField'|'dateKind'|'period'|'splitBy'|'caseId',value=el.value.trim();
-        if(key==='weightField'||key==='splitBy'||key==='caseId'){if(value)d[key]=value;else delete d[key];}
-        else (d as unknown as Record<string,string>)[key]=value;redraw();}));
-    },
-    apply:d=>{change(w=>{const target=getNode(w,nodeId,'case_series');const was=target.params.source;target.params=d;
-      if((was||'points')!==(d.source||'points'))w.edges=w.edges.filter(e=>e.to!==nodeId);});},
-  },esc);
-}
-function openRateConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'rate');
-  type Draft=import('./types.js').ParamsByType['rate'];
-  openConfigDialog<Draft>({
-    id:'rate-config',widget:'Rate with a denominator',step:node.params.label||TYPES.rate.title,draft:structuredClone(node.params),
-    sections:draft=>{
-      const table=draft.source==='table'?tableOnPort(workflow,nodeId,'records'):null;
-      const up=workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===nodeId&&e.port==='records')?.from);
-      const columns=table?[...table.keys,table.valueField]
-        :draft.source==='table'&&up?[...Object.keys(upstreamKeyValues(node)??{}),...(upstreamValueField(up)?[upstreamValueField(up)!]:[])]:[];
-      const wide=draft.source==='table'&&draft.tableForm==='wide';
-      const measures=draft.source==='table'&&!wide&&table?[...new Set(table.rows.map(r=>r.key[draft.measureKey||'measure']??''))].filter(Boolean):[];
-      // A column chosen from a list where the columns are known; typed where they are not, as a point's attribute is.
-      const pick=(id:string,label:string,key:keyof Draft,offered:string[],placeholder:string,optional=false)=>{
-        const held=String(draft[key]??'');
-        return `<div class="field"><label class="field-label" for="${id}">${label}</label>`+(offered.length
-          ?`<select id="${id}" data-rate="${String(key)}"><option value="">${optional?'Not used':'Choose…'}</option>`
-            +offered.map(c=>`<option value="${esc(c)}" ${c===held?'selected':''}>${esc(c)}</option>`).join('')+'</select>'
-          :`<input id="${id}" data-rate="${String(key)}" maxlength="80" value="${esc(held)}" placeholder="${esc(placeholder)}">`)+'</div>';};
-      const text=(id:string,label:string,key:keyof Draft,placeholder:string)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
-        +`<input id="${id}" data-rate="${String(key)}" maxlength="80" value="${esc(String(draft[key]??''))}" placeholder="${esc(placeholder)}"></div>`;
-      const fields=wide?columns:measures;
-      const settings='<p class="description">Divides counted events by a declared population at risk.</p>'
-        +`<div class="field"><label class="field-label" for="rate-source">Records arrive as</label><select id="rate-source">`
-        +[['points','points, one per subject'],['table','a table']].map(([v,t])=>`<option value="${v}" ${(draft.source||'points')===v?'selected':''}>${t}</option>`).join('')+'</select></div>'
-        +(draft.source==='table'
-          ?`<div class="field"><label class="field-label" for="rate-form">The table holds</label><select id="rate-form">`
-            +`<option value="long" ${!wide?'selected':''}>one row per measure, named in a key column</option>`
-            +`<option value="wide" ${wide?'selected':''}>both numbers on each row, as columns</option></select></div>`
-            +(wide?'':pick('rate-measure','Key column holding the measure names','measureKey',columns,'measure'))
-          :'')
-        +pick('rate-numerator',wide?'Numerator column (what is counted)':'Numerator (what is counted)','numeratorField',fields,'deaths')
-        +pick('rate-denominator',wide?'Denominator column (units at risk)':'Denominator (units at risk)','denominatorField',fields,'population')
-        +`<div class="field"><label class="field-label" for="rate-unit">The denominator counts</label><select id="rate-unit" data-rate="denominatorUnit">`
-        +['people','houses','households','person-time','other'].map(u=>`<option value="${u}" ${draft.denominatorUnit===u?'selected':''}>${u}</option>`).join('')+'</select></div>'
-        +`<div class="field"><label class="field-label" for="rate-kind">Kind</label><select id="rate-kind" data-rate="rateKind">`
-        +['proportion','ratio'].map(k=>`<option value="${k}" ${draft.rateKind===k?'selected':''}>${k==='proportion'?'proportion — numerator is part of the denominator':'ratio — events per unit, may exceed one'}</option>`).join('')+'</select></div>'
-        +`<div class="field"><label class="field-label" for="rate-multiplier">Per</label><select id="rate-multiplier" data-rate-number="multiplier">`
-        +[1,100,1000,10000,100000].map(m=>`<option value="${m}" ${draft.multiplier===m?'selected':''}>${m.toLocaleString()}</option>`).join('')+'</select></div>'
-        +pick('rate-group','Group by (optional)','groupBy',draft.source==='table'?columns:[],'distance_m',true)
-        +`<div class="field"><label class="field-label" for="rate-band">Band width for a numeric grouping (optional)</label><input id="rate-band" type="number" min="0" data-rate-number="bandWidth" value="${draft.bandWidth??''}"></div>`
-        +`<div class="field"><label class="field-label" for="rate-minimum">Smallest denominator that gets a rate</label><input id="rate-minimum" type="number" min="0" data-rate-number="minimumDenominator" value="${draft.minimumDenominator}"></div>`
-        +text('rate-period','Period the numerator covers','numeratorPeriod','1854 outbreak')
-        +text('rate-vintage','Vintage of the denominator','denominatorVintage','1855 map')
-        +'';
-      if(!draft.numeratorField||!draft.denominatorField)return {settings,preview:'<p class="muted">Choose the numerator and the denominator to see the rates.</p>'};
-      if(!table)return {settings,preview:'<p class="muted">The rates are computed when the workflow runs'
-        +(draft.source==='table'?', and shown here once the table can be read without a run.':'.')+'</p>'};
-      try{
-        const records=wide?fromWideTable(table,[draft.numeratorField,draft.denominatorField,draft.groupBy??'']):fromTable(table,draft.measureKey||'measure');
-        const rates=computeRate(records,draft);
-        const preview='<table class="relate-shares"><thead><tr><th>Group</th><th>Numerator</th><th>Denominator</th>'
-          +`<th>Per ${draft.multiplier.toLocaleString()}</th></tr></thead><tbody>`
-          +rates.rows.map(r=>`<tr><th scope="row">${esc(r.label)}</th><td>${r.numerator.toLocaleString()}</td><td>${r.denominator.toLocaleString()}</td>`
-            +`<td${r.rate===null?' class="profile-flag"':''}>${r.rate===null?esc(r.reason??'no rate'):r.rate.toLocaleString(undefined,{maximumFractionDigits:2})}</td></tr>`).join('')
-          +'</tbody></table>';
-        return {settings,preview};
-      }catch(error){return {settings,message:{tone:'refusal' as const,text:errorMessage(error)},blocked:true};}
-    },
-    wire:(root,draft,redraw)=>{
-      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
-        root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
-      on('#rate-source',el=>{draft.source=el.value==='table'?'table':'points';if(draft.source==='points')delete draft.tableForm;});
-      on('#rate-form',el=>{draft.tableForm=el.value==='wide'?'wide':'long';});
-      on('[data-rate]',el=>{const key=el.dataset.rate!;const v=el.value.trim();
-        if(key==='groupBy'||key==='measureKey'){if(v)(draft as unknown as Record<string,string>)[key]=v;else delete (draft as unknown as Record<string,unknown>)[key];}
-        else (draft as unknown as Record<string,string>)[key]=v;});
-      on('[data-rate-number]',el=>{(draft as unknown as Record<string,number|undefined>)[el.dataset.rateNumber!]=el.value===''?undefined:Number(el.value);});
-    },
-    apply:draft=>{
-      change(w=>{const target=getNode(w,nodeId,'rate');const was=target.params.source??'points';target.params=draft;
-        // Points and a table are not the same shape, so changing which one disconnects what was wired.
-        if((draft.source??'points')!==was)w.edges=w.edges.filter(e=>e.to!==nodeId);});
-    },
-  },esc);
-}
-
 /** DEDUPLICATE RECORDS' ONE SENTENCE (experiment 186). */
 function dedupSentence(p:import('./types.js').ParamsByType['deduplicate_points']):string{
   if(p.format==='table')return `Finds rows of one table that are one record entered twice, by ${(p.blockColumns?.length?p.blockColumns:['its primary key']).join(', ')}.`;
@@ -3528,35 +3232,9 @@ function renderInspector(){
     content+=appendInspector.markup(n,stepKit());
   }else if(n.type==='detect_unusual_counts'){
     content+=detectInspector.markup(n,stepKit());
-  }else if(n.type==='regression'){
-    // THE STANDARD INSPECTOR (experiment 186, 2026-11-12): the name, the input, one sentence, Configure…, and the result.
-    const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Name',labelForm('regression-label','Name',p.label||TYPES.regression.title));
-    content+=standardSection('Inputs',standardInputs(n));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(regressionPlan(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :receipt?.method??'Not run yet.')}</p>`);
-  }else if(n.type==='select_rows'){
-    // THE STANDARD INSPECTOR (experiment 186): the column, the values or the range, and the preview of what they keep
-    // are in the configuration dialog; here, one sentence of what the step keeps and what the last run kept.
-    const p=n.params;
-    content+=standardSection('Name',labelForm('select-label','Name',p.label||'Select rows by value'));
-    content+=standardSection('Inputs',standardInputs(n,{records:'Table to choose rows from'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(selectSentence(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const receipt=result?.receipts.find(r=>r.nodeId===n.id) as unknown as {kept?:number;dropped?:number;absent?:string[]}|undefined;
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    const absent=receipt?.absent??[];
-    const line=receipt&&typeof receipt.kept==='number'
-      ?`${receipt.kept.toLocaleString()} of ${(receipt.kept+(receipt.dropped??0)).toLocaleString()} rows kept; `
-        +`${(receipt.dropped??0).toLocaleString()} left out.`
-        +(absent.length?` Not in the table: ${absent.join(', ')}.`:'')
-      :why?`The last run could not compute this step: ${why}`
-      :'Not run yet.';
-    content+=standardSection('Result',`<p class="standard-result${absent.length||why?' standard-result-warning':''}">${esc(line)}</p>`
-      +'<div data-standard-result></div>');
+  }else if(n.type==='regression'||n.type==='select_rows'||n.type==='group_table'||n.type==='two_by_two'){
+    // MOVED OUT OF APP.TS (table-steps-ui.ts, 2026-11-22).
+    content+=(TABLE_STEP_INSPECTORS[n.type as keyof typeof TABLE_STEP_INSPECTORS] as OwnInspector<NodeType>).markup(n as never,tableStepKit());
   }else if(n.type==='relate_table'){
     content+=relateInspector.markup(n,relateKit());
   }else if(n.type==='transmission_chains'){
@@ -3573,19 +3251,6 @@ function renderInspector(){
     const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
       +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method??'Not run yet.')}</p>`);
-  }else if(n.type==='group_table'){
-    // THE STANDARD INSPECTOR (experiments 186 and 191): what is kept, the aggregate, empty cells and shares are in the
-    // configuration dialog; here, one sentence of what the step totals and what the last run made.
-    const p=n.params;
-    content+=standardSection('Name',labelForm('group-label','Name',p.label||'Total within groups'));
-    content+=standardSection('Inputs',standardInputs(n,{records:'Table to total'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(groupSentence(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const receipt=result?.receipts.find(r=>r.nodeId===n.id) as unknown as {method?:string;gaps?:unknown[]}|undefined;
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Result',`<p class="standard-result${why||receipt?.gaps?.length?' standard-result-warning':''}">`
-      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?`${receipt.method}.`:'Not run yet.')}</p>`
-      +'<div data-standard-result></div>');
   }else if(n.type==='space_time_scan'){
     // THE STANDARD INSPECTOR (experiment 186) for the space-time scan (experiment 200, Detect): the settings are in
     // Configure…; here, one sentence of what it scans and what the last run found.
@@ -3631,38 +3296,9 @@ function renderInspector(){
       +`people, and a measure over groups need not hold between individuals.</p>`
       +`<div class="field"><label class="field-label" for="design-note">Note</label>`
       +`<textarea spellcheck="true" id="design-note" data-slr="note" rows="2" maxlength="400">${esc(p.note)}</textarea></div>`;
-  }else if(n.type==='two_by_two'){
-    // THE STANDARD INSPECTOR (experiment 186, 2026-11-14; the practitioner: "If we touch 2x2 we have to standardize"):
-    // the name, the input, one sentence of what is compared, Configure…, and what the run gave.
-    const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Name',labelForm('twobytwo-label','Name',p.label||TYPES.two_by_two.title));
-    content+=standardSection('Inputs',standardInputs(n));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(twoByTwoSettingsSentence(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
-      +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?`${receipt.method}`:'Not run yet.')}</p>`);
-  }else if(n.type==='rate'){
-    // THE STANDARD INSPECTOR (experiment 186): the name, the input, one sentence, Configure…, and what the run gave.
-    const p=n.params,ran=result?.receipts.some(r=>r.nodeId===n.id);
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Name',labelForm('rate-label','Name',p.label||TYPES.rate.title));
-    content+=standardSection('Inputs',standardInputs(n));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(rateSentence(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :ran?'Computed in the last run: the rates are in its table.':'Not run yet.')}</p>`);
-  }else if(n.type==='case_series'){
-    // THE STANDARD INSPECTOR (experiment 186, 2026-11-12): the name, the input, one sentence, Configure…, and the result.
-    const p=n.params,receipt=result?.receipts.find(r=>r.nodeId===n.id);
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Name',labelForm('series-label','Name',p.label||TYPES.case_series.title));
-    content+=standardSection('Inputs',standardInputs(n));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(seriesSentence(p))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :receipt?.method?receipt.method.split('. ')[0]+'.':'Not run yet.')}</p>`
-      +(workflow.edges.some(e=>e.from===n.id)?'':'<div class="inspector-actions"><button id="add-series-chart" class="button small">＋ Add epidemic curve</button></div>'));
+  }else if(n.type==='rate'||n.type==='case_series'){
+    // MOVED OUT OF APP.TS (series-rate-ui.ts, 2026-11-22).
+    content+=(n.type==='rate'?rateInspector.markup(n,seriesRateKit()):caseSeriesInspector.markup(n as WorkflowNode<'case_series'>,seriesRateKit()));
   }else if(n.type==='slr_extract_import'){
     const p=n.params;
     content+=''
@@ -4051,20 +3687,7 @@ function renderInspector(){
       if(chosen===DEFAULT_FIGURE_SECTIONS[node.type as keyof typeof DEFAULT_FIGURE_SECTIONS])delete params.section;
       else params.section=chosen;});
   });
-  if(n.type==='two_by_two')optionalElement('#configure-step')?.addEventListener('click',()=>{
-    const node=workflow.nodes.find(x=>x.id===n.id);
-    if(node?.type!=='two_by_two')return;
-    const shape=upstreamKeyValues(node)??{},table=tableOnPort(workflow,n.id,'records')??undefined;
-    openTwoByTwoConfig({
-      step:node.params.label||TYPES.two_by_two.title,
-      sourceLabel:portSourceName(workflow,n.id,'records','the table'),
-      values:table?Object.fromEntries(table.keys.map(k=>[k,[...new Set(table.rows.map(r=>r.key[k]??'').filter(Boolean))].sort()])):shape,
-      exposuresOffered:d=>exposureColumnsOffered(withoutDeclaredKeys(node,shape),{outcomeColumn:d.outcomeColumn,exposed:d.exposed,unexposed:d.unexposed},upstreamRows(node)),
-      table,
-      initial:twoByTwoDraftOf(node.params),
-      apply:d=>{change(w=>{applyTwoByTwoDraft(getNode(w,n.id,'two_by_two').params,d);},{requirePersistence:true});},
-    },esc);
-  });
+  if(Object.hasOwn(TABLE_STEP_INSPECTORS,n.type))(TABLE_STEP_INSPECTORS[n.type as keyof typeof TABLE_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,tableStepKit(),document);
   optionalElement('#output-run-look')?.addEventListener('click',async()=>{
     await run();
     // The Inspector is redrawn by the run; its button is the one to press now, if the step produced a table.
@@ -4240,33 +3863,6 @@ function renderInspector(){
     const node=workflow.nodes.find(x=>x.id===n.id);
     if(node?.type!=='transmission_chains')return;
     openChainsConfig(node as WorkflowNode<'transmission_chains'>);
-  });
-  if(n.type==='group_table')optionalElement('#configure-step')?.addEventListener('click',()=>{
-    const node=workflow.nodes.find(x=>x.id===n.id);
-    if(node?.type!=='group_table')return;
-    const table=tableOnPort(workflow,n.id,'records');
-    openGroupConfig({
-      step:node.params.label||TYPES[n.type].title,
-      sourceLabel:portSourceName(workflow,n.id,'records','the table'),
-      columns:table?.keys??Object.keys(upstreamKeyValues(node)??{}),
-      valueField:table?.valueField??upstreamValueField(node),
-      ...(table?{table}:{}),
-      initial:groupDraftOf(node.params),
-      apply:draft=>{change(w=>{applyGroupDraft(getNode(w,n.id,'group_table').params,draft);},{requirePersistence:true});},
-    },esc);
-  });
-  if(n.type==='select_rows')optionalElement('#configure-step')?.addEventListener('click',()=>{
-    const node=workflow.nodes.find(x=>x.id===n.id);
-    if(node?.type!=='select_rows')return;
-    const table=tableOnPort(workflow,n.id,'records');
-    openSelectConfig({
-      step:node.params.label||TYPES[n.type].title,
-      sourceLabel:portSourceName(workflow,n.id,'records','the table'),
-      shape:upstreamKeyValues(node)??{},
-      ...(table?{table}:{}),
-      initial:selectDraftOf(node.params),
-      apply:draft=>{change(w=>{applySelectDraft(getNode(w,n.id,'select_rows').params,draft);},{requirePersistence:true});},
-    },esc);
   });
   // RELATE'S CONFIGURATION DIALOG (experiment 186). Given the columns each table declares and, where they resolve, the
   // tables themselves, so the preview is the join this draft would make. Only Apply writes.
@@ -4523,14 +4119,8 @@ function renderInspector(){
   // Switching the kind of input changes what the records port accepts, so anything wired into it
   // is disconnected rather than left in place carrying the wrong shape.
   // Points and a table are not the same shape, so changing which one disconnects what was wired, as Rate does.
-  if(n.type==='case_series'){
-    optionalElement('#configure-step')?.addEventListener('click',()=>openSeriesConfig(n.id));
-    optionalElement('#series-label')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'case_series').params.label=control(e).value.trim()||TYPES.case_series.title;}));
-  }
-  if(n.type==='rate'){
-    optionalElement('#configure-step')?.addEventListener('click',()=>openRateConfig(n.id));
-    optionalElement('#rate-label')?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'rate').params.label=control(e).value.trim()||TYPES.rate.title;}));
-  }
+  if(n.type==='case_series')caseSeriesInspector.wire(n,seriesRateKit(),document);
+  if(n.type==='rate')rateInspector.wire(n,seriesRateKit(),document);
   const retrieve=document.querySelector<HTMLButtonElement>('#hf-retrieve');
   if(retrieve)retrieve.onclick=async e=>{
     const button=e.currentTarget as HTMLButtonElement;
@@ -4577,7 +4167,6 @@ function renderInspector(){
   document.querySelectorAll<HTMLInputElement>('#output-totals').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
       getNode(w,n.id,'table_output').params.totalsAsserted=el.checked||undefined;})));
-  if(n.type==='regression')optionalElement('#configure-step')?.addEventListener('click',()=>openRegressionConfig(n.id));
   // A number, and `data-slr` writes strings, which would reach the module as a key not in its table.
   document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>('[data-slr]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string>)[required(el.dataset.slr)]=el.value.trim();})));
@@ -4585,7 +4174,6 @@ function renderInspector(){
     const node=getNode(w,n.id,'slr_extract_import');node.params.familyValues={...node.params.familyValues,[required(el.dataset.slrFamily)]:el.value.trim()};})));
   document.querySelectorAll<HTMLTextAreaElement>('[data-slr-citation]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=getNode(w,n.id,'slr_extract_import');const citations=[...node.params.citations];citations[Number(el.dataset.slrCitation)]=el.value.trim();node.params.citations=citations;})));
-  optionalElement('#add-series-chart')?.addEventListener('click',()=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'records'});selected=id;}));
   document.querySelectorAll<HTMLInputElement>('#chart-label').forEach(el=>el.addEventListener('change',()=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=el.value.trim()||'Chart';})));
   // Reading, not editing: it opens a dialog and touches nothing that is saved.
   optionalElement('#table-convert-on-run')?.addEventListener('change',e=>{
@@ -6068,6 +5656,27 @@ function chartKit():ChartKit{
   return {...stepKit(),result:()=>result??undefined,tableKeyColumns:node=>[...tableKeyColumns(node)],
     upstreamKeyValues:(node,seen,port)=>upstreamKeyValues(node,seen??new Set(),port),writeUpSelect:n=>writeUpSelect(n as never),
     labelForm:(id,label,value)=>labelForm(id,label,value),standardInputs:(n,labels)=>standardInputs(n,labels)};
+}
+/** THE TABLE STEPS' KIT (table-steps-ui.ts): the step kit, with the last receipt, the step the records come from, the
+ *  columns and values arriving, and the exposure columns a two-by-two could compare. */
+function tableStepKit():TableStepKit{
+  const nodeOf=(id:string)=>workflow.nodes.find(x=>x.id===id)!;
+  return {...stepKit(),receipt:id=>result?.receipts.find(r=>r.nodeId===id),
+    sourceName:(id,port,fallback)=>portSourceName(workflow,id,port,fallback),
+    shape:id=>upstreamKeyValues(nodeOf(id))??{},valueField:id=>upstreamValueField(nodeOf(id)),
+    exposuresOffered:(id,shape,d)=>exposureColumnsOffered(withoutDeclaredKeys(nodeOf(id),shape),d,upstreamRows(nodeOf(id)))};
+}
+/** CASES BY PERIOD'S AND RATE'S KIT (series-rate-ui.ts): the step kit, with the columns arriving, the table on the records
+ *  port, and the one thing the Inspector adds to the canvas, an epidemic curve. */
+function seriesRateKit():SeriesRateKit{
+  return {...stepKit(),columns:id=>[...new Set(candidateFields(workflow,id).map(f=>(f as {attribute:string}).attribute))],
+    rateColumns:id=>{const node=getNode(workflow,id,'rate'),table=node.params.source==='table'?tableOnPort(workflow,id,'records'):null;
+      const up=workflow.nodes.find(m=>m.id===workflow.edges.find(e=>e.to===id&&e.port==='records')?.from);
+      return {table:table??undefined,columns:table?[...table.keys,table.valueField]
+        :node.params.source==='table'&&up?[...Object.keys(upstreamKeyValues(node)??{}),...(upstreamValueField(up)?[upstreamValueField(up)!]:[])]:[]};},
+    feedsAnything:id=>workflow.edges.some(e=>e.from===id),
+    addCurve:n=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve'}});
+      w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'records'});selected=id;})};
 }
 function stepKit():StepKit{
   return {...inspectorKit(),method:id=>result?.receipts.find(r=>r.nodeId===id)?.method,

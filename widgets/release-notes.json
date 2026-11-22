@@ -126,12 +126,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.7.0",
-   "released": "2026-11-15",
+   "version": "0.7.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "An hour period, for dates and times, every hour kept; a date with no time is listed, never put at midnight."
+     "kind": "changed",
+     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
     }
    ],
    "breaking": false,
@@ -367,12 +367,12 @@
    "migrationFrom": []
   },
   "group_table": {
-   "version": "0.6.0",
-   "released": "2026-11-19",
+   "version": "0.6.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: five made-up rows gathered into two regions under the summary you have chosen; a group with an empty cell has an unknown total unless empty cells are left out, and a count of rows counts the empty one; its last step the table this step makes from the same rows (experiment 223)."
+     "kind": "changed",
+     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
     }
    ],
    "breaking": false,
@@ -632,12 +632,12 @@
    "migrationFrom": []
   },
   "rate": {
-   "version": "0.4.0",
-   "released": "2026-11-09",
+   "version": "0.4.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A table can hold both numbers on each row, as columns: a count, and a population brought beside it by Relate. On the standard Inspector and dialog: its name, its input, one sentence of what it divides by what, and Configure…, which holds every setting and previews each group's rate before Apply."
+     "kind": "changed",
+     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
     }
    ],
    "breaking": false,
@@ -756,12 +756,12 @@
    "migrationFrom": []
   },
   "select_rows": {
-   "version": "0.5.0",
-   "released": "2026-11-19",
+   "version": "0.5.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: a made-up table checked row by row under the way of choosing you have picked: values to keep, values to leave out, or a range; a row with an empty cell is set aside by keeping values and kept by leaving one out, as this step does; its last step the table this step makes from the same rows (experiment 223)."
+     "kind": "changed",
+     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
     }
    ],
    "breaking": false,
@@ -972,12 +972,12 @@
    "migrationFrom": []
   },
   "two_by_two": {
-   "version": "0.8.2",
-   "released": "2026-11-19",
+   "version": "0.8.3",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "patch",
-     "description": "With no study design connected, the table still says its measures are named by their arithmetic; what to do about it (\"Connect a study design to say what they measure.\") is said in the application and not printed in a draft (target outputs audit, 2026-11-19)."
+     "kind": "changed",
+     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
     }
    ],
    "breaking": false,
@@ -1009,12 +1009,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.6.0",
-   "released": "2026-11-12",
+   "version": "0.6.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The standard Inspector and dialog (experiment 186): the panel holds the step's Name, its input, one sentence saying the model it will fit, Configure…, and the run's own sentence on what it estimated and which rows it used and left out. Every setting moved to Configure…, on a draft that changes the step only on Apply; nothing about the model changed. With several exposure columns the run says which model it is fitting, k of n, and lets the page draw it between models; the seven models of Brazil's lag workflow held the page for 35 s with nothing moving (the practitioner, 2026-11-12)."
+     "kind": "changed",
+     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
     }
    ],
    "breaking": false,

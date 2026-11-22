@@ -3,6 +3,12 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.164.0 — In development
+
+- **Six Inspectors out of the application's main file**, the first batch of the Inspector move: Cases by period, Rate,
+  Select rows by value, Total within groups, Two-by-two and Regression now each live with their dialogs in a module of
+  their own. Nothing they do changed; the main file is about 390 lines shorter.
+
 ## 0.163.0 — 2026-11-22
 
 - **Show me how for every spatial step.** Sample a raster (at points, or over areas), Keep points inside the area and

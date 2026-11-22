@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-11-21_
+_Created 2026-10-10 · Updated 2026-11-22_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -103,8 +103,12 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   mapping effort and population density mislead; only area totals shown, with a minimum count. Open: real boundaries
   with made-up venues, or a made-up geography. Needs a spatial count model and residual cluster tests in a tab.
 - **Done in 0.155.0.** Table leftovers from the DR Congo workflow: After shows the rows as stored, then the crosstab; a long read names its value; the `measure` column a wide read makes is said as made by the read wherever it is offered.
-- **The rest of the Inspector move:** reading satellite files (its dialog and sentence are still in app.ts, with their
-  readers and caches). Tabular data's Configure… and its save moved to data-table-ui.ts in 0.155.0.
+- **The rest of the Inspector move** (the practitioner, 2026-11-22: *"rest of the Inspector move for app.ts"*), in five
+  batches, one release each. **A, done in 0.164.0:** Cases by period, Rate, Select rows, Total within groups, Two-by-two,
+  Regression. **Left:** B, Transmission chains, Space-time scan, Study design; C, Deduplicate records, Find health
+  facilities, Project to UTM, Mean center, Donut and H3 geomasking; D, Table output, Polygon layer, Georeferenced map
+  image, Find satellite products, and reading satellite files (its dialog and sentence, with their readers and caches);
+  E, the three sea-level steps.
 - **Coastal sea-level:** the PSMSL archive reader; the framework's ontology terms, waiting on the practitioner's choice
   of the CF standard name for relative sea level.
 - **Done in 0.155.0.** Boundary levels as published: Check this level says the level's own name where geoBoundaries

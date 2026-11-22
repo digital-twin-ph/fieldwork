@@ -547,7 +547,7 @@
       "id": "urn:fieldwork:example:workflows-rulesets",
       "title": "Rules on synthetic data",
       "repository": "https://github.com/digital-twin-ph/example-workflows-rulesets",
-      "commit": "e419d2e11bf88ab1262bc043409b5e7e039793da",
+      "commit": "2362c940edc41ff28d8e9ca92f25aefe6046eb71",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-workflows-rulesets",
       "licence": {
         "data": "CC0-1.0",
@@ -577,8 +577,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "4bb249202a4ef9079c7a094084de4f549abae4cce71d7b348bb9868afb4db5e4",
-          "bytes": 80611
+          "sha256": "d9889e7b01d5c3eaa2c2bed26b1c664d49e3c267571684dbf3cbbb5d3c1c534b",
+          "bytes": 80607
         },
         {
           "path": "data/clinic-visits.csv",
@@ -725,7 +725,7 @@
       "id": "urn:fieldwork:example:sea-level-rise-philippines",
       "title": "Sea-level rise at Manila’s health facilities",
       "repository": "https://github.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
-      "commit": "d0d946dc661c69cf9f73c329ad41a1d8e5d152be",
+      "commit": "739ea6fcc49475d770f1deae0a6620a2af9ea7d0",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-sea-level-rise-philippines",
       "licence": {
         "data": "Projections and sites CC BY 4.0, with three required citations; DeltaDTM v1.1 and DTU25MSS subsets CC BY 4.0; facilities retrieved from OpenStreetMap (ODbL 1.0) by the workflows; the study area, diagram, manual and scripts CC0 1.0",
@@ -760,8 +760,8 @@
         },
         {
           "path": "manual.json",
-          "sha256": "90b9bc01d594899e98a3ef4d5fd35f713383a30f981d530c6a1c8460d5f247d3",
-          "bytes": 58787
+          "sha256": "4234858c81547f0b2ce845d8669e13bea6c0316fdb5ecb9eea79680e79350b9d",
+          "bytes": 58775
         },
         {
           "path": "README.md",

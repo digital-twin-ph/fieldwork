@@ -1,6 +1,6 @@
 # Developmental evaluation: saving, deleting and identifying pushpins
 
-_Created 2026-10-06 · Updated 2026-10-14_
+_Created 2026-10-06 · Updated 2026-11-22_
 
 **Status:** tried. Save Edits, Delete Pin and record IDs were built and checked on 2026-10-05 (A33 to A38). On
 2026-11-22 a review of what pins can do found twelve gaps, and the practitioner added photos and GPS exports, listed

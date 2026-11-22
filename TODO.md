@@ -96,6 +96,14 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   phones, community engagement) rather than microplanning against none; all eight GIS-mapping effectiveness studies were
   positive and none had a comparison group, so GIS mapping is rated "promising". A planned route beside each team's
   actual track is the case study's layer.
+- **Travel time to care for Nigeria microplanning, the first use of WebGPU** (the practitioner, 2026-11-22: yes). For
+  every 100 m cell of a state, the time to the nearest health facility over roads, paths and terrain: the accessibility
+  modelling of the WHO-UNICEF geo-enabled microplanning handbook, beside the line layer above. **Measure first:** the
+  same computation in the Rust kernel for one Nigerian state, timed; a WebGPU path only where the kernel is too slow,
+  held to the kernel as experiment 225's spike was. **Needs:** a friction surface, the Malaria Atlas Project's (CC BY),
+  its Nigeria coverage and licence read on its pages; no download without the practitioner's yes. **Also named, not
+  ordered:** Brazil dengue's space-time scan at scale, the agent-based model over a health zone, density surfaces of
+  many points.
 - **Study design's dialog** on the standard draft-until-Apply dialog: done in 0.167.0 (Study design 0.8.0).
 - **Conditional gating, replayed again after the Inspector move** (the practitioner, 2026-11-22: yes). The gating audit
   (docs/audits/gating-audit.md) set it aside while `app.ts` was 11,024 lines and named by most widgets; it is 9,512 on

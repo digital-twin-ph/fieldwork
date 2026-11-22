@@ -14,6 +14,11 @@ export async function dragConnection(page,from,to,landed,{tries=3,wait=4000}={})
     await page.mouse.move(ax,ay);await page.mouse.down();
     // A small first move, so the canvas starts the connection before the long one.
     await page.mouse.move(ax+4,ay+4,{steps:2});
+    // A PRESS THAT MISSED THE HANDLE PICKS UP THE NODE (0.167.0 CI, WebKit): the long move then carried "Census 1984" onto
+    // Join's inputs, and every later try began on a handle Join now covered. So a connection must have begun before the
+    // long move; if none has, the press is let go where it was, nothing moved, and the drag is measured again.
+    if(!await page.locator('.react-flow__connection, .react-flow__connectionline').count()){
+      await page.mouse.move(ax,ay);await page.mouse.up();await page.waitForTimeout(200);continue;}
     await page.mouse.move(bx,by,{steps:20});
     // Settled over the target before release.
     await page.mouse.move(bx+1,by,{steps:2});await page.mouse.move(bx,by);

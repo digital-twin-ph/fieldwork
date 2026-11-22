@@ -77,10 +77,12 @@ test('a project is managed in the Project tab, and exports from a button there',
   await page.locator('#project-create').click();
   await page.locator('[data-view="project"]').click();
   await expect(page.locator('#project-view')).toBeVisible();
-  const exportButton=page.locator('.project-view-block button[data-export-project]').first();
+  const exportButton=page.locator('.project-view-block button[data-seal-project]').first();
   await expect(exportButton).toBeVisible();
-  // Named for the act, not the file format: three controls called Export became one called Back up.
-  await expect(exportButton).toContainText('Back up');
+  // Named for the act, not the file format: three controls called Export became one called Back up; encrypted since
+  // 2026-11-21 (experiment 229), with the plain copy beside it, named as one.
+  await expect(exportButton).toContainText('Back up, encrypted');
+  await expect(page.locator('.project-view-block button[data-export-project]').first()).toContainText('Plain copy');
   // The storage readout still opens it, because somebody has learned that by now.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#storage-status').click();

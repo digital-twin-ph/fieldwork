@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.162.1 — In development
+## 0.162.1 — 2026-11-21
 
 - **The checks on GitHub run again.** 0.162.0's new validation fixture read the syndromic example from a copy beside the
   repository, which GitHub's runner does not have, so the checks stopped before any browser test ran. It now says the

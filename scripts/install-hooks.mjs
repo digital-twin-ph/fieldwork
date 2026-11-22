@@ -10,10 +10,13 @@
 // something to a developer's machine they did not ask for; this is a command they run.
 import {writeFileSync,chmodSync,existsSync,mkdirSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
-import {join} from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {join,resolve} from 'node:path';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
-const dir=join(root,'.git/hooks');
+// WHERE GIT KEEPS HOOKS, asked of git: in a worktree `.git` is a file naming the main repository, whose hooks every
+// worktree shares (2026-11-22).
+const dir=resolve(root,execFileSync('git',['-C',root,'rev-parse','--git-common-dir'],{encoding:'utf8'}).trim(),'hooks');
 const hook=join(dir,'pre-push');
 
 const script=`#!/bin/sh
@@ -25,6 +28,10 @@ const script=`#!/bin/sh
 # machine. This hook is a filter, not a replacement for that.
 #
 # To push anyway, when you know why: git push --no-verify
+# Git exports this repository's GIT_DIR and its kin to a hook. The checks read the example, lab and data repositories
+# beside this one with \`git -C\`, and with GIT_DIR set every one of them reads THIS repository instead (pushing from a
+# worktree, 2026-11-22: every example's pin "disagreed" with its checkout). Cleared, so the hook sees what a shell does.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX GIT_COMMON_DIR GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
 echo "pre-push: running npm run check:fast"
 if ! npm run --silent check:fast; then
   echo ""

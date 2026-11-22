@@ -1,6 +1,6 @@
 # 221 · Large rasters with terrio
 
-_Created 2026-11-18 · Updated 2026-11-18_
+_Created 2026-11-18 · Updated 2026-11-21_
 
 **Status:** validated. Adopted 2026-11-18 as Fieldwork's one raster engine; the change is complete: no application code
 reads cells with geotiff.js, which stays only as an independent writer of test files. Validated against geotiff.js

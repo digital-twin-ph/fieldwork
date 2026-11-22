@@ -37,7 +37,7 @@ test('a stored project says whether a copy exists, and that is the way to make o
   await page.locator('.project-view-block [data-export-project]').first().click();
   await download;
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('#project-safety')).toHaveText('Backed up');
+  await expect(page.locator('#project-safety')).toHaveText('Backed up, not encrypted');
   await expect(page.locator('#project-safety')).toHaveAttribute('data-safety','backed-up');
 });
 

@@ -12,7 +12,17 @@ decision.
 
 Workflows, attached PDFs and retained raster windows stay in your browser; export them to move between the local and published sites, which have separate browser storage.
 
-**Encrypted ZIP** creates a password-protected project containing the workflow, referenced PDFs and retained raster windows as binary files. Enter and confirm a long passphrase, then use **Import** to restore the ZIP on another device. Generic archive entry names, counts and sizes remain visible; original PDF filenames and citations are inside encrypted content. There is no password recovery. Browser storage and the existing JSON export/run receipts remain unencrypted. The prototype supports PDFs and bounded GeoTIFF windows, with a 20 MB archive limit; original national rasters and arbitrary attachments are not embedded. See the [encrypted-package design](experiments/24-encrypted-project-packages.md).
+**Back up** offers encrypted copies first (since 0.162.0). **This project, encrypted** and **This workflow, encrypted**
+write a sealed file (`.fwsealed`) that only the people you choose can open: you, while your identity is open; project
+members who gave their key with **This is me**; anyone whose key you paste under **Also for** (they find it under
+Identity → *Your key for encrypted files*; it is public, so email is fine); and, for someone with no identity, a
+passphrase you tell them another way. **Import** opens a sealed file with your open identity, or asks for the
+passphrase. If you lose your identity file or its passphrase, a file sealed only for you cannot be opened. **Plain
+copies** follow, readable by anyone who has the file: for a worked example to publish. **Export as repository** is
+encrypted the same way, with a plain ZIP as its other button. Browser storage stays unencrypted. See
+[experiment 229](experiments/229-backups-encrypted-by-default.md).
+
+**The password ZIP** (*This workflow with its PDFs and raster windows*) creates a password-protected project containing the workflow, referenced PDFs and retained raster windows as binary files. Enter and confirm a long passphrase, then use **Import** to restore the ZIP on another device. Generic archive entry names, counts and sizes remain visible; original PDF filenames and citations are inside encrypted content. There is no password recovery. Browser storage and the existing JSON export/run receipts remain unencrypted. The prototype supports PDFs and bounded GeoTIFF windows, with a 20 MB archive limit; original national rasters and arbitrary attachments are not embedded. See the [encrypted-package design](experiments/24-encrypted-project-packages.md).
 
 Projects now keep a manifest alongside their workflow. Edits update its inventory of nodes, connections, embedded records, fields and references. Export/import validate this inventory and required PDF/raster contents; incomplete packages are rejected. Older workflows acquire a manifest when saved. Reference-only JSON imports require their PDF/raster assets to be available locally—use a complete bundle to move projects between devices.
 

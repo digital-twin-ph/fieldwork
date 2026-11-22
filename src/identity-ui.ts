@@ -5,12 +5,13 @@
  *  and, encrypted, in this browser's storage so a reload keeps it (`session-keep.ts`); locked after ten idle minutes or
  *  at Lock. */
 import {affiliationEditor,readAffiliationEditor} from './affiliations-ui.js';
-import {createIdentityFile,openIdentityFile,updateIdentityFile,validOrcid,validRor,sshPublicKey,keyPublished,type OpenIdentity} from './identity-file.js';
+import {createIdentityFile,openIdentityFile,updateIdentityFile,addSealingKey,validOrcid,validRor,sshPublicKey,keyPublished,type OpenIdentity} from './identity-file.js';
 import {AVATAR_COLOURS,AVATAR_ICONS,avatarSvg,iconSvg,keyPatternSvg,type AvatarChoice} from './avatars.js';
 import type {Escape} from './types.js';
 import {validLogin} from './identity.js';
 import {qrSvg} from './qr.js';
 import {keep,restore,extend,drop,UNLOCKED_FOR_MS} from './session-keep.js';
+import {keyText,fingerprint} from './sealed-file.js';
 
 const IDLE_MS=UNLOCKED_FOR_MS;
 let open:OpenIdentity|null=null;
@@ -34,7 +35,9 @@ export function identityUntilLock():number|null{return open?Math.max(0,lastActiv
 /** KEPT THROUGH A RELOAD while open (2026-11-16, `session-keep.ts`): the profile encrypted, the signing key as the
  *  non-exportable CryptoKey it is. Dropped the moment it locks. */
 function set(next:OpenIdentity|null,kept=false){open=next;if(next)markOpenedHere();listeners.forEach(l=>l());
-  if(next&&!kept)void keep('identity',{profile:next.profile,algorithm:next.algorithm,publicKey:next.publicKey},Date.now()+IDLE_MS,{privateKey:next.privateKey});
+  if(next&&!kept)void keep('identity',{profile:next.profile,algorithm:next.algorithm,publicKey:next.publicKey,
+    ...(next.sealing?{sealingPublicKey:next.sealing.publicKey}:{})},Date.now()+IDLE_MS,
+    {privateKey:next.privateKey,...(next.sealing?{sealingKey:next.sealing.privateKey}:{})});
   if(!next)void drop('identity');}
 let extendedAt=0;
 /** Activity moves the kept identity's expiry on, at most twice a minute. */
@@ -62,6 +65,10 @@ const OPENED_KEY='fieldwork-identity-opened-v1';
 function openedHere():boolean{try{return localStorage.getItem(OPENED_KEY)==='yes';}catch{return false;}}
 function markOpenedHere(){try{localStorage.setItem(OPENED_KEY,'yes');}catch{/* a convenience only */}}
 function lock(){if(open)set(null);}
+/** The identity file, given to the person to keep. */
+function saveIdentityFile(text:string,name:string){const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'application/json'}));a.download=identityFileName(name);a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),10_000);}
 
 /** THE FILE'S NAME, easy to find in a folder (the practitioner, 2026-11-16: *"Need to automatically prefix the identify
  *  file with FWID-<name here>.fwid so it's easy to identify in a folder"*): FWID-, the name with spaces and punctuation as
@@ -124,6 +131,11 @@ key</strong>. Only the public key leaves Fieldwork; it cannot be used to sign in
 <li>Set <strong>Key type</strong> to <strong>Signing Key</strong>, paste the key, and press <strong>Add SSH key</strong>.</li>
 <li>Then check: <button type="button" class="button small" id="identity-ssh-check">Check the link</button></li></ol>
 <p id="identity-ssh-result" class="field-check" role="status" aria-live="polite"></p></details>
+<details id="identity-sealing-part" class="identity-github" hidden><summary>Your key for encrypted files</summary>
+<p>Backups are encrypted to this key while your identity is open. To let someone send you a file only you can open,
+give them this key: it is public, so email or chat is fine. They add it under <strong>Also for</strong> when they back up.</p>
+<p><code id="identity-sealing-key" class="identity-ssh-key"></code> <button type="button" class="button small" id="identity-sealing-copy">Copy</button></p>
+<p>Fingerprint, to read aloud and check: <strong id="identity-sealing-print"></strong></p></details>
 <details id="identity-avatar-part" hidden><summary>Change your avatar, ORCID iD or affiliations</summary>
 <p>They are kept in your identity file, so changing them saves a new file to keep in place of the old one. Your key
 stays the same. Choose the file and enter its passphrase.</p>
@@ -175,10 +187,11 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
     if(d&&e.target instanceof Node&&d.contains(e.target))used();},{capture:true});
   setInterval(()=>{if(open&&Date.now()-lastActivity>=IDLE_MS)lock();},10_000);
   // NOT LOCKED ON LEAVING THE PAGE any more: a reload keeps it, until 15 minutes without use or Lock.
-  void restore<{profile:OpenIdentity['profile'];algorithm:OpenIdentity['algorithm'];publicKey:string}>('identity').then(kept=>{
-    const privateKey=kept?.keys?.privateKey;
+  void restore<{profile:OpenIdentity['profile'];algorithm:OpenIdentity['algorithm'];publicKey:string;sealingPublicKey?:string}>('identity').then(kept=>{
+    const privateKey=kept?.keys?.privateKey,sealingKey=kept?.keys?.sealingKey;
     if(!kept||!privateKey||open)return;
-    lastActivity=kept.expiresAt-IDLE_MS;set({...kept.value,privateKey},true);});
+    const {sealingPublicKey,...value}=kept.value;
+    lastActivity=kept.expiresAt-IDLE_MS;set({...value,privateKey,...(sealingPublicKey&&sealingKey?{sealing:{publicKey:sealingPublicKey,privateKey:sealingKey}}:{})},true);});
   button.onclick=()=>{
     if(!document.querySelector('#identity-dialog'))document.body.insertAdjacentHTML('beforeend',DIALOG);
     const d=document.querySelector<HTMLDialogElement>('#identity-dialog')!;
@@ -244,6 +257,9 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
       ($('#identity-lock') as HTMLButtonElement).disabled=!open;
       $('#identity-avatar').innerHTML=open?avatarSvg(open.profile,48)+`<span class="key-label">${keyPatternSvg(open.publicKey,28)} Your key</span>`:'';
       $('#identity-avatar-part').hidden=!open;
+      $('#identity-sealing-part').hidden=!open?.sealing;
+      if(open?.sealing){$('#identity-sealing-key').textContent=keyText(open.sealing.publicKey);
+        void fingerprint(open.sealing.publicKey).then(f=>{$('#identity-sealing-print').textContent=f;});}
       // LINK TO GITHUB: offered once an identity with a GitHub login and an Ed25519 key is open.
       const ssh=open?sshPublicKey(open):null;
       $('#identity-github-part').hidden=!ssh||!open?.profile.login;
@@ -274,7 +290,12 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
       if(!file){said('Choose your identity file first.',false);return;}
       if(!pass){said('Enter the passphrase for this file.',false);$('#identity-passphrase').focus();return;}
       said('Opening…',true);
-      try{const identity=await openIdentityFile(await file.text(),pass);justOpened='Opened from your file.';set(identity);lastActivity=Date.now();justOpened='';
+      try{const text=await file.text();let identity=await openIdentityFile(text,pass);justOpened='Opened from your file.';
+        // A FILE MADE BEFORE 2026-11-21 GAINS ITS KEY FOR ENCRYPTED BACKUPS (experiment 229), and is given back to keep.
+        if(!identity.sealing){const added=await addSealingKey(text,pass);
+          if(added){identity=added.identity;saveIdentityFile(added.file,identity.profile.name);
+            justOpened=`Opened, and given a key for encrypted backups: keep the new ${identityFileName(identity.profile.name)} in place of the old one.`;}}
+        set(identity);lastActivity=Date.now();justOpened='';
         ($('#identity-passphrase') as HTMLInputElement).value='';($('#identity-file') as HTMLInputElement).value='';result.textContent='';
         $('#identity-status').scrollIntoView({block:'nearest'});}
       catch(e){said(e instanceof Error?e.message:'The file could not be opened.',false);($('#identity-passphrase') as HTMLInputElement).select();}
@@ -321,6 +342,10 @@ export function installIdentity(button:HTMLButtonElement,esc:Escape){
         set(identity);lastActivity=Date.now();
       }catch(e){fail(e instanceof Error?e.message:'The file could not be changed.');}
     };
+    $('#identity-sealing-copy').onclick=async()=>{if(!open?.sealing)return;
+      try{await navigator.clipboard.writeText(keyText(open.sealing.publicKey));$('#identity-sealing-copy').textContent='Copied';}
+      catch{const range=document.createRange();range.selectNodeContents($('#identity-sealing-key'));const sel=getSelection();sel?.removeAllRanges();sel?.addRange(range);
+        $('#identity-sealing-copy').textContent='Selected: press Cmd or Ctrl C';}};
     $('#identity-ssh-copy').onclick=async()=>{const ssh=open&&sshPublicKey(open);if(!ssh)return;
       try{await navigator.clipboard.writeText(ssh);$('#identity-ssh-copy').textContent='Copied';}
       catch{const range=document.createRange();range.selectNodeContents($('#identity-ssh-key'));const sel=getSelection();sel?.removeAllRanges();sel?.addRange(range);

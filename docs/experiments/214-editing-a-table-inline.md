@@ -1,6 +1,6 @@
 # 214 · Editing a table's values inline, in Data quality
 
-_Created 2026-11-14 · Updated 2026-11-14_
+_Created 2026-11-14 · Updated 2026-11-21_
 
 **Status:** validated. Built 2026-11-14 in 0.114.0 (Tabular data 0.11.0, Point data 0.8.0); the practitioner has used the
 inline edit in their own work (2026-11-21), the observation this record was waiting on.

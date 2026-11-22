@@ -8,6 +8,9 @@ header and is the route to the backup. The Project view itself is not built: the
 now, and it still opens onto the old dialog. Sections below are left as written on 2026-10-22,
 with what the building found recorded at the end rather than folded back into the proposal.
 
+**2026-11-21:** a project can now be backed up encrypted ([229](229-backups-encrypted-by-default.md)); the gap this
+record made visible in the Back up dialog is closed, and the dialog says encrypted or plain beside *Backed up*.
+
 ## What was asked
 
 The practitioner, 2026-10-22, at the end of a day in which they could not find their own backup,

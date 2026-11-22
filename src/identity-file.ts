@@ -13,6 +13,7 @@
  *  holding the file and its passphrase shows. */
 import type {Note} from './notes.js';
 import {isAvatarChoice,type AvatarChoice} from './avatars.js';
+import {newSealingKeys,importSealingKey} from './sealed-file.js';
 
 export const IDENTITY_FORMAT='fieldwork/identity/1';
 /** PBKDF2 rounds: OWASP's 2023 figure for SHA-256. Measured cost is recorded in 218. */
@@ -49,8 +50,10 @@ export interface IdentityProfile {name:string; login?:string; orcid?:string;
   affiliations?:Affiliation[];
   /** An icon of Fieldwork's set on a colour (`avatars.ts`); initials where absent. */
   avatar?:AvatarChoice}
-/** An identity opened for this session: its profile, its public key, and a private key that cannot be exported. */
-export interface OpenIdentity {profile:IdentityProfile; algorithm:SigningAlgorithm; publicKey:string; privateKey:CryptoKey}
+/** An identity opened for this session: its profile, its public key, and a private key that cannot be exported; and,
+ *  since 2026-11-21 (experiment 229), a key for files sealed to it, likewise. */
+export interface OpenIdentity {profile:IdentityProfile; algorithm:SigningAlgorithm; publicKey:string; privateKey:CryptoKey;
+  sealing?:{publicKey:string;privateKey:CryptoKey}}
 
 const enc=new TextEncoder(),dec=new TextDecoder();
 const b64=(bytes:ArrayBuffer|Uint8Array)=>{const u=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
@@ -102,11 +105,14 @@ export async function createIdentityFile(profile:IdentityProfile,passphrase:stri
   const clean:IdentityProfile={name,...(profile.login?.trim()?{login:profile.login.trim()}:{}),...(profile.orcid?{orcid:profile.orcid}:{}),
     ...(affiliations.length?{affiliations}:{}),
     ...(isAvatarChoice(profile.avatar)?{avatar:{icon:profile.avatar.icon,colour:profile.avatar.colour}}:{})};
-  const file=await seal({profile:clean,key:{algorithm,publicKey,privateKey}},passphrase,options.iterations??KDF_ITERATIONS);
-  return {file,identity:await openFrom(clean,algorithm,publicKey,privateKey)};
+  const sealing=await newSealingKeys();
+  const file=await seal({profile:clean,key:{algorithm,publicKey,privateKey},sealing},passphrase,options.iterations??KDF_ITERATIONS);
+  return {file,identity:await openFrom(clean,algorithm,publicKey,privateKey,sealing)};
 }
 
-interface Inner {profile:IdentityProfile; key:{algorithm:SigningAlgorithm;publicKey:string;privateKey:string}}
+/** THE KEY FOR SEALED FILES (experiment 229): ECDH P-256, beside the signing key, sealed in the same file. */
+type SealingPair={publicKey:string;privateKey:string};
+interface Inner {profile:IdentityProfile; key:{algorithm:SigningAlgorithm;publicKey:string;privateKey:string}; sealing?:SealingPair}
 async function seal(inner:Inner,passphrase:string,iterations:number):Promise<string>{
   const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
   const sealed=await subtle().encrypt({name:'AES-GCM',iv},await passphraseKey(passphrase,salt,iterations),enc.encode(JSON.stringify(inner)));
@@ -114,10 +120,11 @@ async function seal(inner:Inner,passphrase:string,iterations:number):Promise<str
     cipher:{name:'AES-GCM',iv:b64(iv)},data:b64(sealed)},null,2);
 }
 
-async function openFrom(profile:IdentityProfile,algorithm:SigningAlgorithm,publicKey:string,privateKey:string):Promise<OpenIdentity>{
+async function openFrom(profile:IdentityProfile,algorithm:SigningAlgorithm,publicKey:string,privateKey:string,sealing?:SealingPair):Promise<OpenIdentity>{
   // NOT EXTRACTABLE ONCE OPENED: the private key can sign and nothing can read it back out of the session.
   const key=await subtle().importKey('pkcs8',unb64(privateKey) as BufferSource,PARAMS[algorithm].import,false,['sign']);
-  return {profile,algorithm,publicKey,privateKey:key};
+  return {profile,algorithm,publicKey,privateKey:key,
+    ...(sealing?{sealing:{publicKey:sealing.publicKey,privateKey:await importSealingKey(sealing.privateKey)}}:{})};
 }
 
 /** A FIELD NAMED FOR A SECRET, anywhere in the file: an identity is not a credential, and one holding a token is refused. */
@@ -129,7 +136,17 @@ const holdsSecret=(value:unknown):boolean=>!!value&&typeof value==='object'
  *  identity file, or it holds a secret for a service. */
 export async function openIdentityFile(file:string,passphrase:string):Promise<OpenIdentity>{
   const {inner}=await unseal(file,passphrase);
-  return openFrom(inner.profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey);
+  return openFrom(inner.profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey,inner.sealing);
+}
+/** AN IDENTITY MADE BEFORE 2026-11-21 GAINS ITS KEY FOR SEALED FILES (experiment 229), the next time it is opened: the
+ *  same profile and signing key, a new encryption key, sealed again with the same passphrase. Null where the file has
+ *  one already. The person keeps the new file in place of the old. */
+export async function addSealingKey(file:string,passphrase:string):Promise<{file:string;identity:OpenIdentity}|null>{
+  const {inner,iterations}=await unseal(file,passphrase);
+  if(inner.sealing)return null;
+  const sealing=await newSealingKeys();
+  return {file:await seal({...inner,sealing},passphrase,iterations),
+    identity:await openFrom(inner.profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey,sealing)};
 }
 
 /** A CHANGED PROFILE, SEALED AGAIN: the same key, a new salt. The opened key cannot be read back out of the session,
@@ -146,8 +163,10 @@ export async function updateIdentityFile(file:string,passphrase:string,change:{a
   // An avatar left out of the change is kept; null removes it.
   const avatar=change.avatar===undefined?_was:change.avatar;
   const profile:IdentityProfile={...rest,...(orcid?{orcid}:{}),...(affiliations.length?{affiliations}:{}),...(avatar&&isAvatarChoice(avatar)?{avatar}:{})};
-  const next={profile,key:inner.key};
-  return {file:await seal(next,passphrase,iterations),identity:await openFrom(profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey)};
+  // A file without a key for sealed files gains one here too (experiment 229).
+  const sealing=inner.sealing??await newSealingKeys();
+  const next={profile,key:inner.key,sealing};
+  return {file:await seal(next,passphrase,iterations),identity:await openFrom(profile,inner.key.algorithm,inner.key.publicKey,inner.key.privateKey,sealing)};
 }
 
 async function unseal(file:string,passphrase:string):Promise<{inner:Inner;iterations:number}>{
@@ -156,7 +175,7 @@ async function unseal(file:string,passphrase:string):Promise<{inner:Inner;iterat
   if(outer?.format!==IDENTITY_FORMAT||typeof outer.data!=='string'||typeof outer.kdf?.salt!=='string'
     ||typeof outer.kdf?.iterations!=='number'||typeof outer.cipher?.iv!=='string')
     throw new Error(`This is not a Fieldwork identity file (${IDENTITY_FORMAT}).`);
-  let inner:{profile?:IdentityProfile;key?:{algorithm?:SigningAlgorithm;publicKey?:string;privateKey?:string}};
+  let inner:{profile?:IdentityProfile;key?:{algorithm?:SigningAlgorithm;publicKey?:string;privateKey?:string};sealing?:{publicKey?:unknown;privateKey?:unknown}};
   try{
     const key=await passphraseKey(passphrase,unb64(outer.kdf.salt),outer.kdf.iterations);
     inner=JSON.parse(dec.decode(await subtle().decrypt({name:'AES-GCM',iv:unb64(outer.cipher.iv) as BufferSource},key,unb64(outer.data) as BufferSource)));
@@ -166,8 +185,10 @@ async function unseal(file:string,passphrase:string):Promise<{inner:Inner;iterat
   if(!inner.profile?.name||!inner.key?.publicKey||!inner.key.privateKey||(algorithm!=='Ed25519'&&algorithm!=='ECDSA-P256'))
     throw new Error('This identity file is incomplete: it has no name or no key.');
   const {avatar,...profile}=inner.profile;
+  const sealing=typeof inner.sealing?.publicKey==='string'&&typeof inner.sealing.privateKey==='string'
+    ?{sealing:{publicKey:inner.sealing.publicKey,privateKey:inner.sealing.privateKey}}:{};
   return {inner:{profile:{...profile,...(isAvatarChoice(avatar)?{avatar}:{})},
-    key:{algorithm,publicKey:inner.key.publicKey,privateKey:inner.key.privateKey}},iterations:outer.kdf.iterations};
+    key:{algorithm,publicKey:inner.key.publicKey,privateKey:inner.key.privateKey},...sealing},iterations:outer.kdf.iterations};
 }
 
 /** WHAT OF A NOTE IS SIGNED: its content, in one canonical form (keys sorted, no whitespace), so the same note signs the

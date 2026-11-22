@@ -5,6 +5,12 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.162.0 — In development
 
+- **Backups are encrypted by default.** Back up offers *This project, encrypted* and *This workflow, encrypted* first:
+  a sealed file only the people you choose can open: you, while your identity is open; project members who gave their
+  key; anyone whose key you paste (Identity → *Your key for encrypted files*, safe to email); or a passphrase. Import
+  opens one with your identity or asks for the passphrase. Plain copies stay, named as readable by anyone with the
+  file; *Backed up* says encrypted or not. An identity made before this gains its key the next time it is opened, and
+  is given back to keep. Browser storage stays unencrypted. Export as repository is encrypted the same way.
 - **Chart draws series together**: several series on one scale in one panel, each with its own mark (bars, a line, a
   dashed line), and a triangle where another series is 1, such as Detect unusual counts' *signal*.
 - **Detect unusual counts shows each method's computation**: its statistic against its limit (CUSUM's running sum

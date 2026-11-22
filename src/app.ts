@@ -148,6 +148,8 @@ import {readNotes,WRITE_UP_PARTS,type Note,type WriteUpPart,moveNote,forkMachine
   UNWRITTEN,objectivesOf,type MachinedNote,FIGURE_SECTIONS,DEFAULT_FIGURE_SECTIONS,figureSection,type FigureSection,LEFT_OUT,inWriteUp} from './notes.js';
 import {readAuthors,currentIdentity,attestIdentity,setCurrentIdentity,authorLabel,DEVICE_REPOSITORY_FIELDS,readRepository} from './identity.js';
 import {installIdentity,openIdentity,identityUntilLock,signingIdentity,identityKeepOpen} from './identity-ui.js';
+import {openSealDialog,openSealedFile,type SealMember} from './seal-ui.js';
+import {isSealed} from './sealed-file.js';
 import {signStatement,verifyStatement} from './identity-file.js';
 import {affiliationLabel} from './affiliations-ui.js';
 import {noteVersion} from './identity-file.js';
@@ -8377,17 +8379,21 @@ function renderProjectView():void{
       // Same class: exportProject opens with the same guard, and this button is rebuilt by
       // render() on every state change, so it carries the state rather than being set once.
       backup.className='button small';backup.dataset.exportProject=project.id;backup.disabled=busy;
+      // ENCRYPTED FIRST (experiment 229): the default, with its own button; the plain copy beside it, named as one.
+      const sealed=document.createElement('button');
+      sealed.className='button small primary';sealed.dataset.sealProject=project.id;sealed.disabled=busy;
+      sealed.textContent='\u2193 Back up, encrypted';
       // THE SECOND EXPORT, beside the first rather than instead of it. One file backs a project
       // up; a repository lets several authors own one. Experiment 150.
       const repository=document.createElement('button');
       repository.className='button small';
       repository.dataset.exportRepository=project.id;repository.disabled=busy;
       repository.textContent='Export as repository';
-      backup.textContent='\u2193 Back up';
+      backup.textContent='\u2193 Plain copy';backup.title='Readable by anyone who has the file: for a worked example to publish.';
       const remove=document.createElement('button');
       remove.className='button small danger';remove.dataset.deleteProject=project.id;
       remove.textContent='Delete project';
-      actions.append(backup,repository,remove);
+      actions.append(sealed,backup,repository,remove);
     }else{
       // Its workflows can still be backed up one at a time; the PROJECT cannot, because the
       // dialog's project export renders only for a project that can be deleted.
@@ -8503,7 +8509,8 @@ function renderProjectSafety():void{
   control.type='button';
   control.id='project-safety';
   control.className='link-button';
-  control.textContent=safety;
+  // ENCRYPTED OR PLAIN, said beside it (experiment 229): a plain copy in a downloads folder is readable by anyone.
+  control.textContent=safety==='Not backed up'?safety:`${safety}${project.exportedSealed?', encrypted':', not encrypted'}`;
   control.title=safety==='Backed up'
     ?'A copy of this project exists outside this browser. Open the Workspace to make another.'
     :'No copy of this project exists outside this browser. Open the Workspace to make one.';
@@ -8671,19 +8678,33 @@ async function projectRepositoryFileMap(project:Project):Promise<Map<string,stri
  *
  *  ONE-WAY, AND IT SAYS SO. Reading a repository back is unbuilt, and the format declaration this
  *  writes carries that rather than implying a round trip. */
+async function projectRepositoryZip(project:Project):Promise<{blob:Blob;name:string;files:number}>{
+    save();
+    const files=await projectRepositoryFileMap(project);
+    const zip=new ZipWriter(new BlobWriter('application/zip'));
+    for(const [path,text] of files)await zip.add(path,new TextReader(text));
+    return {blob:await zip.close(),name:`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-repository.zip`,files:files.size};
+}
+/** EXPORT AS REPOSITORY, ENCRYPTED BY DEFAULT (experiment 229); the plain ZIP is the dialog's other button. */
+async function sealRepository(id:string){
+  if(busy)return;
+  const project=readProjects().find(p=>p.id===id);
+  if(!project)return;
+  const {members,without}=await sealMembers(project);
+  openSealDialog({what:`the project ${project.name} as a repository`,identity:openIdentity(),members,membersWithoutKey:without,
+    openIdentity:()=>$('#identity-button').click(),
+    make:async()=>{const z=await projectRepositoryZip(project);return {bytes:new Uint8Array(await z.blob.arrayBuffer()),name:z.name,mediaType:'application/zip'};},
+    plain:()=>exportProjectRepository(id),
+    done:name=>toast(`${name}: the repository, encrypted. Whoever opens it gets the ZIP to unzip into a clone of fieldwork-project-template.`)},esc);
+}
 async function exportProjectRepository(id:string){
   if(busy)return;
   const project=readProjects().find(p=>p.id===id);
   if(!project)return;
   try{
-    save();
-    const files=await projectRepositoryFileMap(project);
-    const zip=new ZipWriter(new BlobWriter('application/zip'));
-    for(const [path,text] of files)await zip.add(path,new TextReader(text));
-    const blob=await zip.close();
-    const name=`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-repository.zip`;
+    const {blob,name,files:count}=await projectRepositoryZip(project);
     downloadBlob(name,blob);
-    toast(`${files.size} files. Unzip into a clone of fieldwork-project-template, or into an `
+    toast(`${count} files. Unzip into a clone of fieldwork-project-template, or into an `
       +`empty directory and \`git init\`. Fieldwork cannot open one back yet.`,{tone:'notice'});
   }catch(error){toast(errorMessage(error),{tone:'failure'});}
 }
@@ -8691,11 +8712,9 @@ async function exportProjectRepository(id:string){
 /** A PROJECT AS ONE FILE. *"Where is the export project button?"* -- 2026-10-21. There was none:
  *  Export and Encrypted ZIP are both workflow-scoped, so four workflows about one province moved
  *  as four unrelated files with nothing recording that they belonged together. */
-async function exportProject(id:string){
-  if(busy)return;
-  const project=readProjects().find(p=>p.id===id);
-  if(!project)return;
-  try{
+/** THE PROJECT'S BACKUP FILE, made and not written: the plain backup writes it, and the encrypted one seals it first
+ *  (experiment 229). */
+async function projectBackupFile(project:Project):Promise<{blob:Blob;name:string;text:string;held:string[];loose:number}>{
     save();
     const saved=readSavedWorkflows();
     const held=project.workflows.filter(key=>Object.hasOwn(saved,key));
@@ -8728,25 +8747,58 @@ async function exportProject(id:string){
     // has to exist first. `gunzip | jq .` gives the readability back on demand.
     const text=JSON.stringify(document);
     const name=`${project.name.replace(/[^a-z0-9]+/gi,'-').toLowerCase()}-project.json.gz`;
-    const blob=await gzipText(text);
-    downloadBlob(name,blob);
-    // Recorded here, where the file has been written -- not where the export was asked for.
-    touchProject(id,'exportedAt');
-    // AND SAID, which is a separate act from recording it. Found by the test: the state was
-    // written correctly and the header went on reading "Not backed up" until the next save or
-    // render, so a practitioner who backed up and looked would have been told it had not worked.
-    //
-    // Both surfaces, because the second one repeated the first one's mistake: the Project view
-    // was added, the state was recorded on export, and the view went on saying Not backed up
-    // while the header beside it had already corrected itself. Every place that states a derived
-    // fact has to be told when the fact changes, and there are now two.
+    return {blob:await gzipText(text),name,text,held,loose};
+}
+/** Said once a backup is written, plain or encrypted: how many workflows, and any dataset left out by reference. */
+function backupWritten(project:Project,held:number,loose:number,sealed?:{name:string;recipients:number}){
+    touchProject(project.id,'exportedAt');
+    writeProjects(readProjects().map(p=>p.id!==project.id?p:{...p,exportedSealed:!!sealed}));
+    // AND SAID, which is a separate act from recording it. Found by the test: the state was written correctly and the
+    // header went on reading "Not backed up" until the next save or render. Both surfaces: the Project view repeated the
+    // header's mistake once. Every place that states a derived fact has to be told when the fact changes.
     renderProjectSafety();
     if(currentView==='project')renderProjectView();
-    toast(`${name} — ${(text.length/1e6).toFixed(1)} MB of project, ${(blob.size/1e6).toFixed(1)} MB written.`);
-    toast(`"${project.name}" exported: ${held.length} ${held.length===1?'workflow':'workflows'}.`
+    toast(`"${project.name}" ${sealed?`backed up encrypted, as ${sealed.name}, for ${sealed.recipients===1?'one key':`${sealed.recipients} keys`}`:'exported'}: ${held} ${held===1?'workflow':'workflows'}.`
       +(loose?` ${loose} downloaded ${loose===1?'dataset is':'datasets are'} kept on this device by reference and `
         +`${loose===1?'is':'are'} not in the file; whoever opens it downloads ${loose===1?'it':'them'} again.`:''),
       {tone:loose?'warning':undefined});
+}
+/** THE PROJECT'S MEMBERS WHO GAVE A KEY, each checked against their own signature: a key nobody signed is not offered. */
+async function sealMembers(project:Project):Promise<{members:SealMember[];without:string[]}>{
+  const me=openIdentity()?.sealing?.publicKey;
+  const members:SealMember[]=[],without:string[]=[];
+  for(const m of project.members??[]){
+    if(!m.sealKey){without.push(m.name??m.login);continue;}
+    if(m.sealKey===me)continue;
+    const verified=!!(m.signature&&m.publicKey&&m.algorithm)&&await verifyStatement(m.algorithm!,m.publicKey!,memberStatement(m),m.signature!);
+    members.push({name:m.name??m.login,login:m.login,sealKey:m.sealKey,verified});
+  }
+  return {members,without};
+}
+/** A PROJECT BACKED UP ENCRYPTED, the default (experiment 229): who can open it, then the sealed file. */
+async function sealProject(id:string){
+  if(busy)return;
+  const project=readProjects().find(p=>p.id===id);
+  if(!project)return;
+  const {members,without}=await sealMembers(project);
+  let made:{held:string[];loose:number}|null=null;
+  openSealDialog({what:`the project ${project.name}`,identity:openIdentity(),members,membersWithoutKey:without,
+    openIdentity:()=>$('#identity-button').click(),
+    make:async()=>{const file=await projectBackupFile(project);made=file;
+      return {bytes:new Uint8Array(await file.blob.arrayBuffer()),name:file.name,mediaType:'application/gzip'};},
+    plain:()=>exportProject(id),
+    done:(name,recipients)=>{if(made)backupWritten(project,made.held.length,made.loose,{name,recipients});}},esc);
+}
+async function exportProject(id:string){
+  if(busy)return;
+  const project=readProjects().find(p=>p.id===id);
+  if(!project)return;
+  try{
+    const {blob,name,text,held,loose}=await projectBackupFile(project);
+    downloadBlob(name,blob);
+    // Recorded here, where the file has been written -- not where the export was asked for.
+    toast(`${name} — ${(text.length/1e6).toFixed(1)} MB of project, ${(blob.size/1e6).toFixed(1)} MB written.`);
+    backupWritten(project,held.length,loose);
   }catch(error){toast(errorMessage(error),{tone:'failure'});}
 }
 /** Open one. The project is recreated with a key of its own for every workflow, so importing a
@@ -8915,9 +8967,10 @@ const projectListAction=async(event:Event)=>{
   const {openWorkflow,exportWorkflow,deleteWorkflow:removeKey,deleteProject:removeProject}=button.dataset;
   if(openWorkflow){loadExample(openWorkflow);return;}
   if(removeProject){deleteProject(removeProject);return;}
+  if(button.dataset.sealProject){await sealProject(button.dataset.sealProject);return;}
   if(button.dataset.exportProject){await exportProject(button.dataset.exportProject);return;}
   if(button.dataset.exportRepository){
-    await exportProjectRepository(button.dataset.exportRepository);return;}
+    await sealRepository(button.dataset.exportRepository);return;}
   if(removeKey){deleteWorkflow(removeKey);renderStorageStatus();
     if(currentView==='project')renderProjectView();return;}
   if(exportWorkflow){
@@ -9251,10 +9304,11 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
       const identity=signingIdentity();
       if(!identity){says.textContent=' Open your identity file, then press This is me again.';$('#identity-button').click();return;}
       const statement={login,name:identity.profile.name,...(identity.profile.orcid?{orcid:identity.profile.orcid}:{}),
-        ...(identity.profile.affiliations?.length?{affiliations:identity.profile.affiliations}:{})};
+        ...(identity.profile.affiliations?.length?{affiliations:identity.profile.affiliations}:{}),
+        ...(identity.sealing?{sealKey:identity.sealing.publicKey}:{})};
       const signed=await signStatement(identity,memberStatement(statement));
       writeProjects(readProjects().map(p=>p.id!==project.id?p:{...p,members:(p.members??[]).map(m=>
-        m.login.toLowerCase()!==login.toLowerCase()?m:{...m,...statement,...signed})}));
+        m.login.toLowerCase()!==login.toLowerCase()?m:{...(({sealKey:_was,...rest})=>(void _was,rest))(m),...statement,...signed})}));
       void refresh(false);});
   };
   // A DISCUSSION STARTED FROM THE PROJECT, in the words the person types (the first write of 2026-11-16, moved here from
@@ -9467,7 +9521,10 @@ if(new URLSearchParams(location.search).get('catalog')==='1'||location.hash==='#
  *  having looked for it: *"Where is the export to zip for projects?"* and *"So encrypted zip
  *  description is misleading."* There are three combinations, not four: a project cannot be
  *  backed up encrypted, because the encrypted package takes one workflow. That is said in the
- *  dialog rather than left as an option a practitioner hunts for and does not find. */
+ *  dialog rather than left as an option a practitioner hunts for and does not find.
+ *
+ *  CLOSED 2026-11-21 (experiment 229): a project is backed up encrypted, as a sealed file, and encrypted comes first in
+ *  the dialog; the plain copies follow, named as readable by anyone with the file. */
 function openBackupDialog(){
   if(busy)return;
   const project=readProjects().find(p=>p.id===(workflow.projectId
@@ -9477,7 +9534,7 @@ function openBackupDialog(){
   $('#backup-project-note').textContent=project
     ?`Compressed JSON of all ${project.workflows.length===1?'1 workflow':`${project.workflows.length} workflows`} filed under "${project.name}".`
     :'This workflow is filed under no project, so there is no project to back up. "New project" files it under one.';
-  $('#backup-gap').hidden=!project;
+  ($('#backup-project-sealed') as HTMLButtonElement).hidden=!project;
   $('#backup-dialog').showModal();
 }
 $('#backup-button').onclick=openBackupDialog;
@@ -9509,11 +9566,33 @@ function discardPreviousRun():void{
   renderResults();
 }
 function applyImportedWorkflow(next:Workflow){const persisted=change(w=>{replaceWorkflow(w,next);selected=next.nodes[0]?.id;},{requirePersistence:true});if(!persisted)throw new Error('Workflow could not be saved. The previous workflow is unchanged.');discardPreviousRun();renderLibrary();flow?.fit();toast('Workflow imported. Run it to update results.');}
+/** THIS WORKFLOW, ENCRYPTED (experiment 229): sealed for the open identity and anyone added. */
+async function workflowBackupFile():Promise<{bytes:Uint8Array;name:string;mediaType:string}>{
+  const exported=await workflowDocument(workflow);
+  const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
+  return {bytes:new Uint8Array(await (await gzipText(JSON.stringify(exported))).arrayBuffer()),name,mediaType:'application/gzip'};
+}
+$('#backup-workflow-sealed').onclick=()=>{if($('#backup-dialog').open)$('#backup-dialog').close();
+  openSealDialog({what:'this workflow',identity:openIdentity(),openIdentity:()=>$('#identity-button').click(),
+    make:workflowBackupFile,plain:async()=>{$('#export-button').click();},
+    done:(name,n)=>toast(`${name}: this workflow, encrypted for ${n===1?'one key':`${n} keys`}.`)},esc);};
+$('#backup-project-sealed').onclick=async()=>{
+  const project=readProjects().find(p=>p.id===(workflow.projectId??projectOfWorkflow(storageKey(workflow),readProjects())?.id));
+  if(!project)return;
+  $('#backup-dialog').close();
+  await sealProject(project.id);
+};
 $('#export-button').onclick=async()=>{try{if($('#backup-dialog').open)$('#backup-dialog').close();
   const exported=await workflowDocument(workflow);const text=JSON.stringify(exported);
   const name=exported.schema==='fieldwork/bundle/1'?'fieldwork-workflow-bundle.json.gz':'fieldwork-workflow.json.gz';
   downloadBlob(name,await gzipText(text));}catch(error){toast(errorMessage(error),{tone:'failure'});}};$('#import-button').onclick=()=>$('#workflow-file').click();
-$('#workflow-file').onchange=async e=>{const file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{if(file.size>MAX_BUNDLE_BYTES)throw new Error(`Workflow or bundle exceeds the ${(MAX_BUNDLE_BYTES/1e6).toFixed(0)} MB import limit.`);if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}
+$('#workflow-file').onchange=async e=>{let file=(control(e) as HTMLInputElement).files?.[0];if(!file)return;try{
+  // A SEALED BACKUP (experiment 229) is opened first, with the open identity or a passphrase, and then goes the way a
+  // plain file does. Known by its first bytes, not its name.
+  if(isSealed(new Uint8Array(await file.slice(0,16).arrayBuffer()))){
+    const opened=await openSealedFile(new Uint8Array(await file.arrayBuffer()),openIdentity(),()=>$('#identity-button').click(),esc);
+    if(!opened){control(e).value='';return;}
+    file=opened;}if(file.size>MAX_BUNDLE_BYTES)throw new Error(`Workflow or bundle exceeds the ${(MAX_BUNDLE_BYTES/1e6).toFixed(0)} MB import limit.`);if(file.name.toLowerCase().endsWith('.zip')){openPackageDialog(workflow,validateWorkflow,applyImportedWorkflow,file);control(e).value='';return;}
   // Gzipped or not, by what the first two bytes say rather than by the name on the file.
   const parsed=JSON.parse(await readMaybeGzipped(file));
   // A PROJECT DOCUMENT comes in through the same control: a practitioner handed a file should not

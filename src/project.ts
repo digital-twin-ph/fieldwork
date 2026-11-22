@@ -70,6 +70,8 @@ export interface Project {
    *  download machinery and loses sight of it, unable to read the filesystem or tell whether the
    *  file was kept, moved or deleted. This ages the process, not the file. */
   exportedAt?:string;
+  /** Whether that export was encrypted (experiment 229): said beside Backed up. */
+  exportedSealed?:boolean;
   /** THE PEOPLE WHO AUTHORED THE INVESTIGATION, in the order a publication would list them.
    *
    *  On the project rather than on a workflow, for the reason the notes are: six workflows are six
@@ -307,7 +309,7 @@ export function validateProject(raw:unknown):Project{
     .filter(([key,value])=>typeof value==='string'&&isPublicationEntry(key,value)&&value.trim()&&value.length<=MAX_PUBLICATION_PART) as [string,string][]):{};
   return {schema:'fieldwork/project/2',id:raw.id,name:raw.name,subject:raw.subject,
     workflows:[...new Set(raw.workflows as string[])],
-    ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(work?{exportedWork:work}:{}),
+    ...(changedAt?{changedAt}:{}),...(exportedAt?{exportedAt}:{}),...(exportedAt&&raw.exportedSealed===true?{exportedSealed:true}:{}),...(work?{exportedWork:work}:{}),
     ...(notes.length?{notes}:{}),...(authors.length?{authors}:{}),
     ...(createdAt?{createdAt}:{}),...(repository?{repository}:{}),...(dictionaries.length?{dictionaries}:{}),
     ...(Object.keys(publication).length?{publication}:{}),

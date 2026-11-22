@@ -4,6 +4,10 @@ _Created 2026-10-06 · Updated 2026-10-14_
 
 Date: October 6, 2026. Status: design and bounded prototype; not a security certification.
 
+**2026-11-21:** ordinary exports are no longer the default: backups are encrypted by default, for the person's identity
+and anyone they add, as sealed files ([229](229-backups-encrypted-by-default.md)). The password ZIP below stays, as the
+one backup that carries attached PDFs and raster windows. What follows is the record as written.
+
 ## A77 Package binaries separately from workflow serialization
 
 Offer an explicit **Encrypted ZIP** export alongside the existing JSON export. Import accepts both. The prototype contains the workflow and all referenced PDFs as original bytes, with an encrypted manifest binding file paths, lengths and SHA-256 digests. JSON remains the internal workflow/manifest representation; binary assets no longer require Base64. Ordinary export and run-receipt JSON remain unencrypted and retain their existing behavior.

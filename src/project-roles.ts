@@ -38,6 +38,9 @@ export interface ProjectMember {
   name?:string;
   orcid?:string;
   affiliations?:{name:string;ror?:string}[];
+  /** Their identity's key for sealed files (experiment 229), so a project backup opens for them. In the statement they
+   *  sign, so nobody can put another key in their place. */
+  sealKey?:string;
   /** Their key's signature over login, name, ORCID iD and affiliations, and the key it verifies against. */
   publicKey?:string;
   algorithm?:string;
@@ -57,14 +60,15 @@ export function readMembers(raw:unknown):ProjectMember[]{
     const text=(k:string)=>typeof r[k]==='string'&&r[k]?{[k]:r[k] as string}:{};
     const affiliations=Array.isArray(r.affiliations)?(r.affiliations as unknown[]).flatMap(a=>{const x=a as Record<string,unknown>|null;
       return x&&typeof x.name==='string'&&x.name?[{name:x.name,...(typeof x.ror==='string'&&x.ror?{ror:x.ror}:{})}]:[];}):[];
-    out.push({login:r.login,role:r.role as ProjectRole,since:r.since,...text('name'),...text('orcid'),...(affiliations.length?{affiliations}:{}),
+    out.push({login:r.login,role:r.role as ProjectRole,since:r.since,...text('name'),...text('orcid'),...text('sealKey'),...(affiliations.length?{affiliations}:{}),
       ...(typeof r.signature==='string'&&typeof r.publicKey==='string'&&typeof r.algorithm==='string'
         ?{publicKey:r.publicKey,algorithm:r.algorithm,signature:r.signature}:{})});
   }
   return out;
 }
 
-/** What a member's own signature covers, in a fixed order. */
-export const memberStatement=(m:Pick<ProjectMember,'login'|'name'|'orcid'|'affiliations'>)=>
+/** What a member's own signature covers, in a fixed order. Their key for sealed files is covered where they gave one;
+ *  a statement signed before 2026-11-21 had none and reads exactly as it was signed. */
+export const memberStatement=(m:Pick<ProjectMember,'login'|'name'|'orcid'|'affiliations'|'sealKey'>)=>
   JSON.stringify({login:m.login,name:m.name??null,orcid:m.orcid??null,
-    affiliations:(m.affiliations??[]).map(a=>({name:a.name,ror:a.ror??null}))});
+    affiliations:(m.affiliations??[]).map(a=>({name:a.name,ror:a.ror??null})),...(m.sealKey?{sealKey:m.sealKey}:{})});

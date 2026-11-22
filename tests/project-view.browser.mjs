@@ -116,7 +116,7 @@ test('Back up is one control, and says which combination does not exist',async({
   // With no project, backing one up is refused with the reason rather than offered and failing.
   await expect(page.locator('#backup-project')).toBeDisabled();
   await expect(page.locator('#backup-project-note')).toContainText('filed under no project');
-  await expect(page.locator('#backup-gap')).toBeHidden();
+  await expect(page.locator('#backup-project-sealed')).toBeHidden();
   await page.locator('#backup-dialog-close').click();
 
   await page.locator('#new-project').click();
@@ -127,14 +127,14 @@ test('Back up is one control, and says which combination does not exist',async({
   await page.locator('#backup-button').click();
   await expect(page.locator('#backup-project')).toBeEnabled();
   await expect(page.locator('#backup-project-note')).toContainText('Ituri health zones');
-  // The combination that does not exist is stated, not hunted for.
-  await expect(page.locator('#backup-gap')).toContainText('cannot yet be backed up encrypted');
+  // A project is backed up encrypted first (experiment 229, 2026-11-21); the plain copy follows.
+  await expect(page.locator('#backup-project-sealed')).toBeVisible();
 
   const download=page.waitForEvent('download');
   await page.locator('#backup-project').click();
   await download;
   await expect(page.locator('#backup-dialog')).toBeHidden();
-  await expect(page.locator('#project-safety')).toHaveText('Backed up');
+  await expect(page.locator('#project-safety')).toHaveText('Backed up, not encrypted');
 });
 
 // THE TAB WAS EMPTY WHERE IT MATTERED MOST. The practitioner, on the Project tab of a canvas

@@ -110,7 +110,7 @@ export async function exportEvidenceFiles(workflow:Workflow):Promise<EvidenceFil
   // country's raster has been written out (2026-11-12).
   const refs=[...projectFiles(workflow,true).values()],encoded=refs.reduce((sum,ref)=>sum+Math.ceil(ref.bytes/3)*4,0);
   if(encoded>MAX_WORKFLOW_FILE_ATTACHMENT_CHARS)throw new Error(`This workflow's files come to ${(encoded/1e6).toFixed(0)} MB in a workflow file, more than the `
-    +`${MAX_WORKFLOW_FILE_ATTACHMENT_CHARS/1e6} MB one can carry. Back it up with “This workflow, encrypted”, which carries them as they are.`);
+    +`${MAX_WORKFLOW_FILE_ATTACHMENT_CHARS/1e6} MB one can carry. Back it up with “This workflow with its PDFs and raster windows”, which carries them as they are.`);
   const result:EvidenceFile[]=[];
   for(const ref of refs)result.push({sha256:ref.sha256,bytes:ref.bytes,...(ref.mediaType==='image/tiff'?{mediaType:ref.mediaType}:{}),dataBase64:encodeFile(await verifiedProjectFile(ref))});
   return result;

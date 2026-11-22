@@ -3,7 +3,7 @@
   "description": "Independent recomputation of implemented widgets by an external process, recorded after release. Release files are immutable once committed, so evidence about a release lives here and accrues as checks run. A fixture digest recorded in a result is over canonical JSON content rather than the file’s bytes, revised 2026-10-11 because byte identity is unsatisfiable in the browser the lab publishes to. A parity result establishes numerical agreement with a named external implementation under a stated criterion. It is not scientific certification, and it says nothing about whether a method is appropriate for a question.",
   "lab": {
     "repository": "https://github.com/digital-twin-ph/validation-lab",
-    "commit": "ff03b21c7bb09b116acb027545a7e0640ddbd8dd",
+    "commit": "202cc775bafbfc1e05dac6d3d28f72a36dfa8a4c",
     "pinNote": "The commit CI checks the lab out at: .github/workflows/pages.yml reads it with `jq -r .lab.commit widgets/parity.json`. So this pin, not the clone beside this repository, is what `validate:dive-deeper` verifies against on a clean runner -- and it must be advanced whenever a check lands in the lab, in the same push-then-pin order the worked examples use."
   },
   "outcomes": {
@@ -941,6 +941,28 @@
       ],
       "note": "A whole example's epidemiology, not one widget: it covers Total within groups' Mean, Median and Column to total, Apply ruleset's days between dates, and Two-by-two as this example chains them. The fixture carries no row of the source (scripts/export-validation-fixture.mjs, mers-epi-001).",
       "notebook": "51-mers-epidemiology-vs-pandas.ipynb"
+    },
+    {
+      "widget": "urn:fieldwork:widget:detect_unusual_counts",
+      "coversRelease": "0.2.0",
+      "check": "53-detect-unusual-counts",
+      "result": "content/results/check-53-detect-unusual-counts.json",
+      "sha256": "eefc61b55c5715e8367ebca0e1fb9f5095e95aec42efa7fc8099cf58693bd553",
+      "external": [
+        "numpy 2.5.3",
+        "scipy 1.18.1",
+        "R surveillance 1.25.0 (recorded values)"
+      ],
+      "criterion": "Every period's expected count, threshold, statistic and limit within 1e-6 (relative above 1); the same signals, a period at its limit listed rather than counted; the same refusals; on the 40 made-up days, EARS C1 and C2 thresholds and CUSUM's the same as R's recorded values, C3 reported only",
+      "outcome": "agrees",
+      "measured": "24 runs on four series (40 made-up days with an excess; the syndromic example's 175 gastrointestinal days; three seasonal years, weekly; a sparse rare condition): all agree, including two refusals alike. Against R: C1, C2 and CUSUM identical thresholds and signal days; C3 differs on the first day of the rise, as declared. Seasonal: CUSUM on the first year signals 50 of 156 weeks, EWMA none, EARS on each autumn rise.",
+      "ranAt": "2026-11-22T01:34:09+00:00",
+      "notEstablished": [
+        "That a signal is an outbreak: both sides compute the same statistic from the same baseline.",
+        "That any alpha, h or L suits a surveillance system: they are decisions about false alarms.",
+        "A seasonal baseline (Farrington, or a GLM): Fieldwork has none, and seasonal-weekly shows what follows.",
+        "Fieldwork's reading of a table into a series (periods put in order, a missing period counted as 0): the fixture carries the series as Fieldwork read them, so that step is checked by Fieldwork's own tests."
+      ]
     }
   ],
   "notebookNote": "`notebook` names the lab notebook that carries the check, and `diveDeeper` the heading of its Dive Deeper section where it has one -- the part written for a practitioner who wants to understand the widget rather than for a reviewer checking it (experiment 94). Both are recorded rather than derived from the check id: `24-project-forward` lives in `24-project-vs-pyproj.ipynb`, so matching on the leading number works by luck and would break the first time a check and its notebook are named differently. The application reads `diveDeeper` to decide which widgets offer the link, and scripts/validate-dive-deeper.mjs refuses a heading the notebook does not actually carry."

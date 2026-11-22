@@ -1591,7 +1591,8 @@ const builders={
     // The syndromic example at the commit Fieldwork pins, beside this repository: each visit's date and generated syndrome.
     const pin=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples
       .find(e=>e.repository.endsWith('example-2026-syndromic-surveillance'));
-    const at=path=>readFileSync(new URL(`../../example-2026-syndromic-surveillance/${path}`,import.meta.url));
+    const at=path=>{try{return readFileSync(new URL(`../../example-2026-syndromic-surveillance/${path}`,import.meta.url));}
+      catch{throw new Error(`example-2026-syndromic-surveillance/${path} is not on this machine beside this repository.`);}};
     const csv=path=>at(path).toString('utf8').trim().split('\n').slice(1).map(line=>line.split(','));
     const syndrome=new Map(csv('data/truth.csv').map(([id,s])=>[id,s]));
     const gi=new Map();for(const [id,date] of csv('data/visits.csv'))if(syndrome.get(id)==='gastrointestinal')gi.set(date,(gi.get(date)??0)+1);

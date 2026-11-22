@@ -74,7 +74,19 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 ### Threads from 0.154.0 and 0.155.0 (2026-11-20), not yet ordered
 
 - **Detect unusual counts:** checked in the lab in Python (check 53, 0.162.0). Owed: the name review of "Detect unusual
-  counts".
+  counts". Proposed 2026-11-21, not yet decided: Farrington flexible (Noufaily 2013) as a method, the seasonal baseline
+  check 53 showed missing, then an ESSENCE-style regression on day of week; each checked against R's `surveillance`.
+- **The syndromic example on NSSP's definitions** (the practitioner, 2026-11-21: re-scoped to NSSP's, *"Both ICD-10,
+  ICD-11, with free text"*, and SNOMED CT from the Global Patient Set). Syndromes ILI (ILI CCDD v1), broad acute
+  respiratory (CDC Broad Acute Respiratory DD v1), norovirus (Norovirus v1, the seeded outbreak) and measles (CDC Measles
+  CCDD v1); injury dropped, since NSSP has no general one. Each visit gains a discharge diagnosis in ICD-10, ICD-11 and
+  SNOMED CT (GPS, CC BY-ND 4.0: terms quoted unaltered, exact codes only, SNOMED's attribution and the release in
+  provenance); some missing or late. Apply ruleset gains *starts with*. Credited to CDC/NSSP with CDC's non-endorsement
+  disclaimer. Before building: each NSSP query transcribed from its page, and every ICD-11 code checked in the current
+  release.
+- **206, syndromic surveillance's first record:** retire it into 228? Its open questions, if so, come here: New York's
+  daily series as a test bed; a seasonal baseline; the day-of-week pattern; whether a real syndromic feed reads in as
+  published; EWMA's lower limit. Waiting on the practitioner.
 
 - **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);
   the practitioner, 2026-11-21). The spike reads a point by two byte ranges, checked against Planetary Computer at five
@@ -1223,7 +1235,8 @@ thesis citation type, Word; the basemap under the cluster map is the practitione
 
 ### 25. A study area across a border
 
-25. **A study area across a border** (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
+25. **Built in 0.85.0 ([204](docs/experiments/204-a-study-area-across-a-border.md)), and a Polygon layer of several study
+   areas' parts, each with its country and level, in 0.159.0.** ~~**A study area across a border**~~ (the practitioner, 2026-11-10: *"We discussed the cross border study area. In this
    case we need to be able to either (1) detect the countries based on geometry overlaps or (2) named explicitly"*).
    **Built 2026-11-10 (0.85.0), [204](docs/experiments/204-a-study-area-across-a-border.md)**: a list of countries,
    named or found with shares and confirmed; the walk upstream; Raster input offering the area's countries with its
@@ -1296,7 +1309,9 @@ thesis citation type, Word; the basemap under the cluster map is the practitione
 
 ### 31. Syndromic surveillance: an aberration in a count over time
 
-31. **Syndromic surveillance: an aberration in a count over time** ([206](docs/experiments/206-syndromic-surveillance-aberration-detection.md);
+31. **Built: Detect unusual counts (0.159.0, [228](docs/experiments/228-detect-unusual-counts.md), lab check 53 in
+   0.162.0) and the syndromic worked example (0.160.0, charted in 0.162.0).** Left: 206's open questions (below, the
+   threads), and the NSSP re-scope. ~~**Syndromic surveillance: an aberration in a count over time**~~ ([206](docs/experiments/206-syndromic-surveillance-aberration-detection.md);
    the practitioner, 2026-11-11: *"We can add 206 to our TODO list."*). Not placed in the order yet. First, the check
    that may need nothing built: whether Apply ruleset's previous-row value can read a value computed in the same step,
    which would let EWMA and CUSUM be written as rules (option E). **Then, preferred (the practitioner: *"Can we modify

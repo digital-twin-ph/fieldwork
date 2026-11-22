@@ -9,8 +9,8 @@
   "measuredAt": "2026-11-21",
   "counts": {
     "widgets": 51,
-    "covered": 31,
-    "awaiting": 10,
+    "covered": 32,
+    "awaiting": 9,
     "none": 9,
     "blocked": 1
   },
@@ -297,7 +297,9 @@
     {
       "nodeType": "detect_unusual_counts",
       "expectation": "parity",
-      "computes": "Each period's expected count, threshold and signal by EARS C1, C2, C3, CUSUM or EWMA. R's surveillance package (earsC, algo.cusum) recomputes EARS and CUSUM; EWMA by its formula. Checked in unit tests against R on one series (experiment 228); a lab notebook over several series, including a seasonal one, is owed."
+      "computes": "Each period's expected count, threshold, statistic, limit and signal by EARS C1, C2, C3, CUSUM or EWMA.",
+      "check": "53-detect-unusual-counts",
+      "reason": "A signal sends an investigator to look, and a wrong threshold sends them to look at nothing, or not at all. Each method is recomputable from its published definition, and R's surveillance package gives a third reading."
     }
   ]
 }

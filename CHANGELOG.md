@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.165.0 — In development
+## 0.165.0 — 2026-11-22
 
 - **Study design on the standard Inspector**: one sentence of the design, what it reports, its period and its unit, then
   Configure…, and the checklist under Result. The period, the unit of analysis and the note moved from the Inspector into

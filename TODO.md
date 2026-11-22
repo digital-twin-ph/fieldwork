@@ -72,9 +72,9 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 2026-11-22
 
-- **Order set by the practitioner, 2026-11-22, later the same day:** the Inspector move's batch D, then WebGPU (travel time
-  to care, measured in the kernel first), then the conditional-gating replay; Hagelloch's peak (4) and batches C and E
-  after. Done before it: pins (09 closed), 1a (the table stress tests), 3 (the WebGPU spike).
+- **Order set by the practitioner, 2026-11-22, later the same day:** the Inspector move's batch D (done in 0.169.0), then
+  WebGPU (travel time to care, measured in the kernel first), then the conditional-gating replay; Hagelloch's peak (4)
+  and Find health facilities after. Done before it: pins (09 closed), 1a (the table stress tests), 3 (the WebGPU spike).
 - **Pins, experiment 09: closed 2026-11-22** (0.166.0 and 0.167.0; field order built, groups judged not needed). **Left,
   for the field:** a real phone, a real GPS fix, a real phone photo (HEIC) and a real handheld's GPX.
 - **A line layer** (the practitioner, 2026-11-22: *"That's an important gap no line layer"*, *"Line layer can be

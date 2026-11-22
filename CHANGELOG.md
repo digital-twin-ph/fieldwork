@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.169.0 — In development
+## 0.169.0 — 2026-11-22
 
 - **The Inspector move, batch D**: Table output, Polygon layer, Georeferenced map image and Find satellite products now
   each live with their dialogs in a module of their own, as does Sample a raster's dialog for satellite files. Nothing

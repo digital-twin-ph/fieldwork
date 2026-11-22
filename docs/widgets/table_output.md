@@ -99,6 +99,12 @@ inherited and is recorded as open in
 
 ## History
 
+### 2026-11-22 · Moved out of the application's main file (0.13.2)
+
+Its Inspector and its Configure… moved into a module of their own, unchanged. Nothing it does changed.
+The older **Input mode** choice, from before what is connected decided how a table is shown, is retired: a table of
+polygons is shown by the standard Inspector as any table is.
+
 ### 2026-11-19 · No 2,000-record ceiling (0.13.0)
 
 A table of points refused more than 2,000 records across its point inputs. That ceiling is gone; Point data's own

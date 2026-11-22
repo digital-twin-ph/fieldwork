@@ -15,7 +15,7 @@ test('a question about NO2 offers the open products first, and choosing one is s
   const id=saved.nodes.find(n=>n.type==='find_satellite_products').id;
   await page.locator(`.react-flow__node[data-id="${id}"]`).click();
   await expect(page.locator('#inspector-content')).toContainText('No product chosen yet');
-  await page.locator('#satellite-find').click();
+  await page.locator('#configure-step').click();
   const dialog=page.locator('#satellite-products-dialog');
   await expect(dialog).toBeVisible();
   await dialog.locator('#sat-question').fill('NO2 air pollution in New York City');
@@ -37,10 +37,12 @@ test('a question about NO2 offers the open products first, and choosing one is s
   await dialog.locator('#sat-close').click();
   const after=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   expect(after.nodes.find(n=>n.id===id).params).toMatchObject({topic:'no2',route:'pc-s5p-no2'});
-  await expect(page.locator('#inspector-content')).toContainText('Change the product');
+  // On the standard Inspector (2026-11-22): the choice in its one sentence, and Configure… to change it.
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('for Nitrogen dioxide (NO₂): Tropospheric NO₂ column');
+  await expect(page.locator('#configure-step')).toBeVisible();
   await expect(page.locator('#inspector-content')).toContainText('Sentinel-5P · TROPOMI NO₂ (Planetary Computer)');
   // Ozone is Fieldwork's addition, and says it is a column, not surface ozone.
-  await page.locator('#satellite-find').click();
+  await page.locator('#configure-step').click();
   await dialog.locator('[data-sat-chip="ozone"]').click();
   await expect(dialog.locator('[data-sat-topic="ozone"] .satellite-caution')).toContainText('not surface ozone');
   expect(errors).toEqual([]);

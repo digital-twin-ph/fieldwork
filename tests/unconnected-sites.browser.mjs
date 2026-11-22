@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureStep} from './configure-step.mjs';
 import assert from 'node:assert/strict';
 
 // What a site out of reach of the streets gets, and what the practitioner is told about it.
@@ -13,8 +14,7 @@ test('a site past the snap limit is routed off-network, and the widget says so',
 
   // 5 m from a street is closer than any of the eight pumps stands, so every one is marked.
   await widget.click();
-  await page.locator('#catchment-maxSnapM').fill('5');
-  await page.locator('#catchment-maxSnapM').blur();
+  await configureStep(page,{'isochrone-maxSnapM':'5'});
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
 
@@ -66,8 +66,8 @@ test('a site past the snap limit is routed off-network, and the widget says so',
 
   // The loop closes: the omission is acted on by raising the limit, and the alert goes.
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('#catchment-maxSnapM').fill('150');
-  await page.locator('#catchment-maxSnapM').blur();
+  await widget.click();
+  await configureStep(page,{'isochrone-maxSnapM':'150'});
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await expect(widget.locator('.node')).not.toHaveClass(/alerting/);
@@ -82,15 +82,10 @@ test('a site whose walk spends the budget gets no result, and the omission trave
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
-  await page.locator('#catchment-maxSnapM').fill('1000');
-  await page.locator('#catchment-maxSnapM').blur();
+  await configureStep(page,{'isochrone-maxSnapM':'1000','isochrone-times':'0.1'});
   // The shipped example draws four cumulative bands; the single travel time below is what the
   // widget uses once they are cleared. Six seconds of walking buys 7.5 m, and the pump stands
   // 10.9 m from the nearest junction.
-  await page.locator('#catchment-thresholds').fill('');
-  await page.locator('#catchment-thresholds').blur();
-  await page.locator('#catchment-minutes').fill('0.1');
-  await page.locator('#catchment-minutes').blur();
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await expect(page.locator('.inspector-alert')).toContainText('with no result');

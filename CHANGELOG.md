@@ -3,6 +3,31 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.169.0 — In development
+
+- **The Inspector move, batch D**: Table output, Polygon layer, Georeferenced map image and Find satellite products now
+  each live with their dialogs in a module of their own, as does Sample a raster's dialog for satellite files. Nothing
+  they do changed, except:
+  - Find satellite products is on the standard Inspector: its name, one sentence of the product chosen, Configure…
+    opening the same chooser, and the product's card under Result, where it had its own label field and button.
+  - Table output's older Input mode choice is retired; what is connected decides how a table is shown.
+  The main file is about 390 lines shorter (8,942).
+- **Six process steps on the standard Inspector**: Convex hull, Voronoi catchments, Network isochrone, Mean center, Move
+  points in a donut and Aggregate points to H3 cells. Each shows its name, inputs, one sentence of what it does with
+  Configure…, and what its last run made: the hull's area and span, the catchments or regions drawn (and the sites that
+  reached nothing or were routed off the network), the centre and the points used, the points moved, the cells kept.
+  - The UTM zone is set in Configure…, which says which zone the workflow's coordinates suggest, offers it, and says
+    how far the chosen one stretches distances. When the two disagree, Settings says so without opening the dialog.
+  - Network isochrone takes one travel time or several in one field, so it no longer shows a single time beside the
+    several it uses. Its dialog says how far the longest time goes at the stated speed.
+  - Apply is held, with the reason, on any setting the run would refuse.
+  - Voronoi catchments says that a straight line ignores roads, rivers and travel time. It has a manual page, as do Mean
+    center, Move points in a donut and Aggregate points to H3 cells.
+- **Summarize points to polygons' Show me how** is redrawn: houses named House 1 to 6, a table of what each holds and
+  where it falls, and the two units shaded by their totals at the end, with the house on the shared edge counted in both.
+- **A dialog no longer throws when a field it is redrawing still has focus.** A redraw asked for during a redraw now runs
+  after it.
+
 ## 0.168.0 — 2026-11-22
 
 - **Stress tests of the table operations, second pass** (TODO 1a): the steps that read a table through other ports, a

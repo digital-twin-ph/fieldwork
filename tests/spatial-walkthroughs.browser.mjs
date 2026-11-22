@@ -20,7 +20,7 @@ const CASES=[
   ['measure_area',3,'passes the same area on'],
   ['clip_polygons',5,'2 of 3 units, each cut to the area'],
   ['clip_points_to_area',5,'2 of 4 points. Inside 1, on the outline 1, outside 1, no location 1.'],
-  ['summarize_points_to_polygon',6,'North 3 points, deaths 8; South 3 points, deaths 6.'],
+  ['summarize_points_to_polygon',6,'North: 3 houses, deaths 8; South: 3 houses, deaths 6'],
   ['sample_points',5,'A 40, B no value, C no value. 1 read, 1 with no data, 1 outside.'],
   ['sample_areas',4,'its total, 273, from 7 cells; the cell with no data inside it adds nothing and is counted apart, never as 0.']];
 for(const [id,steps,last] of CASES)test(`${id}: Show me how ends on what the step makes`,async({page})=>{

@@ -173,6 +173,10 @@ reaches be drawn as separate exposures.
 
 ## History
 
+### 2026-11-22 · Moved out of the application's main file (0.8.1)
+
+Its Inspector and its Configure… moved into a module of their own, unchanged. Nothing it does changed.
+
 ### 2026-11-22 · Study areas dropped on the canvas (0.8.0)
 
 A second study area connected on the canvas replaced the first, so a layer of several areas could be made only in

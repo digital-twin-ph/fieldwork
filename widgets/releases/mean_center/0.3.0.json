@@ -1,0 +1,66 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:mean_center",
+ "nodeType": "mean_center",
+ "version": "0.3.0",
+ "title": "Mean center",
+ "released": "2026-11-22",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['mean_center']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "mean-center"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:MeanCenterComputation",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "PROV computation, WGS84 UTM calculation CRS, and GeoSPARQL CRS84 center geometry. A weighted run also asserts fw:weightField and fw:weightTotal, declared in ontology/fieldwork.ttl and emitted from src/mean-center.ts; the definition site named above asserts nothing itself.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/mean-center.ts",
+   "src/core.ts",
+   "src/metric-steps-ui.ts",
+   "src/area-steps-ui.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "changed",
+   "description": "On the standard Inspector: the weight chosen from the arriving points' numeric columns in Configure…, with the UTM zone and the suggested one; the centre, the points used and the weight total of the last run; a manual page."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Numeric projection and SHACL checks; no privacy guarantee. Parity for 0.1.0 established that proj4js and PROJ agree on the UTM transform and that the average is unweighted as declared; it has not been re-run for the weighted path, and the gate reports that it does not cover this release."
+ }
+}

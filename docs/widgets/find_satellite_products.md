@@ -27,9 +27,9 @@ can take.
 ## How to use it
 
 1. Add **Find satellite products** from Sources. It needs no input.
-2. In the Inspector, press **Find satellite products…**.
+2. In the Inspector, press **Configure…**.
 3. Type a topic or a measurement, or press a topic. Read the caution, then the cards: open products are first.
-4. Press **Choose this product** on the one you want, then **Done**. The Inspector shows your choice.
+4. Press **Choose this product** on the one you want, then **Done**. The Inspector says your choice in one sentence, with its card under Result.
 5. Run the workflow: the run records which product was chosen and what was and was not read about it, in the N3 &
    evidence view.
 
@@ -67,3 +67,11 @@ Fieldwork adds the routes that need no sign-in, an ozone topic, and the facts on
 ## Where it is used
 
 The NYC example, *Did the satellite see the city's NO₂?* (1 to 14 June 2023).
+
+## History
+
+### 2026-11-22 · On the standard Inspector (0.4.0)
+
+It had its own label field and a **Find satellite products…** button. It now has the standard Inspector: its name, one
+sentence saying the product chosen, **Configure…**, which opens the same chooser, and the product's card under Result.
+Its code moved out of the application's main file.

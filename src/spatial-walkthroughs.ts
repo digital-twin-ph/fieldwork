@@ -17,9 +17,11 @@ import type {AreaUnit} from './types.js';
 import {joinTableToAreas} from './area-join.js';
 
 type Kind='input'|'area'|'look'|'result'|'gone';
-interface Shape {kind:Kind;rings?:Position[][][];point?:Position;label?:string;at?:Position}
+interface Shape {kind:Kind;rings?:Position[][][];point?:Position;label?:string;at?:Position;
+  /** How dark a made shape is drawn, 0 to 1: units shaded by their totals, so two results look different. */
+  shade?:number}
 const KEY:Record<Kind,string>={input:'Grey outline: what the step is given',area:'Dashed outline: the area it works within',
-  look:'Thick outline: what this step looks at',result:'Filled: what the step makes',gone:'Faint: left out'};
+  look:'Thick outline: what this step looks at',result:'Filled: what the step makes, darker for a larger total',gone:'Faint: left out'};
 
 /** The shapes drawn in a 360 by 240 box, longitude across and latitude up, at the scale of the widest shape. */
 function draw(shapes:Shape[],label:string):{svg:string;key:string[]}{
@@ -32,7 +34,7 @@ function draw(shapes:Shape[],label:string):{svg:string;key:string[]}{
   const x=(lon:number)=>20+(lon-w)*scale+(260-(e-w)*scale)/2,y=(lat:number)=>40+(n-lat)*scale+(180-(n-south)*scale)/2;
   const path=(rings:Position[][][])=>rings.map(poly=>poly.map(r=>'M'+r.map(p=>`${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('L')+'Z').join(' ')).join(' ');
   const body=shapes.map(s=>s.rings
-    ?`<path class="walk-shape walk-shape-${s.kind}" d="${path(s.rings)}" fill-rule="evenodd"/>`
+    ?`<path class="walk-shape walk-shape-${s.kind}" d="${path(s.rings)}" fill-rule="evenodd"${s.shade!==undefined?` style="fill-opacity:${(0.2+0.75*s.shade).toFixed(2)}"`:''}/>`
     :s.point?`<circle class="walk-shape walk-shape-${s.kind} walk-point" cx="${x(s.point[0]).toFixed(1)}" cy="${y(s.point[1]).toFixed(1)}" r="5"/>`:'').join('')
     +shapes.filter(s=>s.label).map(s=>{const at=s.at??s.point??s.rings![0]![0]![0]!;
       return `<text class="walk-shape-label" x="${(x(at[0])+8).toFixed(1)}" y="${(y(at[1])-8).toFixed(1)}">${s.label!.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]!))}</text>`;}).join('');
@@ -233,25 +235,48 @@ export function clipPointsWalkthrough(keepBoundary:boolean):Walkthrough{
 export function summarizePointsWalkthrough(boundary:'include'|'exclude',valueField:string):Walkthrough{
   const NORTH:Position[]=[[30,-1],[30.04,-1],[30.04,-1.015],[30,-1.015]],SOUTH:Position[]=[[30,-1.015],[30.04,-1.015],[30.04,-1.03],[30,-1.03]];
   const field=valueField.trim()||'deaths';
-  const P:{name:string;at:Position;v:number|null}[]=[{name:'H1',at:[30.01,-1.006],v:3},{name:'H2',at:[30.028,-1.009],v:1},
-    {name:'H3',at:[30.015,-1.023],v:2},{name:'H4',at:[30.025,-1.015],v:4},{name:'H5',at:[30.032,-1.024],v:null},{name:'H6',at:[30.05,-1.02],v:5}];
+  const P:{name:string;house:string;at:Position;v:number|null}[]=[{name:'H1',house:'House 1',at:[30.01,-1.006],v:3},{name:'H2',house:'House 2',at:[30.028,-1.009],v:1},
+    {name:'H3',house:'House 3',at:[30.015,-1.023],v:2},{name:'H4',house:'House 4',at:[30.025,-1.015],v:4},{name:'H5',house:'House 5',at:[30.032,-1.024],v:null},
+    {name:'H6',house:'House 6',at:[30.05,-1.02],v:5}];
   const input={features:[{type:'Feature',properties:{name:'North'},geometry:{type:'Polygon',coordinates:ring(NORTH)[0]!}},
     {type:'Feature',properties:{name:'South'},geometry:{type:'Polygon',coordinates:ring(SOUTH)[0]!}}],sites:[],method:'',crs:'CRS84',notes:[]} as unknown as Polygons;
   const points:PointCollection={type:'FeatureCollection',features:P.map(p=>({type:'Feature',id:p.name,
     properties:{name:p.name,...(p.v===null?{}:{[field]:p.v})},geometry:{type:'Point',coordinates:p.at}}))};
   const made=summarizePolygons(input,points,{label:'Walk',boundary,valueField:field});
   const unit=(name:string)=>made.features.find(f=>(f.properties as {name?:string}).name===name) as unknown as {count:number;total:number;missingValues:number};
-  const n=unit('North'),s=unit('South');
-  const units=(kind:Kind,label=false):Shape[]=>[{kind,rings:ring(NORTH),...(label?{label:`North · ${n.count} · ${field} ${n.total}`}:{label:'North'}),at:[30.001,-1.001]},
-    {kind,rings:ring(SOUTH),...(label?{label:`South · ${s.count} · ${field} ${s.total}`}:{label:'South'}),at:[30.001,-1.028]}];
-  const pt=(kind:Kind,name:string):Shape=>{const p=P.find(x=>x.name===name)!;return {kind,point:p.at,label:`${name}${p.v===null?' · no value':` · ${p.v}`}`};};
-  return {title:'Summarize points to polygons, step by step',tables:[],resultColumns:[],steps:[
-    step(`Two made-up units, North and South, sharing an edge, and six households, each with its ${field}. H5 has no value recorded.`,[...units('input'),...P.map(p=>pt('input',p.name))]),
-    step(`North counts the points inside it, H1 and H2, and adds their ${field}: 3 + 1.`,[...units('input'),pt('look','H1'),pt('look','H2'),...['H3','H4','H5','H6'].map(x=>pt('gone',x))]),
-    step(`South counts H3 and H5. H5 has no ${field}: it is counted as a location, and its missing value is counted apart, never as 0.`,[...units('input'),pt('look','H3'),pt('look','H5'),...['H1','H2','H4','H6'].map(x=>pt('gone',x))]),
-    step(boundary==='include'?`H4 sits on the edge both units share. As set, a point on an edge is counted in every unit it touches: in North and in South, and said as counted twice.`
-      :`H4 sits on the edge both units share. As set, a point on an edge is counted in neither.`,[...units('input'),pt(boundary==='include'?'look':'gone','H4')]),
-    step('H6 lies in neither unit: it is counted as outside every unit, not in either.',[...units('input'),pt('gone','H6')]),
-    step(`What the step passes on: the two units, each carrying its count and its total. North ${n.count} points, ${field} ${n.total}; South ${s.count} points, ${field} ${s.total}.`,
-      [...units('result',true),...P.map(p=>pt('input',p.name))],true)]};
+  const n=unit('North'),s=unit('South'),top=Math.max(n.total,s.total)||1;
+  const houses=(k:number)=>`${k} house${k===1?'':'s'}`;
+  // THE UNITS, named; at the end each with what it carries, shaded by its total so the two look different (the
+  // practitioner, 2026-11-22: "two rectangles not having any difference at the end").
+  const units=(kind:Kind,end=false):Shape[]=>[
+    {kind,rings:ring(NORTH),label:end?`North: ${houses(n.count)}, ${field} ${n.total}`:'North',at:[30.001,-1.001],...(end?{shade:n.total/top}:{})},
+    {kind,rings:ring(SOUTH),label:end?`South: ${houses(s.count)}, ${field} ${s.total}`:'South',at:[30.001,-1.028],...(end?{shade:s.total/top}:{})}];
+  const pt=(kind:Kind,name:string,said?:string):Shape=>{const p=P.find(x=>x.name===name)!;
+    return {kind,point:p.at,label:said??`${p.house}: ${p.v===null?'no value':p.v}`};};
+  const onEdge=boundary==='include';
+  // THE HOUSES AS A TABLE beside the drawing, each marked as the step counts it.
+  const where=(name:string)=>name==='H4'?(onEdge?'North and South':'neither'):name==='H6'?'neither':['H1','H2'].includes(name)?'North':'South';
+  const table={label:'The houses, one row each',columns:['House',field,'Inside'],rows:P.map(p=>[p.house,p.v===null?'':String(p.v),where(p.name)])};
+  const row=(name:string)=>P.findIndex(p=>p.name===name);
+  const mark=(name:string,state:'matched'|'unmatched'|'several',word:string)=>({table:0,row:row(name),state,word});
+  return {title:'Summarize points to polygons, step by step',tables:[table],resultColumns:[],steps:[
+    step(`Two made-up units, North and South, sharing an edge, and six houses, each with its ${field}. House 5 has none recorded.`,
+      [...units('input'),...P.map(p=>pt('input',p.name))]),
+    step(`North counts the houses inside it, 1 and 2, and adds their ${field}: 3 + 1.`,
+      [...units('input'),pt('look','H1'),pt('look','H2'),...['H3','H4','H5','H6'].map(x=>pt('gone',x))],false,
+      [mark('H1','matched','in North'),mark('H2','matched','in North')]),
+    step(`South counts houses 3 and 5. House 5 has no ${field}: it is counted as a house, and its missing value is counted apart, never as 0.`,
+      [...units('input'),pt('look','H3'),pt('look','H5'),...['H1','H2','H4','H6'].map(x=>pt('gone',x))],false,
+      [mark('H3','matched','in South'),mark('H5','matched',`in South, no ${field}`)]),
+    step(onEdge?`House 4 sits on the edge both units share. As set, a house on an edge is counted in every unit it touches: in North and in South. So it is counted twice, and the step says so.`
+      :`House 4 sits on the edge both units share. As set, a house on an edge is counted in neither.`,
+      [...units('input'),pt(onEdge?'look':'gone','H4',onEdge?'House 4: 4, in both':'House 4: 4, in neither'),...['H1','H2','H3','H5','H6'].map(x=>pt('gone',x))],false,
+      [mark('H4',onEdge?'several':'unmatched',onEdge?'in both':'in neither')]),
+    step('House 6 lies in neither unit: it is counted as outside every unit, and adds to neither.',
+      [...units('input'),pt('gone','H6','House 6: outside'),...['H1','H2','H3','H4','H5'].map(x=>pt('gone',x))],false,
+      [mark('H6','unmatched','outside')]),
+    step(`What the step passes on: the two units, each carrying its count of houses and its total ${field}. North: ${houses(n.count)}, ${field} ${n.total}; `
+      +`South: ${houses(s.count)}, ${field} ${s.total}${s.missingValues?`, with ${s.missingValues} house whose ${field} is not recorded`:''}.`
+      +(onEdge?' House 4 is in both, so the two counts add up to one more than the houses inside.':''),
+      [...units('result',true),...P.map(p=>({...pt('gone',p.name),label:undefined}))],true)]};
 }

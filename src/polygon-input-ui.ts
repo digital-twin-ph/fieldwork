@@ -1,6 +1,16 @@
-import type {WorkflowNode,Escape,Boundary} from './types.js';
-import {AREA_KINDS,readBox,type AreaKind} from './osm-areas.js';
-import {MAX_LAYER_VERTICES} from './polygon-layer.js';
+import type {WorkflowNode,Escape,Boundary,Workflow} from './types.js';
+import type {OwnInspector,StepKit} from './inspector-kit.js';
+import {MAX_AREA_INPUTS,outputOf} from './core.js';
+import {areaParts} from './area-parts-layer.js';
+import {contentHash} from './project-files.js';
+import {dropPayload} from './payload-store.js';
+import {errorMessage} from './guards.js';
+import {mountFeatureChooser} from './polygon-review.js';
+import {openConfigDialog} from './config-dialog.js';
+import {payloadDigest} from './project.js';
+import {previewArea} from './raster-preview.js';
+import {AREA_KINDS,readBox,areasInWorker,retrievalProvenance,type AreaKind} from './osm-areas.js';
+import {MAX_LAYER_VERTICES,readPolygonFeatures} from './polygon-layer.js';
 import {extractsFor,EXTRACT_CATALOGUE_TAKEN} from './extract-catalogue.js';
 import {geometryBounds} from './study-area.js';
 import {labelField} from './catchment-ui.js';
@@ -211,3 +221,204 @@ export function polygonSentence(n:WorkflowNode<'polygon_input'>):string{
   return `${count.toLocaleString('en')} polygon feature${count===1?'':'s'}, ${from}.`
     +(p.hidden?.length?` ${p.hidden.length} set aside.`:'');
 }
+
+/** WHAT POLYGON LAYER READS OF THE APPLICATION, through its kit (2026-11-22, the Inspector move's batch D). */
+export interface PolygonKit extends StepKit {
+  /** Connect `from` to the layer, as every step's input lists do. */
+  connect:(w:Workflow,from:string,to:string,port:string)=>void;
+  /** A change that must reach storage: false, said by the caller, where it could not. */
+  persist:(edit:(w:Workflow)=>void)=>boolean;
+  /** Keep a payload on the device by its digest. */
+  keepDataset:(digest:string,payload:unknown)=>Promise<boolean>;
+  toast:(text:string)=>void;
+  /** Whether the last run made this layer. */
+  ran:(nodeId:string)=>boolean;
+}
+
+export function openPolygonConfig(kit:PolygonKit,nodeId:string){
+  const esc=kit.esc,workflow=kit.workflow(),node=workflow.nodes.find(x=>x.id===nodeId) as WorkflowNode<'polygon_input'>|undefined;if(!node)return;
+  const target=(w:Workflow)=>w.nodes.find(x=>x.id===nodeId) as WorkflowNode<'polygon_input'>;
+  const connected=workflow.edges.find(e=>e.to===nodeId&&e.port==='area')?.from;
+  const areaPort=(i:number)=>i===0?'area':`area_${i+1}`;
+  const connectedAreas=Array.from({length:MAX_AREA_INPUTS},(_,i)=>workflow.edges.find(e=>e.to===nodeId&&e.port===areaPort(i))?.from)
+    .filter((x):x is string=>!!x);
+  const areaSources=workflow.nodes.filter(x=>x.id!==nodeId&&outputOf(x)==='area').map(x=>({id:x.id,label:x.params.label||kit.title(x.type)}));
+  // THE PARTS, BEFORE A RUN, where an area is a Study area that holds its shape; another step's area is known once it runs.
+  const partsOf=(ids:string[])=>{const known=ids.map(id=>workflow.nodes.find(x=>x.id===id)).filter((x):x is WorkflowNode<'study_area'>=>x?.type==='study_area'&&!!x.params.geometry);
+    return {parts:areaParts(known.map(x=>({value:{boundary:x.params.geometry!,...(x.params.boundary?.units?{units:x.params.boundary.units}:{}),areaId:x.id,geometryId:x.id,label:x.params.label||'Study area'},
+      ...(x.params.boundary?.boundaryID?{boundaryID:x.params.boundary.boundaryID}:{})}))),unknown:ids.length-known.length};};
+  let file:File|undefined;
+  type Feature=WorkflowNode<'polygon_input'>['params']['data']['features'][number];
+  const held=node.params.data.features as Feature[];
+  // THE FEATURES SHOWN in the chooser: a GeoJSON file just chosen, read on the spot so its features can be chosen before
+  // Apply; else the layer held, named again by the property in the draft where that changed. An extract is read on Apply.
+  let fresh:Feature[]|undefined,readError='',anyKept=true,unmount:(()=>void)|undefined;
+  const fromFile=node.params.inputMethod!=='extract';
+  const renamed=(features:readonly Feature[],nameField?:string):Feature[]=>readPolygonFeatures({type:'FeatureCollection',
+    features:features.map(f=>({type:'Feature',id:f.id,geometry:f.geometry,properties:(f as {properties?:object}).properties??{}}))},{nameField}) as Feature[];
+  const shownFor=(d:PolygonDraft):Feature[]|undefined=>{
+    if(file)return d.inputMethod==='file'?fresh:undefined;
+    if(!held.length)return undefined;
+    if(fromFile&&d.inputMethod==='file'&&(d.nameField??'')!==(node.params.nameField??'')){
+      try{readError='';return renamed(held,d.nameField);}catch(error){readError=errorMessage(error);return undefined;}
+    }
+    return held;
+  };
+  const readChosen=async(d:PolygonDraft)=>{
+    fresh=undefined;readError='';
+    if(!file||d.inputMethod!=='file')return;
+    try{fresh=readPolygonFeatures(JSON.parse(await file.text()),{nameField:d.nameField,layerName:d.layerName}) as Feature[];}
+    catch(error){readError=errorMessage(error);}
+  };
+  const boundaryOf=(area?:string)=>{if(!area)return undefined;try{return previewArea(workflow,area).boundary;}catch{return undefined;}};
+  const frameOf=(d:PolygonDraft)=>{
+    // THE FRAME THE READ USED, where there is one: an extract read records its own box; a file layer has none, so the
+    // connected study area's bounds stand in.
+    if(node.params.retrieval?.bbox&&!file)return node.params.retrieval.bbox;
+    const area=boundaryOf(d.area??connected);const b=area?geometryBounds(area):undefined;
+    return b?[b[0],b[1],b[2],b[3]] as [number,number,number,number]:undefined;
+  };
+  openConfigDialog<PolygonDraft>({
+    id:'polygon-config',widget:'Polygon layer',step:node.params.label||kit.title('polygon_input'),draft:polygonDraftOf(node,connected,connectedAreas),wide:true,
+    sections:d=>{
+      if(d.inputMethod==='areas'){
+        const missing=polygonMissing(d),{parts,unknown}=partsOf(d.areas.filter(Boolean));
+        const after=parts.features.length?'<fieldset class="join-after"><legend>After</legend>'
+          +`<p><strong>${parts.features.length.toLocaleString('en')} parts</strong> at ${esc(parts.levels.join(', '))}`
+          +(parts.levels.length>1?': at different levels, so a count compares only units at one level, and a rate compares across them.':'.')+'</p>'
+          +'<div class="table-scroll"><table><thead><tr><th scope="col">name</th><th scope="col">id</th><th scope="col">country</th><th scope="col">level</th><th scope="col">study area</th></tr></thead><tbody>'
+          +parts.features.map(f=>`<tr>${['name','id','country','level','study_area'].map(k=>`<td>${esc(String(f.properties[k]??''))}</td>`).join('')}</tr>`).join('')
+          +'</tbody></table></div>'+(unknown?`<p class="muted">${unknown} more area${unknown===1?' is':'s are'} made by a step, and ${unknown===1?'its':'their'} parts are known once the workflow runs.</p>`:'')+'</fieldset>'
+          :unknown?'<p class="muted">The parts are known once the workflow runs: the area is made by a step.</p>':'';
+        return {settings:polygonConfigSettings(d,esc,undefined,areaSources,undefined,''),...(after?{preview:after}:{}),blocked:!!missing,
+          ...(missing?{message:{tone:'warning' as const,text:missing}}:{})};
+      }
+      const shown=shownFor(d);
+      const missing=readError||polygonMissing(d,file,held.length>0)||(shown&&!anyKept?'Every feature is set aside. Tick at least one.':'');
+      const preview=shown?`<div id="polygon-chooser-host"></div>`
+        :file&&d.inputMethod==='extract'?`<p class="muted">The areas are read from ${esc(file.name)} on Apply; open Configure… again to choose among them.</p>`
+        :'';
+      return {settings:polygonConfigSettings(d,esc,boundaryOf(d.area),areaSources,file?.name,heldFileLine(node.params.source,held.length,esc)),
+        ...(preview?{preview}:{}),blocked:!!missing,
+        ...(missing?{message:{tone:readError?'refusal' as const:'warning' as const,text:missing}}:{})};},
+    beforeRedraw:()=>{unmount?.();unmount=undefined;},
+    wire:(root,d,redraw)=>{
+      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
+        root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
+      on('#polygon-input-method',el=>{d.inputMethod=el.value==='extract'||el.value==='areas'?el.value:'file';file=undefined;fresh=undefined;readError='';
+        if(d.inputMethod==='areas'&&!d.areas.length&&connected)d.areas=[connected];});
+      on('[data-polygon-area]',el=>{const i=Number(el.dataset.polygonArea);if(!d.areas.length)d.areas=[''];d.areas[i]=el.value;});
+      root.querySelector('#polygon-add-area')?.addEventListener('click',()=>{if(!d.areas.length)d.areas=[''];d.areas.push('');redraw();});
+      root.querySelector('#polygon-remove-area')?.addEventListener('click',()=>{d.areas.pop();redraw();});
+      on('#polygon-area',el=>{if(el.value)d.area=el.value;else delete d.area;});
+      on('[data-area-kind]',el=>{const kind=el.dataset.areaKind as AreaKind,kept=new Set(d.kinds);
+        if(el.checked)kept.add(kind);else kept.delete(kind);d.kinds=AREA_KINDS.filter(k=>kept.has(k));});
+      // UNSET IS A VALUE HERE, not zero: unset reads every area of the chosen kinds.
+      on('#polygon-min-vertices',el=>{const raw=el.value.trim();if(raw==='')delete d.minVertices;else d.minVertices=Number(raw);});
+      on('#polygon-margin',el=>{const raw=el.value.trim();d.marginM=raw===''?0:Number(raw);});
+      on('#polygon-layer-name',el=>{const raw=el.value.trim();if(raw)d.layerName=raw;else delete d.layerName;});
+      // A FILE OR A NAMING PROPERTY CHANGED: the features are read again, and choices made among the others start over,
+      // since a feature's id may not name the same feature.
+      const fresh0=()=>{d.decisions={hidden:[],clipped:false,names:{},merges:[]};anyKept=true;};
+      root.querySelectorAll<HTMLInputElement>('#polygon-file,#polygon-extract').forEach(el=>el.addEventListener('change',()=>{
+        file=el.files?.[0];fresh0();void readChosen(d).then(redraw);}));
+      root.querySelector<HTMLInputElement>('#polygon-name-field')?.addEventListener('change',el=>{
+        const raw=(el.target as HTMLInputElement).value.trim();if(raw)d.nameField=raw;else delete d.nameField;
+        fresh0();void readChosen(d).then(redraw);});
+      const host=root.querySelector<HTMLElement>('#polygon-chooser-host'),shown=shownFor(d);
+      if(host&&shown)unmount=mountFeatureChooser(host,shown,d.nameField,d.decisions,esc,kept=>{
+        // Only a change of whether anything is kept redraws: a redraw rebuilds the map.
+        if(kept!==anyKept){anyKept=kept;redraw();}},frameOf(d));
+    },
+    apply:()=>{},
+    applyAsync:async(d,say)=>{
+      // THE PARTS OF CONNECTED STUDY AREAS: nothing to read; the areas are connected, one to each input, and the layer is
+      // made from them each run.
+      if(d.inputMethod==='areas'){
+        const chosen=d.areas.filter(Boolean);
+        if(!kit.persist(w=>{const t=target(w).params;t.inputMethod='areas';t.areaInputCount=Math.max(1,chosen.length);
+          if(d.layerName)t.layerName=d.layerName;else delete t.layerName;
+          w.edges=w.edges.filter(e=>!(e.to===nodeId&&/^area(_\d+)?$/.test(e.port)));
+          chosen.forEach((id,i)=>w.edges.push({id:`e-${nodeId}-${areaPort(i)}`,from:id,to:nodeId,port:areaPort(i)}));}))
+          throw new Error('The layer could not be saved on this device.');
+        kit.toast('Polygon layer updated. Run the workflow to make it.');
+        return true;
+      }
+      // The settings first, then any read: the read is of these settings, and the study area it reads inside.
+      const settle=(w:Workflow)=>{const t=target(w).params;
+        t.inputMethod=d.inputMethod;t.kinds=d.kinds;t.marginM=d.marginM;
+        if(d.minVertices===undefined)delete t.minVertices;else t.minVertices=d.minVertices;
+        if(d.nameField)t.nameField=d.nameField;else delete t.nameField;
+        if(d.layerName)t.layerName=d.layerName;else delete t.layerName;
+        if(d.inputMethod==='extract'&&d.area)kit.connect(w,d.area,nodeId,'area');
+        // CHOOSE FEATURES' DECISIONS, each stored only where it was made, so a layer nobody reduced carries nothing.
+        const {hidden,clipped,names,merges}=d.decisions;
+        if(hidden.length)t.hidden=hidden;else delete t.hidden;
+        if(clipped)t.clipToBox=true;else delete t.clipToBox;
+        if(Object.keys(names).length)t.names=names;else delete t.names;
+        if(merges.length)t.merges=merges;else delete t.merges;};
+      const keepFeatures=async(features:Feature[],extra:(t:WorkflowNode<'polygon_input'>)=>void)=>{
+        const data={features};
+        const digest=await payloadDigest(data);
+        if(!await kit.keepDataset(digest,data))
+          throw new Error(`These ${features.length.toLocaleString('en')} features could not be kept on this device, so they were not saved.`
+            +(d.inputMethod==='extract'?' A higher vertex threshold reads fewer of them.':' Export the workflow to a file to keep it.'));
+        const kept=kit.persist(w=>{settle(w);const t=target(w);t.params.data=data;t.params.dataRef=digest;extra(t);});
+        if(!kept){await dropPayload(digest);throw new Error('The layer could not be saved on this device.');}
+      };
+      if(!file){
+        // NOTHING NEW TO READ: the settings and the features chosen; the held layer named again where its property changed.
+        const shown=shownFor(d);
+        if(shown&&shown!==held)await keepFeatures(shown,t=>{if(t.params.source)t.params.source={...t.params.source,features:shown.length};});
+        else if(!kit.persist(w=>settle(w)))throw new Error('The layer could not be saved on this device.');
+        kit.toast('Polygon layer updated. Rerun to update results.');
+        return true;
+      }
+      const bytes=new Uint8Array(await file.arrayBuffer());
+      const sha256=await contentHash(bytes);
+      let features:Feature[],retrieval;
+      if(d.inputMethod==='extract'){
+        // THE SCOPE IS THE STUDY AREA'S, which is why the port exists: a read with no box is a read of whatever the file holds.
+        if(d.area)kit.change(w=>kit.connect(w,d.area!,nodeId,'area'));
+        const {boundary}=previewArea(kit.workflow(),nodeId);
+        const bounds=geometryBounds(boundary);
+        const bbox=readBox([bounds[0],bounds[1],bounds[2],bounds[3]],d.marginM);
+        ({features,retrieval}=await areasInWorker(bytes,{kinds:d.kinds,bbox,nameTag:d.nameField,minVertices:d.minVertices},say));
+        say('Keeping the areas on this device…');
+      }else{
+        say(`Reading ${file.name}…`);
+        features=fresh??readPolygonFeatures(JSON.parse(new TextDecoder().decode(bytes)),{nameField:d.nameField,layerName:d.layerName}) as Feature[];
+      }
+      const read=retrieval?{...retrieval,filename:file.name,sha256,bytes:bytes.length}:undefined;
+      await keepFeatures(features,t=>{
+        t.params.source={filename:file!.name,bytes:bytes.length,sha256,features:features.length};
+        if(read){t.params.retrieval=read;t.params.provenance=retrievalProvenance(read,{filename:file!.name,sha256});}
+        // A FILE LAYER HAS NO RETRIEVAL, and leaving the previous one would compare this file against a box it was never read for.
+        else delete t.params.retrieval;});
+      kit.toast(`${features.length.toLocaleString('en')} polygon feature${features.length===1?'':'s'} read`
+        +`${d.inputMethod==='extract'?' from the extract and saved on this device':''}. Run the workflow to use them.`);
+      return true;
+    },
+  },esc);
+}
+
+/** POLYGON LAYER'S STANDARD INSPECTOR, moved out of app.ts with its dialog. */
+export const polygonInspector:OwnInspector<'polygon_input'>={
+  markup:(n,k)=>{const kit=k as PolygonKit;
+    const esc=kit.esc,p=n.params;let content='';
+    content+=kit.section('Name',kit.name('polygon-label',p.label||'Polygon layer'));
+    content+=kit.section('Inputs',kit.inputs(n,p.inputMethod==='areas'
+      ?Object.fromEntries(Array.from({length:MAX_AREA_INPUTS},(_,i)=>[i===0?'area':`area_${i+1}`,`Study area ${i+1}`]))
+      :{area:'Study area to read inside, for an extract'}));
+    content+=kit.section('Settings',`<p class="standard-sentence">${esc(polygonSentence(n))}</p>`
+      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
+    content+=kit.section('Result',p.inputMethod==='areas'
+      ?`<p class="standard-result">${esc(kit.ran(n.id)?'Made from the connected study areas in the last run.':'Made from the connected study areas when the workflow runs.')}</p>`
+      :p.data.features.length
+      // Choosing among the features is in Configure… since 2026-11-13, beside the file they came from.
+      ?layerCard(n,esc)
+      :'<p class="standard-result">Nothing read yet.</p>');
+    return content;
+  },
+  wire:(n,k,root)=>{root.querySelector('#configure-step')?.addEventListener('click',()=>openPolygonConfig(k as PolygonKit,n.id));},
+};

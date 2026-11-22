@@ -244,6 +244,11 @@ dengue and New York ozone read satellite files with it.
 
 ## History
 
+### 2026-11-22 · Its satellite dialog moved (0.10.1)
+
+The dialog for reading satellite files, with the sentence that summarises it, moved out of the application's main file
+into this widget's own module, unchanged.
+
 ### 2026-11-22 · Show me how (0.10.0)
 
 **Configure…** offers **Show me how it works**: the reading chosen, at points (the cell's value, or between the four

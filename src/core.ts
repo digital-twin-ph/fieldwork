@@ -56,7 +56,7 @@ import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
 // application actually performs, from the same bundle it already reads TYPES out of.
 export {RENAMED_NODE_TYPES};
 import type {Reasoner} from './worker-types.js';
-import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status} from './results.js';
+import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status,StepSummary} from './results.js';
 import {declarationGaps,dataIssuesOf} from './results.js';
 import {isRecord,required} from './guards.js';
 interface ExecutionInputs {samples:PointCollection&{sourceNodeId?:string;sourceKind?:string};area:import('./results.js').AreaValue;area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;list:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
@@ -1249,6 +1249,18 @@ function dataOrigin(workflow:Workflow,nodeId:string,runId:string):string{
 /** THE TABLES A RUN'S STEPS MADE, from its values: kept on a finished run, and on a stopped one (2026-11-20), so a step's
  *  dialog can show the tables reaching it although the run stopped there -- Append rows' columns, after it refused to
  *  stack a table holding its names under another column. */
+/** The few numbers a process step's Result shows, by type; undefined for a step that keeps nothing here. */
+export function summarizeStep(node:WorkflowNode,value:unknown):StepSummary|undefined{
+  const v=value as {features?:{areaSquareMetres?:number;spanMetres?:number}[];unconnected?:unknown[];offNetwork?:unknown[]}|undefined;
+  switch(node.type){
+    case 'summarize_hull':{const f=v?.features?.[0];return f?{areaSquareMetres:f.areaSquareMetres,spanMetres:f.spanMetres}:undefined;}
+    case 'voronoi':case 'donut_geomask':case 'aggregate_points_to_h3_cell':return {features:v?.features?.length??0};
+    case 'isochrone':return {features:v?.features?.length??0,unconnected:v?.unconnected?.length??0,offNetwork:v?.offNetwork?.length??0};
+    case 'mean_center':{const c=value as MeanCenter;return {longitude:c.coordinates[0],latitude:c.coordinates[1],count:c.count,
+      ...(c.weight?{weightField:c.weight.field,weightTotal:c.weight.total}:{})};}
+    default:return undefined;
+  }
+}
 export function tablesOfRun(workflow:Workflow,values:Map<string,unknown>):Record<string,DataTable>{
   const tables:Record<string,DataTable>={};
   for(const [nodeId,value] of values)
@@ -1272,6 +1284,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // produced, so a step that silently halved a stratification looks exactly like one that did
   // not. See `relateOutcome` in src/relate-table.ts.
   const relations:Record<string,RelateOutcome>={};
+  // WHAT A PROCESS STEP MADE, in a few numbers, for its Inspector's Result: only output steps keep their values after a
+  // run, and a step's Result must not say "not run" of a step that ran (2026-11-22).
+  const stepSummaries:Record<string,StepSummary>={};
   const joins:Record<string,import('./area-join.js').AreaJoinResult>={};
   const relateShifts:Record<string,ShiftColumn[]>={};
   // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. Four producers:
@@ -2836,7 +2851,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         withNote(receipts,runId,node.id,[note]);
       }
     }
-    values.set(node.id,value);trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
+    values.set(node.id,value);{const summary=summarizeStep(node,value);if(summary)stepSummaries[node.id]=summary;}trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // A RASTER IS LET GO once every step that reads it has run (2026-11-13): three national windows at 100 m held to the
     // end of Botswana's run stalled the tab, and nothing after the steps reading a raster reads it again. A step showing it,
     // a map, holds its own reference.
@@ -2937,6 +2952,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     ...(unfinished.length?{unfinished}:{}),
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),
+    ...(Object.keys(stepSummaries).length?{stepSummaries}:{}),
     ...(Object.keys(joins).length?{joins}:{}),
     ...(Object.keys(relateShifts).length?{relateShifts}:{}),
     ...(Object.keys(machined).length?{machined:signedByWidget(machined,workflow)}:{}),

@@ -39,20 +39,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "aggregate_points_to_h3_cell": {
-   "version": "0.2.0",
-   "released": "2026-10-19",
+   "version": "0.3.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Renamed from `hex_aggregate` to `aggregate_points_to_h3_cell`. The old identifier keeps resolving: a saved workflow naming `hex_aggregate` is rewritten on open and stamped with sourceMigration, because the operation is unchanged and a rename must not refuse work the way a retirement does. The verb came after its object and the areal unit was unstated, while its sibling said verb first. Both now read as one operation over a named unit: aggregate points to H3 cells. The unit is the ontology's own term (fw:HexCell, 'H3 cell'), not 'hexbin', because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index. No contract change: ports, output, parameters and behaviour are identical."
-    },
-    {
-     "kind": "patch",
-     "description": "Retitled from \"Group points in H3 cells\". The node type names hexagonal aggregation and the title named the indexing method instead, so the two shared no word and a reader had to know that H3 cells are hexagons to connect them. Flagged by the naming ratchet added 2026-10-13 under title-type-agreement; the convention's own rule is that the node type and the title must say the same thing. No contract change: ports, output, parameters and behaviour are identical, which is why this is a patch."
-    },
-    {
-     "kind": "initial",
-     "description": "Bounded geoprivacy worked example; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+     "kind": "changed",
+     "description": "On the standard Inspector: the resolution and the fewest points a cell must hold in Configure…, with the size of a cell at two resolutions; the cells kept by the last run; a manual page."
     }
    ],
    "breaking": false,
@@ -274,12 +266,12 @@
    ]
   },
   "donut_geomask": {
-   "version": "0.1.0",
-   "released": "2026-10-07",
+   "version": "0.2.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Bounded geoprivacy worked example; see docs/experiments/35-cholera-geoprivacy-workflow.md."
+     "kind": "changed",
+     "description": "On the standard Inspector: the two distances and the seed in Configure…, the run's own check holding Apply; one sentence saying it is a teaching transformation, not a privacy guarantee; a manual page."
     }
    ],
    "breaking": false,
@@ -379,20 +371,12 @@
    "migrationFrom": []
   },
   "isochrone": {
-   "version": "0.4.0",
-   "released": "2026-10-20",
+   "version": "0.5.0",
+   "released": "2026-11-22",
    "changes": [
     {
      "kind": "changed",
-     "description": "Declares fw:travelMode, which src/catchments.ts began asserting when street networks gained a walking or driving mode: the mode a graph was filtered for is now on the network entity in the receipt. Nothing about how an isochrone is computed changed. This widget reads the mode rather than setting it, and a graph downloaded for driving is refused by the reachability step it is built on if that step says walking."
-    },
-    {
-     "kind": "minor",
-     "description": "Optional bounded list of cumulative time thresholds and explicit interior-hole infill; preserves single-time corridor defaults."
-    },
-    {
-     "kind": "changed",
-     "description": "All three segments of a walk are now charged and drawn. The walk onto the network comes out of the budget; the walk off it at the end is the leg the budget still allows up to bufferM, so the region ends at its own time rather than bufferM beyond it; and the region is the whole route buffered rather than the streets alone. A site beyond the snap limit is routed anyway and marked off-network instead of ending the run, and one whose walk alone spends the budget gets no catchment and is named. Results change: the John Snow bands shrink by 39.3%, 13.8%, 4.2% and 0%, and the one-minute band holds 21 locations and 65 deaths where it held 48 and 110. Experiment 114."
+     "description": "On the standard Inspector, out of the shared catchment panel: one sentence of direction, times, speed and last walk; every setting in Configure…, with the distance the time buys and the run's own check holding Apply; the regions drawn and the sites that reached nothing or were routed off the network."
     }
    ],
    "breaking": false,
@@ -411,12 +395,12 @@
    "migrationFrom": []
   },
   "map_image_input": {
-   "version": "0.8.0",
-   "released": "2026-11-15",
+   "version": "0.8.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Reads a GeoTIFF: a picture told from values by its tags, its projection read from them (polyconic, transverse Mercator, Lambert, Albers, UTM by code; NAD27 by its mean shift), the part over the study area redrawn north up. Opens on the file's own placement with the graticule dashed on the sheet's datum; a shift from that placement by one pair or more; both placements kept; the image cut to its printed sheet. A reading error is said beside the picker."
+     "kind": "changed",
+     "description": "Its Inspector and Configure… moved to map-image-ui.ts, unchanged."
     }
    ],
    "breaking": false,
@@ -445,12 +429,12 @@
    ]
   },
   "mean_center": {
-   "version": "0.2.0",
-   "released": "2026-10-19",
+   "version": "0.3.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "feature",
-     "description": "Optional weightField: each point is weighted by a named record attribute, with the field and the weight total asserted in the receipt beside the unchanged point count. Unweighted when no field is given."
+     "kind": "changed",
+     "description": "On the standard Inspector: the weight chosen from the arriving points' numeric columns in Configure…, with the UTM zone and the suggested one; the centre, the points used and the weight total of the last run; a manual page."
     }
    ],
    "breaking": false,
@@ -612,12 +596,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "polygon_input": {
-   "version": "0.8.0",
+   "version": "0.8.1",
    "released": "2026-11-22",
    "changes": [
     {
      "kind": "changed",
-     "description": "A study area dropped on an input another one holds takes the next input, a new one added when all are held, up to six; a layer read from a file or an extract keeps its one area."
+     "description": "Its Inspector and Configure… moved to polygon-input-ui.ts, unchanged."
     }
    ],
    "breaking": false,
@@ -740,12 +724,12 @@
    "migrationFrom": []
   },
   "sample_raster": {
-   "version": "0.10.0",
+   "version": "0.10.1",
    "released": "2026-11-22",
    "changes": [
     {
-     "kind": "added",
-     "description": "Show me how it works in Configure…: the chosen reading, at points or over areas, on a made-up grid of 12 cells with one of no data."
+     "kind": "changed",
+     "description": "Its satellite-file dialog and sentence moved to sample-raster-ui.ts, unchanged."
     }
    ],
    "breaking": false,
@@ -878,12 +862,12 @@
    "migrationFrom": []
   },
   "summarize_hull": {
-   "version": "0.1.0",
-   "released": "2026-10-10",
+   "version": "0.2.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "initial",
-     "description": "The smallest convex outline containing a set of points, computed in a metric CRS. Derived from the PHI case studies rather than proposed: Advanced-2 NB02 hulls its death locations to bound a Voronoi diagram and Advanced-1 NB03 hulls the reached network, and docs/research/john-snow-voronoi.md recorded that hull and buffer should not be hidden inside Voronoi. It is also the first of six primitives an isochrone composition needs, and the only one unblocked today. Refuses fewer than three located points and refuses collinear ones, because a line encloses nothing. Takes a UTM zone for the same reason five other widgets do — a layer cannot state the coordinate system it is in, which is D5's finding in experiment 40 and this makes six. Named with a stage verb under the taxonomy proposed in experiment 76: many points become one shape, which is summarising. See docs/experiments/80-convex-hull.md."
+     "kind": "changed",
+     "description": "On the standard Inspector: name, inputs, one sentence and the area and span of the last run; the UTM zone in Configure…, with the zone the workflow's coordinates suggest and what the chosen one stretches, and a notice in Settings when they disagree."
     }
    ],
    "breaking": false,
@@ -914,12 +898,12 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.13.1",
-   "released": "2026-11-19",
+   "version": "0.13.2",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A table shown by subject or as a cross-tabulation shows 200 rows at a time, with Previous and Next; totals count every row."
+     "kind": "changed",
+     "description": "Its Inspector and Configure… moved to table-output-ui.ts, unchanged; the older Input mode branch retired."
     }
    ],
    "breaking": false,
@@ -992,12 +976,12 @@
    "migrationFrom": []
   },
   "voronoi": {
-   "version": "0.1.0",
-   "released": "2026-10-07",
+   "version": "0.2.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Reusable local catchment primitive; see docs/experiments/32-john-snow-primitives.md. Bounded prototype, not an exact notebook replay."
+     "kind": "changed",
+     "description": "On the standard Inspector, out of the shared catchment panel: one sentence saying it allocates by straight-line distance, which ignores roads, rivers and travel time; the UTM zone in Configure…, with the suggested zone; the catchments drawn; a manual page."
     }
    ],
    "breaking": false,
@@ -1029,12 +1013,12 @@
    "migrationFrom": []
   },
   "find_satellite_products": {
-   "version": "0.3.0",
-   "released": "2026-11-06",
+   "version": "0.4.0",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Offers MODIS land surface temperature, 8-day, 1 km, on Planetary Computer under Surface heat, with its facts, licence (NASA Earthdata: open, CC0 unless marked) and citation read at source. Experiment 180."
+     "kind": "changed",
+     "description": "On the standard Inspector: its name, one sentence of the product chosen, Configure… opening the chooser, the product's card under Result; its code moved to satellite-products-ui.ts."
     }
    ],
    "breaking": false,

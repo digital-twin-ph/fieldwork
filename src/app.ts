@@ -1,7 +1,5 @@
 import {MAX_GROUND_LAYERS,groundPort,isGroundPort} from './core.js';
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
-import {boundsOf} from './health-facilities.js';
-import {openMapImageConfig} from './georeference-ui.js';
 import {openCountriesConfig} from './area-countries-ui.js';
 import {openChangelog} from './changelog-ui.js';
 import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl,ghsRecordFor} from './ghs-pop.js';
@@ -9,7 +7,7 @@ import {rasterUnitsOf} from './raster-units.js';
 import {grid3RasterFor,grid3RecordFor,GRID3_CITATION,GRID3_COUNTRIES,GRID3_LICENCE,GRID3_NOTE,GRID3_PRODUCT,GRID3_TAKEN} from './grid3-catalogue.js';
 import {countriesOfArea} from './area-countries.js';
 import {studyAreaInspector,geometryVertices,type StudyAreaKit} from './study-area-inspector.js';
-import {placedCard} from './map-image-ui.js';
+import {mapImageStep,type MapImageKit} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
 import {SCAN_DEFAULTS,newScanSeed} from './space-time-scan.js';
 import {linkLinesSvg} from './map-links.js';
@@ -34,7 +32,6 @@ import {compareInspector,type CompareKit} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
 import {mountCatchmentMap,mountDensityPanel,BASEMAP_OPTIONS,placeOnMap} from './catchment-map.js';
-import {areaParts} from './area-parts-layer.js';
 import {catchmentPlot,polygonSvg,polygonPanelsSvg,panelColumns,catchmentFrame,polygonFrame} from './catchment-output.js';
 import {rasterPanelsSvg,densityImage,rampFor,scaleWords,drawnWords} from './raster-image.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
@@ -73,12 +70,9 @@ import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
 import {productFor} from './satellite-products.js';
 import {onRunDetail} from './run-progress.js';
 import {appendLabel,appendPort,appendTableCount} from './append-rows.js';
-import {GRID_KEYS,gridReaderFor,clearGridCache,layerKeyOf,ruleOf,rulesOf,layerPhrase,reportUnit} from './satellite-grid-sample.js';
-import {clearFileCache} from './satellite-sample-reader.js';
+import {GRID_KEYS,gridReaderFor} from './satellite-grid-sample.js';
 import {treeSvg} from './transmission-tree.js';
-import {savedReadingsSummary,forgetSavedReadings} from './satellite-reading-store.js';
-import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
-import {openProductsDialog,productCard} from './satellite-products-ui.js';
+import {findProductsInspector} from './satellite-products-ui.js';
 import {fetchRemoteTable,useDeviceCopies,archiveOnDevice,progressText} from './remote-table.js';
 import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom,dictionaryKeyOf,scalesOf,declaredUpstream,type TableDictionary} from './column-metadata.js';
 import {openColumnsDialog} from './columns-dialog.js';
@@ -109,12 +103,11 @@ function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assig
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
 import {PORT_NAMES,PORT_GROUPS,groupFor} from './port-names.js';
 import {proposeChartForms,proposalOrder,type ChartForm,type ChartProposal} from './chart-proposals.js';
-import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,shownMode,portSourceName,IncompleteWorkflow,rereadOnce,MAX_AREA_INPUTS} from './core.js';
+import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,portSourceName,IncompleteWorkflow,MAX_AREA_INPUTS} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {staticBoundaryMap,staticMapFrame} from './static-map.js';
 import {mapLayerList,membersOfPolygons,portIsDrawn,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
-import {mountFeatureChooser} from './polygon-review.js';
 import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
@@ -137,6 +130,7 @@ import {caseSeriesInspector,rateInspector,type SeriesRateKit} from './series-rat
 import {TABLE_STEP_INSPECTORS,type TableStepKit} from './table-steps-ui.js';
 import {OUTBREAK_STEP_INSPECTORS,type OutbreakKit} from './outbreak-steps-ui.js';
 import {dedupInspector,type DedupKit} from './deduplicate-step-ui.js';
+import {tableOutputInspector,type TableOutputKit} from './table-output-ui.js';
 import {AREA_STEP_INSPECTORS,type AreaStepKit} from './area-steps-ui.js';
 import {zipSync,strToU8} from 'fflate';
 import {referenceList} from './references.js';
@@ -182,7 +176,6 @@ import {containsPoint} from './point-grid.js';
 import {basemapAvailable,basemapOf,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM,useBasemapKeys,KEY_ORIGINS,staticGround} from './basemaps.js';
 import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
 import {mapImage,mapImageMarkup,mapImageCredit,withGroundUnder,type MapImage} from './map-image.js';
-import {mapImageInspector} from './map-image-ui.js';
 import {readWorldFile,boundsFromWorldFile} from './map-image.js';
 
 /** A georeferenced plate's chosen files, waiting for Apply. Same reason as the polygon layer's:
@@ -193,9 +186,7 @@ import {dataTableMarkup,tableFromFetched} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup,widgetIdentity} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
-import {layerCard as polygonLayerCard,polygonConfigSettings,polygonDraftOf,polygonMissing,polygonSentence,heldFileLine,type PolygonDraft} from './polygon-input-ui.js';
-import {areasInWorker,retrievalProvenance,readBox,AREA_KINDS,type AreaKind} from './osm-areas.js';
-import {readPolygonFeatures} from './polygon-layer.js';
+import {polygonInspector,type PolygonKit} from './polygon-input-ui.js';
 import {contentHash} from './project-files.js';
 import {projectDocument,readProjectDocument,unbundledReferences,PROJECT_DOCUMENT_SCHEMA} from './project-document.js';
 import {openPackageDialog} from './package-ui.js';
@@ -204,7 +195,7 @@ import {withDictionary,BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,proje
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence,withoutLeftOutAreas} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
-import {pointPort,MAX_POINT_LAYERS,markedPoints,markLabel} from './point-layers.js';
+import {pointPort,markedPoints,markLabel} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
 import {exposureColumnsOffered} from './two-by-two-mapping.js';
 import {repositoryFiles} from './project-repository.js';
@@ -1079,7 +1070,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','transmission_chains','detect_unusual_counts','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','measure_area','clip_polygons','join_table_to_area','compare_point_sets','clip_points_to_area','summarize_points_to_polygon']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['search_satellite_catalog','find_satellite_products','transmission_chains','detect_unusual_counts','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','measure_area','clip_polygons','join_table_to_area','compare_point_sets','clip_points_to_area','summarize_points_to_polygon','summarize_hull','voronoi','isochrone','mean_center','donut_geomask','aggregate_points_to_h3_cell']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2181,86 +2172,6 @@ function openPointsFromTableConfig(nodeId:string){
   },esc);
 }
 
-/** WHAT SAMPLE SATELLITE READS, in one sentence (experiment 186). */
-function satelliteSampleSentence(n:WorkflowNode<'sample_raster'>):string{
-  const p=n.params,product=samplerProduct(n),grid=product?gridReaderFor(product):null;
-  if(!product)return 'Reads each satellite file the search kept, at points or over areas. Connect the files first.';
-  if(grid){
-    const layer=grid.layers[layerKeyOf(grid,p.layer)]!,rule=ruleOf(grid,p.qualityRule);
-    const areas=workflow.edges.some(e=>e.to===n.id&&(e.port==='areas'||e.port==='area'));
-    const unit=reportUnit(grid,p.unit,layer);
-    return `Reads ${layerPhrase(layer)} ${areas?'over each area':'at each point'}, ${unit===layer.label?'unitless':`in ${unit}`}, `
-      +`keeping cells that pass: ${MODIS_RULES[rule]}. The place column is ${p.placeColumn?.trim()||(areas?'area':'point_id')}.`;
-  }
-  return `Reads ${product.route.label} at the pixel nearest each point, keeping values with qa_value ${p.qaOperator??'>='} the product's threshold.`;
-}
-
-/** SAMPLE SATELLITE'S CONFIGURATION DIALOG (experiment 186, 2026-11-09). Only Apply writes; reading every file again
- *  and forgetting the saved readings are choices applied with it. */
-function openSatelliteSampleConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'sample_raster'),p=node.params;
-  const product=samplerProduct(node),grid=product?gridReaderFor(product):null;
-  const areas=workflow.edges.some(e=>e.to===nodeId&&(e.port==='areas'||e.port==='area'));
-  type Draft={layer:string;qualityRule:ModisQualityRule|'';unit:'K'|'°C'|'°F';placeColumn:string;qaOperator:'>='|'>';reread:boolean;forget:boolean};
-  const draft:Draft={layer:grid?layerKeyOf(grid,p.layer):p.layer??'',qualityRule:grid?ruleOf(grid,p.qualityRule):'',
-    unit:p.unit??'°C',placeColumn:p.placeColumn??'',qaOperator:p.qaOperator??'>=',reread:false,forget:false};
-  let saved:{count:number;bytes:number}|null=null;
-  openConfigDialog<Draft>({
-    id:'satellite-config',widget:'Sample a raster at points or over areas',step:p.label||TYPES.sample_raster.title,draft,
-    sections:d=>{
-      const settings=grid
-        ?`<div class="field"><label class="field-label" for="satellite-layer">Layer</label><select id="satellite-layer">`
-          +Object.entries(grid.layers).map(([k,l])=>`<option value="${esc(k)}"${k===d.layer?' selected':''}>${esc(l.label)}</option>`).join('')+'</select></div>'
-          +`<div class="field"><label class="field-label" for="satellite-quality-rule">Quality rule</label><select id="satellite-quality-rule">`
-          +rulesOf(grid).map(k=>`<option value="${k}"${k===d.qualityRule?' selected':''}>${esc(MODIS_RULES[k])}</option>`).join('')
-          +`</select><small>${grid.quality.rules?'The ranks and their meanings are the file\u2019s own legend.':'The product documents its quality bits and recommends no rule.'} The rule is stated on every row.</small></div>`
-          +(grid.unit==='K'?`<div class="field"><label class="field-label" for="satellite-unit">Report temperature in</label><select id="satellite-unit">`
-            +`<option value="°C"${d.unit==='°C'?' selected':''}>degrees Celsius (K − 273.15)</option>`
-            +`<option value="°F"${d.unit==='°F'?' selected':''}>degrees Fahrenheit (K × 9/5 − 459.67)</option>`
-            +`<option value="K"${d.unit==='K'?' selected':''}>kelvin, as the file states it</option></select></div>`:'')
-          +`<div class="field"><label class="field-label" for="satellite-place-column">Name of the place column</label>`
-          +`<input id="satellite-place-column" maxlength="60" value="${esc(d.placeColumn)}" placeholder="${areas?'area':'point_id'}">`
-          +'<small>Name it as the table you will relate it to does, such as municipio.</small></div>'
-        :product
-          ?`<div class="field"><label class="field-label" for="satellite-qa-operator">Quality rule</label>`
-            +`<select id="satellite-qa-operator"><option value=">="${d.qaOperator==='>='?' selected':''}>qa_value at or above the threshold (the product manual's table)</option>`
-            +`<option value=">"${d.qaOperator==='>'?' selected':''}>qa_value above the threshold (the product readme)</option></select>`
-            +'<small>The product\'s documents differ, and only at exactly the threshold. The choice is stated on the result.</small></div>'
-          :'<p class="notice">Connect the files from Search a satellite catalog first: the settings are the product\u2019s.</p>';
-      const preview=grid
-        ?''
-        :'';
-      const decisions='<h4>Readings saved on this device</h4>'
-        +'<p>A file read before, the same way at the same places, is taken from this device instead of being read again, and the result says how many were.</p>'
-        +`<p id="satellite-saved">${saved?`${saved.count.toLocaleString('en-US')} saved, about ${(saved.bytes/1e6).toFixed(1)} MB.`:'Counting\u2026'}</p>`
-        +`<label class="check"><input type="checkbox" id="satellite-reread"${d.reread?' checked':''}> Read every file again on the next run</label>`
-        +`<label class="check"><input type="checkbox" id="satellite-forget"${d.forget?' checked':''}> Forget every saved reading on this device, for every workflow</label>`;
-      return {settings,preview,decisions};
-    },
-    wire:(root,d,redraw)=>{
-      if(!saved)void savedReadingsSummary().then(s=>{saved=s;const el=root.querySelector('#satellite-saved');
-        if(el)el.textContent=`${s.count.toLocaleString('en-US')} saved, about ${(s.bytes/1e6).toFixed(1)} MB.`;});
-      const on=(id:string,act:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
-        root.querySelector<HTMLInputElement&HTMLSelectElement>('#'+id)?.addEventListener('change',e=>{act(e.currentTarget as HTMLInputElement&HTMLSelectElement);redraw();});
-      on('satellite-layer',el=>{d.layer=el.value;});
-      on('satellite-quality-rule',el=>{d.qualityRule=el.value as ModisQualityRule;});
-      on('satellite-unit',el=>{d.unit=el.value as 'K'|'°C'|'°F';});
-      on('satellite-place-column',el=>{d.placeColumn=el.value.trim();});
-      on('satellite-qa-operator',el=>{d.qaOperator=el.value as '>='|'>';});
-      on('satellite-reread',el=>{d.reread=el.checked;});
-      on('satellite-forget',el=>{d.forget=el.checked;});
-    },
-    apply:d=>{
-      change(w=>{const params=getNode(w,nodeId,'sample_raster').params;
-        if(grid){params.layer=d.layer;if(d.qualityRule)params.qualityRule=d.qualityRule;params.unit=d.unit;
-          if(d.placeColumn)params.placeColumn=d.placeColumn;else delete params.placeColumn;}
-        else if(product)params.qaOperator=d.qaOperator;});
-      if(d.reread)rereadOnce.add(nodeId);
-      if(d.forget)void forgetSavedReadings().then(()=>{clearGridCache();clearFileCache();
-        toast('Every saved satellite reading on this device was forgotten. The next run reads every file again.',{tone:'notice'});});
-    },
-  },esc);
-}
 
 /** THE POLYGON LAYER, CONFIGURED (experiment 186, 2026-11-11). Where the features come from, the study area to read
  *  inside, what to read, the file, and how to name them -- a draft until Apply, and Apply is the read. The file is held
@@ -2277,219 +2188,11 @@ function generationAreas(nodeId:string):{id:string;label:string;geometry:Boundar
   const first=own.find(a=>a.id===connected)??(made?{id:connected,label:made.label,geometry:made.boundary}:undefined);
   return first?[first,...own.filter(a=>a.id!==connected)]:own;
 }
-function openPolygonConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'polygon_input');
-  const connected=workflow.edges.find(e=>e.to===nodeId&&e.port==='area')?.from;
-  const areaPort=(i:number)=>i===0?'area':`area_${i+1}`;
-  const connectedAreas=Array.from({length:MAX_AREA_INPUTS},(_,i)=>workflow.edges.find(e=>e.to===nodeId&&e.port===areaPort(i))?.from)
-    .filter((x):x is string=>!!x);
-  const areaSources=workflow.nodes.filter(x=>x.id!==nodeId&&outputOf(x)==='area').map(x=>({id:x.id,label:x.params.label||TYPES[x.type].title}));
-  // THE PARTS, BEFORE A RUN, where an area is a Study area that holds its shape; another step's area is known once it runs.
-  const partsOf=(ids:string[])=>{const known=ids.map(id=>workflow.nodes.find(x=>x.id===id)).filter((x):x is WorkflowNode<'study_area'>=>x?.type==='study_area'&&!!x.params.geometry);
-    return {parts:areaParts(known.map(x=>({value:{boundary:x.params.geometry!,...(x.params.boundary?.units?{units:x.params.boundary.units}:{}),areaId:x.id,geometryId:x.id,label:x.params.label||'Study area'},
-      ...(x.params.boundary?.boundaryID?{boundaryID:x.params.boundary.boundaryID}:{})}))),unknown:ids.length-known.length};};
-  let file:File|undefined;
-  type Feature=WorkflowNode<'polygon_input'>['params']['data']['features'][number];
-  const held=node.params.data.features as Feature[];
-  // THE FEATURES SHOWN in the chooser: a GeoJSON file just chosen, read on the spot so its features can be chosen before
-  // Apply; else the layer held, named again by the property in the draft where that changed. An extract is read on Apply.
-  let fresh:Feature[]|undefined,readError='',anyKept=true,unmount:(()=>void)|undefined;
-  const fromFile=node.params.inputMethod!=='extract';
-  const renamed=(features:readonly Feature[],nameField?:string):Feature[]=>readPolygonFeatures({type:'FeatureCollection',
-    features:features.map(f=>({type:'Feature',id:f.id,geometry:f.geometry,properties:(f as {properties?:object}).properties??{}}))},{nameField}) as Feature[];
-  const shownFor=(d:PolygonDraft):Feature[]|undefined=>{
-    if(file)return d.inputMethod==='file'?fresh:undefined;
-    if(!held.length)return undefined;
-    if(fromFile&&d.inputMethod==='file'&&(d.nameField??'')!==(node.params.nameField??'')){
-      try{readError='';return renamed(held,d.nameField);}catch(error){readError=errorMessage(error);return undefined;}
-    }
-    return held;
-  };
-  const readChosen=async(d:PolygonDraft)=>{
-    fresh=undefined;readError='';
-    if(!file||d.inputMethod!=='file')return;
-    try{fresh=readPolygonFeatures(JSON.parse(await file.text()),{nameField:d.nameField,layerName:d.layerName}) as Feature[];}
-    catch(error){readError=errorMessage(error);}
-  };
-  const boundaryOf=(area?:string)=>{if(!area)return undefined;try{return previewArea(workflow,area).boundary;}catch{return undefined;}};
-  const frameOf=(d:PolygonDraft)=>{
-    // THE FRAME THE READ USED, where there is one: an extract read records its own box; a file layer has none, so the
-    // connected study area's bounds stand in.
-    if(node.params.retrieval?.bbox&&!file)return node.params.retrieval.bbox;
-    const area=boundaryOf(d.area??connected);const b=area?geometryBounds(area):undefined;
-    return b?[b[0],b[1],b[2],b[3]] as [number,number,number,number]:undefined;
-  };
-  openConfigDialog<PolygonDraft>({
-    id:'polygon-config',widget:'Polygon layer',step:node.params.label||TYPES.polygon_input.title,draft:polygonDraftOf(node,connected,connectedAreas),wide:true,
-    sections:d=>{
-      if(d.inputMethod==='areas'){
-        const missing=polygonMissing(d),{parts,unknown}=partsOf(d.areas.filter(Boolean));
-        const after=parts.features.length?'<fieldset class="join-after"><legend>After</legend>'
-          +`<p><strong>${parts.features.length.toLocaleString('en')} parts</strong> at ${esc(parts.levels.join(', '))}`
-          +(parts.levels.length>1?': at different levels, so a count compares only units at one level, and a rate compares across them.':'.')+'</p>'
-          +'<div class="table-scroll"><table><thead><tr><th scope="col">name</th><th scope="col">id</th><th scope="col">country</th><th scope="col">level</th><th scope="col">study area</th></tr></thead><tbody>'
-          +parts.features.map(f=>`<tr>${['name','id','country','level','study_area'].map(k=>`<td>${esc(String(f.properties[k]??''))}</td>`).join('')}</tr>`).join('')
-          +'</tbody></table></div>'+(unknown?`<p class="muted">${unknown} more area${unknown===1?' is':'s are'} made by a step, and ${unknown===1?'its':'their'} parts are known once the workflow runs.</p>`:'')+'</fieldset>'
-          :unknown?'<p class="muted">The parts are known once the workflow runs: the area is made by a step.</p>':'';
-        return {settings:polygonConfigSettings(d,esc,undefined,areaSources,undefined,''),...(after?{preview:after}:{}),blocked:!!missing,
-          ...(missing?{message:{tone:'warning' as const,text:missing}}:{})};
-      }
-      const shown=shownFor(d);
-      const missing=readError||polygonMissing(d,file,held.length>0)||(shown&&!anyKept?'Every feature is set aside. Tick at least one.':'');
-      const preview=shown?`<div id="polygon-chooser-host"></div>`
-        :file&&d.inputMethod==='extract'?`<p class="muted">The areas are read from ${esc(file.name)} on Apply; open Configure… again to choose among them.</p>`
-        :'';
-      return {settings:polygonConfigSettings(d,esc,boundaryOf(d.area),areaSources,file?.name,heldFileLine(node.params.source,held.length,esc)),
-        ...(preview?{preview}:{}),blocked:!!missing,
-        ...(missing?{message:{tone:readError?'refusal' as const:'warning' as const,text:missing}}:{})};},
-    beforeRedraw:()=>{unmount?.();unmount=undefined;},
-    wire:(root,d,redraw)=>{
-      const on=(selector:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
-        root.querySelectorAll<HTMLInputElement&HTMLSelectElement>(selector).forEach(el=>el.addEventListener('change',()=>{fn(el);redraw();}));
-      on('#polygon-input-method',el=>{d.inputMethod=el.value==='extract'||el.value==='areas'?el.value:'file';file=undefined;fresh=undefined;readError='';
-        if(d.inputMethod==='areas'&&!d.areas.length&&connected)d.areas=[connected];});
-      on('[data-polygon-area]',el=>{const i=Number(el.dataset.polygonArea);if(!d.areas.length)d.areas=[''];d.areas[i]=el.value;});
-      root.querySelector('#polygon-add-area')?.addEventListener('click',()=>{if(!d.areas.length)d.areas=[''];d.areas.push('');redraw();});
-      root.querySelector('#polygon-remove-area')?.addEventListener('click',()=>{d.areas.pop();redraw();});
-      on('#polygon-area',el=>{if(el.value)d.area=el.value;else delete d.area;});
-      on('[data-area-kind]',el=>{const kind=el.dataset.areaKind as AreaKind,kept=new Set(d.kinds);
-        if(el.checked)kept.add(kind);else kept.delete(kind);d.kinds=AREA_KINDS.filter(k=>kept.has(k));});
-      // UNSET IS A VALUE HERE, not zero: unset reads every area of the chosen kinds.
-      on('#polygon-min-vertices',el=>{const raw=el.value.trim();if(raw==='')delete d.minVertices;else d.minVertices=Number(raw);});
-      on('#polygon-margin',el=>{const raw=el.value.trim();d.marginM=raw===''?0:Number(raw);});
-      on('#polygon-layer-name',el=>{const raw=el.value.trim();if(raw)d.layerName=raw;else delete d.layerName;});
-      // A FILE OR A NAMING PROPERTY CHANGED: the features are read again, and choices made among the others start over,
-      // since a feature's id may not name the same feature.
-      const fresh0=()=>{d.decisions={hidden:[],clipped:false,names:{},merges:[]};anyKept=true;};
-      root.querySelectorAll<HTMLInputElement>('#polygon-file,#polygon-extract').forEach(el=>el.addEventListener('change',()=>{
-        file=el.files?.[0];fresh0();void readChosen(d).then(redraw);}));
-      root.querySelector<HTMLInputElement>('#polygon-name-field')?.addEventListener('change',el=>{
-        const raw=(el.target as HTMLInputElement).value.trim();if(raw)d.nameField=raw;else delete d.nameField;
-        fresh0();void readChosen(d).then(redraw);});
-      const host=root.querySelector<HTMLElement>('#polygon-chooser-host'),shown=shownFor(d);
-      if(host&&shown)unmount=mountFeatureChooser(host,shown,d.nameField,d.decisions,esc,kept=>{
-        // Only a change of whether anything is kept redraws: a redraw rebuilds the map.
-        if(kept!==anyKept){anyKept=kept;redraw();}},frameOf(d));
-    },
-    apply:()=>{},
-    applyAsync:async(d,say)=>{
-      // THE PARTS OF CONNECTED STUDY AREAS: nothing to read; the areas are connected, one to each input, and the layer is
-      // made from them each run.
-      if(d.inputMethod==='areas'){
-        const chosen=d.areas.filter(Boolean);
-        if(!change(w=>{const t=getNode(w,nodeId,'polygon_input').params;t.inputMethod='areas';t.areaInputCount=Math.max(1,chosen.length);
-          if(d.layerName)t.layerName=d.layerName;else delete t.layerName;
-          w.edges=w.edges.filter(e=>!(e.to===nodeId&&/^area(_\d+)?$/.test(e.port)));
-          chosen.forEach((id,i)=>w.edges.push({id:`e-${nodeId}-${areaPort(i)}`,from:id,to:nodeId,port:areaPort(i)}));},{requirePersistence:true}))
-          throw new Error('The layer could not be saved on this device.');
-        toast('Polygon layer updated. Run the workflow to make it.');
-        return true;
-      }
-      // The settings first, then any read: the read is of these settings, and the study area it reads inside.
-      const settle=(w:Workflow)=>{const t=getNode(w,nodeId,'polygon_input').params;
-        t.inputMethod=d.inputMethod;t.kinds=d.kinds;t.marginM=d.marginM;
-        if(d.minVertices===undefined)delete t.minVertices;else t.minVertices=d.minVertices;
-        if(d.nameField)t.nameField=d.nameField;else delete t.nameField;
-        if(d.layerName)t.layerName=d.layerName;else delete t.layerName;
-        if(d.inputMethod==='extract'&&d.area)setConnection(w,d.area,nodeId,'area');
-        // CHOOSE FEATURES' DECISIONS, each stored only where it was made, so a layer nobody reduced carries nothing.
-        const {hidden,clipped,names,merges}=d.decisions;
-        if(hidden.length)t.hidden=hidden;else delete t.hidden;
-        if(clipped)t.clipToBox=true;else delete t.clipToBox;
-        if(Object.keys(names).length)t.names=names;else delete t.names;
-        if(merges.length)t.merges=merges;else delete t.merges;};
-      const keepFeatures=async(features:Feature[],extra:(t:WorkflowNode<'polygon_input'>)=>void)=>{
-        const data={features};
-        const digest=await payloadDigest(data);
-        if(!await keepDataset(digest,data))
-          throw new Error(`These ${features.length.toLocaleString('en')} features could not be kept on this device, so they were not saved.`
-            +(d.inputMethod==='extract'?' A higher vertex threshold reads fewer of them.':' Export the workflow to a file to keep it.'));
-        const kept=change(w=>{settle(w);const t=getNode(w,nodeId,'polygon_input');t.params.data=data;t.params.dataRef=digest;extra(t);},{requirePersistence:true});
-        if(!kept){await dropPayload(digest);throw new Error('The layer could not be saved on this device.');}
-      };
-      if(!file){
-        // NOTHING NEW TO READ: the settings and the features chosen; the held layer named again where its property changed.
-        const shown=shownFor(d);
-        if(shown&&shown!==held)await keepFeatures(shown,t=>{if(t.params.source)t.params.source={...t.params.source,features:shown.length};});
-        else if(!change(w=>settle(w),{requirePersistence:true}))throw new Error('The layer could not be saved on this device.');
-        toast('Polygon layer updated. Rerun to update results.');
-        return true;
-      }
-      const bytes=new Uint8Array(await file.arrayBuffer());
-      const sha256=await contentHash(bytes);
-      let features:Feature[],retrieval;
-      if(d.inputMethod==='extract'){
-        // THE SCOPE IS THE STUDY AREA'S, which is why the port exists: a read with no box is a read of whatever the file holds.
-        if(d.area)change(w=>setConnection(w,d.area!,nodeId,'area'));
-        const {boundary}=previewArea(workflow,nodeId);
-        const bounds=geometryBounds(boundary);
-        const bbox=readBox([bounds[0],bounds[1],bounds[2],bounds[3]],d.marginM);
-        ({features,retrieval}=await areasInWorker(bytes,{kinds:d.kinds,bbox,nameTag:d.nameField,minVertices:d.minVertices},say));
-        say('Keeping the areas on this device…');
-      }else{
-        say(`Reading ${file.name}…`);
-        features=fresh??readPolygonFeatures(JSON.parse(new TextDecoder().decode(bytes)),{nameField:d.nameField,layerName:d.layerName}) as Feature[];
-      }
-      const read=retrieval?{...retrieval,filename:file.name,sha256,bytes:bytes.length}:undefined;
-      await keepFeatures(features,t=>{
-        t.params.source={filename:file!.name,bytes:bytes.length,sha256,features:features.length};
-        if(read){t.params.retrieval=read;t.params.provenance=retrievalProvenance(read,{filename:file!.name,sha256});}
-        // A FILE LAYER HAS NO RETRIEVAL, and leaving the previous one would compare this file against a box it was never read for.
-        else delete t.params.retrieval;});
-      toast(`${features.length.toLocaleString('en')} polygon feature${features.length===1?'':'s'} read`
-        +`${d.inputMethod==='extract'?' from the extract and saved on this device':''}. Run the workflow to use them.`);
-      return true;
-    },
-  },esc);
-}
 /** WHAT CLIP RASTER KEEPS, in one sentence. */
 
 /** WHAT SAMPLE RASTER WRITES, in one sentence. */
 
 
-/** WHAT A TABLE OUTPUT SHOWS, in one sentence, from what is wired. */
-function tableOutputSentence(n:WorkflowNode<'table_output'>,mode:ReturnType<typeof shownMode>):string{
-  const from=(port:string)=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);const up=e&&workflow.nodes.find(m=>m.id===e.from);
-    return up?(up.params.label||TYPES[up.type].title):'';};
-  if(mode==='table')return `Shows the rows of ${from('table')||'the table connected'} as they stand${n.params.totalsAsserted?', with totals you asserted':''}.`;
-  if(mode==='polygons')return 'Shows the polygon layers connected and their summaries.';
-  return workflow.edges.some(e=>e.to===n.id)?'Shows the point records connected, with their coordinates and every attribute.'
-    :'Nothing is connected yet, so this table has nothing to show.';
-}
-
-/** TABLE'S CONFIGURATION DIALOG (experiment 186): how a reasoning result is shown, and the totals claim. Both on a draft,
- *  written by Apply. Turning a reasoning table into a map or a chart changes the step itself. */
-function openTableConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'table_output');
-  type Draft=WorkflowNode<'table_output'>['params']&{view?:'map'|'table'|'bars'};
-  const mode=shownMode(node,workflow.edges);
-  openConfigDialog<Draft>({
-    id:'table-config',widget:'Table',step:node.params.label||TYPES.table_output.title,draft:structuredClone(node.params),
-    sections:draft=>{
-      let settings='';
-      // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them (2026-10-26). Offered only for a table,
-      // and only where the table does not already state its unit.
-      if(mode==='table'&&!tableUnitFor(node))settings+=`<label class="check"><input type="checkbox" id="output-totals" ${draft.totalsAsserted?'checked':''}> Show totals: these values count the same thing</label>`
-        +'<p class="description">Tick it only where every cell counts the same thing.</p>';
-      if(!settings)settings='<p class="muted">Nothing to set: what you connect decides how it is shown.</p>';
-      const shows={table:'Rows are shown as imported, an absent value as unknown.',
-        other:'Every point with its coordinates and attributes, missing ones included.'};
-      return {settings,preview:`<p class="muted">${mode==='table'?shows.table:shows.other}</p>`};
-    },
-    wire:(root,draft,redraw)=>{
-      root.querySelector<HTMLSelectElement>('#output-view')?.addEventListener('change',e=>{draft.view=(e.target as HTMLSelectElement).value as Draft['view'];redraw();});
-      root.querySelector<HTMLInputElement>('#output-totals')?.addEventListener('change',e=>{
-        if((e.target as HTMLInputElement).checked)draft.totalsAsserted=true;else delete draft.totalsAsserted;redraw();});
-    },
-    apply:draft=>{
-      const {view,...params}=draft;
-      if(view&&view!=='table'){change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
-        w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
-      change(w=>{getNode(w,nodeId,'table_output').params=params;},{spatial:false});
-      renderResults();
-    },
-  },esc);
-}
 
 
 /** WHERE AN OUTPUT'S FIGURE GOES IN THE WRITE-UP, or that it is left out, one control for all three output widgets. */
@@ -2933,15 +2636,8 @@ function renderInspector(){
   if(Object.hasOwn(AREA_STEP_INSPECTORS,n.type)){
     // THE FOUR AREA STEPS ON THE STANDARD (area-steps-ui.ts, 2026-11-20).
     content+=(AREA_STEP_INSPECTORS[n.type as keyof typeof AREA_STEP_INSPECTORS] as OwnInspector<NodeType>).markup(n as never,areaStepKit());
-  }else if(n.type==='mean_center'){
-    content+=`<div class="notice">${n.params.weightField?.trim()?`Weighted by <strong>${esc(n.params.weightField.trim())}</strong>: each point counts in proportion to that attribute, and the receipt asserts the field and the weight total beside the point count.`:'Unweighted mean of projected point locations. Name an attribute below to weight each point by it \u2014 250 addresses carrying 489 deaths have two different centres.'} The computation uses UTM internally and emits one CRS84 center; it does not create a projected point dataset. Keep source and result private when locations are sensitive.</div><div class="field"><label class="field-label" for="mean-center-weight">Weight each point by this attribute (optional)</label><input id="mean-center-weight" data-slr="weightField" maxlength="60" value="${esc(n.params.weightField||'')}" placeholder="DEATHS"><p class="description">Leave empty for one point, one vote.</p></div><label class="field-label" for="mean-center-zone">WGS84 UTM zone</label><input id="mean-center-zone" type="number" min="1" max="60" value="${n.params.zone}"><label class="field-label" for="mean-center-hemisphere">Hemisphere</label><select id="mean-center-hemisphere"><option value="north" ${n.params.hemisphere==='north'?'selected':''}>North</option><option value="south" ${n.params.hemisphere==='south'?'selected':''}>South</option></select>`;
   }else if(n.type==='compare_point_sets'){
     content+=compareInspector.markup(n,compareKit());
-  }else if(n.type==='donut_geomask'||n.type==='aggregate_points_to_h3_cell'){
-    content+=`<div class="notice">Educational transformation only. The private source remains in the project and run evidence. No anonymity claim.</div>`;
-    content+='<details><summary>How does this geoprivacy method work? (?)</summary><p>Map encryption and its calibration are planned, not executable here. See the <a href="https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library" target="_blank" rel="noopener noreferrer">geoprivacy notebooks</a>.</p></details>';
-    if(n.type==='donut_geomask')content+=`<label class="field-label" for="privacy-innerM">Inner radius (m)</label><input id="privacy-innerM" type="number" min="0" max="5000" value="${n.params.innerM}"><label class="field-label" for="privacy-outerM">Outer radius (m)</label><input id="privacy-outerM" type="number" min="1" max="5000" value="${n.params.outerM}"><label class="field-label" for="privacy-seed">Demonstration seed</label><input id="privacy-seed" type="number" min="0" max="4294967295" value="${n.params.seed}"><p class="description">Output names and IDs are generated afresh; original attributes are not copied. The seeded generator is predictable and unsuitable as a production privacy control.</p>`;
-    else content+=`<label class="field-label" for="privacy-resolution">H3 resolution</label><input id="privacy-resolution" type="number" min="0" max="15" value="${n.params.resolution}"><label class="field-label" for="privacy-minOccupancy">Minimum locations per released cell</label><input id="privacy-minOccupancy" type="number" min="2" max="100" value="${n.params.minOccupancy}"><p class="description">Counts locations, not deaths. Sparse cells are omitted; occupancy alone does not establish anonymity.</p>`;
   }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='reachable_nodes'){
     // The study area is handed to the Inspector so a downloaded network can be seen against the
     // ground it was asked for. previewArea throws when nothing is connected, which is a legitimate
@@ -2969,75 +2665,12 @@ function renderInspector(){
     const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
       :drawn?`Shown in Results, under "${n.params.label||'Chart'}".`:'Not run yet.')}</p>`);
-  }else if(n.type==='table_output'&&n.params.inputMode==='polygons'){
-    content+=`<label class="field-label" for="catchment-output-mode">Input mode</label><select id="catchment-output-mode"><option value="polygons">Catchment polygons / summaries</option><option value="spatial">Point layers</option></select><label class="field-label" for="polygon-source">Polygon input</label><select id="polygon-source" data-map-port="polygons"><option value="">Select input</option>${workflow.nodes.filter(x=>outputOf(x)==='polygons').map(x=>`<option value="${esc(x.id)}" ${workflow.edges.some(e=>e.to===n.id&&e.from===x.id)?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')}</select><label class="field-label" for="polygon-output-label">Results tab name</label><input id="polygon-output-label" maxlength="60" value="${esc(n.params.label||'')}"><p class="notice">Connect a polygon operation. Charts require Summarize points in polygons.</p>`;
-    // map_output has its own branch above and is no longer reached here.
-    // nor here: a map's communication controls are in its own branch.
   }else if(n.type==='table_output'){
-    // THE STANDARD INSPECTOR (experiment 186): the name, which is the Results tab's, and where the figure goes in the
-    // write-up; the inputs, every port a table can show; one sentence and Configure…; and what the last run showed.
-    // Touched for the sea-level example (0.68.0), when a number stopped becoming its headings: touched widgets move to
-    // the standard, always. WHAT IS WIRED decides how it is shown, never a mode chosen first.
-    const mode=shownMode(n,workflow.edges);
-    const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
-    content+=standardSection('Name',`<div class="field"><label class="field-label" for="table-label">Results tab name</label><input id="table-label" maxlength="60" value="${esc(n.params.label)}"></div>`
-      +writeUpSelect(n));
-    const portName=(port:string)=>({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:'Or: Raster',network:'Street network',polygons:'Polygons'} as Record<string,string>)[port]
-      ||'Point data '+(port==='points'?1:port.split('_')[1]);
-    // WHAT IS CONNECTED, and one picker to connect more (2026-11-09, the practitioner: *"streamline its input ports like
-    // map output"*). A select for each of five ports, most never used, was the Inspector's half of the clutter.
-    let inputs=`<p class="description">What you connect decides how it is shown.</p>`
-      +nodeInputs(n).map(([port,type])=>{const edge=workflow.edges.find(e=>e.to===n.id&&e.port===port);
-        if(!edge)return '';
-        return `<div class="field"><label class="field-label" for="table-${port}">${esc(portName(port))}</label><select id="table-${port}" data-map-port="${port}"><option value="">Not connected</option>`
-          +workflow.nodes.filter(x=>x.id!==n.id&&portAccepts(type,outputOf(x))).map(x=>`<option value="${esc(x.id)}" ${edge?.from===x.id?'selected':''}>${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')+'</select></div>';}).join('');
-    {
-      const showable=new Set(nodeInputs(n).map(([,type])=>type));
-      const candidates=workflow.nodes.filter(x=>x.id!==n.id&&(showable.has(outputOf(x) as never)||portAccepts('table',outputOf(x)))
-        &&!workflow.edges.some(e=>e.to===n.id&&e.from===x.id));
-      if(candidates.length)inputs+=`<div class="field"><label class="field-label" for="table-add-input">Add an input</label>`
-        +`<select id="table-add-input"><option value="">Choose a result to show…</option>`
-        +candidates.map(x=>`<option value="${esc(x.id)}">${esc(x.params.label||TYPES[x.type].title)}</option>`).join('')
-        +`</select></div>`;
-    }
-    if(!n.params.inputMode||n.params.inputMode==='spatial')
-      inputs+=`<div class="inspector-actions"><button id="add-point-input" class="button small" ${(n.params.pointInputCount??1)>=MAX_POINT_LAYERS?'disabled':''}>＋ Add point input</button><button id="remove-point-input" class="button small" ${(n.params.pointInputCount??1)<=1?'disabled':''}>Remove last input</button></div>`;
-    content+=standardSection('Inputs',inputs);
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(tableOutputSentence(n,mode))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const shown=result?.outputs.find(o=>o.nodeId===n.id);
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :shown?`Shown in Results, under "${n.params.label||'Table'}".`:'Not run yet.')}</p>`);
+    content+=tableOutputInspector.markup(n,tableOutputKit());
   }else if(n.type==='polygon_input'){
-    // THE STANDARD INSPECTOR (experiment 186; the practitioner, 2026-11-11: "Let's also standardize the Polygon layer input
-    // ASAP"): the name, its study area, one sentence and Configure…, which holds the five steps and whose Apply is the
-    // read; and what it holds, with the features to choose from.
-    const p=n.params;
-    content+=standardSection('Name',labelForm('polygon-label','Name',p.label||'Polygon layer'));
-    content+=standardSection('Inputs',standardInputs(n,p.inputMethod==='areas'
-      ?Object.fromEntries(Array.from({length:MAX_AREA_INPUTS},(_,i)=>[i===0?'area':`area_${i+1}`,`Study area ${i+1}`]))
-      :{area:'Study area to read inside, for an extract'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(polygonSentence(n))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    content+=standardSection('Result',p.inputMethod==='areas'
-      ?`<p class="standard-result">${esc(result?.outputs.some(o=>o.nodeId===n.id)?'Made from the connected study areas in the last run.':'Made from the connected study areas when the workflow runs.')}</p>`
-      :p.data.features.length
-      // Choosing among the features is in Configure… since 2026-11-13, beside the file they came from.
-      ?polygonLayerCard(n,esc)
-      :'<p class="standard-result">Nothing read yet.</p>');
+    content+=polygonInspector.markup(n,polygonKit());
   }else if(n.type==='map_image_input'){
-    // THE STANDARD INSPECTOR (experiments 186 and 201), touched to place an image by matched points: the name; no inputs;
-    // one sentence and Configure…, which holds the image, its placement and its opacity; and what is placed.
-    const p=n.params,placed=typeof p.data==='string'&&p.data.startsWith('data:');
-    content+=standardSection('Name',labelForm('map-image-label','Name',p.label||'Georeferenced map image'));
-    content+=standardSection('Inputs',standardInputs(n));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(placed
-      ?`Draws ${p.image.filename||'the image'} as ground, ${p.placement==='points'?`placed by ${p.controlPoints?.length??0} matched points`:'placed by its world file'}, ${Math.round((p.opacity??0.85)*100)}% opaque.`
-      :'Choose a map image and how to place it, in Configure\u2026')
-      +(p.guide?.length?` A worked example names ${p.guide.length} features to find, in Configure\u2026`:'')}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    content+=standardSection('Result',placed?placedCard(n,esc):'<p class="standard-result">Nothing placed yet.</p>');
+    content+=mapImageStep.markup(n,mapImageKit());
   }else if(n.type==='table_input'){
     content+=tableInspector.markup(n,tableKit());
   }else if(n.type==='join_table_to_area'){
@@ -3148,15 +2781,7 @@ function renderInspector(){
     // ITS OWN MODULE'S INSPECTOR (2026-11-19): the first widget moved out of app.ts when touched.
     content+=searchCatalogInspector.markup(n,inspectorKit());
   }else if(n.type==='find_satellite_products'){
-    // WHICH SATELLITES MEASURE A VARIABLE: the choice is made in a dialog adapted from JLT's EO Satellite Guide, and
-    // summarised here with what Fieldwork has read about it. Experiment 179.
-    const p=n.params,chosen=p.topic&&p.route?productFor(p.topic,p.route):null;
-    content+=labelForm('satellite-label','Node label',p.label||'Find satellite products')
-      +'<p class="description">Which satellites and products measure a variable, and what each one measures. Products needing no sign-in come first. Nothing is downloaded by this step.</p>'
-      +`<button class="button primary" id="satellite-find">${chosen?'Change the product…':'Find satellite products…'}</button>`
-      +(chosen?productCard(chosen,true,esc).replace(/<div class="inspector-actions">[\s\S]*?<\/div><\/article>$/,'</article>')
-        :'<p class="notice">No product chosen yet.</p>')
-      +(chosen?.topic.caution?`<p class="notice notice-warning">${esc(chosen.topic.caution)}</p>`:'');
+    content+=findProductsInspector.markup(n,inspectorKit());
   }else if(n.type==='point_input'){
     // POINT DATA ON THE STANDARD INSPECTOR (experiments 186, 200): name, inputs, one sentence and Configure…, and the
     // records it holds. Configure… opens the Input data editor for points held here, or, for points read from a table,
@@ -3297,7 +2922,7 @@ function renderInspector(){
     }
   }
   const zoned=n.params as Record<string,unknown>;
-  if(typeof zoned.zone==='number'&&typeof zoned.hemisphere==='string'){
+  if(!standard&&typeof zoned.zone==='number'&&typeof zoned.hemisphere==='string'){
     const advice=suggestUTM(workflow);
     if(advice){
       const chosen={zone:zoned.zone as number,hemisphere:zoned.hemisphere as 'north'|'south'};
@@ -3382,12 +3007,7 @@ function renderInspector(){
   if(Object.hasOwn(OUTBREAK_STEP_INSPECTORS,n.type))(OUTBREAK_STEP_INSPECTORS[n.type as keyof typeof OUTBREAK_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,outbreakKit(),document);
   if(n.type==='search_satellite_catalog')searchCatalogInspector.wire(n,inspectorKit(),document);
   if(Object.hasOwn(AREA_STEP_INSPECTORS,n.type))(AREA_STEP_INSPECTORS[n.type as keyof typeof AREA_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,areaStepKit(),document);
-  optionalElement('#satellite-find')?.addEventListener('click',()=>{
-    const node=getNode(workflow,n.id,'find_satellite_products');
-    openProductsDialog({question:node.params.question??node.params.topic,route:node.params.route},esc,choice=>{
-      change(w=>{Object.assign(getNode(w,n.id,'find_satellite_products').params,choice);});
-    });
-  });
+  if(n.type==='find_satellite_products')findProductsInspector.wire(n,inspectorKit(),document);
   optionalElement('#output-section')?.addEventListener('change',event=>{
     const chosen=(event.target as HTMLSelectElement).value as FigureSection|'none';
     change(w=>{const node=required(w.nodes.find(x=>x.id===n.id));
@@ -3528,44 +3148,11 @@ function renderInspector(){
   // without a run, so the preview is the rows this draft keeps. Only Apply writes.
   // TOTAL WITHIN GROUPS' CONFIGURATION DIALOG (experiments 186 and 191): given the columns coming in and, where it
   // resolves without a run, the table, so the preview is the table the draft would make. Only Apply writes.
-  if(n.type==='table_output')optionalElement('#configure-step')?.addEventListener('click',()=>openTableConfig(n.id));
+  if(n.type==='table_output')tableOutputInspector.wire(n,tableOutputKit(),document);
   if(n.type==='sample_raster')sampleInspector.wire(n,sampleKit(),document);
   if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(chartKit(),n.id));
-  if(n.type==='polygon_input')optionalElement('#configure-step')?.addEventListener('click',()=>openPolygonConfig(n.id));
-  if(n.type==='map_image_input')optionalElement('#configure-step')?.addEventListener('click',()=>{
-    const p=getNode(workflow,n.id,'map_image_input').params,placed=typeof p.data==='string'&&p.data.startsWith('data:');
-    const area=workflow.nodes.find(x=>x.type==='study_area');
-    let near:[number,number,number,number]|undefined;
-    try{if(area){const b=previewArea(workflow,area.id).boundary;near=[...boundsOf(b)] as [number,number,number,number];}}catch{near=undefined;}
-    openMapImageConfig({step:p.label||'Georeferenced map image',esc,near,
-      initial:{label:p.label,...(placed?{image:{data:p.data!,...p.image}}:{}),placement:p.placement??'world-file',
-        model:p.placementModel??'affine',points:structuredClone(p.controlPoints??[]),opacity:p.opacity??0.85,
-        ...(p.tagsWorld&&p.tagsSaid?{tags:{world:p.tagsWorld,said:p.tagsSaid,...(p.tagsGeographic?{geographic:p.tagsGeographic}:{}),...(p.tagsDatum?{datum:p.tagsDatum}:{})}}:{}),
-        ...(p.guide?.length?{guide:p.guide}:{}),...(p.offered?{offered:p.offered}:{})},
-      apply:(d,{world,fit})=>void (async()=>{
-        try{
-          let image=d.image!,digest=p.dataRef,data=d.image!.data;
-          if(d.file){
-            const bytes=new Uint8Array(await d.file.arrayBuffer());
-            image={...image,sha256:await contentHash(bytes),bytes:bytes.length};
-            digest=await payloadDigest(data);
-            if(!await keepDataset(digest,data))throw new Error('This image could not be kept on this device, so it was not placed. A smaller export of the same plate will fit.');
-          }
-          const bounds=boundsFromWorldFile(world,image.width,image.height);
-          change(w=>{const t=getNode(w,n.id,'map_image_input');
-            t.params.data=data;if(digest)t.params.dataRef=digest;
-            t.params.image={width:image.width,height:image.height,bytes:image.bytes,sha256:image.sha256,...(image.filename?{filename:image.filename}:{})};
-            t.params.bounds=bounds;t.params.world=world;t.params.placement=d.placement;t.params.opacity=d.opacity;
-            if(d.placement==='points'){t.params.controlPoints=d.points.filter(c=>[...c.pixel,...c.lonlat].every(Number.isFinite));t.params.placementModel=d.model;}
-            else{delete t.params.controlPoints;delete t.params.placementModel;}
-            if(d.tags){t.params.tagsWorld=d.tags.world;t.params.tagsSaid=d.tags.said;
-              if(d.tags.geographic)t.params.tagsGeographic=d.tags.geographic;if(d.tags.datum)t.params.tagsDatum=d.tags.datum;}
-            else{delete t.params.tagsWorld;delete t.params.tagsSaid;delete t.params.tagsGeographic;delete t.params.tagsDatum;}
-          },{requirePersistence:true});
-          if(fit)toast(`Placed from ${fit.points} points: errors ${Math.round(fit.rmsM)} m root mean square. Run the workflow to draw it.`);
-        }catch(error){toast(errorMessage(error),{tone:'failure'});}
-      })()});
-  });
+  if(n.type==='polygon_input')polygonInspector.wire(n,polygonKit(),document);
+  if(n.type==='map_image_input')mapImageStep.wire(n,mapImageKit(),document);
   // RELATE'S CONFIGURATION DIALOG (experiment 186). Given the columns each table declares and, where they resolve, the
   // tables themselves, so the preview is the join this draft would make. Only Apply writes.
   if(n.type==='relate_table')relateInspector.wire(n,relateKit(),document);
@@ -3603,7 +3190,6 @@ function renderInspector(){
       {tone:'notice'});
     renderInspector();renderResults();
   });
-  for(const key of ['innerM','outerM','seed','resolution','minOccupancy'])optionalElement(`#privacy-${key}`)?.addEventListener('change',e=>change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>)[key]=control(e).value===''?NaN:Number(control(e).value);}));
   if(n.type==='compare_point_sets')compareInspector.wire(n,compareKit(),document);
   optionalElement('#chart-panels-by')?.addEventListener('change',e=>change(w=>{
     const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
@@ -3627,9 +3213,6 @@ function renderInspector(){
   optionalElement('#series-orientation')?.addEventListener('change',e=>change(w=>{
     getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical';
   },{spatial:false}));
-  optionalElement('#mean-center-zone')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'mean_center').params.zone=control(e).value===''?NaN:Number(control(e).value)));
-  optionalElement('#mean-center-hemisphere')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'mean_center').params.hemisphere=control(e).value as 'north'|'south'));
-  optionalElement('#catchment-output-mode')?.addEventListener('change',e=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));(target.params as unknown as Record<string,unknown>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
   optionalElement('#polygon-output-label')?.addEventListener('change',e=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value;}));
   optionalElement('#save-network')?.addEventListener('click',()=>{try{const text=(document.querySelector('#network-json') as HTMLTextAreaElement).value;if(text.length>2000000)throw new Error('Network JSON exceeds 2 MB.');const data=JSON.parse(text);change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e),{tone:'failure'});}});
   for(const selector of ['#network-file','#network-upload'])document.querySelector<HTMLInputElement>(selector)?.addEventListener('change',async e=>{const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;const baseline=JSON.stringify(workflow);try{const data=await importNetwork(file,getNode(workflow,n.id,'network_input').params.maxNodes);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed; import again.');const digest=await payloadDigest(data);if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it.`);if(!change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true}))await dropPayload(digest);}catch(e){toast(errorMessage(e),{tone:'failure'});}});
@@ -5310,7 +4893,13 @@ function areaStepKit():AreaStepKit{
       const features=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features??[];
       const keys=new Set<string>();for(const f of features.slice(0,500))for(const [k,v] of Object.entries(f.properties??{}))
         if(typeof v==='number'&&Number.isFinite(v)||typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v)))keys.add(k);
-      return [...keys];}};
+      return [...keys];},
+    summary:id=>dirty?undefined:result?.stepSummaries?.[id],
+    zoneAdvice:(zone,hemisphere)=>{const advice=suggestUTM(workflow);if(!advice)return undefined;
+      const chosen={zone,hemisphere},valid=Number.isInteger(zone)&&zone>=1&&zone<=60;
+      const worst=valid?workflowPositions(workflow).reduce((most,position)=>Math.max(most,utmScaleFactor(position,chosen)),0):NaN;
+      return {...advice.choice,matches:advice.choice.zone===zone&&advice.choice.hemisphere===hemisphere,positions:advice.positions,
+        straddles:advice.straddles,stretch:(worst-1)*100};}};
 }
 /** THE KIT OF A STEP MOVED OUT OF APP.TS WITH ITS LAST RUN (inspector-kit.ts). */
 /** CHART'S KIT (chart-ui.ts): the step kit, with the last run, the columns read up the workflow, and the controls the
@@ -5322,6 +4911,22 @@ function chartKit():ChartKit{
 }
 /** THE OUTBREAK STEPS' KIT (outbreak-steps-ui.ts): the step kit, with the columns of the cases arriving, the values a
  *  table's keys hold, and the study design's checklist of what the workflow has declared. */
+/** GEOREFERENCED MAP IMAGE'S KIT (map-image-ui.ts): the step kit, with keeping, saving and saying. */
+function mapImageKit():MapImageKit{
+  return {...stepKit(),keepDataset:(digest,payload)=>keepDataset(digest,payload),persist:edit=>{change(edit,{requirePersistence:true});},
+    toast:(text,tone)=>toast(text,tone?{tone}:undefined)};
+}
+/** POLYGON LAYER'S KIT (polygon-input-ui.ts): the step kit, with connecting, keeping and saying. */
+function polygonKit():PolygonKit{
+  return {...stepKit(),connect:(w,from,to,port)=>setConnection(w,from,to,port),persist:edit=>!!change(edit,{requirePersistence:true}),
+    keepDataset:(digest,payload)=>keepDataset(digest,payload),toast:text=>toast(text),ran:id=>!!result?.outputs.some(o=>o.nodeId===id)};
+}
+/** TABLE OUTPUT'S KIT (table-output-ui.ts): the step kit, with what a table shows and where its figure goes. */
+function tableOutputKit():TableOutputKit{
+  return {...stepKit(),unitFor:n=>tableUnitFor(n),writeUpSelect:n=>writeUpSelect(n),
+    presentation:edit=>{change(edit,{spatial:false});},renderResults:()=>renderResults(),
+    shown:id=>!!result?.outputs.some(o=>o.nodeId===id)};
+}
 /** DEDUPLICATE RECORDS' KIT (deduplicate-step-ui.ts): the step kit, with what its last run found and the keys arriving. */
 function dedupKit():DedupKit{
   return {...stepKit(),linkage:id=>result?.linkages?.[id],
@@ -5391,7 +4996,7 @@ function sampleKit():SampleKit{
   return {...stepKit(),facts:id=>result?.receipts?.find(r=>r.nodeId===id)?.facts,ran:()=>!!result,
     said:id=>(result?.tables?.[id] as {sentence?:string}|undefined)?.sentence,
     connect:(w,from,to,port)=>setConnection(w,from,to,port),
-    satelliteSentence:n=>satelliteSampleSentence(n),openSatellite:id=>openSatelliteSampleConfig(id)};
+    product:id=>{const n=workflow.nodes.find(x=>x.id===id);return n?samplerProduct(n):null;},toast:text=>toast(text,{tone:'notice'})};
 }
 /** TABULAR DATA'S KIT (data-table-ui.ts): the step kit, with where the rows came from this time, whether anything
  *  reads the table, this device's store for Configure… to keep the rows and dictionary in, and DHIS2's tokens. */

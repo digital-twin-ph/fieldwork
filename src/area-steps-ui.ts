@@ -10,6 +10,8 @@ import {openWalkthrough} from './table-walkthrough.js';
 import {bufferPointWalkthrough,measureAreaWalkthrough,clipPolygonsWalkthrough,clipPointsWalkthrough,summarizePointsWalkthrough} from './spatial-walkthroughs.js';
 import {areaUnitOptions} from './area-measurement.js';
 import {calculateArea,formatArea} from './area-computation.js';
+import {METRIC_STEP_INSPECTORS} from './metric-steps-ui.js';
+import {GEOPRIVACY_INSPECTORS} from './geoprivacy-ui.js';
 type Measurement=ReturnType<typeof calculateArea>;
 
 /** What a step's last run made, for its Result: the area it passed on and, for Calculate area, its measurement. */
@@ -21,6 +23,11 @@ export interface AreaStepKit extends InspectorKit {
   method:(nodeId:string)=>string|undefined;
   /** The numeric columns of the points arriving on a port, where their source holds them. */
   numericFields:(nodeId:string,port:string)=>string[];
+  /** What a process step made in the last run, in a few numbers, while that run is current. */
+  summary:(nodeId:string)=>Record<string,number|string|undefined>|undefined;
+  /** The UTM zone this workflow's coordinates suggest, against the one chosen, and how far the chosen one stretches
+   *  distances over them, as a percentage; undefined where nothing on the canvas has a coordinate yet. */
+  zoneAdvice:(zone:number,hemisphere:'north'|'south')=>{zone:number;hemisphere:'north'|'south';matches:boolean;positions:number;straddles:number[];stretch:number}|undefined;
 }
 const showMe='<p><button type="button" class="button" data-show-me>Show me how it works</button></p>';
 const configure='<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>';
@@ -168,4 +175,5 @@ export const summarizePointsInspector:OwnInspector<'summarize_points_to_polygon'
 
 export const AREA_STEP_INSPECTORS={buffer_point:bufferPointInspector,
   measure_area:measureAreaInspector,clip_polygons:clipPolygonsInspector,
-  clip_points_to_area:clipPointsInspector,summarize_points_to_polygon:summarizePointsInspector} as const;
+  clip_points_to_area:clipPointsInspector,summarize_points_to_polygon:summarizePointsInspector,
+  ...METRIC_STEP_INSPECTORS,...GEOPRIVACY_INSPECTORS} as const;

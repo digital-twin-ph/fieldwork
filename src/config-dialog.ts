@@ -111,7 +111,17 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
   };
 
   let built=false;
+  // A REDRAW ASKED FOR DURING A REDRAW runs after it, never inside it (2026-11-22): replacing the body removes the field
+  // that has focus, the browser then fires that field's change, and a change redraws. Nested, the second replacement
+  // found its node already gone and threw.
+  let drawing=false,again=false;
   function draw(){
+    if(drawing){again=true;return;}
+    drawing=true;
+    try{drawNow();}finally{drawing=false;}
+    if(again){again=false;draw();}
+  }
+  function drawNow(){
     // WHERE THE PERSON WAS, kept across the rebuild: the element with focus by id, and the caret in a text box.
     const active=document.activeElement as HTMLInputElement|null;
     const focusId=active&&body.contains(active)?active.id:'';
@@ -144,9 +154,9 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
 
     body.scrollTop=scroll;
     if(focusId&&!confirming){
-      const again=body.querySelector<HTMLInputElement>(`#${CSS.escape(focusId)}`);
-      if(again){again.focus();if(caret!==null&&typeof again.setSelectionRange==='function'){
-        try{again.setSelectionRange(caret,caret);}catch{/* a select or number box has no caret */}}}
+      const back=body.querySelector<HTMLInputElement>(`#${CSS.escape(focusId)}`);
+      if(back){back.focus();if(caret!==null&&typeof back.setSelectionRange==='function'){
+        try{back.setSelectionRange(caret,caret);}catch{/* a select or number box has no caret */}}}
     }
   }
 

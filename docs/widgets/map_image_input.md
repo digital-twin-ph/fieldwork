@@ -147,3 +147,9 @@ file's extent to 7½′, 15′ or 30′, so its margin covers no neighbouring sh
 USGS's *Oswego East, NY, 1943*: its tags place it 652 m east-west off its printed corners. One pair at its north-east
 corner moves it 652 m east and 11 m south, the same as measured from its pixels. *West of Texas, NY, 1943*, the sheet
 north of it, is placed correctly by its tags.
+
+## History
+
+### 2026-11-22 · Moved out of the application's main file (0.8.1)
+
+Its Inspector and its Configure… moved into a module of their own, unchanged. Nothing it does changed.

@@ -1,0 +1,71 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:voronoi",
+ "nodeType": "voronoi",
+ "version": "0.2.0",
+ "title": "Voronoi catchments",
+ "released": "2026-11-22",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['voronoi']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "sites",
+    "type": "points"
+   }
+  ],
+  "output": "polygons"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:VoronoiComputation",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. Configuration SHACL is future work.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/catchments.ts",
+   "src/street-network.ts",
+   "src/core.ts",
+   "src/metric-steps-ui.ts",
+   "src/area-steps-ui.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "changed",
+   "description": "On the standard Inspector, out of the shared catchment panel: one sentence saying it allocates by straight-line distance, which ignores roads, rivers and travel time; the UTM zone in Configure…, with the suggested zone; the catchments drawn; a manual page."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Synthetic numerical contracts and pinned source regression cases; no independent scientific certification."
+ }
+}

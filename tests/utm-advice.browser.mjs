@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureStep} from './configure-step.mjs';
 
 // A drawn area at Gaborone, Botswana: UTM zone 35S. Old Naledi stood here until it retired on 2026-11-11
 // (docs/audits/old-naledi-audit.md).
@@ -20,9 +21,12 @@ test('a widget added to a workflow takes the zone that workflow is in',async({pa
   // derived zone from a lucky one. It establishes the agreeing case and the note that says so.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
-  await expect(page.locator('[data-utm-advice]')).toContainText('zone 30N matches this workflow');
-  await expect(page.locator('[data-utm-advice]')).toContainText('configured coordinate');
-  await expect(page.locator('[data-utm-advice] [data-use-suggested-zone]')).toHaveCount(0);
+  // Settings says nothing of a zone that fits; the dialog says it fits, and offers no other.
+  await expect(page.locator('[data-utm-mismatch]')).toHaveCount(0);
+  const dialog=await configureStep(page,{},{apply:false});
+  await expect(dialog.locator('[data-utm-advice]')).toContainText('Zone 30N fits this workflow');
+  await expect(dialog.locator('[data-utm-advice] [data-suggested-zone]')).toHaveCount(0);
+  await dialog.locator('#config-cancel').click();
 
   // Gaborone is in zone 35S. A widget added there must not arrive as 30N.
   await openGaborone(page);
@@ -40,7 +44,9 @@ test('a widget added to a workflow takes the zone that workflow is in',async({pa
   expect(added.zone).toBe(35);
   expect(added.hemisphere).toBe('south');
   // And the note agrees with the data rather than warning about a default it just set.
-  await expect(page.locator('[data-utm-advice]')).toContainText('zone 35S matches this workflow');
+  await page.locator('.react-flow__node').filter({hasText:'Convex hull'}).click();
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('UTM zone 35S');
+  await expect(page.locator('[data-utm-mismatch]')).toHaveCount(0);
 });
 
 test('a zone that disagrees with the data is reported, with what it costs and a way to fix it',async({page})=>{
@@ -65,17 +71,19 @@ test('a zone that disagrees with the data is reported, with what it costs and a 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node').filter({hasText:'Convex hull'}).click();
 
-  const advice=page.locator('[data-utm-advice]');
-  await expect(advice).toContainText('data is in UTM zone 35S');
-  await expect(advice).toContainText('not 30N');
+  const advice=page.locator('[data-utm-mismatch]');
+  await expect(advice).toContainText('UTM zone 35S, not 30N');
   // The cost is stated as a measured percentage, not as a warning with no magnitude.
   const text=await advice.textContent();
   const [,stretch]=text.match(/by up to ([\d.]+)%/);
   expect(Number(stretch)).toBeGreaterThan(1);   // five zones out of position is a large stretch
 
   // And the advice is actionable.
-  await advice.locator('[data-use-suggested-zone]').click();
-  await expect(advice).toContainText('zone 35S matches this workflow');
+  const dialog=await configureStep(page,{},{apply:false});
+  await dialog.locator('[data-suggested-zone]').click();
+  await expect(dialog.locator('[data-utm-advice]')).toContainText('Zone 35S fits this workflow');
+  await dialog.locator('#config-apply').click();await expect(dialog).toHaveCount(0);
+  await expect(advice).toHaveCount(0);
   const fixed=await page.evaluate(()=>{
     const w=JSON.parse(localStorage.getItem('fieldwork-workflow-v1'));
     return w.nodes.find(n=>n.type==='summarize_hull').params;

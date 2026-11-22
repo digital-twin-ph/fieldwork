@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureStep} from './configure-step.mjs';
 
 // "And a bug - when I deleted the Map, Street Network and Study Area, Result Map was still there."
 //
@@ -51,8 +52,7 @@ test('deleting one output leaves the others, and a parameter change still keeps 
   // there to rerun.
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="catchments"]').click();
-  await page.locator('#catchment-zone').fill('31');
-  await page.locator('#catchment-zone').blur();
+  await configureStep(page,{'voronoi-zone':'31'});
   await expect(page.locator('#workflow-state')).toContainText('Changed');
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#result-tabs [data-output]')).toHaveCount(before-1);

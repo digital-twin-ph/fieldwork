@@ -1,6 +1,6 @@
 # Observed extent (convex hull)
 
-_Created 2026-10-14 · Updated 2026-11-12_
+_Created 2026-10-14 · Updated 2026-11-22_
 
 **A process widget.** It takes points and gives back one polygon: the smallest convex outline
 that contains them, with the area it encloses.
@@ -27,9 +27,9 @@ Ruleset to make a judgement about its size.
 1. **Add it** from the palette, under Summaries.
 2. **Connect a point layer.** Points without a location sit the step out, and the notes say
    how many took part.
-3. **Check the zone.** The widget measures in metres, so it projects your points first, and the
-   UTM zone it uses is part of the answer. The Inspector suggests the zone that fits your data
-   and tells you what a different one would cost.
+3. **Check the zone, in Configure….** The widget measures in metres, so it projects your points
+   first, and the UTM zone it uses is part of the answer. The dialog suggests the zone that fits
+   your data and says what the chosen one stretches; Settings says so when they disagree.
 4. **Run the workflow**, then read the area on the output or draw the outline on a map.
 
 ## Worked examples that use it
@@ -55,3 +55,10 @@ Ruleset to make a judgement about its size.
 
 The lab's [hull notebook](https://digital-twin-ph.github.io/validation-lab/lab/index.html?path=10-hull-vs-shapely.ipynb)
 recomputes the outline and the area with Shapely and compares them to this widget's.
+
+## History
+
+### 2026-11-22 · On the standard (0.2.0)
+
+Moved to the standard Inspector: name, inputs, one sentence, and the area and span of the last run. The UTM zone is in
+**Configure…**, with the zone the data suggests; Settings says when the two disagree.

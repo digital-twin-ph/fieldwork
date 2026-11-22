@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureStep} from './configure-step.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {auditRuntimeRun} from '../scripts/audit-runtime-n3.mjs';
@@ -49,7 +50,7 @@ test('geoprivacy canvas shows before/after maps and tables with editable paramet
   assert.ok(maximum-minimum>10,'a band this narrow suggests the pairing is wrong');
   const centerBefore=await metres('mean centre moved');
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="original-center"]').click();await expect(page.locator('#mean-center-zone')).toHaveValue('30');
+  await page.locator('.react-flow__node[data-id="original-center"]').click();await expect(page.locator('#inspector-content .standard-sentence')).toContainText('UTM zone 30N');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="compare"]').click();
   await expect(page.locator('#inspector-content .standard-result')).toContainText('The mean centre moved');
@@ -57,8 +58,8 @@ test('geoprivacy canvas shows before/after maps and tables with editable paramet
   await expect(page.locator('#compare-config #comparison-zone')).toHaveValue('30');await expect(page.locator('#compare-config #comparison-hemisphere')).toHaveValue('north');
   await page.locator('#compare-config #config-cancel').click();
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="move"]').click();await page.locator('#privacy-seed').fill('43');await page.locator('#privacy-seed').press('Tab');
-  await expect(page.locator('#privacy-seed')).toHaveValue('43');await expect(page.locator('#workflow-state')).toContainText('Changed');await page.locator('#run-button').click();
+  await page.locator('.react-flow__node[data-id="move"]').click();await configureStep(page,{'donut-seed':'43'});
+ await expect(page.locator('#workflow-state')).toContainText('Changed');await page.locator('#run-button').click();
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();
@@ -71,8 +72,8 @@ test('geoprivacy canvas shows before/after maps and tables with editable paramet
   const hexPayload=JSON.parse(await readFile(await hexDownload.path(),'utf8'));
   assert.equal(hexPayload.features.length,5);assert.ok(hexPayload.features.every(f=>f.geometry.type==='Polygon'&&Number.isInteger(f.properties.count)&&!('DEATHS' in f.properties)));
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="group"]').click();await expect(page.locator('#privacy-resolution')).toHaveValue('9');
-  await page.locator('#privacy-minOccupancy').fill('3');await page.locator('#privacy-minOccupancy').dispatchEvent('change');
+  await page.locator('.react-flow__node[data-id="group"]').click();await expect(page.locator('#inspector-content .standard-sentence')).toContainText('resolution 9');
+  await configureStep(page,{'h3-min':'3'});
   await expect(page.locator('#workflow-state')).toContainText('Changed');await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="results"]').click();

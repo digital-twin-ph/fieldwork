@@ -5,8 +5,9 @@
  *  chain from question to collection, the caution, and one card per route. The practitioner, 2026-11-05: *"Let's follow
  *  FW style for dialogs."* Each card adds what Fieldwork has read: what the product measures and its unit, sign-in,
  *  the licence as read, whether a browser can read it, the quality rule. Experiment 179. */
-import type {Escape} from './types.js';
-import {SATELLITE_TOPICS,SIGN_IN_WORDS,VENDORED,productsFor,resolve,type SatelliteProduct,type SatelliteTopic,type DatasetCitation}
+import type {Escape,WorkflowNode} from './types.js';
+import type {OwnInspector,InspectorKit} from './inspector-kit.js';
+import {productFor,SATELLITE_TOPICS,SIGN_IN_WORDS,VENDORED,productsFor,resolve,type SatelliteProduct,type SatelliteTopic,type DatasetCitation}
   from './satellite-products.js';
 
 const QUANTITY:Record<string,string>={column:'a column through the atmosphere','optical-depth':'an optical depth, unitless',
@@ -104,3 +105,32 @@ export function openProductsDialog(initial:{question?:string;route?:string},esc:
   dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   dialog.showModal();
 }
+
+/** FIND SATELLITE PRODUCTS ON THE STANDARD INSPECTOR (2026-11-22, the Inspector move's batch D): the name, no inputs, one
+ *  sentence of the product chosen, Configure…, which opens the chooser adapted from JLT's EO Satellite Guide, and under
+ *  Result the product's card, with its caution. It had its own label field and a Find button. */
+export function findProductsSentence(p:WorkflowNode<'find_satellite_products'>['params']):string{
+  const chosen=p.topic&&p.route?productFor(p.topic,p.route):null;
+  if(!chosen)return 'Which satellites and products measure a variable, and what each measures. Choose one in Configure\u2026; nothing is downloaded by this step.';
+  return `${chosen.route.label}, for ${chosen.topic.label}: ${chosen.route.measurement}. Nothing is downloaded by this step.`;
+}
+export const findProductsInspector:OwnInspector<'find_satellite_products'>={
+  markup:(n,kit:InspectorKit)=>{
+    const esc=kit.esc,p=n.params,chosen=p.topic&&p.route?productFor(p.topic,p.route):null;
+    return kit.section('Name',kit.name('satellite-label',p.label||'Find satellite products'))
+      +kit.section('Inputs',kit.inputs(n))
+      +kit.section('Settings',`<p class="standard-sentence">${esc(findProductsSentence(p))}</p>`
+        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>')
+      +kit.section('Result',(chosen?productCard(chosen,true,esc).replace(/<div class="inspector-actions">[\s\S]*?<\/div><\/article>$/,'</article>')
+        :'<p class="standard-result">No product chosen yet.</p>')
+        +(chosen?.topic.caution?`<p class="notice notice-warning">${esc(chosen.topic.caution)}</p>`:''));
+  },
+  wire:(n,kit,root)=>{
+    root.querySelector('#configure-step')?.addEventListener('click',()=>{
+      const node=kit.workflow().nodes.find(x=>x.id===n.id) as WorkflowNode<'find_satellite_products'>|undefined;if(!node)return;
+      openProductsDialog({question:node.params.question??node.params.topic,route:node.params.route},kit.esc,choice=>{
+        kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id) as WorkflowNode<'find_satellite_products'>|undefined;if(t)Object.assign(t.params,choice);});
+      });
+    });
+  },
+};

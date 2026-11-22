@@ -2,6 +2,11 @@
  *  Inspector -- name, inputs, one sentence and Configure…, what the last run read -- and its dialog for points and areas.
  *  Reading satellite files keeps its sentence and dialog in app.ts, with the readers and caches they use; the kit opens
  *  them. */
+import {MODIS_RULES,type ModisQualityRule} from './satellite-areas.js';
+import {gridReaderFor,clearGridCache,layerKeyOf,ruleOf,rulesOf,layerPhrase,reportUnit} from './satellite-grid-sample.js';
+import {clearFileCache} from './satellite-sample-reader.js';
+import {savedReadingsSummary,forgetSavedReadings} from './satellite-reading-store.js';
+import {rereadOnce} from './core.js';
 import type {Workflow,WorkflowNode} from './types.js';
 import type {RasterAsset} from './raster.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
@@ -19,9 +24,10 @@ export interface SampleKit extends StepKit {
   said:(nodeId:string)=>string|undefined;
   /** One connection made, replacing what was on that port. */
   connect:(w:Workflow,from:string,to:string,port:string)=>void;
-  /** Satellite files: the sentence and the dialog, kept with their readers. */
-  satelliteSentence:(n:WorkflowNode<'sample_raster'>)=>string;
-  openSatellite:(nodeId:string)=>void;
+  /** The satellite product chosen upstream of the files this step reads, if one is. */
+  product:(nodeId:string)=>import('./satellite-products.js').SatelliteProduct|null;
+  /** Say something in the toast, as a notice. */
+  toast:(text:string)=>void;
 }
 
 export function sampleSentence(n:WorkflowNode<'sample_raster'>):string{
@@ -131,7 +137,7 @@ export const sampleInspector:OwnInspector<'sample_raster'>={
       const said=k.said(n.id);
       return kit.section('Name',kit.name('satellite-sample-label',p.label||'Sample a raster'))
         +kit.section('Inputs',kit.inputs(n,{files:'Satellite files',points:'Points',areas:'Areas, a polygon layer',area:'Or: a study area’s named parts'}))
-        +kit.section('Settings',`<p class="standard-sentence">${esc(k.satelliteSentence(n))}</p>`
+        +kit.section('Settings',`<p class="standard-sentence">${esc(satelliteSampleSentence(k,n))}</p>`
           +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>')
         +kit.section('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
           :said??'Run the workflow to read the files. A file read before on this device, the same way at the same places, is not read again.')}</p>`);
@@ -153,6 +159,89 @@ export const sampleInspector:OwnInspector<'sample_raster'>={
         :counts?`${counts.sampled} point${counts.sampled===1?'':'s'} given a value; ${counts.noData} on no data, ${counts.outside} outside the raster, ${counts.unlocated} without a location. None is set to zero.`
         :k.ran()?(p.over==='areas'?'Run to total the raster over the areas.':'Run to read the raster at the points.'):'Not run yet.')}</p>`);},
   wire:(n,kit,root)=>{const k=kit as SampleKit;
-    root.querySelector('#configure-step')?.addEventListener('click',()=>n.params.source==='satellite-files'?k.openSatellite(n.id):openSampleConfig(k,n.id));
+    root.querySelector('#configure-step')?.addEventListener('click',()=>n.params.source==='satellite-files'?openSatelliteSampleConfig(k,n.id):openSampleConfig(k,n.id));
   },
 };
+
+/* SATELLITE FILES: the sentence and the dialog, moved out of app.ts (2026-11-22, the Inspector move's batch D). */
+/** WHAT SAMPLE SATELLITE READS, in one sentence (experiment 186). */
+function satelliteSampleSentence(kit:SampleKit,n:WorkflowNode<'sample_raster'>):string{
+  const workflow=kit.workflow();
+  const p=n.params,product=kit.product(n.id),grid=product?gridReaderFor(product):null;
+  if(!product)return 'Reads each satellite file the search kept, at points or over areas. Connect the files first.';
+  if(grid){
+    const layer=grid.layers[layerKeyOf(grid,p.layer)]!,rule=ruleOf(grid,p.qualityRule);
+    const areas=workflow.edges.some(e=>e.to===n.id&&(e.port==='areas'||e.port==='area'));
+    const unit=reportUnit(grid,p.unit,layer);
+    return `Reads ${layerPhrase(layer)} ${areas?'over each area':'at each point'}, ${unit===layer.label?'unitless':`in ${unit}`}, `
+      +`keeping cells that pass: ${MODIS_RULES[rule]}. The place column is ${p.placeColumn?.trim()||(areas?'area':'point_id')}.`;
+  }
+  return `Reads ${product.route.label} at the pixel nearest each point, keeping values with qa_value ${p.qaOperator??'>='} the product's threshold.`;
+}
+
+/** SAMPLE SATELLITE'S CONFIGURATION DIALOG (experiment 186, 2026-11-09). Only Apply writes; reading every file again
+ *  and forgetting the saved readings are choices applied with it. */
+function openSatelliteSampleConfig(kit:SampleKit,nodeId:string){
+  const esc=kit.esc,workflow=kit.workflow(),node=workflow.nodes.find(x=>x.id===nodeId) as WorkflowNode<'sample_raster'>,p=node.params;
+  const product=kit.product(nodeId),grid=product?gridReaderFor(product):null;
+  const areas=workflow.edges.some(e=>e.to===nodeId&&(e.port==='areas'||e.port==='area'));
+  type Draft={layer:string;qualityRule:ModisQualityRule|'';unit:'K'|'°C'|'°F';placeColumn:string;qaOperator:'>='|'>';reread:boolean;forget:boolean};
+  const draft:Draft={layer:grid?layerKeyOf(grid,p.layer):p.layer??'',qualityRule:grid?ruleOf(grid,p.qualityRule):'',
+    unit:p.unit??'°C',placeColumn:p.placeColumn??'',qaOperator:p.qaOperator??'>=',reread:false,forget:false};
+  let saved:{count:number;bytes:number}|null=null;
+  openConfigDialog<Draft>({
+    id:'satellite-config',widget:'Sample a raster at points or over areas',step:p.label||kit.title('sample_raster'),draft,
+    sections:d=>{
+      const settings=grid
+        ?`<div class="field"><label class="field-label" for="satellite-layer">Layer</label><select id="satellite-layer">`
+          +Object.entries(grid.layers).map(([k,l])=>`<option value="${esc(k)}"${k===d.layer?' selected':''}>${esc(l.label)}</option>`).join('')+'</select></div>'
+          +`<div class="field"><label class="field-label" for="satellite-quality-rule">Quality rule</label><select id="satellite-quality-rule">`
+          +rulesOf(grid).map(k=>`<option value="${k}"${k===d.qualityRule?' selected':''}>${esc(MODIS_RULES[k])}</option>`).join('')
+          +`</select><small>${grid.quality.rules?'The ranks and their meanings are the file\u2019s own legend.':'The product documents its quality bits and recommends no rule.'} The rule is stated on every row.</small></div>`
+          +(grid.unit==='K'?`<div class="field"><label class="field-label" for="satellite-unit">Report temperature in</label><select id="satellite-unit">`
+            +`<option value="°C"${d.unit==='°C'?' selected':''}>degrees Celsius (K − 273.15)</option>`
+            +`<option value="°F"${d.unit==='°F'?' selected':''}>degrees Fahrenheit (K × 9/5 − 459.67)</option>`
+            +`<option value="K"${d.unit==='K'?' selected':''}>kelvin, as the file states it</option></select></div>`:'')
+          +`<div class="field"><label class="field-label" for="satellite-place-column">Name of the place column</label>`
+          +`<input id="satellite-place-column" maxlength="60" value="${esc(d.placeColumn)}" placeholder="${areas?'area':'point_id'}">`
+          +'<small>Name it as the table you will relate it to does, such as municipio.</small></div>'
+        :product
+          ?`<div class="field"><label class="field-label" for="satellite-qa-operator">Quality rule</label>`
+            +`<select id="satellite-qa-operator"><option value=">="${d.qaOperator==='>='?' selected':''}>qa_value at or above the threshold (the product manual's table)</option>`
+            +`<option value=">"${d.qaOperator==='>'?' selected':''}>qa_value above the threshold (the product readme)</option></select>`
+            +'<small>The product\'s documents differ, and only at exactly the threshold. The choice is stated on the result.</small></div>'
+          :'<p class="notice">Connect the files from Search a satellite catalog first: the settings are the product\u2019s.</p>';
+      const preview=grid
+        ?''
+        :'';
+      const decisions='<h4>Readings saved on this device</h4>'
+        +'<p>A file read before, the same way at the same places, is taken from this device instead of being read again, and the result says how many were.</p>'
+        +`<p id="satellite-saved">${saved?`${saved.count.toLocaleString('en-US')} saved, about ${(saved.bytes/1e6).toFixed(1)} MB.`:'Counting\u2026'}</p>`
+        +`<label class="check"><input type="checkbox" id="satellite-reread"${d.reread?' checked':''}> Read every file again on the next run</label>`
+        +`<label class="check"><input type="checkbox" id="satellite-forget"${d.forget?' checked':''}> Forget every saved reading on this device, for every workflow</label>`;
+      return {settings,preview,decisions};
+    },
+    wire:(root,d,redraw)=>{
+      if(!saved)void savedReadingsSummary().then(s=>{saved=s;const el=root.querySelector('#satellite-saved');
+        if(el)el.textContent=`${s.count.toLocaleString('en-US')} saved, about ${(s.bytes/1e6).toFixed(1)} MB.`;});
+      const on=(id:string,act:(el:HTMLInputElement&HTMLSelectElement)=>void)=>
+        root.querySelector<HTMLInputElement&HTMLSelectElement>('#'+id)?.addEventListener('change',e=>{act(e.currentTarget as HTMLInputElement&HTMLSelectElement);redraw();});
+      on('satellite-layer',el=>{d.layer=el.value;});
+      on('satellite-quality-rule',el=>{d.qualityRule=el.value as ModisQualityRule;});
+      on('satellite-unit',el=>{d.unit=el.value as 'K'|'°C'|'°F';});
+      on('satellite-place-column',el=>{d.placeColumn=el.value.trim();});
+      on('satellite-qa-operator',el=>{d.qaOperator=el.value as '>='|'>';});
+      on('satellite-reread',el=>{d.reread=el.checked;});
+      on('satellite-forget',el=>{d.forget=el.checked;});
+    },
+    apply:d=>{
+      kit.change(w=>{const params=(w.nodes.find(y=>y.id===nodeId) as WorkflowNode<'sample_raster'>).params;
+        if(grid){params.layer=d.layer;if(d.qualityRule)params.qualityRule=d.qualityRule;params.unit=d.unit;
+          if(d.placeColumn)params.placeColumn=d.placeColumn;else delete params.placeColumn;}
+        else if(product)params.qaOperator=d.qaOperator;});
+      if(d.reread)rereadOnce.add(nodeId);
+      if(d.forget)void forgetSavedReadings().then(()=>{clearGridCache();clearFileCache();
+        kit.toast('Every saved satellite reading on this device was forgotten. The next run reads every file again.');});
+    },
+  },esc);
+}

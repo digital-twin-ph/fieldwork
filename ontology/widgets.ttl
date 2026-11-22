@@ -10,7 +10,8 @@
 
 <urn:fieldwork:widget:access> a fw:WidgetDefinition; fw:nodeType "access"; rdfs:label "Facility access".
 <urn:fieldwork:widget:access_policy> a fw:WidgetDefinition; fw:nodeType "access_policy"; rdfs:label "Access review".
-<urn:fieldwork:widget:aggregate_points_to_h3_cell> a fw:WidgetDefinition; fw:nodeType "aggregate_points_to_h3_cell"; rdfs:label "Aggregate points to H3 cells".
+<urn:fieldwork:widget:aggregate_points_to_h3_cell> a fw:WidgetDefinition; fw:nodeType "aggregate_points_to_h3_cell"; rdfs:label "Aggregate points to H3 cells";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/aggregate_points_to_h3_cell.md>.
 <urn:fieldwork:widget:alert> a fw:WidgetDefinition; fw:nodeType "alert"; rdfs:label "Heat alert".
 <urn:fieldwork:widget:apply_ruleset> a fw:WidgetDefinition; fw:nodeType "apply_ruleset"; rdfs:label "Apply ruleset";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/apply_ruleset.md>.
@@ -37,7 +38,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/deduplicate_points.md>.
 <urn:fieldwork:widget:derive_value> a fw:WidgetDefinition; fw:nodeType "derive_value"; rdfs:label "Derive a value";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/derive_value.md>.
-<urn:fieldwork:widget:donut_geomask> a fw:WidgetDefinition; fw:nodeType "donut_geomask"; rdfs:label "Move points in a donut".
+<urn:fieldwork:widget:donut_geomask> a fw:WidgetDefinition; fw:nodeType "donut_geomask"; rdfs:label "Move points in a donut";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/donut_geomask.md>.
 <urn:fieldwork:widget:facilities> a fw:WidgetDefinition; fw:nodeType "facilities"; rdfs:label "Select nearby facilities".
 <urn:fieldwork:widget:facility_audit> a fw:WidgetDefinition; fw:nodeType "facility_audit"; rdfs:label "Evidence register".
 <urn:fieldwork:widget:fill_interior_gaps> a fw:WidgetDefinition; fw:nodeType "fill_interior_gaps"; rdfs:label "Fill interior gaps".
@@ -56,7 +58,8 @@
 <urn:fieldwork:widget:map_output> a fw:WidgetDefinition; fw:nodeType "map_output"; rdfs:label "Map";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_output.md>;
   fw:defaultFigureSection "Results".
-<urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center".
+<urn:fieldwork:widget:mean_center> a fw:WidgetDefinition; fw:nodeType "mean_center"; rdfs:label "Mean center";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/mean_center.md>.
 <urn:fieldwork:widget:measure_area> a fw:WidgetDefinition; fw:nodeType "measure_area"; rdfs:label "Calculate area";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/measure_area.md>.
 <urn:fieldwork:widget:measure_distance> a fw:WidgetDefinition; fw:nodeType "measure_distance"; rdfs:label "Measure distance";
@@ -113,7 +116,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/study_design.md>.
 <urn:fieldwork:widget:two_by_two> a fw:WidgetDefinition; fw:nodeType "two_by_two"; rdfs:label "Two-by-two table";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/two_by_two.md>.
-<urn:fieldwork:widget:voronoi> a fw:WidgetDefinition; fw:nodeType "voronoi"; rdfs:label "Voronoi catchments".
+<urn:fieldwork:widget:voronoi> a fw:WidgetDefinition; fw:nodeType "voronoi"; rdfs:label "Voronoi catchments";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/voronoi.md>.
 <urn:fieldwork:widget:xpert> a fw:WidgetDefinition; fw:nodeType "xpert"; rdfs:label "Diagnostic evidence".
 <urn:fieldwork:widget:regression> a fw:WidgetDefinition; fw:nodeType "regression"; rdfs:label "Regression";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/regression.md>.

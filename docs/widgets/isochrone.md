@@ -1,6 +1,6 @@
 # Network isochrone
 
-_Created 2026-10-14 · Updated 2026-11-11_
+_Created 2026-10-14 · Updated 2026-11-22_
 
 **A process widget.** It draws the area you can reach on foot within a stated time, walking
 along real streets, from one or more sites.
@@ -28,15 +28,15 @@ Out come polygons, one per site. Draw them on a Map, or count your records into 
 
 1. **Add it** from the palette, under Catchments.
 2. **Connect your sites and a street network.**
-3. **Set the budget.** *Minutes* × *metres per minute* is how far someone can walk — 5 minutes
+3. **Open Configure… and set the budget.** *Minutes* × *metres per minute* is how far someone can walk — 5 minutes
    at 75 m/min is 375 m of street.
 4. **Set the final walk off the street** — how far from a street someone can get to a door.
    The band is this wide where there is time left and narrower where there is not.
 5. **Set the snap limit** — how far a site may be from the nearest street before the result
    says so.
 6. **Check the zone.** Measuring happens in metres, so the UTM zone is part of the answer, and
-   every measuring step in one workflow must agree on it. The run is refused by name if they
-   disagree.
+   every measuring step in one workflow must agree on it. The dialog suggests the zone that fits
+   your data, and the run is refused by name if the steps disagree.
 7. **Run the workflow**, then read the regions on a map and the alert in the Inspector.
 
 ## How the travel time is spent
@@ -104,3 +104,11 @@ network, and check how far each site had to go to reach a street.
 The lab's [snapping notebook](https://digital-twin-ph.github.io/validation-lab/lab/index.html?path=19-snap-vs-pyproj.ipynb)
 measures the displacement on the example data, and the corridor check rebuilds the region from
 the stated rule with Shapely.
+
+## History
+
+### 2026-11-22 · On the standard (0.5.0)
+
+Moved to the standard Inspector: one sentence of direction, times, speed and last walk, and every setting in
+**Configure…**, which says how far the time goes at the stated speed and holds Apply on a setting the run would refuse.
+The Result names the regions drawn and the sites that reached nothing or were routed off the network.

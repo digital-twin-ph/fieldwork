@@ -190,6 +190,7 @@ export function dataIssuesOf(value:unknown,nodeId:string):import('./authored-app
  *  result is in `outputs`; this is the first INTERMEDIATE result the interface has to show,
  *  because the review band is a question the widget asks and the answer belongs on the node
  *  rather than in whichever result tab happens to be open. */
+export type StepSummary=Record<string,number|string|undefined>;
 export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; provenanceN3:string; outputs:Output[]; trace:{nodeId:string; type:string; milliseconds:number}[]; receipts:Receipt[]; runId:string; engine:string; runAt:string;
   linkages?:Record<string,import('./deduplicate-points.js').DeduplicateResult>;
   /** STEPS UNDER CONSTRUCTION THAT COULD NOT BE COMPUTED: leading to no output, so they did not stop the run, and named
@@ -199,6 +200,8 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
    *  interface has to show, and for a sharper reason than the first: the rows a relate drops are
    *  absent from the table it hands on, so the outcome cannot be read off the data. */
   relations?:Record<string,import('./relate-table.js').RelateOutcome>;
+  /** What each process step made, in a few numbers (summarizeStep in core.ts), for its Result. */
+  stepSummaries?:Record<string,StepSummary>;
   /** What each Join a table to the study area joined, by step: its parts, counts and what was left over. */
   joins?:Record<string,import('./area-join.js').AreaJoinResult>;
   /** Per Relate over several shifts (experiment 185): each column, its shift, and its matched and empty counts. */

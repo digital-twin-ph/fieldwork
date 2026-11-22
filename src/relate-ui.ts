@@ -204,13 +204,13 @@ export interface RelateConfigView {
  *  which rows match, and so what there is to decide. The preview is the join this draft would make. */
 export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
   // THE KEYS PROPOSED FROM THEIR VALUES where none is chosen yet (2026-11-22): the pair of columns that links most.
-  let proposed:{on:string;text:string;warning?:boolean}|undefined;
+  let proposed:{on:string;rightOn?:string;text:string;warning?:boolean}|undefined;
   const matches=view.left&&view.right?columnMatches(view.left,view.right,view.initial.normalisation):[];
   if(!view.initial.on&&view.left&&view.right){
     const found=proposeRelateKeys(view.left,view.right,view.initial.normalisation);
     if(found.proposal){const p=found.proposal;
       view={...view,initial:{...view.initial,on:p.on,rightOn:p.rightOn===p.on?'':p.rightOn}};
-      proposed={on:p.on,text:`Proposed from the values: "${p.on}"${p.rightOn===p.on?' in both tables':` with the second table's "${p.rightOn}"`}, `
+      proposed={on:p.on,rightOn:p.rightOn===p.on?'':p.rightOn,text:`Proposed from the values: "${p.on}"${p.rightOn===p.on?' in both tables':` with the second table's "${p.rightOn}"`}, `
         +`which links ${p.linked} of the first table's ${p.leftDistinct} ${p.leftDistinct===1?'key':'keys'} to the second's ${p.rightDistinct}. Choose another column if these are not the same things.`};}
     else if(found.codesAndNames)proposed={on:'',warning:true,text:`No column of one table holds the values of a column of the other. `
       +`${found.codesAndNames.codes[0]!.toUpperCase()+found.codesAndNames.codes.slice(1)} looks like codes and ${found.codesAndNames.names} like names: `
@@ -399,7 +399,10 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
       if(showMe)showMe.onclick=()=>openWalkthrough(relateWalkthrough({normalisation:draft.normalisation,spelling:draft.spelling,
         several:draft.several,decision:draft.decision,label:draft.label}),esc,showMe);
       const on=(id:string,fn:(el:HTMLSelectElement)=>void)=>{const el=root.querySelector<HTMLSelectElement>(`#${id}`);if(el)el.onchange=()=>{fn(el);redraw();};};
-      on('relate-on',el=>{draft.on=el.value;draft.alsoOn=draft.alsoOn.filter(c=>c!==el.value);});
+      on('relate-on',el=>{draft.on=el.value;draft.alsoOn=draft.alsoOn.filter(c=>c!==el.value);
+        // A SECOND-TABLE COLUMN THAT ONLY CAME FROM THE PROPOSAL goes when another first-table column is chosen, back to the
+        // column of the same name (gate 254: Brazil's manual chose its own key and kept the proposed "period_start").
+        if(proposed?.rightOn&&draft.rightOn===proposed.rightOn&&el.value!==proposed.on)draft.rightOn='';});
       // A PAIR CHOSEN FROM THE COLUMNS WHOSE VALUES MATCH: both boxes set at once.
       root.querySelectorAll<HTMLButtonElement>('[data-column-match]').forEach(b=>b.onclick=()=>{
         const [first,second]=b.dataset.columnMatch!.split('\u001f');if(!first||!second)return;

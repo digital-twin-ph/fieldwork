@@ -1,0 +1,61 @@
+// THE RULESET AS A JSON SCHEMA (the practitioner, 2026-11-21: "All three plus color keyed JSON"): for writing rules in an
+// editor such as VS Code, which reads a file's "$schema" and offers the names, kinds and comparisons as they are typed.
+// Written from the lists the rule editor checks against (src/ruleset-json.ts), so the two cannot name different things;
+// what the schema cannot say (a field not declared, words missing, units that do not agree) the editor still checks.
+//   node scripts/ruleset-schema.mjs          writes schemas/authored-ruleset.schema.json
+//   node scripts/ruleset-schema.mjs --check  fails if the file differs from what the lists give
+import {readFileSync,writeFileSync,mkdirSync,existsSync} from 'node:fs';
+import {RULESET_SCHEMA,RULESET_SCHEMA_URL,COMPARATORS,KINDS,REQUIRED_PARTS} from '../build/ruleset-json.js';
+
+const file=new URL('../schemas/authored-ruleset.schema.json',import.meta.url);
+const name={type:'string',pattern:'^[a-zA-Z][a-zA-Z0-9_-]*:[a-zA-Z][a-zA-Z0-9_]*$',
+  description:'A name such as fwa:chief_complaint: a prefix, a colon, then letters, digits and underscores.'};
+const words={
+  equals:'is: the value is this one',notEquals:'is not: a recorded value other than this one',
+  greaterThan:'is more than',notGreaterThan:'is at most',lessThan:'is less than',notLessThan:'is at least',
+  contains:'contains any of: the text holds one of these words, separated by commas, ignoring capitals',
+  notContains:'contains none of: the text holds none of these words'};
+const schema={
+  $schema:'https://json-schema.org/draft/2020-12/schema',$id:RULESET_SCHEMA_URL,
+  title:'A Fieldwork ruleset, as Apply ruleset stores it',
+  description:'Rules that give each record a value: a category, a band, a verdict or a computed number. See the guide in docs/widgets/apply_ruleset.md, "Writing rules as JSON".',
+  type:'object',required:[...REQUIRED_PARTS],
+  properties:{
+    $schema:{type:'string',description:'This schema, so an editor can check the file as it is typed.'},
+    schema:{const:RULESET_SCHEMA,description:'Which form of ruleset this is.'},
+    title:{type:'string',minLength:1,description:'What the rules decide, in words.'},
+    mustNotBeReadAs:{type:'string',minLength:1,description:'What the result must not be taken to mean, such as "a diagnosis".'},
+    fields:{type:'array',description:'The columns the rules read: each as the file spells it, the name the rules use, and its kind.',items:{$ref:'#/$defs/field'}},
+    parameters:{type:'array',description:'Settings: numbers a person can change without rewriting a rule.',items:{$ref:'#/$defs/setting'}},
+    rules:{type:'array',description:'Each rule: when any one of its groups holds, it gives its conclusions.',items:{$ref:'#/$defs/rule'}},
+    order:{type:'object',description:'The order records are read in, where a rule reads the previous row.'},
+    otherwise:{type:'array',description:'A column\'s value where no rule gave it one.',items:{type:'object',required:['predicate','value'],
+      properties:{predicate:name,value:{type:'string'}}}},
+  },
+  $defs:{
+    field:{type:'object',required:['attribute','predicate','kind'],properties:{
+      attribute:{type:'string',minLength:1,description:'The column, as the file spells it.'},
+      predicate:name,kind:{enum:KINDS,description:'number, boolean, term (text or a category), date or datetime.'},
+      label:{type:'string'},unit:{type:'string',description:'For a number: its unit, as a QUDT address.'},unitLabel:{type:'string'}}},
+    setting:{type:'object',required:['name','meaning'],properties:{name:{type:'string',minLength:1},meaning:{type:'string',minLength:1},
+      unit:{type:'string'},unitLabel:{type:'string'},min:{type:'number'},max:{type:'number'},decimals:{type:'integer'}}},
+    condition:{type:'object',required:['field','comparator','value'],properties:{
+      field:name,comparator:{enum:COMPARATORS,description:COMPARATORS.map(c=>`${c}: ${words[c]}`).join('; ')},
+      value:{description:'A value, a number, true or false, or {"setting": "name"} for one of the settings.',
+        anyOf:[{type:'string'},{type:'number'},{type:'boolean'},{type:'object',required:['setting'],properties:{setting:{type:'string'}}}]}}},
+    conclusion:{type:'object',required:['predicate'],properties:{
+      predicate:name,value:{type:'string',description:'The value given, such as "gastrointestinal".'},
+      compute:{type:'object',description:'A number computed from two values: minus, plus, times or dividedBy.'},
+      datetime:{type:'object',description:'A date, or a date and time, written from columns.'},
+      column:{type:'string'},meaning:{type:'string'},unit:{type:'string'}}},
+    rule:{type:'object',required:['any','then'],properties:{
+      any:{type:'array',minItems:1,description:'Alternatives: the rule holds when any one group holds.',
+        items:{type:'object',required:['all'],properties:{all:{type:'array',description:'Conditions that must all hold. Empty only for a value computed for every record.',items:{$ref:'#/$defs/condition'}}}}},
+      then:{type:'array',minItems:1,items:{$ref:'#/$defs/conclusion'}}}},
+  },
+};
+const text=JSON.stringify(schema,null,2)+'\n';
+if(process.argv.includes('--check')){
+  if(!existsSync(file)||readFileSync(file,'utf8')!==text){console.error('schemas/authored-ruleset.schema.json differs from the rule editor\'s lists: run node scripts/ruleset-schema.mjs.');process.exit(1);}
+  console.log('Ruleset schema matches the rule editor\'s lists.');
+}else{mkdirSync(new URL('../schemas/',import.meta.url),{recursive:true});writeFileSync(file,text);console.log('Wrote schemas/authored-ruleset.schema.json.');}

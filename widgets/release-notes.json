@@ -73,12 +73,12 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.15.0",
+   "version": "0.16.0",
    "released": "2026-11-21",
    "changes": [
     {
      "kind": "changed",
-     "description": "Words in text: contains any of, contains none of. The rules as JSON beside the Rules view: checked as typed, problems placed on their lines, brackets that close themselves, uploaded and downloaded."
+     "description": "The JSON view colour-keyed, names bold, every colour 4.5:1 in both themes; four templates that run as loaded; a JSON Schema for editors such as VS Code; a guide, Writing rules as JSON, whose examples are tested."
     }
    ],
    "breaking": false,

@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.161.0 — In development
+
+- **Writing rules as JSON, a guide** in Apply ruleset's manual: the parts of a ruleset, a rule, every comparison, a
+  setting in place of a number, keeping two rules apart, rules in stages, and what each problem the editor reports
+  means. Its examples are loaded and run by a test.
+- **Start from a template** in the JSON view: categories from words, bands from a number, days between two dates against
+  a target, one column divided by another; each runs as loaded, on the step's own columns where it can.
+- **Colour-keyed JSON**: names bold and blue, text green, numbers brown, true, false and null purple, a problem line
+  tinted; every colour meets 4.5:1 in both themes, checked by a test; **Colours** turns them off.
+- **A JSON Schema** for rulesets (`schemas/authored-ruleset.schema.json`), named by every downloaded file, so an editor
+  such as VS Code offers the parts, kinds and comparisons as they are typed. Written from the editor's own lists.
+
 ## 0.160.0 — 2026-11-21
 
 - **A worked example: syndromic surveillance.** 24,328 made-up emergency department visits with a seeded

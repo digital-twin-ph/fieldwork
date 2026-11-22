@@ -7,6 +7,8 @@ import {authoredUnitProblems,otherwiseProblems,computesValues,evaluatedDirectly,
   containedWords,bandRules,targetRules,type Comparator} from './authored-rules.js';
 
 export const RULESET_SCHEMA='fieldwork/authored-ruleset/1';
+/** WHERE AN EDITOR FINDS THE SCHEMA: VS Code reads a file's "$schema" and offers names, kinds and comparisons as it is typed. */
+export const RULESET_SCHEMA_URL='https://raw.githubusercontent.com/digital-twin-ph/fieldwork/main/schemas/authored-ruleset.schema.json';
 export interface JsonProblem {line:number;column?:number;says:string;path?:string}
 /** Where each value starts, by its path: `rules.0.any.0.all.1.field`. */
 export type Positions=Map<string,{line:number;column:number}>;
@@ -62,8 +64,10 @@ export function parseJson(text:string):{value?:unknown;positions:Positions;error
     return {positions,error:{line:where.line,column:where.column,says:(error as Error).message}};}
 }
 
-const COMPARATORS:Comparator[]=['equals','notEquals','greaterThan','notGreaterThan','lessThan','notLessThan','contains','notContains'];
-const KINDS=['number','boolean','term','date','datetime'];
+export const COMPARATORS:Comparator[]=['equals','notEquals','greaterThan','notGreaterThan','lessThan','notLessThan','contains','notContains'];
+export const KINDS=['number','boolean','term','date','datetime'];
+/** The parts every ruleset has; the rest are optional. */
+export const REQUIRED_PARTS=['title','mustNotBeReadAs','fields','rules'] as const;
 const CURIE=/^[a-zA-Z][a-zA-Z0-9_-]*:[a-zA-Z][a-zA-Z0-9_]*$/;
 const isObj=(v:unknown):v is Record<string,unknown>=>typeof v==='object'&&v!==null&&!Array.isArray(v);
 
@@ -81,6 +85,7 @@ export function checkRulesetJson(text:string):{ruleset?:RulesetFile;problems:Jso
   const v=parsed.value;
   if(!isObj(v))return {problems:[{line:1,says:'A ruleset is an object, { … }, with a title, fields and rules.'}]};
   if(v.schema!==undefined&&v.schema!==RULESET_SCHEMA)say('schema',`"schema" is ${RULESET_SCHEMA}, or left out.`);
+  if(v.$schema!==undefined&&typeof v.$schema!=='string')say('$schema','"$schema" is the address of the schema an editor checks against.');
   if(typeof v.title!=='string'||!v.title.trim())say('title','"title" names the ruleset, in words.');
   if(typeof v.mustNotBeReadAs!=='string'||!v.mustNotBeReadAs.trim())say('mustNotBeReadAs','"mustNotBeReadAs" says what the rules must not be taken to mean.');
   const fields=Array.isArray(v.fields)?v.fields:[];
@@ -133,7 +138,8 @@ export function checkRulesetJson(text:string):{ruleset?:RulesetFile;problems:Jso
 }
 
 /** A ruleset as the file a person downloads: two spaces, the schema first. */
-export const rulesetText=(r:RulesetFile)=>{const {schema:_,...rest}=r;void _;return JSON.stringify({schema:RULESET_SCHEMA,...rest},null,2)+'\n';};
+export const rulesetText=(r:RulesetFile)=>{const {schema:_,$schema:__,...rest}=r as RulesetFile&{$schema?:string};void _;void __;
+  return JSON.stringify({$schema:RULESET_SCHEMA_URL,schema:RULESET_SCHEMA,...rest},null,2)+'\n';};
 
 /** AUTO-CLOSING BRACKETS (the practitioner, 2026-11-21: "Auto bracket."): a key typed into the JSON view, and what the
  *  text becomes. Undefined where the browser's own handling is right. Pure, so it is tested without a page. */

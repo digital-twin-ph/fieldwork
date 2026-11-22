@@ -144,8 +144,154 @@ settings, its rules and each column's default. Type in it, or **Upload (JSON)** 
   were last valid, Apply waits, and the Rules view says so.
 - **Brackets close themselves.** Typing `{`, `[` or `"` adds its partner; typing the partner steps over it; Backspace
   between a pair removes both; Enter between them opens an indented line; selected text is wrapped.
+- **Colours.** Names are bold and blue, text green, numbers brown, *true*, *false* and *null* purple; a line with a
+  problem is tinted. Every colour is readable in both themes. **Colours** turns them off.
+- **Start from a template…** loads a small ruleset that runs as it is, on this step's own columns where it has the kind
+  each needs: categories from words, bands from a number, days between two dates against a target, or one column
+  divided by another.
 
 A file is a ruleset a person wrote: what it must not be read as goes with it.
+
+## Writing rules as JSON
+
+A ruleset is one object with these parts. **Bold** ones are required.
+
+| Part | What it holds |
+| --- | --- |
+| **title** | What the rules decide, in words |
+| **mustNotBeReadAs** | What the result must not be taken to mean, such as *a diagnosis* |
+| **fields** | The columns the rules read: `attribute` as the file spells it, `predicate` the name the rules use (`fwa:` and the column), and `kind`: `number`, `boolean`, `term` (text or a category), `date` or `datetime`. A number also gives its `unit` |
+| parameters | Settings: numbers a person can change without rewriting a rule, each with a `name`, its `meaning` and unit |
+| **rules** | The rules, below |
+| otherwise | A column's value where no rule gave it one |
+| order | The order records are read in, where a rule reads the previous row |
+
+A downloaded file starts with `"$schema"`, the address of the [schema](../../schemas/authored-ruleset.schema.json): an
+editor such as VS Code reads it and offers the parts, kinds and comparisons as you type.
+
+### A rule
+
+A rule says **when** and **then**. `any` lists alternatives, and the rule holds when any one of them does; each
+alternative's `all` lists conditions that must all hold. `then` says what the rule gives.
+
+```json
+{
+  "title": "Syndrome from the chief complaint",
+  "mustNotBeReadAs": "a diagnosis",
+  "fields": [{"attribute": "chief_complaint", "predicate": "fwa:chief_complaint", "kind": "term"}],
+  "rules": [
+    {"any": [{"all": [{"field": "fwa:chief_complaint", "comparator": "contains", "value": "vomit, diarrh, n/v"}]}],
+     "then": [{"predicate": "fwa:syndrome", "value": "gastrointestinal"}]}
+  ],
+  "otherwise": [{"predicate": "fwa:syndrome", "value": "other"}]
+}
+```
+
+Visits whose complaint holds *vomit*, *diarrh* or *n/v* are gastrointestinal; every other visit is other.
+
+### Every comparison
+
+| `comparator` | Means | For |
+| --- | --- | --- |
+| `equals` | is | every kind |
+| `notEquals` | is not: a recorded value other than this one | every kind |
+| `greaterThan`, `notGreaterThan` | is more than; is at most | numbers |
+| `lessThan`, `notLessThan` | is less than; is at least | numbers |
+| `contains` | holds any of the words, separated by commas, ignoring capitals | text |
+| `notContains` | holds none of the words | text |
+
+### Two conditions, and an alternative
+
+Conditions in one `all` must all hold; another object in `any` is an alternative. A fever with a cough, or the word
+*influenza*:
+
+```json
+{
+  "title": "Influenza-like illness",
+  "mustNotBeReadAs": "a diagnosis",
+  "fields": [{"attribute": "chief_complaint", "predicate": "fwa:chief_complaint", "kind": "term"}],
+  "rules": [
+    {"any": [
+       {"all": [{"field": "fwa:chief_complaint", "comparator": "contains", "value": "fever, fevr"},
+                {"field": "fwa:chief_complaint", "comparator": "contains", "value": "cough"}]},
+       {"all": [{"field": "fwa:chief_complaint", "comparator": "contains", "value": "influenza"}]}],
+     "then": [{"predicate": "fwa:ili", "value": "yes"}]}
+  ],
+  "otherwise": [{"predicate": "fwa:ili", "value": "no"}]
+}
+```
+
+### A setting in place of a number
+
+Write `{"setting": "name"}` where a number would go, and declare the setting: the number is then set on the step, and
+changed without touching the rule.
+
+```json
+{
+  "title": "A fever",
+  "mustNotBeReadAs": "a diagnosis",
+  "fields": [{"attribute": "temperature_c", "predicate": "fwa:temperature_c", "kind": "number",
+              "unit": "http://qudt.org/vocab/unit/DEG_C", "unitLabel": "degrees Celsius"}],
+  "parameters": [{"name": "fever_from", "meaning": "The lowest temperature counted as a fever",
+                  "unit": "http://qudt.org/vocab/unit/DEG_C", "unitLabel": "degrees Celsius"}],
+  "rules": [
+    {"any": [{"all": [{"field": "fwa:temperature_c", "comparator": "notLessThan", "value": {"setting": "fever_from"}}]}],
+     "then": [{"predicate": "fwa:fever", "value": "yes"}]}
+  ]
+}
+```
+
+### When two rules disagree
+
+A record two rules give different values to gets none, and the step names it. Keep rules apart with a condition that
+rules the other out: a fever that is not gastrointestinal.
+
+```json
+{
+  "title": "Syndromes, kept apart",
+  "mustNotBeReadAs": "a diagnosis",
+  "fields": [{"attribute": "chief_complaint", "predicate": "fwa:chief_complaint", "kind": "term"}],
+  "rules": [
+    {"any": [{"all": [{"field": "fwa:chief_complaint", "comparator": "contains", "value": "vomit, diarrh"}]}],
+     "then": [{"predicate": "fwa:syndrome", "value": "gastrointestinal"}]},
+    {"any": [{"all": [{"field": "fwa:chief_complaint", "comparator": "contains", "value": "fever"},
+                      {"field": "fwa:chief_complaint", "comparator": "notContains", "value": "vomit, diarrh"}]}],
+     "then": [{"predicate": "fwa:syndrome", "value": "influenza-like"}]}
+  ]
+}
+```
+
+### Rules in stages
+
+A later rule can read a column an earlier one gave, by its name: here a band first, then whether the band is a child.
+
+```json
+{
+  "title": "Children",
+  "mustNotBeReadAs": "a finding: the cut points are a choice",
+  "fields": [{"attribute": "age", "predicate": "fwa:age", "kind": "number",
+              "unit": "http://qudt.org/vocab/unit/YR", "unitLabel": "years"}],
+  "rules": [
+    {"any": [{"all": [{"field": "fwa:age", "comparator": "lessThan", "value": 18}]}],
+     "then": [{"predicate": "fwa:band", "value": "under 18"}]},
+    {"any": [{"all": [{"field": "fwa:band", "comparator": "equals", "value": "under 18"}]}],
+     "then": [{"predicate": "fwa:child", "value": "yes"}]}
+  ]
+}
+```
+
+### What the editor says, and what to do
+
+| It says | Do |
+| --- | --- |
+| *A comma is missing after the value of "title"* | Put a comma at the end of that line |
+| *A comma is left before "]"* | Remove the comma after the last item |
+| *JSON writes names and strings in double quotes* | Change `'` to `"` |
+| *fwa:age is not a declared field* | Add the column to `fields`, or correct the name |
+| *"comparator" is one of …* | Use one of the comparisons above |
+| *write the words to look for* | Give `contains` its words, separated by commas |
+| *… is a number, so it holds no words* | Look for words in a text column (`kind` `term`) |
+
 
 ## Combining conditions
 

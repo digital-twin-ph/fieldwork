@@ -20,7 +20,7 @@ test('every value is placed by its path, and a valid ruleset passes the checks a
   assert.equal(positions.get('rules.0.any.0.all.0.comparator').line,text.split('\n').findIndex(l=>l.includes('"comparator"'))+1);
   const {ruleset,problems}=checkRulesetJson(text);
   assert.deepEqual(problems,[]);assert.equal(ruleset.title,'Syndromes');
-  assert.match(text,/^\{\n  "schema": "fieldwork\/authored-ruleset\/1",/);
+  assert.match(text,/^\{\n  "\$schema": "https:\/\/raw.githubusercontent.com\/digital-twin-ph\/fieldwork\/main\/schemas\/authored-ruleset.schema.json",\n  "schema": "fieldwork\/authored-ruleset\/1",/);
 });
 test('what a ruleset means is checked and placed: an undeclared field, an unknown comparator, no words',()=>{
   const bad=structuredClone(GOOD);
@@ -59,4 +59,21 @@ test('every template passes the checks and runs, on stand-in columns and on the 
     assert.ok(Object.keys(e.records[0].values).length>0,`${id} gave the record a value`);
   }
   assert.equal(rulesetTemplate('words',own).fields[0].attribute,'cc');
+});
+
+/** THE GUIDE'S EXAMPLES RUN (2026-11-21): every JSON example in "Writing rules as JSON" passes the editor's checks and gives
+ *  a record a value, so the manual cannot show a ruleset that does not work. */
+import {readFileSync as readManual} from 'node:fs';
+test('every example in the guide passes the checks and runs',()=>{
+  const manual=readManual(new URL('../docs/widgets/apply_ruleset.md',import.meta.url),'utf8');
+  const guide=manual.slice(manual.indexOf('## Writing rules as JSON'));
+  const examples=[...guide.matchAll(/```json\n([\s\S]*?)```/g)].map(m=>m[1]);
+  assert.equal(examples.length,5);
+  for(const text of examples){
+    const {ruleset,problems}=checkRulesetJson(text);
+    assert.deepEqual(problems,[],text.slice(0,60));
+    const props=Object.fromEntries(ruleset.fields.map(f=>[f.attribute,f.kind==='number'?12:'fever and cough, influenza, vomit']));
+    const e=evaluateAuthored([{id:'r',label:'r',properties:props}],ruleset.fields,ruleset.rules,Object.fromEntries((ruleset.parameters??[]).map(p=>[p.name,10])),undefined,ruleset.otherwise??[]);
+    assert.ok(Object.keys(e.records[0].values).length>0,`${ruleset.title} gave the record a value`);
+  }
 });

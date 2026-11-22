@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.168.0 — In development
+## 0.168.0 — 2026-11-22
 
 - **Stress tests of the table operations, second pass** (TODO 1a): the steps that read a table through other ports, a
   wide read, and 250,000-row tables (Select rows, Total within groups and Relate a column each within 2 seconds here).

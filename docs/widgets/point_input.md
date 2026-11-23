@@ -148,6 +148,11 @@ events is something your labels and your weights have to say.
 
 ## History
 
+### 2026-11-23 · An Excel workbook (0.16.0)
+
+**Import Excel** reads a workbook's first sheet carrying a header row, exactly as a CSV is read, and proposes the
+longitude and latitude columns by name. A spreadsheet of sites had to be saved as a CSV first.
+
 ### 2026-11-23 · The table's coordinate columns are proposed (0.15.0)
 
 Reading points from a table, **Configure…** proposed nothing: both selects opened on *Choose a column…* though the

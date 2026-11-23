@@ -7,21 +7,21 @@ import {collectPageErrors} from './page-errors.mjs';
 test.use({serviceWorkers:'block'});
 const square=[[[30,-1],[30.04,-1],[30.04,-1.03],[30,-1.03],[30,-1]]];
 const nodes=[{id:'area',type:'study_area',x:20,y:20,params:{label:'Area',source:'drawn',selectionMode:'polygon',geometry:{type:'Polygon',coordinates:square}}},
-  {id:'pts',type:'point_input',x:20,y:200,params:{label:'Households',data:{type:'FeatureCollection',features:[{type:'Feature',properties:{name:'A',deaths:3},geometry:{type:'Point',coordinates:[30.01,-1.01]}}]}}},
-  {id:'buffer_point',type:'buffer_point',x:320,y:20,params:{label:'Around',pointId:'A',distanceM:500}},
-  {id:'measure_area',type:'measure_area',x:320,y:120,params:{label:'Size',unit:'km2'}},
-  {id:'clip_polygons',type:'clip_polygons',x:320,y:220,params:{label:'Clipped'}},
-  {id:'clip_points_to_area',type:'clip_points_to_area',x:320,y:320,params:{label:'Inside',keepBoundary:true,showExcluded:true}},
-  {id:'summarize_points_to_polygon',type:'summarize_points_to_polygon',x:320,y:420,params:{label:'Counted',boundary:'include',valueField:''}},
-  {id:'sample_points',type:'sample_raster',x:640,y:20,params:{label:'Sampled',attribute:'people'}},
-  {id:'sample_areas',type:'sample_raster',x:640,y:300,params:{label:'Over areas',attribute:'people',over:'areas'}},
+  {id:'pts',type:'point_input',x:320,y:20,params:{label:'Households',data:{type:'FeatureCollection',features:[{type:'Feature',properties:{name:'A',deaths:3},geometry:{type:'Point',coordinates:[30.01,-1.01]}}]}}},
+  {id:'buffer_point',type:'buffer_point',x:640,y:20,params:{label:'Around',pointId:'A',distanceM:500}},
+  {id:'measure_area',type:'measure_area',x:20,y:170,params:{label:'Size',unit:'km2'}},
+  {id:'clip_polygons',type:'clip_polygons',x:320,y:170,params:{label:'Clipped'}},
+  {id:'clip_points_to_area',type:'clip_points_to_area',x:640,y:170,params:{label:'Inside',keepBoundary:true,showExcluded:true}},
+  {id:'summarize_points_to_polygon',type:'summarize_points_to_polygon',x:20,y:320,params:{label:'Counted',boundary:'include',valueField:''}},
+  {id:'sample_points',type:'sample_raster',x:320,y:320,params:{label:'Sampled',attribute:'people'}},
+  {id:'sample_areas',type:'sample_raster',x:640,y:320,params:{label:'Over areas',attribute:'people',over:'areas'}},
   // The six put on the standard in 0.169.0, given Show me how 2026-11-23.
-  {id:'summarize_hull',type:'summarize_hull',x:960,y:20,params:{label:'Hull',zone:36,hemisphere:'south'}},
-  {id:'voronoi',type:'voronoi',x:960,y:120,params:{label:'Cells',zone:36,hemisphere:'south'}},
-  {id:'isochrone',type:'isochrone',x:960,y:220,params:{label:'Reach',zone:36,hemisphere:'south',minutes:10,speedMPerMin:80,bufferM:25,maxSnapM:150,direction:'outbound'}},
-  {id:'mean_center',type:'mean_center',x:960,y:320,params:{label:'Centre',zone:36,hemisphere:'south',weightField:'deaths'}},
-  {id:'donut_geomask',type:'donut_geomask',x:1280,y:20,params:{label:'Moved',innerM:50,outerM:125,seed:42}},
-  {id:'aggregate_points_to_h3_cell',type:'aggregate_points_to_h3_cell',x:1280,y:120,params:{label:'Cells',resolution:9,minOccupancy:2}}];
+  {id:'summarize_hull',type:'summarize_hull',x:20,y:470,params:{label:'Hull',zone:36,hemisphere:'south'}},
+  {id:'voronoi',type:'voronoi',x:320,y:470,params:{label:'Cells',zone:36,hemisphere:'south'}},
+  {id:'isochrone',type:'isochrone',x:640,y:470,params:{label:'Reach',zone:36,hemisphere:'south',minutes:10,speedMPerMin:80,bufferM:25,maxSnapM:150,direction:'outbound'}},
+  {id:'mean_center',type:'mean_center',x:20,y:620,params:{label:'Centre',zone:36,hemisphere:'south',weightField:'deaths'}},
+  {id:'donut_geomask',type:'donut_geomask',x:320,y:620,params:{label:'Moved',innerM:50,outerM:125,seed:42}},
+  {id:'aggregate_points_to_h3_cell',type:'aggregate_points_to_h3_cell',x:640,y:620,params:{label:'Cells',resolution:9,minOccupancy:2}}];
 const CASES=[
   ['buffer_point',3,'it becomes the study area'],
   ['measure_area',3,'passes the same area on'],
@@ -40,7 +40,11 @@ for(const [id,steps,last] of CASES)test(`${id}: Show me how ends on what the ste
   const errors=collectPageErrors(page);
   await page.goto('/?example=blank');await page.waitForSelector('html[data-ready]');
   await page.locator('#workflow-file').setInputFiles({name:'w.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(
-    {schema:'fieldwork/workflow/1',exampleId:'blank',name:'Walks',nodes,edges:[]}))});
+    // ONE NODE PER CANVAS (2026-11-23): fifteen on one canvas overlapped, and the ones underneath could not be clicked
+    // in WebKit. Each case opens one step's Configure…, and a walkthrough draws made-up shapes rather than reading a
+    // port, so the step needs nothing else on the canvas with it.
+    {schema:'fieldwork/workflow/1',exampleId:'blank',name:'Walks',
+      nodes:nodes.filter(n=>n.id===id).map(n=>({...n,x:20,y:20})),edges:[]}))});
   await page.locator('[data-view="workflow"]').click();
   // The run notice sits over the lower part of the canvas; closed first, so it cannot take the click.
   await page.locator('#toast button').click().catch(()=>{});

@@ -7,6 +7,8 @@ test('a widget’s manual page detaches, stays beside a dialog and through a rel
   await page.goto('/?example=hagelloch-people');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="apply_ruleset"]').click();
+  // THE INSPECTOR FIRST: clicked before it had switched, WebKit opened the previously selected widget's page.
+  await expect(page.locator('#inspector-content')).toContainText('Apply ruleset',{timeout:30000});
   await page.locator('#open-manual').click();
   const dialog=page.locator('#manual-dialog');
   await expect(dialog.locator('em').first()).toHaveText('if');

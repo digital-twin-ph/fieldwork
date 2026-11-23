@@ -1129,7 +1129,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.43.0",
+      "currentVersion": "0.44.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1475,6 +1475,11 @@
           "version": "0.43.0",
           "path": "widgets/releases/map_output/0.43.0.json",
           "sha256": "8c3c20ff2040a32766eafebeb5a95efee3f7fca6fa2ecb703c07f535c823d3b6"
+        },
+        {
+          "version": "0.44.0",
+          "path": "widgets/releases/map_output/0.44.0.json",
+          "sha256": "c85b6dba1170ac2233ef4995d26c7af1e67a239186f501904968ca16db26229d"
         }
       ]
     },
@@ -1743,7 +1748,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.15.0",
+      "currentVersion": "0.16.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1829,6 +1834,11 @@
           "version": "0.15.0",
           "path": "widgets/releases/point_input/0.15.0.json",
           "sha256": "904edeac5580e2a62293eb01c2ae06de658c8a34ce7ed39f7733f17c8a96f1d2"
+        },
+        {
+          "version": "0.16.0",
+          "path": "widgets/releases/point_input/0.16.0.json",
+          "sha256": "63c8c8a5b2f65050ca11a81a6c670cd6e081ea71856b4254d44012e8f4cc8829"
         }
       ],
       "previousNodeTypes": [
@@ -2577,7 +2587,7 @@
     {
       "id": "urn:fieldwork:widget:study_area",
       "nodeType": "study_area",
-      "currentVersion": "0.12.1",
+      "currentVersion": "0.13.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2678,6 +2688,11 @@
           "version": "0.12.1",
           "path": "widgets/releases/study_area/0.12.1.json",
           "sha256": "4ea5566b5ea173424f5af857775a12362a2d7e4b10e53c4b62c9118c4204bf1b"
+        },
+        {
+          "version": "0.13.0",
+          "path": "widgets/releases/study_area/0.13.0.json",
+          "sha256": "0d8d514cbc2a577553c6ac6ada7e324411e02275e1334170b2832999bb9f59f7"
         }
       ],
       "previousNodeTypes": [

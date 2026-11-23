@@ -32,7 +32,9 @@ test('legacy point inputs use shared editors, preserve labels and save attribute
   await page.locator('[data-view="workflow"]').click();
     await page.locator(`.react-flow__node[data-id="${id}"]`).click();
     await page.locator('#configure-step').click();
-    await expect(page.locator('#input-mode option')).toHaveCount(7);
+    // Every way in, named rather than only counted: a count alone says nothing about which one went missing.
+    expect(await page.locator('#input-mode option').allInnerTexts()).toEqual(['Generate synthetic points','Import CSV',
+      'Import Excel','Import GeoPackage','Import GeoJSON','Import GPX from a GPS device','Import KML or KMZ','Place pushpins on map']);
     await page.locator('#input-mode').selectOption('pins');
     await page.locator('#pins-basemap').selectOption('none');
     await page.locator('#pin-record').selectOption(record);

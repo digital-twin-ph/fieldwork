@@ -5,7 +5,6 @@
   "added",
   "changed",
   "feature",
-  "fixed",
   "initial",
   "major",
   "minor",
@@ -406,12 +405,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.43.0",
+   "version": "0.44.0",
    "released": "2026-11-23",
    "changes": [
     {
-     "kind": "added",
-     "description": "A lines input: routes, tracks and borders from Line layer, drawn over the area and under the points, static and interactive, and alone."
+     "kind": "minor",
+     "description": "Polygons built from the study areas connected to a workflow are drawn in one wash, not a hue each, where points are drawn over them: they are the ground the points stand on, and a colour each said they were different things. Configure… offers a colour for each polygon always or never. A layer read from a file keeps its hues whatever else the map draws, and a layer carrying a value keeps its classes either way."
     }
    ],
    "breaking": false,
@@ -527,12 +526,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.15.0",
+   "version": "0.16.0",
    "released": "2026-11-23",
    "changes": [
     {
      "kind": "minor",
-     "description": "Configure… proposes which column holds the longitude and which the latitude when the step reads a table, from the same names its own CSV import has always proposed by. Shown in the selects, where they can be changed; a run still reads the mapping stored here and names its columns."
+     "description": "An Excel workbook is read, its first sheet carrying a header row taken as a CSV is, with the longitude and latitude columns proposed by name. A spreadsheet of sites had to be saved as a CSV first."
     }
    ],
    "breaking": false,
@@ -786,12 +785,12 @@
    ]
   },
   "study_area": {
-   "version": "0.12.1",
-   "released": "2026-11-22",
+   "version": "0.13.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "fixed",
-     "description": "Each opening of the area dialog starts the boundary picker empty; the last study area's country, units and terms no longer stay on screen with nothing behind them, which refused a unit chosen there."
+     "kind": "minor",
+     "description": "A boundary acquired below ADM0 can carry its country outline, for context: a province drawn with nothing around it is hard to place. Read from the same geoBoundaries release as the units and as the simplified geometry, 339 KB for DR Congo against 2.4 MB, with its own licence rather than the unit's. It is drawn under everything as a line with no fill, and nothing clips, counts or joins to it."
     }
    ],
    "breaking": false,

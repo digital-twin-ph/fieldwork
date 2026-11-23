@@ -132,6 +132,17 @@ London** workflows each use their own Soho extent, which is why three of them di
 
 ## History
 
+### 2026-11-23 · The country outline, for context (0.13.0)
+
+A province acquired on its own was drawn with nothing around it, which makes it hard to place. Picking a level below
+**ADM0** now offers **Include the country outline, for context**. It is read from the same geoBoundaries release as the
+units, as the simplified geometry — DR Congo's outline is 339 KB against 2.4 MB, and a line drawn for context needs no
+more — and it carries its own licence, which is not the unit's to inherit.
+
+It is drawn under everything as a line with no fill, and it can be switched off in the layer list like any other layer.
+Nothing clips, counts or joins to it: it says where the country is and nothing else. If it cannot be read, the units
+are unaffected and the dialog says so.
+
 ### 2026-11-22 · A second study area's picker starts empty (0.12.1)
 
 Adding a fourth study area, Rwanda, after South Sudan, DR Congo and Uganda, the boundary could not be applied: the dialog,

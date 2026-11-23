@@ -373,6 +373,16 @@ Methods as a limitation, by itself. Natural Earth is bundled and writes no such 
 
 ## History
 
+### 2026-11-23 · Polygons as the ground a point stands on (0.44.0)
+
+A layer built from the study areas connected to a workflow was drawn with a colour for each polygon. Where points are
+drawn over them the polygons are the ground the points stand on, and a colour each says they are different things, so
+they are now drawn in one wash and keyed by the layer. Each is still named, in the layer list and in its popup.
+
+**Configure… → Polygons → A colour for each polygon** chooses: *Where no points are drawn over them*, *Always*,
+*Never*. A layer read from a file keeps its colours whatever else the map draws, and a layer carrying a value keeps its
+classes either way, so a table joined to the study area is still a choropleth with its points over it.
+
 How the panels and the inset came to be: what was asked, designed, built, checked and found, dated. Each was
 once an experiment record (212 and 213).
 

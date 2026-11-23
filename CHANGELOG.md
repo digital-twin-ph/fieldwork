@@ -3,6 +3,27 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.175.0 — 2026-11-23
+
+- **Polygons built from the study areas are the ground a point stands on** (Map 0.44.0). Four provinces under one mine
+  pin were drawn in four colours, which says they are four different things. Where points are drawn over them such a
+  layer is now drawn in one wash and keyed by the layer; each polygon is still named in the layer list and its popup.
+  **Configure… → Polygons** chooses *Where no points are drawn over them*, *Always* or *Never*. A layer read from a
+  file keeps its colours whatever else the map draws — the Thames' two reaches under an intake are two things a reader
+  wants told apart — and a layer carrying a value keeps its classes either way.
+- **A study area can carry its country outline, for context** (0.13.0). Picking a level below ADM0 offers it; it is
+  read from the same geoBoundaries release as the units, as the simplified geometry (339 KB for DR Congo against
+  2.4 MB), with its own licence, and drawn under everything as a line with no fill. Nothing measures against it.
+- **Point data reads an Excel workbook** (0.16.0), its sheet read as a CSV is and its coordinate columns proposed by
+  name.
+- **Two tests made fit for CI's WebKit**, both failures of the tests rather than the application: the Show me how cases
+  put fifteen steps on one canvas, where the ones underneath could not be clicked, and each now opens a canvas holding
+  the one step it exercises; and the manual-page test opened a manual before the Inspector had switched to the step it
+  had just added, so WebKit showed the page of whatever was selected before.
+- A checkbox in the study area's right-hand column is drawn as a checkbox. The rule giving that column's inputs their
+  full width and border caught checkboxes too, so the new one appeared as a wide bordered box with its words wrapped
+  underneath; the rule now excludes them, as the input editor's already did.
+
 ## 0.174.0 — 2026-11-23
 
 - **A table's count says what it counts** (Tabular data 0.19.0). A file of 18,409 records read wide was reported as

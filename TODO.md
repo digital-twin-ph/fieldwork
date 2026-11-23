@@ -201,6 +201,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   write-up's prose and the receipt, and a coordinate column reaches the steps after the import. **Open:** the table
   meta and rows-shown lines, the viewer's fallback note, Relate's two previews, `fw:artifactRowCount`, the eight
   dialogs that offer the long table's columns, and whether a line list should melt at all.
+- **Done in 0.175.0.** Polygons from study areas drawn as context where points are over them, with the choice in
+  Configure…; a study area's country outline for context; Point data reads Excel.
 - **The bat roosts and the Kibali mine** (the practitioner, 2026-11-23): a small table of species joined to the African
   Bat Database through Relate, inner join, to filter it. After the population rasters. The database is CC BY 4.0,
   18,409 records of 312 species; its `Roost` column is "Yes" on 90 records, so it says where bats were recorded, not

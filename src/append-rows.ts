@@ -151,10 +151,14 @@ export function stackedUnder(tables:DataTable[],params:AppendParams,names?:reado
       if(!table.keys.includes(m.column))throw new Error(`${called(i)} has no "${m.column}" column to stack under "${m.as}". Its columns are ${table.keys.join(', ')}.`);
       if(table.keys.includes(m.as))throw new Error(`${called(i)} already has a "${m.as}" column, so its "${m.column}" cannot be stacked under it.`);
     }
-    const to=new Map(moves.map(m=>[m.column,m.as]));
-    const rename=(k:string)=>to.get(k)??k;
-    return {...table,keys:table.keys.map(rename),...(table.primaryKey?{primaryKey:table.primaryKey.map(rename)}:{}),
-      rows:table.rows.map(r=>({...r,key:Object.fromEntries(Object.entries(r.key).map(([k,v])=>[rename(k),v]))}))};
+    // ONE COLUMN UNDER TWO NAMES (2026-11-23): where the other tables hold the same names in two columns, as Botswana's
+    // districts do in "id" and "name", the census's one column of names fills both. Renamed under the first and copied
+    // under the second; a Map from column to one name kept only the last, and the census had no "id".
+    const to=new Map<string,string[]>();for(const m of moves)to.set(m.column,[...(to.get(m.column)??[]),m.as]);
+    const rename=(k:string)=>to.get(k)?.[0]??k;
+    const spread=(k:string)=>to.get(k)??[k];
+    return {...table,keys:table.keys.flatMap(spread),...(table.primaryKey?{primaryKey:table.primaryKey.map(rename)}:{}),
+      rows:table.rows.map(r=>({...r,key:Object.fromEntries(Object.entries(r.key).flatMap(([k,v])=>spread(k).map(name=>[name,v])))}))};
   });
 }
 /** A TABLE'S OWN NAME FOR A COLUMN MOST OF THE OTHERS SHARE (2026-11-20). For each table, each column held by more of

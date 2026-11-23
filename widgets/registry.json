@@ -341,7 +341,7 @@
     {
       "id": "urn:fieldwork:widget:chart_output",
       "nodeType": "chart_output",
-      "currentVersion": "0.25.1",
+      "currentVersion": "0.25.2",
       "releases": [
         {
           "version": "0.1.0",
@@ -522,6 +522,11 @@
           "version": "0.25.1",
           "path": "widgets/releases/chart_output/0.25.1.json",
           "sha256": "929635053f23242de57694ef68c8e5294cfa813ea73d1670001f75fcf970f70a"
+        },
+        {
+          "version": "0.25.2",
+          "path": "widgets/releases/chart_output/0.25.2.json",
+          "sha256": "a13f88b9568a4c773eb6fcdd1da3fc424e7fecd60975c49aa12857598184de3b"
         }
       ]
     },
@@ -2368,7 +2373,7 @@
     {
       "id": "urn:fieldwork:widget:append_rows",
       "nodeType": "append_rows",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.5.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -2409,6 +2414,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/append_rows/0.5.0.json",
           "sha256": "6fe83bc8c202395af9b350b67177a7f0f56e68f118efffa5fc0510ff8d9fe386"
+        },
+        {
+          "version": "0.5.1",
+          "path": "widgets/releases/append_rows/0.5.1.json",
+          "sha256": "96dc7e47fdcfe2043e9706d253fb053287a9633ce17e71cb842ba4675375ac7e"
         }
       ]
     },

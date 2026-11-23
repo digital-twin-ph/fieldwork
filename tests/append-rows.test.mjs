@@ -175,3 +175,16 @@ test('two complete candidates holding the same names are one choice: the first i
   assert.throws(()=>appendTables([split,...models]),/has no "name" column/);
   assert.equal(appendTables([split,...models],{stackUnder:[{table:0,column:'geoboundaries_name',as:'name'}]}).table.rows.length,16);
 });
+
+// ONE COLUMN UNDER TWO NAMES (2026-11-23): Botswana's population models hold each district's name in both "id" and "name";
+// its census holds it once, in "geoboundaries_name". Both line up from that one column; the census rows had no "id" before.
+test('a column lined up under two names fills both',()=>{
+  const names=['Gaborone','Sowa Town','Ngamiland Delta'];
+  const census={kind:'data-table',keys:['unit','geoboundaries_name'],valueField:'population',unit:'people',rowCount:3,missingValueCount:0,
+    rows:[['Gaborone','Gaborone'],['Sowa','Sowa Town'],['Delta','Ngamiland Delta']].map(([unit,g],i)=>({key:{unit,geoboundaries_name:g},value:100+i}))};
+  const model=()=>({kind:'data-table',keys:['id','name'],valueField:'population',unit:'people',rowCount:3,missingValueCount:0,
+    rows:names.map(n=>({key:{id:n,name:n},value:1}))});
+  const made=appendTables([census,model(),model()],{tableCount:3,nameSource:true,sourceColumn:'source',labels:['census','a','b']});
+  assert.deepEqual(made.table.rows.slice(0,3).map(r=>[r.key.id,r.key.name]),names.map(n=>[n,n]));
+  assert.ok(!made.table.keys.includes('geoboundaries_name'));
+});

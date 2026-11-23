@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.172.2 — 2026-11-23
+
+- **The population example runs end to end again**, for Rwanda and, for the first time in the browser, Botswana.
+  Neither workflow had run past Append rows since 2026-11-20:
+  - **Append rows** (0.5.1) lines a table's one column of names up under two of the others' columns where they hold the
+    same names, as Botswana's population models do in **id** and **name**; the census had lost its **id**.
+  - The example selects the census rows as Append rows names them, "2022 census" (example 04fae26, pinned).
+- **Chart** (0.25.2): a panel of zeros no longer labels its axis 0.000000.
+- Experiment 209 records the run: Botswana's 0.1, 0.1 and 11.9, and Rwanda's 5.6 from a local copy of GHS-POP.
+
 ## 0.172.1 — 2026-11-23
 
 - **Raster input's picker starts at what the step holds** (0.14.1). A GRID3 2025 step's Configure… was titled

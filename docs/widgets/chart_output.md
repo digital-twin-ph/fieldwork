@@ -247,6 +247,10 @@ it.
 
 ## History
 
+### 2026-11-23 · No trailing zeros on a panel's axis (0.25.2)
+
+A panel whose values were all 0 labelled its axis 0.000000. It now reads 0.
+
 
 ### 2026-11-22 · Squares in a series chart's legend (0.25.1)
 

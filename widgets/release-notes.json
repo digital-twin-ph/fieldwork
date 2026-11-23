@@ -5,7 +5,6 @@
   "added",
   "changed",
   "feature",
-  "fix",
   "fixed",
   "initial",
   "major",
@@ -143,12 +142,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.25.1",
-   "released": "2026-11-22",
+   "version": "0.25.2",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "fix",
-     "description": "A series chart's legend shows each series as a filled square in its colour, as the bar charts' do, where a line series showed a short stroke."
+     "kind": "patch",
+     "description": "A panel's value axis drops trailing zeros: a panel of zeros was labelled 0.000000."
     }
    ],
    "breaking": false,
@@ -689,12 +688,12 @@
    "migrationFrom": []
   },
   "append_rows": {
-   "version": "0.5.0",
-   "released": "2026-11-22",
+   "version": "0.5.1",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "added",
-     "description": "Columns whose values match: for each table after the first, its columns whose values match a column of the first under another name, with the counts, ignoring capitals, punctuation and spacing; Stack under puts one under the other's name."
+     "kind": "patch",
+     "description": "A table's one column of names lines up under two of the others' columns where they hold the same names, as Botswana's population models do in id and name: it was renamed under one and lost from the other, so the census had no id and the step refused."
     }
    ],
    "breaking": false,

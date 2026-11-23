@@ -222,3 +222,29 @@ drawn. **Botswana not run in the browser** this time; its 0.1, 0.1 and 11.9 come
 totals. **Not yet done:** lab check 50 recomputes the totals, not the zonal statistics; extending it to the mean,
 median, standard deviation, cells populated and density is owed. The figure is computed from shares held to one decimal,
 so it is low by a few tenths (5.75 and 12.07 from unrounded shares).
+
+## Run again end to end, 2026-11-23, Chromium
+
+Both workflows run in the browser from the files on this machine, nothing fetched: WorldPop's and GRID3's windows read
+again from the 2025 files and checked against their digests; GHS-POP's window made anew from a local copy of the 12.3 GB
+global grid, since the step offers only the JRC's address to read it again from. **Botswana in the browser for the first
+time:** WorldPop 0.1, GRID3 0.1, GHS-POP 11.9, the figures recorded above from the reference totals. Rwanda: Gasabo
+6.6 % in the census, WorldPop and GRID3; WorldPop 0, GRID3 0, GHS-POP 5.6, as above, so the window made from the local
+copy gives the JRC read's answer.
+
+Neither workflow had run past Append rows since 2026-11-20, and no check saw it, because the end-to-end test needs the
+raster files and is skipped without them:
+
+- **Rwanda and Botswana:** the census's rows were named "2022 census", filled from `{census}`, while Select rows kept
+  "Census 2022". The example now selects "2022 census" (example 04fae26).
+- **Botswana:** the population models hold each district's name in both `id` and `name`; Append rows' automatic line-up
+  moved the census's `geoboundaries_name` under one and lost it from the other, so the census had no `id` (Append rows
+  0.5.1).
+
+Also found: the difference chart's panels of zeros were labelled 0.000000 (Chart 0.25.2), and each raster step's source
+picker started at WorldPop's newest year whatever the step held (Raster input 0.14.1). A WorldPop 2026 file offered for
+a 2025 window was refused, by name and size, and nothing kept.
+
+**Not established:** that the GHS-POP window from the local copy is byte for byte the kept one; the local file is named
+`…V3331_0.tif` where the JRC's is `…V1_0.tif`, the same size, and it was not checked against the kept window's digest.
+Its unit was not recognised by name, so the cells map said "unit not stated" for it.

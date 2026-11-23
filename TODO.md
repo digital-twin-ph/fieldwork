@@ -184,7 +184,16 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   states one (not "Unknown"), and its units beside each level of the country's census in Census tables, saying where
   no level, or two together, has as many.
 - **The gate's gap:** the population example's run end to end needs the raster downloads, so the gate checks it opens
-  from its pin, with its census and words, and no more.
+  from its pin, with its census and words, and no more. **It cost something, 2026-11-23:** neither workflow had run past Append rows since
+  2026-11-20 (a census label the example's Select rows did not ask for; Botswana's names lost under two columns), and
+  nothing saw it for three days. Fixed in 0.172.2 (experiment 209). Open: a check that runs the chain on small windows
+  carried in the example, so the gate exercises it without the downloads.
+- **GHS-POP read again from a local copy.** A window read from the JRC's address can only be read again from there; a
+  practitioner holding the 12 GB file must send the area to the server anyway. Offer the local file beside the address,
+  checked against the kept window's digest, as WorldPop's and GRID3's are (found re-running experiment 209, 2026-11-23).
+- **Years carried and compared** (the practitioner, 2026-11-23, on provenance alignment): each source's year recorded,
+  but only Rate compares two, as exact text. Proposed: the year travels with values as units do, and a step combining
+  values of different years says so, never refusing. Awaiting the practitioner's go-ahead for an experiment.
 
 ## Urgent
 

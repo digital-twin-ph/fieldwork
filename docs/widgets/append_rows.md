@@ -95,6 +95,12 @@ An estimate's interval, declared by Regression, survives the stacking when every
 
 ## History
 
+### 2026-11-23 · One column under two names (0.5.1)
+
+Where the other tables hold the same names in two columns, as Botswana's population models do in **id** and **name**, a
+table's one column of names now fills both. It was moved under one and lost from the other, so Botswana's census had no
+**id** and the step stopped, asking for it.
+
 ### 2026-11-22 · Columns whose values match (0.5.0)
 
 Configure… now lists,

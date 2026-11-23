@@ -512,7 +512,9 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
         encoding:{x,
           // The name as the file spells it, its meaning beside it, over two lines so a long meaning fits the panel.
           y:{field:'count',type:'quantitative' as const,title:chart.meanings?.[panel]?[nameOf(panel),...wrapToWidth(chart.meanings[panel]!,height)]:nameOf(panel),
-            scale:{zero:mark==='bar'}},
+            // TRAILING ZEROS DROPPED: a panel whose values are all 0, as WorldPop's and GRID3's differences from the census
+            // are, labelled its axis "0.000000" (2026-11-23).
+            scale:{zero:mark==='bar'},axis:{format:',~r'}},
           tooltip:[{field:'label',type:temporal?'temporal' as const:'nominal' as const,title:chart.categoryTitle??'',...(temporal?{format:'%-d %b %Y'}:{})},
             {field:'count',type:'quantitative' as const,title:nameOf(panel)}]}};
       // MARKED DATES across every panel, on the shared time axis; the label once, on the first (experiment 210).

@@ -1,6 +1,6 @@
 # Chart
 
-_Created 2026-10-28 · Updated 2026-11-21_
+_Created 2026-10-28 · Updated 2026-11-22_
 
 **An output widget.** It draws bars: a set of labelled categories with a number each. It creates a
 named tab in Results and changes nothing about the data it is given.
@@ -247,6 +247,11 @@ it.
 
 ## History
 
+
+### 2026-11-22 · Squares in a series chart's legend (0.25.1)
+
+A series chart's legend showed a line series as a short stroke, hard to tell apart at six syndromes. Each series is now
+a filled square in its colour, as in the bar charts' legend.
 ### 2026-11-19 · The source line ends at its source (0.23.1)
 
 A chart's default source line read "Source: … · See N3 & evidence for method.", and the pointer, an instruction for

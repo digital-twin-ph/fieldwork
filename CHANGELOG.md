@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.170.0 — In development
+
+- **Rasters on one map** (Map 0.42.0). With nothing arranged, several rasters are now drawn over one frame, as Arrange's
+  *One map* always said, static and interactive, on one key per unit; where two overlap, the later is drawn on top and
+  the map says how many cells. Panels when Arrange chooses them.
+- **Points over rasters.** A point layer wired to a Map with rasters, a single pin included, is drawn over the cells.
+- **Manage layers governs a map of rasters:** its order, names, groups and switches; a group is one entry in the
+  interactive layer list. The Map's study area is a layer of its own.
+- **Configure…'s preview** draws the rasters, where it drew one study area's outline.
+- **A series chart's legend** shows each series as a filled square in its colour, as the bar charts' do (Chart 0.25.1).
+- **Travel time to care, in the kernel** (experiment 225): least time to the nearest facility over a friction surface,
+  checked against the Malaria Atlas Project's own method on Kano to 0.022%; not yet a widget.
+
 ## 0.169.0 — 2026-11-22
 
 - **The Inspector move, batch D**: Table output, Polygon layer, Georeferenced map image and Find satellite products now

@@ -375,6 +375,29 @@ Methods as a limitation, by itself. Natural Earth is bundled and writes no such 
 How the panels and the inset came to be: what was asked, designed, built, checked and found, dated. Each was
 once an experiment record (212 and 213).
 
+### Rasters on one map, and Manage layers for rasters (0.42.0)
+
+_2026-11-22._ Four countries' WorldPop rasters on one Map were drawn as four panels, though **Arrange** said *One map*:
+for rasters, nothing arranged meant panels two by two. Now *One map* draws every raster over one frame, static and
+interactive, each with its study area's outline, on one key per unit. Where two overlap, the later input is drawn on
+top, and the map says how many drawn cells of which raster it covers. Panels are drawn when Arrange chooses them. The
+population example chooses panels in one row, so it is unchanged.
+
+Found with it, and fixed in the same release:
+
+| Found | Now |
+| --- | --- |
+| Configure…'s preview drew the first study area's outline and no cells | it draws the rasters as Results does |
+| A point layer wired to a Map with rasters was not drawn, a single pin included | the points are drawn over the cells, named where a layer has 12 or fewer, on one map and in every panel |
+| Manage layers' order, names, groups and switches reached no raster | a map of rasters is drawn as Manage layers lists it, bottom to top; a group is one entry in the interactive map's layer list, switching its members together; the Map's own study area is a layer of its own |
+| A panel map closed between two frames was fitted after it was gone, a page error | a closed map is left alone |
+
+Checked in `tests/raster-one-map.browser.mjs` (two rasters half overlapping, a pin, a group, a hidden study area; five
+runs) and `tests/raster-panels.test.mjs` (the overlap count), Chromium.
+
+**Not established:** how a reader takes a later raster drawn over an earlier one where two countries' rasters overlap at
+a border; the map says how much, not which value is right.
+
 ### Study areas left out, and a refused key says why (0.41.0)
 
 _2026-11-22._ A map of four countries' study areas, made into one Polygon layer, had no way to show some and not

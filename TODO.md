@@ -105,6 +105,12 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   its Nigeria coverage and licence read on its pages; no download without the practitioner's yes. **Also named, not
   ordered:** Brazil dengue's space-time scan at scale, the agent-based model over a health zone, density surfaces of
   many points.
+- **Small multimodal models in the browser: deferred** (the practitioner, 2026-11-22: *"Let's defer small models work
+  for later"*; no Chinese models for now). Researched that day from public pages only: Gemma 4 E2B (Apache 2.0, about
+  3.2 GB for transformers.js with WebGPU) the one open, multilingual, document-reading candidate; LFM2.5-VL 1.6B (custom
+  licence, unread) and SmolVLM 500M (English only) behind it. Nothing published on their speed in a browser, on maps at
+  that size, or in Hausa or Swahili. Any use must build trainees' reasoning, never do it for them. Next, when taken up:
+  time Gemma 4 E2B on Fieldwork's own charts and maps on an 8 GB laptop, with the practitioner's yes to a 3.2 GB download.
 - **Study design's dialog** on the standard draft-until-Apply dialog: done in 0.167.0 (Study design 0.8.0).
 - **Conditional gating, replayed again after the Inspector move** (the practitioner, 2026-11-22: yes). The gating audit
   (docs/audits/gating-audit.md) set it aside while `app.ts` was 11,024 lines and named by most widgets; it is 9,512 on
@@ -1763,6 +1769,14 @@ can shelve GDELT and conflict for now."*). Research was stopped before it report
 or coverage was established. Picking it up starts with UCDP's terms and the attacks-on-health-care sources.
 
 ### Immunization microplanning, planned in Fieldwork and simulated (asked 2026-11-18)
+
+**Its own worked example (the practitioner, 2026-11-22: "Separate")**, not part of the Nigeria immunization example: a
+repository of its own (`example-2026-nigeria-microplanning`, name to confirm), linked both ways. The Nigeria example's
+fourth workflow picks the LGA; this one starts there. Kept apart because GRID3's friction, wards, settlements and roads
+are CC BY-SA, so what is built from them is too, and because it is village-level (30–100 m) in one state, where the
+Nigeria example is LGA-level across the country. Travel time to care is its first piece: the kernel agrees with MAP's
+method on Kano (experiment 225); GRID3's 30 m friction (CC BY-SA 4.0) and Health Facilities v4.0 (CC BY 4.0) are
+downloaded, outside any repository.
 
 The practitioner, 2026-11-18, after a CDC GIS Day talk on polio microplanning: *"It seems we can also use ABM for
 immunization micro planning"*; then *"There's two things to consider: 1-the planning itself can be conducted within FW.

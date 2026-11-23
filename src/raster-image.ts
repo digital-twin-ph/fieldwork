@@ -1,4 +1,4 @@
-import {RAMPS,classOfDensity,type DrawnDensity,type PanelScale,type RampName} from './raster-panels.js';
+import {RAMPS,RASTER_POINT_COLOURS,classOfDensity,overlappingCells,type DrawnDensity,type PanelScale,type RampName,type RasterPoints,type RasterMapLayer} from './raster-panels.js';
 import type {RasterGrid} from './raster.js';
 
 /** A raster window as a PNG data URL, for anything that draws one.
@@ -84,9 +84,9 @@ export const rampFor=(breaks:readonly number[],ramp:RampName='YlOrRd'):string[]=
   return Array.from({length:n},(_,k)=>colours[n===1?colours.length-1:Math.round(k*(colours.length-1)/(n-1))]!);
 };
 /** WHAT A SCALE'S KEY SAYS, in words: the shade, its classes and what is clear. One people scale reads as it always has. */
-export function scaleWords(scale:PanelScale,only:boolean|'single'):{shade:string;classes:string}{
+export function scaleWords(scale:PanelScale,only:boolean|'single'|'together'):{shade:string;classes:string}{
   const counted=scale.mode==='density',n=scale.breaks.length+1,how=scale.classes==='equal'?'equal steps':'quantile classes';
-  return {shade:only==='single'?`Cell shade: ${scale.label}`:`Cell shade: ${scale.label}${only?', one scale for every panel':` (${scale.layers.join(', ')})`}; side by side, not a difference`,
+  return {shade:only==='single'?`Cell shade: ${scale.label}`:only==='together'?`Cell shade: ${scale.label} (${scale.layers.join(', ')})`:`Cell shade: ${scale.label}${only?', one scale for every panel':` (${scale.layers.join(', ')})`}; side by side, not a difference`,
     classes:counted?`${n} ${how} of the cells with ${scale.noun||'a count'}; clear: ${scale.noun==='people'?'no one modelled':'none counted'}`
       :`${n} ${how} of the cells with a value; clear: no value`};
 }
@@ -98,7 +98,7 @@ export function drawnWords(scales:readonly PanelScale[],metres:number):string{
 const roundDensity=(v:number)=>{const a=Math.abs(v);return Number(a>=100?v.toFixed(0):a>=10?v.toFixed(1):v.toFixed(2)).toLocaleString('en');};
 /** THE STATIC FIGURE: one frame for every panel, so a place sits in the same spot in each; a title over each; one key. */
 export function rasterPanelsSvg(panels:readonly DrawnDensity[],scales:readonly PanelScale[],grid:'row'|'grid'|'column',
-    titles:Record<string,string|undefined>,esc:(v:unknown)=>string):string{
+    titles:Record<string,string|undefined>,esc:(v:unknown)=>string,points:readonly RasterPoints[]=[]):string{
   if(!panels.length)return '<text x="30" y="40">No raster to put in a panel</text>';
   const west=Math.min(...panels.map(p=>p.bounds[0])),south=Math.min(...panels.map(p=>p.bounds[1]));
   const east=Math.max(...panels.map(p=>p.bounds[2])),north=Math.max(...panels.map(p=>p.bounds[3]));
@@ -118,6 +118,8 @@ export function rasterPanelsSvg(panels:readonly DrawnDensity[],scales:readonly P
       +`<image href="${densityImage(p,scales[p.scale]??scales[0]!)}" x="${x}" y="${y}" width="${wPx}" height="${hPx}" preserveAspectRatio="none" style="image-rendering:pixelated"/>`
       // THE STUDY AREA, over the cells, so a panel says where its edge is (the practitioner, 2026-11-13).
       +(p.outline?.length?`<path data-panel-outline d="${p.outline.map(ring=>'M'+ring.map(([lon,lat])=>`${(cx+(lon!-(east+west)/2)*cos*scale).toFixed(1)},${(cy-(lat!-(north+south)/2)*scale).toFixed(1)}`).join('L')+'Z').join('')}" fill="none" stroke="#1f2a24" stroke-width=".7" stroke-opacity=".8"/>`:'')
+      // THE POINTS, OVER EVERY PANEL (2026-11-22): a place is in the same spot in each.
+      +pointMarksSvg(points,(lon,lat)=>[cx+(lon-(east+west)/2)*cos*scale,cy-(lat-(north+south)/2)*scale],esc)
       +`</g>`;
   }).join('');
   const top0=height-94-(scales.length-1)*block,width=90;
@@ -127,4 +129,57 @@ export function rasterPanelsSvg(panels:readonly DrawnDensity[],scales:readonly P
       +`<text x="20" y="${top+44}" font-size="14">${esc(words.shade)}</text><text x="20" y="${top+62}" font-size="14">${esc(words.classes)}</text></g>`;}).join('');
   const drawn=Math.max(...panels.map(p=>p.drawnCellM)),last=top0+(scales.length-1)*block;
   return `<rect width="850" height="${height}" fill="#ffffff"/>${cells}${keys}<text x="20" y="${last+80}" font-size="14">${esc(drawnWords(scales,drawn))}</text>`;
+}
+
+/** WHAT A MAP OF SEVERAL RASTERS SAYS OF WHERE THEY OVERLAP: nothing where none do. */
+export function overlapWords(panels:readonly DrawnDensity[]):string{
+  const found=overlappingCells(panels);if(!found.length)return '';
+  return 'Where rasters overlap, the later is drawn over the earlier: '
+    +found.map(f=>`${f.layer} over ${f.under}, ${f.cells.toLocaleString('en')} drawn cell${f.cells===1?'':'s'}`).join('; ')+'.';
+}
+/** RASTERS ON ONE MAP, THE STATIC FIGURE (Map's manual, History: rasters on one map, 2026-11-22): every raster in one frame, in
+ *  the order of the Map's inputs, each with its study area's outline; one key per scale; what overlaps, said. */
+export function rasterOneMapSvg(plan:readonly RasterMapLayer[],scales:readonly PanelScale[],esc:(v:unknown)=>string):string{
+  const shown=plan.filter(l=>l.drawn),panels=shown.flatMap(l=>l.kind==='raster'?[l.panel]:[]);
+  if(!panels.length)return '<text x="30" y="40">No raster to draw</text>';
+  const west=Math.min(...panels.map(p=>p.bounds[0])),south=Math.min(...panels.map(p=>p.bounds[1]));
+  const east=Math.max(...panels.map(p=>p.bounds[2])),north=Math.max(...panels.map(p=>p.bounds[3]));
+  const left=20,frameWidth=810,cos=Math.cos((south+north)/2*Math.PI/180),w=(east-west)*cos,h=north-south;
+  const frameHeight=Math.round(Math.min(frameWidth*h/w,620)),scale=Math.min(frameWidth/w,frameHeight/h);
+  const cx=left+frameWidth/2,cy=10+frameHeight/2;
+  const xy=(lon:number,lat:number):[number,number]=>[cx+(lon-(east+west)/2)*cos*scale,cy-(lat-(north+south)/2)*scale];
+  const path=(rings:number[][][])=>rings.map(ring=>'M'+ring.map(([lon,lat])=>xy(lon!,lat!).map(v=>v.toFixed(1)).join(',')).join('L')+'Z').join('');
+  // BOTTOM TO TOP, as Manage layers lists them: each raster's cells with its outline, the area, the points.
+  const drawn=shown.map(l=>{
+    if(l.kind==='raster'){const p=l.panel,[x,y]=xy(p.bounds[0],p.bounds[3]);
+      return `<g data-map-raster="${esc(l.label)}"><image href="${densityImage(p,scales[p.scale]??scales[0]!)}" x="${x}" y="${y}" `
+        +`width="${(p.bounds[2]-p.bounds[0])*cos*scale}" height="${(p.bounds[3]-p.bounds[1])*scale}" preserveAspectRatio="none" style="image-rendering:pixelated"/>`
+        +(p.outline?.length?`<path data-panel-outline d="${path(p.outline)}" fill="none" stroke="#1f2a24" stroke-width=".8"/>`:'')+'</g>';}
+    if(l.kind==='area')return `<path data-map-area="${esc(l.label)}" d="${path(l.outline)}" fill="none" stroke="#1f2a24" stroke-width="1.6"/>`;
+    return pointMarksSvg([{...l.points,layer:l.label}],xy,esc,[l.colour]);}).join('');
+  const pointLayers=shown.flatMap(l=>l.kind==='points'?[{label:l.label,colour:l.colour}]:[]);
+  const block=72,top0=10+frameHeight+28+(pointLayers.length?22:0),width=90;
+  const keys=scales.map((x,j)=>{const top=top0+j*block,colours=rampFor(x.breaks,x.ramp),words=scaleWords(x,'together');
+    return `<g data-scale-key="${j}">`+colours.map((c,i)=>`<rect x="${40+i*width}" y="${top}" width="${width}" height="10" fill="${c}" stroke="#4d4d4d" stroke-width=".4"/>`).join('')
+      +x.breaks.map((b,i)=>`<text x="${40+(i+1)*width}" y="${top+23}" font-size="14" text-anchor="middle" fill="#4d4d4d">${roundDensity(b)}</text>`).join('')
+      +`<text x="20" y="${top+44}" font-size="14">${esc(words.shade)}</text><text x="20" y="${top+62}" font-size="14">${esc(words.classes)}</text></g>`;}).join('');
+  const last=top0+(scales.length-1)*block,overlap=overlapWords(panels);
+  const height=last+80+(overlap?20:0)+10;
+  return `<rect width="850" height="${height}" fill="#ffffff"/><rect x="${left}" y="10" width="${frameWidth}" height="${frameHeight}" fill="#f7faf8" stroke="#4d4d4d" stroke-width=".4"/>`
+    +drawn+pointKeySvg(pointLayers,10+frameHeight+22,esc)+keys+`<text x="20" y="${last+80}" font-size="14">${esc(drawnWords(scales,Math.max(...panels.map(p=>p.drawnCellM))))}</text>`
+    +(overlap?`<text x="20" y="${last+100}" font-size="14" data-raster-overlap>${esc(overlap)}</text>`:'');
+}
+
+/** POINTS OVER THE CELLS: a ringed dot each, coloured by layer, named where a layer has few enough to read. */
+export function pointMarksSvg(points:readonly RasterPoints[],project:(lon:number,lat:number)=>[number,number],esc:(v:unknown)=>string,colours?:readonly string[]):string{
+  return points.map((layer,k)=>{const colour=colours?.[k]??RASTER_POINT_COLOURS[k%RASTER_POINT_COLOURS.length]!,named=layer.points.length<=12;
+    return `<g data-raster-points="${esc(layer.layer)}">`+layer.points.map(p=>{const [x,y]=project(p.lon,p.lat);
+      return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="${colour}" stroke="#ffffff" stroke-width="1.5"/>`
+        +(named&&p.name?`<text x="${(x+8).toFixed(1)}" y="${(y+4).toFixed(1)}" font-size="13" fill="#1f2a24" stroke="#ffffff" stroke-width="3" paint-order="stroke">${esc(p.name)}</text>`:'');}).join('')+'</g>';}).join('');
+}
+/** One key line for the point layers, under the frame. */
+export function pointKeySvg(layers:readonly {label:string;colour:string}[],top:number,esc:(v:unknown)=>string):string{
+  let x=20;
+  return layers.map(layer=>{const at=x;x+=40+layer.label.length*8;
+    return `<g data-point-key><circle cx="${at+6}" cy="${top}" r="5" fill="${layer.colour}" stroke="#ffffff" stroke-width="1.5"/><text x="${at+16}" y="${top+5}" font-size="14">${esc(layer.label)}</text></g>`;}).join('');
 }

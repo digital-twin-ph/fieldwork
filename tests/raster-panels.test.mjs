@@ -90,3 +90,13 @@ test('a map\'s raster shading is one of the stated choices or refused',async()=>
   assert.ok(validRasterShading({})&&validRasterShading({show:'cell-value',ramp:'viridis',classes:'equal'}));
   assert.ok(!validRasterShading({ramp:'jet'})&&!validRasterShading({show:'log'})&&!validRasterShading({other:1}));
 });
+
+test('rasters on one map: the later raster\'s drawn cells over an earlier one\'s are counted, and none where apart',async()=>{
+  const {overlappingCells}=await import('../build/raster-panels.js');
+  const grid=(west,v=1)=>({width:10,height:10,bounds:[west,0,west+1,1],density:Float32Array.from({length:100},()=>v)});
+  // The second starts half-way across the first: 5 columns of 10 rows overlap.
+  assert.deepEqual(overlappingCells([{layer:'A',...grid(0)},{layer:'B',...grid(0.5)}]),[{layer:'B',under:'A',cells:50}]);
+  assert.deepEqual(overlappingCells([{layer:'A',...grid(0)},{layer:'B',...grid(2)}]),[]);
+  // A cell with no value on either side is not an overlap.
+  assert.deepEqual(overlappingCells([{layer:'A',...grid(0,NaN)},{layer:'B',...grid(0.5)}]),[]);
+});

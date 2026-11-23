@@ -379,7 +379,12 @@ export function seriesVegaSpec(chart:ChartSummary,given:ChartParams,context:{sou
   const x={field:'displayLabel',type:'nominal' as const,sort:labels,title:params.xAxisTitle?.trim()||chart.categoryTitle||null,
     axis:{labelOverlap:'parity' as const,labelSeparation:4}};
   const y={field:'count',type:'quantitative' as const,title:params.yAxisTitle?.trim()||chart.caption.split(' by ')[0]||'value'};
-  const color={field:'series',type:'nominal' as const,scale:{domain:shown,range:shown.map(colour)},legend:{title:by,orient:'top' as const}};
+  // FILLED SQUARES IN THE LEGEND, each in its series' colour, as the bar charts' (2026-11-22, the practitioner, of six
+  // syndromes: "the legend colors would be easier to perceive if they were circles instead of lines", then "Or squares like
+  // the GI graph"). A line's swatch was a short stroke.
+  const color={field:'series',type:'nominal' as const,scale:{domain:shown,range:shown.map(colour)},legend:{title:by,orient:'top' as const,
+    symbolType:'square',symbolSize:150,symbolStrokeWidth:0,symbolOpacity:1,
+    encode:{symbols:{update:{fill:{scale:'color',field:'value'},stroke:{value:'transparent'}}}}}};
   const tooltip=[{field:'displayLabel',type:'nominal' as const,title:chart.categoryTitle??'period'},{field:'series',type:'nominal' as const,title:by},{field:'count',type:'quantitative' as const,title:'value'}];
   const layer:object[]=shown.map(g=>{const kind=marks[g]??'line';
     return {transform:[{filter:{field:'series',equal:g}}],

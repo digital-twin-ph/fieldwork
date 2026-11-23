@@ -177,3 +177,29 @@ export function singleRasterScale(grid:Pick<RasterGrid,'metadata'|'values'>&{bou
     :measure.unit||'value, unit not stated';
   return {mode,label,ramp,classes,breaks:pooledBreaks([panel],RAMPS[ramp].length,classes,mode),layers:[layer],noun:mode==='density'&&measure.stated?measure.noun:''};
 }
+
+/** WHERE RASTERS ON ONE MAP OVERLAP (Map's manual, History: rasters on one map, 2026-11-22): how many of each later raster's drawn
+ *  cells with a value sit, by their centre, on a cell with a value of an earlier one. On one map the later input is drawn
+ *  over the earlier, so these are the cells whose earlier value the map does not show. */
+export function overlappingCells(panels:readonly Pick<DrawnDensity,'layer'|'width'|'height'|'bounds'|'density'>[]):{layer:string;under:string;cells:number}[]{
+  const found:{layer:string;under:string;cells:number}[]=[];
+  for(let j=1;j<panels.length;j++){const b=panels[j]!,[bw,,be,bn]=b.bounds,bdx=(be-bw)/b.width,bdy=(bn-b.bounds[1])/b.height;
+    for(let i=0;i<j;i++){const a=panels[i]!,[aw,as,ae,an]=a.bounds;
+      if(be<=aw||bw>=ae||b.bounds[1]>=an||bn<=as)continue;
+      const adx=(ae-aw)/a.width,ady=(an-as)/a.height;let cells=0;
+      for(let r=0;r<b.height;r++){const lat=bn-(r+.5)*bdy;if(lat<=as||lat>=an)continue;const ar=Math.floor((an-lat)/ady);
+        for(let c=0;c<b.width;c++){if(!Number.isFinite(b.density[r*b.width+c]!))continue;const lon=bw+(c+.5)*bdx;if(lon<=aw||lon>=ae)continue;
+          if(Number.isFinite(a.density[ar*a.width+Math.floor((lon-aw)/adx)]!))cells++;}}
+      if(cells)found.push({layer:b.layer,under:a.layer,cells});}}
+  return found;
+}
+
+/** POINT LAYERS DRAWN OVER RASTERS (2026-11-22): each by its step's name, every point with its name. */
+export interface RasterPoints {layer:string; points:{lon:number;lat:number;name:string}[]}
+/** The colour of the k-th point layer over cells: dark, so it reads on yellow and on red. */
+export const RASTER_POINT_COLOURS=['#1f2a24','#2b5cab','#6a3d9a','#0b6e4f'] as const;
+
+/** A LAYER OF A MAP OF RASTERS, as Manage layers sets it (2026-11-22): bottom to top, each shown or not, in a group or not.
+ *  A raster carries its cells and its area's outline; points their marks; the Map's study area its outline. */
+export type RasterMapLayer={label:string;group?:string;drawn:boolean}&(
+  {kind:'raster';panel:DrawnDensity}|{kind:'points';points:RasterPoints;colour:string}|{kind:'area';outline:number[][][]});

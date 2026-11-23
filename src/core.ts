@@ -13,7 +13,7 @@ import {travelTimeBand,validateBandNode} from './travel-time-band.js';
 import {collectPolygonLayers,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './polygon-layers.js';
 import {applyFeatureEdits,applyTableEdits,editsFacts,editsSentence,validEdits,editsAt} from './cell-edits.js';
 import {rasterUnitsOf} from './raster-units.js';
-import {singleRasterScale,drawnDensity,pooledBreaks,isRasterPort,rasterPort,rasterMeasure,validRasterShading,RAMPS,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE,type PanelScale} from './raster-panels.js';
+import {thinnedOutline,singleRasterScale,drawnDensity,pooledBreaks,isRasterPort,rasterPort,rasterMeasure,validRasterShading,RAMPS,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE,type PanelScale} from './raster-panels.js';
 import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
 /** Resolves a named credential to its secret. No current widget needs one; the credential
  *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
@@ -2677,7 +2677,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           const breaks=scales[0]!.breaks;
           const first=values.get(rasterFed[0]!.from) as RasterGrid;
           const shown=decisionPresentation(node,{kind:'raster-map',raster:{...first,values:new Float32Array(0)},boundary:first.boundary,rows:[],centers:[]},rasterFed[0]!.from,runId);
-          value={...shown.value,rasterPanels:panels,densityBreaks:breaks,panelScales:scales} as unknown as DisplayValue;
+          // THE POINTS OVER THE CELLS (2026-11-22, the practitioner: "I also have one push pin and it does not show up on the
+          // map"): every point layer wired to the Map, by its step's name, drawn over every raster.
+          const rasterPoints=pointInputs().layers.map(layer=>({layer:layer.label||layer.sourceNodeId,
+            points:layer.features.filter(f=>f.geometry).map(f=>({lon:f.geometry!.coordinates[0]!,lat:f.geometry!.coordinates[1]!,name:String(f.properties?.name??f.id??'')}))}))
+            .filter(l=>l.points.length);
+          // THE MAP'S OWN STUDY AREA, its outline a layer of its own (2026-11-22: Manage layers could not show, hide or group it).
+          const areaBoundary=(inputs as unknown as {area?:{boundary?:import('./types.js').Boundary}}).area?.boundary;
+          value={...shown.value,rasterPanels:panels,densityBreaks:breaks,panelScales:scales,...(rasterPoints.length?{rasterPoints}:{}),
+            ...(areaBoundary?{rasterArea:thinnedOutline(areaBoundary)}:{})} as unknown as DisplayValue;
           const used=rasterFed.slice(1).map(e=>`<urn:fieldwork:run:${runId}:map:${node.id}> prov:used <urn:fieldwork:run:${runId}:output:${e.from}>.\n`).join('');
           const said=scales.map(x=>`${x.layers.join(', ')}: ${x.mode==='density'?`${x.label} of each cell's area on the sphere`:`${x.label}, the mean of the cells under each drawn cell`}, in ${x.breaks.length+1} ${x.classes==='equal'?'equal steps':'quantile classes'}`).join('; ');
           shown.receipt.facts+=used+`<urn:fieldwork:run:${runId}:map:${node.id}> fw:drawnAs ${JSON.stringify(`${said}; at most ${MAX_DRAWN_SIDE} drawn cells a side`)}^^<http://www.w3.org/2001/XMLSchema#string>.\n`;

@@ -1364,6 +1364,9 @@ select.rule-op.rule-op-compare,select.rule-op.rule-op-equal,select.rule-op.rule-
 .map-panels-key{display:flex;flex-wrap:wrap;gap:.35rem .9rem;align-items:center;margin:.25rem 0 .5rem}
 .map-panels-key i{display:inline-block;width:16px;height:12px;border:1px solid #4d4d4d;margin-right:.3rem;vertical-align:-1px}
 .raster-panel-map{height:340px}
+/* RASTERS ON ONE MAP (Map's manual, History: rasters on one map): one map as tall as the results map. */
+.raster-one-map{height:min(70vh,640px);min-height:360px}
+.map-config-preview .raster-one-map{height:100%}
 .quality-records{overflow:auto;max-height:60vh;border:1px solid var(--line);border-radius:6px}
 .quality-records table{border-collapse:collapse;font-size:14px}
 .quality-records th,.quality-records td{border-bottom:1px solid var(--line);padding:2px 4px;text-align:left;white-space:nowrap}

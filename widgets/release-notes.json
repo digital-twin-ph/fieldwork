@@ -407,16 +407,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.41.0",
+   "version": "0.42.0",
    "released": "2026-11-22",
    "changes": [
     {
-     "kind": "added",
-     "description": "Study areas: where the map's polygon layers are made of two or more study areas, a checkbox for each; unchecked, a study area is left out of the map in Results, the preview and the write-up, and the map's notes say so. The layer keeps it."
-    },
-    {
-     "kind": "fixed",
-     "description": "When a tile on the person's own key fails, the map asks the provider once for the same tile and says its HTTP status and its own words, and that a key locked to Fieldwork's published address is refused on any other; never the key. Before, it said the provider did not answer."
+     "kind": "changed",
+     "description": "Rasters on one map: with nothing arranged, several rasters are drawn over one frame, static and interactive, on one key per unit, the overlap counted and said; panels when Arrange chooses them. Points wired to a map of rasters are drawn over the cells. Manage layers' order, names, groups and switches govern a map of rasters, a group one entry in the layer list; the Map's study area is a layer. Configure…'s preview draws the rasters."
     }
    ],
    "breaking": false,

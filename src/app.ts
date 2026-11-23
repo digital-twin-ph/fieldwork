@@ -31,9 +31,10 @@ import {geoprivacyExample} from './geoprivacy-example.js';
 import {compareInspector,type CompareKit} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
 import {catchmentInspector} from './catchment-ui.js';
-import {mountCatchmentMap,mountDensityPanel,BASEMAP_OPTIONS,placeOnMap} from './catchment-map.js';
+import {mountCatchmentMap,mountDensityPanel,mountDensityLayers,BASEMAP_OPTIONS,placeOnMap} from './catchment-map.js';
 import {catchmentPlot,polygonSvg,polygonPanelsSvg,panelColumns,catchmentFrame,polygonFrame} from './catchment-output.js';
-import {rasterPanelsSvg,densityImage,rampFor,scaleWords,drawnWords} from './raster-image.js';
+import {rasterMapPlan} from './raster-map-plan.js';
+import {rasterPanelsSvg,rasterOneMapSvg,overlapWords,densityImage,rampFor,scaleWords,drawnWords} from './raster-image.js';
 import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
 import {RATE_TABLE_KEYS} from './rate.js';
@@ -3893,7 +3894,7 @@ function renderResults(){
       declared:runWorkflow&&shown?declaredKinds(runWorkflow,shown.sourceNodeId||shown.nodeId):{}},esc);
   };
   $('#result-rows').querySelectorAll<HTMLElement & SVGElement>('[data-place]').forEach(el=>{el.onclick=()=>selectResult(el.dataset.place!);el.onkeydown=e=>{if(e.key==='Enter')selectResult(el.dataset.place!);};});
-  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};const panelsOf=(output as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;if(panelsOf?.length){const scalesNow=panelScalesOf(output,panelsOf);$('#result-metrics').textContent=`${panelsOf.length} rasters side by side · ${scalesNow.length===1?`${scalesNow[0]!.label} in each cell, one scale`:scalesNow.map(x=>`${x.label} for ${x.layers.join(', ')}`).join('; ')} · drawn cells about ${Math.round(Math.max(...panelsOf.map(p=>p.drawnCellM))).toLocaleString('en')} m across`;$('.map-legend').hidden=true;}else if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${validCells(raster.values).toLocaleString('en')} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
+  const raster=output?.raster;$('#raster-download').hidden=!raster;$('#raster-download').onclick=()=>{if(raster)try{downloadRaster(raster);}catch(e){toast(errorMessage(e),{tone:'failure'});}};const panelsOf=(output as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;if(panelsOf?.length){const scalesNow=panelScalesOf(output,panelsOf);$('#result-metrics').textContent=`${panelsOf.length} rasters ${output&&(workflow.nodes.find(x=>x.id===output.nodeId) as WorkflowNode<'map_output'>|undefined)?.params.arrangement?'side by side':'on one map'} · ${scalesNow.length===1?`${scalesNow[0]!.label} in each cell, one scale`:scalesNow.map(x=>`${x.label} for ${x.layers.join(', ')}`).join('; ')} · drawn cells about ${Math.round(Math.max(...panelsOf.map(p=>p.drawnCellM))).toLocaleString('en')} m across`;$('.map-legend').hidden=true;}else if(raster){$('#result-metrics').textContent=`${raster.metadata.width} x ${raster.metadata.height} cells | ${validCells(raster.values).toLocaleString('en')} valid | ${raster.mask?(raster.mask.method==='all-touched'?'All-touched polygon mask':'Cell-center polygon mask')+' / margin '+(raster.mask.marginPixels||0)+' px':'Unmasked input window'} | Source-reported units: ${raster.asset.provenance?.units||'Not supplied'}`;$('.map-legend').hidden=true;}else $('.map-legend').hidden=false;
   if(output?.polygons){const p=output.polygons;$('.map-legend').hidden=true;$('#map-note').textContent=p.method;$('#result-metrics').textContent=p.kind==='hexbin'?`${p.features.length} released H3 cells / ${p.summary?.matched} locations represented / ${p.summary?.unmatched} locations in omitted sparse cells`:p.summary?`${p.summary.records} locations / ${p.summary.matched} matched / ${p.summary.unmatched} outside / ${p.summary.missingLocation} missing location / ${p.summary.multiple} multiple memberships`:p.features.length+' polygon'+(p.features.length===1?'':'s');$('#map-note').textContent=p.method+' / '+p.notes.join(' ');}
   if(exampleKey(workflow)==='snow-geoprivacy'&&output)$('#map-note').textContent=(output.nodeId.startsWith('before-')?'PRIVATE SOURCE · original coordinates. ':'DERIVED DISPLAY · educational transformation; no anonymity guarantee. ')+$('#map-note').textContent;
   renderMap();
@@ -4151,8 +4152,23 @@ function panelScalesOf(result:unknown,panels:readonly import('./raster-panels.js
   return [{mode:'density',label:'people per km²',ramp:'YlOrRd',classes:'quantile',noun:'people',
     breaks:(result as {densityBreaks?:number[]}).densityBreaks??[],layers:panels.map(p=>p.layer)}];
 }
+/** RASTERS ON ONE MAP, INTERACTIVE (Map's manual, History: rasters on one map): the keys above, one map, what overlaps said below. */
+function mountRasterOneMap(host:HTMLElement,panels:import('./raster-panels.js').DrawnDensity[],scales:import('./raster-panels.js').PanelScale[],
+    mapNode:WorkflowNode<'map_output'>,plan:import('./raster-panels.js').RasterMapLayer[]):()=>void{
+  host.classList.add('map-panels-host');
+  const overlap=overlapWords(plan.flatMap(l=>l.kind==='raster'&&l.drawn?[l.panel]:[]));
+  host.innerHTML=scales.map((scale,j)=>{const colours=rampFor(scale.breaks,scale.ramp),breaks=scale.breaks,words=scaleWords(scale,'together');
+    return `<div class="map-panels-key" data-density-key data-scale-key="${j}">${colours.map((c,i)=>`<span><i style="background:${c}"></i>${
+      i===0?`up to ${roundTo(breaks[0])}`:i===colours.length-1?`over ${roundTo(breaks[i-1])}`:`${roundTo(breaks[i-1])} to ${roundTo(breaks[i])}`}</span>`).join('')}`
+    +` <span class="muted">${esc(words.shade.replace(/^Cell shade: /,''))}</span></div>`;}).join('')
+    +`<div class="raster-one-map" data-raster-one-map></div>`
+    +`<p class="muted">${esc(drawnWords(scales,Math.max(...panels.map(p=>p.drawnCellM))))}.${overlap?' '+esc(overlap):''}</p>`;
+  const dispose=mountDensityLayers(host.querySelector<HTMLElement>('[data-raster-one-map]')!,
+    plan.map(l=>l.kind==='raster'?{...l,image:densityImage(l.panel,scales[l.panel.scale]??scales[0]!)}:l),basemapOf(mapNode.params.basemap));
+  return ()=>{dispose();host.classList.remove('map-panels-host');host.replaceChildren();};
+}
 function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').DrawnDensity[],scales:import('./raster-panels.js').PanelScale[],
-    mapNode:WorkflowNode<'map_output'>):()=>void{
+    mapNode:WorkflowNode<'map_output'>,points:import('./raster-panels.js').RasterPoints[]=[]):()=>void{
   const arranged=mapNode.params.arrangement;
   const order=arranged?arranged.panels.map(p=>p.layer):panels.map(p=>p.layer);
   const shown=order.map(name=>panels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
@@ -4176,12 +4192,13 @@ function mountRasterPanels(host:HTMLElement,panels:import('./raster-panels.js').
     finally{moving=false;}};
   const basemap=basemapOf(mapNode.params.basemap);
   const disposers=shown.map((p,i)=>mountDensityPanel(host.querySelector<HTMLElement>(`[data-map-panel-host="${i}"]`)!,densityImage(p,scales[p.scale]??scales[0]!),p.bounds,basemap,
-    map=>{maps.push(map);map.on('move zoom',()=>follow(map));},p.outline));
+    map=>{maps.push(map);map.on('move zoom',()=>follow(map));},p.outline,points));
   // FITTED ONCE THE PANELS HAVE A SIZE: fitted before, they opened zoomed into the middle (Rwanda, 2026-11-13).
   const all=[Math.min(...shown.map(p=>p.bounds[0])),Math.min(...shown.map(p=>p.bounds[1])),Math.max(...shown.map(p=>p.bounds[2])),Math.max(...shown.map(p=>p.bounds[3]))];
-  const settle=requestAnimationFrame(()=>requestAnimationFrame(()=>{for(const m of maps)m.invalidateSize();
+  let removed=false;
+  const settle=requestAnimationFrame(()=>requestAnimationFrame(()=>{if(removed)return;for(const m of maps)m.invalidateSize();
     maps[0]?.fitBounds([[all[1]!,all[0]!],[all[3]!,all[2]!]],{padding:[8,8],animate:false});ready=true;if(maps[0])follow(maps[0]);}));
-  return ()=>{cancelAnimationFrame(settle);ready=false;for(const d of disposers)d();host.classList.remove('map-panels-host');host.replaceChildren();};
+  return ()=>{removed=true;cancelAnimationFrame(settle);ready=false;for(const d of disposers)d();host.classList.remove('map-panels-host');host.replaceChildren();};
 }
 const roundTo=(v:number|undefined)=>v===undefined?'':Number(Math.abs(v)>=100?v.toFixed(0):Math.abs(v)>=10?v.toFixed(1):v.toFixed(2)).toLocaleString('en');
 /** THE STATIC FIGURE OF A MAP, drawn into `svg`: one renderer for the Results tab and the write-up (2026-11-14; the
@@ -4214,7 +4231,12 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
     const scales=panelScalesOf(result,rasterPanels);
     const order=arranged?arranged.panels.map(p=>p.layer):rasterPanels.map(p=>p.layer);
     const shownPanels=order.map(name=>rasterPanels.find(p=>p.layer===name)).filter((p):p is NonNullable<typeof p>=>!!p);
-    svg.innerHTML=rasterPanelsSvg(shownPanels,scales,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc);
+    // ONE MAP UNLESS PANELS ARE CHOSEN (Map's manual, History: rasters on one map, 2026-11-22): what Arrange's "One map" always said.
+    const plan=mapNode?rasterMapPlan(result,mapNode,own.edges,id=>own.nodes.find(n=>n.id===id)?.params.label):[];
+    // THE POINTS MANAGE LAYERS SHOWS, over every panel.
+    const points=plan.flatMap(l=>l.kind==='points'&&l.drawn?[{...l.points,layer:l.label}]:[]);
+    if(!arranged&&shownPanels.length>1&&plan.length)svg.innerHTML=rasterOneMapSvg(plan,scales,esc);
+    else svg.innerHTML=rasterPanelsSvg(shownPanels,scales,arranged?.grid??'grid',Object.fromEntries((arranged?.panels??[]).map(p=>[p.layer,p.title])),esc,points);
     // No background to read the height from: the cells' mask leaves the outside clear. Framed by what is drawn.
     applyFrame(svg,(result as {rasterScale?:unknown}).rasterScale?'<rect width="850" height="375"/>':'');
     return true;
@@ -4483,8 +4505,10 @@ function renderMap(){
     const plates=groundImagesFor(mapNode?.id).map(livePlate=>({data:livePlate.data,bounds:livePlate.bounds,opacity:livePlate.opacity,
       label:mapImageCredit(livePlate),...(livePlate.corners?{corners:livePlate.corners,width:livePlate.width,height:livePlate.height}:{})}));
     const withPlate=plates.length?{...result,plate:plates[0]!,...(plates.length>1?{plates}:{})}:result;
-    if(rasterPanels?.length&&mapNode)disposeCatchmentMap=mountRasterPanels(host,rasterPanels,
-      panelScalesOf(result,rasterPanels),mapNode);
+    if(rasterPanels&&rasterPanels.length>1&&mapNode&&!arranged)disposeCatchmentMap=mountRasterOneMap(host,rasterPanels,panelScalesOf(result,rasterPanels),mapNode,rasterMapPlan(result,mapNode,workflow.edges,id=>workflow.nodes.find(n=>n.id===id)?.params.label));
+    else if(rasterPanels?.length&&mapNode)disposeCatchmentMap=mountRasterPanels(host,rasterPanels,
+      panelScalesOf(result,rasterPanels),mapNode,rasterMapPlan(result,mapNode,workflow.edges,id=>workflow.nodes.find(n=>n.id===id)?.params.label)
+        .flatMap(l=>l.kind==='points'&&l.drawn?[{...l.points,layer:l.label}]:[]));
     else if(arranged&&result.polygons&&mapNode)disposeCatchmentMap=mountMapPanels(host,withPlate,mapNode,arranged);
     else disposeCatchmentMap=mountCatchmentMap(host,withPlate.polygons?{...withPlate,polygons:withPlate.polygons}:withPlate,
       result.contextPoints,esc,mapNode?basemapOf(mapNode.params.basemap):'none',

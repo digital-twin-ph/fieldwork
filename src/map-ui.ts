@@ -9,7 +9,10 @@ import {withoutLeftOutAreas,mapStudyAreas} from './map-output.js';
 import {TYPES,nodeInputs,outputOf} from './core.js';
 import {openConfigDialog} from './config-dialog.js';
 import {errorMessage,required} from './guards.js';
-import {mountCatchmentMap,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.js';
+import {mountCatchmentMap,mountDensityLayers,basemapOptions,BASEMAP_OPTIONS} from './catchment-map.js';
+import {densityImage} from './raster-image.js';
+import {rasterMapPlan} from './raster-map-plan.js';
+import type {DrawnDensity,PanelScale} from './raster-panels.js';
 import {basemapAvailable,basemapOf} from './basemaps.js';
 import {FOCUS_LIMIT,type Corner} from './map-inset.js';
 import {isRasterPort} from './raster-panels.js';
@@ -136,6 +139,22 @@ export function openMapConfig(nodeId:string){
         const layerSymbols=Object.fromEntries((drawn.pointLayers||[]).map((layer,index)=>
           [layer.sourceNodeId,resolveLayerSymbol(index,draft.layerSymbols?.[layer.sourceNodeId])]));
         const shown=withoutLeftOutAreas({...drawn,layerSymbols,markHalo:draft.markHalo!==false} as typeof drawn,draft.leftOutAreas);
+        // THE RASTERS, as Results draws them on one map (2026-11-22, the practitioner: "On the Map configure dialog, the other
+        // layers and raster do not show up"): the polygon map below drew the first area's outline and none of the cells.
+        const panels=(shown as {rasterPanels?:DrawnDensity[]}).rasterPanels;
+        if(panels?.length){
+          const held=(shown as {panelScales?:PanelScale[]}).panelScales;
+          const scales:PanelScale[]=held?.length?held:[{mode:'density',label:'people per km²',ramp:'YlOrRd',classes:'quantile',noun:'people',
+            breaks:(shown as {densityBreaks?:number[]}).densityBreaks??[],layers:panels.map(p=>p.layer)}];
+          // AS MANAGE LAYERS SETS IT: order, names, groups and what is shown.
+          const plan=rasterMapPlan(shown,{...node,params:draft},ctx.workflow().edges,id=>ctx.workflow().nodes.find(n=>n.id===id)?.params.label);
+          let cancelledRaster=false;
+          const frame=requestAnimationFrame(()=>{if(cancelledRaster||!previewHost.isConnected)return;
+            try{const dispose=mountDensityLayers(previewHost,plan.map(l=>l.kind==='raster'?{...l,image:densityImage(l.panel,scales[l.panel.scale]??scales[0]!)}:l),
+              basemapOf(draft.basemap));disposePreview=()=>{cancelledRaster=true;dispose();};}
+            catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
+          disposePreview=()=>{cancelledRaster=true;cancelAnimationFrame(frame);};
+        }else{
         // One frame later: Leaflet fits the map to its box, and the box has no size until the dialog has laid it out.
         let cancelled=false;
         const frame=requestAnimationFrame(()=>{if(cancelled||!previewHost.isConnected)return;
@@ -144,6 +163,7 @@ export function openMapConfig(nodeId:string){
             disposePreview=()=>{cancelled=true;previewMap=undefined;dispose();};}
           catch(error){previewHost.textContent=`The preview could not be drawn: ${errorMessage(error)}`;}});
         disposePreview=()=>{cancelled=true;cancelAnimationFrame(frame);};
+        }
       }
       // THE INSET PICKED ON THE PREVIEW (Map's manual, History: the inset), for a map shown as a static figure, which cannot be zoomed.
       root.querySelector('[data-inset-from-preview]')?.addEventListener('click',()=>{
@@ -297,11 +317,11 @@ function mapRasterSection(n:WorkflowNode<'map_output'>):string{
   const r=n.params.rasterShading??{};
   const select=(id:string,label:string,options:[string,string][],held:string|undefined)=>`<div class="field"><label class="field-label" for="${id}">${label}</label>`
     +`<select id="${id}">${options.map(([v,t])=>`<option value="${v}" ${(held??'')===v?'selected':''}>${t}</option>`).join('')}</select></div>`;
-  return `<span class="inspector-section">Raster panels</span>`
+  return `<span class="inspector-section">Rasters</span>`
     +select('raster-show','Each cell shows',[['','From the raster\u2019s unit: a count per km², or the value'],['per-km2','A count, per km²'],['cell-value','The cell\u2019s value']],r.show)
     +select('raster-ramp','Colours',[['','From what is shown: yellow to red for a count, viridis for a value'],['YlOrRd','Yellow to red (YlOrRd)'],['viridis','Viridis']],r.ramp)
     +select('raster-classes','Classes',[['','Quantiles: about as many cells in each'],['equal','Equal steps from lowest to highest']],r.classes==='equal'?'equal':'')
-    +`<p class="muted">Used when the map draws rasters in panels. Panels in the same unit share one scale and one key.</p>`;
+    +`<p class="muted">Rasters in the same unit share one scale and one key, on one map or in panels.</p>`;
 }
 /** EACH STUDY AREA, a checkbox: unchecked, it is left out of the map (2026-11-22). */
 function mapStudyAreasSection(n:WorkflowNode<'map_output'>):string{
@@ -322,6 +342,8 @@ function mapArrangeSection(n:WorkflowNode<'map_output'>):string{
     +`<option value="row" ${grid==='row'?'selected':''}>Panels in one row</option>`
     +`<option value="grid" ${grid==='grid'?'selected':''}>Panels two by two</option>`
     +`<option value="column" ${grid==='column'?'selected':''}>Panels in one column</option></select></div>`
+    +(!a&&ctx.workflow().edges.filter(e=>e.to===n.id&&isRasterPort(e.port)).length>1
+      ?`<p class="muted">The rasters are drawn over one frame, in the order of the inputs; where two overlap, the later is drawn on top, and the map says how many cells.</p>`:'')
     +(a?`<p class="muted">One panel per layer, every panel on one scale and one key. A panel shows its layer only.</p>`
       +`<div class="map-panels" data-map-panels>`+layers.map((layer,i)=>{const panel=a.panels.find(p=>p.layer===layer);
         return `<div class="map-panel-row"><label><input type="checkbox" data-panel-include="${esc(layer)}" ${panel?'checked':''}> ${esc(layer)}</label>`

@@ -23,6 +23,9 @@ test('the counts as bars, the threshold dashed, and a triangle on each day that 
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:30000});
   await page.locator('[data-view="results"]').click();
   const figure=page.locator('svg').filter({hasText:'value by date: observed, threshold, one measure each'}).first();
+  // THE LEGEND'S SWATCHES ARE FILLED SQUARES in each series' colour, a dashed line's too (the practitioner, 2026-11-22).
+  const swatches=await figure.locator('.role-legend-symbol path').evaluateAll(ps=>ps.map(p=>p.getAttribute('fill')));
+  expect(swatches.filter(f=>f&&f!=='transparent'&&f!=='none').length).toBeGreaterThanOrEqual(2);
   await expect(figure).toBeVisible({timeout:20000});
   // THE TWO SERIES IN THE LEGEND, AND THE MARKS: 40 bars, one dashed line, two triangles (days 26 and 27).
   await expect(figure).toContainText('observed');await expect(figure).toContainText('threshold');await expect(figure).toContainText('signal');

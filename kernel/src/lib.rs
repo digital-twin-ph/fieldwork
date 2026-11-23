@@ -25,6 +25,9 @@ pub mod zonal;
 /// A kernel density surface, points onto a grid: the reference for experiment 225's WebGPU spike.
 pub mod density;
 
+/// Travel time over a friction surface to the nearest of a set of places: travel time to care (2026-11-22).
+pub mod travel_time;
+
 fn ratio(numerator: f64, denominator: f64) -> f64 {
     if denominator > 0.0 {
         numerator / denominator

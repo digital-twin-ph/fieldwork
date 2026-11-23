@@ -1,6 +1,6 @@
 # 225 · WebGPU as an accelerator, never a requirement
 
-_Created 2026-11-19 · Updated 2026-11-20_
+_Created 2026-11-19 · Updated 2026-11-22_
 
 **Status:** tried, 2026-11-22: the spike ran on four browsers. WebGPU is offered on every one tried, including the gate's
 Chromium with one flag; the density surface agrees with the kernel to 3 in a million at 100,000 points and is about 40
@@ -112,6 +112,58 @@ peak is far below what a map shows, but it is past the line drawn beforehand, an
 use at that size needs summation the compiler cannot reorder (two-float arithmetic, or partial sums per bin), or the
 line moved by a decision, not by this result. Nothing on Windows, Android or a field laptop. The practitioner observation
 (whether a receipt naming the GPU reads as equally trustworthy) is not reached until a widget uses it.
+
+## Travel time to care, measured in the kernel first (2026-11-22)
+
+The first use the practitioner named for WebGPU: for every cell of a Nigerian state, the time to the nearest health
+facility over a friction surface, for microplanning. Measured first in the kernel (`kernel/src/travel_time.rs`), as the
+rule above asks. The method is the Malaria Atlas Project's, as its own script states (`R_generic_accessibilty_mapping_script_2020-1.txt`,
+D. Weiss, 2020: gdistance `transition(friction, 1/mean, 8)`, `geoCorrection`, `accCost`): each cell joins its 8 neighbours, a step costs its length times the
+mean of the two cells' friction, the least total found by Dijkstra's algorithm from every facility at once. Memory is
+fixed at 16 bytes a cell. Four Rust tests: the 8-neighbour distances on a uniform surface, a wall gone round, an island
+nothing reaches, the nearest facility winning, a row narrowed by latitude.
+
+Timed in WebAssembly under Node on the development Mac, on synthetic states at 100 m cells (walking ground, a road every
+5 km, rivers with a crossing every 10 km):
+
+| Grid | Cells | Facilities | Time |
+| --- | --- | --- | --- |
+| 1,000 × 1,000 | 1.0 M | 300 | 0.6 s |
+| 2,000 × 1,900 (about Kano) | 3.8 M | 1,300 | 2.7 s |
+| 3,000 × 3,000 | 9.0 M | 1,300 | 8.1 s |
+| 4,500 × 3,300 (about Niger state) | 14.9 M | 1,300 | 15.7 s |
+
+**What decides it is the friction surface's resolution.** The Malaria Atlas Project's motorized and walking-only surfaces
+(nominal 2019, CC BY 4.0 as Earth Engine's catalogue states, Weiss et al. 2020) are 30 arc-seconds, about 1 km: a state is
+about 240 × 240 cells and takes milliseconds. GRID3's Nigeria surface (v1.0, October 2025) is 30 m: Kano would be about
+42 million cells, roughly a minute and 680 MB here, which is where WebGPU or coarsening would be wanted. At 1 km, by the
+rule, WebGPU is not.
+
+**Held to that method, on Kano (2026-11-22).** MAP's 2019 motorized and walking-only friction surfaces, cut by its
+WCS to 7.6–9.5° E, 10.3–12.7° N (228 × 288 cells of 30 arc-seconds), and Kano's 1,561 health facilities (eHealth
+Africa's Nigeria list of 2020 on HDX, CC BY; 1,512 primary, 31 secondary, 18 tertiary). gdistance 1.6 in R 4.4 took
+1.7 s for each surface; the kernel 28–32 ms. Every cell either reaches, the other reaches. The first comparison was off
+by up to 0.53%, with a median of 0.17%: the kernel measured cells on a sphere and `raster` on the WGS84 ellipsoid, whose
+north–south radius of curvature at 11° N is 0.53% shorter. With the ellipsoid's two radii (the meridian's for the
+cell's height, the prime vertical's times the cosine for its width), the two agree on every one of the 65,664 cells
+to 0.022% at most, the largest difference 0.12 minutes. So the caller gives the kernel cell sizes on the ellipsoid.
+The files stay in the scratchpad, not in any repository.
+
+**What resolution microplanning asks for (read 2026-11-22).** The WHO-UNICEF Geo-enabled Microplanning Handbook (2023)
+states no friction-surface resolution. It asks that data resolution match the microplan's fidelity, so that no group is
+missed; it works from settlements and from GRID3's population at 90–100 m; and the thresholds it and the AFRO RED guide
+(2008) use are 2, 5 and 10 km from a facility (walk in, outreach, mobile team, in GRID3's Nigeria example) and one hour.
+It recommends AccessMod, and validating modelled times with local partners against a minimum acceptable error set at the
+outset, since a model gives the best case. A 1 km cell is about 12 minutes of walking and half the 2 km threshold, so
+MAP's surface can place a state's or a district's settlements in the 5 and 10 km or one-hour bands, but not decide which
+side of 2 km a settlement is. Deciding that matches a 100 m surface, as GRID3's population is: GRID3's 30 m friction
+coarsened to 100 m, about 3.8 million cells for Kano and about 3 seconds in the kernel. So WebGPU is still not wanted;
+only at 30 m would it be.
+
+**What this does not establish.** Agreement with AccessMod; facilities beyond the box, which a cell near the state's
+edge may be nearer to; the time in a browser rather than Node; and whether 1 km is fine enough for microplanning, which is a
+question for the practitioner and the handbook, not for a timing. Dijkstra settles one cell at a time; a GPU version
+would sweep the grid many times over, so a speed-up there is not the density spike's to assume.
 
 ## What it does not establish
 

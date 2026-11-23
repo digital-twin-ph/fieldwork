@@ -1,4 +1,5 @@
 import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM} from './point-layers.js';
+import {RASTER_POINT_COLOURS} from './raster-panels.js';
 import {GlMarks,type GlMark} from './gl-marks.js';
 /** SITES ABOVE EVERY POINT LAYER: point layers are lifted by their place in Manage layers, up to 1000 x 10,000 for a layer
  *  the list does not name, and a pump covered by a death mark could not be clicked (gate 134, 2026-11-12). */
@@ -1021,7 +1022,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
 /** ONE PANEL OF GRID CELLS (Map's manual, History: panels): a small map, its tile basemap where one is chosen, the panel's cells as one
  *  image, and the Leaflet map handed back so the panels can be linked. No toolbar and no key: the figure says those once. */
 export function mountDensityPanel(host:HTMLElement,image:string,bounds:readonly [number,number,number,number],basemap:BasemapChoice,
-    onMap:(map:L.Map)=>void,outline?:number[][][]):()=>void{
+    onMap:(map:L.Map)=>void,outline?:number[][][],points:readonly import('./raster-panels.js').RasterPoints[]=[]):()=>void{
   const map=L.map(host,{scrollWheelZoom:true,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false,zoomSnap:0.25});
   if(Object.hasOwn(BASEMAPS,basemap)){const source=BASEMAPS[basemap as keyof typeof BASEMAPS];
     L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution}).addTo(map);}
@@ -1030,9 +1031,41 @@ export function mountDensityPanel(host:HTMLElement,image:string,bounds:readonly 
   // The study area's outline, over the cells.
   if(outline?.length)L.polygon(outline.map(ring=>ring.map(([lon,lat])=>[lat!,lon!] as [number,number])),
     {color:'#1f2a24',weight:1,opacity:.8,fill:false,interactive:false,className:'raster-panel-outline'}).addTo(map);
+  for(const [k,layer] of points.entries())for(const p of layer.points){
+    const mark=L.circleMarker([p.lat,p.lon],{radius:6,color:'#ffffff',weight:1.5,fillColor:RASTER_POINT_COLOURS[k%RASTER_POINT_COLOURS.length]!,fillOpacity:1,className:'raster-point'});
+    if(p.name)mark.bindTooltip(p.name,{direction:'right',permanent:layer.points.length<=12,className:'raster-point-label'});mark.addTo(map);}
   map.fitBounds([[s,w],[n,e]],{padding:[8,8]});
   onMap(map);
   return ()=>{map.remove();};
+}
+
+/** RASTERS ON ONE MAP, INTERACTIVE (Map's manual, History: rasters on one map, 2026-11-22): each raster's cells and its study
+ *  area's outline one layer, in the order given, the later over the earlier; each can be switched off. */
+export function mountDensityLayers(host:HTMLElement,plan:readonly (import('./raster-panels.js').RasterMapLayer&{image?:string})[],basemap:BasemapChoice):()=>void{
+  const map=L.map(host,{scrollWheelZoom:true,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false,zoomSnap:0.25});
+  if(Object.hasOwn(BASEMAPS,basemap)){const source=BASEMAPS[basemap as keyof typeof BASEMAPS];
+    L.tileLayer(source.url,{maxZoom:source.maxZoom,referrerPolicy:'origin',updateWhenIdle:true,keepBuffer:0,attribution:source.attribution}).addTo(map);}
+  const rings=(outline:number[][][])=>outline.map(ring=>ring.map(([lon,lat])=>[lat!,lon!] as [number,number]));
+  // BOTTOM TO TOP, as Manage layers lists them. A GROUP IS ONE ENTRY in the layer control, switching every member together.
+  const overlays:Record<string,L.LayerGroup>={};
+  for(const layer of plan){if(!layer.drawn)continue;
+    const key=layer.group??layer.label,group=overlays[key]??=L.layerGroup().addTo(map);
+    if(layer.kind==='raster'&&layer.image){const [w,s,e,n]=layer.panel.bounds;
+      L.imageOverlay(layer.image,[[s,w],[n,e]],{opacity:.85,interactive:false,className:'raster-panel-image'}).addTo(group);
+      if(layer.panel.outline?.length)L.polygon(rings(layer.panel.outline),{color:'#1f2a24',weight:1,opacity:.8,fill:false,interactive:false,className:'raster-panel-outline'}).addTo(group);}
+    else if(layer.kind==='area')L.polygon(rings(layer.outline),{color:'#1f2a24',weight:2,opacity:.9,fill:false,interactive:false,className:'raster-map-area'}).addTo(group);
+    else if(layer.kind==='points')for(const p of layer.points.points){
+      const mark=L.circleMarker([p.lat,p.lon],{radius:6,color:'#ffffff',weight:1.5,fillColor:layer.colour,fillOpacity:1,className:'raster-point'});
+      if(p.name)mark.bindTooltip(p.name,{direction:'right',permanent:layer.points.points.length<=12,className:'raster-point-label'});mark.addTo(group);}}
+  L.control.layers(undefined,overlays,{collapsed:false}).addTo(map);L.control.scale({imperial:false}).addTo(map);
+  const boxes=plan.filter(l=>l.drawn&&l.kind==='raster').map(l=>(l as {panel:{bounds:readonly number[]}}).panel.bounds);
+  const all=boxes.length?[Math.min(...boxes.map(b=>b[0]!)),Math.min(...boxes.map(b=>b[1]!)),Math.max(...boxes.map(b=>b[2]!)),Math.max(...boxes.map(b=>b[3]!))]:undefined;
+  // FITTED TWO FRAMES ON, once the map has a size; a map removed in between is left alone (2026-11-22: cancelling the first frame
+  // did not stop the second, and a redraw then fitted a map that was gone).
+  let removed=false;
+  const settle=requestAnimationFrame(()=>requestAnimationFrame(()=>{if(removed)return;map.invalidateSize();
+    if(all)map.fitBounds([[all[1]!,all[0]!],[all[3]!,all[2]!]],{padding:[8,8],animate:false});else map.setView([0,0],2);}));
+  return ()=>{removed=true;cancelAnimationFrame(settle);map.remove();};
 }
 
 /** AN ELEMENT AS A CONTROL ON THE MAP, taking no room from it (the inset picker, Map's manual, History: the inset: a bar under the map

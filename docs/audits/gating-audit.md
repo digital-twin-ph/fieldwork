@@ -1,6 +1,6 @@
 # Audit — the release gate
 
-_Created 2026-11-19 · Updated 2026-11-20_
+_Created 2026-11-19 · Updated 2026-11-22_
 
 Asked by the practitioner on 2026-11-19, while gate 219 ran: *"Why does gate 219 take that long?"*, then *"Maybe
 conditional gates, where things will likely fail given the updates?"*, and, on the proposal to write it up as an
@@ -179,10 +179,87 @@ Computer's answers was the alternative, not taken: hundreds of MB, unmeasured.
 **Not established:** that the four pass in the weekly check before it has run; whether the 26 remaining outside
 requests in the browser suite ever fail a gate.
 
+## Replayed 2026-11-22, after the Inspector move
+
+Asked by the practitioner on 2026-11-22: replay the rules over every release since 2026-11-19, once batches C to E of
+the Inspector move were done. The replay covers 24 releases, 0.151.0 to 0.170.0. Each release's changed files were
+compared with the release before it. A widget's files were read from **its release record at that commit**, not from
+today's, which closes one of the gaps listed below. A from-scratch test was taken to use a widget when the widget's
+type appears in the test file or in its example repository's JSON. Times are from the last gate (0.170.0, 620 tests).
+At that gate the twelve from-scratch tests took 19.8 minutes of browser time, Brazil 8.8 of it. The accessibility scan
+took 6.0 minutes.
+
+The proposal was refined first, as the audit had suggested. A version-only change to `package.json` or
+`package-lock.json` does not count. Neither does a change to `build.mjs` that only adds a module to its list.
+
+| Rule | Full gates, of 24 | Saved per gate, browser time | At 4 workers, wall time |
+| --- | --- | --- | --- |
+| `src/app.ts` a shared file | 24 | 0 | 0 |
+| `src/app.ts` not shared: each test runs when its widgets' files change | 23 | 1.7 min | about 25 s |
+| … and `src/core.ts` not counted | 23 | 1.9 min | about 30 s |
+| … and `src/types.ts` and `styles.css` not counted | 23 | 2.1 min | about 30 s |
+
+**Why it still saves so little.** The Inspector move cut the widgets naming `app.ts` from 34 of 72 to 29 of 73. In
+the same window, 67 widgets name `core.ts`. Two other things outweigh both:
+
+- **Releases are batched.** One release, one gate: a release changed from 63 to 400 files, about 200 on average.
+- **The shared modules now carry the load.** The standard Inspector moved code into a few modules that many widgets
+  name. After `styles.css` and `core.ts`, the files that most often decided a test should run were
+  `src/data-table-ui.ts`, the census tables' catalogue, `src/types.ts`, `src/config-dialog.ts` and
+  `src/catchment-map.ts`.
+
+Only one release, 0.165.0, would have skipped most from-scratch tests (11 of 12).
+
+**What it would have missed: nothing.** Four gates in the window failed because a from-scratch test found a fault:
+
+- **228:** five manuals quoted a label that had changed.
+- **242:** the rulesets example ran into the new arriving-columns check.
+- **251:** the rulesets and sea-level manuals still said Save Edits.
+- **254:** Brazil's manual kept a key that Relate had proposed; this one was a defect in the code.
+
+In every case the rules would still have run the test that found it. The accessibility scan would have run at 23 of
+the 24 releases.
+
+**Item 5, checked.**
+
+- **Recorded copies are in the gate.** geoBoundaries is answered from `../fieldwork-recorded` (`tests/recorded-copies.mjs`).
+- **The from-scratch tests share the gate's four workers.** The browser part of the last gate took 14.1 minutes,
+  against 38 at gate 218. Its floor is Brazil's 8.8 minutes, one test on one worker.
+
+**What the evidence supports.** Conditional gating by changed files is still not worth adopting. With releases batched
+and the standard Inspector's shared modules, a rule by file saves under a minute of a 14-minute gate. The next saving
+is in Brazil's test: at 8.8 minutes it sets the floor of a 14-minute gate.
+
+## CI's verify, 2026-11-18 to 2026-11-23
+
+CI's verify runs each browser on its own shared runner, one test file at a time (`FIELDWORK_WORKERS` is not set in
+`.github/workflows/pages.yml`), with a limit of 75 minutes.
+
+| Browser | Successful runs | Median by day | Longest | Stopped at the limit |
+| --- | --- | --- | --- | --- |
+| Chromium | 27 | 46 to 61 min | 70 min | 1 |
+| WebKit | 14 | 52 to 62 min | 74 min | 2 |
+
+No steady rise shows in five days. The margin is the problem: a successful WebKit run comes within 1 to 27 minutes of
+the limit, and three runs reached it.
+
+**0.170.0's WebKit verify failed** on `hagelloch-who-infected-whom` (run 45090224607). Locally it failed 1 time in 4.
+The test reloaded and opened Configure… before the page was ready. Once it waited, WebKit's service worker refused the
+reasoning worker "due to access control checks", as in `relate-proposed-keys`. The fix is the same as there: wait for
+`html[data-ready]` and block service workers. After the fix it passed 20 of 20 on WebKit and 20 of 20 on Chromium.
+
+**Not established:**
+
+- Whether two workers fit a shared runner's 4 cores, which would roughly halve verify.
+- Whether the workflow edit that two workers need is wanted: `pages.yml` is not the one workflow that may be edited.
+- That a file-to-widget map read from release records is complete: a widget whose record leaves out a file would be
+  skipped silently, as before.
+
 ## What this does not establish
 
 - That the slow tests rarely catch defects. One window of 37 gates over four days is not a rate.
-- The widget dependencies at each commit: each widget's current release was read, not its release at the time.
+- The widget dependencies at each commit: each widget's current release was read, not its release at the time. The
+  2026-11-22 replay read the release at the time.
 - That widget releases name all their files. A missing file would make a conditional rule skip silently.
 - Savings under other loads. Gate 214 took 45 minutes on a similar suite.
 - Whether the NYC and Nigeria published projects came from live runs. That was inferred from their contents.

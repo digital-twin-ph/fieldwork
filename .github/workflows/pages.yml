@@ -96,6 +96,10 @@ jobs:
     name: verify (${{ matrix.browser }})
     env:
       FIELDWORK_BROWSERS: ${{ matrix.browser }}
+      # TWO TEST FILES AT ONCE (the practitioner, 2026-11-22, after the gating audit's replay): one at a time, WebKit's
+      # verify took 52 to 62 minutes most days against the 75-minute bound, and three runs reached it. A shared runner
+      # has 4 cores; the local gate measured 4 workers on 14. Not yet measured here: the first runs at 2 are the test.
+      FIELDWORK_WORKERS: 2
     # A superseded verify is verifying a commit nobody is looking at any more, and two 30-minute
     # gates queued behind each other is how the old lag was built. The newest commit is the one
     # that gets checked; an older one that was cancelled is recorded as cancelled, not as green.

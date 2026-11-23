@@ -6,6 +6,9 @@ import {readFileSync} from 'node:fs';
 // WHO INFECTED WHOM, IN HAGELLOCH, by hand (experiment 200). The cases, a point layer, go into both of Relate's ports;
 // Relate brings each case's infector's prodrome date under a name of its own; the unmatched (no infector recorded) are
 // kept under a category, decided; then a rule takes one date from the other, giving the serial interval in days.
+// WebKit's service worker refused the reasoning worker "due to access control checks" here (0.170.0 CI); blocked, as
+// elsewhere. The editor is opened only once the reloaded page is ready.
+test.use({serviceWorkers:'block'});
 const data=JSON.parse(readFileSync(new URL('../examples/hagelloch-1861/cases.json',import.meta.url),'utf8'));
 const cases={id:'cases',type:'point_input',params:{label:'188 measles cases, one per child',data,
   sourceInfo:{format:'R outbreaks 1.9.0 · measles_hagelloch_1861',url:'https://archive.org/details/beitrgezurpatho00pfeigoog'}}};
@@ -54,6 +57,7 @@ test('Hagelloch\'s cases related to themselves on infector, and the serial inter
     localStorage.setItem(key,JSON.stringify(w));
   });
   await page.reload();
+  await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
   await page.locator('[data-view="workflow"]').click();
   // The editor offers "date" as a kind for a column the rules read.
   await page.locator('.react-flow__node[data-id="rules"]').click();

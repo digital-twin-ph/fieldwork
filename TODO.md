@@ -112,12 +112,10 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   that size, or in Hausa or Swahili. Any use must build trainees' reasoning, never do it for them. Next, when taken up:
   time Gemma 4 E2B on Fieldwork's own charts and maps on an 8 GB laptop, with the practitioner's yes to a 3.2 GB download.
 - **Study design's dialog** on the standard draft-until-Apply dialog: done in 0.167.0 (Study design 0.8.0).
-- **Conditional gating, replayed again after the Inspector move** (the practitioner, 2026-11-22: yes). The gating audit
-  (docs/audits/gating-audit.md) set it aside while `app.ts` was 11,024 lines and named by most widgets; it is 9,512 on
-  2026-11-22. When batches C to E are done: replay the audit's rules over every release since 2026-11-19, say whether
-  rules by changed file now tell the from-scratch tests apart, what they save and what they would have missed, and
-  write it into the audit. With it, check what of item 5 is in place: recorded copies in the gate, from-scratch tests on
-  several workers.
+- **Conditional gating, replayed again after the Inspector move: done 2026-11-22** (docs/audits/gating-audit.md,
+  "Replayed 2026-11-22"). Over 24 releases a rule by changed file saves about 25 s of a 14-minute gate and would have
+  missed nothing; not worth adopting. Item 5 is in place. **Open:** two workers in CI's verify, which would need an edit
+  to `pages.yml` (asked); Brazil's from-scratch test, 8.8 minutes, the gate's floor.
 - **Columns whose values match** (the practitioner, 2026-11-22: "Can FW detect compatible keys between tables?", then
   "show the user on the UI which columns from different tables have potential matches", "Is it the same with append
   tables?"). Done in 0.167.0: Relate a column proposes the pair linking most and lists every pair sharing values;

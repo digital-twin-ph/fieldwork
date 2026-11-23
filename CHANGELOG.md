@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.170.1 — 2026-11-22
+
+- **CI's verify runs two test files at a time**, where it ran one; WebKit's run had come within minutes of its
+  75-minute limit (the gating audit, replayed after the Inspector move).
+- **A WebKit test made steady:** Hagelloch's who-infected-whom test waits for the reloaded page and blocks the service
+  worker, as its neighbours do; it had failed 0.170.0's WebKit verify.
+
 ## 0.170.0 — 2026-11-22
 
 - **Rasters on one map** (Map 0.42.0). With nothing arranged, several rasters are now drawn over one frame, as Arrange's

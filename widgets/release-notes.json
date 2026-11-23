@@ -143,12 +143,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.25.0",
-   "released": "2026-11-21",
+   "version": "0.25.1",
+   "released": "2026-11-22",
    "changes": [
     {
-     "kind": "added",
-     "description": "Series together: the values of a column in one panel, on one scale, each as bars, a line or a dashed line; the periods where one series is 1 marked with triangles. Configure… moved into its own module."
+     "kind": "fix",
+     "description": "A series chart's legend shows each series as a filled square in its colour, as the bar charts' do, where a line series showed a short stroke."
     }
    ],
    "breaking": false,

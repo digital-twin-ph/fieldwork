@@ -129,6 +129,8 @@ export interface MapLayers {
   polygons?:Polygons;
   /** A study area, drawn as the ground the rest sits on. */
   boundary?:{type:string;coordinates:unknown};
+  /** The country outline the study area carries, for context: a line under everything, never measured against. */
+  contextOutline?:{type:string;coordinates:unknown};
   /** A raster, drawn UNDER the study area: it is the most ground-like thing a map carries.
    *  Arrives as a layer rather than as a mode, so a map showing streets and facilities can
    *  show the population they are to be read against. */
@@ -270,6 +272,14 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
     if(!hiddenPort('raster')){overlay.addTo(map);all.addLayer(overlay);}
     // Named for its source and what it shows, not "Population raster" whatever it holds (2026-11-17).
     place('raster',layers.rasterScale?`${layers.rasterScale.layers[0]} \u00b7 ${layers.rasterScale.label}`:'Raster',overlay);
+  }
+  // THE COUNTRY OUTLINE FIRST, so nothing it crosses is hidden by it (2026-11-23): a dashed line and no fill, offered
+  // in the layer list like anything else a reader may want out of the way.
+  if(layers.contextOutline){
+    const country=L.geoJSON(layers.contextOutline as never,{renderer:canvasRenderer(),interactive:false,
+      style:{color:'#8a9a8f',weight:1.2,dashArray:'6 4',fill:false}} as L.GeoJSONOptions);
+    if(!hiddenPort('country-outline')){country.addTo(map);all.addLayer(country);}
+    place('country-outline','Country outline',country);
   }
   if(layers.boundary){
     // Canvas for the same reason the streets use it: a published boundary can be tens of

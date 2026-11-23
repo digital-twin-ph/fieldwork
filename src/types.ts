@@ -183,7 +183,15 @@ export type AreaParams = {source:'drawn'; label:string; selectionMode:'bbox'|'po
   countries?:string[];
   /** WHAT ITS UNITS ARE CALLED, plural, said once as the country is (2026-11-20): "provinces". Figures read it as {units}.
    *  Where unstated, the boundary's own name for its level is used if it is one. */
-  unitName?:string} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance; drawnBy?:DrawnBy; /** The key the outline and its revisions are kept under in the payload store; written on save, read only by storage. */ areaRef?:string};
+  unitName?:string} & {
+  /** THE COUNTRY OUTLINE, FOR CONTEXT (2026-11-23). The practitioner, of a province drawn with nothing around it:
+   *  *"when we pick admin boundary other than ADM0 ... we can have the option to include the ADM0 boundary as well
+   *  for context."* A province alone on a map is hard to place. Acquired with the units, from the same geoBoundaries
+   *  release, as the SIMPLIFIED outline: 339 KB for DR Congo against 2.4 MB, and a context line needs no more. It is
+   *  drawn, never measured against: nothing clips, counts or joins to it, and it carries its own licence because the
+   *  country's terms are not the province's to inherit. */
+  countryOutline?:{geometry:Boundary; provenance:BoundaryProvenance};
+} & {revisions?:AreaRevision[]; boundary?:BoundaryProvenance; drawnBy?:DrawnBy; /** The key the outline and its revisions are kept under in the payload store; written on save, read only by storage. */ areaRef?:string};
 export interface Exclusion {sourceNodeId:string; featureId:string; signature:string; reason:string}
 export type AreaUnit = 'm2'|'km2'|'ha'|'ft2'|'acre'|'mi2';
 export interface Measurement {squareMetres:number; value:number; unit:AreaUnit; method:string}

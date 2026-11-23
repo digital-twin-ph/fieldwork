@@ -214,8 +214,11 @@ export function openStudyAreaEditor(node:WorkflowNode<'study_area'>,onApply:(par
   // boundary, the receipt must still name the source AND say the shape is no longer theirs, which
   // it cannot do if the record is dropped the moment the shape changes.
   let acquired:DrawnParams['boundary']=node.params.source==='drawn'?node.params.boundary:undefined;
+  // THE COUNTRY OUTLINE, CARRIED BESIDE THE UNITS (2026-11-23): drawn under them so a province can be placed, never
+  // measured against. Kept here as the units are, and written on Apply.
+  let outline:DrawnParams['countryOutline']=node.params.source==='drawn'?node.params.countryOutline:undefined;
   const chosenUnitName=()=>acquired?.unitName||acquired?.unitID||'This published outline';
-  function currentParams():DrawnParams{return {source:'drawn',label:name.value.trim(),selectionMode,geometry,...(acquired?{boundary:acquired}:{})};}
+  function currentParams():DrawnParams{return {source:'drawn',label:name.value.trim(),selectionMode,geometry,...(acquired?{boundary:acquired}:{}),...(outline?{countryOutline:outline}:{})};}
   let lastShape:Boundary|null=null,lastName='',lastSettings='',lastN3:ReturnType<typeof studyAreaN3>|null=null;
   function refresh(){
     $('#area-feedback').classList.remove('clip-preview-error');$('#area-feedback').setAttribute('role','status');if(previewStatus)previewStatus.textContent='Draw a valid boundary to preview the clip.';
@@ -546,6 +549,10 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
 
   const boundaryStatus=$('#area-boundary-status'),unitsBox=$('#area-boundary-units');
   const unitPick=$('#area-boundary-pick') as HTMLSelectElement;
+  // OFFERED ONLY WHERE IT MEANS SOMETHING (2026-11-23): a level below the country, acquired from geoBoundaries. A
+  // country picked at ADM0 is already its own outline, and a file read from this device says nothing about a country.
+  const countryRow=$('#area-country-row'),countryBox=$('#area-country-outline') as HTMLInputElement;
+  const offerCountryOutline=(offer:boolean)=>{countryRow.hidden=!offer;if(!offer)countryBox.checked=false;};
   // EVERY OPENING STARTS THE PICKER EMPTY (2026-11-22). The dialog is reused, and the last study area's country, units
   // and terms stayed on screen with none of the state behind them: a unit chosen from that list belonged to no level, so
   // Use answered "Select at least one unit" and the area could not be applied. Found by the practitioner adding a
@@ -573,7 +580,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
         :'Choose a country, by name or by its three-letter code.';
       return;
     }
-    unitsBox.hidden=true;pickedLevel=null;pickedUnits=[];
+    unitsBox.hidden=true;offerCountryOutline(false);pickedLevel=null;pickedUnits=[];
     // The country is NAMED, not just coded. Typing "Congo" resolves correctly to the Republic
     // of the Congo -- and somebody who meant the Democratic Republic of the Congo has to be able
     // to see that before they download a boundary a thousand kilometres from their outbreak.
@@ -624,7 +631,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       const {readUnits}=await import('./boundary-source.js');
       pickedUnits=readUnits(level,JSON.parse(shapes));
       offerUnits((await import('./boundary-source.js')).unitOptions(pickedUnits));
-      unitsBox.hidden=false;
+      unitsBox.hidden=false;offerCountryOutline(!/^ADM0/i.test(level.level)&&!!level.iso);
       // The SIZE stays on screen rather than flashing past. It is the thing that makes
       // "only the boundaries we need" a decision the practitioner can take, and a message that
       // is replaced as soon as the download finishes is a message they may never read.
@@ -721,7 +728,7 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       pickedUnits=unitsFromFile(parsed,key,level.boundaryID);
       pickedLevel=level;
       offerUnits((await import('./boundary-source.js')).unitOptions(pickedUnits));
-      unitsBox.hidden=false;
+      unitsBox.hidden=false;offerCountryOutline(false);
       summarise=(_l,chosen)=>`${chosen.length} of ${pickedUnits.length} boundaries from ${file.name} \u00b7 licence not stated here`;
       showSelection();
       lookAt(pickedUnits);
@@ -757,7 +764,28 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
         $('#area-feedback').textContent=`Drawing ${chosen.length===1?chosen[0].name:`${chosen.length} units`} \u2014 ${chosenVertices.toLocaleString()} vertices\u2026`;
         await new Promise(resolve=>requestAnimationFrame(()=>setTimeout(resolve,0)));
       }
-      const {publishedRings,publishedNote}=await import('./boundary-source.js');
+      const {publishedRings,publishedNote,levelUrl,readCountryOutline}=await import('./boundary-source.js');
+      // THE COUNTRY OUTLINE, WHERE IT WAS ASKED FOR: the same release the units came from, its simplified geometry.
+      // A failure here loses the outline and nothing else -- the units are what the practitioner came for, and an
+      // outline drawn for context is not worth refusing them over.
+      if(countryBox.checked&&pickedLevel&&!/^ADM0/i.test(pickedLevel.level)){
+        try{
+          $('#area-feedback').textContent='Reading the country outline\u2026';
+          const record=readCountryOutline(pickedLevel.iso,await (await fetch(levelUrl(pickedLevel.iso,'ADM0'))).json());
+          if(!record)throw new Error('this release publishes no simplified outline for the country');
+          const payload=await (await fetch(record.geoJsonUrl)).json() as {features?:{geometry?:unknown}[]};
+          const rings=publishedRings(payload.features?.[0]?.geometry);
+          if(!rings)throw new Error('the outline carries no usable rings');
+          outline={geometry:rings.parts.length>1?{type:'MultiPolygon',coordinates:rings.parts}:{type:'Polygon',coordinates:rings.rings},
+            provenance:{boundaryID:record.boundaryID,unitID:record.boundaryID,unitName:record.name,
+              source:record.source,licence:record.licence,licenceSource:record.licenceSource,
+              yearRepresented:record.yearRepresented,canonical:record.canonical,
+              retrievedFrom:record.geoJsonUrl,retrievedAt:new Date().toISOString(),
+              vertices:rings.vertices,publishedHash:boundaryFingerprint(rings.parts.length>1
+                ?{type:'MultiPolygon',coordinates:rings.parts}:{type:'Polygon',coordinates:rings.rings})}};
+        }catch(error){outline=undefined;countryBox.checked=false;
+          $('#area-feedback').textContent=`The country outline could not be read (${errorMessage(error)}). The units are unaffected.`;}
+      }else outline=undefined;
       // ONE unit gets its OWN OUTLINE, AS PUBLISHED. "Selecting Bunia gave me a square not the
       // jurisdictional polygon" -- it did, because a bounding box was the shortcut for combining
       // several, and it was applied even to one. A box includes ground that is not in the

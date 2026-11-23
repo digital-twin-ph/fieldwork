@@ -9,6 +9,7 @@ import {readGpx,readKml,readKmz,gpsSentence} from './gps-import.js';
 import type {NoteImagePayload} from './note-image.js';
 const attributeType=(value:string):AttributeType=>{if(!ATTRIBUTE_TYPES.includes(value))throw new Error('Choose a supported attribute type.');return value as AttributeType;};
 import L from 'leaflet';
+import {readXlsx} from './xlsx.js';
 import {parseCSV,readTextFile,COLUMN_ALIASES,csvPoints,syntheticPoints,loadSQLite,geoPackageLayers,geoPackagePoints,geoJSONDeclaredCRS,type CSVCoordinateReport} from './input-data.js';
 import {coordinateSentence,readCoordinate} from './coordinates.js';
 import {rasterBasemap,PIN_BASEMAPS,tileFailure} from './catchment-map.js';
@@ -36,7 +37,7 @@ const PINS_PER_PAGE=25;
  *  so the ordinary CSV import would have failed at run time with the compiler satisfied. */
 const csvColumn=(key:string):number=>Number((document.querySelector('#csv-'+key) as HTMLSelectElement).value);
 const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
-const bodyMarkup=`<div class="input-editor-body"><label class="field-label" for="input-mode">Input method</label><select id="input-mode"><option value="synthetic">Generate synthetic points</option><option value="csv">Import CSV</option><option value="gpkg">Import GeoPackage</option><option value="geojson">Import GeoJSON</option><option value="gpx">Import GPX from a GPS device</option><option value="kml">Import KML or KMZ</option><option value="pins">Place pushpins on map</option></select><p id="input-replace-note" class="input-replace-note" role="status" hidden></p>
+const bodyMarkup=`<div class="input-editor-body"><label class="field-label" for="input-mode">Input method</label><select id="input-mode"><option value="synthetic">Generate synthetic points</option><option value="csv">Import CSV</option><option value="xlsx">Import Excel</option><option value="gpkg">Import GeoPackage</option><option value="geojson">Import GeoJSON</option><option value="gpx">Import GPX from a GPS device</option><option value="kml">Import KML or KMZ</option><option value="pins">Place pushpins on map</option></select><p id="input-replace-note" class="input-replace-note" role="status" hidden></p>
 <div id="input-synthetic"><label class="field-label" for="synthetic-boundary">Study area for generation</label><select id="synthetic-boundary"></select><div class="input-inline"><label>Inside points<input id="synthetic-inside" type="number" value="20" min="1" max="250000"></label><label>Outside points for testing<input id="synthetic-outside" type="number" value="2" min="0" max="249999"></label><label>Seed<input id="synthetic-seed" type="number" value="42" min="0" max="4294967295"></label></div><button id="generate-input" class="button small">Generate points</button><p class="muted">Synthetic demonstration records.</p></div>
 <div id="input-file-panel" hidden><label class="field-label" for="input-file">Local file · 40 MB maximum</label><input id="input-file" type="file"><p id="gps-file-note" role="status" hidden></p><div id="csv-mapping" hidden><div class="input-inline"><label id="csv-x-label">Longitude<select id="csv-longitude"></select></label><label id="csv-y-label">Latitude<select id="csv-latitude"></select></label><label>Record ID<select id="csv-id"></select></label><label>Label<select id="csv-name"></select></label></div><div class="input-inline"><label>Coordinates<select id="csv-frame"><option value="degree">Longitude / latitude, degrees</option><option value="metre">UTM easting / northing, metres</option></select></label><label id="csv-zone-label" hidden>UTM zone<input id="csv-zone" type="number" min="1" max="60" step="1" value="35"></label><label id="csv-hemisphere-label" hidden>Hemisphere<select id="csv-hemisphere"><option value="south">South</option><option value="north">North</option></select></label></div><p id="csv-frame-note" class="muted" hidden></p><button id="csv-preview" class="button small">Preview mapped records</button></div><div id="gpkg-mapping" hidden><label for="gpkg-layer">Point layer</label><select id="gpkg-layer"></select><p id="gpkg-crs-note" class="muted" hidden></p><button id="gpkg-preview" class="button small">Preview layer</button></div><p class="muted">Up to 250,000 points. Scalar attributes are retained. CSV reads longitude/latitude in degrees, or UTM easting/northing in metres on the WGS84 datum, converted to CRS84 on import. GeoPackage reads 2D POINT layers in EPSG:4326 or a WGS84 UTM zone, using the CRS the file itself declares.</p></div>
 <div id="input-pins" hidden><p>Click the map to add a pin. Select or drag a pin to edit it.</p><p class="pin-field-help" id="pin-privacy">Pins on homes can identify the people who live there. Back up the project encrypted, and mask the points with Donut geomasking before sharing a map of them.</p><div class="pin-locate"><button id="pin-locate" class="button small" type="button">Add a pin at my location</button><button id="pin-locate-move" class="button small" type="button" disabled>Move this pin to my location</button><p id="pin-locate-status" role="status"></p></div><div class="pin-map-tools"><label class="pin-basemap">Basemap<select id="pins-basemap">${PIN_BASEMAPS.map(b=>`<option value="${b}">${esc(BASEMAP_LABELS[b])}</option>`).join('')}</select></label><form id="pin-place-form" class="pin-place"><label>Find a place<input id="pin-place" maxlength="200" autocomplete="off" placeholder="A town, district or landmark"></label><button id="pin-place-find" class="button small" type="submit">Find</button></form></div><p id="pin-place-status" role="status"></p><ul id="pin-place-results" class="pin-place-results"></ul><label class="field-label" for="pin-record">Select a record to edit, including missing locations</label><select id="pin-record"></select><div class="pin-record-actions"><button id="pin-undo" class="button small" type="button" disabled>Undo</button><button id="pin-delete" class="button danger" disabled>Delete pin</button><label><input id="pin-use-uuid" type="checkbox"> Generate UUIDs for new pins</label></div><p class="muted">Existing record IDs stay unchanged. Delete pin removes the chosen record from this draft; Apply keeps the change.</p><div class="pin-layout"><div><div id="pin-map"></div><button id="pins-fit" class="button small">Fit pins and study area</button><span id="pins-map-status" class="muted"></span><p id="pin-legend" class="pin-legend"></p><div id="pin-areas" class="pin-areas" hidden></div></div><div id="pin-form"></div></div><div id="pin-table" class="pin-table"></div><details><summary>Add a form field</summary><p class="pin-field-help">The form every pin shows, in this order:</p><ol id="pin-field-order" class="pin-field-order"></ol><div class="input-inline"><label>Field key<input id="pin-field-key" maxlength="60" placeholder="household_size"></label><label>Label<input id="pin-field-label" maxlength="100" placeholder="Household size"></label><label>Type<select id="pin-field-type">${TYPE_OPTIONS}</select></label><label>Default value<input id="pin-field-default" maxlength="1000"></label><label>Allowed values (optional, one per line)<textarea id="pin-field-values" maxlength="10000" rows="3"></textarea></label><label class="pin-required"><input id="pin-field-required" type="checkbox"> Required on every pin</label></div><button id="pin-add-field" class="button small">Add field</button></details></div>
@@ -73,31 +74,24 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
   $('#synthetic-boundary').innerHTML=areas.map(a=>`<option value="${esc(a.id)}">${esc(a.label)}</option>`).join('');
   for(const key of ['inside','outside','seed'] as const)($('#synthetic-'+key) as HTMLInputElement).value=String(source[key]??{inside:20,outside:2,seed:42}[key]);
   $('#input-file').value='';$('#csv-mapping').hidden=true;$('#gpkg-mapping').hidden=true;$('#input-mode').value=['synthetic','csv','gpkg','geojson','gpx','kml','pins'].includes(source.format)?source.format:'synthetic';
-  const metadata=(file:File)=>({format:$('#input-mode').value,filename:file.name,bytes:file.size,importedAt:new Date().toISOString()});
-  function mode(){const kind=$('#input-mode').value;replaceNote(kind);$('#input-synthetic').hidden=kind!=='synthetic';$('#input-file-panel').hidden=!['csv','gpkg','geojson','gpx','kml'].includes(kind);$('#input-pins').hidden=kind!=='pins';$('#input-file').accept=({csv:'.csv',gpkg:'.gpkg',geojson:'.geojson,.json',gpx:'.gpx',kml:'.kml,.kmz'} as Record<string,string>)[kind]||'';($('#gps-file-note') as HTMLElement).hidden=true;error('');if(kind==='pins')setTimeout(()=>{if(!closed){ensureMap();map!.invalidateSize();fit();}},0);}
-  let activeMode=$('#input-mode').value;
-  $('#input-mode').onchange=()=>{if(activeMode==='pins'&&!savePin()){$('#input-mode').value=activeMode;return;}activeMode=$('#input-mode').value;requestId++;mode();if(activeMode==='pins')preview();};
-  $('#generate-input').onclick=()=>{try{const area=areas.find(a=>a.id===$('#synthetic-boundary').value);if(!area)throw new Error('Define a study area before generating sample points.');const options=Object.fromEntries(['inside','outside','seed'].map(k=>[k,Number(($('#synthetic-'+k) as HTMLInputElement).value)]));accept(syntheticPoints(area.geometry,options),{format:'synthetic',areaNodeId:area.id,boundarySnapshot:structuredClone(area.geometry),...options,method:'Seeded uniform rejection sampling in longitude/latitude',generatedAt:new Date().toISOString()});}catch(e){error(e);}};
-  $('#input-file').onchange=async()=>{const file=$('#input-file').files?.[0];if(!file)return;const request=++requestId,kind=$('#input-mode').value;applyButton().disabled=true;$('#csv-mapping').hidden=true;$('#gpkg-mapping').hidden=true;error('');try{if(file.size>MAX_POINT_FILE_BYTES)throw new Error(`This file is ${(file.size/1e6).toFixed(1)} MB; Point data reads files up to ${MAX_POINT_FILE_BYTES/1e6} MB.`);db?.close();db=null;
-    if(kind==='gpx'||kind==='kml'){
-      const bytes=new Uint8Array(await file.arrayBuffer());if(closed||request!==requestId)return;
-      const read=kind==='gpx'?readGpx(new TextDecoder().decode(bytes)):file.name.toLowerCase().endsWith('.kmz')?readKmz(bytes):readKml(new TextDecoder().decode(bytes));
-      const note=$('#gps-file-note') as HTMLElement;note.textContent=gpsSentence(read,file.name);note.hidden=false;
-      if(!read.collection.features.length)throw new Error(`${file.name} holds no ${kind==='gpx'?'waypoints':'point placemarks'} to import.`);
-      accept(read.collection,{...metadata(file),crs:'CRS84'});
+  /** THE COLUMNS A FILE HOLDS, offered for whichever kind it is (2026-11-23): a CSV and an Excel sheet reach this the
+   *  same way, and the names a longitude or a latitude goes by are the one list `input-data.ts` keeps. */
+  const offerColumns=()=>{
+    if(!csv)return;
+    const aliases=COLUMN_ALIASES as unknown as Record<string,string[]>;
+    for(const key of Object.keys(aliases)){
+      const select=$('#csv-'+key) as HTMLSelectElement;
+      select.innerHTML='<option value="-1">'+(['id','name'].includes(key)?'Generate automatically':'Select column')+'</option>'
+        +csv.headers.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('');
+      select.value=String(csv.headers.findIndex(h=>aliases[key]!.includes(h.toLowerCase())));
+      select.onchange=()=>applyButton().disabled=true;
     }
-    else if(kind==='gpkg'){const bytes=new Uint8Array(await file.arrayBuffer()),SQL=await loadSQLite();if(closed||request!==requestId)return;db=new SQL.Database(bytes);const layers=geoPackageLayers(db);$('#gpkg-layer').innerHTML=layers.map(l=>`<option value="${esc(l.table_name)}">${esc(l.table_name)} · EPSG:${l.epsg}</option>`).join('');$('#gpkg-mapping').hidden=false;
-      // The layer names the CRS it is in, so the dialog states it rather than asking. A UTM layer
-      // is converted on import and the note says so; before 2026-10-13 it was refused outright.
-      const gpkgNote=()=>{const layer=layers.find(l=>l.table_name===$('#gpkg-layer').value);const note=$('#gpkg-crs-note') as HTMLElement;
-        if(!layer){note.hidden=true;return;}note.hidden=false;
-        const utm=utmFromEPSGCode(layer.epsg);
-        note.textContent=utm?`Layer CRS EPSG:${layer.epsg} · UTM zone ${utm.zone}${utm.hemisphere==='north'?'N':'S'}, converted to CRS84 on import.`:`Layer CRS EPSG:${layer.epsg} · read as it stands.`;};
-      gpkgNote();
-      $('#gpkg-layer').onchange=()=>{applyButton().disabled=true;gpkgNote();};
-      $('#gpkg-preview').onclick=()=>{try{const layer=layers.find(l=>l.table_name===$('#gpkg-layer').value);
-        accept(geoPackagePoints(required(db),$('#gpkg-layer').value),{...metadata(file),layer:$('#gpkg-layer').value,crs:'CRS84',sourceCRS:`EPSG:${layer?.epsg??4326}`});}catch(e){applyButton().disabled=true;error(e);}};$('#gpkg-preview').click();}
-    else {const {text}=await readTextFile(file);if(closed||request!==requestId)return;if(kind==='geojson'){const parsed=JSON.parse(text);accept(parsed,{...metadata(file),crs:geoJSONDeclaredCRS(parsed)});}else{csv=parseCSV(text);const aliases=COLUMN_ALIASES as unknown as Record<string,string[]>;for(const key of Object.keys(aliases)){const select=$('#csv-'+key) as HTMLSelectElement;select.innerHTML='<option value="-1">'+(['id','name'].includes(key)?'Generate automatically':'Select column')+'</option>'+csv.headers.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('');select.value=String(csv.headers.findIndex(h=>aliases[key].includes(h.toLowerCase())));select.onchange=()=>applyButton().disabled=true;}$('#csv-mapping').hidden=false;
+    $('#csv-mapping').hidden=false;
+  };
+  /** THE COLUMN CONTROLS AND THE PREVIEW, wired once for whichever kind of file was read (2026-11-23): a CSV and an
+   *  Excel sheet are the same table by the time they reach here, and the preview was reachable only from the CSV path. */
+  const setUpColumns=(file:File)=>{
+    offerColumns();
       // A CSV of UTM metres read through the degree path produced [500000, 7800000] as a longitude
       // and latitude with no error: every point then read as Outside the study area, which is a
       // finding about geography rather than a fault, and haversine on metres-read-as-degrees
@@ -141,7 +135,42 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
         if(!projected()){accept(read,{...metadata(file),crs:'CRS84'});return;}
         const converted=reprojectToCRS84(read,utmZone(),utmHemisphere());
         accept(converted.collection,{...metadata(file),crs:'CRS84',sourceCRS:converted.provenance.sourceCRS,reprojection:converted.provenance});
-      }catch(e){applyButton().disabled=true;error(e);}};$('#csv-preview').click();}}
+      }catch(e){applyButton().disabled=true;error(e);}};$('#csv-preview').click();
+  };
+  const metadata=(file:File)=>({format:$('#input-mode').value,filename:file.name,bytes:file.size,importedAt:new Date().toISOString()});
+  function mode(){const kind=$('#input-mode').value;replaceNote(kind);$('#input-synthetic').hidden=kind!=='synthetic';$('#input-file-panel').hidden=!['csv','xlsx','gpkg','geojson','gpx','kml'].includes(kind);$('#input-pins').hidden=kind!=='pins';$('#input-file').accept=({csv:'.csv',xlsx:'.xlsx',gpkg:'.gpkg',geojson:'.geojson,.json',gpx:'.gpx',kml:'.kml,.kmz'} as Record<string,string>)[kind]||'';($('#gps-file-note') as HTMLElement).hidden=true;error('');if(kind==='pins')setTimeout(()=>{if(!closed){ensureMap();map!.invalidateSize();fit();}},0);}
+  let activeMode=$('#input-mode').value;
+  $('#input-mode').onchange=()=>{if(activeMode==='pins'&&!savePin()){$('#input-mode').value=activeMode;return;}activeMode=$('#input-mode').value;requestId++;mode();if(activeMode==='pins')preview();};
+  $('#generate-input').onclick=()=>{try{const area=areas.find(a=>a.id===$('#synthetic-boundary').value);if(!area)throw new Error('Define a study area before generating sample points.');const options=Object.fromEntries(['inside','outside','seed'].map(k=>[k,Number(($('#synthetic-'+k) as HTMLInputElement).value)]));accept(syntheticPoints(area.geometry,options),{format:'synthetic',areaNodeId:area.id,boundarySnapshot:structuredClone(area.geometry),...options,method:'Seeded uniform rejection sampling in longitude/latitude',generatedAt:new Date().toISOString()});}catch(e){error(e);}};
+  $('#input-file').onchange=async()=>{const file=$('#input-file').files?.[0];if(!file)return;const request=++requestId,kind=$('#input-mode').value;applyButton().disabled=true;$('#csv-mapping').hidden=true;$('#gpkg-mapping').hidden=true;error('');try{if(file.size>MAX_POINT_FILE_BYTES)throw new Error(`This file is ${(file.size/1e6).toFixed(1)} MB; Point data reads files up to ${MAX_POINT_FILE_BYTES/1e6} MB.`);db?.close();db=null;
+    if(kind==='gpx'||kind==='kml'){
+      const bytes=new Uint8Array(await file.arrayBuffer());if(closed||request!==requestId)return;
+      const read=kind==='gpx'?readGpx(new TextDecoder().decode(bytes)):file.name.toLowerCase().endsWith('.kmz')?readKmz(bytes):readKml(new TextDecoder().decode(bytes));
+      const note=$('#gps-file-note') as HTMLElement;note.textContent=gpsSentence(read,file.name);note.hidden=false;
+      if(!read.collection.features.length)throw new Error(`${file.name} holds no ${kind==='gpx'?'waypoints':'point placemarks'} to import.`);
+      accept(read.collection,{...metadata(file),crs:'CRS84'});
+    }
+    else if(kind==='gpkg'){const bytes=new Uint8Array(await file.arrayBuffer()),SQL=await loadSQLite();if(closed||request!==requestId)return;db=new SQL.Database(bytes);const layers=geoPackageLayers(db);$('#gpkg-layer').innerHTML=layers.map(l=>`<option value="${esc(l.table_name)}">${esc(l.table_name)} · EPSG:${l.epsg}</option>`).join('');$('#gpkg-mapping').hidden=false;
+      // The layer names the CRS it is in, so the dialog states it rather than asking. A UTM layer
+      // is converted on import and the note says so; before 2026-10-13 it was refused outright.
+      const gpkgNote=()=>{const layer=layers.find(l=>l.table_name===$('#gpkg-layer').value);const note=$('#gpkg-crs-note') as HTMLElement;
+        if(!layer){note.hidden=true;return;}note.hidden=false;
+        const utm=utmFromEPSGCode(layer.epsg);
+        note.textContent=utm?`Layer CRS EPSG:${layer.epsg} · UTM zone ${utm.zone}${utm.hemisphere==='north'?'N':'S'}, converted to CRS84 on import.`:`Layer CRS EPSG:${layer.epsg} · read as it stands.`;};
+      gpkgNote();
+      $('#gpkg-layer').onchange=()=>{applyButton().disabled=true;gpkgNote();};
+      $('#gpkg-preview').onclick=()=>{try{const layer=layers.find(l=>l.table_name===$('#gpkg-layer').value);
+        accept(geoPackagePoints(required(db),$('#gpkg-layer').value),{...metadata(file),layer:$('#gpkg-layer').value,crs:'CRS84',sourceCRS:`EPSG:${layer?.epsg??4326}`});}catch(e){applyButton().disabled=true;error(e);}};$('#gpkg-preview').click();}
+    else if(kind==='xlsx'){
+      // AN EXCEL SHEET READ AS A CSV IS (the practitioner, 2026-11-23: *"Point data import should also include Excel"*):
+      // the first sheet carrying a header row, its cells as written, then the same column mapping a CSV is given.
+      const sheets=readXlsx(new Uint8Array(await file.arrayBuffer())).filter(s=>s.headers.length);
+      if(closed||request!==requestId)return;
+      if(!sheets.length)throw new Error('This workbook has no sheet with a header row.');
+      csv={headers:sheets[0]!.headers.map(h=>h.trim()),rows:sheets[0]!.rows};
+      setUpColumns(file);
+    }
+    else {const {text}=await readTextFile(file);if(closed||request!==requestId)return;if(kind==='geojson'){const parsed=JSON.parse(text);accept(parsed,{...metadata(file),crs:geoJSONDeclaredCRS(parsed)});}else{csv=parseCSV(text);setUpColumns(file);}}
   }catch(e){error(e);}};
   $('#gpkg-layer').onchange=()=>applyButton().disabled=true;
   /** WHAT A GENERATE OR AN IMPORT WOULD REPLACE, said before it does (experiment 09, 2026-11-22): the records in this draft

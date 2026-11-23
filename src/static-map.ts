@@ -5,7 +5,7 @@
 import {plotFrame} from './catchment-output.js';
 import {proportionalRadius,sizedLargest,layerRanks,colouredClasses} from './point-layers.js';
 import {linkLinesSvg} from './map-links.js';
-import type {Escape,LineLayer} from './types.js';
+import type {Escape,LineLayer,Position} from './types.js';
 import type {DisplayValue} from './results.js';
 import {markPath} from './presentation.js';
 import {markLabel,LABEL_CEILING,MERGED_MARKS_FROM,MarkBatch} from './point-layers.js';
@@ -60,6 +60,15 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
   // pale wash still earns its place by separating figure from ground; over a basemap it simply
   // hides the ground, which is what the practitioner met on the South London figure, 2026-10-25.
   // So the fill is declared here and withdrawn by whoever draws ground underneath it.
+  // THE COUNTRY OUTLINE UNDER EVERYTHING, where the study area carries one (2026-11-23): a line and no fill, drawn
+  // first so nothing it crosses is hidden, and clipped by the frame like any other geometry -- the map stays about the
+  // study area and shows the national border where it runs through it.
+  if(output.contextOutline){
+    const parts=output.contextOutline.type==='MultiPolygon'
+      ?output.contextOutline.coordinates as Position[][][]:[output.contextOutline.coordinates as Position[][]];
+    svg+=`<path data-country-outline d="${parts.flat().map(ring=>'M'+ring.map(p=>project(p as Position).join(',')).join('L')+'Z').join(' ')}" `
+      +`fill="none" stroke="#8a9a8f" stroke-width="${1.2*markScale}" stroke-dasharray="${6*markScale} ${4*markScale}"/>`;
+  }
   svg+=polygons.map(rings=>`<path data-fill-role="context" d="${rings.map(ring=>'M'+ring.map(p=>project(p).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="${1.5*markScale}" fill-rule="evenodd"/>`).join('');
   svg+=lineLayersSvg(output,project as never,markScale);
   const focus=output.rows.find(r=>'result:'+r.id===selected);

@@ -42,7 +42,7 @@ export interface CoverageRow extends MapRow {excluded:boolean; exclusionReason:s
  *  tell which is Streatham, which is why nothing could join a table to a study area: the names
  *  existed, in `BoundaryProvenance`, and stopped at the node. Index-aligned with the parts of
  *  `boundary` when it is a MultiPolygon. */
-export interface AreaValue {boundary:Boundary; units?:{id:string;name:string}[]; areaId:string; geometryId:string; label:string; spatialReference?:SpatialReference; areaFacts?:string; measurement?:Measurement; bounds?:Bounds; ready?:boolean; source?:string; dataset?:string; kind?:'study-area'; rows?:never[]; centers?:never[]}
+export interface AreaValue {boundary:Boundary; /** The country outline the study area carries, for context: drawn, never measured against (2026-11-23). */ contextOutline?:Boundary; units?:{id:string;name:string}[]; areaId:string; geometryId:string; label:string; spatialReference?:SpatialReference; areaFacts?:string; measurement?:Measurement; bounds?:Bounds; ready?:boolean; source?:string; dataset?:string; kind?:'study-area'; rows?:never[]; centers?:never[]}
 export interface CoverageValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-coverage'; rows:CoverageRow[]; centers:never[]; checkNodeId:string; areaNodeId:string; sourceNodeId:string|null; pointLayers:LayerSummary[]; reviewCount:number; excludedCount:number; canProceed:boolean; retainedLayers:{sourceNodeId:string; label:string; data:PointCollection}[]; retainedData:PointCollection; pointTable?:boolean}
 export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-map'; rows:MapRow[]; centers:never[];
   /** How each point layer is drawn, resolved once so the plot, the interactive map, the legend
@@ -115,6 +115,8 @@ export interface ChartSummary {field:'status'|'zone'|'tier'|'count'|'total'|'per
   numericCategory?:{unit:string};
   bins:{key:string; label:string; count:number; order?:number; panel?:string; missing?:true; lower?:number; upper?:number}[]}
 export interface DisplayValue {
+  /** The country outline the study area carries, for context: drawn under everything, never measured against (2026-11-23). */
+  contextOutline?:Boundary;
   polygonPresentation?:'plot'|'interactive';
   contextPoints?:PointCollection;
   polygons?:import('./catchments.js').Polygons;

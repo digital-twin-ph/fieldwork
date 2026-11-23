@@ -182,6 +182,24 @@ export function readLevel(iso:string,level:string,payload:unknown):BoundaryLevel
   };
 }
 
+/** THE COUNTRY OUTLINE THAT GOES WITH A LEVEL, read from the same release (2026-11-23). The simplified geometry, which
+ *  the service publishes beside the full one: DR Congo is 339 KB against 2.4 MB, and an outline drawn for context needs
+ *  no more. Null where the record names no simplified file, rather than quietly falling back to the full one -- a
+ *  context line is not worth a megabyte nobody asked for. */
+export function readCountryOutline(iso:string,payload:unknown):{boundaryID:string;name:string;licence:string;
+  licenceSource:string;source:string;yearRepresented:string;canonical:string;geoJsonUrl:string}|null{
+  const record=Array.isArray(payload)?payload[0]:payload;
+  if(!record||typeof record!=='object')return null;
+  const r=record as Record<string,unknown>;
+  const url=text(r.simplifiedGeometryGeoJSON);
+  if(!url||!text(r.boundaryID))return null;
+  return {boundaryID:text(r.boundaryID),name:text(r.boundaryName)||iso,
+    licence:text(r.boundaryLicense)||'not stated',licenceSource:text(r.licenseSource),
+    source:text(r.boundarySource)||'not stated',
+    yearRepresented:text(r.boundaryYearRepresented).replace(/\.0+$/,''),
+    canonical:text(r.boundaryCanonical),geoJsonUrl:browserFetchableUrl(url)};
+}
+
 /** True when a licence obliges anything derived from this boundary to carry the same terms.
  *
  *  Recorded per boundary because the project's own records said geoBoundaries was "CC BY 4.0 …

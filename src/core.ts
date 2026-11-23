@@ -2773,7 +2773,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         const ready=conclusions.some(q=>q.subject===`urn:fieldwork:area:${node.id}`&&q.predicate===NS+'readyForSpatialAnalysis'&&q.object==='true');
         if(!ready)throw new Error('The reasoner did not confirm the study-area input contract.');
         receipts.push({nodeId:node.id,...n3,conclusions});
-        value={kind:'study-area',areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,boundary:structuredClone(node.params.geometry),...(node.params.boundary?.units?.length?{units:structuredClone(node.params.boundary.units)}:{}),bounds:geometryBounds(node.params.geometry!),label:node.params.label,selectionMode:node.params.selectionMode,ready,rows:[],centers:[],source:'User-drawn geometry in CRS84'};break;
+        value={kind:'study-area',areaId:`urn:fieldwork:area:${node.id}`,geometryId:`urn:fieldwork:geometry:${node.id}`,boundary:structuredClone(node.params.geometry),...(node.params.countryOutline?{contextOutline:structuredClone(node.params.countryOutline.geometry)}:{}),...(node.params.boundary?.units?.length?{units:structuredClone(node.params.boundary.units)}:{}),bounds:geometryBounds(node.params.geometry!),label:node.params.label,selectionMode:node.params.selectionMode,ready,rows:[],centers:[],source:'User-drawn geometry in CRS84'};break;
       }
     case 'point_grid':{
       const rows=gridPoints(inputs.area.boundary,node.params.spacingM);

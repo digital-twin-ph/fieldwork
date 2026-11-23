@@ -3,7 +3,7 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
-## 0.170.0 — In development
+## 0.170.0 — 2026-11-22
 
 - **Rasters on one map** (Map 0.42.0). With nothing arranged, several rasters are now drawn over one frame, as Arrange's
   *One map* always said, static and interactive, on one key per unit; where two overlap, the later is drawn on top and

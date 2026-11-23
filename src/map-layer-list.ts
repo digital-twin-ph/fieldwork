@@ -170,7 +170,15 @@ export function classesOfPoints(rows:unknown,sourceNodeId:string):{name:string;p
 export function mapLayerList(node:WorkflowNode<'map_output'>,
   edges:readonly {to:string;from:string;port:string}[],
   sourceLabel:(nodeId:string)=>string|undefined,
-  within:readonly WithinSource[]=[]):MapLayer[]{
+  within:readonly WithinSource[]=[],
+  /** WHOSE LAYER THIS PORT CARRIES, where the run knows better than the wire. `core.ts` resolves
+   *  a point layer's identity from the data -- a `clip_points_to_area` passes the original
+   *  input's `sourceNodeId` through -- and the stack, the symbols and a classed layer's classes
+   *  are all keyed by that. Keying this list by the edge instead put those two identities out of
+   *  step whenever a step sat in between, so the layer could not be found and was drawn above
+   *  everything (2026-11-23: bats clipped to DRC buried a mine pin that reordering could not
+   *  lift). The edge's `from` is the fallback, which is what a port nobody resolved still uses. */
+  originOf:(port:string)=>{sourceNodeId:string;count?:number}|undefined=()=>undefined):MapLayer[]{
   const settings=node.params.layers||{},groups=node.params.layerGroups||[];
   const wired=edges.filter(e=>e.to===node.id&&drawablePort(e.port));
   const layers:MapLayer[]=[];
@@ -182,22 +190,32 @@ export function mapLayerList(node:WorkflowNode<'map_output'>,
       // what is in it. Listing both would offer a toggle that cannot mean anything.
       for(const member of members){
         const id=`${edge.port}/${member.name}`;
-        layers.push({id,kind,origin:'within',port:edge.port,sourceNodeId:edge.from,within:edge.port,
+        layers.push({id,kind,origin:'within',port:edge.port,sourceNodeId:originOf(edge.port)?.sourceNodeId??edge.from,within:edge.port,
           parts:member.parts,...resolved(settings[id],member.name,kind,groups)});
       }
       continue;
     }
-    layers.push({id:edge.port,kind,origin:'port',port:edge.port,sourceNodeId:edge.from,
-      ...resolved(settings[edge.port],defaultLabel(edge.port,sourceLabel(edge.from)),kind,groups)});
+    const carried=originOf(edge.port),source=carried?.sourceNodeId??edge.from;
+    layers.push({id:edge.port,kind,origin:'port',port:edge.port,sourceNodeId:source,
+      ...(typeof carried?.count==='number'?{parts:carried.count}:{}),
+      ...resolved(settings[edge.port],defaultLabel(edge.port,sourceLabel(source)),kind,groups)});
   }
   // A GROUP IS DRAWN AS A BLOCK. Its members sort by their own index within it, and the block
   // sorts by `fw:groupIndex` among the ungrouped layers -- so moving a group moves everything in
   // it, which is the point of having declared one. An ungrouped layer sorts on its own index.
   const blockIndex=(layer:MapLayer)=>layer.group?layer.group.index:layer.index;
+  // THE SMALLER LAYER ON TOP, among layers of one kind that nobody has positioned. Arrival order
+  // decided this until now, which drew one mine pin under 1,170 bat marks and 250 cholera deaths
+  // over eight pumps -- and the practitioner had to lift the pumps by hand on 2026-11-12. It is
+  // the same reading KIND_DEPTH already applies between kinds: the subject is what you are meant
+  // to see, and the layer with fewer marks is the one a fill or a swarm can hide. A position set
+  // in Manage layers is an index and wins over this.
+  const bulk=(layer:MapLayer)=>layer.parts??0;
   return layers
     .sort((a,b)=>blockIndex(a)-blockIndex(b)
       ||(a.group?.id===b.group?.id?0:(a.group?.id||'').localeCompare(b.group?.id||''))
-      ||a.index-b.index||KIND_DEPTH[a.kind]-KIND_DEPTH[b.kind]||a.id.localeCompare(b.id))
+      ||a.index-b.index||KIND_DEPTH[a.kind]-KIND_DEPTH[b.kind]
+      ||bulk(b)-bulk(a)||a.id.localeCompare(b.id))
     .map((layer,index)=>({...layer,index}));
 }
 

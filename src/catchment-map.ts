@@ -2,9 +2,30 @@ import {LINE_COLOURS} from './static-map.js';
 import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM} from './point-layers.js';
 import {RASTER_POINT_COLOURS} from './raster-panels.js';
 import {GlMarks,type GlMark} from './gl-marks.js';
-/** SITES ABOVE EVERY POINT LAYER: point layers are lifted by their place in Manage layers, up to 1000 x 10,000 for a layer
- *  the list does not name, and a pump covered by a death mark could not be clicked (gate 134, 2026-11-12). */
-const SITES_ON_TOP=100_000_000;
+/** THE STACK IS PANES, NOT ARITHMETIC (2026-11-23). Leaflet stacks markers within a pane by latitude -- each marker's
+ *  own z comes from its projected y in pixels -- so ordering layers by `zIndexOffset` meant reserving a band wider than
+ *  any layer's pixel spread: a stride of 10,000, and 100,000,000 to put the sites over all of it. The practitioner,
+ *  reading those numbers: *"Why do we have 10,000 layers when the points really are a layer group?"* They are a group,
+ *  and the groups were already built -- for switching on and off. A Leaflet FeatureGroup reserves no z of its own, so
+ *  order stayed arithmetic while visibility was structural, and the two knew nothing about each other. That is how a
+ *  layer the list could not name took the 1000 fallback, x 10,000, and sat above everything: one mine pin under 1,171
+ *  bat records that no reordering could lift.
+ *
+ *  A pane per layer makes the order structural. A layer with no position cannot outrank everything, because it has to
+ *  be IN a pane to be drawn, and the pane IS its position. Leaflet's own latitude ordering then does what it is for,
+ *  within one layer, which is what the stride was reserving room for. The static figure and the GPU renderer were
+ *  already structural -- both sort and draw in order -- so this was the one place a number stood in for a position.
+ *
+ *  Panes sit between Leaflet's `markerPane` (600) and `tooltipPane` (650), which leaves room for MAX_MANAGED_LAYERS
+ *  and keeps every tooltip and popup over every mark. The note at the sites below records a 2026-10-21 attempt that
+ *  broke the vector basemap's attribution; what broke it was a pane the basemap bridge drew into, not panes as such --
+ *  `gl-marks.ts` and `study-area-map.ts` have shipped their own since. Checked here against the attribution. */
+const MARKS_PANE_BASE=601;
+const SITES_PANE='fw-sites';
+/** Above every point layer, below the tooltips: a pump covered by a death mark could not be clicked (gate 134,
+ *  2026-11-12), and that was the first thing the arithmetic was holding up. */
+const SITES_PANE_Z=640;
+import {MAX_MANAGED_LAYERS} from './map-layer-list.js';
 import L from 'leaflet';
 import {TurnedImage} from './turned-image.js';
 /** HOW MANY STREET SEGMENTS AN INTERACTIVE MAP DRAWS. See the sampling below for the measurement
@@ -222,6 +243,18 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   // Views can disappear immediately on tab/workspace changes. Avoid delayed zoom
   // transition callbacks that outlive Leaflet's removed panes.
   const map=L.map(canvas,{scrollWheelZoom:false,zoomAnimation:false,fadeAnimation:false,markerZoomAnimation:false}),all=L.featureGroup(),overlays:Record<string,L.Layer>=Object.create(null);
+  /** ONE PANE PER LAYER, at its place in the stack. Clamped to the layers a key can tell apart, so a rank nobody set
+   *  cannot climb over the sites or under the basemap; within the pane Leaflet orders by latitude, as it should. */
+  const marksPane=(rank:number):string=>{
+    const at=Math.max(0,Math.min(MAX_MANAGED_LAYERS-1,rank));
+    const name=`fw-marks-${at}`;
+    if(!map.getPane(name))map.createPane(name).style.zIndex=String(MARKS_PANE_BASE+at);
+    return name;
+  };
+  const sitesPane=():string=>{
+    if(!map.getPane(SITES_PANE))map.createPane(SITES_PANE).style.zIndex=String(SITES_PANE_Z);
+    return SITES_PANE;
+  };
   options.onMap?.(map);
   // EVERY OVERLAY'S NAME AND POSITION COMES FROM THE LAYER LIST, not from the line that happens
   // to construct it. Each of these used to invent its own string where it was built -- "Study
@@ -467,7 +500,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   const pumps=L.featureGroup(),points=context?.features||p.sites;
   for(const f of points){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates;
     if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
-    const marker=L.marker([lat,lon],{zIndexOffset:SITES_ON_TOP,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
+    const marker=L.marker([lat,lon],{pane:sitesPane(),icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:f.properties.name}).bindPopup(`<b>${esc(f.properties.name)}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}${p.sites.some(s=>s.id===f.id)?'<br>Travel-time origin':''}`).addTo(pumps);
     marker.on('add',()=>{const icon=marker.getElement();if(icon){L.DomEvent.disableClickPropagation(icon);icon.addEventListener('mousedown',event=>event.preventDefault());icon.addEventListener('click',event=>{event.stopPropagation();marker.openPopup();});}});
   }
   if(pumps.getLayers().length){if(!hiddenPort('sites')){pumps.addTo(map);all.addLayer(pumps);}
@@ -507,7 +540,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       if(ramp)rows.sort((a,b)=>(valueOf(a)??-Infinity)-(valueOf(b)??-Infinity));
       // THE LAYER'S PLACE IN THE STACK set in Manage layers (2026-11-12): Leaflet stacks markers by latitude unless told,
       // so each layer's marks are lifted by its position, and a layer moved up is drawn over the others.
-      const lift=layerRanks(layers.mapLayers)(source)*10000;
+      const pane=marksPane(layerRanks(layers.mapLayers)(source));
       // PROPORTIONAL SYMBOLS, as the static figure draws them (experiment 210): largest first, so none hides another.
       const largest=symbol.sizeBy&&!ramp?Math.max(0,...rows.map(row=>Number((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])).filter(Number.isFinite)):0;
       if(largest>0)rows.sort((a,b)=>(Number((b as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])||0)-(Number((a as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!])||0));
@@ -601,7 +634,7 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         const r=largest>0?proportionalRadius((row as {attributes?:Record<string,unknown>}).attributes?.[symbol.sizeBy!],largest,markRadius(symbol.size))
           :ramp?Math.max(7,markRadius(symbol.size)):markRadius(symbol.size);
         const box=Math.ceil(2*(r+2.5)),centre=box/2;
-        const marker=L.marker([lat,lon],{title:row.name,zIndexOffset:lift,icon:L.divIcon({className:'catchment-point-mark',
+        const marker=L.marker([lat,lon],{title:row.name,pane,icon:L.divIcon({className:'catchment-point-mark',
           iconSize:[box,box],iconAnchor:[centre,centre],
           html:`<svg width="${box}" height="${box}" viewBox="0 0 ${box} ${box}" aria-hidden="true">`
             +(layers.markHalo===false?'':`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="none" `
@@ -670,10 +703,11 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
       if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;
       // ABOVE the point marks. Facility marks became icons on 2026-10-21 so they could carry a
       // halo, which moved them from the overlay pane into the marker pane -- where a dense layer
-      // covered the site markers and swallowed their clicks. A custom pane fixed the stacking and
-      // broke the vector basemap's attribution, which arrives through the bridge into Leaflet's
-      // control; `zIndexOffset` orders them inside the one pane and leaves that alone.
-      L.marker([lat,lon],{zIndexOffset:SITES_ON_TOP,icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:center.name})
+      // covered the site markers and swallowed their clicks. A pane fixed the stacking then and
+      // broke the vector basemap's attribution, so it was reverted to `zIndexOffset`; the pane it
+      // broke was one the basemap bridge drew into. Its own pane, which nothing else draws into,
+      // is checked against the attribution by tests/catchments.browser.mjs.
+      L.marker([lat,lon],{pane:sitesPane(),icon:L.divIcon({className:'catchment-site-marker',iconSize:[12,12],iconAnchor:[6,6]}),title:center.name})
         .bindPopup(`<b>${esc(center.name??'Center')}</b><br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`).addTo(group);
     }
     if(group.getLayers().length){if(!hiddenPort('centers')){group.addTo(map);all.addLayer(group);}

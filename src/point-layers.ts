@@ -15,7 +15,14 @@ export function pointLayers(points:PointInput){
   return layers;
 }
 export const recordKey=(source:string,id:string,multiple:boolean)=>multiple?`${source.length}_${source}_${id}`:id;
-export const layerSummary=(layers:PointLayer[])=>layers.map(l=>({sourceNodeId:l.sourceNodeId,label:l.label||l.sourceNodeId,count:l.features.length}));
+export const layerSummary=(layers:PointLayer[])=>layers.map(l=>({sourceNodeId:l.sourceNodeId,label:l.label||l.sourceNodeId,count:l.features.length,...(l.port?{port:l.port}:{})}));
+/** WHICH STEP EACH PORT'S LAYER REALLY CAME FROM, read off the layers the run composed rather than off the edges.
+ *  Empty for a map drawn before the port travelled, where the edge's `from` remains the only answer there is. */
+export const layerOrigins=(summaries:readonly {sourceNodeId:string;port?:string;count?:number}[]|undefined)
+  :(port:string)=>{sourceNodeId:string;count?:number}|undefined=>{
+  const by=new Map((summaries??[]).flatMap(l=>l.port?[[l.port,{sourceNodeId:l.sourceNodeId,count:l.count}] as const]:[]));
+  return port=>by.get(port);
+};
 export function layerRecords(layers:PointLayer[]){return layers.flatMap(layer=>layer.features.map(feature=>({feature,id:recordKey(layer.sourceNodeId,feature.id,layers.length>1),recordId:feature.id,sourceNodeId:layer.sourceNodeId,layerLabel:layer.label||layer.sourceNodeId,attributeTypes:Object.fromEntries((layer.attributeDefinitions||[]).map(d=>[d.key,d.type]))})));}
 
 /** THE POINTS A MAP COMPOSED, DRAWN OVER WHATEVER RENDERER LED.

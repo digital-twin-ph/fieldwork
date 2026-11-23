@@ -1,6 +1,6 @@
 # Map
 
-_Created 2026-10-14 · Updated 2026-11-22_
+_Created 2026-10-14 · Updated 2026-11-23_
 
 **An output widget.** It draws what your workflow produced. It computes nothing, changes
 nothing and decides nothing — if a number looks wrong on the map, the step that produced it is
@@ -372,6 +372,50 @@ being served, so another machine may show different ground. A map over an online
 Methods as a limitation, by itself. Natural Earth is bundled and writes no such note.
 
 ## History
+
+### 2026-11-23 · A pane per layer, and the stride retired (0.45.0)
+
+The practitioner, reading the z-indices the fix above exposed — 10,076 and 10,000,092: *"Why do we have 10,000 layers
+when the points really are a layer group?"*
+
+They are a group, and the groups were already built. Leaflet orders markers within a pane by latitude — each marker's
+own z comes from its projected y in pixels — so ordering layers by `zIndexOffset` meant reserving a band wider than any
+layer's pixel spread: a stride of 10,000 per layer, and 100,000,000 to hold the sites above all of it. A FeatureGroup
+reserves no depth of its own, so the groups carried visibility while a number carried order, and the two knew nothing
+about each other. That is how a layer the list could not name took the 1000 fallback, times the stride, and sat over
+everything.
+
+Each point layer now draws in its own pane at its place in the stack, between Leaflet's marker pane and its tooltips,
+and the sites have a pane of their own. Both numbers are gone. A layer with no position cannot outrank anything,
+because it has to be in a pane to be drawn and the pane is its position. Leaflet's latitude ordering is left to do what
+it is for, within one layer, which is what the stride was reserving room for. The static figure and the GPU renderer
+needed no change: both already order by drawing in order.
+
+A pane was tried for the sites on 2026-10-21 and reverted because it broke the vector basemap's attribution. Retested:
+what broke was a pane the basemap bridge drew into, not panes as such. A pane nothing else draws into keeps the
+attribution, checked by `tests/catchments.browser.mjs`.
+
+**Not fixed by this.** A point layer past 2,000 marks is drawn by the GPU renderer, which is one canvas in one pane
+below the marker pane, so such a layer draws under every smaller layer wherever it is placed, and GPU layers order
+among themselves by arrival. One canvas cannot interleave with a pane per layer; that needs its own measurement.
+
+### 2026-11-23 · The layer stack and the marks read one identity (0.45.0)
+
+One mine pin and 1,171 bat records clipped to the DRC's provinces: *"This workflow keeps bat sites inside DRC ADM1
+polygons but loses the mines push pin... I tried layers, putting mines as top layer on map but did not work."* The pin
+was drawn — hiding the bats left exactly one mark — and buried at z 10,076 under bats at 10,000,092.
+
+Two notions of a layer's identity were in use. The marks are keyed by the identity the data carries, which a
+`clip_points_to_area` passes through from the input behind it; the layer list keyed each layer by the edge it arrived
+on, which names the clip. They agree until a step sits in between. `layerRanks` lifts a layer the list cannot name
+above every layer it can, so the bats went to the top and no reordering could reach them. The list now reads the same
+identity the marks do, through the port, which is the one name both sides agree on. A classed layer's classes were
+found by the same lookup and were lost the same way.
+
+And the default stack was arrival order among point layers, which put one pin under a swarm. The smaller layer is now
+drawn on top — the reading `KIND_DEPTH` already applies between kinds — and a position set in Manage layers still wins.
+The dialog shows each layer's count.
+
 
 ### 2026-11-23 · Polygons as the ground a point stands on (0.44.0)
 

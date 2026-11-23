@@ -1,5 +1,6 @@
 import {test,expect} from './fixtures.mjs';
 import {inMapSettings} from './map-settings.mjs';
+import assert from 'node:assert/strict';
 
 /** SNOW'S OWN MAP, and the encoding its key promises.
  *
@@ -108,4 +109,54 @@ test('moving a layer in Manage layers redraws the marks in that order, at once',
   await page.locator('[data-layer-move="points_2"][data-direction="down"]').click();
   await show();
   await expect.poll(topLayer).toBe('pumps');
+});
+
+// A PANE PER LAYER, so the stack is structural. The practitioner, 2026-11-23, reading z-indices of 10,000 and
+// 100,000,000 on the interactive map: *"Why do we have 10,000 layers when the points really are a layer group?"*
+// They are a group, and the groups were already built -- for switching on and off, which reserves no z of its own.
+// Order was arithmetic, visibility was structural, and the two knew nothing about each other: a layer the list
+// could not name took the fallback rank, x 10,000, and sat above everything no matter where it was put.
+test('each point layer draws in its own pane, and Manage layers moves the pane',async({page})=>{
+  await page.goto('/?example=snow-deaths');
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  // The spot map is a figure; the panes are the interactive map's, so it is drawn as one here.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="spot-map"]').click();
+  await inMapSettings(page,d=>d.locator('#polygon-presentation').selectOption('interactive'));
+  await page.locator('[data-view="results"]').click();await page.locator('[data-output="spot-map"]').click();
+  await expect(page.locator('.catchment-leaflet')).toBeVisible({timeout:30000});
+  /** EACH LAYER'S PANE AND ITS DEPTH, told apart by how many marks are in it: eight pumps and 250 deaths. A mark's
+   *  own z within a pane is Leaflet's latitude ordering, which is what the stride used to reserve room for; it is
+   *  not read here, because that is the ordering panes exist to leave alone. */
+  const panes=async()=>page.evaluate(()=>{
+    const out={};
+    for(const mark of document.querySelectorAll('.catchment-point-mark')){
+      const pane=mark.closest('.leaflet-pane');
+      const name=pane&&[...pane.classList].find(c=>/^leaflet-fw-marks-\d+-pane$/.test(c));
+      if(!name)continue;
+      const held=out[name]??(out[name]={z:Number(getComputedStyle(pane).zIndex),marks:0});
+      held.marks++;
+    }
+    return out;});
+  const depthOf=async()=>{
+    const found=Object.entries(await panes()).map(([pane,v])=>({pane,...v}));
+    return {pumps:found.find(p=>p.marks<50),deaths:found.find(p=>p.marks>=50),count:found.length};
+  };
+  const first=await depthOf();
+  assert.equal(first.count,2,'one pane per point layer, and no layer sharing');
+  assert.ok(first.pumps&&first.deaths,'both layers are in a layer pane of their own');
+  // Eight pumps over 250 deaths without anybody asking: the smaller layer is the one a swarm can hide.
+  assert.ok(first.pumps.z>first.deaths.z,`pumps ${first.pumps.z} over deaths ${first.deaths.z}`);
+  // AND NO ARITHMETIC: every pane sits between Leaflet's marker pane and its tooltips, so a tooltip and a popup
+  // are still over every mark however many layers there are.
+  for(const entry of [first.pumps,first.deaths])assert.ok(entry.z>600&&entry.z<650,`${entry.pane} at ${entry.z}`);
+  // Moved in Manage layers, the marks change pane -- the position IS the pane.
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="spot-map"]').click();
+  await page.locator('[data-manage-layers]').first().click();
+  await page.locator('[data-layer-move="points_2"][data-direction="up"]').click();
+  await page.keyboard.press('Escape').catch(()=>{});
+  await page.locator('[data-view="results"]').click();await page.locator('[data-output="spot-map"]').click();
+  await expect(page.locator('.catchment-leaflet')).toBeVisible({timeout:30000});
+  await expect.poll(async()=>{const now=await depthOf();return !!now.deaths&&!!now.pumps&&now.deaths.z>now.pumps.z;}).toBe(true);
 });

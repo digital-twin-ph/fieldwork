@@ -179,7 +179,7 @@ import {withDictionary,BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,proje
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence,withoutLeftOutAreas} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
-import {pointPort,markedPoints} from './point-layers.js';
+import {pointPort,markedPoints,layerOrigins} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
 import {exposureColumnsOffered} from './two-by-two-mapping.js';
 import {repositoryFiles} from './project-repository.js';
@@ -4040,7 +4040,8 @@ function renderMap(){
       id=>workflow.nodes.find(n=>n.id===id)?.params.label,
       ((result as {mapLayers?:import('./map-layer-list.js').MapLayer[]}).mapLayers||[]).filter(l=>l.origin==='within')
         .reduce((within,l)=>{const at=within.find(w=>w.port===l.port);const member={name:l.id.slice(l.port.length+1),parts:l.parts??0};
-          if(at)at.members.push(member);else within.push({port:l.port,members:[member]});return within;},[] as {port:string;members:{name:string;parts:number}[]}[]));
+          if(at)at.members.push(member);else within.push({port:l.port,members:[member]});return within;},[] as {port:string;members:{name:string;parts:number}[]}[]),
+      layerOrigins(result.pointLayers));
   }
   const spec=result&&mapNode&&runWorkflow?mapPresentation(mapNode,result,runWorkflow):undefined;
   $('#map-panel').classList.toggle('has-communication',!!spec);
@@ -5689,7 +5690,8 @@ function renderNotesView(){
     notesMapSvg.set(key,'<p class="muted">Drawing the map\u2026</p>');
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg') as SVGSVGElement;
     svg.setAttribute('viewBox','0 0 850 295');
-    const kept=new Set<string>(mapLayerList(node,held.workflow.edges,id=>held.workflow.nodes.find(n=>n.id===id)?.params.label)
+    const kept=new Set<string>(mapLayerList(node,held.workflow.edges,id=>held.workflow.nodes.find(n=>n.id===id)?.params.label,
+      [],layerOrigins(output.pointLayers))
       .filter(l=>!l.drawn).map(l=>l.sourceNodeId??l.id));
     drawStaticFigure(svg,output,node,{hidden:kept,offPage:{workflow:held.workflow}}).then(ok=>{
       if(!ok){notesMapSvg.set(key,'');refreshNotesIfOpen();return;}
@@ -8288,7 +8290,8 @@ const layersFor=(node:WorkflowNode<'map_output'>):MapLayer[]=>{
   const out=result?.outputs.find(o=>o.nodeId===node.id);
   return mapLayerList(node,workflow.edges,
     id=>workflow.nodes.find(n=>n.id===id)?.params.label,
-    out?.polygons?[{port:'polygons',members:membersOfPolygons(out.polygons)}]:[]);
+    out?.polygons?[{port:'polygons',members:membersOfPolygons(out.polygons)}]:[],
+    layerOrigins(out?.pointLayers));
 };
 const KIND_WORD:Record<string,string>={AreaLayer:'study area',PointsLayer:'points',
   PolygonsLayer:'polygons',RasterLayer:'raster',NetworkLayer:'street network',BasemapLayer:'basemap'};
@@ -8313,7 +8316,7 @@ function renderLayerDialog(){
       +(node.params.layerGroups||[]).map(group=>
         `<option value="${esc(group.id)}" ${layer.group?.id===group.id?'selected':''}>${esc(group.label)}</option>`).join('')
       +`</select>`
-    +`<span class="muted layer-row-kind">${esc(KIND_WORD[layer.kind]||layer.kind)}${layer.parts?` · ${layer.parts} parts`:''}<br><span class="layer-row-origin">${layer.origin==='within'?'named by the data':'named by the widget'}</span></span>`
+    +`<span class="muted layer-row-kind">${esc(KIND_WORD[layer.kind]||layer.kind)}${layer.parts?` · ${layer.parts.toLocaleString('en-US')}${layer.origin==='within'?' parts':''}`:''}<br><span class="layer-row-origin">${layer.origin==='within'?'named by the data':'named by the widget'}</span></span>`
     +`</div>`).join('')
     :'<p class="muted">Nothing is connected to this map yet, so it has no layers to manage.</p>';
   // WHAT IS REFUSED IS SAID HERE, and it is never a combination of kinds. A kind decides how a

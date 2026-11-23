@@ -105,7 +105,7 @@ import {studyAreaN3,geometryBounds,validateDrawnGeometry,validateAreaParams} fro
 import {measureArea,validateAreaUnit} from './area-measurement.js';
 import {mapOutput} from './map-output.js';
 import {tableOutput} from './table-output.js';
-import {MAX_POINT_LAYERS,MAX_POINT_RECORDS,pointPort,isPointPort} from './point-layers.js';
+import {MAX_POINT_LAYERS,MAX_POINT_RECORDS,pointPort,isPointPort,layerOrigins} from './point-layers.js';
 import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
@@ -1403,7 +1403,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         :{sourceNodeId:from,label:connected.params.label||TYPES[connected.type].title};
     };
     const pointInputs=():{layers:import('./types.js').PointLayer[]}=>({layers:nodeInputs(node).filter(([port])=>isPointPort(port)).flatMap(([port])=>{const edge=workflow.edges.find(e=>e.to===node.id&&e.port===port);if(!edge)return [];const source=workflow.nodes.find(n=>n.id===edge.from);if(!source)return [];return [{...(inputs[port as keyof ExecutionInputs] as unknown as PointCollection),
-      ...layerIdentity(workflow,edge.from,inputs[port as keyof ExecutionInputs] as unknown as PointCollection,source),attributeDefinitions:[...('fields' in source.params?source.params.fields||[]:[]),...('attributeRules' in source.params?source.params.attributeRules||[]:[])]}];})});
+      ...layerIdentity(workflow,edge.from,inputs[port as keyof ExecutionInputs] as unknown as PointCollection,source),port,attributeDefinitions:[...('fields' in source.params?source.params.fields||[]:[]),...('attributeRules' in source.params?source.params.attributeRules||[]:[])]}];})});
     let value:unknown;
     // THE LAYERS THIS NODE DRAWS, settled once and read by everything downstream. Built before
     // the renderer is chosen, because which renderer leads and which layers survive are two
@@ -2827,6 +2827,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
     }
     if(node.type==='map_output'&&isRecord(value)){
+      const originOf=layerOrigins((value as {pointLayers?:{sourceNodeId:string;port?:string}[]}).pointLayers);
       const plan=mapLayerList(node,workflow.edges,
         id=>workflow.nodes.find(n=>n.id===id)?.params.label,
         [...(inputs.polygons?[{port:'polygons',members:membersOfPolygons(inputs.polygons)}]:[]),
@@ -2834,9 +2835,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           // collected polygon's members. Read from the rows the map just built, so the list and
           // the picture are one answer rather than two.
           ...workflow.edges.filter(e=>e.to===node.id&&isPointPort(e.port)).flatMap(edge=>{
-            const classes=classesOfPoints((value as {rows?:unknown}).rows,edge.from);
+            const classes=classesOfPoints((value as {rows?:unknown}).rows,originOf(edge.port)?.sourceNodeId??edge.from);
             return classes.length?[{port:edge.port,members:classes}]:[];
-          })]);
+          })],originOf);
       assertSomethingToDraw(plan,node.params.label||node.id);
       (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=plan;
       const described=mapDescriptionNote(plan,node.params.label,node.id);

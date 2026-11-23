@@ -28,7 +28,7 @@ export interface Sample {id:string; name:string; coordinates:Position; attribute
  *  stated assumption -- a straight-line distance walked at a constant speed -- and not a unit of
  *  distance, which is why it is a separate step and not a third value of `unit`. */
 export interface NearestRow {id:string; name:string; coordinates:Position|null; distance:number|null; unit:DistanceUnit; center:Sample|null; reason?:string; minutes?:number|null; attributes?:Record<string,Scalar>}
-export interface LayerSummary {sourceNodeId:string; label:string; count:number}
+export interface LayerSummary {sourceNodeId:string; label:string; count:number; port?:string}
 export interface PointRow {id:string; recordId:string; sourceNodeId:string; layerLabel:string; attributeTypes:Record<string,AttributeType>; name:string; attributes:Record<string,Scalar>; coordinates:Position|null}
 /** `fill` is the class the map RESOLVED this row to, by its own fillEncoding. The renderer draws
  *  the class; it does not read the variable. */

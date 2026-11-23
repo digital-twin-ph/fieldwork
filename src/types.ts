@@ -42,7 +42,15 @@ export interface SpatialReference {datum:'WGS84'; geodeticCRS:'EPSG:4326'; geome
 export interface ProjectedReference {datum:'WGS84'; geodeticCRS:'EPSG:4326'; geometryCRS:string; axisOrder:'easting-northing'; units:'metre'}
 export type AnySpatialReference = SpatialReference | ProjectedReference;
 export const isProjectedReference=(reference:AnySpatialReference|undefined):reference is ProjectedReference=>reference?.units==='metre';
-export interface PointLayer extends PointCollection {sourceNodeId:string; label?:string; spatialReference?:AnySpatialReference; attributeDefinitions?:AttributeDefinition[];
+export interface PointLayer extends PointCollection {sourceNodeId:string;
+  /** THE PORT THIS LAYER ARRIVED AT, carried because the layer's identity and the wire disagree
+   *  whenever a step sits between the source and the map: `clip_points_to_area` passes the
+   *  original input's `sourceNodeId` through, so the drawn marks are stamped with the input while
+   *  the edge names the clip. Reported 2026-11-23 -- bats clipped to DRC buried a mine pin that
+   *  no reordering in Manage layers could lift, because the layer list keyed the stack by the
+   *  edge and the marks by the input, and a layer the list cannot find is drawn on top. The port
+   *  is the one name both sides agree on. */
+  port?:string; label?:string; spatialReference?:AnySpatialReference; attributeDefinitions?:AttributeDefinition[];
   /** The source table's column the point ids were read from, when they were read from one. */
   idColumn?:string}
 export type PointInput = PointLayer | {layers:PointLayer[]};

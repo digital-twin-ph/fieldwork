@@ -5,6 +5,7 @@
   "added",
   "changed",
   "feature",
+  "fixed",
   "initial",
   "major",
   "minor",
@@ -405,12 +406,20 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.44.0",
+   "version": "0.45.0",
    "released": "2026-11-23",
    "changes": [
     {
+     "kind": "fixed",
+     "description": "A point layer that reaches the map through another step -- a clip, say -- is found in the layer list again, so Manage layers can move it. The list keyed each layer by the edge it arrived on while the marks are keyed by the identity the data carries, and for a clipped layer those two names disagree; a layer the list cannot find is lifted above every layer it can, which is why one mine pin stayed buried under 1,171 bat records however the stack was reordered."
+    },
+    {
      "kind": "minor",
-     "description": "Polygons built from the study areas connected to a workflow are drawn in one wash, not a hue each, where points are drawn over them: they are the ground the points stand on, and a colour each said they were different things. Configure… offers a colour for each polygon always or never. A layer read from a file keeps its hues whatever else the map draws, and a layer carrying a value keeps its classes either way."
+     "description": "Among point layers nobody has positioned, the one with fewer marks is now drawn on top. Arrival order decided this before, which drew one pin under a swarm; it is the reading the stack already applies between kinds, and a position set in Manage layers still wins. Each port layer's count is shown in the dialog."
+    },
+    {
+     "kind": "changed",
+     "description": "The interactive map's stack is a pane per point layer, not arithmetic. Leaflet orders markers within a pane by latitude, so ordering layers by an offset meant reserving a band wider than any layer's pixel spread -- a stride of 10,000, and 100,000,000 to hold the sites above it -- and a layer the list could not name took the fallback rank times that stride and sat over everything. A layer with no position can no longer outrank anything, because the pane IS its position; Leaflet's latitude ordering is left to do what it is for, within a layer. The static figure and the GPU renderer already ordered by drawing in order. The sites have a pane of their own, which is what 100,000,000 was for."
     }
    ],
    "breaking": false,

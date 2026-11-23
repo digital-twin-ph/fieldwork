@@ -69,3 +69,31 @@ test('a layer with no carried identity still falls back to what is connected',as
   const map=(await run(workflow)).outputs.find(o=>o.nodeId==='map');
   assert.deepEqual(map.pointLayers.map(l=>l.label),['OSM Health Facilities']);
 });
+
+// AND THE STACK IS KEYED BY THE SAME IDENTITY. Reported 2026-11-23, with one mine pin and 1,171
+// bat records clipped to the DRC's provinces: *"This workflow keeps bat sites inside DRC ADM1
+// polygons but loses the mines push pin... I tried layers, putting mines as top layer on map but
+// did not work."* The pin was drawn and buried. `mapLayerList` keyed each layer by the edge's
+// `from` while the marks were keyed by the identity the data carries, so for a clipped layer the
+// two names disagreed -- and `layerRanks` lifts a layer it cannot find above every layer it can,
+// which is exactly why reordering changed nothing.
+test('the layer stack is keyed by the identity the data carries, so a clipped layer can be moved',async()=>{
+  const many=Array.from({length:12},(_,i)=>[0.4+i*0.1,0.4]);
+  const workflow={schema:'fieldwork/workflow/1',id:'w',label:'Stack',nodes:[
+    area,points('mine','Mines',[[1,1]]),points('bats','Bats',many),clip('clip'),
+    {id:'map',type:'map_output',x:0,y:0,params:{label:'Map',pointInputCount:2}},
+  ],edges:[
+    {id:'e1',from:'area',to:'clip',port:'area'},{id:'e2',from:'bats',to:'clip',port:'points'},
+    {id:'e3',from:'area',to:'map',port:'area'},
+    {id:'e4',from:'mine',to:'map',port:'points'},{id:'e5',from:'clip',to:'map',port:'points_2'},
+  ]};
+  const map=(await run(workflow)).outputs.find(o=>o.nodeId==='map');
+  const stack=map.mapLayers.filter(l=>l.kind==='PointsLayer');
+  assert.deepEqual(stack.map(l=>l.sourceNodeId),['bats','mine'],
+    'the clipped layer is listed as the input it came from, not as the clip');
+  // THE SMALLER LAYER ON TOP by default: one pin under twelve marks is a map that answers nothing.
+  assert.deepEqual(stack.map(l=>l.label),['Bats','Mines']);
+  // Every drawn mark can now be found in the list, which is what makes Manage layers effective.
+  const named=new Set(map.mapLayers.map(l=>l.sourceNodeId));
+  for(const row of map.rows)assert.ok(named.has(row.sourceNodeId),`${row.sourceNodeId} is in the layer list`);
+});

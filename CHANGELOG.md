@@ -3,6 +3,25 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.176.0 — 2026-11-23
+
+- **A point layer that reaches the map through another step can be moved again** (Map 0.45.0). Reported with one mine
+  pin and 1,171 bat records clipped to the DRC's provinces: the pin was drawn and buried, and putting Mines at the top
+  of Manage layers changed nothing. The layer list keyed each layer by the edge it arrived on while the marks are keyed
+  by the identity the data carries — a clip passes the input's identity through, so for a clipped layer the two names
+  disagreed, and a layer the list cannot find is lifted above every layer it can. Both now read the same identity.
+- **The smaller point layer is drawn on top by default** (Map 0.45.0). Arrival order decided this before, which is how
+  one pin ended up under a swarm and why the pumps had to be lifted over the cholera deaths by hand on 2026-11-12. It
+  is the reading the stack already applies between kinds; a position set in Manage layers still wins, and the dialog
+  now shows how many marks each layer holds.
+- **The interactive map's stack is a pane per layer, not arithmetic** (Map 0.45.0). Reading the z-indices above:
+  *"Why do we have 10,000 layers when the points really are a layer group?"* They are a group, and the groups were
+  already there — for switching on and off, which reserves no depth of its own. So order was a number and visibility
+  was structure, and the two knew nothing about each other. Each point layer now draws in its own Leaflet pane at its
+  place in the stack, which retires the stride of 10,000 and the 100,000,000 that held the sites above it; a layer with
+  no position cannot outrank anything, because the pane is its position. Leaflet's latitude ordering is left to do what
+  it is for, within a layer. The static figure and the GPU renderer already ordered by drawing in order.
+
 ## 0.175.0 — 2026-11-23
 
 - **Polygons built from the study areas are the ground a point stands on** (Map 0.44.0). Four provinces under one mine

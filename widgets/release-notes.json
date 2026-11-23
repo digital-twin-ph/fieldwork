@@ -105,12 +105,28 @@
    "migrationFrom": []
   },
   "buffer_point": {
-   "version": "0.3.0",
+   "version": "0.4.0",
    "released": "2026-11-23",
    "changes": [
     {
      "kind": "minor",
-     "description": "Configure… offers the points the connected layer carries, by name, instead of asking for one to be typed against a placeholder. Where exactly one arrives the dialog opens on it, because one point is not a choice; where several do, the first entry says Choose a point and carries no value, so the control never reads as an answer the step does not hold. A point already chosen stays on the list even where the layer no longer offers it. A source that holds no records of its own and has not run offers nothing, and the name is typed in as before, with a line saying a run will populate it."
+     "description": "Buffers points, lines or polygons, not one point. Nothing named draws an area around every feature connected; a name still picks one. Asked for 2026-11-23: the step is also supposed to work for polygons and lines."
+    },
+    {
+     "kind": "minor",
+     "description": "Configure... offers to combine the buffers into one study area or keep each one separate as a polygon layer, and says what combining costs: the summed area of the parts, the area once combined, and how much is covered more than once. The dissolve and that arithmetic are combined-area.ts's, not a second implementation."
+    },
+    {
+     "kind": "minor",
+     "description": "Preview draws the areas to scale with their overlaps, from the same construction the run uses, so a radius can be judged before anything runs."
+    },
+    {
+     "kind": "fixed",
+     "description": "The dialog capped the radius at 5,000 m while the rule allowed 50,000, so a radius the step would have accepted could not be typed. One number now, read by both. A 50 km question about a mine is what made it bite."
+    },
+    {
+     "kind": "fixed",
+     "description": "The one-degree span limit is held to study areas, which window every raster a workflow reads, and no longer applied to a polygon layer, which windows nothing. Applied to a layer it refused foraging ranges across two provinces -- a prototype limit extended past what it guards."
     }
    ],
    "breaking": false,
@@ -535,12 +551,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.16.0",
+   "version": "0.17.0",
    "released": "2026-11-23",
    "changes": [
     {
      "kind": "minor",
-     "description": "An Excel workbook is read, its first sheet carrying a header row taken as a CSV is, with the longitude and latitude columns proposed by name. A spreadsheet of sites had to be saved as a CSV first."
+     "description": "The pin editor's map takes the room the dialog has instead of a fixed 400 px, and Full screen gives it the whole window with the pin's form still beside it. Siting a pin is reading the ground around it -- which river, which road, which workings -- and the small window made that a sequence of zooms rather than a look."
     }
    ],
    "breaking": false,

@@ -14,6 +14,7 @@ import {readFileSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
 import {join} from 'node:path';
 import {TYPES,nodeInputs,requiredInputs,outputOf} from '../build/core.js';
+import {PORT_GROUPS} from '../build/port-names.js';
 
 const root=fileURLToPath(new URL('../',import.meta.url));
 
@@ -54,12 +55,23 @@ export function contracts(){
       const node={id:'n',type,x:0,y:0,params:{label:'x',pointInputCount:1,...params}};
       let all;try{all=nodeInputs(node);}catch{continue;}
       const req=requiredInputs(node).map(([p,t])=>[p,t]);
-      const opt=all.filter(([p])=>!req.some(([r])=>r===p)).map(([p,t])=>[p,t]);
-      const signature=JSON.stringify([req,opt,outputOf(node)]);
+      let opt=all.filter(([p])=>!req.some(([r])=>r===p)).map(([p,t])=>[p,t]);
+      // ONE OF SEVERAL, which `required` cannot say: it is a conjunction, and the alternatives a widget really has
+      // come from what is WIRED, not from a parameter. Area around a point requires no single port -- it buffers
+      // points, lines or polygons -- and a contract reading `required: []` says it can run with nothing connected,
+      // which is what put it on the blank-canvas palette on 2026-11-23. It refuses with nothing connected. Where a
+      // widget declares a port group and requires none of that group's ports, the group IS the alternative, so it
+      // is published as one and the palette can tell "needs nothing" from "needs one of these".
+      const anyOf=req.length?[]:Object.values(PORT_GROUPS[type]??{}).flat()
+        .filter(port=>all.some(([p])=>p===port))
+        .map(port=>[port,all.find(([p])=>p===port)[1]]);
+      // A port named as one of the alternatives is not also optional: it is one of the ways this step is satisfied.
+      if(anyOf.length)opt=opt.filter(([p])=>!anyOf.some(([a])=>a===p));
+      const signature=JSON.stringify([req,anyOf,opt,outputOf(node)]);
       if(seen.has(signature))continue;
       // THE OUTPUT A VARIANT GIVES, where it is not the widget's default (experiment 205).
       const given=outputOf(node);
-      seen.set(signature,{when:key(params),required:req,optional:opt,...(given!==(definition.output??null)?{output:given}:{})});
+      seen.set(signature,{when:key(params),required:req,...(anyOf.length?{requiredAnyOf:anyOf}:{}),optional:opt,...(given!==(definition.output??null)?{output:given}:{})});
     }
     out[type]={output:definition.output??null,contracts:[...seen.values()]};
   }

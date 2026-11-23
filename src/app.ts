@@ -4555,19 +4555,30 @@ function areaStepKit():AreaStepKit{
     summary:id=>dirty?undefined:result?.stepSummaries?.[id],
     // THE POINTS ARRIVING, named: the source's own records where it holds them, the last run's where it does not.
     pointChoices:(id,port)=>{
-      const e=workflow.edges.find(x=>x.to===id&&x.port===port);
-      if(!e)return {names:[],total:0};
-      const source=workflow.nodes.find(n=>n.id===e.from);
-      const held=(source?.params as {data?:{features?:{id?:unknown;properties?:{name?:unknown}}[]}}|undefined)?.data?.features;
-      const ran=result?.outputs.find(o=>o.nodeId===e.from) as {rows?:{name?:unknown;recordId?:unknown}[]}|undefined;
-      const named=held?.length
-        ?held.map(f=>String(f.properties?.name??f.id??'').trim())
-        :(ran?.rows??[]).map(r=>String(r.name??r.recordId??'').trim());
+      // EVERY PORT THE STEP BUFFERS, not one: points, lines and a polygon layer share a group on the canvas and a
+      // feature from any of them can be the one named (2026-11-23).
+      const ports=port==='points'?['points','lines','polygons']:[port];
+      const features:{name:string;geometry:{type:string;coordinates:unknown}}[]=[];
+      for(const wanted of ports){
+        const e=workflow.edges.find(x=>x.to===id&&x.port===wanted);
+        if(!e)continue;
+        const source=workflow.nodes.find(n=>n.id===e.from);
+        const held=(source?.params as {data?:{features?:{id?:unknown;name?:unknown;properties?:{name?:unknown};geometry?:{type:string;coordinates:unknown}}[]}}|undefined)?.data?.features;
+        const ran=result?.outputs.find(o=>o.nodeId===e.from) as
+          {rows?:{name?:unknown;recordId?:unknown;coordinates?:[number,number]}[];features?:{name?:unknown;id?:unknown;geometry?:{type:string;coordinates:unknown}}[]}|undefined;
+        const from=held?.length?held:(ran?.features??[]);
+        for(const f of from)if(f.geometry)
+          features.push({name:String((f as {properties?:{name?:unknown}}).properties?.name??(f as {name?:unknown}).name??f.id??'').trim(),
+            geometry:f.geometry});
+        if(!from.length)for(const row of ran?.rows??[])if(row.coordinates)
+          features.push({name:String(row.name??row.recordId??'').trim(),
+            geometry:{type:'Point',coordinates:row.coordinates}});
+      }
       const seen=new Set<string>();
-      for(const name of named)if(name)seen.add(name);
+      for(const f of features)if(f.name)seen.add(f.name);
       // CAPPED, because a layer may carry a quarter of a million records and a list that long is not a choice.
       const names=[...seen].slice(0,POINT_CHOICE_LIMIT);
-      return {names,total:seen.size};},
+      return {names,total:seen.size,features:features.slice(0,POINT_CHOICE_LIMIT)};},
     zoneAdvice};
 }
 /** How many point names one step will list. Above it the list is cut and the dialog says by how much. */

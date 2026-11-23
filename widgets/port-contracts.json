@@ -915,10 +915,19 @@
       "contracts": [
         {
           "when": "default",
-          "required": [
+          "required": [],
+          "requiredAnyOf": [
             [
               "points",
               "points"
+            ],
+            [
+              "lines",
+              "lines"
+            ],
+            [
+              "polygons",
+              "polygons"
             ]
           ],
           "optional": []

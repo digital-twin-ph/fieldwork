@@ -8,6 +8,8 @@ export const PORT_NAMES:Partial<Record<NodeType,Record<string,string>>>={
   // at and Raster to read where the node read Points and Raster.
   sample_raster:{points:'Points',areas:'Areas',area:'Study area',raster:'Raster',files:'Satellite files',read:'Raster',at:'Read at'},
   join_table_to_area:{records:'Table',parts:'Study area or polygon layer',area:'Study area',polygons:'Polygon layer'},
+  // 2026-11-23: the step took one points port and now buffers points, lines or polygons, so the canvas shows one.
+  buffer_point:{around:'Points, lines or polygons',points:'Points',lines:'Lines',polygons:'Polygon layer'},
 };
 /** PORTS SHOWN AS ONE (2026-11-13, the practitioner: "Raster still shows multiple input ports"). Sample a raster reads one
  *  raster or set of satellite files at one kind of place, so the canvas and the Inspector show two: what it reads, and
@@ -18,6 +20,7 @@ export const PORT_GROUPS:Partial<Record<NodeType,Record<string,readonly string[]
   // 2026-11-20, the practitioner: "The join a table to study area widget input port does not automatically detect the
   // output port connecting to it." Its three dots took one kind each, unnamed; a drop on the wrong one was refused.
   join_table_to_area:{records:['records'],parts:['area','polygons']},
+  buffer_point:{around:['points','lines','polygons']},
 };
 /** A DROP ON THE WRONG ONE OF A NODE'S GROUPS is bound to the group that takes it, where exactly one does: a table dropped
  *  on Join's "Study area or polygon layer" goes to its Table. */

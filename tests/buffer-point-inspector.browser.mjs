@@ -31,38 +31,52 @@ const open=async(page,features)=>{
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
   .nodes.find(x=>x.type==='buffer_point').params);
 
-test('the points on the connected port are offered by name, and the only one is the answer',async({page})=>{
+test('the connected features are offered by name, with the picture and the combine choice',async({page})=>{
   const errors=collectPageErrors(page);
   // ONE MINE, which is the practitioner's case: there is nothing to choose, so there is nothing to type.
   let dialog=await open(page,[point('m1','Kibali Mining Site',29.6,3.1)]);
   await expect(dialog.locator('input#bp-point')).toHaveCount(0);
   await expect(dialog.locator('select#bp-point')).toHaveValue('Kibali Mining Site');
-  // The label names the layer, so it is clear which set is being chosen within.
-  await expect(dialog.locator('label[for="bp-point"]')).toContainText('Point in Mines');
-  // And the refusal is gone before anything is typed.
+  await expect(dialog.locator('label[for="bp-point"]')).toContainText('in Mines');
   await expect(dialog).not.toContainText('Name the point the area is drawn around');
+  // THE PICTURE, to scale, which is the reason the Preview section exists.
+  await expect(dialog.locator('svg[aria-label="The areas this step draws"]')).toBeVisible();
+  // THE RADIUS GOES TO THE RULE'S OWN CEILING, not the 5,000 m the dialog used to allow: a 50 km question about a
+  // mine could not be typed (2026-11-23).
+  await expect(dialog.locator('#bp-distance')).toHaveAttribute('max','50000');
+  await dialog.locator('#bp-distance').fill('50000');
+  await dialog.locator('#bp-distance').dispatchEvent('change');
+  await expect(dialog).not.toContainText('Give a radius above 0');
   await dialog.locator('#config-apply').click();
   await expect(dialog).toHaveCount(0);
-  expect((await saved(page)).pointId).toBe('Kibali Mining Site');
+  let saved_=await saved(page);
+  expect(saved_.pointId).toBe('Kibali Mining Site');
+  expect(saved_.distanceM).toBe(50000);
+  expect(saved_.yields).toBe('area');
 
-  // SEVERAL, each offered, and the one chosen is what the step records and says.
-  dialog=await open(page,[point('m1','Kibali Mining Site',29.6,3.1),
-    point('m2','Durba',29.5,3.2),point('m3','Watsa',29.5,3.0)]);
-  const offered=await dialog.locator('select#bp-point option').allInnerTexts();
-  // Nothing chosen yet, so the first entry says so and carries no value: a select showing a name the step does
-  // not hold would read as an answer while the dialog refuses.
-  expect(offered.map(t=>t.trim())).toEqual(['Choose a point\u2026','Kibali Mining Site','Durba','Watsa']);
+  // SEVERAL. Every one of them is the default, and each is offered by name.
+  dialog=await open(page,[point('m1','Kibali Mining Site',29.60,3.10),
+    point('m2','Durba',29.62,3.11),point('m3','Watsa',29.64,3.09)]);
+  const offered=(await dialog.locator('select#bp-point option').allInnerTexts()).map(t=>t.trim());
+  expect(offered[0]).toMatch(/^Every one of them \(3\)$/);
+  expect(offered.slice(1)).toEqual(['Kibali Mining Site','Durba','Watsa']);
   await expect(dialog.locator('select#bp-point')).toHaveValue('');
-  await expect(dialog).toContainText('Name the point the area is drawn around');
-  await dialog.locator('select#bp-point').selectOption('Durba');
-  await dialog.locator('select#bp-point').dispatchEvent('change');
+  // Nothing named is an answer now, not a refusal: it means draw around all of them.
+  await expect(dialog).not.toContainText('Name the point the area is drawn around');
+
+  // KEPT APART OR COMBINED, chosen here, and the picture says what combining costs.
+  await expect(dialog.locator('#bp-yields')).toHaveValue('area');
+  await expect(dialog).toContainText('covered more than once');
+  await dialog.locator('#bp-yields').selectOption('polygons');
+  await dialog.locator('#bp-yields').dispatchEvent('change');
+  await expect(dialog).toContainText('kept apart');
   await dialog.locator('#config-apply').click();
   await expect(dialog).toHaveCount(0);
-  expect((await saved(page)).pointId).toBe('Durba');
-  await expect(page.locator('#inspector-content [data-standard-section="settings"]')).toContainText('Durba');
+  saved_=await saved(page);
+  expect(saved_.pointId).toBe('');
+  expect(saved_.yields).toBe('polygons');
 
-  // NOTHING TO OFFER YET -- a source that holds no records of its own and has not run. The name is typed in, as
-  // it always was, rather than the step pretending to a list it does not have.
+  // NOTHING CONNECTED: there is nothing to offer and nothing to draw, and the dialog says so rather than pretending.
   dialog=await open(page,[]);
   await expect(dialog.locator('select#bp-point')).toHaveCount(0);
   await expect(dialog.locator('input#bp-point')).toBeVisible();

@@ -25,7 +25,13 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const role=t.group==='Sources'?'input':t.group==='Outputs'?'output':'processing';
   // NAMED PORT ROWS: each input a row with its name, and the output named. Sample a raster joined 2026-11-12 (the practitioner:
   // "Sample a raster has not standardized its ports yet"): five unnamed dots, of which one or two are used at a time.
-  const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster','sample_raster','join_table_to_area'].includes(data.type);
+  // WHICH NODES DRAW NAMED PORT ROWS rather than one bare handle per declared input. A node with a PORT_GROUPS entry
+  // belongs here by construction: the grouped row is the only thing that draws it as one port, and without it the
+  // node shows a dot per underlying port, unlabelled, where a drop on the wrong one is refused. Reported 2026-11-23,
+  // the moment Area around a point grew lines and polygons: *"Area around a point won't accept a point (mines
+  // pushpin)"* -- three dots had appeared and only the first took points.
+  const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster','sample_raster','join_table_to_area'].includes(data.type)
+    ||!!PORT_GROUPS[data.type as NodeType];
   const portLabel=(port:string)=>PORT_NAMES[data.type as NodeType]?.[port]??(port==='context'?'Context points':port==='polygons'?(t.inputs.some(([p])=>p==='polygons_2')?'Areas 1':'Areas'):/^polygons_\d$/.test(port)?`Areas ${port.split('_')[1]}`:port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
     // NAMED, NEVER "Points undefined" (2026-11-10, a georeferenced map image on the ground port): a port this list does not
     // know is shown by its own name, and only a numbered point port is called Points.

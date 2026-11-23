@@ -13,7 +13,11 @@ import {bboxPolygon} from './study-area.js';
  *  Raised to 50,000 on 2026-10-12 after the Old Naledi facility selection turned out to need 6 km.
  *  That selection is a 6 km circle at the boundary's bounding-box centre, and a 6 km margin around
  *  the boundary itself is what it was approximating — which this cap made impossible to express. */
-export function validateBuffer(distanceM:number){if(!Number.isFinite(distanceM)||distanceM<0||distanceM>50000)throw new Error('Study-area buffer must be 0–50,000 metres.');}
+/** The furthest a buffer may reach, in metres. The dialog offered 5,000 of this until 2026-11-23 while the rule
+ *  allowed 50,000, so a radius the step would have accepted could not be typed; the practitioner's 50 km question
+ *  about a mine is what made that bite. One number, read by the rule and by the dialog. */
+export const MAX_BUFFER_M=50_000;
+export function validateBuffer(distanceM:number){if(!Number.isFinite(distanceM)||distanceM<0||distanceM>MAX_BUFFER_M)throw new Error(`Study-area buffer must be 0\u2013${MAX_BUFFER_M.toLocaleString('en')} metres.`);}
 /** A circle of a stated radius around a centre, as a polygon.
  *
  *  The same construction `buffer_point` uses, and the same measured step count: Turf's `steps`

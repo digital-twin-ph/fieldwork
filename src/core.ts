@@ -2,7 +2,7 @@ import {readPinPhotos} from './pin-photos.js';
 import {setFigureWords,figureWordsOf} from './figure-words.js';
 ﻿import {sampleRaster,sampleReceipt,validateSampleNode} from './sample-raster.js';
 import {computeSpaceTimeScan,computeSpaceTimeReplay,scanValue,replayValue,validateScanParams} from './space-time-scan.js';
-import {bufferPoint,validateBufferPointNode} from './buffer-point.js';
+import {bufferFeatures,validateBufferPointNode,requireRunnableBufferPoint} from './buffer-point.js';
 import {facilitiesValue,migrateHealthsitesNodes,validateFindHealthFacilitiesNode} from './health-facilities.js';
 import {convexHull,validateHullNode} from './convex-hull.js';
 import {combinedArea,combineAreas,validateCombinedAreaNode} from './combined-area.js';
@@ -255,7 +255,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   summarize_combined_area:{title:'Combined area',group:'Summaries',icon:'∪',color:'teal',description:'Areas become one area; overlapping and touching polygons become one polygon',inputs:[['polygons','polygons'],['area','area'],['area2','area']],output:'polygons'},
   summarize_hull:{title:'Convex hull',group:'Summaries',icon:'⬟',color:'teal',description:'The smallest convex outline containing a set of points, computed in metres',inputs:[['points','points']],output:'polygons'},
   find_health_facilities:{title:'Find health facilities',group:'Sources',icon:'⌖',color:'blue',description:'Find the health facilities inside a study area, or the facilities a list names, in national registers and OpenStreetMap',inputs:[['area','area']],output:'points'},
-  buffer_point:{title:'Area around a point',group:'Spatial operations',icon:'◍',color:'teal',description:'Define a study area as everything within a stated distance of one named point',inputs:[['points','points']],output:'area'},
+  buffer_point:{title:'Area around a point',group:'Spatial operations',icon:'◍',color:'teal',description:'Everything within a stated distance of the points, lines or polygons connected, as one area or as a layer of separate buffers',inputs:[['points','points'],['lines','lines'],['polygons','polygons']],output:'area'},
   sample_raster:{title:'Sample a raster at points or over areas',group:'Spatial operations',icon:'◴',color:'teal',
     description:'Read a raster, or satellite files, at each point or over each area: the cell\'s value at a point, the total of the cells in an area, and say where there is no value and why',
     inputs:[['points','points'],['areas','polygons'],['area','area'],['raster','raster'],['files','satellite-files']],output:'points'},
@@ -402,6 +402,9 @@ export function outputOf(node:WorkflowNode):PortType|null{
   // widget that does exactly what was asked could not be used for it. Given areas it yields an
   // area, which the street network, the facilities and the clip all accept.
   if(node.type==='summarize_combined_area')return node.params.yields==='area'?'area':'polygons';
+  // THE UNION OFFER IS THE OUTPUT TYPE. Dissolved, the buffers are one scope, which is the only form the clip, the
+  // street network and the facility search will take; kept apart, they are a layer you can see the overlaps in.
+  if(node.type==='buffer_point')return node.params.yields==='polygons'?'polygons':'area';
   if(node.type==='apply_ruleset')return node.params.ruleset?.output??null;
   if(node.type==='deduplicate_points'&&node.params.format==='table')return 'table';
   // THE OUTPUT FOLLOWS THE INPUT (experiment 205): satellite files give a table of places by period; a raster over areas
@@ -439,6 +442,9 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // POINTS OR AREAS: the sampler reads at one or the other, so neither is required on its own; the run says which is
   // missing when neither is connected (experiment 180).
   if(node.type==='sample_raster')return all.filter(([port])=>port===(node.params.source==='satellite-files'?'files':'raster'));
+  // POINTS, LINES OR POLYGONS: the step buffers whichever is connected, so none is required on its own and the run
+  // says so when nothing is. The same shape as the sampler above.
+  if(node.type==='buffer_point')return [];
   // A DESIGN IS DECLARED OR IT IS ABSENT, and absent must keep working. Requiring it would make
   // every existing workflow with a two-by-two refuse to run until somebody answered a question
   // they may not be able to answer -- and would drop the widget's own contract into one that
@@ -1461,7 +1467,10 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           facilityRegisters.registers as RegisterEntry[],runId);value=got.value as unknown as DisplayValue;receipts.push(got.receipt as unknown as Receipt);break;}
         const got=facilitiesValue(node,runId);value=got.value;receipts.push(got.receipt);break;
       }
-      case 'buffer_point':{const made=bufferPoint(inputs.points,node,runId);value=made.value;receipts.push(made.receipt);break;}
+      case 'buffer_point':{const made=bufferFeatures(
+        {points:inputs.points,lines:(inputs as unknown as {lines?:import('./types.js').LineLayer}).lines,
+          polygons:inputs.polygons},node,runId);
+        value=made.value as unknown as DisplayValue;receipts.push(made.receipt);break;}
       case 'space_time_scan':{
         // DETECT (experiment 200): the scan runs in a worker; a date column is named, never guessed.
         if(!node.params.dateField)throw new Error(`Choose, in Configure…, the column holding each case's date for "${node.params.label}".`);

@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.178.0 — 2026-11-23
+
+- **Area around a point buffers points, lines or polygons** (0.4.0), and offers to combine the areas into one study
+  area or keep each one separate as a polygon layer. Combining says what it costs: the parts' summed area, the area
+  once combined, and how much is covered more than once. Preview draws the areas to scale with their overlaps, from
+  the same construction the run uses.
+- **Its radius goes to 50,000 m** (0.4.0). The dialog had capped it at 5,000 while the rule allowed 50,000, so a
+  radius the step would have accepted could not be typed.
+- **The one-degree span limit is held to study areas** (0.4.0), which window every raster a workflow reads. A polygon
+  layer windows nothing, and the limit applied to one refused buffers drawn across two provinces.
+- **The pin editor's map takes the room the dialog has**, and **Full screen** gives it the whole window with the pin's
+  form beside it (Point data 0.17.0). Siting a pin is reading the ground around it, and a fixed 400 px window made
+  that a sequence of zooms.
+
 ## 0.177.0 — 2026-11-23
 
 - **Area around a point offers the points it is connected to** (0.3.0). The dialog asked for a point by name against

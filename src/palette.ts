@@ -36,11 +36,15 @@ import portContracts from '../widgets/port-contracts.json';
  *
  *  A widget whose ports come from a pin (`apply_ruleset`) is not an input: it
  *  has no ports at all until it is configured, which is a different thing from needing nothing. */
-interface DeclaredContract {output?:string|null; lateBoundTo?:string; contracts?:{required:unknown[]}[]}
+interface DeclaredContract {output?:string|null; lateBoundTo?:string; contracts?:{required:unknown[];requiredAnyOf?:unknown[]}[]}
 export const INPUT_STAGE:ReadonlySet<string>=new Set(
   Object.entries((portContracts as unknown as {widgets:Record<string,DeclaredContract>}).widgets)
     .filter(([,widget])=>!widget.lateBoundTo&&!!widget.output
-      &&(!(widget.contracts??[]).length||(widget.contracts??[]).some(c=>c.required.length===0)))
+      // NEEDING NOTHING IS NOT THE SAME AS NEEDING ONE OF SEVERAL. A contract that requires no particular port but
+      // declares `requiredAnyOf` describes a step that refuses with nothing connected, so it is not somewhere to
+      // start (2026-11-23: Area around a point, which buffers points, lines or polygons, appeared on a blank canvas).
+      &&(!(widget.contracts??[]).length
+        ||(widget.contracts??[]).some(c=>c.required.length===0&&!(c.requiredAnyOf??[]).length)))
     .map(([name])=>name));
 
 /** Derived from each widget's declared `implementationStatus`, not hand-maintained.

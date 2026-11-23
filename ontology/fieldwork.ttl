@@ -61,6 +61,9 @@ fw:unlocatedCount a owl:DatatypeProperty; rdfs:domain fw:RasterPointSample; rdfs
   rdfs:comment "Counted separately from no-data and outside, because the three have different remedies.".
 fw:sourcePoint a owl:DatatypeProperty; rdfs:domain fw:PointBuffer; rdfs:range xsd:string;
   rdfs:label "Identifier of the point a circle was drawn around".
+fw:sourceFeature a owl:DatatypeProperty; rdfs:domain fw:PointBuffer; rdfs:range xsd:string;
+  rdfs:label "Identifier of a feature an area was drawn around";
+  rdfs:comment "The step buffers points, lines or polygons from 2026-11-23, so what an area was drawn around is not always a point. fw:sourcePoint is kept for the single-point form it has always described, and this names a member of a set of several.".
 fw:circleAreaFraction a owl:DatatypeProperty; rdfs:domain fw:PointBuffer; rdfs:range xsd:decimal;
   rdfs:label "Fraction of the true circle's area the polygon covers";
   rdfs:comment "A buffer is a polygon approximating a circle, so it is smaller than the circle it stands for. Emitted so the approximation is a number rather than a footnote.".
@@ -203,7 +206,7 @@ fw:snapLimitMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkSnap; rdfs:rang
 fw:CombinedArea a owl:Class;
   rdfs:label "Combined area computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Union of areas in a projected CRS. Answers whether anywhere is covered, not how well: two areas overlapping meant two things reached the same ground, and combining them discards that along with whatever distinguished the parts.".
-fw:partCount a owl:DatatypeProperty; rdfs:domain fw:CombinedArea; rdfs:range xsd:nonNegativeInteger;
+fw:partCount a owl:DatatypeProperty; rdfs:domain [ a owl:Class; owl:unionOf ( fw:CombinedArea fw:PointBuffer ) ]; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Number of areas combined".
 fw:combinedPieceCount a owl:DatatypeProperty; rdfs:domain fw:CombinedArea; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Separate pieces in the result";

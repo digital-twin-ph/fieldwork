@@ -80,6 +80,7 @@ In **Configure…**, choose **Place pushpins on map**.
 | Type a position | Decimal degrees, such as -5.9333, or degrees, minutes and seconds, such as 5° 56' 00" S |
 | Find a town or district | **Find a place** asks OpenStreetMap's Nominatim, only when you press Find; the words you type are sent there. A result moves the map; it does not place a pin |
 | See houses | **Basemap**: OpenStreetMap, OpenTopoMap, or a CARTO or Esri style on your own key, Esri's satellite imagery among them |
+| See the ground around the pin | **Full screen** gives the map the whole window, with the pin's form still beside it. Press it again, or Escape, to come back |
 | Take back a change | **Undo**, the last 30 changes, before Apply. Above 20,000 records Undo is off |
 | Put the form's questions in order | Under **Add a form field**, **Move up** and **Move down** beside each field; every pin's form follows |
 | Show some study areas, not all | **Study areas shown**: a checkbox for each study area's outline; **Fit pins and study area** fits the ones shown |

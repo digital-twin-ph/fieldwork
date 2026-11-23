@@ -35,14 +35,16 @@ test('the scope records its source point and radius with a unit',()=>{
   assert.match(receipt.facts,/prov:wasGeneratedBy/,'and its derivation is recorded');
 });
 
-test('an unknown, blank or unlocated point is refused, and points are never unioned',()=>{
-  // A node with no point chosen is an unfinished draft, not an invalid one: it must stay addable.
+test('an unknown name is refused, and nothing named draws around everything connected',()=>{
+  // A node with nothing chosen is an unfinished draft, not an invalid one: it must stay addable.
   assert.doesNotThrow(()=>validateBufferPointNode(node({pointId:''})),'an empty draft is valid');
-  assert.throws(()=>requireRunnableBufferPoint(node({pointId:''})),/Choose which point/,'but it cannot run');
-  assert.throws(()=>bufferPoint(gauges,node({pointId:'CEBU'}),'r1'),/no point called "CEBU"/);
-  assert.throws(()=>bufferPoint(gauges,node({pointId:'UNLOCATED'}),'r1'),/no coordinates/);
-  // Two gauges 940 km apart must not become one scope; the message says so.
-  assert.match(String(Object.getOwnPropertyNames({})),/^$/);
+  // NOTHING NAMED NO LONGER REFUSES (2026-11-23). It used to be the only behaviour a single-feature step could
+  // have; now it means every feature connected, which is what several points asked for. Nothing CONNECTED still
+  // refuses, because then there is nothing to draw around.
+  assert.doesNotThrow(()=>requireRunnableBufferPoint(node({pointId:''})),'an unnamed step is runnable');
+  assert.throws(()=>bufferPoint({type:'FeatureCollection',features:[]},node({pointId:''}),'r1'),
+    /Connect points, lines or a polygon layer/);
+  assert.throws(()=>bufferPoint(gauges,node({pointId:'CEBU'}),'r1'),/Nothing called "CEBU"/);
   const one=bufferPoint(gauges,node(),'r1');
   assert.ok(one.value.bounds[3]-one.value.bounds[1]<0.2,'the scope spans one place, not the archipelago');
 });

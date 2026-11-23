@@ -1,6 +1,6 @@
 # Area around a point
 
-_Created 2026-11-20 · Updated 2026-11-20_
+_Created 2026-11-20 · Updated 2026-11-23_
 
 **A study area drawn around one place.** Everything within a stated distance of a well, a clinic or a city centre.
 
@@ -22,7 +22,8 @@ quarter. That polygon becomes a study area, which any step that takes a study ar
 | Setting | What it decides |
 | --- | --- |
 | **Point in ‹layer‰ that defines the area** | chosen from the points the connected layer carries. One point arriving is the choice; several, and the list opens on *Choose a point*. A layer that holds no records of its own and has not run offers none, and the name is typed in until it has |
-| **Radius in metres** | above 0 and up to 5,000 |
+| **Radius in metres** | above 0 and up to 50,000. The radius is a claim about reach, so give the figure your evidence supports and say where it came from in Methods |
+| **Where several areas are drawn** | combine them into one study area, or keep each one separate as a polygon layer |
 
 **Show me how it works**, in the dialog, draws a made-up well and the area around it, step by step, with the radius
 you have set.
@@ -31,10 +32,10 @@ you have set.
 
 ## What it will not do
 
-- **It will not draw around several points.** One point, named; the others are ignored.
+- **It will not keep the buffers apart and call them a study area.** Combined, they are one scope; kept apart, they are a polygon layer, and only a scope can be connected to the clip, the street network or a facility search.
 - **It will not follow roads or terrain.** The distance is straight, on the ground; for travel time, use a travel-time
   step.
-- **It will not draw more than 5,000 metres.** For a wider area, draw it under Study area.
+- **It will not draw more than 50,000 metres.** A study area is held to one degree as well, which a radius reaches at about 55.6 km; beyond that, keep the buffers as a polygon layer or draw the area under Study area.
 
 ## Where it is used
 

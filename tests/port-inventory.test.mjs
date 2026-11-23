@@ -61,6 +61,11 @@ import {TYPES} from '../build/core.js';
 // would resolve it -- so every stud is listed with that answer, and the list changes as evidence does: a stud that
 // gains a second end is no longer one and must leave, and one whose reason stops holding is folded back. The history
 // above is kept; the last count was 9.
+// `lines` LEFT THIS LIST 2026-11-23, by the resolution its own entry named. It read: "Resolved by its second
+// consumer, Area around a point taking lines (the buffer, TODO), when it is no longer a stud." Area around a point
+// took points, lines or polygons that day, so the port fits two blocks and the hard stop it asked for is no longer
+// what holds it. A stud whose stated resolution arrives is the ratchet working: the entry is removed rather than
+// rewritten, and this note is what it leaves behind.
 const CUSTOM_STUDS={
   'alert':'Retired with its widgets; a retired producer still declares it, and it carries nothing live.',
   'facilities':'An archived definition still declares it; no live widget produces it.',
@@ -71,7 +76,6 @@ const CUSTOM_STUDS={
   'mean-center':'The mean of point coordinates is not a polygon centroid; compare_point_sets is its consumer.',
   'point-comparison':'A two-set comparison drawn only by its own map.',
   'satellite-product':'A catalog search without a chosen product searches nothing (experiment 179, D4). One producer, find_satellite_products; one consumer, search_satellite_catalog.',
-  'lines':'A route, a track or a border is not a street network: on the network port every routing step would take a team\'s track as streets to route over (experiment 229, D3). One producer, line_input; one consumer, map_output. Resolved by its second consumer, Area around a point taking lines (the buffer, TODO), when it is no longer a stud.',
   // 'satellite-files' left this list 2026-11-11: Sample a raster reads it, and so does the archived definition of the
   // satellite sampler retired into it (experiment 205). Counted as two ends, one of them archived; one live reader.
 };

@@ -569,7 +569,9 @@ export interface ParamsByType {
   find_health_facilities:{mode?:'area'|'list';list?:import('./facility-matching.js').FacilityListSettings;
     registerRetrieved?:{registers:{id:string;title:string;licence:string;records:number;country?:string}[];at:string};
     label:string;source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';kinds:string[];requireName:boolean;country:string;minConfidence:number;data:PointCollection|null;retrieved:{source:'openstreetmap-live'|'hdx-hot-export'|'overture-places';sourceLabel:string;licence:string;licenceIRI:string;sourceIRI:string;attribution:string;origin:string;kept:number;dropped:{kind:number;coordinates:number;name:number;outside?:number};at:string;scope:string;filename?:string;sha256?:string;bytes?:number;release?:string;belowConfidence?:number;unmappedCategory?:number;minConfidence?:number}|null};
-  buffer_point:{label:string;pointId:string;distanceM:number};
+  /** `pointId` names ONE feature to buffer; empty means every feature connected (2026-11-23, several points).
+   *  `yields` is the union offer: an area dissolves the buffers into one scope, polygons keeps them apart. */
+  buffer_point:{label:string;pointId:string;distanceM:number;yields?:'area'|'polygons'};
   /** SAMPLE A RASTER AT POINTS OR OVER AREAS (experiment 205): one sampler for a Raster input or satellite files. */
   sample_raster:{label:string;attribute:string;valueUnit:string;
     /** How a value is read at a point: the cell containing it (the default), or between the four nearest cell centres,

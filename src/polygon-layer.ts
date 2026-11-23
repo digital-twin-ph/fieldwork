@@ -148,6 +148,8 @@ export interface PolygonLayerRequest {
   nameField?:string;
   /** What to call the layer where a reader toggles it. */
   layerName?:string;
+  /** Built from the study areas connected to the step, rather than read from a file (2026-11-23). */
+  fromStudyAreas?:boolean;
 }
 
 export interface ParsedFeature {
@@ -235,6 +237,9 @@ export function polygonLayer(features:ParsedFeature[],request:PolygonLayerReques
   const named=request.nameField?.trim();
   return {
     ...(request.layerName?.trim()?{layerName:request.layerName.trim()}:{}),
+    // THE GROUND, OR THE SUBJECT: carried so a map can tell a layer of the workflow's own study areas from one read
+    // from a file, which is what decides whether points drawn over it take its hues away (2026-11-23).
+    ...(request.fromStudyAreas?{fromStudyAreas:true as const}:{}),
     // WHETHER THESE FEATURES ARE NAMED THINGS OR NUMBERED PARTS, carried on the value because a
     // renderer cannot tell by looking: a read numbers what it could not name, so every feature
     // arrives with a name either way.

@@ -650,7 +650,13 @@ export interface ParamsByType {
    *  parameters stay so the registry entry resolves and a saved workflow that still names the type
    *  can be migrated rather than refused. Nothing adds one, nothing runs one. */
   coverage_check:{exclusions:Exclusion[]; pointInputCount?:number};
-  map_output:{label:string; /** Study areas left out of this map, by name (2026-11-22): a Polygon layer of study areas keeps them all. */ leftOutAreas?:string[]; section?:import('./notes.js').FigureSection|'none';
+  map_output:{label:string;
+    /** WHETHER EACH POLYGON GETS ITS OWN HUE (2026-11-23). The practitioner: *"polygons can be data bearing but the
+     *  polygon can be just context for the points. If there are no points then we must be using the polygon data if
+     *  there are any."* Absent is that rule: a hue per feature where the polygons are the subject, a neutral wash where
+     *  points are drawn over them. `each` and `plain` say it outright. Shading by a VALUE is not this setting's
+     *  business and is never suppressed: a table joined to the study area is data whatever else the map draws. */
+    shadeFeatures?:'each'|'plain'; /** Study areas left out of this map, by name (2026-11-22): a Polygon layer of study areas keeps them all. */ leftOutAreas?:string[]; section?:import('./notes.js').FigureSection|'none';
     /** An enlarged part, or a locator, on the static figure (Map's manual, History: the inset), its box picked on the interactive map. */
     inset?:import('./map-inset.js').InsetSettings; pointInputCount?:number;
     /** How many polygon layers it takes, as `polygons`, `polygons_2` … (2026-11-13: Collect polygon layers retired). */

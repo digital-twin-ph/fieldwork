@@ -29,7 +29,7 @@ import {detectSettings,detectTable,detectSentence} from './aberration.js';
 export const MAX_AREA_INPUTS=6;
 import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,clipPolygons,summarizePolygons,catchmentReceipt,unconnectedSites,offNetworkSites} from './catchments.js';
 import type {Polygons,Network} from './catchments.js';
-import {polygonDisplay,polygonPresentationReceipt} from './catchment-output.js';
+import {polygonDisplay,polygonPresentationReceipt,shadeFeaturesOf} from './catchment-output.js';
 import {loadRaster,clipRaster,rasterReceipt,validateRasterAsset} from './raster-workflow.js';
 import {validateClipOptions} from './raster.js';
 import {projectFiles} from './project-files.js';
@@ -1758,7 +1758,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // "Layer 1" and "Layer 2", so a map carrying the sub-districts and the Thames offered a
         // reader two toggles named after nothing. The words on the canvas are the words the
         // practitioner already chose.
-        value=polygonLayer(shown,{...node.params,...(fromAreas?{nameField:'name'}:{}),
+        value=polygonLayer(shown,{...node.params,...(fromAreas?{nameField:'name',fromStudyAreas:true}:{}),
           layerName:node.params.layerName||node.params.label}) as unknown as DisplayValue;
         // AREAS AT DIFFERENT LEVELS, said: a count compares only like units; a rate across the border still does.
         if(fromAreas)(value as unknown as {notes?:string[]}).notes=[
@@ -2658,7 +2658,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
             +`same Study area the rest of this workflow uses will do.`);
         if(inputs.area){
           const mapped=mapOutput(node,{area:inputs.area,points:pointInputs()},runId);
-          value={...mapped.value,polygons:shown.polygons,
+          // CONTEXT, WHERE POINTS ARE DRAWN OVER THEM (2026-11-23): the polygons keep their names and their popups and
+          // lose the hue per feature, which says "different things" about ground a point is placed on.
+          value={...mapped.value,
+            polygons:shadeFeaturesOf(shown.polygons as NonNullable<DisplayValue['polygons']>,
+              (beside.length>0||!!node.params.contextPoints)&&shown.polygons?.fromStudyAreas===true,
+              node.params.shadeFeatures),
             polygonPresentation:node.params.presentation||'plot'} as unknown as DisplayValue;
           if(node.params.contextPoints)
             (value as DisplayValue).contextPoints=(inputs as unknown as {context:PointCollection}).context;

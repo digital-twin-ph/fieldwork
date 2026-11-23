@@ -304,6 +304,11 @@ export interface Polygons {kind?:'hexbin';siteSourceNodeId?:string;
    *  it could not name, so a renderer cannot tell by looking, and the difference decides whether
    *  a hue per feature says anything at all. */
   featuresNamed?:boolean;
+  /** BUILT FROM THE STUDY AREAS CONNECTED TO IT, not read from a file (2026-11-23): the parts of the areas a workflow
+   *  already works within. Such a layer is the ground the rest of the map stands on, which is what decides whether a
+   *  hue per feature says anything where points are drawn over it. A layer read from a file is not this, however its
+   *  features are named: the Thames' tidal and non-tidal reaches are two things a reader wants told apart. */
+  fromStudyAreas?:boolean;
   /** A TIMELINE OF DAYS, where each feature belongs to one (the space-time scan's replay, 2026-11-10): the interactive
    *  map plays through them, drawing each day's features and the points with a date in `dateField` up to that day.
    *  `captions` says, per day, what the frame shows. */

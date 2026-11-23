@@ -2,6 +2,22 @@ import {RING_RED,RING_BLUE,orderedSteps,categoricalSteps,polygonShading,shadedVa
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
 import type {Boundary,Escape,Position,PointCollection,WorkflowNode} from './types.js';
+/** POLYGONS ARE DATA, OR THEY ARE THE GROUND A POINT STANDS ON (the practitioner, 2026-11-23: *"polygons can be data
+ *  bearing but the polygon can be just context for the points. If there are no points then we must be using the polygon
+ *  data if there are any, particularly if we merge a table and a polygon (study area)."*). A hue per feature says "these
+ *  are four different things", which a reader needs where the polygons are the subject and does not where they are
+ *  context: four provinces under one mine pin were read as four categories.
+ *
+ *  ONLY A LAYER BUILT FROM THE STUDY AREAS, and only where points are drawn over it (*"Only for polygons derived from
+ *  study areas"*, the same day). A layer read from a file is the subject whatever else the map carries: two named
+ *  reaches of the Thames under an intake are two things a reader wants told apart, and the first form of this rule
+ *  took their colours away. Only the hue-per-feature identity shading is ever suppressed; a layer carrying a value
+ *  keeps its classes, so a table joined to the study area is drawn as the data it is. */
+export function shadeFeaturesOf<T extends {featuresNamed?:boolean}>(
+  layer:T,pointsDrawn:boolean,choice?:'each'|'plain'):T{
+  if(choice==='each')return layer;
+  return choice==='plain'||pointsDrawn?{...layer,featuresNamed:false}:layer;
+}
 export function polygonDisplay(p:Polygons,view:'map'|'table'|'chart'):DisplayValue{
   if(p.kind==='hexbin'){
     if(view==='chart')throw new Error('H3 cell charts are not configured in this example.');

@@ -16,6 +16,7 @@ import type {DrawnDensity,PanelScale} from './raster-panels.js';
 import {basemapAvailable,basemapOf} from './basemaps.js';
 import {FOCUS_LIMIT,type Corner} from './map-inset.js';
 import {isRasterPort} from './raster-panels.js';
+import {isPolygonPort} from './polygon-layers.js';
 import {isPointPort,MAX_POINT_LAYERS,LABEL_CEILING} from './point-layers.js';
 import {LAYER_SHAPES,resolveLayerSymbol,type LayerShape,FIGURE_PALETTE,MARK_RADIUS_MIN,MARK_RADIUS_MAX} from './presentation.js';
 import {TILE_DEFAULT_MAX_ZOOM,TILE_MAX_ZOOMS,TILE_SOURCE,drawnBounds,importTiles} from './tile-extract.js';
@@ -197,6 +198,7 @@ export function openMapConfig(nodeId:string){
       const shade=(key:'show'|'ramp'|'classes',value:string)=>{const next={...(draft.rasterShading??{})} as Record<string,string>;
         if(value)next[key]=value;else delete next[key];
         if(Object.keys(next).length)draft.rasterShading=next as NonNullable<Draft['rasterShading']>;else delete draft.rasterShading;};
+      on('#polygon-shading',el=>{const v=el.value;if(v==='each'||v==='plain')draft.shadeFeatures=v;else delete draft.shadeFeatures;});
       on('#raster-show',el=>shade('show',el.value));on('#raster-ramp',el=>shade('ramp',el.value));on('#raster-classes',el=>shade('classes',el.value));
       on('#polygon-presentation',el=>{
         draft.presentation=el.value==='interactive'?'interactive':'plot';
@@ -311,6 +313,23 @@ function mapInsetSection(n:WorkflowNode<'map_output'>):string{
 }
 /** RASTER PANELS, SHOWN AS CHOSEN (2026-11-17; the practitioner: "I can't seem to find how Map output enables rendering of pop
  *  density as YlOrRd hues"). Each left at its first option, the rasters' stated units decide. */
+/** WHETHER EACH POLYGON GETS ITS OWN HUE (2026-11-23). Offered only where polygon layers are wired, as the point
+ *  symbols are: a control for a layer that does not exist is a setting nobody can check against the picture. The
+ *  practitioner, of four provinces drawn in four colours under one mine pin: *"polygons can be data bearing but the
+ *  polygon can be just context for the points."* Shading by a value is not this control's business and is never
+ *  suppressed by it, so a table joined to the study area is drawn as the data it is. */
+function mapPolygonSection(n:WorkflowNode<'map_output'>):string{
+  if(!ctx.workflow().edges.some(e=>e.to===n.id&&isPolygonPort(e.port)))return '';
+  const held=n.params.shadeFeatures??'';
+  return '<span class="inspector-section">Polygons</span>'
+    +'<div class="field"><label class="field-label" for="polygon-shading">A colour for each polygon</label>'
+    +'<select id="polygon-shading">'
+    +([['','Where no points are drawn over them'],['each','Always'],['plain','Never']] as [string,string][])
+      .map(([v,t])=>`<option value="${v}" ${held===v?'selected':''}>${t}</option>`).join('')
+    +'</select><small>A colour each says these are different things, which is what a reader needs where the polygons '
+    +'are the subject. Where points are drawn over them the polygons are the ground the points stand on, and they are '
+    +'drawn in one wash, named in the layer list and in their popups. A layer carrying a value keeps its classes either way.</small></div>';
+}
 function mapRasterSection(n:WorkflowNode<'map_output'>):string{
   if(!ctx.workflow().edges.some(e=>e.to===n.id&&isRasterPort(e.port)))return '';
   const r=n.params.rasterShading??{};
@@ -363,7 +382,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       // potential point layer in the map gets a configurable/selectable symbol." Only the point
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
-      +mapBasemapControls(n)+mapStudyAreasSection(n)+mapArrangeSection(n)+mapRasterSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
+      +mapBasemapControls(n)+mapStudyAreasSection(n)+mapArrangeSection(n)+mapPolygonSection(n)+mapRasterSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
       +`<p class="muted">Order, name and group the layers.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{

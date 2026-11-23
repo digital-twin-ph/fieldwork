@@ -85,6 +85,8 @@ test('the key names the regions drawn, not a modelled catchment',async()=>{
   const run=await executeWorkflow(validateWorkflow(workflow()),ready);
   const out=run.outputs.find(o=>o.nodeId==='map');
   const w=validateWorkflow(workflow());
+  // A LAYER READ FROM A FILE KEEPS ITS HUES, points or no points (2026-11-23): the two reaches are two things a reader
+  // wants told apart under an intake. Only a layer built from the workflow's own study areas is treated as ground.
   const key=mapPresentation(w.nodes.find(n=>n.id==='map'),out,w);
   const labels=key.items.map(i=>i.label);
   assert.deepEqual(labels,['tidal','non-tidal']);

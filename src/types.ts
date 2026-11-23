@@ -325,6 +325,9 @@ export interface ParamsByType {
    *  READ AS PUBLISHED. Nothing is clipped, simplified or reprojected on the way in. A file whose
    *  coordinates are not CRS84 degrees is refused rather than converted, because converting it
    *  silently would hand on a different shape from the one its author published. */
+  /** LINES (experiment 229, 2026-11-22): routes, tracks and borders, read from a GPX, KML, KMZ or GeoJSON file, or made
+   *  from two study areas as the stretch of the first's outline within `toleranceM` of the second's. See line-layer.ts. */
+  line_input:{label:string;inputMethod:'file'|'border';data?:LineLayer;file?:string;toleranceM?:number};
   polygon_input:{
     hidden?:string[];
     /** Cut each feature to the box the read was scoped to, dropping what falls wholly outside.
@@ -798,7 +801,13 @@ export interface CandidateCondition {field:string; comparator:'in'|'notIn'; valu
 import type {StudyDesign} from './study-design.js';
 export type {StudyDesign};
 
-export type PortType = 'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'ground'|'polygons'|'network'|'mean-center'|'point-comparison'|'design'|'satellite-product'|'satellite-files';
+/** LINES (experiment 229): a feature per route, track or stretch of border, longitude and latitude on WGS84. */
+export interface LineFeature {type:'Feature';id:string;properties:{name:string;[key:string]:string|number};
+  geometry:{type:'LineString';coordinates:[number,number][]}|{type:'MultiLineString';coordinates:[number,number][][]}}
+export interface LineLayer {kind:'lines';features:LineFeature[];source:string;
+  /** What a file held besides lines: counted, not imported. */
+  notLines?:{points:number;areas:number}}
+export type PortType = 'lines'|'points'|'table'|'alert'|'distances'|'decisions'|'area'|'facilities'|'gradedFacilities'|'access'|'coverage-check'|'raster'|'ground'|'polygons'|'network'|'mean-center'|'point-comparison'|'design'|'satellite-product'|'satellite-files';
 export interface NodeDefinition {title:string; group:string; icon:string; color:string; description:string; inputs:[string,PortType][]; output:PortType|null}
 export type Escape = (value:unknown)=>string;
 export type SpatialRelation = 'Inside'|'Boundary'|'Outside'|'MissingLocation';

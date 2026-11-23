@@ -1,6 +1,6 @@
 # Find satellite products
 
-_Created 2026-11-05 · Updated 2026-11-05_
+_Created 2026-11-05 · Updated 2026-11-22_
 
 **Which satellites and products measure a variable, and what each one measures.** It chooses where satellite data
 will come from. It downloads nothing.

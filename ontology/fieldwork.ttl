@@ -460,6 +460,8 @@ fw:PointComparisonPort a fw:PortType; rdfs:label "point-comparison".
 fw:TablePort a fw:PortType; rdfs:label "table".
 fw:RasterPort a fw:PortType; rdfs:label "raster".
 fw:NetworkPort a fw:PortType; rdfs:label "network".
+fw:LinesPort a fw:PortType; rdfs:label "lines";
+  rdfs:comment "Routes, tracks and borders as lines, longitude and latitude on WGS84: not a street network, which is a graph to route over (experiment 229).".
 fw:AlertPort a fw:PortType; rdfs:label "alert";
   rdfs:comment "Retired 2026-10-25 with the alert widget. A bespoke port type whose only consumer was `policy`, itself retired on 2026-10-12, so it carried a value between one live widget and one archived one. The condition it carried is declared on the node that applies the ruleset asking for it, beside that ruleset's threshold.";
   owl:deprecated true;

@@ -213,6 +213,21 @@ test('the structure with the prodrome within a fixed time to the rash validates,
     assert.deepEqual([latent[2]+pro[2],latent[3]+pro[3]],[12,13]);}
   assert.ok(Math.abs(program.shares.slice(0,5).reduce((a,b)=>a+b,0)-1)<1e-9);
 });
+/** THE TWO JOINED (experiment 199, 2026-11-22, "Yes start"): the time to the rash nearly fixed, the prodrome's last
+ *  2 days apart from its early days. */
+test('the joined structure validates, every branch reaching the rash in 12 or 13 days through the prodrome’s last 2',()=>{
+  const joined=json('structures/measles-rash-fixed-split-household-class-village/1.0.0.json'),set=json('parameter-sets/measles-hagelloch-rash-fixed-split/1.0.0.json');
+  validateStructure(joined);validateParameterSet(set,joined);
+  validateParameterSet(json('parameter-sets/measles-hagelloch-fitted-rash-fixed-split/1.0.0.json'),joined);
+  validateResponseScenario(scenario('hagelloch-as-in-1861-rash-fixed-split'),joined);
+  const program=compile(joined,set,{n:3,groups:{household:[0,0,1],class:[1,1,0]}});
+  const at=id=>joined.states.findIndex(s=>s.id===id),from=id=>program.steps.filter(s=>s[0]===at(id));
+  const [late]=from('PL');assert.deepEqual([late[2],late[3]],[2,2]);
+  for(const step of from('E')){
+    const early=step[1]===at('PL')?[0,0]:(([s])=>[s[2],s[3]])(from(joined.states[step[1]].id));
+    assert.deepEqual([step[2]+early[0]+2,step[3]+early[1]+2],[12,13]);}
+  for(const k of [3,4,5,6])assert.equal(joined.infection.weights[`P${k}`],'w_early');
+});
 test('a network met on given dates only is open those days and no others',async()=>{
   const {validateResponseScenario,compileResponse}=await import('../build/disease-model.js');
   const st=json('structures/measles-prodrome-rash-household-class-village-gathering/1.0.0.json'),sc=json('response-scenarios/hagelloch-as-in-1861-gathering/1.0.0.json');

@@ -8,9 +8,9 @@
   },
   "measuredAt": "2026-11-22",
   "counts": {
-    "widgets": 50,
+    "widgets": 51,
     "covered": 31,
-    "awaiting": 9,
+    "awaiting": 10,
     "none": 9,
     "blocked": 1
   },
@@ -294,6 +294,12 @@
       "computes": "Each period's expected count, threshold, statistic, limit and signal by EARS C1, C2, C3, CUSUM or EWMA.",
       "check": "53-detect-unusual-counts",
       "reason": "A signal sends an investigator to look, and a wrong threshold sends them to look at nothing, or not at all. Each method is recomputable from its published definition, and R's surveillance package gives a third reading."
+    },
+    {
+      "nodeType": "line_input",
+      "expectation": "parity",
+      "reason": "TWO CLAIMS AN OUTSIDE READER CAN CHECK. Read from a file, the lines handed on are the file's own, every position in order, with the lines of fewer than two positions dropped and the points and areas counted: GDAL or fiona reading the same GPX, KML or GeoJSON recomputes it. Taken from two areas, the border is the stretch of the first's outline within a stated distance of the second's: shapely (the first's boundary, kept where its distance to the second's boundary is within the distance) recomputes the stretches and their lengths. What a check could NOT establish is that two sources' outlines put the border where it is.",
+      "computes": "Lines read from GPX tracks and routes, KML LineString and gx:Track, and GeoJSON LineString and MultiLineString; their lengths on the sphere; and the stretches of one area's outline lying within a distance of another's."
     }
   ]
 }

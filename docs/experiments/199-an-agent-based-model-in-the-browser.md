@@ -421,6 +421,43 @@ record's, and its curve fits worse than weighting the prodrome's last days. A ga
 weighted), which is the next model if the peak is pursued; whether the record's dates or the rule of 1863 make its rash
 dates bunched.
 
+## The two joined, 2026-11-22
+
+The practitioner, 2026-11-22: *"Yes start"*. The next model named above: the time from infection to the rash nearly
+fixed, as in `measles-rash-fixed-household-class-village`, and the prodrome's last days counted apart from its early
+days, as in `measles-prodrome-split-household-class-village`. Declared as `measles-rash-fixed-split-household-class-village`
+(`measles-hagelloch-rash-fixed-split`, `hagelloch-as-in-1861-rash-fixed-split`): each branch's prodrome of 3 to 6 days
+is its early days and then its last 2, a prodrome of 2 days being all last days; infection to the rash 12 to 13 days in
+every branch. The early days (`w_early`) and the rash (`w_rash`) are weighted against the last 2 days, and fitted with
+the three probabilities (`--join`; 5 × 6 × 6 × 4 × 4 points at 100 runs, then 7³ × 3 × 3 at 300; 713 s). Declared as
+`measles-hagelloch-fitted-rash-fixed-split`.
+
+Checked first: with every prodrome day weighted alike and the rash at 0.5, the joined model gives the fixed model's
+deviance (158.5 against 159.4, at 0.03, 0.015, 0.0058).
+
+| | Weighted by part of the illness | Time to the rash fixed | **The two joined** |
+| --- | --- | --- | --- |
+| Household, class, village | 0.33, 0.04, 0.016 | 0.03, 0.015, 0.0058 | 0.26, 0.024, 0.011 |
+| Early prodrome, against its last days | 0.15 | 1 | 0.3 |
+| With the rash, against the prodrome's last days | 0 | 0.5 | 0.07 |
+| Deviance | 143 | 157 | **126** |
+| Children on the peak day (recorded **26**) | 16 (14 to 21) | 18 (15 to 23) | **23 (17 to 30)** |
+| Three peak days, 95th percentiles (recorded 68) | 52 | 58 | **77** |
+| Recorded days inside the band | 76 of 83 | 77 of 83 | 77 of 83 |
+
+The ranges within 4 of the best: household 0.08 to 0.33, class 0.007 to 0.03, village 0.008 to 0.013, the rash 0 to
+0.07; the early prodrome 0.3 throughout.
+
+**Found:** joined, the two make the record's peak. The recorded peak day, 26, is inside the runs' 5th to 95th
+percentiles (17 to 30), and the busiest three days, 68, under their 95th (77), which no model before reached. The curve
+fits best of any (126). Most transmission is in the prodrome's last 2 days, a third as much in its early days, little
+or none with the rash.
+
+**What this does not establish:** that the rule of 1863 holds rather than the record's dates being made so: a model
+that fixes the time to the rash fits a record whose rash dates may have been set in batches equally well. Where the
+prodrome is split (2 days) is assumed. The runs end sooner than the record: the last child by day 42 (38 to 50), the
+record's on day 82, a tail of a few late cases no model here has made.
+
 ## Left for later, step by step, if the spike says yes
 
 1. The care cascade.

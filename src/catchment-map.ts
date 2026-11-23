@@ -1,3 +1,4 @@
+import {LINE_COLOURS} from './static-map.js';
 import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM} from './point-layers.js';
 import {RASTER_POINT_COLOURS} from './raster-panels.js';
 import {GlMarks,type GlMark} from './gl-marks.js';
@@ -164,6 +165,8 @@ export interface MapLayers {
    *  interactive and could carry no basemap, because the static branch returned before the
    *  interactive one was reached. */
   network?:{nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;geometry?:Position[]}[]};
+  /** LINES: routes, tracks and borders, a layer each (experiment 229). */
+  lines?:(import('./types.js').LineLayer&{sourceNodeId:string;label:string})[];
   /** THE LAYERS, as the practitioner ordered, named and grouped them. Where this is absent the
    *  map draws exactly what it drew before: the names below are the defaults, not a fallback
    *  that loses anything. */
@@ -431,6 +434,13 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
         :'Street network']=streets;
     }
   }
+  // THE LINES, one layer each, over the area and under the points; each line named on hover (experiment 229).
+  (layers.lines??[]).forEach((layer,i)=>{
+    const group=L.featureGroup();
+    for(const f of layer.features){
+      const parts=(f.geometry.type==='LineString'?[f.geometry.coordinates]:f.geometry.coordinates).map(part=>part.map(([lon,lat])=>[lat,lon] as [number,number]));
+      L.polyline(parts,{color:LINE_COLOURS[i%LINE_COLOURS.length],weight:3,opacity:.95}).bindTooltip(esc(f.properties.name)).addTo(group);}
+    group.addTo(map);all.addLayer(group);overlays[esc(layer.label)]=group;});
   const observations=L.featureGroup();
   for(const f of p.observations?.features||[]){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates,n=f.properties.DEATHS;
     if(!Number.isFinite(lat)||!Number.isFinite(lon))continue;

@@ -71,6 +71,7 @@ const CUSTOM_STUDS={
   'mean-center':'The mean of point coordinates is not a polygon centroid; compare_point_sets is its consumer.',
   'point-comparison':'A two-set comparison drawn only by its own map.',
   'satellite-product':'A catalog search without a chosen product searches nothing (experiment 179, D4). One producer, find_satellite_products; one consumer, search_satellite_catalog.',
+  'lines':'A route, a track or a border is not a street network: on the network port every routing step would take a team\'s track as streets to route over (experiment 229, D3). One producer, line_input; one consumer, map_output. Resolved by its second consumer, Area around a point taking lines (the buffer, TODO), when it is no longer a stud.',
   // 'satellite-files' left this list 2026-11-11: Sample a raster reads it, and so does the archived definition of the
   // satellite sampler retired into it (experiment 205). Counted as two ends, one of them archived; one live reader.
 };

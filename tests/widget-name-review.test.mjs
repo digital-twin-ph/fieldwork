@@ -144,7 +144,8 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 51 on 2026-11-21: detect_unusual_counts, a series' periods held to a threshold from its own past (experiment 228); its
   // name pending the practitioner's review.
   // 50 on 2026-11-22: reproject retired into Table output (docs/audits/reproject-retired.md).
-  assert.equal(review.reviews.length,50);
+  // 51 on 2026-11-22: line_input, routes, tracks and borders (experiment 229); its name pending the practitioner's review.
+  assert.equal(review.reviews.length,51);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

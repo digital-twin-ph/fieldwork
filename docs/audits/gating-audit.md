@@ -248,9 +248,14 @@ The test reloaded and opened Configure… before the page was ready. Once it wai
 reasoning worker "due to access control checks", as in `relate-proposed-keys`. The fix is the same as there: wait for
 `html[data-ready]` and block service workers. After the fix it passed 20 of 20 on WebKit and 20 of 20 on Chromium.
 
+**Measured 2026-11-23, the first run at two workers (0.170.1, run 45103751148):** Chromium's verify took 34 minutes and
+passed. WebKit's took 68 and failed 17 tests: 9 were WebKit's service worker refusing `reasoning-worker.js` "due to
+access control checks", the error seen in single tests before, and the rest page errors and timeouts of the same run.
+WebKit is set back to one worker; Chromium stays at two.
+
 **Not established:**
 
-- Whether two workers fit a shared runner's 4 cores, which would roughly halve verify.
+- Why WebKit's service worker refuses the reasoning worker, and whether Safari users meet it outside tests.
 - Whether the workflow edit that two workers need is wanted: `pages.yml` is not the one workflow that may be edited.
 - That a file-to-widget map read from release records is complete: a widget whose record leaves out a file would be
   skipped silently, as before.

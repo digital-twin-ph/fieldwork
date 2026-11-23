@@ -17,7 +17,10 @@
 // --gathering (the practitioner, 2026-11-21, "All three"): one day when the village's children met, children in the
 // prodrome infecting there (measles-prodrome-rash-household-class-village-gathering); its day and probability fitted, the
 // three probabilities held at measles-hagelloch-fitted's.
-// node scripts/abm-hagelloch-fit.mjs [--by-class|--split|--to-rash [--total 14]|--gathering] [--json out.json] [--periods latent_period=8-9,prodrome=4-4]
+// --join (the practitioner, 2026-11-22, "Yes start"): the two best joined, the time to the rash nearly fixed and the
+// prodrome's last 2 days counted apart from its early days (measles-rash-fixed-split-household-class-village); how
+// infectious the early days and the rash are, each against the last days, fitted with the three probabilities.
+// node scripts/abm-hagelloch-fit.mjs [--by-class|--split|--to-rash [--total 14]|--join|--gathering] [--json out.json] [--periods latent_period=8-9,prodrome=4-4]
 import {readFileSync,writeFileSync} from 'node:fs';
 import {compile,runDeclared,compileResponse} from '../build/disease-model.js';
 const kernel=(await WebAssembly.instantiate(readFileSync(new URL('../kernel/fieldwork-kernel.wasm',import.meta.url)),{})).instance.exports;
@@ -32,13 +35,15 @@ const day=s=>Date.parse(s+'T00:00:00Z')/864e5;
 const recorded=new Array(SPAN).fill(0);
 for(const c of cases){const d=day(c.date_of_rash)-day(cases[index].date_of_rash);if(d>=0&&d<SPAN)recorded[d]++;}
 
-const BY_CLASS=process.argv.includes('--by-class'),SPLIT=process.argv.includes('--split'),TO_RASH=process.argv.includes('--to-rash'),GATHERING=process.argv.includes('--gathering');
+const BY_CLASS=process.argv.includes('--by-class'),SPLIT=process.argv.includes('--split'),TO_RASH=process.argv.includes('--to-rash'),GATHERING=process.argv.includes('--gathering'),JOIN=process.argv.includes('--join');
 const NETS=BY_CLASS?['household','class_1','class_2','village']:GATHERING?['household','class','village','gathering']:['household','class','village'];
-const WEIGHTS=SPLIT?['P1','Q']:TO_RASH?['Q']:[];
-const structure=json(`structures/${BY_CLASS?'measles-prodrome-rash-household-classes-village'
+const WEIGHTS=SPLIT?['P1','Q']:JOIN?['P3','Q']:TO_RASH?['Q']:[];
+// A weight may stand for several states: the early days of each prodrome are weighted alike.
+const WEIGHTED={P3:JOIN?['P3','P4','P5','P6']:['P3']};
+const structure=json(`structures/${JOIN?'measles-rash-fixed-split-household-class-village':BY_CLASS?'measles-prodrome-rash-household-classes-village'
   :TO_RASH?'measles-rash-fixed-household-class-village':GATHERING?'measles-prodrome-rash-household-class-village-gathering':SPLIT?'measles-prodrome-split-household-class-village':'measles-prodrome-rash-household-class-village'}`);
 // The periods of the record's set; by class, its one class probability stands for each class's until the grid sets them.
-const set=json(TO_RASH?'parameter-sets/measles-hagelloch-rash-fixed':GATHERING?'parameter-sets/measles-hagelloch-fitted':'parameter-sets/measles-hagelloch-from-the-record');
+const set=json(JOIN?'parameter-sets/measles-hagelloch-rash-fixed-split':TO_RASH?'parameter-sets/measles-hagelloch-rash-fixed':GATHERING?'parameter-sets/measles-hagelloch-fitted':'parameter-sets/measles-hagelloch-from-the-record');
 if(GATHERING){set.structure={id:structure.id,version:structure.version};set.values.p_gathering={value:0.1,evidence:{basis:'assumed',note:'Set by the grid.'}};}
 if(SPLIT){set.structure={id:structure.id,version:structure.version};const pro=set.values.prodrome;delete set.values.prodrome;
   // The record's 2 to 6 days, as 1 to 4 early and 1 to 2 late: the same mean, 4.
@@ -46,7 +51,7 @@ if(SPLIT){set.structure={id:structure.id,version:structure.version};const pro=se
   set.values.w_early=set.values.w_rash={value:1,evidence:{basis:'assumed',note:'Set by the grid.'}};}
 if(BY_CLASS){set.structure={id:structure.id,version:structure.version};set.values.p_class_1=set.values.p_class_2=set.values.p_class;delete set.values.p_class;}
 const program=compile(structure,set,population);
-const response=compileResponse(structure,json(`response-scenarios/${BY_CLASS?'hagelloch-as-in-1861-by-class':TO_RASH?'hagelloch-as-in-1861-rash-fixed':GATHERING?'hagelloch-as-in-1861-gathering':SPLIT?'hagelloch-as-in-1861-split-prodrome':'hagelloch-as-in-1861'}`),DAYS);
+const response=compileResponse(structure,json(`response-scenarios/${JOIN?'hagelloch-as-in-1861-rash-fixed-split':BY_CLASS?'hagelloch-as-in-1861-by-class':TO_RASH?'hagelloch-as-in-1861-rash-fixed':GATHERING?'hagelloch-as-in-1861-gathering':SPLIT?'hagelloch-as-in-1861-split-prodrome':'hagelloch-as-in-1861'}`),DAYS);
 // --periods latent_period=8-9,prodrome=4-4: a sensitivity, the declared periods replaced for this run only.
 const periods=process.argv.indexOf('--periods');
 if(periods>0)for(const part of process.argv[periods+1].split(',')){const [id,span]=part.split('='),[lo,hi]=span.split('-').map(Number);
@@ -54,14 +59,14 @@ if(periods>0)for(const part of process.argv[periods+1].split(',')){const [id,spa
 // --total T: infection to the rash T to T+1 days, each branch's latent period T less its prodrome.
 const totalArg=process.argv.indexOf('--total');
 if(TO_RASH&&totalArg>0){const T=Number(process.argv[totalArg+1]);
-  structure.course.forEach((c,k)=>{if(c.from==='E'){const pro=Number(c.to.slice(1));program.steps[k][2]=T-pro;program.steps[k][3]=T+1-pro;}});}
+  structure.course.forEach((c,k)=>{if(c.from==='E'){const pro=Number(c.duration.split('_')[1]);program.steps[k][2]=T-pro;program.steps[k][3]=T+1-pro;}});}
 const width=structure.states.length,at=['Q','R'].map(id=>structure.states.findIndex(s=>s.id===id));
 const net=id=>program.nets[structure.networks.findIndex(x=>x.id===id)];
 
 const curves=(p,runs)=>{NETS.forEach((id,i)=>{net(id).probability=p[i];});
   // THE GATHERING'S DAY, the last value: the network meets that day only.
   if(GATHERING){const j=NETS.indexOf('gathering');for(let d=0;d<DAYS;d++)response.open[d*NETS.length+j]=d===p[NETS.length]?1:0;}
-  WEIGHTS.forEach((id,i)=>{program.weights[structure.states.findIndex(s=>s.id===id)]=p[NETS.length+i];});
+  WEIGHTS.forEach((id,i)=>{for(const st of WEIGHTED[id]??[id])program.weights[structure.states.findIndex(s=>s.id===st)]=p[NETS.length+i];});
   return Array.from({length:runs},(_,i)=>{
     const run=runDeclared(kernel,program,{seed:i+1,index,days:DAYS,response});
     const reached=d=>at.reduce((t,k)=>t+run.counts[d*width+k],0);
@@ -85,7 +90,7 @@ const t0=performance.now();
 const around=(x,lo,hi,k)=>geo(Math.max(lo,x/2),Math.min(hi,x*2),k);
 const W=[0,0.1,0.3,1],wAround=x=>x===0?[0,0.03,0.07]:geo(x/2,Math.min(1.5,x*2),3);
 const DAYS_TRIED=Array.from({length:46},(_,d)=>d);
-const coarse=GATHERING?grid([[0.47],[0.0035],[0.0052],geo(0.002,0.5,9),DAYS_TRIED],100):TO_RASH?grid([geo(0.03,0.9,5),geo(0.002,0.3,6),geo(0.0005,0.02,6),W],100):SPLIT?grid([geo(0.03,0.9,5),geo(0.002,0.3,6),geo(0.0005,0.01,5),W,W],100):BY_CLASS?grid([geo(0.05,0.9,5),geo(0.002,0.5,8),geo(0.002,0.5,8),geo(0.0005,0.01,6)],100)
+const coarse=GATHERING?grid([[0.47],[0.0035],[0.0052],geo(0.002,0.5,9),DAYS_TRIED],100):JOIN?grid([geo(0.03,0.9,5),geo(0.002,0.3,6),geo(0.0005,0.03,6),W,W],100):TO_RASH?grid([geo(0.03,0.9,5),geo(0.002,0.3,6),geo(0.0005,0.02,6),W],100):SPLIT?grid([geo(0.03,0.9,5),geo(0.002,0.3,6),geo(0.0005,0.01,5),W,W],100):BY_CLASS?grid([geo(0.05,0.9,5),geo(0.002,0.5,8),geo(0.002,0.5,8),geo(0.0005,0.01,6)],100)
   :grid([geo(0.01,0.5,8),geo(0.002,0.3,10),geo(0.0001,0.01,8)],100);
 const fine=GATHERING?grid([[0.47],[0.0035],[0.0052],around(coarse[0].p[3],0.0005,0.9,9),[coarse[0].p[4]-1,coarse[0].p[4],coarse[0].p[4]+1]],300)
   :grid(coarse[0].p.map((x,i)=>i>=NETS.length?wAround(x):NETS[i]==='village'?around(x,0.00002,0.05,BY_CLASS?5:7):around(x,0.0005,0.9,BY_CLASS?5:7)),300);
@@ -101,7 +106,7 @@ let inside=0;for(let d=0;d<span;d++)if(recorded[d]>=band[d][0]&&recorded[d]<=ban
 const peak3=[29,30,31],within=Math.round(fine[0].deviance)+4;
 const near=fine.filter(x=>x.deviance<=within);
 const range=i=>[Math.min(...near.map(x=>x.p[i])),Math.max(...near.map(x=>x.p[i]))];
-const ASSUMED=BY_CLASS?[0.08,0.02,0.02,0.002]:SPLIT?[0.47,0.0035,0.0052,1,1]:TO_RASH?[0.08,0.02,0.002,1]:GATHERING?[0.47,0.0035,0.0052,0,10]:[0.08,0.02,0.002],before=score(ASSUMED,1000);
+const ASSUMED=BY_CLASS?[0.08,0.02,0.02,0.002]:JOIN?[0.08,0.02,0.002,0.15,0]:SPLIT?[0.47,0.0035,0.0052,1,1]:TO_RASH?[0.08,0.02,0.002,1]:GATHERING?[0.47,0.0035,0.0052,0,10]:[0.08,0.02,0.002],before=score(ASSUMED,1000);
 const out={recorded,coarseTop:coarse.slice(0,10),fineTop:fine.slice(0,10),best:{p:best.p,deviance:best.deviance,
   inside:`${inside} of ${span} days`,peak3p95:peak3.reduce((t,d)=>t+band[d][2],0),peak3recorded:peak3.reduce((t,d)=>t+recorded[d],0),
   ...Object.fromEntries(['total','peakDay','peakCount','halfDay','lastDay'].map(k=>[k,stat(k)]))},

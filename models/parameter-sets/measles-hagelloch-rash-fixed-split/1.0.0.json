@@ -1,0 +1,360 @@
+{
+  "schema": "fieldwork/parameter-set/1",
+  "id": "measles-hagelloch-rash-fixed-split",
+  "version": "1.0.0",
+  "title": "Hagelloch 1861: the time to the rash nearly fixed, 12 to 13 days, and the prodrome's last 2 days weighted apart",
+  "structure": {
+    "id": "measles-rash-fixed-split-household-class-village",
+    "version": "1.0.0"
+  },
+  "values": {
+    "latent_2": {
+      "min": 10,
+      "max": 11,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Pfeilsticker A. Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse. Tübingen: Eberhard-Karls-Universität; 1863.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "OCR text of the incubation chapter, 2026-11-18"
+        },
+        "quote": "dass die Zeit von der Ansteckung bis zur Eruption … constant 14 Tage sei (that the time from infection to the rash is a constant 14 days)",
+        "working": "Infection to the rash 12 to 13 days, less a prodrome of 2: 10 to 11 days. 12 to 13 is the record's latent period (median 8.5, experiment 199) and prodrome (mean 4) together, held nearly fixed as the rule of 1863 holds it fixed.",
+        "note": "Pfeilsticker's 14 days is from infection; the model's day of infection is the day of transmission, and the record's intervals give 12 to 13. A sensitivity runs others."
+      }
+    },
+    "latent_3": {
+      "min": 9,
+      "max": 10,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Pfeilsticker A. Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse. Tübingen: Eberhard-Karls-Universität; 1863.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "OCR text of the incubation chapter, 2026-11-18"
+        },
+        "quote": "dass die Zeit von der Ansteckung bis zur Eruption … constant 14 Tage sei (that the time from infection to the rash is a constant 14 days)",
+        "working": "Infection to the rash 12 to 13 days, less a prodrome of 3: 9 to 10 days. 12 to 13 is the record's latent period (median 8.5, experiment 199) and prodrome (mean 4) together, held nearly fixed as the rule of 1863 holds it fixed.",
+        "note": "Pfeilsticker's 14 days is from infection; the model's day of infection is the day of transmission, and the record's intervals give 12 to 13. A sensitivity runs others."
+      }
+    },
+    "latent_4": {
+      "min": 8,
+      "max": 9,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Pfeilsticker A. Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse. Tübingen: Eberhard-Karls-Universität; 1863.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "OCR text of the incubation chapter, 2026-11-18"
+        },
+        "quote": "dass die Zeit von der Ansteckung bis zur Eruption … constant 14 Tage sei (that the time from infection to the rash is a constant 14 days)",
+        "working": "Infection to the rash 12 to 13 days, less a prodrome of 4: 8 to 9 days. 12 to 13 is the record's latent period (median 8.5, experiment 199) and prodrome (mean 4) together, held nearly fixed as the rule of 1863 holds it fixed.",
+        "note": "Pfeilsticker's 14 days is from infection; the model's day of infection is the day of transmission, and the record's intervals give 12 to 13. A sensitivity runs others."
+      }
+    },
+    "latent_5": {
+      "min": 7,
+      "max": 8,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Pfeilsticker A. Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse. Tübingen: Eberhard-Karls-Universität; 1863.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "OCR text of the incubation chapter, 2026-11-18"
+        },
+        "quote": "dass die Zeit von der Ansteckung bis zur Eruption … constant 14 Tage sei (that the time from infection to the rash is a constant 14 days)",
+        "working": "Infection to the rash 12 to 13 days, less a prodrome of 5: 7 to 8 days. 12 to 13 is the record's latent period (median 8.5, experiment 199) and prodrome (mean 4) together, held nearly fixed as the rule of 1863 holds it fixed.",
+        "note": "Pfeilsticker's 14 days is from infection; the model's day of infection is the day of transmission, and the record's intervals give 12 to 13. A sensitivity runs others."
+      }
+    },
+    "latent_6": {
+      "min": 6,
+      "max": 7,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Pfeilsticker A. Beiträge zur Pathologie der Masern mit besonderer Berücksichtigung der statistischen Verhältnisse. Tübingen: Eberhard-Karls-Universität; 1863.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "OCR text of the incubation chapter, 2026-11-18"
+        },
+        "quote": "dass die Zeit von der Ansteckung bis zur Eruption … constant 14 Tage sei (that the time from infection to the rash is a constant 14 days)",
+        "working": "Infection to the rash 12 to 13 days, less a prodrome of 6: 6 to 7 days. 12 to 13 is the record's latent period (median 8.5, experiment 199) and prodrome (mean 4) together, held nearly fixed as the rule of 1863 holds it fixed.",
+        "note": "Pfeilsticker's 14 days is from infection; the model's day of infection is the day of transmission, and the record's intervals give 12 to 13. A sensitivity runs others."
+      }
+    },
+    "share_2": {
+      "value": 0.1915,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "working": "36 of the 188 children had a prodrome of 2 days or less (0 or 1 taken as 2): 0.1915. A prodrome of 6 or more is the rest (24 children)."
+      }
+    },
+    "share_3": {
+      "value": 0.1649,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "working": "31 of the 188 children had a prodrome of 3 days: 0.1649. A prodrome of 6 or more is the rest (24 children)."
+      }
+    },
+    "share_4": {
+      "value": 0.383,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "working": "72 of the 188 children had a prodrome of 4 days: 0.3830. A prodrome of 6 or more is the rest (24 children)."
+      }
+    },
+    "share_5": {
+      "value": 0.133,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "working": "25 of the 188 children had a prodrome of 5 days: 0.1330. A prodrome of 6 or more is the rest (24 children)."
+      }
+    },
+    "early_3": {
+      "min": 1,
+      "max": 1,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "working": "A prodrome of 3 days, less its last 2.",
+        "note": "Where the prodrome is split is assumed; nothing in the record marks it."
+      }
+    },
+    "early_4": {
+      "min": 2,
+      "max": 2,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "working": "A prodrome of 4 days, less its last 2.",
+        "note": "Where the prodrome is split is assumed; nothing in the record marks it."
+      }
+    },
+    "early_5": {
+      "min": 3,
+      "max": 3,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "working": "A prodrome of 5 days, less its last 2.",
+        "note": "Where the prodrome is split is assumed; nothing in the record marks it."
+      }
+    },
+    "early_6": {
+      "min": 4,
+      "max": 4,
+      "evidence": {
+        "basis": "derived",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "directness": "direct",
+        "credibility": "unverified",
+        "source": {
+          "citation": "Measles in Hagelloch, Germany, 1861: 188 children, from Pfeilsticker (1863) as reanalysed by Oesterle (1992), in the outbreaks R package 1.9.0 (measles_hagelloch_1861); examples/hagelloch-1861/cases.json in this repository.",
+          "url": "https://archive.org/details/beitrgezurpatho00pfeigoog",
+          "open": true,
+          "read": "every record, 2026-11-21"
+        },
+        "working": "A prodrome of 6 days, less its last 2.",
+        "note": "Where the prodrome is split is assumed; nothing in the record marks it."
+      }
+    },
+    "prodrome_late": {
+      "min": 2,
+      "max": 2,
+      "evidence": {
+        "basis": "assumed",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "note": "The last 2 days of every prodrome, the upper end of the 1 to 2 of measles-hagelloch-fitted-split; a prodrome of 2 days is all late. Assumed: nothing in the record marks the split."
+      }
+    },
+    "rash_infectious": {
+      "min": 5,
+      "max": 5,
+      "evidence": {
+        "basis": "derived",
+        "place": "global",
+        "time": {
+          "same": false,
+          "note": "a 2024 reference for an 1861 outbreak"
+        },
+        "directness": "indirect",
+        "credibility": "unverified",
+        "source": {
+          "citation": "CDC. Epidemiology and Prevention of Vaccine-Preventable Diseases (the Pink Book), chapter 13: Measles. Page dated 24 April 2024.",
+          "url": "https://www.cdc.gov/pinkbook/hcp/table-of-contents/chapter-13-measles.html",
+          "open": true,
+          "read": "full text, 2026-11-17"
+        },
+        "quote": "transmissible from 4 days before through 4 days after rash onset",
+        "working": "The day of the rash and the 4 days after it: 5 days. With the 4-day prodrome, 9 infectious days in all, as in the Pink Book set.",
+        "note": "Not in the record: nothing marks when a child stopped being infectious. Kept from the Pink Book."
+      }
+    },
+    "p_household": {
+      "value": 0.08,
+      "evidence": {
+        "basis": "assumed",
+        "note": "The spike's assumption, kept; to be fitted (scripts/abm-hagelloch-fit.mjs --to-rash)."
+      }
+    },
+    "p_class": {
+      "value": 0.02,
+      "evidence": {
+        "basis": "assumed",
+        "note": "The spike's assumption, kept; to be fitted (scripts/abm-hagelloch-fit.mjs --to-rash)."
+      }
+    },
+    "p_village": {
+      "value": 0.002,
+      "evidence": {
+        "basis": "assumed",
+        "note": "The spike's assumption, kept; to be fitted (scripts/abm-hagelloch-fit.mjs --to-rash)."
+      }
+    },
+    "w_early": {
+      "value": 0.15,
+      "evidence": {
+        "basis": "assumed",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "note": "Set by the fit; 0.15 in measles-hagelloch-fitted-split."
+      }
+    },
+    "w_rash": {
+      "value": 0,
+      "evidence": {
+        "basis": "assumed",
+        "place": "direct",
+        "time": {
+          "same": true
+        },
+        "note": "Set by the fit; 0 in measles-hagelloch-fitted-split."
+      }
+    }
+  }
+}

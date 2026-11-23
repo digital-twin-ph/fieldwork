@@ -128,3 +128,29 @@ test('a study area unchecked in Map is left out of the map; in the pin editor it
   await expect(outlines).toHaveCount(before-1);
   expect(errors).toEqual([]);
 });
+
+// NO STUDY AREA ON MAP ITSELF (the practitioner, 2026-11-22: "The study area is a requirement for the map unless it can
+// query upstream that in fact two areas are connected"). Two countries' study areas reach Map only through Polygon layer,
+// with pins beside them: the pins are placed against both areas together.
+test('a map whose polygon layer was read from study areas places its points against those areas',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org|basemaps|tiles/,route=>route.abort('failed'));
+  const pin=(id,x,y)=>({type:'Feature',id,properties:{name:id},geometry:{type:'Point',coordinates:[x,y]}});
+  const pins={type:'FeatureCollection',features:[pin('in-drc',28.5,1.5),pin('in-ssd',28.5,4.5),pin('away',35,10)]};
+  const alone={...flow,nodes:flow.nodes.map(n=>n.id==='pts'?{...n,params:{...n.params,data:pins}}:n),
+    edges:[...flow.edges.filter(e=>e.id!=='e4'&&e.id!=='e5'),{id:'e6',from:'pts',to:'map',port:'points'}]};
+  await page.goto('/');await page.waitForSelector('html[data-ready]');
+  await page.evaluate(f=>{localStorage.clear();localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(f));},alone);
+  await page.goto('/');await page.waitForSelector('html[data-ready]');
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:30000});
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('#map')).toContainText('in-drc');await expect(page.locator('#map')).toContainText('in-ssd');
+  // Placed against both areas together: inside where inside either, outside where outside both; the area named as theirs.
+  await page.locator('[data-view="evidence"], button:has-text("N3 & evidence")').first().click();
+  const facts=page.locator('main').first();
+  await expect(facts).toContainText('<urn:fieldwork:area:map:together> prov:wasDerivedFrom <urn:fieldwork:area:drc>, <urn:fieldwork:area:ssd>.');
+  for(const [id,relation] of [['in-drc','Inside'],['in-ssd','Inside'],['away','Outside']])
+    await expect(facts).toContainText(`<urn:fieldwork:record:pts:${id}> a geo:Feature; <http://purl.org/dc/terms/isPartOf> <urn:fieldwork:source:pts>; fw:spatialRelation fw:${relation}.`);
+  expect(errors).toEqual([]);
+});

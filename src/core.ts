@@ -11,6 +11,8 @@ import {reachableNodes,validateReachNode} from './reachable-nodes.js';
 import {reachableCorridor,validateCorridorNode} from './reachable-corridor.js';
 import {travelTimeBand,validateBandNode} from './travel-time-band.js';
 import {collectPolygonLayers,isPolygonPort,polygonPort,MAX_POLYGON_LAYERS} from './polygon-layers.js';
+import {areasBehindPolygons} from './areas-behind.js';
+import {sharedBorder,BORDER_TOLERANCE_M,lengthKm as lineLengthKm} from './line-layer.js';
 import {applyFeatureEdits,applyTableEdits,editsFacts,editsSentence,validEdits,editsAt} from './cell-edits.js';
 import {rasterUnitsOf} from './raster-units.js';
 import {thinnedOutline,singleRasterScale,drawnDensity,pooledBreaks,isRasterPort,rasterPort,rasterMeasure,validRasterShading,RAMPS,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE,type PanelScale} from './raster-panels.js';
@@ -175,6 +177,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // and the country an extract is read for, which is what `network_input` already does with
   // the same port. Absent, the widget still reads a file, which is why `required` stays empty
   // in the contract and this stays an input-stage widget.
+  line_input:{title:'Line layer',group:'Sources',icon:'〰',color:'blue',description:'Read routes, tracks or roads from a GPX, KML or GeoJSON file, or take the border two study areas share',inputs:[['area','area'],['area_2','area']],output:'lines'},
   polygon_input:{title:'Polygon layer',group:'Sources',icon:'⬟',color:'blue',description:'Read a polygon layer from a GeoJSON file as published, or from a published OSM extract within the study area',inputs:[['area','area']],output:'polygons'},
   relate_table:{title:'Relate a column from another table',group:'Summaries',icon:'⋈',color:'teal',
     description:'Bring a category from a second table onto these rows, matched on a column both carry',
@@ -293,7 +296,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // definition, and a saved workflow that still names this type is migrated to
   // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
-  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['raster','raster'],['ground','ground'],['network','network']],output:null},
+  map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['raster','raster'],['ground','ground'],['network','network'],['lines','lines']],output:null},
   table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Show what is connected as a table',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons']],output:null},
   chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Draw a table or a case series as bars or a curve, or who infected whom as a tree',inputs:[['records','table'],['polygons','polygons']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
@@ -430,6 +433,8 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // canvas, which is where a source widget has to be.
   // A LAYER MADE OF THE AREAS' PARTS needs one area at least; the others are added as wanted.
   if(node.type==='polygon_input'&&node.params.inputMethod==='areas')return all.filter(([port])=>port==='area');
+  // A LINE LAYER READ FROM A FILE needs nothing connected; a border needs both areas (experiment 229).
+  if(node.type==='line_input')return node.params.inputMethod==='border'?all:[];
   if(node.type==='network_input'||node.type==='polygon_input')
     return all.filter(([port])=>port!=='area');
   // THE AREA TO GENERATE IN, optional too (2026-11-21): connected, it is the one Configure… generates in.
@@ -581,6 +586,8 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // `output-mode-set-before-the-shape-arrives`, and the reason a practitioner had to answer a
   // question about shape before having the shape.
   // SEVERAL STUDY AREAS, each its own input, where the layer is made of their parts (2026-11-21).
+  // THE TWO AREAS A BORDER IS TAKEN FROM, offered only where the layer is a border (experiment 229).
+  if(node.type==='line_input')return node.params.inputMethod==='border'?[['area','area'],['area_2','area']]:[];
   if(node.type==='polygon_input')return [['area','area'],
     ...Array.from({length:node.params.inputMethod==='areas'?Math.max(0,Math.min(MAX_AREA_INPUTS,node.params.areaInputCount??1)-1):0},
       (_,i)=>[`area_${i+2}`,'area'] as [string,PortType])];
@@ -598,7 +605,9 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
     ...Array.from({length:Math.max(1,Math.min(MAX_RASTER_LAYERS,node.params.rasterInputCount??1))},(_,i)=>[rasterPort(i),'raster'] as [string,PortType]),
     // SEVERAL SHEETS AS GROUND (TODO 35, 2026-11-15): Lycoming lies across two 1943 sheets, each placed and cut on its own.
     ...Array.from({length:Math.max(1,Math.min(MAX_GROUND_LAYERS,node.params.groundInputCount??1))},(_,i)=>[groundPort(i),'ground'] as [string,PortType]),
-    ['network','network']];
+    ['network','network'],
+    // LINES, drawn over whatever else the map draws (experiment 229).
+    ['lines','lines']];
 
   // A street network is a thing to look at, not only a thing to route over. Four widgets consume a
   // `network` and none of them was an output, so a downloaded network could not be seen.
@@ -1023,6 +1032,9 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (n.type==='policy' && (!Number.isFinite(n.params.thresholdKm) || n.params.thresholdKm<0 || n.params.thresholdKm>1000)) throw new Error('Distance threshold must be between 0 and 1,000 km.');
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
+    if(n.type==='line_input'){if(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>100)throw new Error('Name the line layer using 1–100 characters.');
+      if(n.params.inputMethod!=='file'&&n.params.inputMethod!=='border')throw new Error('A line layer is read from a file or taken from two study areas\' border.');
+      if(n.params.toleranceM!==undefined&&!(n.params.toleranceM>0&&n.params.toleranceM<=10_000))throw new Error('The distance within which two outlines count as one border is more than 0 m and at most 10 km.');}
     if(n.type==='detect_unusual_counts'){if(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>100)throw new Error('Name the detection using 1–100 characters.');detectSettings(n.params);}
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
     if((n.type==='map_output'||n.type==='table_output'||n.type==='deduplicate_points')&&n.params.pointInputCount!==undefined&&(!Number.isInteger(n.params.pointInputCount)||n.params.pointInputCount<1||n.params.pointInputCount>MAX_POINT_LAYERS))throw new Error(`Use 1–${MAX_POINT_LAYERS} point input ports.`);
@@ -1235,6 +1247,8 @@ export function summarizeStep(node:WorkflowNode,value:unknown):StepSummary|undef
   switch(node.type){
     case 'summarize_hull':{const f=v?.features?.[0];return f?{areaSquareMetres:f.areaSquareMetres,spanMetres:f.spanMetres}:undefined;}
     case 'voronoi':case 'donut_geomask':case 'aggregate_points_to_h3_cell':return {features:v?.features?.length??0};
+    case 'line_input':{const l=value as import('./types.js').LineLayer|undefined;if(!l?.features)return undefined;
+      const km=l.features.reduce((t,f)=>t+lineLengthKm(f),0);return {lines:l.features.length,km:km<10?km.toFixed(2):Math.round(km).toLocaleString('en')};}
     case 'isochrone':return {features:v?.features?.length??0,unconnected:v?.unconnected?.length??0,offNetwork:v?.offNetwork?.length??0};
     case 'mean_center':{const c=value as MeanCenter;return {longitude:c.coordinates[0],latitude:c.coordinates[1],count:c.count,
       ...(c.weight?{weightField:c.weight.field,weightTotal:c.weight.total}:{})};}
@@ -2094,6 +2108,21 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           workflow.edges.find(e=>e.to===node.id&&e.port==='records')!.from,!!declared&&!declared.stopped),
           method:sentence} as unknown as Receipt);
         break;}
+      case 'line_input':{
+        if(node.params.inputMethod==='border'){
+          const a=inputs.area as AreaValue|undefined,b=(inputs as unknown as {area_2?:AreaValue}).area_2;
+          if(!a?.boundary||!b?.boundary)throw new Error(`Connect two study areas to "${node.params.label}": its border is where they meet.`);
+          const tolerance=node.params.toleranceM??BORDER_TOLERANCE_M,stretches=sharedBorder(a.boundary,b.boundary,tolerance);
+          if(!stretches.length)throw new Error(`${a.label} and ${b.label} do not meet: no stretch of ${a.label}'s outline lies within ${tolerance.toLocaleString('en')} m of ${b.label}'s.`);
+          value={kind:'lines',source:`The border of ${a.label} and ${b.label}, within ${tolerance.toLocaleString('en')} m`,
+            features:stretches.map((coordinates,i)=>({type:'Feature',id:`border-${i+1}`,
+              properties:{name:stretches.length===1?`${a.label} and ${b.label}`:`${a.label} and ${b.label}, ${i+1} of ${stretches.length}`},
+              geometry:{type:'LineString',coordinates}}))} as unknown as DisplayValue;
+        }else{
+          if(!node.params.data?.features?.length)throw new Error(`Read a file of lines into "${node.params.label}" before running: a GPX, KML, KMZ or GeoJSON file, in Configure….`);
+          value=structuredClone(node.params.data) as unknown as DisplayValue;
+        }
+        break;}
       case 'detect_unusual_counts':{
         const table=inputs.records as unknown as import('./data-table.js').DataTable|undefined;
         if(table?.kind!=='data-table')throw new Error('Connect a table of counts per period, such as Cases by period gives.');
@@ -2622,6 +2651,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // MissingLocation. So the honest answer is the one the spatial branch already gives, in
         // the same words, rather than inventing a fifth relation or drawing points that claim a
         // relation to nothing.
+        // THE STUDY AREAS A POLYGON LAYER WAS READ FROM ARE AREAS (the practitioner, 2026-11-22: "The study area is a
+        // requirement for the map unless it can query upstream that in fact two areas are connected"). South Sudan and
+        // DR Congo through Polygon layer into Map, with pins: the points are placed against the areas together.
+        const upstream=inputs.area?undefined:areasBehindPolygons(workflow,node.id,values);
+        if(upstream)(inputs as unknown as {area:AreaValue}).area=upstream;
         if(beside.length&&!inputs.area)
           throw new Error(`Connect a study area to "${node.params.label||node.id}". A Map places `
             +`its points by their relation to an area \u2014 inside it, on its boundary, or `
@@ -2723,6 +2757,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         // map to draw and `mapOutput` read `boundary` off nothing: "Cannot read properties of
         // undefined (reading 'boundary')", reported 2026-10-21 on a Map wired to a deduplication
         // and nothing else. A refusal that names the node and the port is the least this owes.
+        // A MAP OF LINES ALONE draws them in their own frame (experiment 229): there are no points to place against an area.
+        if(!inputs.area&&!pointInputs().layers.length&&(inputs as unknown as {lines?:unknown}).lines){
+          value={kind:'spatial-map',rows:[],centers:[],label:node.params.label||'Map'} as unknown as DisplayValue;break;}
         if(!inputs.area)throw new Error(`Connect a study area to "${node.params.label||node.id}". `
           +`A Map places its points by their relation to an area -- inside it, on its boundary, or `
           +`outside -- so points alone have nothing to be placed against. The same Study area the `
@@ -2844,6 +2881,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         withNote(receipts,runId,node.id,[note]);
       }
     }
+    // LINES JOIN EVERY MAP, whichever renderer leads: a map's layers are not a mode (experiment 229).
+    if(node.type==='map_output'&&value&&(inputs as unknown as {lines?:import('./types.js').LineLayer}).lines){
+      const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='lines')!,from=workflow.nodes.find(n=>n.id===edge.from);
+      (value as unknown as {lines:unknown}).lines=[{...structuredClone((inputs as unknown as {lines:import('./types.js').LineLayer}).lines),
+        sourceNodeId:edge.from,label:(from?.params as {label?:string})?.label||edge.from}];}
     values.set(node.id,value);{const summary=summarizeStep(node,value);if(summary)stepSummaries[node.id]=summary;}trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // A RASTER IS LET GO once every step that reads it has run (2026-11-13): three national windows at 100 m held to the
     // end of Botswana's run stalled the tab, and nothing after the steps reading a raster reads it again. A step showing it,

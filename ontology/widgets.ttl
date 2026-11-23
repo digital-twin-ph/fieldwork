@@ -130,3 +130,5 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/transmission_chains.md>.
 <urn:fieldwork:widget:detect_unusual_counts> a fw:WidgetDefinition; fw:nodeType "detect_unusual_counts"; rdfs:label "Detect unusual counts";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/detect_unusual_counts.md>.
+<urn:fieldwork:widget:line_input> a fw:WidgetDefinition; fw:nodeType "line_input"; rdfs:label "Line layer";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/line_input.md>.

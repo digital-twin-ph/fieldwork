@@ -22,12 +22,13 @@ You connect what you want drawn. There is no setting that says what kind of map 
 
 | Connect | To draw |
 | --- | --- |
-| a study area | the boundary your work is inside |
+| a study area | the boundary your work is inside; without one, the study areas a polygon layer was read from |
 | a point layer | records with locations — up to eight separate layers |
 | a polygon layer | areas: districts, catchments, cells or bands — up to six separate layers |
 | a coverage check | points marked inside, outside or missing a location |
 | a raster | prepared or clipped cells |
 | a street network | the streets themselves |
+| a line layer | routes, tracks and borders, over the area and under the points |
 
 ## How to use it
 
@@ -374,6 +375,25 @@ Methods as a limitation, by itself. Natural Earth is bundled and writes no such 
 
 How the panels and the inset came to be: what was asked, designed, built, checked and found, dated. Each was
 once an experiment record (212 and 213).
+
+### Lines (0.43.0)
+
+_2026-11-22._ A **lines** input takes a Line layer: routes, tracks and borders, drawn over the study area and under the
+points, on the static figure and the interactive map, where each is a layer of its own and each line is named on hover.
+A map of lines alone is drawn in their own frame. Not yet drawn on a map that leads with polygons, a raster or a street
+network, and not yet in the key ([experiment 229](../experiments/229-a-line-layer.md)).
+
+### Points placed against the study areas behind a polygon layer (0.42.1)
+
+_2026-11-22._ Two study areas, South Sudan and DR Congo, wired into Polygon layer and from it to Map, with a point layer
+beside them: the run stopped, asking for a study area on Map itself. The areas were there, one step back. Now, where
+nothing is on Map's area input, Map follows its polygon layers back to the study areas they were read from and places
+the points against those areas together: inside where inside either, outside where outside both. The map's notes name
+the area as derived from them. Only Polygon layers that read their parts from study areas are followed.
+
+Checked in `tests/study-areas-as-layer.browser.mjs` (two areas, three pins: one in each, one away), Chromium and WebKit.
+
+**Not established:** how a point exactly on the border two areas share is described; it is on the outline of each.
 
 ### Rasters on one map, and Manage layers for rasters (0.42.0)
 

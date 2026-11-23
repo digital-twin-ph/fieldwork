@@ -3,6 +3,20 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.171.0 — 2026-11-22
+
+- **Line layer** (0.1.0, experiment 229): routes, tracks and roads read from GPX, KML, KMZ or GeoJSON, or the border two
+  study areas share, found where their outlines lie within 500 m of each other. Map draws lines (0.43.0), static and
+  interactive.
+- **A Map with no study area of its own** places its points against the study areas its polygon layers were read from,
+  together (Map 0.42.1), where it stopped asking for one.
+- **Hagelloch's peak, made**: a fixed time to the rash joined with the prodrome's last days weighted fits the record best
+  of any model, the peak day inside the runs' range (experiment 199).
+- **An Apply made while the workflow is running is no longer lost.** A Configure… dialog opened before a run began
+  dropped its Apply without a word and closed as if it had applied. It now says the workflow is running and keeps the
+  settings until the run is done.
+- The Coordinate reference system card points to Table output, where it named the retired Reproject points.
+
 ## 0.170.1 — 2026-11-22
 
 - **CI's verify runs two test files at a time**, where it ran one; WebKit's run had come within minutes of its

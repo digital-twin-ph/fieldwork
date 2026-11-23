@@ -5,7 +5,7 @@
 import {plotFrame} from './catchment-output.js';
 import {proportionalRadius,sizedLargest,layerRanks,colouredClasses} from './point-layers.js';
 import {linkLinesSvg} from './map-links.js';
-import type {Escape,Position} from './types.js';
+import type {Escape,Position,LineLayer} from './types.js';
 import type {DisplayValue} from './results.js';
 import {markPath} from './presentation.js';
 import {markLabel,LABEL_CEILING,MERGED_MARKS_FROM,MarkBatch} from './point-layers.js';
@@ -17,9 +17,22 @@ import {markLabel,LABEL_CEILING,MERGED_MARKS_FROM,MarkBatch} from './point-layer
  *  A basemap needs both: the extent, to know which tiles cover it, and the projection, to place
  *  each tile by its own corners. Experiment 137. */
 /** `box`: draw over this extent instead of the data's own, for an inset's enlarged view (Map's manual, History: the inset). */
+/** The line layers a map carries (experiment 229). */
+export const lineLayersOf=(output:DisplayValue)=>((output as unknown as {lines?:(LineLayer&{sourceNodeId:string;label:string})[]}).lines??[]);
+/** THE COLOUR OF EACH LINE LAYER, dark and apart from the points' hues and the area's green. */
+export const LINE_COLOURS=['#7a3e9d','#b5482f','#2f5f98','#8a6d1d'];
+/** Each line layer as one path, over the area and under the points. */
+export function lineLayersSvg(output:DisplayValue,project:(p:[number,number])=>[number,number],markScale=1):string{
+  return lineLayersOf(output).map((layer,i)=>{
+    const d=layer.features.flatMap(f=>f.geometry.type==='LineString'?[f.geometry.coordinates]:f.geometry.coordinates)
+      .map(part=>'M'+part.map(p=>project(p).map(v=>+v.toFixed(1)).join(',')).join('L')).join('');
+    return `<path data-line-layer="${layer.sourceNodeId}" d="${d}" fill="none" stroke="${LINE_COLOURS[i%LINE_COLOURS.length]}" stroke-width="${2.5*markScale}" stroke-linejoin="round" stroke-linecap="round"/>`;}).join('');
+}
 export function staticMapFrame(output:DisplayValue,box?:readonly [number,number,number,number]){
-  const boundary=output.boundary!,polygons=boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
-  const outline=polygons.flat(2),points=box?[[box[0],box[1]],[box[2],box[3]]]:[...outline,...output.rows.filter(r=>r.coordinates!).map(r=>r.coordinates!),...(output.centers||[]).filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
+  const boundary=output.boundary,polygons=!boundary?[]:boundary.type==='MultiPolygon'?boundary.coordinates:[boundary.coordinates];
+  // LINES ARE IN THE FRAME (experiment 229), and are all of it where a map draws lines alone.
+  const lineVertices=lineLayersOf(output).flatMap(l=>l.features.flatMap(f=>f.geometry.type==='LineString'?f.geometry.coordinates:f.geometry.coordinates.flat()));
+  const outline=[...polygons.flat(2),...lineVertices],points=box?[[box[0],box[1]],[box[2],box[3]]]:[...outline,...output.rows.filter(r=>r.coordinates!).map(r=>r.coordinates!),...(output.centers||[]).filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
   // A LOOP, NEVER Math.min(...xs) (2026-11-19). The practitioner's DR Congo at the first level, 26 provinces and 194,009
   // vertices, drew a blank map: spreading that many numbers into one call threw "Maximum call stack size exceeded", which
   // the map swallowed. study-area.ts has warned of exactly this since 2026-10-18; this frame had not heeded it.
@@ -48,6 +61,7 @@ export function staticBoundaryMap(output:DisplayValue,selected:string|null|undef
   // hides the ground, which is what the practitioner met on the South London figure, 2026-10-25.
   // So the fill is declared here and withdrawn by whoever draws ground underneath it.
   svg+=polygons.map(rings=>`<path data-fill-role="context" d="${rings.map(ring=>'M'+ring.map(p=>project(p).join(',')).join('L')+'Z').join(' ')}" fill="#dbe8d6" stroke="#668870" stroke-width="${1.5*markScale}" fill-rule="evenodd"/>`).join('');
+  svg+=lineLayersSvg(output,project as never,markScale);
   const focus=output.rows.find(r=>'result:'+r.id===selected);
   if(focus?.center){svg+=`<path d="M${project(focus.coordinates!).join(',')}L${project(focus.center.coordinates!).join(',')}" stroke="#587d6c" stroke-dasharray="4 4"/>`;}
   for(const c of output.centers||[]){if(!c.geometry)continue;const [x,y]=project(c.geometry!.coordinates);svg+=`<rect x="${x-5}" y="${y-5}" width="10" height="10" fill="#315d57" stroke="white"/><text x="${x+9}" y="${y-8}">${esc(c.properties.name)}</text>`;}

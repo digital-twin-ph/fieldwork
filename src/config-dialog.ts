@@ -58,6 +58,13 @@ export interface ConfigDialog<D> {
 
 export const CONFIG_APPLY='config-apply', CONFIG_CANCEL='config-cancel', CONFIG_CLOSE='config-close';
 
+/** WHETHER A RUN IS IN FLIGHT, told by the application (2026-11-22). An edit made during a run is not made: the controls
+ *  are disabled rather than queued, at the practitioner's decision. A dialog opened before the run began stays open, and
+ *  its Apply was dropped without a word and the dialog closed as if it had applied (found by experiment 229's test, about
+ *  one Apply in ten made just after another). Now Apply says why, and the dialog keeps the draft until the run is done. */
+let runInFlight:()=>boolean=()=>false;
+export function setRunInFlight(check:()=>boolean):void{runInFlight=check;}
+
 export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
   document.getElementById(spec.id)?.remove();
   const dialog=document.createElement('dialog');
@@ -96,6 +103,8 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
   const cancelButton=dialog.querySelector<HTMLButtonElement>(`#${CONFIG_CANCEL}`)!;
   applyButton.onclick=async()=>{
     if(applyButton.disabled||spec.readOnly)return;
+    if(runInFlight()){slot.innerHTML='<div class="config-message config-message-warning" role="status" data-run-in-flight>'
+      +'<p>The workflow is running. Apply once the run is done: your settings are kept here until then.</p></div>';return;}
     if(!spec.applyAsync){applied=true;spec.apply(draft);close();return;}
     // A SHARE, WHERE THE WORK KNOWS ONE, IS DRAWN AS A BAR under the words (2026-11-14).
     const say=(text:string,tone:'info'|'failure'='info',share?:number)=>{slot.innerHTML=text

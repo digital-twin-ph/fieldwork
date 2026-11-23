@@ -1104,7 +1104,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.42.0",
+      "currentVersion": "0.43.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1440,6 +1440,16 @@
           "version": "0.42.0",
           "path": "widgets/releases/map_output/0.42.0.json",
           "sha256": "e17ff3929a50f1f276e02ecb7730dcd6717faddd410bbaed0732299df2899e36"
+        },
+        {
+          "version": "0.42.1",
+          "path": "widgets/releases/map_output/0.42.1.json",
+          "sha256": "d921fbb17d6c71c060e32ec7eeaf5bf5bd0e4c62718736b118db419d420d93b1"
+        },
+        {
+          "version": "0.43.0",
+          "path": "widgets/releases/map_output/0.43.0.json",
+          "sha256": "8c3c20ff2040a32766eafebeb5a95efee3f7fca6fa2ecb703c07f535c823d3b6"
         }
       ]
     },
@@ -3308,6 +3318,18 @@
           "version": "0.2.0",
           "path": "widgets/releases/detect_unusual_counts/0.2.0.json",
           "sha256": "246fbfdc77031ba3d27fbad7ea70815747481f4c9ffe00ed1e1321f360191647"
+        }
+      ]
+    },
+    {
+      "id": "urn:fieldwork:widget:line_input",
+      "nodeType": "line_input",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/line_input/0.1.0.json",
+          "sha256": "0af63ac0722d7734c206a73e42840e837bcd94600184b83340ddefcafaa97785"
         }
       ]
     }

@@ -407,12 +407,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.42.0",
-   "released": "2026-11-22",
+   "version": "0.43.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "Rasters on one map: with nothing arranged, several rasters are drawn over one frame, static and interactive, on one key per unit, the overlap counted and said; panels when Arrange chooses them. Points wired to a map of rasters are drawn over the cells. Manage layers' order, names, groups and switches govern a map of rasters, a group one entry in the layer list; the Map's study area is a layer. Configure…'s preview draws the rasters."
+     "kind": "added",
+     "description": "A lines input: routes, tracks and borders from Line layer, drawn over the area and under the points, static and interactive, and alone."
     }
    ],
    "breaking": false,
@@ -1068,6 +1068,18 @@
     {
      "kind": "added",
      "description": "A limit measure, the decision limit on the statistic's own scale; the method's computation drawn in Configure…; Show me how for each method."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
+  },
+  "line_input": {
+   "version": "0.1.0",
+   "released": "2026-11-22",
+   "changes": [
+    {
+     "kind": "added",
+     "description": "Routes, tracks and roads read from GPX, KML, KMZ or GeoJSON, and the border two study areas share, as lines (experiment 229)."
     }
    ],
    "breaking": false,

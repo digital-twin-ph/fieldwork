@@ -21,7 +21,7 @@ quarter. That polygon becomes a study area, which any step that takes a study ar
 
 | Setting | What it decides |
 | --- | --- |
-| **Point that defines the area** | the point's name or id, as the point layer holds it |
+| **Point in ‹layer‰ that defines the area** | chosen from the points the connected layer carries. One point arriving is the choice; several, and the list opens on *Choose a point*. A layer that holds no records of its own and has not run offers none, and the name is typed in until it has |
 | **Radius in metres** | above 0 and up to 5,000 |
 
 **Show me how it works**, in the dialog, draws a made-up well and the area around it, step by step, with the radius

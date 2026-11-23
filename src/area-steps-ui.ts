@@ -23,6 +23,13 @@ export interface AreaStepKit extends InspectorKit {
   method:(nodeId:string)=>string|undefined;
   /** The numeric columns of the points arriving on a port, where their source holds them. */
   numericFields:(nodeId:string,port:string)=>string[];
+  /** THE POINTS ARRIVING ON A PORT, by the name each is known by. The practitioner, 2026-11-23, of Area around a
+   *  point refusing a connected Mines layer: *"This should not be guess work as the input port is connected."* A
+   *  step that is wired to a layer knows which points it may be given, so asking for one by typing its name is
+   *  asking the practitioner to supply what the workflow already holds -- and to spell it the way the file does.
+   *  Read from the source's own records where it holds them, and from the last run where it does not; empty where
+   *  neither has them yet, which is the only case a name must still be typed in. */
+  pointChoices:(nodeId:string,port:string)=>{names:string[];total:number};
   /** What a process step made in the last run, in a few numbers, while that run is current. */
   summary:(nodeId:string)=>Record<string,number|string|undefined>|undefined;
   /** The UTM zone this workflow's coordinates suggest, against the one chosen, and how far the chosen one stretches
@@ -41,6 +48,13 @@ const nodeIn=<T extends WorkflowNode['type']>(kit:InspectorKit,n:WorkflowNode<T>
 const showMeIn=(root:ParentNode,kit:InspectorKit,walk:()=>Parameters<typeof openWalkthrough>[0])=>
   root.querySelector<HTMLButtonElement>('[data-show-me]')?.addEventListener('click',event=>openWalkthrough(walk(),kit.esc,event.currentTarget as HTMLElement));
 
+/** The one point a connected layer offers, where it offers exactly one; otherwise nothing, because choosing
+ *  between several is the practitioner's. */
+const soleChoice=(kit:AreaStepKit,nodeId:string):string=>{
+  const {names}=kit.pointChoices(nodeId,'points');
+  return names.length===1?names[0]!:'';
+};
+
 export const bufferPointInspector:OwnInspector<'buffer_point'>={
   markup:(n,kit)=>{const k=kit as AreaStepKit,p=n.params;
     return kit.section('Name',kit.name('bp-label',p.label||'Area around a point'))
@@ -52,17 +66,40 @@ export const bufferPointInspector:OwnInspector<'buffer_point'>={
     root.querySelector('#configure-step')?.addEventListener('click',()=>{
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog({id:'buffer-point-dialog',widget:'Area around a point',step:node.params.label||'',
-        draft:{pointId:node.params.pointId,distanceM:String(node.params.distanceM)},
+        // ONE POINT ARRIVING IS NOT A CHOICE. Where the connected layer offers exactly one and none has been
+        // chosen, the dialog opens on it: the practitioner's Mines layer holds a single mine, and asking which
+        // one it is is asking them to type back what the wire already says. Several, and they pick.
+        draft:{pointId:node.params.pointId||soleChoice(kit as AreaStepKit,node.id),distanceM:String(node.params.distanceM)},
         sections:d=>{const m=Number(d.distanceM),ok=Number.isFinite(m)&&m>0&&m<=5000;
-          return {settings:`<div class="field"><label class="field-label" for="bp-point">Point that defines the area, by its name or id</label>`
-            +`<input id="bp-point" maxlength="80" value="${kit.esc(d.pointId)}" placeholder="MANILA"></div>`
+          const edge=kit.workflow().edges.find(e=>e.to===n.id&&e.port==='points');
+          const from=edge&&kit.workflow().nodes.find(x=>x.id===edge.from);
+          const layer=from?(from.params.label||'the connected layer'):'';
+          const {names,total}=(kit as AreaStepKit).pointChoices(n.id,'points');
+          // The chosen point is kept on the list even where the layer no longer offers it, so opening this dialog
+          // on an old workflow shows what it says rather than silently standing for something else.
+          const options=d.pointId&&!names.includes(d.pointId)?[d.pointId,...names]:names;
+          // A SELECT SHOWING A NAME THE STEP DOES NOT HOLD would read as an answer while the dialog refuses, so
+          // where none is chosen the first entry says so and carries no value.
+          const unchosen=!d.pointId&&options.length>0;
+          const label=layer?`Point in ${layer} that defines the area`:'Point that defines the area, by its name or id';
+          return {settings:`<div class="field"><label class="field-label" for="bp-point">${kit.esc(label)}</label>`
+            +(options.length
+              ?`<select id="bp-point">${unchosen?'<option value="" selected>Choose a point\u2026</option>':''}`
+                +`${options.map(name=>`<option value="${kit.esc(name)}"${name===d.pointId?' selected':''}>${kit.esc(name)}</option>`).join('')}</select>`
+                +(total>options.length?`<p class="description">${total.toLocaleString('en')} points arrive here; the first ${options.length.toLocaleString('en')} are listed.</p>`:'')
+              // NOTHING TO OFFER YET: a source that holds no records of its own and has not run. The name is typed
+              // in, as it always was, rather than the step pretending to a list it does not have.
+              :`<input id="bp-point" maxlength="80" value="${kit.esc(d.pointId)}" placeholder="MANILA">`
+                +`<p class="description">Run the workflow once and this step will offer the points by name.</p>`)
+            +`</div>`
             +`<div class="field"><label class="field-label" for="bp-distance">Radius in metres</label>`
             +`<input id="bp-distance" type="number" min="0" max="5000" step="100" value="${kit.esc(d.distanceM)}"></div>`,
             preview:showMe,blocked:!ok||!d.pointId.trim(),
             ...(!d.pointId.trim()?{message:{tone:'refusal' as const,text:'Name the point the area is drawn around.'}}
               :!ok?{message:{tone:'refusal' as const,text:'Give a radius above 0 and up to 5,000 metres.'}}:{})};},
         wire:(root,d,redraw)=>{
-          root.querySelector<HTMLInputElement>('#bp-point')!.onchange=e=>{d.pointId=(e.target as HTMLInputElement).value;redraw();};
+          root.querySelector<HTMLInputElement|HTMLSelectElement>('#bp-point')!.onchange=
+            e=>{d.pointId=(e.target as HTMLInputElement|HTMLSelectElement).value;redraw();};
           root.querySelector<HTMLInputElement>('#bp-distance')!.onchange=e=>{d.distanceM=(e.target as HTMLInputElement).value;redraw();};
           showMeIn(root,kit,()=>bufferPointWalkthrough(Number(d.distanceM)));},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='buffer_point'){t.params.pointId=d.pointId.trim();t.params.distanceM=Number(d.distanceM);}}),

@@ -4553,8 +4553,25 @@ function areaStepKit():AreaStepKit{
         if(typeof v==='number'&&Number.isFinite(v)||typeof v==='string'&&v.trim()!==''&&Number.isFinite(Number(v)))keys.add(k);
       return [...keys];},
     summary:id=>dirty?undefined:result?.stepSummaries?.[id],
+    // THE POINTS ARRIVING, named: the source's own records where it holds them, the last run's where it does not.
+    pointChoices:(id,port)=>{
+      const e=workflow.edges.find(x=>x.to===id&&x.port===port);
+      if(!e)return {names:[],total:0};
+      const source=workflow.nodes.find(n=>n.id===e.from);
+      const held=(source?.params as {data?:{features?:{id?:unknown;properties?:{name?:unknown}}[]}}|undefined)?.data?.features;
+      const ran=result?.outputs.find(o=>o.nodeId===e.from) as {rows?:{name?:unknown;recordId?:unknown}[]}|undefined;
+      const named=held?.length
+        ?held.map(f=>String(f.properties?.name??f.id??'').trim())
+        :(ran?.rows??[]).map(r=>String(r.name??r.recordId??'').trim());
+      const seen=new Set<string>();
+      for(const name of named)if(name)seen.add(name);
+      // CAPPED, because a layer may carry a quarter of a million records and a list that long is not a choice.
+      const names=[...seen].slice(0,POINT_CHOICE_LIMIT);
+      return {names,total:seen.size};},
     zoneAdvice};
 }
+/** How many point names one step will list. Above it the list is cut and the dialog says by how much. */
+const POINT_CHOICE_LIMIT=500;
 /** THE KIT OF A STEP MOVED OUT OF APP.TS WITH ITS LAST RUN (inspector-kit.ts). */
 /** CHART'S KIT (chart-ui.ts): the step kit, with the last run, the columns read up the workflow, and the controls the
  *  application draws for every output. */

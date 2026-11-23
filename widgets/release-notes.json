@@ -105,12 +105,12 @@
    "migrationFrom": []
   },
   "buffer_point": {
-   "version": "0.2.0",
-   "released": "2026-11-20",
+   "version": "0.3.0",
+   "released": "2026-11-23",
    "changes": [
     {
      "kind": "minor",
-     "description": "The standard Inspector: Name, Inputs, one sentence with Configure…, Result; the point and radius set in Configure…, with Show me how it works on a made-up well. The receipt names the area drawn by its GeoJSON's SHA-256."
+     "description": "Configure… offers the points the connected layer carries, by name, instead of asking for one to be typed against a placeholder. Where exactly one arrives the dialog opens on it, because one point is not a choice; where several do, the first entry says Choose a point and carries no value, so the control never reads as an answer the step does not hold. A point already chosen stays on the list even where the layer no longer offers it. A source that holds no records of its own and has not run offers nothing, and the name is typed in as before, with a line saying a run will populate it."
     }
    ],
    "breaking": false,

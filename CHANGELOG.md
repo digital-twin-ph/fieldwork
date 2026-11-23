@@ -3,6 +3,15 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.177.0 — 2026-11-23
+
+- **Area around a point offers the points it is connected to** (0.3.0). The dialog asked for a point by name against
+  a placeholder of `MANILA`, while the port it reads was already wired and the step already matched on the name or
+  the id. Reported with a Mines layer carrying a single mine: *"This should not be guess work as the input port is
+  connected."* It now lists the points the connected layer carries. One arriving is the choice, so the dialog opens
+  on it; several, and the list opens on *Choose a point* and refuses until one is picked. A source that holds no
+  records of its own and has not run offers none, and says a run will populate it.
+
 ## 0.176.0 — 2026-11-23
 
 - **A point layer that reaches the map through another step can be moved again** (Map 0.45.0). Reported with one mine

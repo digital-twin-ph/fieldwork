@@ -10,7 +10,7 @@ import {refuseModeMismatch} from '../build/reachable-nodes.js';
 const AREA={type:'Polygon',coordinates:[[[29.63,1.55],[29.65,1.55],[29.65,1.57],[29.63,1.57],[29.63,1.55]]]};
 
 test('the query asks for the mode it was given, and the mode is part of the cache key',()=>{
-  const walk=osmQuery(AREA,250,2000,'walking'),drive=osmQuery(AREA,250,2000,'driving');
+  const walk=osmQuery(AREA,250,'walking'),drive=osmQuery(AREA,250,'driving');
   assert.equal(walk.mode,'walking');
   assert.equal(drive.mode,'driving');
   assert.match(walk.query,/footway/);
@@ -23,11 +23,11 @@ test('the query asks for the mode it was given, and the mode is part of the cach
 });
 
 test('walking remains the default, so a saved workflow downloads what it always did',()=>{
-  assert.equal(osmQuery(AREA,250,2000).query,osmQuery(AREA,250,2000,'walking').query);
+  assert.equal(osmQuery(AREA,250).query,osmQuery(AREA,250,'walking').query);
 });
 
 test('an unknown mode is refused by name rather than filtered as something else',()=>{
-  assert.throws(()=>osmQuery(AREA,250,2000,'flying'),/not a street network travel mode/);
+  assert.throws(()=>osmQuery(AREA,250,'flying'),/not a street network travel mode/);
 });
 
 // One motorway (cars only), one footway (feet only), one residential street tagged one-way for

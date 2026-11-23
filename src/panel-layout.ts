@@ -1,6 +1,6 @@
 /** Browser-local presentation preferences, deliberately separate from workflow data. */
 export function mountPanelLayout():void{
-  const studio=document.querySelector<HTMLElement>('.studio')!,work=document.querySelector<HTMLElement>('.work-area')!;
+  const studio=document.querySelector<HTMLElement>('.studio')!;
   const key='fieldwork.panel-layout.v1',desktop=matchMedia('(min-width:851px)');
   // `results` was here until 2026-10-21, when the results panel became a TAB: there is no
   // boundary between the canvas and the results to drag any more, and no height to remember.

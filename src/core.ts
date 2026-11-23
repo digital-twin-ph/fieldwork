@@ -17,29 +17,24 @@ import {applyFeatureEdits,applyTableEdits,editsFacts,editsSentence,validEdits,ed
 import {rasterUnitsOf} from './raster-units.js';
 import {thinnedOutline,singleRasterScale,drawnDensity,pooledBreaks,isRasterPort,rasterPort,rasterMeasure,validRasterShading,RAMPS,MAX_RASTER_LAYERS,MAX_DRAWN_SIDE,type PanelScale} from './raster-panels.js';
 import {fillInteriorGaps,validateFillNode} from './fill-interior-gaps.js';
-/** Resolves a named credential to its secret. No current widget needs one; the credential
- *  manager stands on its own (experiment 30) and executeWorkflow still accepts a resolver so a
- *  future authenticated source does not change this signature. */
-export type CredentialResolver=(ref:string,provider:string,origin:string)=>string;
 import {computeIsochrone} from './catchment-executor.js';
 import {moveDonut,aggregateHex,validatePrivacyNode,privacyReceipt} from './geoprivacy.js';
 import {comparePointSets,comparisonReceipt,comparisonTable,validatePointComparisonNode} from './point-comparison.js';
 import type {PointComparison} from './point-comparison.js';
 import {computeMeanCenter,meanCenterReceipt,validateMeanCenterNode} from './mean-center.js';
 import type {MeanCenter} from './mean-center.js';
-import {validateBuffer} from './area-buffer.js';
 import {areaParts} from './area-parts-layer.js';
 import {detectSettings,detectTable,detectSentence} from './aberration.js';
 /** Study areas a Polygon layer of their parts takes: the cap Map keeps on polygon layers. */
 export const MAX_AREA_INPUTS=6;
-import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,isochrone,clipPolygons,summarizePolygons,catchmentReceipt,unconnectedSites,offNetworkSites} from './catchments.js';
+import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,clipPolygons,summarizePolygons,catchmentReceipt,unconnectedSites,offNetworkSites} from './catchments.js';
 import type {Polygons,Network} from './catchments.js';
 import {polygonDisplay,polygonPresentationReceipt} from './catchment-output.js';
 import {loadRaster,clipRaster,rasterReceipt,validateRasterAsset} from './raster-workflow.js';
 import {validateClipOptions} from './raster.js';
 import {projectFiles} from './project-files.js';
 import type {RasterGrid} from './raster.js';
-import {chartOutput,tableChart} from './chart-output.js';
+import {tableChart} from './chart-output.js';
 import type {ChartSummary} from './results.js';
 import {chartSpecificationFacts,chartRenderer} from './chart-vega.js';
 import {mapSpecificationFacts} from './map-communication.js';
@@ -53,12 +48,12 @@ import {deduplicateTable} from './deduplicate-table.js';
 import {deduplicateTableReceipt} from './deduplicate-points.js';
 import type {DeduplicateResult} from './deduplicate-points.js';
 import {clipPointsToArea,clipPointsReceipt} from './clip-points.js';
-import {workflowMetricCRS,metricCRSFacts} from './metric-crs.js';
+import {workflowMetricCRS} from './metric-crs.js';
 // Re-exported so the registry validator can cross-check a declared rename against the one the
 // application actually performs, from the same bundle it already reads TYPES out of.
 export {RENAMED_NODE_TYPES};
 import type {Reasoner} from './worker-types.js';
-import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,Status,StepSummary} from './results.js';
+import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,StepSummary} from './results.js';
 import {declarationGaps,dataIssuesOf} from './results.js';
 import {isRecord,required} from './guards.js';
 interface ExecutionInputs {samples:PointCollection&{sourceNodeId?:string;sourceKind?:string};area:import('./results.js').AreaValue;area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;list:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
@@ -70,8 +65,7 @@ import {resolveRuleset,publishedRuleset,RETIRED_RULESETS,WRITTEN_IN_WORKFLOW,bin
 import {selectRows,selectRange,rangeSentence} from './select-rows.js';
 import {appendTables,appendSentence,appendPort,appendTableCount} from './append-rows.js';
 import {runDetail} from './run-progress.js';
-import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposure,fitEachExposureStepwise,
-  regressionsTable,regressionsSentence,regressionsReceipt} from './regression.js';
+import {fitRegression,specFrom,rowsOf,regressionTable,regressionSentence,regressionReceipt,exposureColumnsOf,fitEachExposureStepwise,regressionsTable,regressionsSentence,regressionsReceipt} from './regression.js';
 import {metadataFindings,declaredUpstream,scalesOf,inDeclaredOrder} from './column-metadata.js';
 import widgetRegistry from '../widgets/registry.json';
 import {relateTable,relateOutcome,machinedNotes,relateReceiptFacts,relateAtShifts,relateShiftsReceiptFacts,type RelateOutcome,type ShiftColumn} from './relate-table.js';
@@ -115,7 +109,7 @@ import {MAX_POINT_LAYERS,MAX_POINT_RECORDS,pointPort,isPointPort} from './point-
 import {validateAttributeSchema} from './attribute-schema.js';
 import {defaultSpatialReference,validateSpatialReference} from './spatial-reference.js';
 import {utmDefinition,projectFromCRS84} from './reproject.js';
-import {findingsSummary,dataTable,wideDataTable,declaredWide,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
+import {findingsSummary,wideDataTable,declaredWide,tableReceipt,MAX_TABLE_ROWS} from './data-table.js';
 import {mapImage,mapImageReceipt} from './map-image.js';
 import type {DataTable} from './data-table.js';
 import {computeRate,fromPoints,fromTable,fromWideTable,rateTable,rateChart,rateReceipt,validateRateNode} from './rate.js';
@@ -1281,7 +1275,7 @@ export function tablesOfRun(workflow:Workflow,values:Map<string,unknown>):Record
         tables[nodeId]=outputOf(n)==='points'?pointsAsTable(value as never):polygonsAsTable(value as never);}
   return tables;
 }
-export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done'|'failed')=>void=()=>{},resolveCredential?:CredentialResolver):Promise<WorkflowRun> {
+export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProgress:(id:string,status:'running'|'done'|'failed')=>void=()=>{}):Promise<WorkflowRun> {
   workflow=validateWorkflow(workflow);
   const runId=crypto.randomUUID(), receipts:Receipt[]=[];
   // What each deduplication found, so the node can show the band it is waiting on.

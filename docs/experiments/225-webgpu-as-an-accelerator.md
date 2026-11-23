@@ -1,6 +1,6 @@
 # 225 · WebGPU as an accelerator, never a requirement
 
-_Created 2026-11-19 · Updated 2026-11-22_
+_Created 2026-11-19 · Updated 2026-11-23_
 
 **Status:** tried, 2026-11-22: the spike ran on four browsers. WebGPU is offered on every one tried, including the gate's
 Chromium with one flag; the density surface agrees with the kernel to 3 in a million at 100,000 points and is about 40

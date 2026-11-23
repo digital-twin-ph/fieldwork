@@ -4,11 +4,9 @@
  *  is a spelling; two or more close are ambiguous and wait for a person; none is none. Relate then matches the row on
  *  the second table's own spelling, and a name with no match is one of Relate's unmatched rows, decided as those are.
  *  The pandas shape: a key derived on each side, an exact merge, the leftovers decided by a person. */
-import type {DataTable} from './data-table.js';
 import {normaliseName,jaroWinkler} from './deduplicate-points.js';
 
 export type LinkOutcome='exact'|'spelling'|'ambiguous'|'none';
-export const LINK_OUTCOMES:LinkOutcome[]=['exact','spelling','ambiguous','none'];
 export const LINK_WORDS:Record<LinkOutcome,string>={exact:'matched exactly',spelling:'matched allowing for spelling',
   ambiguous:'ambiguous, awaiting a decision',none:'not found'};
 
@@ -22,7 +20,6 @@ export interface SpellingSettings {
 }
 /** 0.88 to start, as Deduplicate records' names; the practitioner adjusts it in Relate's dialog. */
 export const DEFAULT_SPELLING_THRESHOLD=0.88;
-export const DEFAULT_SPELLING_SETTINGS=():SpellingSettings=>({dropWords:[],threshold:DEFAULT_SPELLING_THRESHOLD,decisions:{}});
 
 /** The name as compared: folded, and the dropped words taken out as whole words. */
 export function linkKey(value:unknown,dropWords:readonly string[]):string{
@@ -39,12 +36,6 @@ export interface LinkMatch {
   decided?:boolean;
 }
 
-/** The values a column of a table holds, as text: a key column's, or the value column's. */
-export function columnValues(table:DataTable,column:string):string[]{
-  if(table.keys.includes(column))return table.rows.map(r=>String(r.key[column]??''));
-  if(column===table.valueField)return table.rows.map(r=>r.value===null?'':String(r.value));
-  throw new Error(`This table has no "${column}" column. Its columns are ${[...table.keys,table.valueField].join(', ')}.`);
-}
 
 /** Every distinct name of the first column, matched once. */
 export function linkNames(left:readonly string[],right:readonly string[],settings:SpellingSettings,margin=0.02):Map<string,LinkMatch>{

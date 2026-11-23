@@ -1,4 +1,4 @@
-import type {WorkflowNode,AreaParams,Boundary,Polygon,Position} from './types.js';
+import type {WorkflowNode,AreaParams,Boundary,Position} from './types.js';
 import {element} from './dom.js';
 import {errorMessage} from './guards.js';
 import {escapeProse as esc} from './prose.js';
@@ -21,7 +21,7 @@ import 'leaflet/dist/leaflet.css';
  *  on-demand half work at all, and a hashed chunk href resolved by hand would break on the next
  *  content change. */
 import 'maplibre-gl/dist/maplibre-gl.css';
-import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,geometryWKT,boundaryFingerprint,CRS84,geometryByReference} from './study-area.js';
+import {bboxPolygon,validateDrawnGeometry,geometryBounds,studyAreaN3,boundaryFingerprint,geometryByReference} from './study-area.js';
 import type {RasterGrid} from './raster.js';
 import {clipRaster,rasterOverhang,overhangSentence} from './raster.js';
 import {rasterImage} from './raster-ui.js';
@@ -850,7 +850,6 @@ async function fetchWithProgress(url:string,estimate:number,onProgress:(read:num
       :(geometry.coordinates as Position[][][]).reduce((n,part)=>n+part.reduce((m,ring)=>m+ring.length,0),0));
     const heavy=vertices>2000;
     button.disabled=true;button.textContent='Applying\u2026';
-    const began=Date.now();
     try{
       if(heavy){message(`Checking the outline \u2014 ${vertices.toLocaleString()} vertices\u2026`);await paint();}
       validateDrawnGeometry(geometry);validateClip();

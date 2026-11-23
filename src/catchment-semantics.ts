@@ -1,6 +1,6 @@
 import type {Network,Polygons} from './catchments.js';
 import type {WorkflowNode} from './types.js';
-import {geometryWKT,CRS84,geometryByReference} from './study-area.js';
+import {geometryByReference} from './study-area.js';
 const lit=JSON.stringify;
 const quantity=(value:number,unit:string)=>`[ a qudt:QuantityValue; qudt:numericValue "${value}"^^xsd:double; qudt:unit <http://qudt.org/vocab/unit/${unit}> ]`;
 

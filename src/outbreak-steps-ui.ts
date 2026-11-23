@@ -2,7 +2,7 @@
  *  their standard Inspectors -- name, inputs, one sentence, Configure…, and what the last run said -- and their dialogs.
  *  The chains' and the scan's dialogs moved as they were; Study design came onto the standard here, its period, unit and
  *  note moving from the Inspector into its dialog's first page. What they read of the application comes through the kit. */
-import type {NodeType,WorkflowNode} from './types.js';
+import type {WorkflowNode} from './types.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import type {Receipt} from './results.js';
 import type {ChecklistItem} from './study-design-checklist.js';

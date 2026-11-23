@@ -1845,15 +1845,6 @@ fw:capValueInForce a owl:DatatypeProperty;
   fw:capEvidence "The largest graph this project has downloaded from the service, parsed and drawn: 27,181 junctions from a 7.39 MB response, 2026-10-13.";
   fw:capRefuses "Nothing. Above it the download warns that nothing larger has been tried.";
   fw:capLiftTest "A larger response downloaded, parsed and drawn, which replaces the figure.".
-<urn:fieldwork:cap:extract-measured-junctions> a fw:Cap;
-  rdfs:label "extract-measured-junctions";
-  fw:capKind "discovery";
-  fw:capValue 122061;
-  fw:capUnit "junctions";
-  fw:capBasis "measured";
-  fw:capEvidence "A province's driving network read from a 416 MB published extract and taken into this application's structures, 2026-10-22. Held, not yet drawn, routed over or snapped to.";
-  fw:capRefuses "Nothing. It is what the extract control reports having been measured to.";
-  fw:capLiftTest "A larger extract-built graph drawn and routed over, which replaces the figure.".
 <urn:fieldwork:cap:buffer-batch> a fw:Cap;
   rdfs:label "buffer-batch";
   fw:capKind "artefact";

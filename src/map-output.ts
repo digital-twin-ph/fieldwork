@@ -1,10 +1,10 @@
 import type {NodeSpec,WorkflowNode,PointInput,Escape,SpatialRelation} from './types.js';
 import {GEOSPARQL_PREDICATE} from './spatial-predicates.js';
-import {resolveLayerSymbol,fillClass,SPATIAL_RELATION_FILL,MARK_VOCABULARY,categoricalSteps,type LayerSymbol} from './presentation.js';
+import {resolveLayerSymbol,fillClass,SPATIAL_RELATION_FILL,categoricalSteps} from './presentation.js';
 import type {AreaValue,MapValue,MapRow,Receipt} from './results.js';
 export type MapInputs={area:AreaValue;points:PointInput};
 import {pointRelation,relationLabel} from './spatial-coverage.js';
-import {CRS84,geometryWKT,geometryByReference} from './study-area.js';
+import {CRS84,geometryByReference} from './study-area.js';
 import {pointLayers,layerRecords,layerSummary} from './point-layers.js';
 import {mapLinks,linkSentence} from './map-links.js';
 

@@ -15,12 +15,6 @@ const sourcePath=(key:string):string=>surfaceOf(key)?`docs/surfaces/${surfaceOf(
 export const manualSource=(nodeType:string):string=>
   `https://github.com/digital-twin-ph/fieldwork/blob/main/${sourcePath(nodeType)}`;
 
-/** The Inspector's entry point. Absent for a widget with no page, rather than opening an empty
- *  dialog: 50 of 53 widgets have none, and offering a link to nothing is worse than offering none. */
-export function manualButton(nodeType:string,esc:(v:string)=>string):string{
-  if(!hasManual(nodeType))return '';
-  return `<button class="text-button" id="open-manual" data-manual="${esc(nodeType)}">Manual for this widget</button>`;
-}
 
 export function openManual(nodeType:string,title:string,esc:(v:string)=>string):void{
   const page=MANUAL_PAGES[nodeType];

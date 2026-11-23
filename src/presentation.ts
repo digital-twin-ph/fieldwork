@@ -74,8 +74,6 @@ export const FIGURE_PALETTE=[
  *  References: Brewer C A, Harrower M and The Pennsylvania State University, ColorBrewer 2.0,
  *  https://colorbrewer2.org/ -- scheme YlGnBu, 5-class sequential. */
 export const ORDERED_PALETTE=['#ffffcc','#a1dab4','#41b6c4','#2c7fb8','#253494'] as const;
-export const ORDERED_PALETTE_NAME='ColorBrewer YlGnBu (5-class sequential)';
-export const ORDERED_PALETTE_AUTHORITY='https://colorbrewer2.org/';
 /** `n` steps of the ordered palette, darkest last. Beyond its length the tail repeats the darkest
  *  class, which the legend states: a sequence a reader cannot rank is worse than a shared step. */
 export function orderedSteps(n:number):string[]{
@@ -96,7 +94,6 @@ export function orderedSteps(n:number):string[]{
  *  and of the YlGnBu ramp above do not. */
 export const GENERATION_PALETTE=['#261156','#3b0f70','#51137c','#651a80','#792282','#8c2981','#a1307f','#b6377a',
   '#ca3f72','#de4968','#ed5a60'] as const;
-export const GENERATION_PALETTE_NAME='magma, 0.15 to 0.65 (Smith and van der Walt)';
 /** The colour of each of `n` generations, first darkest, spread across the ramp. Past its length the last repeats,
  *  and the key says so. */
 export function generationColours(n:number):string[]{

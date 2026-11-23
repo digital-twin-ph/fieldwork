@@ -113,7 +113,7 @@ export function relateDraftOf(p:RelateParams):RelateDraft{
 export function draftShifts(draft:RelateDraft):{shifts:number[];problem?:string}{
   const typed=draft.shifts.map(s=>s.trim()).filter(Boolean);
   const shifts=typed.map(Number);
-  const bad=typed.find((t,i)=>!Number.isInteger(shifts[i]));
+  const bad=typed.find((_,i)=>!Number.isInteger(shifts[i]));
   if(bad!==undefined)return {shifts:[],problem:`A shift is a whole number of days; "${bad}" is not.`};
   const twice=shifts.find((d,i)=>shifts.indexOf(d)!==i);
   if(twice!==undefined)return {shifts,problem:`The shift ${twice} days is listed twice.`};

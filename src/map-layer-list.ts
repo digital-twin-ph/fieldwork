@@ -1,5 +1,5 @@
 import type {WorkflowNode} from './types.js';
-import {pointPort,isPointPort} from './point-layers.js';
+import {isPointPort} from './point-layers.js';
 
 /** THE LAYERS A MAP DRAWS, as a list the practitioner owns.
  *
@@ -98,9 +98,6 @@ const KIND_BY_PORT=(port:string):LayerKind|null=>
  *  on purpose: it changes what the rows SAY, not what is drawn. */
 export const drawablePort=(port:string):boolean=>KIND_BY_PORT(port)!==null;
 
-export const layerKindTerm=(kind:LayerKind)=>`fw:${kind}`;
-export const layerOriginPredicate=(origin:LayerOrigin)=>
-  origin==='port'?'fw:layerPort':origin==='within'?'fw:layerWithin':'fw:layerTileProvider';
 
 /** A name a reader can tell layers apart by, which is not the same as an identifier. The source
  *  node's own label is the best of these, because it is the words the practitioner already chose
@@ -259,12 +256,6 @@ export function assertSomethingToDraw(layers:readonly MapLayer[],label:string):v
     throw new Error(`"${label}" has ${layers.length} layers and a reader can tell at most ${MAX_MANAGED_LAYERS} apart in one key. Split this into two maps.`);
 }
 
-export const visibleLayers=(layers:readonly MapLayer[])=>layers.filter(l=>l.drawn);
-export const layerByPort=(layers:readonly MapLayer[],port:string)=>layers.find(l=>l.port===port&&l.origin==='port');
-/** Whether a port's layer is drawn. A port with no layer -- nothing wired -- is not hidden; it is
- *  absent, and the caller's own `inputs` check is what answers that. */
-export const portIsDrawn=(layers:readonly MapLayer[],port:string)=>
-  layers.some(l=>l.port===port&&l.drawn);
 
 /** The groups a practitioner made, in the order their first layer is drawn. A group is a reading
  *  of the map rather than a property of the data -- the same judgement the glossary records as

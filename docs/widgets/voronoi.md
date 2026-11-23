@@ -1,6 +1,6 @@
 # Voronoi catchments
 
-_Created 2026-11-22 · Updated 2026-11-22_
+_Created 2026-11-22 · Updated 2026-11-23_
 
 **A spatial operation.** It takes a study area and a set of sites, and gives back one polygon per site: the part of
 the area closer to that site than to any other, in a straight line.

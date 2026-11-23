@@ -261,7 +261,7 @@ const modeFilter=(mode:NetworkTravelMode):ModeFilter=>{
   if(!filter)throw new Error(`"${mode}" is not a street network travel mode. This widget downloads ${NETWORK_TRAVEL_MODES.join(' or ')}.`);
   return filter;
 };
-export function osmQuery(boundary:Boundary,marginM:number,maxNodes?:number,mode:NetworkTravelMode='walking'){
+export function osmQuery(boundary:Boundary,marginM:number,mode:NetworkTravelMode='walking'){
   const filter=modeFilter(mode);
   if(!Number.isFinite(marginM)||marginM<0||marginM>2000)throw new Error('Download margin must be 0–2,000 metres.');
   const b=geometryBounds(boundary),dy=marginM/111195,dx=dy/Math.cos((b[1]+b[3])/2*Math.PI/180);
@@ -356,8 +356,8 @@ export async function countWays(url:string,query:string,fetcher:typeof fetch,sig
     return counted===null?{kind:'unknown'}:{kind:'counted',...counted};
   }catch{return {kind:'unknown'};}
 }
-export function countQuery(boundary:Boundary,marginM:number,maxNodes?:number,mode:NetworkTravelMode='walking'){
-  const request=osmQuery(boundary,marginM,maxNodes,mode);
+export function countQuery(boundary:Boundary,marginM:number,mode:NetworkTravelMode='walking'){
+  const request=osmQuery(boundary,marginM,mode);
   const [w,s,e,n]=request.bounds,filter=modeFilter(mode).highways.join('|');
   // `>;` BEFORE THE COUNT, so what is counted is what would be SENT. The count asked for ways
   // alone, and a download returns the ways plus every node they reference -- which is most of the
@@ -448,7 +448,7 @@ export function networkFromOSM(raw:unknown,maxNodes?:number,mode:NetworkTravelMo
  *  what they have is wrong or stale. Serving that from cache would make the button look broken in
  *  the one case where it has to work. */
 export function downloadOSM(boundary:Boundary,marginM:number,maxNodes?:number,pauseMs?:number,refresh=false,onPhase?:(message:string,fraction?:number)=>void,mode:NetworkTravelMode='walking',stopSignal?:AbortSignal):Promise<Network>{
-  osmQuery(boundary,marginM,maxNodes,mode); // Invalid local input must not consume the public-service pause.
+  osmQuery(boundary,marginM,mode); // Invalid local input must not consume the public-service pause.
   // The abort is translated HERE, at the edge a widget calls, so every caller gets this client's
   // sentence rather than the browser's.
   return pacedNetworkDownload(()=>requestOSM(boundary,marginM,fetch,maxNodes,pauseMs,undefined,undefined,undefined,refresh,onPhase,mode,stopSignal)
@@ -473,7 +473,7 @@ export const abortMessage=(error:unknown,attemptSeconds=ATTEMPT_MS/1000):string=
     :text;
 };
 export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof fetch=fetch,maxNodes?:number,pauseMs?:number,exclude:ReadonlySet<string>=new Set(),onWait?:(w:{operator:string;seconds:number})=>void,cacheStore?:CacheLike|null,refresh=false,onPhase?:(message:string,fraction?:number)=>void,mode:NetworkTravelMode='walking',stopSignal?:AbortSignal):Promise<Network>{
-  const request=osmQuery(boundary,marginM,maxNodes,mode);
+  const request=osmQuery(boundary,marginM,mode);
   // One budget per attempt, and one for the whole thing. See ATTEMPT_MS.
   const startedAt=Date.now();
   let controller=new AbortController(),timer=setTimeout(()=>controller.abort(),ATTEMPT_MS);
@@ -619,7 +619,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
     const {maxFeatures}=downloadLimits(maxNodes);
     // Two instances at most, and a refusal needs BOTH of them: one timeout is a server, two are
     // the area. Still two cheap requests against six expensive failures.
-    const countText=countQuery(boundary,marginM,maxNodes,mode).query;
+    const countText=countQuery(boundary,marginM,mode).query;
     const probes:Awaited<ReturnType<typeof countWays>>[]=[];
     for(const endpoint of live.slice(0,2)){
       const outcome=await countWays(endpoint.url,countText,fetcher,freshAttempt());
@@ -646,7 +646,7 @@ export async function requestOSM(boundary:Boundary,marginM:number,fetcher:typeof
         // change exists to stop. One more COUNT, only when the answer is already a refusal.
         const other:NetworkTravelMode=mode==='driving'?'walking':'driving';
         let alternative='';
-        const otherCount=await countWays(live[0].url,countQuery(boundary,marginM,maxNodes,other).query,fetcher,freshAttempt());
+        const otherCount=await countWays(live[0].url,countQuery(boundary,marginM,other).query,fetcher,freshAttempt());
         if(otherCount.kind==='counted'){
           const otherBytes=otherCount.elements*BYTES_PER_FEATURE;
           alternative=` The same area in ${other} mode holds ${otherCount.ways.toLocaleString()} ways `

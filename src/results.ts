@@ -28,8 +28,6 @@ export interface Sample {id:string; name:string; coordinates:Position; attribute
  *  stated assumption -- a straight-line distance walked at a constant speed -- and not a unit of
  *  distance, which is why it is a separate step and not a third value of `unit`. */
 export interface NearestRow {id:string; name:string; coordinates:Position|null; distance:number|null; unit:DistanceUnit; center:Sample|null; reason?:string; minutes?:number|null; attributes?:Record<string,Scalar>}
-export interface HeatRow extends NearestRow {status:Status; explanation:string}
-export interface AccessRow extends Omit<Sample,'coordinates'> {coordinates:Position|null; attributes?:Record<string,Scalar>;distanceKm:number|null; minutes:number|null; center:GradedFacility|null; status?:Status; zone?:Zone; explanation?:string}
 export interface LayerSummary {sourceNodeId:string; label:string; count:number}
 export interface PointRow {id:string; recordId:string; sourceNodeId:string; layerLabel:string; attributeTypes:Record<string,AttributeType>; name:string; attributes:Record<string,Scalar>; coordinates:Position|null}
 /** `fill` is the class the map RESOLVED this row to, by its own fillEncoding. The renderer draws
@@ -61,9 +59,6 @@ export interface MapValue extends Omit<AreaValue,'kind'|'rows'> {kind:'spatial-m
 export interface TableValue {kind:'point-table'; rows:PointRow[]; centers:never[]; spatialReference:AnySpatialReference; pointLayers:LayerSummary[]; pointTable?:boolean}
 export interface Receipt {nodeId:string; references?:EvidenceReference[]; ruleset?:import('./rulesets.js').RulesetCitation; kind?:'computation'|'presentation'|'declaration'; facts:string; rules:string; input:string; conclusions:ReasonerQuad[]; source?:string; method?:string; measurement?:Measurement; areaId?:string; geometryId?:string; exclusions?:Exclusion[]}
 export interface RegistryValue {boundary:Boundary; facilities:Facility[]; radiusKm:number; facilitySource?:{nodeId?:string; sourceInfo?:import('./types.js').SourceInfo; inputCount:number; missingLocationCount:number}}
-export interface GradedRegistryValue extends Omit<RegistryValue,'facilities'> {facilities:GradedFacility[]}
-export interface SamplesValue extends PointCollection {boundary:Boundary; rows:Sample[]; spacingM:number}
-export interface AccessValue {kind:'access'; locationSource?:{nodeId?:string; kind:string}; provenance?:unknown; boundary:Boundary; rows:AccessRow[]; filters:ParamsByType['access']; centers:PointFeature[]; eligibleCount:number; candidateCount:number; thresholdMin?:number; method:string; source:string; dataset:string}
 /** Presentation fields shared by heterogeneous result tabs. Calculations use the narrower contracts above. */
 export interface DisplayRow {
   id:string; name:string; coordinates:Position|null; status?:Status; explanation?:string;

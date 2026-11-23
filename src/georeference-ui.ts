@@ -331,7 +331,6 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
   function wirePoints(root:HTMLElement,d:MapImageDraft,redraw:()=>void){
     if(!d.image)return;
     const blank=():ControlPoint=>({id:'',pixel:[NaN,NaN],lonlat:[NaN,NaN]});
-    root.querySelector('#geo-model')?.remove();
     root.querySelector<HTMLSelectElement>('#map-image-model')?.addEventListener('change',e=>{
       d.model=(e.target as HTMLSelectElement).value==='north-up'?'north-up':'affine';redraw();});
     root.querySelector('#geo-reset')?.addEventListener('click',()=>{confirmingReset=true;redraw();});

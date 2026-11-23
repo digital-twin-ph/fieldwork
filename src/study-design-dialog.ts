@@ -12,7 +12,7 @@
  *  practitioner unsure which design they have can decide by reading what each would license. */
 import {openConfigDialog} from './config-dialog.js';
 import {DESIGN_LICENCES,STUDY_DESIGNS,includedMeasures,notEstimable} from './study-design.js';
-import {answerSentence,chosenOptions,designQuestions,inheritedFill,slotsIn,DESIGN_TABLES,cellDescribed,tableSentences} from './study-design-questions.js';
+import {answerSentence,chosenOptions,designQuestions,inheritedFill,slotsIn,DESIGN_TABLES,tableSentences} from './study-design-questions.js';
 import type {DeclaredCell,DeclaredTable,DesignQuestion} from './study-design-questions.js';
 import type {ChecklistItem} from './study-design-checklist.js';
 import type {StudyDesign} from './study-design.js';

@@ -7,7 +7,7 @@
 import type {DataTable} from './data-table.js';
 import type {Escape,ParamsByType} from './types.js';
 import {openConfigDialog} from './config-dialog.js';
-import {cellsMarkup,exposureColumnsOffered} from './two-by-two-mapping.js';
+import {cellsMarkup} from './two-by-two-mapping.js';
 
 type Params=ParamsByType['two_by_two'];
 export interface TwoByTwoDraft {

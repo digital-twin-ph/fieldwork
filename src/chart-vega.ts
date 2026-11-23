@@ -59,7 +59,7 @@ export const chartOrientation=(params:{orientation?:'horizontal'|'vertical'}):'h
  *  evidence for method -- so this follows it rather than inventing a second convention. The run
  *  id is not lost: it is in the receipt, which is where a reader checking reproducibility looks
  *  and where a reader of the figure does not. */
-export function chartSourceNote(given:ChartParams,sourceId?:string,runId?:string,sourceLabel?:string){
+export function chartSourceNote(given:ChartParams,sourceId?:string,sourceLabel?:string){
   const params=filledParams(given,figureWords());
   if(params.sourceNote?.trim())return params.sourceNote.trim();
   const named=sourceLabel?.trim()||sourceId;
@@ -166,7 +166,7 @@ export function chartVegaSpec(chart:ChartSummary,given:ChartParams,context:{sour
     {calculate:'datum.count - (datum.innerCount == null ? 0 : datum.innerCount)',as:'bandCount'},
   ]}:{};
   const color=params.colorByCategory?{color:{field:'displayLabel',type:'nominal' as const,scale:{domain:values.map(v=>v.displayLabel),range:colors.slice(0,values.length)},legend:{title:'Category'}}}:{};
-  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const sourceNote=chartSourceNote(params,context.sourceId,context.sourceLabel);
   const chartWidth=Math.min(560,Math.max(300,chart.bins.length*72));
   const spec={
     $schema:'https://vega.github.io/schema/vega-lite/v6.json',
@@ -283,7 +283,7 @@ function intervalVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceI
   const yTitle=params.yAxisTitle?.trim()||[interval.estimate,chart.unit?.trim()].filter(Boolean).join(', ');
   const y={type:'quantitative' as const,title:yTitle,
     scale:{type:log?'log' as const:'linear' as const,domain,zero:false,nice:false},axis:{format:'~r',tickCount:6}};
-  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const sourceNote=chartSourceNote(params,context.sourceId,context.sourceLabel);
   const note=ratioScaleNote(chart,params);
   const tooltip=[{field:'label',type:'nominal' as const,title:chart.categoryTitle||'Category'},
     {field:'estimate',type:'quantitative' as const,title:interval.estimate,format:'.4~r'},
@@ -334,7 +334,7 @@ export function stackedVegaSpec(chart:ChartSummary,given:ChartParams,context:{so
   const labels=[...new Set(chart.bins.map(b=>b.label))];
   const periodBins=labels.map(label=>chart.bins.find(b=>b.label===label)!);
   const values=chart.bins.map(b=>({displayLabel:b.label,group:name(b.panel??''),order:groups.indexOf(b.panel??''),count:b.missing?0:b.count}));
-  const width=Math.min(640,Math.max(300,labels.length*14)),sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const width=Math.min(640,Math.max(300,labels.length*14)),sourceNote=chartSourceNote(params,context.sourceId,context.sourceLabel);
   const marked=markedLayers(params,labels,periodBins,'x');
   const drawn={mark:{type:'bar' as const},encoding:{
     x:{field:'displayLabel',type:'nominal' as const,sort:labels,title:params.xAxisTitle?.trim()||chart.categoryTitle||null,axis:{labelOverlap:'parity' as const,labelSeparation:2}},
@@ -375,7 +375,7 @@ export function seriesVegaSpec(chart:ChartSummary,given:ChartParams,context:{sou
   const labels=[...new Set(chart.bins.map(b=>b.label))];
   const colour=(g:string)=>FIGURE_PALETTE[shown.indexOf(g)]!;
   const values=chart.bins.filter(b=>shown.includes(b.panel??'')&&!b.missing).map(b=>({displayLabel:b.label,series:b.panel??'',count:b.count}));
-  const width=Math.min(640,Math.max(300,labels.length*8)),sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const width=Math.min(640,Math.max(300,labels.length*8)),sourceNote=chartSourceNote(params,context.sourceId,context.sourceLabel);
   const x={field:'displayLabel',type:'nominal' as const,sort:labels,title:params.xAxisTitle?.trim()||chart.categoryTitle||null,
     axis:{labelOverlap:'parity' as const,labelSeparation:4}};
   const y={field:'count',type:'quantitative' as const,title:params.yAxisTitle?.trim()||chart.caption.split(' by ')[0]||'value'};
@@ -433,7 +433,7 @@ export function pyramidVegaSpec(chart:ChartSummary,given:ChartParams,context:{so
   const lead=(label:string)=>{const m=/^\s*(\d+(?:\.\d+)?)/.exec(label);return m?Number(m[1]):NaN;};
   const ordered=labels.every(l=>Number.isFinite(lead(l)))?[...labels].sort((a,b)=>lead(a)-lead(b)||a.localeCompare(b)):labels;
   const width=560,height=Math.max(160,Math.min(520,ordered.length*18));
-  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const sourceNote=chartSourceNote(params,context.sourceId,context.sourceLabel);
   const left_note=blank?`${blank.toLocaleString('en')} with ${by} blank are not drawn.`:'';
   return {
     $schema:'https://vega.github.io/schema/vega-lite/v6.json',
@@ -489,7 +489,7 @@ function panelVegaSpec(chart:ChartSummary,params:ChartParams,context:{sourceId?:
     return {data:{values:[{from,to:end}]},mark:{type:'rect' as const,color:FIGURE_ROLE.quietInk,opacity:.12},
       encoding:{x:{field:'from',type:'temporal' as const},x2:{field:'to'}}};
   })():null;
-  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const sourceNote=chartSourceNote(params,context.sourceId,context.sourceLabel);
   return {
     $schema:'https://vega.github.io/schema/vega-lite/v6.json',
     background:FIGURE_ROLE.background,
@@ -552,7 +552,7 @@ export function chartSpecificationFacts(given:WorkflowNode<'chart_output'>,runId
   const unitStatus=banded?'location-memberships-differenced-between-bands'
     :measureKind==='record-count'?'records':measureKind==='location-membership-count'?'location-memberships':'source-unit-not-specified';
   const title=node.params.chartTitle?.trim()||chart.caption;
-  const sourceNote=chartSourceNote(node.params,sourceId,runId);
+  const sourceNote=chartSourceNote(node.params,sourceId);
   const rendererSpec=chartRenderer(node.params)==='vega-lite'?JSON.stringify(chartVegaSpec(chart,node.params,{sourceId,runId})):null;
   return `@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcterms: <http://purl.org/dc/terms/>.\n`+
     `${spec} a fw:ChartSpecification, prov:Plan; dcterms:title ${JSON.stringify(title)}; fw:chartRenderer ${JSON.stringify(chartRenderer(node.params))}; fw:chartMark ${JSON.stringify(node.params.mark||'bar')}; fw:chartOrientation ${JSON.stringify(chartOrientation(node.params))}; fw:chartField ${JSON.stringify(chart.field)}; fw:chartMeasureKind ${JSON.stringify(banded?`band-difference-of-${measureKind}`:measureKind)}; fw:chartUnitStatus ${JSON.stringify(unitStatus)}; fw:chartLegend ${!!node.params.colorByCategory}; fw:chartSourceNote ${JSON.stringify(sourceNote)}; ${(node.params.markedDates??[]).map(m=>`fw:markedDate [ dcterms:date "${m.date}"^^<http://www.w3.org/2001/XMLSchema#date>; <http://www.w3.org/2000/01/rdf-schema#label> ${JSON.stringify(m.label)} ]; `).join('')}prov:wasDerivedFrom <urn:fieldwork:run:${runId}:output:${sourceId}>.\n`+
@@ -609,7 +609,7 @@ export function treeVegaSpec(tree:import('./transmission-tree.js').TransmissionT
   const further=tree.cases.flatMap(c=>(c.alsoFrom??[]).filter(a=>at.has(a)).map(a=>{const p=at.get(a)!;
     return {from:iso(dayOf(p)),to:iso(dayOf(c)),fromRow:p.row,toRow:c.row,interval:(dayOf(c)??0)-(dayOf(p)??0),source:a,case:c.id};}));
   const width=860,height=Math.max(160,tree.cases.length*7);
-  const sourceNote=chartSourceNote(params,context.sourceId,context.runId,context.sourceLabel);
+  const sourceNote=chartSourceNote(params,context.sourceId,context.sourceLabel);
   const x={field:'date',type:'temporal' as const,title:params.xAxisTitle?.trim()||tree.columns.date,
     axis:{format:'%Y-%m-%d',labelFontSize:14,titleFontSize:14,tickCount:6,grid:true,gridColor:FIGURE_GRID}};
   const y={field:'row',type:'quantitative' as const,scale:{reverse:true,domain:[-1,tree.cases.length]},axis:null};

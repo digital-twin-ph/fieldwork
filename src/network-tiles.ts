@@ -166,8 +166,8 @@ export interface TiledNetwork extends Network {tiles:number; droppedEdges:number
 
 /** The service's own answer to how much is in an area, or null if no instance would say. */
 export async function countElements(boundary:Boundary,marginM:number,fetcher:typeof fetch,
-  maxNodes?:number,mode:NetworkTravelMode='walking',signal?:AbortSignal):Promise<number|null>{
-  const {query}=countQuery(boundary,marginM,maxNodes,mode);
+  mode:NetworkTravelMode='walking',signal?:AbortSignal):Promise<number|null>{
+  const {query}=countQuery(boundary,marginM,mode);
   for(const endpoint of OVERPASS_ENDPOINTS){
     const outcome=await countWays(endpoint.url,query,fetcher,signal);
     if(outcome.kind==='counted')return outcome.elements;
@@ -180,7 +180,7 @@ export async function requestOSMInTiles(boundary:Boundary,marginM:number,fetcher
   const {maxNodes,pauseMs,mode='walking',onPhase,stopSignal,refresh=false}=options;
   const budget=downloadLimits(maxNodes).maxFeatures;
   onPhase?.('Asking how much street data is in this area\u2026');
-  const counted=await countElements(boundary,marginM,fetcher,maxNodes,mode,stopSignal);
+  const counted=await countElements(boundary,marginM,fetcher,mode,stopSignal);
   // No count is not a refusal: it is one less thing known. The ordinary single request then
   // applies, with its own predictive refusal, exactly as before tiles existed.
   const plan=planTiles(boundary,counted??0,budget,marginM);
@@ -211,7 +211,7 @@ export async function requestOSMInTiles(boundary:Boundary,marginM:number,fetcher
       const span=Math.max(ring[2][0]-ring[0][0],ring[2][1]-ring[0][1]);
       if(span<1e-6)throw new Error(`${label} is ${span.toExponential(1)} degrees across and still `
         +`holds more street data than one response carries. ${text}`);
-      const inner=await countElements(area,marginM,fetcher,maxNodes,mode,stopSignal);
+      const inner=await countElements(area,marginM,fetcher,mode,stopSignal);
       const split=planTiles(area,Math.max(inner??budget*4,budget*4),budget,marginM);
       onPhase?.(`${label} holds more than one request carries \u2014 asking in ${split.tiles.length} parts`);
       for(let i=0;i<split.tiles.length;i++)

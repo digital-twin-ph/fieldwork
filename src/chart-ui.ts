@@ -1,8 +1,8 @@
 /** CHART, ON THE STANDARD (experiment 186), out of app.ts (2026-11-21: touched for the series drawn together, so moved, as
  *  every widget touched is): its sentence, its Inspector, and Configure… with what is drawn and every setting, with the
  *  ids the panels held. What it reads of the application comes through ChartKit. */
-import type {WorkflowNode,Workflow} from './types.js';
-import type {StepKit,OwnInspector} from './inspector-kit.js';
+import type {WorkflowNode} from './types.js';
+import type {StepKit} from './inspector-kit.js';
 import type {WorkflowRun} from './results.js';
 import type {BarOrder} from './results.js';
 import {openConfigDialog} from './config-dialog.js';
@@ -81,7 +81,7 @@ function chartControls(kit:ChartKit,n:WorkflowNode<'chart_output'>,options:{omit
  *  (experiment 174). Moved into Configure… on 2026-11-09 with the same ids. */
 /** THE DATES A CHART'S AXIS RUNS OVER (experiment 210), from its last run's bins where it has run, else whether it will be
  *  dated at all: a case series by day, week or month is; by day of the week or month of the year it is a cycle, not dates. */
-function datedRange(kit:ChartKit,nodeId:string,draft:WorkflowNode<'chart_output'>['params']):{first:string;last:string}|null|'later'{
+function datedRange(kit:ChartKit,nodeId:string):{first:string;last:string}|null|'later'{
   const bins=(kit.result()?.outputs.find(o=>o.nodeId===nodeId) as {chart?:{bins:{key:string}[]}}|undefined)?.chart?.bins;
   if(bins?.length){const keys=bins.map(b=>b.key);if(!keys.every(k=>/^\d{4}-\d{2}(-\d{2})?$/.test(k)))return null;
     const pad=(k:string)=>k.length===7?`${k}-01`:k;return {first:pad(keys[0]!),last:pad(keys.at(-1)!)};}
@@ -90,7 +90,7 @@ function datedRange(kit:ChartKit,nodeId:string,draft:WorkflowNode<'chart_output'
   return null;
 }
 function markedDatesControls(kit:ChartKit,nodeId:string,draft:WorkflowNode<'chart_output'>['params']):string{
-  const range=datedRange(kit,nodeId,draft);
+  const range=datedRange(kit,nodeId);
   if(!range)return '';
   const bounds=range==='later'?'':` min="${esc(range.first)}" max="${esc(range.last)}"`;
   const marks=draft.markedDates??[];
@@ -335,7 +335,7 @@ export function openChartConfig(kit:ChartKit,nodeId:string){
       const previewHost=root.querySelector<HTMLElement>('#chart-config-preview');
       if(previewHost)void drawChartPreview(previewHost,draft).catch(e=>{if(previewHost.isConnected)previewHost.textContent=`The preview could not be drawn: ${errorMessage(e)}`;});
       root.querySelector<HTMLButtonElement>('#chart-mark-add')?.addEventListener('click',()=>{
-        const range=datedRange(kit,nodeId,draft);draft.markedDates=[...(draft.markedDates??[]),{date:range&&range!=='later'?range.first:'',label:''}];redraw();});
+        const range=datedRange(kit,nodeId);draft.markedDates=[...(draft.markedDates??[]),{date:range&&range!=='later'?range.first:'',label:''}];redraw();});
     },
     apply:draft=>{
       const {view,...params}=draft;

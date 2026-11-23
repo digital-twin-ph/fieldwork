@@ -142,11 +142,3 @@ export function cornersOf(world:WorldFile,width:number,height:number):[number,nu
   return [lonLatOf(world,0,0),lonLatOf(world,width,0),lonLatOf(world,width,height),lonLatOf(world,0,height)];
 }
 
-/** One sentence of what the fit says, for the dialog and the receipt. */
-export function placementSentence(p:Placement):string{
-  const worst=p.residuals.reduce((w,r)=>r.metres>w.metres?r:w,p.residuals[0]!);
-  return `Placed ${p.model==='north-up'?'north-up (a scale and an offset per axis, no rotation)':'by an affine fit (rotation and shear allowed)'} `
-    +`from ${p.points} matched points: residuals ${Math.round(p.rmsM)} m root mean square, largest ${Math.round(p.maxM)} m`
-    +`${worst.id?` at ${worst.id}`:''}. `
-    +(p.points===MIN_POINTS[p.model]?'With no more points than the fit needs, every residual is zero and says nothing: add a point to measure the fit.':'');
-}

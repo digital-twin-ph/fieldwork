@@ -251,9 +251,9 @@ test('the request does not dictate the service\'s memory budget', ()=>{
   // The byte cap is enforced on arrival, where it is a limit on a real quantity. Telling the server
   // its execution budget was a category error, and it broke a shipped example.
   const area={type:'Polygon',coordinates:[[[-0.142,51.509],[-0.128,51.509],[-0.128,51.517],[-0.142,51.517],[-0.142,51.509]]]};
-  for(const maxNodes of [undefined,2000,27181,50000])
-    assert.ok(!sn.osmQuery(area,0,maxNodes).query.includes('maxsize'),
-      'no graph limit may put a maxsize back into the query');
+  // The graph limit is not an argument of the query at all since 0.173.0: it is enforced on arrival.
+  assert.ok(!sn.osmQuery(area,0).query.includes('maxsize'),'no maxsize in the query');
+  assert.equal(sn.osmQuery.length,2,'boundary and margin; the travel mode has a default, and there is no graph limit');
   assert.ok(sn.osmQuery(area,0).query.includes('[timeout:25]'),'the time budget is still stated');
 });
 

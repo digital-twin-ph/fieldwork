@@ -61,8 +61,6 @@ export const SATELLITE_ROUTES:Record<string,{route:SatelliteRoute; curatedBy:Sat
   Object.fromEntries([...vendoredRoutes.map(r=>[r.id,{route:r,curatedBy:'eo-satellite-guide' as const}]),
     ...addedRoutes.map(r=>[r.id,{route:r,curatedBy:'fieldwork' as const}])]);
 export const VENDORED=(fieldwork as unknown as {vendored:{repository:string;commit:string}}).vendored;
-/** The date JLT's file was curated, as it states it. */
-export const CURATED_ON=(jlt as {verified?:string}).verified??null;
 
 /** JLT's matcher, ported: whole-phrase alias matching, and a named pollutant drops its broad parent. */
 export const normalize=(text:string):string=>String(text).normalize('NFKD').replace(/₂/g,'2').replace(/₃/g,'3')

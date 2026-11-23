@@ -1,6 +1,5 @@
 import type {Workflow} from './types.js';
 import {createEncryptedPackage,readEncryptedPackage} from './encrypted-package.js';
-import {referencedPDFs} from './evidence.js';
 import {projectFiles} from './project-files.js';
 import {verifiedProjectFile,storePDFs} from './evidence-storage.js';
 

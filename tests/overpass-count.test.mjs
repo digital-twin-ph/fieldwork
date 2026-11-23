@@ -10,7 +10,7 @@ import {countQuery,readOverpassCount,countWays,osmQuery} from '../build/street-n
 const BORDER={type:'Polygon',coordinates:[[[29.0,-1.5],[32.5,-1.5],[32.5,2.5],[29.0,2.5],[29.0,-1.5]]]};
 
 test('the count asks for the same ways as the download, and asks only for their number',()=>{
-  const counting=countQuery(BORDER,250,50000,'walking'),downloading=osmQuery(BORDER,250,50000,'walking');
+  const counting=countQuery(BORDER,250,'walking'),downloading=osmQuery(BORDER,250,'walking');
   assert.match(counting.query,/out count;$/);
   assert.doesNotMatch(counting.query,/out body/);
   // AND IT COUNTS WHAT WOULD BE SENT. A ways-only count sat inside every limit for an area whose
@@ -22,7 +22,7 @@ test('the count asks for the same ways as the download, and asks only for their 
   assert.equal(counting.query.match(filter)[1],downloading.query.match(filter)[1]);
   assert.deepEqual(counting.bounds,downloading.bounds);
   // And it follows the mode, because a driving count is a different number.
-  assert.notEqual(countQuery(BORDER,250,50000,'driving').query,counting.query);
+  assert.notEqual(countQuery(BORDER,250,'driving').query,counting.query);
 });
 
 test('a count answer is read, and anything else is not mistaken for one',()=>{

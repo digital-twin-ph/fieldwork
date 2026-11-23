@@ -576,12 +576,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.14.0",
-   "released": "2026-11-20",
+   "version": "0.14.1",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A window past what a tab holds (166.4 million cells or 1.1 GB, lowered from 518.9 million) is streamed, not refused, by file or by address; a window saved before keeps reading. A streamed file is chosen again from the run's stop message and, in Chrome and Edge, remembered across sessions. Configure… always opens, even where the kept bytes cannot be read. The Inspector moves out of app.ts."
+     "kind": "patch",
+     "description": "Configure…'s picker of where to get a file starts at the source and year of the window the step holds: a GRID3 2025 step's was titled Population (WorldPop) and offered WorldPop's newest year, 2026, as was a WorldPop 2025 step's."
     }
    ],
    "breaking": false,

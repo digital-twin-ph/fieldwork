@@ -68,13 +68,6 @@ export interface ExtractRequest {
   onPhase?:(message:string)=>void;
 }
 
-const text=(engine:Engine,pointer:number,length:number):string=>
-  new TextDecoder().decode(new Uint8Array(engine.memory.buffer,pointer>>>0,length>>>0));
-
-/** A pointer past 2 GB arrives as a negative i32 through the C ABI, and this
- *  module routinely holds more than that. */
-const address=(value:number):number=>value>>>0;
-
 export async function loadEngine(fetcher:typeof fetch=fetch):Promise<Engine>{
   const response=await fetcher(ENGINE_URL);
   if(!response.ok)throw new Error('The street engine could not be read from this build.');
@@ -130,53 +123,6 @@ export function networkFromBuffers(flatNodes:Float64Array,flatEdges:Float64Array
   return {nodes,edges,source:extractSource(request,bytes,junctions)} as Network;
 }
 
-export async function networkFromExtract(bytes:Uint8Array,request:ExtractRequest,
-  engine?:Engine):Promise<Network>{
-  const module=engine??await loadEngine();
-  const {onPhase}=request;
-  onPhase?.(`Reading ${(bytes.length/1e6).toFixed(0)} MB of extract…`);
-  const pointer=address(module.alloc(bytes.length));
-  new Uint8Array(module.memory.buffer,pointer,bytes.length).set(bytes);
-
-  const [west,south,east,north]=geometryBounds(request.boundary);
-  const margin=(request.marginM??0)/111195;
-  module.set_bbox(west-margin,south-margin,east+margin,north+margin);
-  module.set_two_pass(1);
-  module.set_retain_all(request.everyNode?1:0);
-  if(request.walkSpeedMPerMin)module.set_walk_speed_kph(request.walkSpeedMPerMin*60/1000);
-
-  onPhase?.('Building the street network…');
-  let junctions=0;
-  try{junctions=module.graph_from_pbf(pointer,bytes.length,request.mode==='driving'?1:0);}
-  catch(error){
-    // A panic traps the module and its memory stays readable, so the reason is
-    // recoverable rather than arriving as "RuntimeError: unreachable".
-    const message=(()=>{try{return text(module,module.panic_ptr(),module.panic_len());}catch{return '';}})();
-    throw new Error(`The street engine stopped while reading this extract${message?`: ${message.split('\n').pop()}`:''}. `
-      +`Nothing was changed. A smaller study area, or the other travel mode, may get through.`);
-  }
-  if(junctions<0)throw new Error('That file could not be read as an OpenStreetMap extract (.osm.pbf), so nothing was changed.');
-  if(junctions===0)throw new Error('The extract holds no streets of this kind inside the study area. '
-    +'Check the area, the travel mode, and that the extract covers this part of the world.');
-
-  onPhase?.(`Taking ${junctions.toLocaleString('en')} junctions out…`);
-  const nodePointer=address(module.export_nodes()),nodeValues=address(module.node_values());
-  const edgePointer=address(module.export_edges()),edgeValues=address(module.edge_values());
-  // Copied, because the module is about to be let go and a view into its memory
-  // would dangle.
-  const flatNodes=new Float64Array(module.memory.buffer,nodePointer,nodeValues).slice();
-  const flatEdges=new Float64Array(module.memory.buffer,edgePointer,edgeValues).slice();
-  module.drop_graph();module.drop_buffers();
-
-  const nodes=new Array(flatNodes.length/3);
-  for(let i=0,j=0;i<flatNodes.length;i+=3,j++)
-    nodes[j]={id:'osm-'+flatNodes[i],coordinates:[flatNodes[i+1],flatNodes[i+2]] as [number,number]};
-  const edges=new Array(flatEdges.length/3);
-  for(let i=0,j=0;i<flatEdges.length;i+=3,j++)
-    edges[j]={from:'osm-'+flatNodes[flatEdges[i]*3],to:'osm-'+flatNodes[flatEdges[i+1]*3],lengthM:flatEdges[i+2]};
-
-  return {nodes,edges,source:extractSource(request,bytes.length,junctions)} as Network;
-}
 
 /** What this network is, in the sentence a reader of the workflow will see.
  *  The licence travels with it: ODbL requires attribution and this is where a

@@ -1,7 +1,7 @@
 import {metricCRSAssertion} from './metric-crs.js';
 ﻿import {metric} from './catchments.js';
 import type {PointCollection,Position,WorkflowNode} from './types.js';
-import type {DisplayValue,Receipt} from './results.js';
+import type {Receipt} from './results.js';
 import {computeMeanCenter} from './mean-center.js';
 import {dataTable} from './data-table.js';
 import type {MeanCenter} from './mean-center.js';

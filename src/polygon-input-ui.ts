@@ -10,8 +10,8 @@ import {openConfigDialog} from './config-dialog.js';
 import {payloadDigest} from './project.js';
 import {previewArea} from './raster-preview.js';
 import {AREA_KINDS,readBox,areasInWorker,retrievalProvenance,type AreaKind} from './osm-areas.js';
-import {MAX_LAYER_VERTICES,readPolygonFeatures} from './polygon-layer.js';
-import {extractsFor,EXTRACT_CATALOGUE_TAKEN} from './extract-catalogue.js';
+import {readPolygonFeatures} from './polygon-layer.js';
+import {extractsFor} from './extract-catalogue.js';
 import {geometryBounds} from './study-area.js';
 import {shareAlike} from './input-provenance.js';
 import type {FeatureDecisions} from './polygon-review.js';
@@ -94,19 +94,6 @@ export function layerCard(n:WorkflowNode<'polygon_input'>,esc:Escape):string{
 }
 
 
-/** The two naming questions, which both paths ask in the same words. */
-function nameFields(p:WorkflowNode<'polygon_input'>['params'],esc:Escape):string{
-  return `<label class="field-label" for="polygon-name-field">Which property names each feature`
-    +`</label>`
-    +`<input id="polygon-name-field" maxlength="100" value="${esc(p.nameField||'')}" `
-    +`placeholder="Not set">`
-    +`<small>Leave it unset to number them. A property the file does not carry is refused rather `
-    +`than left blank.</small>`
-    +`<label class="field-label" for="polygon-layer-name">What to call the layer</label>`
-    +`<input id="polygon-layer-name" maxlength="100" value="${esc(p.layerName||'')}" `
-    +`placeholder="${esc(p.label||'Polygon layer')}">`
-    +`<small>What a reader sees beside it on a map.</small>`;
-}
 
 
 /** WHAT CONFIGURE… HOLDS (experiment 186, 2026-11-11: the practitioner, "Let's also standardize the Polygon layer input

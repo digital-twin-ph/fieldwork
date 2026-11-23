@@ -1,6 +1,6 @@
 import {sha256OfText} from './sha256-stream.js';
 import {REPAIR_RULE} from './boundary-repair.js';
-import type {AreaParams,Boundary,Bounds,Escape,NodeSpec,Polygon,Position,Workflow,WorkflowNode} from './types.js';
+import type {AreaParams,Boundary,Bounds,NodeSpec,Polygon,Position,Workflow,WorkflowNode} from './types.js';
 import type {ReasonerQuad} from './worker-types.js';
 import {isRecord} from './guards.js';
 import {validLogin} from './identity.js';

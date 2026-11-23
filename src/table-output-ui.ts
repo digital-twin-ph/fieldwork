@@ -64,7 +64,6 @@ function openTableConfig(kit:TableOutputKit,nodeId:string){
       return {settings,preview:`<p class="muted">${mode==='table'?shows.table:shows.other}</p>`};
     },
     wire:(root,draft,redraw)=>{
-      root.querySelector<HTMLSelectElement>('#output-view')?.addEventListener('change',e=>{draft.view=(e.target as HTMLSelectElement).value as Draft['view'];redraw();});
       root.querySelector<HTMLSelectElement>('#output-coordinates')?.addEventListener('change',e=>{draft.coord.metres=(e.target as HTMLSelectElement).value==='metres';redraw();});
       if(draft.coord.metres)wireZone(root,draft.coord,redraw,'output');
       root.querySelector<HTMLInputElement>('#output-totals')?.addEventListener('change',e=>{

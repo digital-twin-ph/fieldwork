@@ -15,7 +15,7 @@ export const INTERACTIVE_SEGMENT_LIMIT=200_000;
 import type {Polygons} from './catchments.js';
 import type {PointCollection,Escape,Position} from './types.js';
 
-import {BASEMAP_CHOICES,basemapAvailable,basemapOptions,BASEMAP_LABELS,basemapKey,keyedProvider,PROVIDER_NAMES,type BasemapChoice} from './basemaps.js';
+import {basemapOptions,BASEMAP_LABELS,basemapKey,keyedProvider,PROVIDER_NAMES,type BasemapChoice} from './basemaps.js';
 import {groupedKey,RING_RED,RING_BLUE,layerSymbol,markPath,markRadius,polygonShading,shadedValues,classRanges,categoricalSteps,FIGURE_ROLE} from './presentation.js';
 import type {LayerShape,FillClass,FillEncoding} from './presentation.js';
 import {fillClass,SPATIAL_RELATION_FILL,MARK_HALO} from './presentation.js';
@@ -45,9 +45,6 @@ export type {BasemapChoice};
  *  Data is OpenStreetMap; the project is MIT; there is no key and no stated request limit.
  *  Offline bulk download is capped at 3,000 tiles or 50 MB by their terms, which this
  *  application never approaches because it fetches only what is viewed. */
-const OPENFREEMAP_ATTRIBUTION=
-  '<a href="https://openfreemap.org">OpenFreeMap</a> &copy; <a href="https://www.openmaptiles.org/">OpenMapTiles</a> '
-  +'Data from <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
 const VECTOR_BASEMAPS={
   'ofm-liberty':{label:'OpenFreeMap Liberty',style:'https://tiles.openfreemap.org/styles/liberty'},
   'ofm-positron':{label:'OpenFreeMap Positron (muted)',style:'https://tiles.openfreemap.org/styles/positron'},

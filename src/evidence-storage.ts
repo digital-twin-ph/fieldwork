@@ -1,7 +1,7 @@
 import {withoutRemoteRows} from './remote-table.js';
 import type {Workflow} from './types.js';
 import type {EvidenceBundle,EvidenceFile,EvidenceReference} from './evidence.js';
-import {decodeFile,encodeFile,pdfDigest,referencedPDFs,MAX_PDF_BYTES,MAX_WORKFLOW_FILE_ATTACHMENT_CHARS} from './evidence.js';
+import {decodeFile,encodeFile,pdfDigest,MAX_PDF_BYTES,MAX_WORKFLOW_FILE_ATTACHMENT_CHARS} from './evidence.js';
 import {projectFiles,verifyProjectFile,fileByteLimit} from './project-files.js';
 import type {ProjectFile} from './project-files.js';
 import {isRecord} from './guards.js';

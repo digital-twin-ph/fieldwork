@@ -1,7 +1,6 @@
-import type {Boundary,PointCollection,PointFeature,Position,Workflow,WorkflowNode} from './types.js';
+import type {Boundary,PointCollection,PointFeature,WorkflowNode} from './types.js';
 import {pointRelation,GEOSPARQL_PREDICATE} from './spatial-predicates.js';
 import type {Receipt} from './results.js';
-import {bboxPolygon} from './study-area.js';
 
 /** Keeping the points that are in the area, as a step you can see.
  *

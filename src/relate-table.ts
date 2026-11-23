@@ -590,7 +590,7 @@ export function relateShape(left:DataTable,right:DataTable,request:RelateRequest
 export function relateTable(left:DataTable,right:DataTable,request:RelateRequest):RelateResult {
   ({left,right,request}=alignToPeriods(left,right,request));
   const plan=planRelate(left,right,request);
-  const {gaps,signature,bring,normalisation}=plan;
+  const {gaps,signature,normalisation}=plan;
 
   // THE DECISION, required where anything is unmatched. Not a default: the practitioner said the
   // choice has downstream consequences, and an application that picks for them has made the choice

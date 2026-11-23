@@ -34,7 +34,7 @@ export function readStata(bytes:Uint8Array):StataTable{
   return modern?readModern(bytes,view,ascii):readOld(bytes,view,ascii);
 }
 
-function cellsOf(bytes:Uint8Array,view:DataView,little:boolean,kinds:Kind[],formats:string[],from:number,
+function cellsOf(view:DataView,little:boolean,kinds:Kind[],formats:string[],from:number,
   nobs:number,ascii:(f:number,l:number)=>string,strl:(at:number)=>string):string[][]{
   const rows:string[][]=[];let at=from;
   for(let r=0;r<nobs;r++){
@@ -92,7 +92,7 @@ function readOld(bytes:Uint8Array,view:DataView,ascii:(f:number,l:number)=>strin
     if(hasLabels)throw new Error('This Stata file\'s layout could not be read. Export it from Stata as CSV.');
     start=bytes.length-nobs*record;
   }
-  const rows=cellsOf(bytes,view,little,kinds,formats,start,nobs,ascii,()=>'');
+  const rows=cellsOf(view,little,kinds,formats,start,nobs,ascii,()=>'');
   return {headers,rows,format,notes:labelNotes(headers,labelled),labels};
 }
 
@@ -140,7 +140,7 @@ function readModern(bytes:Uint8Array,view:DataView,ascii:(f:number,l:number)=>st
     const o=release===117?view.getUint32(at+4,little):Number(view.getBigUint64(at,little)>>16n);
     return v===0&&o===0?'':strls.get(`${v}:${o}`)??'';
   };
-  const rows=cellsOf(bytes,view,little,kinds,formats,offset(9)+'<data>'.length,nobs,ascii,strl);
+  const rows=cellsOf(view,little,kinds,formats,offset(9)+'<data>'.length,nobs,ascii,strl);
   return {headers,rows,format:release,notes:labelNotes(headers,labelled),labels};
 }
 

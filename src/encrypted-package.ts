@@ -1,7 +1,7 @@
 import {ZipReader,ZipWriter,BlobReader,BlobWriter,Uint8ArrayReader} from '@zip.js/zip.js';
 import type {FileEntry} from '@zip.js/zip.js';
 import type {Workflow} from './types.js';
-import {referencedPDFs,pdfDigest,MAX_BUNDLE_BYTES,MAX_PDF_BYTES,MAX_WORKFLOW_PDF_BYTES} from './evidence.js';
+import {MAX_BUNDLE_BYTES,MAX_PDF_BYTES,MAX_WORKFLOW_PDF_BYTES} from './evidence.js';
 import {rasterFileByteLimit} from './raster-limits.js';
 import {projectFiles,verifyProjectFile,fileByteLimit} from './project-files.js';
 import type {ProjectFile} from './project-files.js';

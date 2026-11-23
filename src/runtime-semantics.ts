@@ -29,7 +29,7 @@ export function runtimeBindingN3(node:WorkflowNode,runId:string,receipts:Receipt
   const release=entry.releases.find(r=>r.version===entry.currentVersion)!;
   let facts=`${plan} a fw:WorkflowNodePlan; fw:widget <${entry.id}>; fw:nodeType ${JSON.stringify(node.type)}; fw:catalogVersion ${JSON.stringify(entry.currentVersion)}; fw:catalogDigest ${JSON.stringify(release.sha256)}; fw:widgetDefinitionSource ${JSON.stringify(HOST_REGISTRY)}.\n<${entry.id}> a fw:WidgetDefinition.\n${step} a fw:WorkflowStep; fw:resultEntity ${output}.\n`;
   // Catalog versions describe the bundle's current descriptors, not selected old executables.
-  for(const receipt of receipts.filter(r=>r.nodeId===node.id))for(const activity of receiptActivities(node,runId))facts+=`${step} fw:receiptActivity <${activity}>.\n<${activity}> a prov:Activity; fw:workflowNode ${plan}.\n`;
+  if(receipts.some(r=>r.nodeId===node.id))for(const activity of receiptActivities(node,runId))facts+=`${step} fw:receiptActivity <${activity}>.\n<${activity}> a prov:Activity; fw:workflowNode ${plan}.\n`;
   if(node.type==='point_input'||node.type==='places'||node.type==='centers'){
     facts+=`${plan} a fw:GenericInputConfiguration.\n${step} a fw:PointInput.\n${output} a fw:PointDataset, geo:FeatureCollection; prov:wasGeneratedBy ${step}; fw:recordCount ${node.params.data.features.length}.\n`;
     const definitions=node.type==='point_input'?[...(node.params.fields||[]),...(node.params.attributeRules||[])]:[];

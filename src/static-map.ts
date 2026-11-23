@@ -5,7 +5,7 @@
 import {plotFrame} from './catchment-output.js';
 import {proportionalRadius,sizedLargest,layerRanks,colouredClasses} from './point-layers.js';
 import {linkLinesSvg} from './map-links.js';
-import type {Escape,Position,LineLayer} from './types.js';
+import type {Escape,LineLayer} from './types.js';
 import type {DisplayValue} from './results.js';
 import {markPath} from './presentation.js';
 import {markLabel,LABEL_CEILING,MERGED_MARKS_FROM,MarkBatch} from './point-layers.js';

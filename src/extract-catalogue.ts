@@ -19,7 +19,6 @@ export interface ExtractRegion {
 }
 const CATALOGUE=catalogue as unknown as {takenAt:string;source:string;regions:ExtractRegion[]};
 export const EXTRACT_CATALOGUE_TAKEN=CATALOGUE.takenAt;
-export const EXTRACT_CATALOGUE_SOURCE=CATALOGUE.source;
 export const EXTRACT_REGIONS=CATALOGUE.regions;
 
 const area=(b:readonly number[]):number=>(b[2]-b[0])*(b[3]-b[1]);

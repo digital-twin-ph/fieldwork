@@ -1,6 +1,6 @@
 import {buffer} from '@turf/buffer';
 import type {Polygon,Position} from './types.js';
-import {CRS84,bboxPolygon} from './study-area.js';
+import {bboxPolygon} from './study-area.js';
 /** The buffer distance is a knob, and its range was a second number with no reason behind it.
  *
  *  It capped at 5,000 m while the geometry helpers in this same module accept 50,000 — `circleAround`

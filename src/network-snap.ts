@@ -25,7 +25,6 @@ import type {Receipt} from './results.js';
 
 export const MAX_SNAP_SITES=100;
 
-const dist=(a:Position,b:Position)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 
 export function validateSnapNode(node:WorkflowNode<'snap_to_network'>):void{
   const {zone,hemisphere,maxSnapM}=node.params;

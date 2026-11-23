@@ -226,18 +226,6 @@
       "kind": "discovery"
     },
     {
-      "id": "extract-measured-junctions",
-      "constant": "EXTRACT_MEASURED_NODES",
-      "iri": "urn:fieldwork:cap:extract-measured-junctions",
-      "value": 122061,
-      "unit": "junctions",
-      "basis": "measured",
-      "evidence": "A province's driving network read from a 416 MB published extract and taken into this application's structures, 2026-10-22. Held, not yet drawn, routed over or snapped to.",
-      "refuses": "Nothing. It is what the extract control reports having been measured to.",
-      "liftTest": "A larger extract-built graph drawn and routed over, which replaces the figure.",
-      "kind": "discovery"
-    },
-    {
       "id": "buffer-batch",
       "constant": "BUFFER_BATCH",
       "iri": "urn:fieldwork:cap:buffer-batch",

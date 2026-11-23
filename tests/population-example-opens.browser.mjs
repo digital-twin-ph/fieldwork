@@ -170,3 +170,34 @@ test('the example opens from its pin, its census read from Census tables, its ti
   }
   expect(errors).toEqual([]);
 });
+
+/** EACH RASTER STEP'S PICKER STARTS AT WHAT THE STEP HOLDS (2026-11-23): a GRID3 2025 step's dialog was titled "Population
+ *  (WorldPop)" and offered WorldPop's newest year, 2026; so was WorldPop 2025's. No raster is read: the windows are not
+ *  on this device, and the picker is only where to get a file. */
+test('each raster step’s source picker starts at the source and year it holds',async({page})=>{
+  test.skip(!existsSync(new URL('fieldwork-project.json.gz',REPO)),'Needs the example repository beside this one.');
+  const errors=collectPageErrors(page);
+  await page.route(/raw\.githubusercontent\.com\/digital-twin-ph\/example-population-models-census/,route=>{
+    const path=new URL(route.request().url()).pathname.split('/').slice(4).join('/');
+    route.fulfill({status:200,body:readFileSync(new URL(path,REPO))});
+  });
+  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=blank');
+  await page.locator('[data-view="project"]').click();
+  await page.locator(`[data-open-example="${ID}"]`).click();
+  await expect(page.locator(`[data-example-status="${ID}"]`)).toContainText('digest matched',{timeout:60000});
+  const value=await page.locator('#workflow-select option').filter({hasText:'Rwanda'}).getAttribute('value');
+  await page.locator('#workflow-select').selectOption(value);
+  await page.locator('[data-view="workflow"]').click();
+  const picker=page.locator('#raster-dialog #raster-population');
+  for(const [id,title,check] of [['worldpop','Population (WorldPop) for Rwanda',async()=>expect(picker.locator('#population-year')).toHaveValue('2025')],
+    ['grid3','Population (GRID3) for Rwanda',async()=>expect(picker.locator('#population-source')).toHaveValue('grid3')],
+    ['ghs','Population (GHS-POP)',async()=>expect(picker.locator('#ghs-epoch')).toHaveValue('2025')]]){
+    await page.locator(`.react-flow__node[data-id="${id}"]`).click();
+    await page.locator('#prepare-raster').click();
+    await expect(picker.locator('h3')).toHaveText(title);
+    await check();
+    await page.locator('#raster-dialog #config-cancel').click();
+  }
+  expect(errors).toEqual([]);
+});

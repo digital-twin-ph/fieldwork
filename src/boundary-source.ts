@@ -149,7 +149,6 @@ export function resolveCountry(typed:string):string|null{
   return prefix.size===1?[...prefix][0]:null;
 }
 
-export const ADM_LEVELS=['ADM0','ADM1','ADM2','ADM3','ADM4','ADM5'] as const;
 
 const text=(v:unknown)=>typeof v==='string'?v.trim():typeof v==='number'?String(v):'';
 const count=(v:unknown)=>{const n=Number(v);return Number.isFinite(n)?n:0;};

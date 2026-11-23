@@ -3,6 +3,17 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.172.1 — 2026-11-23
+
+- **Raster input's picker starts at what the step holds** (0.14.1). A GRID3 2025 step's Configure… was titled
+  *Population (WorldPop)* and offered WorldPop's newest year, 2026, as was a WorldPop 2025 step's. Found re-running the
+  population example. Nothing a step held was changed by it.
+- **Dead code removed**, about 500 lines: unused imports, variables and parameters; handlers for Inspector controls
+  earlier moves took away; the old Georeferenced map image panel and its wiring; a main-thread extract reader replaced by
+  the worker; and the per-browser widget run count, recorded on every run and shown nowhere since the widget catalog
+  dropped it on 2026-11-09. A graph limit the Overpass query never read is no longer passed to it. The extract cap of
+  122,061 junctions, shown nowhere since 2026-11-11, leaves the caps register; experiment 129 keeps the measurement.
+
 ## 0.172.0 — 2026-11-23
 
 - **The Inspector move is done.** Street network (0.14.0) and Reachable junctions (0.6.0) leave the old panel for the

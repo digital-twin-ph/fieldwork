@@ -1,6 +1,6 @@
 # Find health facilities
 
-_Created 2026-11-08 · Updated 2026-11-08_
+_Created 2026-11-08 · Updated 2026-11-23_
 
 **A source of facility points**, two ways: every facility a source records inside a study area, or the facility each
 row of a list names.

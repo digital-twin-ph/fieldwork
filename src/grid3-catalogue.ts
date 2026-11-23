@@ -12,7 +12,6 @@ export const GRID3_PRODUCT=CATALOGUE.product;
 export const GRID3_LICENCE=CATALOGUE.licence;
 export const GRID3_CITATION=CATALOGUE.citation;
 export const GRID3_NOTE=CATALOGUE.note;
-export const GRID3_README=CATALOGUE.readme;
 /** The country's file, or null where GRID3 publishes none: outside sub-Saharan Africa, which is said, not guessed round. */
 export const grid3RasterFor=(iso3:string|null):Grid3Country|null=>iso3?CATALOGUE.countries.find(c=>c.iso3===iso3)??null:null;
 export const GRID3_COUNTRIES=CATALOGUE.countries.length;

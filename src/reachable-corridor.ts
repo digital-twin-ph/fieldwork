@@ -1,5 +1,4 @@
 import {metricCRSAssertion} from './metric-crs.js';
-import {buffer as turfBuffer} from '@turf/buffer';
 import type {Boundary,PointCollection,Position,WorkflowNode} from './types.js';
 import type {Catchment,Network,Polygons} from './catchments.js';
 import {metric,validateNetwork,reachChunks,taperedCorridor} from './catchments.js';

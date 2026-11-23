@@ -96,15 +96,6 @@ export const estimateUnavailable=(name:string,level:IntervalLevel,method:string,
   ({name,value:null,lower:null,upper:null,level,method,conventionalLabel,conventionalLabelSource,
     unavailable:reason,notes:[]});
 
-/** A ratio's interval on the log scale, back-transformed: the shape every ratio here shares.
- *
- *  A ratio is not symmetric about its point estimate -- 2x and 0.5x are the same distance -- so
- *  the interval is computed where it is symmetric and transformed back. */
-export const logInterval=(ratio:number,standardError:number,level:IntervalLevel)=>{
-  const z=quantileFor(level);
-  return {lower:Math.exp(Math.log(ratio)-z*standardError),
-    upper:Math.exp(Math.log(ratio)+z*standardError)};
-};
 
 /** THE MEASURES, as functions of counts and nothing else. Experiment 161.
  *

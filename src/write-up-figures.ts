@@ -89,7 +89,6 @@ export interface RunArtifacts {
   chartSvg?:(nodeId:string)=>string|null;
 }
 
-export type FigureKind='table'|'chart'|'map';
 
 /** The node a description note speaks for, or null where the note is not a description.
  *

@@ -101,9 +101,6 @@ export const NETWORK_NODE_LIMIT_MAX=1_000_000;
  *  a province out of a published extract on 2026-10-22 (experiment 129), and that path transfers
  *  nothing, so it has no byte budget to warn about and this figure does not apply to it. */
 export const NETWORK_MEASURED_NODES=27_181;
-/** The largest graph read from an extract and taken into this application's own structures:
- *  parsed and held, and not yet drawn on a map, routed over or snapped to. */
-export const EXTRACT_MEASURED_NODES=122_061;
 /** WHEN THE JSON EDITOR IS OFFERED, counted in nodes plus directed edges.
  *
  *  The Inspector carried a textarea holding `JSON.stringify(network,null,2)` for every network,
@@ -396,7 +393,6 @@ export function metric(zone:number,hemisphere:string){
   const definition=`+proj=utm +zone=${zone} ${hemisphere==='south'?'+south ':''}+datum=WGS84 +units=m +no_defs`,p=proj4('EPSG:4326',definition),central=zone*6-183;
   return {crs:`EPSG:${hemisphere==='south'?32700+zone:32600+zone}`,forward:(c:Position):Position=>{if(!coordinate(c)||Math.abs(c[0]-central)>6||(hemisphere==='north'?c[1]<0:c[1]>0))throw new Error('Coordinates fall outside this prototype’s UTM zone/hemisphere guard. Choose the appropriate metric CRS.');return p.forward(c);},inverse:(c:Position):Position=>p.inverse(c)};
 }
-type Metric=ReturnType<typeof metric>;
 const dist=(a:Position,b:Position)=>Math.hypot(a[0]-b[0],a[1]-b[1]);
 
 /** The network node nearest a projected point, and how far that is in metres.

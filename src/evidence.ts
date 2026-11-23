@@ -144,7 +144,7 @@ export function evidenceProvenance(nodes:WorkflowNode[],edges:Workflow['edges'],
     seen.add(ruleset.id+'@'+ruleset.version);
     const entity=`<${ruleset.id}>`;
     facts+=`${entity} a fw:Ruleset, prov:Plan; dcterms:hasVersion ${literal(ruleset.version)}; `
-      +`dcterms:title ${literal(ruleset.title)}; fw:basisStatus fw:${ruleset.basis.status.replace(/(^|-)([a-z])/g,(_,d,c)=>c.toUpperCase())}.\n`;
+      +`dcterms:title ${literal(ruleset.title)}; fw:basisStatus fw:${ruleset.basis.status.replace(/(^|-)([a-z])/g,(_,_d,c)=>c.toUpperCase())}.\n`;
     facts+=`${iri('plan:'+receipt.nodeId)} prov:hadPlan ${entity}.\n`;
     for(const ref of ruleset.basis.evidence)
       facts+=referenceN3(iri('ruleset:'+ruleset.id.split(':').pop()+':'+ref.id),entity,ref,literal);

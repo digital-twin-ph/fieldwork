@@ -208,7 +208,6 @@ export function openMapConfig(nodeId:string){
             +'OpenStreetMap and OpenTopoMap are fetched once and drawn into the figure, and are offered here; the vector styles are offered on the interactive map.';}});
       on('#output-section',el=>{const chosen=el.value as FigureSection|'none';
         if(chosen===DEFAULT_FIGURE_SECTIONS.map_output)delete draft.section;else draft.section=chosen;});
-      on('#output-view',el=>{draft.view=el.value as Draft['view'];});
       const perSource=(key:'pinClassField'|'labelField',source:string,value:string)=>{
         const held={...(draft[key]||{})};if(value)held[source]=value;else delete held[source];
         if(Object.keys(held).length)draft[key]=held;else delete draft[key];};
@@ -355,9 +354,8 @@ function mapArrangeSection(n:WorkflowNode<'map_output'>):string{
  *  markup serves the dialog's every redraw and nothing reaches the step before Apply. */
 function mapSettings(n:WorkflowNode<'map_output'>):string{return groupSections('Presentation',mapSettingsFlat(n));}
 function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
-  const at=figureSection(n.params,n.type),fallback=DEFAULT_FIGURE_SECTIONS[n.type];
   return ''
-    +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation" data-catchment-param="presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
+    +`<div class="field"><label class="field-label" for="polygon-presentation">Presentation</label><select id="polygon-presentation"><option value="plot" ${n.params.presentation!=='interactive'?'selected':''}>Static plot (SVG)</option><option value="interactive" ${n.params.presentation==='interactive'?'selected':''}>Interactive map</option></select></div>`
     +ctx.writeUpSelect(n)
     // Shown when decisions are wired, as before: a reasoning result reads as a map, a table or
       // a chart, and this switches which. It used to be gated on the map being in decisions MODE.

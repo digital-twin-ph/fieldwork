@@ -176,16 +176,6 @@ export function mountFeatureChooser(host:HTMLElement,features:readonly Feature[]
     }).join('');
   };
 
-  const pick=(id:string)=>{
-    const was=picked;picked=id;
-    if(was)restyle(was);
-    restyle(id);
-    const layer=layers.get(id);
-    if(layer&&map)map.fitBounds(layer.getBounds(),{padding:[24,24],maxZoom:14});
-    rows();
-    (root.querySelector(`[data-pick="${CSS.escape(id)}"]`) as HTMLElement|null)?.focus();
-  };
-
   $('#polygon-review-rows').addEventListener('input',event=>{
     const field=event.target as HTMLInputElement;
     const id=field.getAttribute('data-name');

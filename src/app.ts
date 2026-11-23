@@ -1,9 +1,7 @@
 import {MAX_GROUND_LAYERS,groundPort,isGroundPort} from './core.js';
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
-import {openCountriesConfig} from './area-countries-ui.js';
 import {openChangelog} from './changelog-ui.js';
 import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl,ghsRecordFor} from './ghs-pop.js';
-import {rasterUnitsOf} from './raster-units.js';
 import {grid3RasterFor,grid3RecordFor,GRID3_CITATION,GRID3_COUNTRIES,GRID3_LICENCE,GRID3_NOTE,GRID3_PRODUCT,GRID3_TAKEN} from './grid3-catalogue.js';
 import {countriesOfArea} from './area-countries.js';
 import {studyAreaInspector,geometryVertices,type StudyAreaKit} from './study-area-inspector.js';
@@ -12,9 +10,8 @@ import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLink
 import {SCAN_DEFAULTS,newScanSeed} from './space-time-scan.js';
 import {linkLinesSvg} from './map-links.js';
 import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
-import {recordRun,runsFor} from './widget-usage.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
-import {manualButton,openManual,hasManual,renderManualPage} from './manual.js';
+import {openManual,hasManual,renderManualPage} from './manual.js';
 import {projectWidgets,projectWidgetsMarkup} from './project-widgets.js';
 import {appendInspector} from './append-ui.js';
 import {detectInspector} from './detect-ui.js';
@@ -24,8 +21,7 @@ import {chartSentence,openChartConfig,type ChartKit} from './chart-ui.js';
 import {setupLabEvaluation} from './lab-evaluation-ui.js';
 import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
-import {johnSnowExample,snowExtentExample} from './john-snow.js';
-import {geoprivacyExample} from './geoprivacy-example.js';
+import {johnSnowExample} from './john-snow.js';
 import {compareInspector,type CompareKit} from './point-comparison-ui.js';
 import {CATCHMENT_TYPES} from './catchments.js';
 import {networkInspector,networkDownloadTick,type NetworkKit} from './network-input-ui.js';
@@ -46,8 +42,6 @@ import {checkRepository,postDiscussion,repositoryName,GITHUB_API,type Repository
 import type {CredentialAccess} from './credentials-ui.js';
 import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_RULESET} from './palette.js';
 import {tidyLayout,alreadyTidy} from './layout.js';
-import {OVERTURE_DEFAULT_CONFIDENCE} from './overture-places.js';
-import {hagellochExample} from './hagelloch-example.js';
 import {openRuleEditor} from './rule-editor.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
 import {orderSentence} from './rule-evaluation.js';
@@ -59,12 +53,11 @@ import {facilitiesInspector,type FacilitiesKit} from './facilities-ui.js';
 import type {RegisterEntry} from './facility-matching.js';
 import facilityRegistersJson from '../widgets/facility-registers.json';
 const FACILITY_REGISTERS=facilityRegistersJson.registers as RegisterEntry[];
-import {relateShape,decisionMatches,relateAtShifts,shiftColumnName} from './relate-table.js';
-import {findingsSummary,wideDataTable,declaredWide} from './data-table.js';
+import {shiftColumnName} from './relate-table.js';
+import {wideDataTable,declaredWide} from './data-table.js';
 import {authoredSubjects} from './authored-application.js';
 import {searchCatalogInspector} from './satellite-catalog-ui.js';
 import {mapInspector,type MapKit} from './map-ui.js';
-import {bboxOf,defaultKept} from './satellite-catalog.js';
 import {SAMPLE_KEYS,days as sampleDays} from './satellite-sample.js';
 import {productFor} from './satellite-products.js';
 import {onRunDetail} from './run-progress.js';
@@ -73,7 +66,7 @@ import {GRID_KEYS,gridReaderFor} from './satellite-grid-sample.js';
 import {treeSvg} from './transmission-tree.js';
 import {findProductsInspector} from './satellite-products-ui.js';
 import {fetchRemoteTable,useDeviceCopies,archiveOnDevice,progressText} from './remote-table.js';
-import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom,dictionaryKeyOf,scalesOf,declaredUpstream,type TableDictionary} from './column-metadata.js';
+import {describableColumns,fileRows,isDescribed,metadataFindings,entriesFrom,dictionaryKeyOf,scalesOf,type TableDictionary} from './column-metadata.js';
 import {openColumnsDialog} from './columns-dialog.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
@@ -85,8 +78,8 @@ import {curatedExamples,exampleById,verifiedFile,type CatalogExample} from './ex
 import {validateManual,renderManual,firstUndone,stepSentence,placedByStep,handleTypes,type WorkedExampleManual} from './worked-example-manual.js';
 import {saveRefusalMessage} from './save-refusal.js';
 import {MAX_BUNDLE_BYTES} from './evidence.js';
-import type {Workflow,WorkflowNode,NodeType,NodeSpec,Boundary,Position,SpatialRelation,ParamsByType,ColumnRepair} from './types.js';
-import type {WorkflowRun,Receipt,Output,MapRow,PointRow,CoverageRow,CoverageValue,TableValue} from './results.js';
+import type {Workflow,WorkflowNode,NodeType,Boundary,Position,SpatialRelation,ColumnRepair} from './types.js';
+import type {WorkflowRun,Receipt,Output,MapRow,PointRow,CoverageValue,TableValue} from './results.js';
 import type {CanvasAPI,NodeDescription} from './canvas.js';
 import type {Connection,Edge} from '@xyflow/react';
 import type {ReasonerQuad,ReasoningRequest,ReasoningResponse} from './worker-types.js';
@@ -100,12 +93,11 @@ function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
 import {PORT_NAMES,PORT_GROUPS,groupFor} from './port-names.js';
-import {proposeChartForms,proposalOrder,type ChartForm,type ChartProposal} from './chart-proposals.js';
 import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,portSourceName,IncompleteWorkflow,MAX_AREA_INPUTS} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {staticBoundaryMap,staticMapFrame,lineLayersOf} from './static-map.js';
-import {mapLayerList,membersOfPolygons,portIsDrawn,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
+import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
 import {MAX_RASTER_LAYERS,rasterPort} from './raster-panels.js';
@@ -121,7 +113,7 @@ import {notesPanel,openNoteDialog,noteKey} from './notes-ui.js';
 // across every workflow of the project, rather than the tab reading the open run alone.
 import {figureFor,describedNode,tableCsv,tableRowCount} from './write-up-figures.js';
 import type {InspectorKit,OwnInspector,StepKit} from './inspector-kit.js';
-import {setFigureWords,figureWordsOf,fillWords,figureWords,wordsHint} from './figure-words.js';
+import {setFigureWords,figureWordsOf,fillWords,figureWords} from './figure-words.js';
 import {tableInspector,type TableKit} from './data-table-ui.js';
 import {sampleInspector,type SampleKit} from './sample-raster-ui.js';
 import {caseSeriesInspector,rateInspector,type SeriesRateKit} from './series-rate-ui.js';
@@ -149,17 +141,15 @@ import {noteVersion} from './identity-file.js';
 /** A polygon layer's chosen file, waiting for Apply. Keyed by node, outside the DOM, because the
  *  Inspector re-renders on every setting change. */
 import {resolveLayerSymbol,markPath,FIGURE_ROLE} from './presentation.js';
-/** A POINT LAYER'S COLOUR, chosen in the Map's Configure… (2026-11-11): the Okabe-Ito six, named, colour-blind safe. */
-import {isPointPort} from './point-layers.js';
 import {EXAMPLE_TEMPLATES,hasExampleTemplate,EXAMPLE_KEYS,WORKED_EXAMPLE_KEYS} from './example-templates.js';
 import {templateFrom} from './workflow-template.js';
-import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,geometryBounds,storageRefusal,STORAGE_QUOTA_BYTES} from './study-area.js';
+import {blankWorkflow,newStudyArea,studyAreaN3,quadToN3,areaSvg,validateDrawnGeometry,storageRefusal,STORAGE_QUOTA_BYTES} from './study-area.js';
 import {loadPayloads,putPayload,dropPayload,cachedPayload,cachedPayloads,payloadStoreKind,payloadBytes,onStoreDegraded} from './payload-store.js';
 import {openStudyAreaEditor} from './study-area-map.js';
-import {newAreaMeasurement,areaUnitOptions,formatArea,AREA_UNITS} from './area-measurement.js';
+import {newAreaMeasurement,formatArea,AREA_UNITS} from './area-measurement.js';
 import {newObservations,relationLabel} from './spatial-coverage.js';
 import {openInputDataEditor} from './input-data-ui.js';
-import {chartMarkup,tableChart} from './chart-output.js';
+import {chartMarkup} from './chart-output.js';
 import {chartOrientation,chartRenderer} from './chart-vega.js';
 import {standaloneChartSvg} from './chart-figure.js';
 import {networkPreviewSvg,networkCoverage,networkPreviewCaption} from './network-preview.js';
@@ -169,17 +159,12 @@ import {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI,useTileStore} from './ba
 import {rasteriseFigure,FIGURE_PIXEL_SCALE} from './figure-export.js';
 import {COUNTRIES,countryName,iso3Of,countryOfArea} from './boundary-source.js';
 import {worldPopRastersForCountry,worldPopRecordFor,GLOBAL2,WORLDPOP_LICENCE,WORLDPOP_TAKEN,WORLDPOP_BYTES_PER_SECOND,downloadWait} from './worldpop-catalogue.js';
-import type {BoundaryProvenance,AreaParams} from './types.js';
+import type {AreaParams} from './types.js';
 import {containsPoint} from './point-grid.js';
-import {basemapAvailable,basemapOf,extentSpanKm,NATURAL_EARTH_MIN_SPAN_KM,useBasemapKeys,KEY_ORIGINS,staticGround} from './basemaps.js';
-import {naturalEarthMarkup,NATURAL_EARTH,NATURAL_EARTH_CREDIT} from './natural-earth.js';
-import {mapImage,mapImageMarkup,mapImageCredit,withGroundUnder,type MapImage} from './map-image.js';
-import {readWorldFile,boundsFromWorldFile} from './map-image.js';
+import {basemapOf,extentSpanKm,useBasemapKeys,KEY_ORIGINS,staticGround} from './basemaps.js';
+import {naturalEarthMarkup,NATURAL_EARTH_CREDIT} from './natural-earth.js';
+import {mapImage,mapImageMarkup,mapImageCredit,type MapImage} from './map-image.js';
 
-/** A georeferenced plate's chosen files, waiting for Apply. Same reason as the polygon layer's:
- *  the Inspector re-renders on every setting change and a file input cannot carry a selection
- *  across that. */
-const pendingPlateFiles=new Map<string,{image?:File;world?:File}>();
 import {dataTableMarkup,tableFromFetched} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup,widgetIdentity} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
@@ -193,12 +178,10 @@ import {withDictionary,BUILT_IN_PROJECTS,WORKFLOW_LABELS,projectOfWorkflow,proje
 import {mountPanelLayout} from './panel-layout.js';
 import {newMapOutput,mapEvidence,withoutLeftOutAreas} from './map-output.js';
 import {newTableOutput,pointTableMarkup,pointTableEvidence} from './table-output.js';
-import {pointPort,markedPoints,markLabel} from './point-layers.js';
+import {pointPort,markedPoints} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
 import {exposureColumnsOffered} from './two-by-two-mapping.js';
 import {repositoryFiles} from './project-repository.js';
-import {orderableBins} from './chart-output.js';
-import {AGGREGATES,type Aggregate} from './group-table.js';
 import type {BarOrder} from './results.js';
 import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
 import {designChecklist} from './study-design-checklist.js';
@@ -373,7 +356,7 @@ let sharedSignature='';
 /** A backup about to be imported into a shared repository, set by its button and taken by the import. */
 let pendingShare:{repository:NonNullable<Project['repository']>;at:number}|null=null;
 let incompleteShown=false;
-let workflow=EXAMPLE_TEMPLATES.hagelloch(),selected:string|null|undefined='cases',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,runIncomplete=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,lastNodeCount=0,importNode:string|null=null;
+let workflow=EXAMPLE_TEMPLATES.hagelloch(),selected:string|null|undefined='cases',result:WorkflowRun|null=null,runWorkflow:Workflow|null=null,busy=false,dirty=true,runFailed=false,runIncomplete=false,statuses:Record<string,string>={},history:Workflow[]=[],future:Workflow[]=[],flow:CanvasAPI|null=null,worker:Worker|null=null,seq=0,importNode:string|null=null;
 let toastTimer:ReturnType<typeof setTimeout>|undefined,activeOutputId:string|null=null,tablePage=0,tableAttributePage=0;
 let tableSort:import('./table-output.js').TableSort|undefined;
 let lastRunMs:number|null=null;
@@ -3041,34 +3024,10 @@ function renderInspector(){
   // RELATE'S CONFIGURATION DIALOG (experiment 186). Given the columns each table declares and, where they resolve, the
   // tables themselves, so the preview is the join this draft would make. Only Apply writes.
   if(n.type==='relate_table')relateInspector.wire(n,relateKit(),document);
-  document.querySelectorAll<HTMLButtonElement>('[data-raster-step]').forEach(button=>button.onclick=()=>{selected=button.dataset.rasterStep;render();});
   optionalElement('#manage-references')?.addEventListener('click',()=>{let baseline=JSON.stringify(n.references||[]);openEvidenceEditor(n,refs=>{const current=workflow.nodes.find(x=>x.id===n.id);if(!current||JSON.stringify(current.references||[])!==baseline)throw new Error('The node changed while editing. Close and reopen its references.');const saved=change(w=>{required(w.nodes.find(x=>x.id===n.id)).references=structuredClone(refs);},{requirePersistence:true});if(saved)baseline=JSON.stringify(refs);return saved;});});
   optionalElement('#add-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>;node.params.pointInputCount=(node.params.pointInputCount??1)+1;w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port==='coverage'));}));
   optionalElement('#remove-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>,count=node.params.pointInputCount??1;if(count>1){w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===pointPort(count-1)));node.params.pointInputCount=count-1;}}));
   document.querySelectorAll<HTMLInputElement>('#map-label,#table-label').forEach(el=>el.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title)));
-  const contextToggle=document.querySelector<HTMLInputElement>('#polygon-context-toggle');if(contextToggle)contextToggle.onchange=()=>change(w=>{const target=w.nodes.find(x=>x.id===n.id);if(target?.type==='map_output'){target.params.contextPoints=contextToggle.checked;if(!contextToggle.checked)w.edges=w.edges.filter(e=>e.to!==n.id||e.port!=='context');}});
-  // CHANGING THE MAP TYPE CAN STRAND THE BASEMAP, and the select would then disagree with what is
-  // stored: the list drops a vector style on the way to a static figure, the held value stays
-  // `ofm-liberty`, and the control shows `None` while the node says otherwise. So the param is
-  // moved too, and the practitioner is told -- a presentation change is theirs, and quietly
-  // discarding a choice they made inside it is not.
-  //
-  // Added with the per-presentation list on 2026-10-27. The listener is separate from the generic
-  // `data-catchment-param` writer above so that one keeps its single job; it runs after it,
-  // because that one is assigned as `onchange` and this is added as a listener.
-  optionalElement('#polygon-presentation')?.addEventListener('change',e=>{
-    if(n.type!=='map_output')return;
-    const presentation=control(e).value==='interactive'?'interactive':'plot';
-    const held=(workflow.nodes.find(x=>x.id===n.id) as WorkflowNode<'map_output'>|undefined)?.params.basemap;
-    if(!held||held==='none'||basemapAvailable(held,presentation))return;
-    const name=BASEMAP_OPTIONS.find(o=>o.value===held)?.label||held;
-    change(w=>{getNode(w,n.id,'map_output').params.basemap='none';});
-    toast(`${name} is drawn from vector tiles, which a static figure cannot bake in, so this map `
-      +'now has no basemap. OpenStreetMap and OpenTopoMap are fetched once and drawn into the '
-      +'figure, and are offered here; the vector styles are offered on the interactive map.',
-      {tone:'notice'});
-    renderInspector();renderResults();
-  });
   if(n.type==='compare_point_sets')compareInspector.wire(n,compareKit(),document);
   optionalElement('#chart-panels-by')?.addEventListener('change',e=>change(w=>{
     const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
@@ -3092,28 +3051,8 @@ function renderInspector(){
   optionalElement('#series-orientation')?.addEventListener('change',e=>change(w=>{
     getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical';
   },{spatial:false}));
-  optionalElement('#polygon-output-label')?.addEventListener('change',e=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value;}));
   optionalElement('#polygon-label')?.addEventListener('change',event=>change(w=>{
     getNode(w,n.id,'polygon_input').params.label=(event.target as HTMLInputElement).value;}));
-  // THE GEOREFERENCED PLATE'S OWN CONTROLS, which did not exist until 2026-10-29. The widget was
-  // addable, its parameters declared, the map drew what it carried, and `mapImage` refused with
-  // "This step has no image yet. Choose a map image and its world file" -- naming two controls
-  // that were nowhere. Same shape as the polygon layer's: both files are held, Apply reads them,
-  // and the button says what it is still waiting for.
-  const plateFiles=()=>pendingPlateFiles.get(n.id)||{};
-  const platePending=()=>{
-    const {image,world}=plateFiles();
-    const apply=optionalElement('#map-image-apply') as HTMLButtonElement|null;
-    const note=optionalElement('#map-image-apply-note');
-    const one=optionalElement('#map-image-pending'),two=optionalElement('#map-image-world-pending');
-    if(one)one.textContent=image?`Chosen: ${image.name}`:'';
-    if(two)two.textContent=world?`Chosen: ${world.name}`:'';
-    if(!apply||!note)return;
-    const missing=!image?'Choose a map image in step 1.'
-      :!world?'Choose its world file in step 2.':'';
-    apply.disabled=!!missing;
-    note.textContent=missing||'Ready. Nothing is placed until you choose this.';
-  };
   // WHICH PROPERTY NAMES A LAYER'S MARKS. Stored per source node, beside the pin class.
   document.querySelectorAll<HTMLSelectElement>('[data-mark-label]').forEach(select=>{
     select.onchange=()=>change(w=>{
@@ -3135,57 +3074,6 @@ function renderInspector(){
       if(Object.keys(held).length)target.params.pinClassField=held;
       else delete target.params.pinClassField;
     });
-  });
-  optionalElement('#map-image-label')?.addEventListener('change',event=>change(w=>{
-    getNode(w,n.id,'map_image_input').params.label=(event.target as HTMLInputElement).value;}));
-  optionalElement('#map-image-file')?.addEventListener('change',event=>{
-    pendingPlateFiles.set(n.id,{...plateFiles(),
-      image:(event.target as HTMLInputElement).files?.[0]});platePending();});
-  optionalElement('#map-image-world')?.addEventListener('change',event=>{
-    pendingPlateFiles.set(n.id,{...plateFiles(),
-      world:(event.target as HTMLInputElement).files?.[0]});platePending();});
-  optionalElement('#map-image-opacity')?.addEventListener('input',event=>{
-    const shown=optionalElement('#map-image-opacity-value');
-    if(shown)shown.textContent=`${Math.round(Number((event.target as HTMLInputElement).value)*100)}%`;});
-  optionalElement('#map-image-opacity')?.addEventListener('change',event=>change(w=>{
-    getNode(w,n.id,'map_image_input').params.opacity=
-      Number((event.target as HTMLInputElement).value);}));
-  platePending();
-  optionalElement('#map-image-apply')?.addEventListener('click',async event=>{
-    const button=event.currentTarget as HTMLButtonElement;
-    const {image,world}=plateFiles();
-    if(!image||!world)return;
-    button.disabled=true;const was=button.textContent;button.textContent='Placing\u2026';
-    try{
-      const bytes=new Uint8Array(await image.arrayBuffer());
-      // THE IMAGE'S OWN PIXEL SIZE, read from the image rather than asked for: a world file says
-      // what ONE pixel covers, so the extent needs the count of them and nobody should type it.
-      const bitmap=await createImageBitmap(image);
-      const {width,height}=bitmap;bitmap.close();
-      const data=await new Promise<string>((resolve,reject)=>{
-        const reader=new FileReader();
-        reader.onload=()=>resolve(String(reader.result));
-        reader.onerror=()=>reject(new Error('That image could not be read.'));
-        reader.readAsDataURL(image);
-      });
-      const bounds=boundsFromWorldFile(readWorldFile(await world.text()),width,height);
-      const sha256=await contentHash(bytes);
-      const digest=await payloadDigest(data);
-      if(!await keepDataset(digest,data))
-        throw new Error('This image could not be kept on this device, so it was not placed. A '
-          +'smaller export of the same plate will fit.');
-      if(change(w=>{
-        const target=getNode(w,n.id,'map_image_input');
-        target.params.data=data;target.params.dataRef=digest;
-        target.params.image={width,height,bytes:bytes.length,sha256,filename:image.name};
-        target.params.bounds=bounds;
-      },{requirePersistence:true})){
-        pendingPlateFiles.delete(n.id);
-        toast(`Placed ${width.toLocaleString('en')} \u00d7 ${height.toLocaleString('en')} pixels `
-          +'as ground. Run the workflow to draw it.');
-      }else await dropPayload(digest);
-    }catch(error){toast(errorMessage(error),{tone:'failure'});}
-    finally{button.textContent=was;platePending();}
   });
   document.querySelectorAll<HTMLSelectElement>('[data-map-port]').forEach(el=>el.onchange=()=>change(w=>setConnection(w,el.value,n.id,el.dataset.mapPort!)));
   // Applying the suggested zone, so the advice is actionable rather than only stated. It sets
@@ -3321,15 +3209,7 @@ function renderInspector(){
   if(n.type==='point_input'&&workflow.edges.some(e=>e.to===n.id&&e.port==='records'))optionalElement('#configure-step')?.addEventListener('click',()=>openPointsFromTableConfig(n.id));
   else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),generationAreas(n.id),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;},
     {read:sha=>readNoteImagePayload(cachedPayload(noteImageKey(sha))),keep:(sha,payload)=>keepDataset(noteImageKey(sha),payload)}));
-  document.querySelectorAll<HTMLSelectElement>('[data-coverage-port]').forEach(el=>el.onchange=()=>{const from=el.value,port=el.dataset.coveragePort!;change(w=>{w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===port));if(from)w.edges.push({id:`e-${Date.now()}`,from,to:n.id,port});});});
   document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
-  // A committed geometry is stamped, so the receipt can say WHEN the area was revised. Only a
-  // changed shape counts: renaming the area or switching its selection mode is not a revision of
-  // the ground it covers, and stamping those would make the history say the extent moved when it
-  // did not. Experiment 01 calls this step "Correct, save, and revisit"; until 2026-10-17 it left
-  // no trace at all, because the study area's IRI is node-scoped while every other area in this
-  // application mints per run.
-  $('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLButtonElement>('[data-param]').forEach(el=>el.addEventListener('change',()=>change(w=>updateParam(w,n.id,required(el.dataset.param),el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value))));
   // Reading, not editing: these redraw the Inspector and touch nothing that is saved, so they
   // go through renderInspector rather than change().
   $('#inspector-content').querySelectorAll<HTMLButtonElement>('[data-records-view]').forEach(el=>
@@ -3383,7 +3263,6 @@ function renderInspector(){
   optionalElement('#assessment-date')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'alert').params.date=control(e).value));
   optionalElement('#source-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title));
   optionalElement('#replace-data')?.addEventListener('click',()=>{importNode=n.id;$('#geojson-file').click();});
-  optionalElement('#output-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()));
   // Every label form, one handler. Saving on change stays -- nothing typed is lost by not
   // pressing the button -- and an empty label is refused rather than written onto the canvas.
   document.querySelectorAll<HTMLFormElement>('[data-label-form]').forEach(form=>{
@@ -3428,8 +3307,6 @@ function renderInspector(){
   if(n.type==='append_rows')appendInspector.wire(n,stepKit(),document);
   if(n.type==='detect_unusual_counts')detectInspector.wire(n,stepKit(),document);
   if(n.type==='line_input')lineInspector.wire(n,lineKit(),document);
-  optionalElement('#output-view')?.addEventListener('change',e=>change(w=>{const index=w.nodes.findIndex(x=>x.id===n.id);w.nodes[index]={...w.nodes[index],type:'output',params:{label:n.params.label,view:control(e).value as 'map'|'table'|'bars'}};}));
-  optionalElement('#output-input-mode')?.addEventListener('change',e=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'>;(node.params as unknown as Record<string,string>).inputMode=control(e).value;w.edges=w.edges.filter(edge=>edge.to!==n.id);}));
   $('#delete-node').onclick=()=>removeNodes([n.id]);
   $('#duplicate-node').onclick=()=>change(w=>{const copy=structuredClone(n);copy.id=`${n.type}-${Date.now()}`;copy.x+=40;copy.y+=90;w.nodes.push(copy);selected=copy.id;});
   if(busy)$('#inspector-content').querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement|HTMLButtonElement>('input,select,textarea,button').forEach(el=>el.disabled=true);
@@ -3597,7 +3474,7 @@ function renderResults(){
         [c.noValue,`name nothing in ${c.column}`],[c.notFound+c.self+c.ambiguous+c.unlocated,'links that could not be drawn']]
         .filter(([v],i)=>i<2||Number(v)>0).map(([v,words])=>`<span class="metric"><b>${Number(v).toLocaleString('en-US')}</b> ${esc(String(words))}</span>`).join(''));
   }
-  const spatial=['spatial-map','spatial-coverage'].includes(output?.kind||''),missing=spatial?rows.filter(r=>!r.coordinates):[],outside=output?.kind==='spatial-map'?rows.filter(r=>r.relation==='Outside').length:0;
+  const spatial=['spatial-map','spatial-coverage'].includes(output?.kind||''),missing=spatial?rows.filter(r=>!r.coordinates):[];
   // The amber sentence went on 2026-10-21. It named a colour the map stopped using when hue was
   // given to the source layer, and it repeated counts that now sit above the map in
   // `#result-metrics` -- *"both probably stale ... and also above the map ... and incorrect (there
@@ -4101,7 +3978,7 @@ function insetBoxFrom(map:import('leaflet').Map,shown:Output):[number,number,num
     return 'This view shows nearly the whole map. Zoom in to the part to enlarge.';
   return clipped;
 }
-function insetPicker(host:HTMLElement,mapNode:WorkflowNode<'map_output'>|undefined,shown:Output,map:import('leaflet').Map){
+function insetPicker(mapNode:WorkflowNode<'map_output'>|undefined,shown:Output,map:import('leaflet').Map){
   // Where the static figure can draw one: the plain map of a study area and its points, not polygons, a raster or panels.
   if(!mapNode||!shown.boundary||mapNode.params.arrangement||shown.polygons||shown.raster||shown.network)return;
   const bar=document.createElement('div');bar.className='map-inset-bar leaflet-bar';
@@ -4132,8 +4009,8 @@ function leftOutApplied<T extends Output|undefined>(out:T):T{
 }
 function renderMap(){
   if(!resultsOnScreen())return;
-  disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#catchment-plot-download')?.remove();document.querySelector('#map-parts')?.remove();
-  const result=leftOutApplied(activeOutput()),svg=$('#map'), rows=result?.rows||[], centers=result?.centers||[], points=[...rows.filter(r=>r.coordinates).map(r=>r.coordinates!),...centers.filter(c=>c.geometry).map(c=>c.geometry!.coordinates)];
+  disposeCatchmentMap?.();disposeCatchmentMap=undefined;document.querySelector('#catchment-map-host')?.remove();document.querySelector('#polygon-method')?.remove();document.querySelector('#map-parts')?.remove();
+  const result=leftOutApplied(activeOutput()),svg=$('#map');
   // PRESENTATION IS LIVE, NOT BAKED INTO THE RUN. The node is read from the current workflow and
   // not from the snapshot as run, because a title, a key, a basemap and a mark's size change
   // nothing the run computed -- so they must show the moment they are chosen, and demanding a
@@ -4275,7 +4152,7 @@ function renderMap(){
       // is one -- remounted the map and refitted it, throwing away the pan and zoom the
       // practitioner had chosen in order to judge the change they were making.
       mapNode?.id,mapNode?.params.tileExtract,mapNode?.params.partLabel,mapNode?.params.frameCaption,
-      {onMap:m=>{insetPicker(host,mapNode,result,m);},
+      {onMap:m=>{insetPicker(mapNode,result,m);},
         ...(parts?{onPart:(id:string)=>parts.choose(id,'map'),partChooser:(mark:(id:string|null)=>void)=>{parts.mark=mark;}}:{})});
     if(result.polygons){
       // ONE OF THESE, NOT ONE PER RENDER. This was inserted into the panel on every render and
@@ -4469,7 +4346,7 @@ async function run(){if(busy)return;
   // a state line that says what is true -- not "Run failed", which claims something went wrong.
   try{executionPlan(workflow);}catch(e){
     if(e instanceof IncompleteWorkflow){runIncomplete=true;showIncomplete(e);render();return;}
-    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;runStartedAt=performance.now();statuses={};justFinished.clear();lastRunMs=null;/* THE LAST RUN'S RASTER IS LET GO AS THIS ONE STARTS (2026-11-17): held while the next run loaded its own, two windows were in memory at once, measured on Nigeria at 100 m. */if(result?.outputs.some(o=>o.raster)){result=null;renderResults();}{const key=storageKey(workflow);if(key&&runsByWorkflow.get(key)?.run.outputs.some(o=>o.raster))runsByWorkflow.delete(key);}render();try{await fillPlacedImages();}catch(e){busy=false;toast(errorMessage(e),{tone:'failure'});runFailed=true;render();return;}const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);},(ref,provider,origin)=>{if(!credentials)throw new Error('Credentials are not available.');return credentials.resolve(ref,provider,origin);});lastRunMs=performance.now()-started;
+    toast(errorMessage(e),{tone:'failure'});runFailed=true;render();console.error(e);return;}busy=true;runStartedAt=performance.now();statuses={};justFinished.clear();lastRunMs=null;/* THE LAST RUN'S RASTER IS LET GO AS THIS ONE STARTS (2026-11-17): held while the next run loaded its own, two windows were in memory at once, measured on Nigeria at 100 m. */if(result?.outputs.some(o=>o.raster)){result=null;renderResults();}{const key=storageKey(workflow);if(key&&runsByWorkflow.get(key)?.run.outputs.some(o=>o.raster))runsByWorkflow.delete(key);}render();try{await fillPlacedImages();}catch(e){busy=false;toast(errorMessage(e),{tone:'failure'});runFailed=true;render();return;}const snapshot=structuredClone(workflow);const started=performance.now();try{const next=await executeWorkflow(snapshot,reason,(id,state)=>{statuses[id]=state;if(state==='done'){justFinished.add(id);setTimeout(()=>{justFinished.delete(id);if(!busy||statuses[id]==='done')flow?.update(playbackView(),selected,statuses);},FINISH_GLOW_MS);}flow?.update(playbackView(),selected,statuses);});lastRunMs=performance.now()-started;
     // THE CANVAS CAN MOVE WHILE A RUN IS IN FLIGHT, and this run is then nobody's results.
     //
     // `renderResults` discards a result whose workflow is no longer the open one -- the rule
@@ -4493,9 +4370,6 @@ async function run(){if(busy)return;
     // `snapshot` and not necessarily the one now open -- the same distinction `stillOurs` makes
     // just above, for the same reason.
     rememberRunNotes(snapshot,next);
-    // A use instance is a widget connected and RUN, so it is counted here and nowhere else:
-    // placing one on a canvas is not using it. Local to this browser, never sent.
-    recordRun(next.trace);
     renderResults();const issues=dataIssueNotice(next);
   // "we must surface the issue on the widget as a toast message that I can then read and close"
   // -- the practitioner, 2026-10-16. A run that quietly bands a third of its records Unrecorded
@@ -4833,6 +4707,14 @@ function prepareRasterStep(n:WorkflowNode<'raster_input'>){
     const rastersNow=()=>worldPopRastersForCountry(country||null,release());
     const thisYear=String(new Date().getFullYear());
     let popYear=node.params.populationYear;
+    // WHAT THE STEP ALREADY HOLDS, where it holds a window: the picker starts at that source and year, not at WorldPop's
+    // newest, which titled a GRID3 2025 step "Population (WorldPop)" and offered 2026 (the population example, 2026-11-23).
+    const held=node.params.asset?.provenance,heldURL=held?.downloadURL??'';
+    if(/GRID3_SSA/i.test(heldURL))popSource='grid3';
+    else if(/\/Global_2015_2030\//.test(heldURL)){popSource='worldpop';popYear??=/\/(\d{4})\/[A-Z]{3}\//.exec(heldURL)?.[1];}
+    else if(/\/Global_2000_2020\//.test(heldURL)){popSource='worldpop1';popYear??=/\/(\d{4})\/[A-Z]{3}\//.exec(heldURL)?.[1];}
+    else if(/^GHS-POP/.test(held?.title??'')){popSource='ghs';const epoch=held?.temporalCoverage??/(?:^|,\s*)(\d{4})(?:,|$)/.exec(held?.title??'')?.[1];
+      if(epoch&&GHS_EPOCHS.includes(epoch as never))ghsEpoch=epoch;}
     const yearNow=()=>{const r=rastersNow();return r.find(x=>x.year===popYear)?.year??r.find(x=>x.year===thisYear)?.year??r[0]?.year??'';};
     const grid3Link=()=>{const r=grid3RasterFor(country||null);
       if(!r)return `<p class="muted">GRID3 publishes no estimate for ${esc(countryName(country))}: its ${GRID3_COUNTRIES} countries are in sub-Saharan Africa.</p>`;
@@ -5478,18 +5360,6 @@ function editInPlace(element:HTMLElement,current:string,apply:(value:string)=>vo
     if(event.key==='Escape'){event.preventDefault();finish(false);}
   });
   input.addEventListener('blur',()=>finish(true));
-}
-/** Rename the investigation this canvas belongs to, from the eyebrow that names it. */
-function renameProjectInPlace(){
-  const key=storageKey(workflow);
-  const project=workflow.projectId?readProjects().find(p=>p.id===workflow.projectId):projectOfWorkflow(key,readProjects());
-  const builtIn=projectOfWorkflow(key,BUILT_IN_PROJECTS)||(workflow.projectId?BUILT_IN_PROJECTS.find(p=>p.id===workflow.projectId):undefined);
-  editInPlace($('#project-name'),project?project.name:'',value=>{
-    if(!writeProjects(readProjects().map(p=>p.id===project!.id?{...p,name:value}:p)))return;
-    forgetSavedWorkflows();render();toast(`Project renamed to "${value}".`);
-  },project?undefined:builtIn
-    ?'This project ships with the application, so its name is fixed. Create a project of your own to name it.'
-    :'This canvas belongs to no investigation yet. Create a project, or choose one under Project details.');
 }
 /** Rename the question this canvas answers, from the heading that states it. */
 function renameWorkflowInPlace(){
@@ -6238,7 +6108,6 @@ function deleteCurrentProject(){
 function deleteProject(id:string){
   const project=readProjects().find(p=>p.id===id);
   if(!project)return;
-  const saved=readSavedWorkflows();
   const raw=(()=>{try{return JSON.parse(localStorage.getItem(WORKSPACES)||'{}') as Record<string,unknown>;}
     catch{return {} as Record<string,unknown>;}})();
   const keys=project.workflows.filter(k=>!isExampleKey(k));
@@ -6846,7 +6715,7 @@ const saveManualProgress=(digest:string,done:Set<string>)=>{
   try{const all=JSON.parse(localStorage.getItem(MANUAL_PROGRESS)||'{}') as Record<string,string[]>;
     all[digest]=[...done];localStorage.setItem(MANUAL_PROGRESS,JSON.stringify(all));}catch{/* progress is a convenience */}
 };
-const manualTitle=(manual:WorkedExampleManual)=>(type:string)=>TYPES[type as NodeType]?.title??type;
+const manualTitle=(type:string)=>TYPES[type as NodeType]?.title??type;
 /** A step clicked, or pressed with Enter or Space, is done; again, it is not. */
 function wireManualSteps(host:HTMLElement,digest:string){
   // COPY puts the exact value on the clipboard. It is a control inside a step, so it does not mark the step done.
@@ -6909,7 +6778,7 @@ function renderManualView():void{
       +'Click a step when it is done. Detach the manual to keep it beside you in a project of your own.</span>'
       +`<div class="inspector-actions"><button class="button small" id="manual-detach">${detachedManual()?.digest===digest?'Detached':'Detach'}</button>`
       +(manual?.workflows.some(w=>w.name===workflow.name)?`<button class="button small" id="manual-playback-start">Play back these steps</button>`:'')+`</div></div>`
-      +renderManual(manual,workflow.name,manualTitle(manual),esc,manualProgress(digest))
+      +renderManual(manual,workflow.name,manualTitle,esc,manualProgress(digest))
     :'<p class="muted">This workflow has no manual.</p>';
   if(manual&&digest){
     wireManualSteps(host,digest);
@@ -6979,7 +6848,7 @@ function renderManualFloat(resume=false):void{
   panel.innerHTML=`<header class="manual-float-head"><strong>Manual \u00b7 ${esc(state.title)}</strong>`
     +`<span class="muted">${done.size} of ${steps} done</span>`
     +`<button class="button small" id="manual-float-close">Close</button></header>`
-    +`<div class="manual-float-body">${renderManual(manual,undefined,manualTitle(manual),esc,done)}</div>`;
+    +`<div class="manual-float-body">${renderManual(manual,undefined,manualTitle,esc,done)}</div>`;
   if(state.left!==undefined&&state.top!==undefined){
     panel.style.left=`${Math.max(0,Math.min(state.left,innerWidth-120))}px`;
     panel.style.top=`${Math.max(0,Math.min(state.top,innerHeight-60))}px`;
@@ -8010,7 +7879,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
   let collaborators:{login:string;role:string}[]|null=null,peopleNote='Press Check GitHub to see who has access.';
   const renderPeople=async()=>{
     const current=readProjects().find(p=>p.id===project.id);if(!current)return;
-    const members=current.members??[];const me=openIdentity();const myLogin=deviceLogin();
+    const members=current.members??[];const myLogin=deviceLogin();
     const logins=[...new Set([...(collaborators??[]).map(c=>c.login),...members.map(m=>m.login)])];
     const rows:string[]=[];
     for(const login of logins){

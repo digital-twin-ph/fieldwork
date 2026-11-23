@@ -69,7 +69,6 @@ export interface Evaluation {
 }
 
 const DAY=86_400_000;
-const ISO=/^\d{4}-\d{2}-\d{2}$/;
 /** The date one period before, written as the column writes it, year-month-day. */
 function periodBefore(date:string,previous:'day'|'week'|'month'):string{
   const t=Date.parse(`${date}T00:00:00Z`);

@@ -2,7 +2,7 @@
  *  for one ruleset (docs/audits/old-naledi-audit.md): every ruleset declares the columns it reads, the path rules
  *  written in a workflow take. The node types it replaced, `policy`, `access_policy` and `xpert`, are refused by name. */
 import type {ParamsByType} from './types.js';
-import type {DisplayValue,NearestRow,Receipt,Status} from './results.js';
+import type {NearestRow,Status} from './results.js';
 import type {ReasonerQuad} from './worker-types.js';
 import type {PointFeature} from './types.js';
 import {resolveRuleset} from './rulesets.js';
@@ -36,4 +36,3 @@ export function pinnedRuleset(rulesetId:string,version:string):ParamsByType['app
     output:ports.output as NonNullable<ParamsByType['apply_ruleset']['ruleset']>['output']};
 }
 
-export type RuleApplicationResult={value:DisplayValue; receipt:Receipt};

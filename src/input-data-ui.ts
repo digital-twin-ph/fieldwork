@@ -1,4 +1,4 @@
-import type {WorkflowNode,Boundary,ObservationParams,PointCollection,PointFeature,AttributeDefinition,FormField,SourceInfo,AttributeType,PinPhoto} from './types.js';
+import type {WorkflowNode,Boundary,ObservationParams,PointCollection,PointFeature,FormField,SourceInfo,AttributeType,PinPhoto} from './types.js';
 import type {CSVTable} from './input-data.js';
 import type {Database} from 'sql.js';
 import {element,optionalElement} from './dom.js';
@@ -54,7 +54,7 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
   const $=<S extends string>(s:S)=>element(s,dialog);
   const applyButton=()=>dialog.querySelector<HTMLButtonElement>('#config-apply')!;
   let data=structuredClone(node.params.data),fields:FormField[]=structuredClone(node.params.fields||[{key:'category',label:'Category',type:'text'},{key:'notes',label:'Notes',type:'text'}]),source:SourceInfo=structuredClone(node.params.sourceInfo||{format:'manual'}),csv:CSVTable|null=null,db:Database|null=null,map:L.Map|null=null,markers:L.LayerGroup|null=null,tiles:L.TileLayer|null=null,selected:string|null=null,serial=0,requestId=0,closed=false;
-  let attributeRules=structuredClone(node.params.attributeRules||[]),dirty=false,tablePage=0;
+  let attributeRules=structuredClone(node.params.attributeRules||[]),tablePage=0;
   let photos:Record<string,PinPhoto[]>=structuredClone(node.params.pinPhotos??{});const pendingPhotos=new Map<string,NoteImagePayload>();
   const photoData=(sha:string)=>pendingPhotos.get(sha)??photoStore.read(sha);
   /** UNDO WITHIN THE DRAFT (experiment 09, 2026-11-22): the last 30 changes, each the whole draft as it was; off above
@@ -62,7 +62,7 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
   const undoStack:string[]=[];const areaLayers=new Map<string,L.GeoJSON>(),shownAreas=new Set(areas.map(a=>a.id));const UNDO_DEPTH=30,UNDO_LIMIT=20_000;
   $('#pin-use-uuid').checked=node.params.pinIdStrategy==='uuid';
   /** THE DRAFT KEPT CURRENT, since the dialog compares only the draft with what the step holds. */
-  const markDirty=()=>{dirty=true;draft.touched=true;draft.params={...draft.params,data,fields,attributeRules,sourceInfo:source,pinPhotos:photos};};
+  const markDirty=()=>{draft.touched=true;draft.params={...draft.params,data,fields,attributeRules,sourceInfo:source,pinPhotos:photos};};
   dialog.oninput=e=>{if(e.target instanceof Element&&e.target.matches('input,select,textarea')&&!['input-mode','pin-record','pins-basemap','pin-place','synthetic-boundary'].includes(e.target.id))markDirty();};
   for(const id of ['key','label','default','values'])($('#pin-field-'+id) as HTMLInputElement).value='';$('#pin-field-type').value='text';($('#pin-field-required') as HTMLInputElement).checked=false;$('#pin-locate-status').textContent='';
   const checkDraft=(next:unknown,nextFields=fields,nextRules=attributeRules)=>{const normalized=validateData(next);validateAttributeSchema(normalized,nextFields,nextRules);return normalized;};
@@ -392,7 +392,7 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
     const ids=new Set(data.features.map(f=>String(f.id)));photos=Object.fromEntries(Object.entries(photos).filter(([pin,list])=>ids.has(pin)&&list.length));
     for(const list of Object.values(photos))for(const p of list){const payload=pendingPhotos.get(p.sha256);if(payload&&!await photoStore.keep(p.sha256,payload))throw new Error('A photo could not be kept on this device. Your draft is still open; try Apply again.');}
     const saved=onApply({...structuredClone(node.params),data:structuredClone(data),fields:structuredClone(fields),attributeRules:structuredClone(attributeRules),sourceInfo:structuredClone(source),pinIdStrategy:$('#pin-use-uuid').checked?'uuid':'sequential',pinPhotos:Object.keys(photos).length?structuredClone(photos):undefined});
-    if(saved===false)throw new Error('Edits could not be saved on this device. Your draft is still open; try Apply again.');dirty=false;return true;}
+    if(saved===false)throw new Error('Edits could not be saved on this device. Your draft is still open; try Apply again.');return true;}
     catch(e){error(e);return false;}};
   release=()=>{closed=true;requestId++;db?.close();map?.stop();map?.remove();};
   error('');preview();mode();

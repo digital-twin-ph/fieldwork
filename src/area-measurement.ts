@@ -1,7 +1,7 @@
 import type {NodeSpec, WorkflowNode, AreaUnit} from './types.js';
 import type {AreaValue,Receipt} from './results.js';
 import {calculateArea,formatArea,AREA_UNITS,validateAreaUnit} from './area-computation.js';
-import {CRS84,geometryWKT,geometryByReference} from './study-area.js';
+import {geometryByReference} from './study-area.js';
 export {formatArea,AREA_UNITS,validateAreaUnit};
 export const newAreaMeasurement=():NodeSpec<'measure_area'>=>({type:'measure_area',params:{unit:'km2'}});
 export function measureArea(node:WorkflowNode<'measure_area'>,source:AreaValue,runId:string):{value:AreaValue;receipt:Receipt}{

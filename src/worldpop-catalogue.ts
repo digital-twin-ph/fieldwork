@@ -1,5 +1,5 @@
 import catalogue from '../widgets/worldpop-catalogue.json';
-import type {Boundary,BoundaryProvenance} from './types.js';
+import type {BoundaryProvenance} from './types.js';
 import {iso3Of,countryName} from './boundary-source.js';
 
 /** WHICH POPULATION RASTER COVERS THIS STUDY AREA.
@@ -103,5 +103,3 @@ export function worldPopRecordFor(filename:string):import('./raster-provenance.j
             temporalCoverage:r.year,units:'people per pixel'};
   return undefined;
 }
-/** Unused for now, kept so the module never tempts anyone to guess a country from a polygon. */
-export const neverGuessCountryFrom=(_boundary:Boundary):null=>null;

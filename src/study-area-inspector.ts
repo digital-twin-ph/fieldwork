@@ -2,7 +2,6 @@
  *  and when DR Congo's provinces were made quick to choose). The name; no inputs; one sentence, the country and the map,
  *  which is this step's dialog; and what it holds -- the shape, what the boundary repair removed, and every extent it has
  *  had. The map stays in app.ts, which reads the project's other study areas from storage; the kit opens it. */
-import type {WorkflowNode} from './types.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {countryName,countryOfArea} from './boundary-source.js';
 import {countriesOfArea} from './area-countries.js';

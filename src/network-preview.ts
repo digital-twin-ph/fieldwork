@@ -1,7 +1,7 @@
 import type {Network} from './catchments.js';
 import type {Boundary,Position} from './types.js';
 import {geometryBounds} from './study-area.js';
-import {FIGURE_ROLE,FIGURE_TYPE} from './presentation.js';
+import {FIGURE_ROLE} from './presentation.js';
 
 /** A picture of a downloaded street network, for the Inspector.
  *
@@ -20,9 +20,6 @@ import {FIGURE_ROLE,FIGURE_TYPE} from './presentation.js';
 
 export const PREVIEW_WIDTH=252;
 export const PREVIEW_HEIGHT=168;
-
-const escape=(value:string):string=>value.replace(/[&<>"']/g,c=>
-  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
 
 /** Metres between two CRS84 positions, by the same haversine the rest of the project uses. */
 function metres(a:Position,b:Position):number{

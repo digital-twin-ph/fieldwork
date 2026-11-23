@@ -193,6 +193,14 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **Years carried and compared:** experiment 230, written 2026-11-23 and proposed, nothing built. Each source's year is
   recorded but only Rate compares two, as exact text. Three questions wait on the practitioner: year or month; whether a
   boundary's year counts beside the data's; and whether Append rows and Rate come first or every step at once.
+- **The long table on the surface** (docs/audits/melted-counts-audit.md, 2026-11-23). Two findings from the
+  practitioner: a melted row count reported where a record count is read — 92,045 for 18,409 bat records, reaching the
+  write-up's prose and the receipt's `fw:artifactRowCount` — and the shift of perspective every table dialog forces,
+  *"high frequency confusion"*, because eight dialogs offer the long table's columns where the practitioner chose in
+  the file's own shape. **Partly closed in 0.174.0:** a count says what it counts, on the Inspector, the metrics, the
+  write-up's prose and the receipt, and a coordinate column reaches the steps after the import. **Open:** the table
+  meta and rows-shown lines, the viewer's fallback note, Relate's two previews, `fw:artifactRowCount`, the eight
+  dialogs that offer the long table's columns, and whether a line list should melt at all.
 - **The bat roosts and the Kibali mine** (the practitioner, 2026-11-23): a small table of species joined to the African
   Bat Database through Relate, inner join, to filter it. After the population rasters. The database is CC BY 4.0,
   18,409 records of 312 species; its `Roost` column is "Yes" on 90 records, so it says where bats were recorded, not

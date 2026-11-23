@@ -7,6 +7,22 @@ import {reprojectToCRS84} from './reproject.js';
 import {MAX_POINT_RECORDS} from './point-layers.js';
 // A point file's size on import is the table file's: a file of points a table can read, Point data can read.
 import {MAX_TABLE_FILE_BYTES as MAX_POINT_FILE_BYTES} from './data-table.js';
+/** THE NAMES A COLUMN OF COORDINATES GOES BY, in one place (2026-11-23). Point data's CSV import knew them and proposed
+ *  by them; Tabular data did not, so latitude and longitude were proposed as measurements and melted into measure and
+ *  value, which left a table with no coordinates for Point data to read; and Point data's own from-a-table dialog
+ *  proposed nothing at all. The practitioner, 2026-11-23: *"Latitude and Longitude does not show up on the point table
+ *  so it cannot be picked."* */
+export const COLUMN_ALIASES={longitude:['longitude','lon','lng','x','easting','east'],
+  latitude:['latitude','lat','y','northing','north'],id:['id','fid'],name:['name','label']} as const;
+export type ColumnRole=keyof typeof COLUMN_ALIASES;
+/** The first column of `columns` whose name is one of that role's, compared without case or surrounding spaces. */
+export const columnFor=(role:ColumnRole,columns:readonly string[]):string|undefined=>
+  columns.find(c=>(COLUMN_ALIASES[role] as readonly string[]).includes(c.trim().toLowerCase()));
+/** A COORDINATE LOCATES THE SUBJECT, IT DOES NOT MEASURE IT: true for a column named as a longitude or a latitude. */
+export const isCoordinateColumn=(name:string):boolean=>{
+  const h=name.trim().toLowerCase();
+  return (COLUMN_ALIASES.longitude as readonly string[]).includes(h)||(COLUMN_ALIASES.latitude as readonly string[]).includes(h);
+};
 export interface CSVTable {headers:string[]; rows:string[][];
   /** Columns the file gave no name, or a name another column has, and the name each is read under. */
   named?:{column:number;given:string;as:string}[];

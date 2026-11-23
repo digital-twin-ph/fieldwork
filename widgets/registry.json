@@ -1743,7 +1743,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.14.1",
+      "currentVersion": "0.15.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1824,6 +1824,11 @@
           "version": "0.14.1",
           "path": "widgets/releases/point_input/0.14.1.json",
           "sha256": "5640ba30f1e8971a08a972eb839171f99565724220e2f6263e1d05dc8141885c"
+        },
+        {
+          "version": "0.15.0",
+          "path": "widgets/releases/point_input/0.15.0.json",
+          "sha256": "904edeac5580e2a62293eb01c2ae06de658c8a34ce7ed39f7733f17c8a96f1d2"
         }
       ],
       "previousNodeTypes": [
@@ -2746,7 +2751,7 @@
     {
       "id": "urn:fieldwork:widget:table_input",
       "nodeType": "table_input",
-      "currentVersion": "0.18.0",
+      "currentVersion": "0.19.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2872,6 +2877,11 @@
           "version": "0.18.0",
           "path": "widgets/releases/table_input/0.18.0.json",
           "sha256": "7805ba73aaf9148525327b30a07d8dde78b92bf9d9103e9dc5d595423cf1c237"
+        },
+        {
+          "version": "0.19.0",
+          "path": "widgets/releases/table_input/0.19.0.json",
+          "sha256": "f6dd184ffca9d48344fc211348b032b6efcf6e74cd2e8708c856cd94ac611c79"
         }
       ]
     },

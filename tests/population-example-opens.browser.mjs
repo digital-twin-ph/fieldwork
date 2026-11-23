@@ -153,13 +153,14 @@ test('the example opens from its pin, its census read from Census tables, its ti
   await page.locator('[data-view="project"]').click();
   await page.locator(`[data-open-example="${ID}"]`).click();
   await expect(page.locator(`[data-example-status="${ID}"]`)).toContainText('digest matched',{timeout:60000});
-  for(const [country,rows,iso] of [['Botswana',28,'BWA'],['Rwanda',30,'RWA']]){
+  // SAID AS ITS READER COUNTS IT since 2026-11-23: the districts the census holds, not the rows its melt makes of them.
+  for(const [country,districts,iso] of [['Botswana',28,'BWA'],['Rwanda',30,'RWA']]){
     const value=await page.locator('#workflow-select option').filter({hasText:country}).getAttribute('value');
     await page.locator('#workflow-select').selectOption(value);
     await page.locator('[data-view="workflow"]').click();
     await page.locator('.react-flow__node[data-id="census"]').click();
     await expect(page.locator('[data-table-remote]')).toContainText('raw.githubusercontent.com');
-    await expect(page.locator('#inspector-content')).toContainText(`${rows} rows`);
+    await expect(page.locator('#inspector-content')).toContainText(`${districts} records`);
     const params=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes);
     const census=params.find(n=>n.id==='census').params;
     expect(census.remote.url).toContain(`/census-tables/`);expect(census.remote.url).toContain(`${iso}/districts.csv`);

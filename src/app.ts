@@ -54,7 +54,8 @@ import type {RegisterEntry} from './facility-matching.js';
 import facilityRegistersJson from '../widgets/facility-registers.json';
 const FACILITY_REGISTERS=facilityRegistersJson.registers as RegisterEntry[];
 import {shiftColumnName} from './relate-table.js';
-import {wideDataTable,declaredWide} from './data-table.js';
+import {wideDataTable,declaredWide,recordsSaid} from './data-table.js';
+import {columnFor} from './input-data.js';
 import {authoredSubjects} from './authored-application.js';
 import {searchCatalogInspector} from './satellite-catalog-ui.js';
 import {mapInspector,type MapKit} from './map-ui.js';
@@ -2113,9 +2114,13 @@ function openPointsFromTableConfig(nodeId:string){
   const declared=Object.keys(upstreamKeyValues(node)??{});
   const columns=[...new Set([...(ran?.keys??[]),...(ran?.valueField?[ran.valueField]:[]),...declared])];
   type Draft={x:string;y:string;id?:string;name?:string};
+  // PROPOSED BY NAME, AS THE CSV IMPORT PROPOSES (2026-11-23): shown in the selects, where it can be seen and changed.
+  // The mapping a run reads is still the one stored here, so `tablePoints` names its columns and never guesses.
+  const proposed:Draft={x:columnFor('longitude',columns)??'',y:columnFor('latitude',columns)??'',
+    ...(columnFor('id',columns)?{id:columnFor('id',columns)}:{}),...(columnFor('name',columns)?{name:columnFor('name',columns)}:{})};
   openConfigDialog<Draft>({
     id:'points-config',widget:'Point data',step:node.params.label||TYPES.point_input.title,
-    draft:{x:'',y:'',...(node.params.fromTable??{})},
+    draft:{...proposed,...(node.params.fromTable??{})},
     sections:draft=>{
       const pick=(id:string,key:keyof Draft,label:string,optional:boolean)=>
         `<div class="field"><label class="field-label" for="${id}">${label}</label>`
@@ -3407,7 +3412,7 @@ function renderResults(){
   $('#result-statement').innerHTML=(stated?`<p class="result-statement">${esc(stated)}</p>`:'')
     +(instrument?.kind==='two-by-two'?twoByTwoMarkup(instrument,esc,carried.design,carried.unit):'');
   $('#result-statement').hidden=!stated&&!instrument;
-  if(output?.kind==='data-table'){const t=output as unknown as import('./data-table.js').DataTable;$('#result-metrics').innerHTML=`<span class="metric"><b>${t.rowCount}</b> rows</span><span class="metric unknown"><b>${t.missingValueCount}</b> values absent</span><span class="metric">${t.keys.length} key columns · value in ${esc(t.unit||'an unstated unit')}</span>`;}
+  if(output?.kind==='data-table'){const t=output as unknown as import('./data-table.js').DataTable;$('#result-metrics').innerHTML=`<span class="metric">${esc(recordsSaid(t))}</span><span class="metric unknown"><b>${t.missingValueCount}</b> values absent</span><span class="metric">${t.keys.length} key columns · value in ${esc(t.unit||'an unstated unit')}</span>`;}
   if(output?.kind==='point-table')$('#result-metrics').innerHTML=`<span class="metric"><b>${rows.length}</b> records</span><span class="metric"><b>${rows.filter(r=>!r.coordinates).length}</b> missing coordinates</span><span class="metric">CRS84 · longitude, latitude</span>`;
   const table=output?.pointTable?{head:'',body:''}:output?.kind==='spatial-map'?{head:'<th>Record</th><th>Spatial relation</th>',body:rows.map(r=>`<tr data-place="${esc(r.id)}"><td>${esc(r.name)}</td><td>${esc(relationLabel(r.relation!))}</td></tr>`).join('')}:{head:'',body:''};$('#result-head').innerHTML=table.head;$('#result-rows').innerHTML=table.body;
   $('#result-search').value='';tablePage=0;tableAttributePage=0;tableSort=undefined;

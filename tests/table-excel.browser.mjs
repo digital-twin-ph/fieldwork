@@ -44,8 +44,9 @@ test('a workbook sheet is chosen, read as a table, and named on the step',async(
   await page.locator('#table-save').click();
   await expect(page.locator('#table-dialog')).toBeHidden();
   await expect(page.locator('.inspector .standard-sentence')).toContainText('Reads districts.xlsx, sheet Cases, wide: one row per district, 2 variables');
-  // Harbour's empty deaths cell is kept as unknown, never zero.
-  await expect(page.locator('.inspector [data-standard-section="result"]')).toContainText('6 rows, 1 values absent');
+  // Harbour's empty deaths cell is kept as unknown, never zero. Three districts, said as three records since
+  // 2026-11-23: the six rows are what the melt makes of them, and a reader of a line list counts the districts.
+  await expect(page.locator('.inspector [data-standard-section="result"]')).toContainText('3 records, 1 values absent');
   const source=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.type==='table_input').params.source);
   expect(source.sheet).toBe('Cases');
   expect(errors).toEqual([]);

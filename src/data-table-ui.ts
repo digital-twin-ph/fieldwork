@@ -4,8 +4,8 @@ import {PREVIEW_ROWS,scrollLongTables} from './long-tables.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {describableColumns,isDescribed,dictionaryKeyOf} from './column-metadata.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
-import {dataTable,wideDataTable,keyDomains,findingsSummary,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
-import {parseCSV,readTextFile} from './input-data.js';
+import {dataTable,wideDataTable,keyDomains,findingsSummary,recordsSaid,declaredWide,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
+import {parseCSV,readTextFile,isCoordinateColumn} from './input-data.js';
 import {readStata,type StataTable} from './stata.js';
 import {readXlsx,type Sheet} from './xlsx.js';
 import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource,progressText} from './remote-table.js';
@@ -623,7 +623,12 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       // AN IDENTIFIER IS A SUBJECT, NOT A VARIABLE, though it is written in digits (2026-11-20): PSMSL's station IDs read
       // as a measurement to average. A column named id, or ending in _id, _code or _no, is a key by its name.
       const identifier=(h:string)=>/(^|_)(id|code|no)$/i.test(h);
-      keyNames=headers.filter((h,i)=>!numeric[i]||identifier(h));
+      // A COORDINATE IS WHERE THE SUBJECT IS, NOT SOMETHING MEASURED ABOUT IT (2026-11-23). Proposed as a value, latitude
+      // and longitude were melted into measure and value, so the long table carried no coordinates and Point data had
+      // none to read. Repeating across rows does not make them a poor key: repetition is checked on the whole
+      // combination of key columns, so carrying them makes each row's signature more distinct, not less -- on the
+      // African Bat Database's 18,409 records it took the repeated-key findings from 207 to 69.
+      keyNames=headers.filter((h,i)=>!numeric[i]||identifier(h)||isCoordinateColumn(h));
       // THE DICTIONARY SAYS WHICH ARE COUNTS (2026-11-21): where it gives some numeric columns a unit, those are the
       // values and the rest are keys. Nigeria's census has `printed_page` and `s_no` in digits, read as measures beside
       // men, women and total; its dictionary gives a unit, persons, to those three only.
@@ -1192,7 +1197,7 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
           +`count the same thing. The table states no unit, so nothing here checks that.</p>`:'');
   // A TABLE WITH NO VALUE COLUMN, a layer's attributes, shows none: an empty "unknown" on every row said nothing.
   const valued=!!table.valueField;
-  return `<div class="table-meta muted">${matching.length} of ${table.rowCount} rows${valued&&table.missingValueCount?` · ${table.missingValueCount} values absent and kept as unknown`:''}${valued?` · value in ${unit}`:''}</div>`
+  return `<div class="table-meta muted">${matching.length} of ${recordsSaid(table)}${valued&&table.missingValueCount?` · ${table.missingValueCount} values absent and kept as unknown`:''}${valued?` · value in ${unit}`:''}</div>`
     +`<table><thead><tr>${table.keys.map(k=>roleHead(roles,k,esc)).join('')}${valued?roleHead(roles,table.valueField,esc):''}</tr></thead><tbody>`
     // A CELL EDITED BY HAND IS MARKED, with what it was on hover (experiment 214).
     +shown.map(row=>{const edited=(row as {edited?:EditedCells}).edited;
@@ -1278,7 +1283,7 @@ export const tableInspector:OwnInspector<'table_input'>={
       const proposed=columns.filter(c=>p.columns?.[c]&&!p.columns[c]!.confirmed).length;
       const findings=p.data.findings?.filter(f=>f.kind!=='undescribed-column'&&f.kind!=='unconfirmed-description')??[];
       html+=kit.section('Result',`<p class="standard-result${findings.length?' standard-result-warning':''}">`
-        +`${esc(`${p.data.rowCount.toLocaleString('en-US')} rows, ${p.data.missingValueCount.toLocaleString('en-US')} values absent and kept as unknown.`)}</p>`
+        +`${esc(`${recordsSaid(declaredWide(p.data,p.wide))}, ${p.data.missingValueCount.toLocaleString('en-US')} values absent and kept as unknown.`)}</p>`
         +(findings.length?`<p class="standard-state" data-table-findings>Data quality: ${esc(findingsSummary(p.data))}. The rows are kept as they stand.</p>`:'')
         +`<p class="standard-state" data-table-meaning>What the columns mean: ${described} of ${columns.length} described`
           +(proposed?`, ${proposed} proposed and not yet accepted`:'')+'.'

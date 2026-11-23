@@ -527,12 +527,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.14.1",
+   "version": "0.15.0",
    "released": "2026-11-23",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A CSV that is not UTF-8 is read as Windows-1252, as Excel on Windows writes it, so accented place names read as they should."
+     "kind": "minor",
+     "description": "Configure… proposes which column holds the longitude and which the latitude when the step reads a table, from the same names its own CSV import has always proposed by. Shown in the selects, where they can be changed; a run still reads the mapping stored here and names its columns."
     }
    ],
    "breaking": false,
@@ -838,12 +838,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.18.0",
+   "version": "0.19.0",
    "released": "2026-11-23",
    "changes": [
     {
      "kind": "minor",
-     "description": "A CSV column the file gives no name, or a name an earlier column has, is read under a name given here and said on the Data quality tab, where the file was refused whole before; a file that is not UTF-8 is read as Windows-1252, as Excel on Windows writes it, and said. Found reading the African Bat Database, whose first column is R's row numbers."
+     "description": "A column named as a latitude or a longitude is read as a key, beside the rule that an identifier in digits is one: proposed as a variable it was melted into measure and value, so the table carried no coordinates for Point data to read. The Result says what it counts: 18,409 records, where it said 92,045 rows for the same file. The receipt asserts fw:tableRecordCount beside the row count, never in place of it."
     }
    ],
    "breaking": false,

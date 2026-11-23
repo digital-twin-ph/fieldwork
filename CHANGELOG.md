@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.174.0 — 2026-11-23
+
+- **A table's count says what it counts** (Tabular data 0.19.0). A file of 18,409 records read wide was reported as
+  **92,045 rows**, five per record, on the Inspector, in the results metrics, in the write-up's prose and in the
+  receipt. The practitioner, on reading a line list: *"And could be a dangerous interpretation."* It reads *18,409
+  records* now, counted from the subject keys the melt declared; the receipt asserts `fw:tableRecordCount` beside the
+  row count, never in place of it.
+- **A coordinate column is read as a key, not melted into a variable** (Tabular data 0.19.0). Proposed as variables,
+  latitude and longitude were melted into `measure` and `value`, so the table carried no coordinates and Point data had
+  none to offer. Carrying them also took the African Bat Database's repeated-key findings from 207 to 69.
+- **Point data proposes the table's coordinate columns** (0.15.0) when it reads points from a table, by the same names
+  its own CSV import has always used. Shown in the selects, where they can be changed.
+- **An audit** of where the internal long table is presented as the practitioner's
+  (`docs/audits/melted-counts-audit.md`), and the direction it settled, `tables-are-presented-wide`: nine surfaces
+  stating a melted count, three of them away from the screen, and eight dialogs offering the long table's columns.
+
 ## 0.173.0 — 2026-11-23
 
 - **A raster window read at a web address can be read again from a copy of that file on this device** (Raster input

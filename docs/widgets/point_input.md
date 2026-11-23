@@ -1,6 +1,6 @@
 # Point data
 
-_Created 2026-10-19 · Updated 2026-11-22_
+_Created 2026-10-19 · Updated 2026-11-23_
 
 **An input widget.** It brings located records into a workflow — one row per thing, each with a
 position and whatever attributes came with it.
@@ -147,6 +147,13 @@ events is something your labels and your weights have to say.
 1861** loads a 188-case line list.
 
 ## History
+
+### 2026-11-23 · The table's coordinate columns are proposed (0.15.0)
+
+Reading points from a table, **Configure…** proposed nothing: both selects opened on *Choose a column…* though the
+step's own CSV import has always proposed by name. It now proposes the longitude, the latitude, the record ID and the
+label from those same names. They are shown in the selects and can be changed, and a run still reads the mapping
+stored here rather than guessing.
 
 ### 2026-11-23 · A CSV that is not UTF-8 (0.14.1)
 

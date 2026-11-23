@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {findingsSummary,dataTable,keyDomains,tableReceipt,MAX_TABLE_ROWS} from '../build/data-table.js';
+import {findingsSummary,dataTable,keyDomains,tableReceipt,MAX_TABLE_ROWS,declaredWide,recordsOf,recordsSaid,wideDataTable} from '../build/data-table.js';
 
 const csv=(headers,rows)=>({headers,rows});
 const projection=csv(['site_id','scenario','year','quantile','value_m'],[
@@ -123,4 +123,26 @@ test('a long read names its value as asked, and refuses a key\'s name',()=>{
   assert.equal(t.valueField,'population');assert.deepEqual(t.rows.map(r=>r.value),[10,20]);
   assert.equal(readLong(file,{keys:['district'],valueField:'total'}).valueField,'total');
   assert.throws(()=>readLong(file,{keys:['district'],valueField:'total',valueAs:'district'}),/is a key column/);
+});
+
+// A COUNT SAYS WHAT IT COUNTS (direction `tables-are-presented-wide`, 2026-11-23). A table melted from a wide file holds
+// one row per subject per variable; the African Bat Database's 18,409 records were reported as 92,045 rows, on screen,
+// in the write-up's prose and in the receipt. The practitioner: "And could be a dangerous interpretation."
+test('a melted table counts the records its reader counts, and a long one counts rows',()=>{
+  const file={headers:['district','men','women'],rows:[['North','3','4'],['South','5','6'],['East','7','8']]};
+  const melted=declaredWide(wideDataTable(file,{keys:['district'],valueFields:['men','women'],
+    measureKey:'measure',valueField:'population'}),{keys:['district'],measureKey:'measure'});
+  assert.equal(melted.rowCount,6,'three districts by two variables');
+  assert.deepEqual(recordsOf(melted),{count:3,noun:'record'});
+  assert.equal(recordsSaid(melted),'3 records');
+  // TWO IDENTICAL ROWS ARE TWO RECORDS: counting distinct subject keys collapsed 84 of the bat database's 18,409.
+  const twice=declaredWide(wideDataTable({headers:['district','men','women'],rows:[['North','3','4'],['North','3','4']]},
+    {keys:['district'],valueFields:['men','women'],measureKey:'measure',valueField:'population'}),
+    {keys:['district'],measureKey:'measure'});
+  assert.equal(recordsOf(twice).count,2,'the same district twice is two records, not one');
+  // A file already long counts its rows: there is no melt, and the row count is what a reader counts.
+  const long=dataTable({headers:['district','population'],rows:[['North','7'],['South','11']]},
+    {keys:['district'],valueField:'population'});
+  assert.deepEqual(recordsOf(long),{count:2,noun:'row'});
+  assert.equal(recordsSaid(long),'2 rows');
 });

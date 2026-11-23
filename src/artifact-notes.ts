@@ -39,6 +39,7 @@
  *  rendered, from its position in the IMRaD outline and the venue's own convention.
  */
 import type {DataTable} from './data-table.js';
+import {recordsSaid} from './data-table.js';
 import type {MachinedNote,FigureSection} from './notes.js';
 import {DEFAULT_FIGURE_SECTION} from './notes.js';
 import type {MapLayer} from './map-layer-list.js';
@@ -82,7 +83,8 @@ export function tableDescriptionNote(table:DataTable,label:string|undefined,node
   // moment they touch it.
   const list=(names:readonly string[])=>names.map(n=>`\`${n}\``).join(names.length===2?' and '
     :', ').replace(/, ([^,]*)$/,names.length>2?' and $1':', $1');
-  let text=`${titled(label)}${count(table.rowCount,'row')}`
+  // SAID AS ITS READER COUNTS IT (direction `tables-are-presented-wide`): a melted table's records, not its long rows.
+  let text=`${titled(label)}${recordsSaid(table)}`
     +(table.keys.length?`, keyed by ${list(table.keys)}`:'')+'. '
     +`Each value is \`${table.valueField}\``
     // The unit only where it says something the value field does not. `rateTable` writes the same

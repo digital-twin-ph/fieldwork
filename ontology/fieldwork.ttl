@@ -1438,6 +1438,12 @@ fw:valueUnitStatus a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range 
 fw:valueUnit a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:string;
   rdfs:label "Value unit"; rdfs:comment "The author-stated unit, present only when one was stated.".
 fw:tableRowCount a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:integer; rdfs:label "Table row count".
+# THE COUNT ITS READER COUNTS (direction `tables-are-presented-wide`, 2026-11-23): a table melted from a wide file holds
+# one row per subject per variable, so its row count is not the number of records the file held. Asserted beside the row
+# count, never in place of it: both are facts about the same table, and a receipt that stated only one would let a reader
+# take a five-fold inflation for a count of cases.
+fw:tableRecordCount a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:integer; rdfs:label "Table record count";
+  rdfs:comment "The subjects a melted table holds, counted over the subject keys the melt declared. Absent where the file was already long, the row count being the record count there.".
 fw:tableMissingValueCount a owl:DatatypeProperty; rdfs:domain fw:DataTable; rdfs:range xsd:integer;
   rdfs:label "Missing value count";
   rdfs:comment "Rows whose value cell was empty. These are retained as unknown and never zero-filled, because zero is a measurement and absence is not.".

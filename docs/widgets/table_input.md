@@ -1,6 +1,6 @@
 # Tabular data
 
-_Created 2026-11-02 · Updated 2026-11-21_
+_Created 2026-11-02 · Updated 2026-11-23_
 
 **A source.** It reads a CSV, Excel or Stata file into a table.
 
@@ -233,6 +233,17 @@ after (`fw:CellEdit`). Experiment 214.
 It does not choose between rows that disagree. The table stays as read until a later step changes it.
 
 ## History
+
+### 2026-11-23 · A coordinate is a key, and the count says what it counts (0.19.0)
+
+A column named as a **latitude** or a **longitude** is read as a key, beside the rule that an identifier written in
+digits is one. Proposed as a variable, both were melted into `measure` and `value`, so the table carried no coordinates
+and **Point data** had none to offer. Repetition does not make a poor key: repeats are judged on the whole combination of key
+columns, and on the African Bat Database carrying the coordinates took the repeated-key findings from 207 to 69.
+
+The **Result** now says what it counts. A file of 18,409 records read wide was reported as **92,045 rows**, five per
+record, and that number reached the write-up's prose and the receipt. It reads *18,409 records*; the receipt asserts
+`fw:tableRecordCount` beside the row count, never in place of it.
 
 ### 2026-11-23 · A column with no name, and a file that is not UTF-8 (0.18.0)
 

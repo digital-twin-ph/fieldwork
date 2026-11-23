@@ -338,7 +338,9 @@ export function tableReceipt(node:{id:string;params:{label:string;unit?:string;d
     +table.keys.map(name=>`fw:keyField ${quote(name)}`).join('; ')+'; '
     +`fw:valueField ${quote(table.valueField)}; fw:valueUnitStatus ${quote(table.unit?'stated':'unstated')}`
     +(table.unit?`; fw:valueUnit ${quote(table.unit)}`:'')
-    +`; fw:tableRowCount "${table.rowCount}"^^xsd:integer; fw:tableMissingValueCount "${table.missingValueCount}"^^xsd:integer.\n`
+    +`; fw:tableRowCount "${table.rowCount}"^^xsd:integer; fw:tableMissingValueCount "${table.missingValueCount}"^^xsd:integer`
+    // THE COUNT ITS READER COUNTS, beside the row count and never in place of it (2026-11-23).
+    +(table.wide?.subjectKeys.length?`; fw:tableRecordCount "${recordsOf(table).count}"^^xsd:integer`:'')+'.\n'
     // THE SHAPE THE FILE WAS IN, and the columns taken from it.
     //
     // A wide file is MELTED on the way in, which is something done to the data the practitioner
@@ -373,6 +375,29 @@ export function tableReceipt(node:{id:string;params:{label:string;unit?:string;d
     receipt:{nodeId:node.id,kind:'computation' as const,facts:facts+distinctFacts,rules:'',
       input:facts+distinctFacts,conclusions:[]}};
 }
+
+/** WHAT A COUNT OF THIS TABLE MEANS TO WHOEVER READS IT (direction `tables-are-presented-wide`, 2026-11-23). A table
+ *  that arrived wide holds one row per subject per variable, and its reader counts records: the African Bat Database's
+ *  18,409 records were reported as 92,045 rows, five per record, on the Inspector, in the write-up's prose and in the
+ *  receipt. The practitioner: *"And could be a dangerous interpretation."* It is, because an epidemiologist reads the
+ *  row count of a line list as a count of cases, and the number is true of the long table the application holds and
+ *  false of the thing it is taken for. Counted from the subject keys the melt declared, never inferred. */
+export function recordsOf(table:Pick<DataTable,'wide'|'rows'|'rowCount'>):{count:number; noun:'record'|'row'}{
+  const measureKey=table.wide?.measureKey;
+  if(!measureKey||!table.rows.length)return {count:table.rowCount,noun:'row'};
+  // ONE ROW PER RECORD, NOT PER DISTINCT SUBJECT. The melt emits one row per record per variable, so the rows carrying
+  // any one variable's name are the records. Counting distinct subject keys instead collapsed the 84 bat records that
+  // repeat every column, reporting 18,325 for 18,409 -- a smaller misstatement of the same kind as the one this counts
+  // against, and two identical rows of a line list are two records.
+  const first=String(table.rows[0]!.key[measureKey]??'');
+  const count=table.rows.filter(row=>String(row.key[measureKey]??'')===first).length;
+  return count?{count,noun:'record'}:{count:table.rowCount,noun:'row'};
+}
+/** That count said: "18,409 records" for a melted table, "92,045 rows" for one the file already held long. */
+export const recordsSaid=(table:Pick<DataTable,'wide'|'rows'|'rowCount'>):string=>{
+  const {count,noun}=recordsOf(table);
+  return `${count.toLocaleString('en-US')} ${noun}${count===1?'':'s'}`;
+};
 
 /** THE WIDE MARK, as the Tabular data step that melted the table states it (experiment 188): one function, so the run
  *  and the Inspector's previews read the same subjects. */

@@ -3,7 +3,7 @@
  *  ontology, label and all, so the screen and the evidence cannot say two things. */
 export type DataIssueKind='ValueAbsent'|'ValueUnreadable'|'KeyAbsent'|'KeyRepeated'|'ColumnUndescribed'|'DescriptionUnconfirmed'
   |'DictionaryMismatch'|'DeclarationAbsent'|'DivisionByZero'|'ConclusionsConflict'|'SiteUnreachable'|'RoutedOffNetwork'
-  |'FieldMissing'|'ValueEmpty'|'BeyondFence'|'AreaBeyondRaster'|'ValueTrimmed'|'ValueNotCoded';
+  |'FieldMissing'|'ValueEmpty'|'BeyondFence'|'AreaBeyondRaster'|'ValueTrimmed'|'ValueNotCoded'|'ColumnNamed'|'TextNotUtf8';
 
 export const ISSUE_LABEL:Record<DataIssueKind,string>={
   ValueAbsent:'No value',ValueUnreadable:'Not the declared kind',KeyAbsent:'No key',KeyRepeated:'Key repeated',
@@ -11,7 +11,7 @@ export const ISSUE_LABEL:Record<DataIssueKind,string>={
   DictionaryMismatch:'Disagrees with the data dictionary',DeclarationAbsent:'Not declared',DivisionByZero:'Divided by zero',
   ConclusionsConflict:'Rules disagree',SiteUnreachable:'No result',RoutedOffNetwork:'Routed off the network',
   FieldMissing:'Field missing',ValueEmpty:'Empty',BeyondFence:'Beyond 1.5×IQR',AreaBeyondRaster:'Area beyond the raster',
-  ValueTrimmed:'Spaces trimmed',ValueNotCoded:'Not among its codes',
+  ValueTrimmed:'Spaces trimmed',ValueNotCoded:'Not among its codes',ColumnNamed:'Column named here',TextNotUtf8:'Read as Windows-1252',
 };
 
 export interface FoundIssue {kind:DataIssueKind; column?:string; count?:number; of?:number; says?:string}
@@ -38,7 +38,7 @@ export function issueFacts(activity:string,about:string,base:string,issues:reado
  *  reading the table made, and each column's profile, through the same `profileColumn` the inspector draws. */
 const FINDING_KIND:Record<string,DataIssueKind>={'repeated-key':'KeyRepeated','missing-key':'KeyAbsent','unreadable-value':'ValueUnreadable',
   'undescribed-column':'ColumnUndescribed','unconfirmed-description':'DescriptionUnconfirmed','dictionary-mismatch':'DictionaryMismatch',
-  'trimmed-value':'ValueTrimmed'};
+  'trimmed-value':'ValueTrimmed','named-column':'ColumnNamed','not-utf8':'TextNotUtf8'};
 export function tableIssues(
   findings:readonly {kind:string; rows:number[]; column?:string; text:string}[],
   columns:readonly string[],rows:readonly Record<string,unknown>[],

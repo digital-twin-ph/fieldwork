@@ -234,6 +234,13 @@ It does not choose between rows that disagree. The table stays as read until a l
 
 ## History
 
+### 2026-11-23 · A column with no name, and a file that is not UTF-8 (0.18.0)
+
+A CSV whose first column has no name — what R writes for its row numbers — was refused whole, saying only that headers
+must be nonempty and unique. That column is now read as **column_1**, a name an earlier column already has takes
+**_2**, and each is said on the **Data quality** tab. A file that is not UTF-8 is read as Windows-1252, the encoding
+Excel on Windows writes, and that too is said: accented place names came through as replacement characters before.
+
 ### 2026-11-21 · Sierra Leone, Malawi and Kenya by level (0.17.0)
 
 **Census tables** offers Sierra Leone's districts and chiefdoms, Malawi's districts with their cities and Kenya's

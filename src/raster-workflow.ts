@@ -19,6 +19,9 @@ export function validateRasterAsset(asset:RasterAsset):void{
 /** FILES CHOSEN THIS SESSION, by digest (2026-11-19): a streamed raster read from a file on this device is read again from it
  *  at each run, and a browser keeps no file between sessions, so after a reload it is chosen again in Raster input. */
 export const sessionFiles=new Map<string,File>();
+/** THE KEY A CHOSEN FILE IS HELD UNDER: the source file's digest where one was taken, else the kept window's own, so a
+ *  window first read at an address can be served by a copy on this device once that copy has given the window again. */
+export const sourceKey=(asset:RasterAsset):string=>asset.source.sha256??asset.sha256;
 /** THE SOURCE FILE CHOSEN AGAIN for a streamed raster whose kept copy is on this device: checked against the file first
  *  chosen, then held for this session's runs. */
 export async function chooseStreamedFile(asset:RasterAsset,file:File,say?:(text:string)=>void):Promise<void>{
@@ -43,10 +46,12 @@ const sameFile=(asset:RasterAsset,file:File)=>file.size===asset.source.bytes&&(!
 /** Where a streamed raster's full cells are read from at a run: its address, the file chosen this session, or the file
  *  this device remembers, where the browser still allows reading it. */
 export async function streamedSource(asset:RasterAsset):Promise<string|File>{
+  // A COPY ON THIS DEVICE COMES BEFORE THE ADDRESS (2026-11-23): once a local file has given this window again, byte for
+  // byte, the run reads its full cells from that file rather than asking the host for them at every run.
+  const held=sessionFiles.get(sourceKey(asset));
+  if(held)return held;
   if(asset.source.url)return asset.source.url;
   const digest=asset.source.sha256;
-  const file=digest?sessionFiles.get(digest):undefined;
-  if(file)return file;
   const {rememberedHandle}=await import('./file-handles.js');
   const handle=digest?await rememberedHandle(digest):undefined;
   if(handle&&digest){
@@ -109,9 +114,14 @@ export async function rereadWindow(asset:RasterAsset,file?:File,say?:(text:strin
   const metadata=await inspectRaster(from),bytes=encodeRaster(asset.streamed
     ?await reduceWindow(from,metadata,asset.window,asset.streamed.factor,asset.streamed.how,(rows,of)=>say?.(`Reading the window again: ${Math.round(100*rows/of)}%…`))
     :await readRasterWindow(from,metadata,asset.window));
-  if(file&&asset.streamed&&asset.source.sha256)sessionFiles.set(asset.source.sha256,file);
+  // WHICH CASE IT IS (2026-11-23): a file chosen here that gives a different window is a different file, not a changed
+  // source. Said apart, because a practitioner holding several epochs of one grid meets the first and not the second.
   if(bytes.length!==asset.bytes||await contentHash(bytes)!==asset.sha256)
-    throw new Error('The window read again is not the window that was kept: the source has changed since. Nothing was kept.');
+    throw new Error(file
+      ?`${file.name} gives a different window from the one that was kept, so it is not the file this window was read from. Nothing was kept.`
+      :'The window read again is not the window that was kept: the source has changed since. Nothing was kept.');
+  // HELD ONLY ONCE IT HAS PASSED THAT CHECK: a file giving a different window was held for the session's runs before it.
+  if(file&&asset.streamed)sessionFiles.set(sourceKey(asset),file);
   return bytes;
 }
 export async function loadRaster(asset:RasterAsset,area:AreaValue):Promise<RasterGrid>{

@@ -188,12 +188,15 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   2026-11-20 (a census label the example's Select rows did not ask for; Botswana's names lost under two columns), and
   nothing saw it for three days. Fixed in 0.172.2 (experiment 209). Open: a check that runs the chain on small windows
   carried in the example, so the gate exercises it without the downloads.
-- **GHS-POP read again from a local copy.** A window read from the JRC's address can only be read again from there; a
-  practitioner holding the 12 GB file must send the area to the server anyway. Offer the local file beside the address,
-  checked against the kept window's digest, as WorldPop's and GRID3's are (found re-running experiment 209, 2026-11-23).
-- **Years carried and compared** (the practitioner, 2026-11-23, on provenance alignment): each source's year recorded,
-  but only Rate compares two, as exact text. Proposed: the year travels with values as units do, and a step combining
-  values of different years says so, never refusing. Awaiting the practitioner's go-ahead for an experiment.
+- **Done in 0.173.0. GHS-POP read again from a local copy** (Raster input 0.15.0), measured on both countries'
+  windows; experiment 209 records it.
+- **Years carried and compared:** experiment 230, written 2026-11-23 and proposed, nothing built. Each source's year is
+  recorded but only Rate compares two, as exact text. Three questions wait on the practitioner: year or month; whether a
+  boundary's year counts beside the data's; and whether Append rows and Rate come first or every step at once.
+- **The bat roosts and the Kibali mine** (the practitioner, 2026-11-23): a small table of species joined to the African
+  Bat Database through Relate, inner join, to filter it. After the population rasters. The database is CC BY 4.0,
+  18,409 records of 312 species; its `Roost` column is "Yes" on 90 records, so it says where bats were recorded, not
+  where they roost.
 
 ## Urgent
 

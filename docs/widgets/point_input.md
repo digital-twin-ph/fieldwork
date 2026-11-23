@@ -148,6 +148,11 @@ events is something your labels and your weights have to say.
 
 ## History
 
+### 2026-11-23 · A CSV that is not UTF-8 (0.14.1)
+
+A CSV whose bytes are not UTF-8 is read as Windows-1252, as Excel on Windows writes it, so an accented place name
+reads as it should rather than as replacement characters.
+
 ### 2026-11-22 · The form's order (0.14.0)
 
 A pin's form listed its fields in the order they were added. Each can now be moved up or down, and every pin's form

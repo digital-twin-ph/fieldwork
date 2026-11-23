@@ -1743,7 +1743,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.14.0",
+      "currentVersion": "0.14.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1819,6 +1819,11 @@
           "version": "0.14.0",
           "path": "widgets/releases/point_input/0.14.0.json",
           "sha256": "cf9408594996eb2788a554ac4acd3f9087255268e178c45da3c513a2d1c747f8"
+        },
+        {
+          "version": "0.14.1",
+          "path": "widgets/releases/point_input/0.14.1.json",
+          "sha256": "5640ba30f1e8971a08a972eb839171f99565724220e2f6263e1d05dc8141885c"
         }
       ],
       "previousNodeTypes": [
@@ -1897,7 +1902,7 @@
     {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
-      "currentVersion": "0.14.1",
+      "currentVersion": "0.15.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2013,6 +2018,11 @@
           "version": "0.14.1",
           "path": "widgets/releases/raster_input/0.14.1.json",
           "sha256": "68be4ab9216f25e6fc44356a4300f7a1d5f7ec354f4988197e67c3d32fe937a3"
+        },
+        {
+          "version": "0.15.0",
+          "path": "widgets/releases/raster_input/0.15.0.json",
+          "sha256": "309d44ffa6f51cfab11560e33608cb5a2659d97543ade874d9afffccb6f82ba8"
         }
       ]
     },
@@ -2736,7 +2746,7 @@
     {
       "id": "urn:fieldwork:widget:table_input",
       "nodeType": "table_input",
-      "currentVersion": "0.17.0",
+      "currentVersion": "0.18.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2857,6 +2867,11 @@
           "version": "0.17.0",
           "path": "widgets/releases/table_input/0.17.0.json",
           "sha256": "cb7226fcdaf3b47b3c05187fb6b03a5ca10e7d5e1d23911b52d3372123c59c6e"
+        },
+        {
+          "version": "0.18.0",
+          "path": "widgets/releases/table_input/0.18.0.json",
+          "sha256": "7805ba73aaf9148525327b30a07d8dde78b92bf9d9103e9dc5d595423cf1c237"
         }
       ]
     },

@@ -74,7 +74,13 @@ export function openRasterEditor(boundary:Boundary,onSave:(asset:RasterAsset)=>b
         ?(needsFile?`<p class="notice" data-raster-streamed-file>This raster is too large to keep on the device, so each run reads it from ${esc(where)}. `
             +'A browser keeps no file between sessions: choose it again for this session. It is checked against the file first chosen.</p>'
           :`<p class="notice" data-raster-missing>The window is not on this device yet: the project carries where it came from, not its cells. Read it again from ${esc(where)}; it is checked against the window that was kept.</p>`)
+          // A COPY ON THIS DEVICE SERVES INSTEAD OF THE HOST (2026-11-23): a practitioner holding GHS-POP's 12 GB global
+          // grid still had to send the study area to the host, because a window read at an address offered only that
+          // address. The window read from the file is checked against the window kept, which is what decides it.
           +(existing!.source.url?'<div class="inspector-actions"><button type="button" id="raster-reread" class="button primary">Read the window again</button></div>'
+            +`<div class="field"><label class="field-label" for="raster-reread-file">Or the same file on this device: ${esc(existing!.source.filename)}</label>`
+            +'<input id="raster-reread-file" type="file" accept=".tif,.tiff,image/tiff">'
+            +'<small>Read where it sits and never copied. The window read from it is checked against the window that was kept, and refused if it differs.</small></div>'
             :`<div class="field"><label class="field-label" for="raster-reread-file">The same file again: ${esc(existing!.source.filename)} (${existing!.source.bytes.toLocaleString('en')} bytes)</label><input id="raster-reread-file" type="file" accept=".tif,.tiff,image/tiff"></div>`)
           +`<p id="raster-reread-status" class="description" role="status">${esc(rereadSaid)}</p>`
         :'<p class="notice" data-raster-missing>The window is not on this device, and this project does not say where to read it again. Import the project with its files.</p>');

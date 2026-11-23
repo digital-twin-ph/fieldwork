@@ -5,7 +5,7 @@ import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {describableColumns,isDescribed,dictionaryKeyOf} from './column-metadata.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
 import {dataTable,wideDataTable,keyDomains,findingsSummary,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
-import {parseCSV} from './input-data.js';
+import {parseCSV,readTextFile} from './input-data.js';
 import {readStata,type StataTable} from './stata.js';
 import {readXlsx,type Sheet} from './xlsx.js';
 import {fetchOrDeviceCopy,tablesInArchive,archiveEntry,asFile,type RemoteTableSource,progressText} from './remote-table.js';
@@ -817,8 +817,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         workbookSays.hidden=false;
       }else{sheets=undefined;sheet=undefined;sheetRow.hidden=true;workbookSays.hidden=true;}
       if(request!==serial)return;
-      text=stata||workbook?'':await file.text();if(request!==serial)return;
-      parsed=stata??(sheet?{headers:sheet.headers,rows:sheet.rows}:undefined)??parseCSV(text,MAX_TABLE_ROWS,FILE_BYTES);
+      const read=stata||workbook?undefined:await readTextFile(file);text=read?.text??'';if(request!==serial)return;
+      parsed=stata??(sheet?{headers:sheet.headers,rows:sheet.rows}:undefined)??{...parseCSV(text,MAX_TABLE_ROWS,FILE_BYTES),...(read?.encoding?{encoding:read.encoding}:{})};
       status.textContent=stata?`Stata format ${stata.format}: ${stata.rows.length.toLocaleString()} rows of ${stata.headers.length} variables.`
         +(stata.notes.length?` ${stata.notes.join(' ')}`:''):'';
       const guessValue=guessValueColumn(parsed.headers,parsed.rows);
@@ -1211,7 +1211,7 @@ export async function tableFromFetched(file:File,settings:{keys:string[];valueFi
   if(workbook&&!sheet)throw new Error('This workbook has no sheet with a header row.');
   if(workbook&&settings.sheet&&sheet!.name!==settings.sheet)throw new Error(`This workbook has no sheet "${settings.sheet}".`);
   const parsed:TableRows=/\.dta$/i.test(file.name)?readStata(new Uint8Array(await file.arrayBuffer()))
-    :sheet?{headers:sheet.headers,rows:sheet.rows}:parseCSV(await file.text(),MAX_TABLE_ROWS,FILE_BYTES);
+    :sheet?{headers:sheet.headers,rows:sheet.rows}:await readTextFile(file).then(r=>({...parseCSV(r.text,MAX_TABLE_ROWS,FILE_BYTES),...(r.encoding?{encoding:r.encoding}:{})}));
   const roles={...(settings.primaryKey?.length?{primaryKey:settings.primaryKey}:{}),...(settings.secondaryKeys?.length?{secondaryKeys:settings.secondaryKeys}:{})};
   if(settings.wide){
     const data=wideDataTable(parsed,{keys:settings.wide.keys,valueFields:settings.wide.valueFields,measureKey:settings.wide.measureKey,

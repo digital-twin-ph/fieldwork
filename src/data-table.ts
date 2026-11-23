@@ -5,7 +5,7 @@ import type {Scalar} from './types.js';
 /** The parsed-CSV shape this module needs, declared locally rather than imported: the type
  *  graph reaches this file from the worker type-check, which has no DOM, and the CSV reader
  *  lives in a module that uses it. Parsing stays the caller's job. */
-export interface TableRows {headers:string[]; rows:string[][]}
+export interface TableRows {headers:string[]; rows:string[][]; named?:{column:number;given:string;as:string}[]; encoding?:'windows-1252'}
 
 /** RAISED FROM 2,000 ON 2026-11-02: Nigeria's 774 LGAs over three years are 2,322 rows once a wide file
  *  is read, and the source holds 19,350. A CSV file is still read up to 2,000 rows by `input-data.ts`. */
@@ -23,7 +23,8 @@ export interface DataTableSource {filename:string; bytes:number; sha256:string; 
  *  these say what to look at. Row numbers are the file's, from 1. Experiment 164. */
 export interface TableFinding {
   /** The last three are about the columns' declared meaning, not the rows (experiment 172). */
-  kind:'repeated-key'|'missing-key'|'unreadable-value'|'undescribed-column'|'unconfirmed-description'|'dictionary-mismatch'|'trimmed-value';
+  kind:'repeated-key'|'missing-key'|'unreadable-value'|'undescribed-column'|'unconfirmed-description'|'dictionary-mismatch'|'trimmed-value'
+    |'named-column'|'not-utf8';
   rows:number[];
   column?:string;
   /** What the file holds there, as it was written. */
@@ -99,12 +100,24 @@ const summed=(findings:TableFinding[])=>findings.length?{findings}:{};
 export function findingsSummary(table:Pick<DataTable,'findings'>):string{
   const held=table.findings??[];
   const count=(kind:TableFinding['kind'])=>held.filter(f=>f.kind===kind).length;
-  const parts=[[count('repeated-key'),'repeated key value'],[count('missing-key'),'row with no key value'],
-    [count('unreadable-value'),'value that is not a number'],[count('trimmed-value'),'column whose values were read without spaces around them']] as const;
-  return parts.filter(([n])=>n).map(([n,word])=>`${n} ${n===1?word:word.replace('row','rows').replace('value that is','values that are').replace('repeated key value','repeated key values')}`).join(', ');
+  // EACH PHRASE WITH ITS OWN PLURAL: "4 column whose values were read…" was the string replacements' miss (2026-11-23).
+  const parts:[number,string,string][]=[[count('repeated-key'),'repeated key value','repeated key values'],
+    [count('missing-key'),'row with no key value','rows with no key value'],
+    [count('unreadable-value'),'value that is not a number','values that are not a number'],
+    [count('trimmed-value'),'column whose values were read without spaces around them','columns whose values were read without spaces around them'],
+    [count('named-column'),'column named here','columns named here'],[count('not-utf8'),'file read as Windows-1252','files read as Windows-1252']];
+  return parts.filter(([n])=>n).map(([n,one,many])=>`${n} ${n===1?one:many}`).join(', ');
 }
 
 const trimmed=(value:string)=>value.trim();
+/** WHAT READING THE FILE CHANGED BEFORE ANY ROW: a column named here, and text read as Windows-1252 (2026-11-23). */
+function fileFindings(table:TableRows):TableFinding[]{
+  return [...(table.named??[]).map(n=>({kind:'named-column' as const,rows:[],column:n.as,
+      text:n.given?`Column ${n.column} has the name ${JSON.stringify(n.given)}, as an earlier column does; it is read as ${JSON.stringify(n.as)}.`
+        :`Column ${n.column} has no name in the file; it is read as ${JSON.stringify(n.as)}.`})),
+    ...(table.encoding==='windows-1252'?[{kind:'not-utf8' as const,rows:[],
+      text:'The file is not UTF-8. It is read as Windows-1252, as Excel on Windows writes it: check that accented names read as they should.'}]:[])];
+}
 /** KEY VALUES READ WITHOUT THE SPACES AROUND THEM, said (the practitioner, 2026-11-12: "Trim, and say so"). Trimming
  *  keeps "Family member" and "Family member " one group, as MERS's contacts need; one finding per column counts the
  *  values it changed and names the first, so the change is on the Data quality tab and in the receipt, not silent. */
@@ -155,7 +168,7 @@ export function dataTable(table:TableRows,selection:TableSelection):DataTable {
     }
     return {key,value};
   });
-  findings.push(...trimFindings(table.rows,keys,index));
+  findings.push(...fileFindings(table),...trimFindings(table.rows,keys,index));
   const declared=declaredKeys(selection,keys);
   findings.push(...repeatedKeys(rows.map(row=>row.key),declared.primaryKey??keys));
   return {kind:'data-table',keys,valueField:named,...declared,...summed(findings),...(selection.unit?{unit:trimmed(selection.unit)}:{}),
@@ -272,7 +285,7 @@ export function wideDataTable(table:TableRows,selection:WideSelection):DataTable
   });
   // In a wide file one row IS one subject, so a repeat is a duplicate record rather than the long
   // shape: the opposite diagnosis from the long reader's, and why these are two readers.
-  findings.push(...trimFindings(table.rows,keys,index));
+  findings.push(...fileFindings(table),...trimFindings(table.rows,keys,index));
   const declared=declaredKeys(selection,keys);
   findings.push(...repeatedKeys(subjects,declared.primaryKey??keys));
   return {kind:'data-table',keys:[...keys,measureKey],valueField,

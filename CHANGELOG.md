@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.173.0 — 2026-11-23
+
+- **A raster window read at a web address can be read again from a copy of that file on this device** (Raster input
+  0.15.0). It is read where it sits, never copied, and the window read from it is checked against the window that was
+  kept, so another file is refused by name. A raster too large to keep then reads its full cells from that copy at each
+  run instead of asking the host. Measured on GHS-POP's 12.3 GB global grid: Rwanda's window in 5 seconds, Botswana's in
+  16, both byte for byte what the JRC's copy gave, and the 2020 grid refused for a 2025 window (experiment 209).
+- **A CSV is read, not refused, for its headers or its encoding** (Tabular data 0.18.0, Point data 0.14.1). A column the
+  file gives no name — R writes its row numbers that way — is read as **column_1** and said on the Data quality tab,
+  where the whole file was refused before; a name an earlier column has takes **_2**. A file that is not UTF-8 is read
+  as Windows-1252, as Excel on Windows writes it, and said, where accented place names came through as replacement
+  characters. Found reading the African Bat Database's 18,409 records.
+- The Data quality summary counts in plurals: "4 column whose values were read…" now reads "4 columns".
+- **Experiment 230** proposes carrying each source's year with its values and saying where different years meet.
+
 ## 0.172.2 — 2026-11-23
 
 - **The population example runs end to end again**, for Rwanda and, for the first time in the browser, Botswana.

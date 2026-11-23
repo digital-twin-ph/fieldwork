@@ -18,7 +18,8 @@ test('CSV parses quoted attributes and missing coordinates, and preserves scalar
   const csv=parseCSV('\uFEFFid,name,longitude,latitude,notes\r\na,"Clinic, A",25.9,-24.69,"line 1\nline ""2"""\r\nb,Missing,,,unknown\r\n');
   const data=validateGeoJSON(csvPoints(csv,{id:0,name:1,x:2,y:3,units:'degree'}),{attributes:true});
   assert.equal(data.features[0].properties.name,'Clinic, A');assert.equal(data.features[0].properties.notes,'line 1\nline "2"');assert.equal(data.features[1].geometry,null);
-  assert.throws(()=>parseCSV('a,a\n1,2'),/unique/);assert.throws(()=>parseCSV('a,b\n1,"broken'),/unclosed/);
+  // A REPEATED HEADER IS NAMED APART, NOT REFUSED, SINCE 2026-11-23 (tests/csv-headers-and-encoding.test.mjs).
+  assert.deepEqual(parseCSV('a,a\n1,2').headers,['a','a_2']);assert.throws(()=>parseCSV('a,b\n1,"broken'),/unclosed/);
   // Two guards, both kept. The gate refuses first now, with a message naming Reproject; the
   // workflow boundary in core.ts still refuses a collection that reaches it some other way, which
   // is the guard this line originally tested.

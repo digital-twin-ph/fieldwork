@@ -7,7 +7,18 @@ import {reprojectToCRS84} from './reproject.js';
 import {MAX_POINT_RECORDS} from './point-layers.js';
 // A point file's size on import is the table file's: a file of points a table can read, Point data can read.
 import {MAX_TABLE_FILE_BYTES as MAX_POINT_FILE_BYTES} from './data-table.js';
-export interface CSVTable {headers:string[]; rows:string[][]}
+export interface CSVTable {headers:string[]; rows:string[][];
+  /** Columns the file gave no name, or a name another column has, and the name each is read under. */
+  named?:{column:number;given:string;as:string}[];
+  /** How the file's bytes were read as text, where it was not UTF-8. */
+  encoding?:'windows-1252'}
+/** A FILE'S TEXT, AS UTF-8 OR, WHERE IT IS NOT, AS WINDOWS-1252 (2026-11-23): the African Bat Database's CSV is written
+ *  as Excel on Windows writes, and read as UTF-8 its accented place names became replacement characters, unsaid. */
+export async function readTextFile(file:Blob):Promise<{text:string;encoding?:'windows-1252'}>{
+  const bytes=new Uint8Array(await file.arrayBuffer());
+  try{return {text:new TextDecoder('utf-8',{fatal:true}).decode(bytes)};}
+  catch{return {text:new TextDecoder('windows-1252').decode(bytes),encoding:'windows-1252'};}
+}
 /** Which columns hold the axes, and in which unit.
  *
  *  The axes are **x and y**, not longitude and latitude, and the explicit mapping is the
@@ -43,10 +54,16 @@ export function parseCSV(text:string,maxRecords=MAX_POINT_RECORDS,maxChars=MAX_P
   for(let i=0;i<text.length;i++){const c=text[i];if(quoted){if(c==='"'){if(text[i+1]==='"'){field+='"';i++;}else{quoted=false;closed=true;}}else field+=c;continue;}
     if(c===',')endField();else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;endRow();}else if(c==='"'&&!field&&!closed)quoted=true;else{if(closed||c==='"')throw new Error('Malformed CSV quoting.');field+=c;}}
   if(quoted)throw new Error('CSV has an unclosed quoted field.');if(field||row.length||closed)endRow();
-  if(!rows.length)throw new Error('CSV needs a header row.');const headers=rows.shift()!.map(s=>s.trim());
-  if(headers.some(s=>!s)||new Set(headers).size!==headers.length)throw new Error('CSV headers must be nonempty and unique.');
+  if(!rows.length)throw new Error('CSV needs a header row.');const given=rows.shift()!.map(s=>s.trim());
+  // A COLUMN WITH NO NAME, OR ANOTHER'S, IS NAMED AND SAID, NOT REFUSED (2026-11-23): R writes its row numbers under an
+  // empty header, and the African Bat Database's CSV was refused whole for it. "column_1" for the first column without a
+  // name; a name met again takes "_2", "_3"; neither takes a name the file uses.
+  const headers:string[]=[],named:{column:number;given:string;as:string}[]=[];
+  given.forEach((h,i)=>{let as=h||`column_${i+1}`;
+    for(let n=2;headers.includes(as)||(as!==h&&given.includes(as));n++)as=`${h||`column_${i+1}`}_${n}`;
+    headers.push(as);if(as!==h)named.push({column:i+1,given:h,as});});
   if(rows.some(r=>r.length!==headers.length))throw new Error('Every CSV row must have the same number of fields as the header.');
-  return {headers,rows};
+  return {headers,rows,...(named.length?{named}:{})};
 }
 /** The loud complaint. Degrees are bounded and metres are not, so the check that matters is the
  *  one that catches a projected file read as geographic — and it names the widget that reads

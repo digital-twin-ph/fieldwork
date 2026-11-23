@@ -9,7 +9,7 @@ import {readGpx,readKml,readKmz,gpsSentence} from './gps-import.js';
 import type {NoteImagePayload} from './note-image.js';
 const attributeType=(value:string):AttributeType=>{if(!ATTRIBUTE_TYPES.includes(value))throw new Error('Choose a supported attribute type.');return value as AttributeType;};
 import L from 'leaflet';
-import {parseCSV,csvPoints,syntheticPoints,loadSQLite,geoPackageLayers,geoPackagePoints,geoJSONDeclaredCRS,type CSVCoordinateReport} from './input-data.js';
+import {parseCSV,readTextFile,csvPoints,syntheticPoints,loadSQLite,geoPackageLayers,geoPackagePoints,geoJSONDeclaredCRS,type CSVCoordinateReport} from './input-data.js';
 import {coordinateSentence,readCoordinate} from './coordinates.js';
 import {rasterBasemap,PIN_BASEMAPS,tileFailure} from './catchment-map.js';
 import {BASEMAP_LABELS,type BasemapChoice} from './basemaps.js';
@@ -97,7 +97,7 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
       $('#gpkg-layer').onchange=()=>{applyButton().disabled=true;gpkgNote();};
       $('#gpkg-preview').onclick=()=>{try{const layer=layers.find(l=>l.table_name===$('#gpkg-layer').value);
         accept(geoPackagePoints(required(db),$('#gpkg-layer').value),{...metadata(file),layer:$('#gpkg-layer').value,crs:'CRS84',sourceCRS:`EPSG:${layer?.epsg??4326}`});}catch(e){applyButton().disabled=true;error(e);}};$('#gpkg-preview').click();}
-    else {const text=await file.text();if(closed||request!==requestId)return;if(kind==='geojson'){const parsed=JSON.parse(text);accept(parsed,{...metadata(file),crs:geoJSONDeclaredCRS(parsed)});}else{csv=parseCSV(text);const aliases:Record<string,string[]>={longitude:['longitude','lon','lng','x','easting','east'],latitude:['latitude','lat','y','northing','north'],id:['id','fid'],name:['name','label']};for(const key of Object.keys(aliases)){const select=$('#csv-'+key) as HTMLSelectElement;select.innerHTML='<option value="-1">'+(['id','name'].includes(key)?'Generate automatically':'Select column')+'</option>'+csv.headers.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('');select.value=String(csv.headers.findIndex(h=>aliases[key].includes(h.toLowerCase())));select.onchange=()=>applyButton().disabled=true;}$('#csv-mapping').hidden=false;
+    else {const {text}=await readTextFile(file);if(closed||request!==requestId)return;if(kind==='geojson'){const parsed=JSON.parse(text);accept(parsed,{...metadata(file),crs:geoJSONDeclaredCRS(parsed)});}else{csv=parseCSV(text);const aliases:Record<string,string[]>={longitude:['longitude','lon','lng','x','easting','east'],latitude:['latitude','lat','y','northing','north'],id:['id','fid'],name:['name','label']};for(const key of Object.keys(aliases)){const select=$('#csv-'+key) as HTMLSelectElement;select.innerHTML='<option value="-1">'+(['id','name'].includes(key)?'Generate automatically':'Select column')+'</option>'+csv.headers.map((h,i)=>`<option value="${i}">${esc(h)}</option>`).join('');select.value=String(csv.headers.findIndex(h=>aliases[key].includes(h.toLowerCase())));select.onchange=()=>applyButton().disabled=true;}$('#csv-mapping').hidden=false;
       // A CSV of UTM metres read through the degree path produced [500000, 7800000] as a longitude
       // and latitude with no error: every point then read as Outside the study area, which is a
       // finding about geography rather than a fault, and haversine on metres-read-as-degrees

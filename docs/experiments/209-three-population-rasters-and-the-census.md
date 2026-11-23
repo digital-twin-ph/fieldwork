@@ -1,6 +1,6 @@
 # 209 · Three population rasters and the census, Botswana
 
-_Created 2026-11-12 · Updated 2026-11-14_
+_Created 2026-11-12 · Updated 2026-11-23_
 
 **Status:** tried — built and run for Botswana and Rwanda, 2026-11-13, every district's share equal to rasterio's;
 Chromium. Validation Lab check 50 agrees, 2026-11-13. The practitioner, 2026-11-12, asking when a raster worked example
@@ -245,6 +245,12 @@ Also found: the difference chart's panels of zeros were labelled 0.000000 (Chart
 picker started at WorldPop's newest year whatever the step held (Raster input 0.14.1). A WorldPop 2026 file offered for
 a 2025 window was refused, by name and size, and nothing kept.
 
-**Not established:** that the GHS-POP window from the local copy is byte for byte the kept one; the local file is named
-`…V3331_0.tif` where the JRC's is `…V1_0.tif`, the same size, and it was not checked against the kept window's digest.
-Its unit was not recognised by name, so the cells map said "unit not stated" for it.
+**Settled later the same day, 2026-11-23.** Raster input 0.15.0 lets a window first read at an address be read again
+from a copy of that file on this device, checked against the window that was kept. Both countries' GHS-POP windows were
+read from the local 12.3 GB grid and matched byte for byte: Rwanda's 2,447 × 2,152 in 5 seconds, Botswana's
+11,252 × 10,956 in 16 seconds, with the host not asked for anything. So the local file, named `…V3331_0.tif` where the
+JRC's is `…V1_0.tif`, holds the same cells over these two countries. The 2020 grid offered for a 2025 window was
+refused, which is what makes the match worth anything.
+
+**Still not established:** that the two files agree outside these two windows. The local file's unit was not recognised
+by name either, so the cells map said "unit not stated" for GHS-POP.

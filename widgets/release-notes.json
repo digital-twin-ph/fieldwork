@@ -527,12 +527,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.14.0",
-   "released": "2026-11-22",
+   "version": "0.14.1",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "added",
-     "description": "Field order: under Add a form field, each field moved up or down, and every pin's form follows; Undo takes a move back. Experiment 09's last open item."
+     "kind": "patch",
+     "description": "A CSV that is not UTF-8 is read as Windows-1252, as Excel on Windows writes it, so accented place names read as they should."
     }
    ],
    "breaking": false,
@@ -575,12 +575,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.14.1",
+   "version": "0.15.0",
    "released": "2026-11-23",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Configure…'s picker of where to get a file starts at the source and year of the window the step holds: a GRID3 2025 step's was titled Population (WorldPop) and offered WorldPop's newest year, 2026, as was a WorldPop 2025 step's."
+     "kind": "minor",
+     "description": "A window first read at a web address can be read again from a copy of that file on this device, where the practitioner has one: it is read where it sits, never copied, and the window read from it is checked against the window that was kept, so another file is refused by name. A streamed raster then reads its full cells from that copy at each run rather than asking the host."
     }
    ],
    "breaking": false,
@@ -838,12 +838,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.17.0",
-   "released": "2026-11-21",
+   "version": "0.18.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "Census tables offers Sierra Leone's districts and chiefdoms, Malawi's districts with their cities and Kenya's summed counties, with geoBoundaries' names; a data dictionary chosen after its table proposes the values again."
+     "kind": "minor",
+     "description": "A CSV column the file gives no name, or a name an earlier column has, is read under a name given here and said on the Data quality tab, where the file was refused whole before; a file that is not UTF-8 is read as Windows-1252, as Excel on Windows writes it, and said. Found reading the African Bat Database, whose first column is R's row numbers."
     }
    ],
    "breaking": false,

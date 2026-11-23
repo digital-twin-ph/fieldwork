@@ -116,6 +116,14 @@ The sea-level example (EGM2008, the mean sea surface and DeltaDTM around Manila)
 
 ## History
 
+### 2026-11-23 · A copy on this device, where the window came from an address (0.15.0)
+
+A window read from a web address could only be read again from that address, so a practitioner holding the file still
+sent the study area to the host at every re-read. **Configure…** now offers *Or the same file on this device* beside
+**Read the window again**. The file is read where it sits and never copied, and the window read from it is checked
+against the window that was kept: another file is refused by name, and nothing is kept. A raster too large to keep then
+reads its full cells from that copy at each run.
+
 ### 2026-11-23 · The picker starts at what the step holds (0.14.1)
 
 **Configure…** offers where to get a population file. On a step that already held a window, it started at WorldPop's

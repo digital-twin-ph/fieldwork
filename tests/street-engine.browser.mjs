@@ -80,10 +80,12 @@ test('the widget offers an extract, and reads one into the workflow',async({page
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#node-library [data-add="network_input"]').click();
   await page.locator('.node').filter({hasText:'Street network'}).click();
-  await page.locator('#network-input-method').selectOption('extract');
-  await expect(page.locator('#network-extract')).toBeVisible();
+  await page.locator('#inspector-content #configure-step').click();
+  await page.locator('#network-config #network-input-method').selectOption('extract');
   // Travel mode is offered here too, because it decides what is read.
-  await expect(page.locator('#network-travel-mode')).toBeVisible();
+  await expect(page.locator('#network-config #network-travel-mode')).toBeVisible();
+  await page.locator('#network-config #config-apply').click();
+  await expect(page.locator('#network-extract')).toBeVisible();
 });
 
 test('the clip is the study area, not the box around it',async({page})=>{

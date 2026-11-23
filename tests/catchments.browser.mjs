@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureNetwork} from './network-config.mjs';
 import {configureStep} from './configure-step.mjs';
 import {inMapSettings} from './map-settings.mjs';
 import assert from 'node:assert/strict';
@@ -90,7 +91,7 @@ test('John Snow examples use shared primitives, persist parameters and replay of
 test('Street network imports GraphML and rejects invalid uploads without replacing saved data',async({page})=>{
   await page.goto('/?example=blank');await page.locator('[data-add="network_input"]').click();
   const xml='<graphml><key id="crs" attr.name="crs"/><key id="x" attr.name="x"/><key id="y" attr.name="y"/><key id="l" attr.name="length"/><graph edgedefault="directed"><data key="crs">EPSG:4326</data><node id="a"><data key="x">-.136</data><data key="y">51.513</data></node><node id="b"><data key="x">-.135</data><data key="y">51.513</data></node><edge source="a" target="b"><data key="l">70</data></edge></graph></graphml>';
-  await page.locator('#network-upload').setInputFiles({name:'tiny.graphml',mimeType:'application/xml',buffer:Buffer.from(xml)});await expect(page.locator('#inspector-content')).toContainText('2 nodes');const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');
+  await page.locator('#network-upload').setInputFiles({name:'tiny.graphml',mimeType:'application/xml',buffer:Buffer.from(xml)});await expect(page.locator('#inspector-content')).toContainText('2 junctions');const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');
   // An uploaded graph is kept in the large store like a downloaded one, so the saved workflow
   // holds its digest and not its edges.
   assert.equal(node.params.data,undefined);const graph=await payload(page,node.params.dataRef);assert.equal(graph.edges.length,1);assert.equal(graph.provenance.sha256.length,64);
@@ -128,7 +129,7 @@ test('Street network downloads bounded OSM data explicitly, preserves failed dow
       await route.fulfill({json:{version:0.6,elements:[{type:'count',id:0,tags:{ways:'3',total:'3'}}]}});return;}
     requests++;assert.match(sent,/data=/);await route.fulfill({json:{elements:[{type:'node',id:1,lon:-.136668,lat:51.513341},{type:'node',id:2,lon:-.135,lat:51.513341},{type:'way',id:3,nodes:[1,2],tags:{highway:'footway'}}]}});});
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node[data-id="network"]').click();await page.locator('#network-input-method').selectOption('osm');assert.equal(requests,0);await page.locator('#download-network').click();await expect(page.locator('#inspector-content')).toContainText('2 nodes');assert.equal(requests,1);assert.equal(counts,1,'the count is asked once, before the download');const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');
+  await page.locator('.react-flow__node[data-id="network"]').click();await configureNetwork(page,{method:'osm'});assert.equal(requests,0);await page.locator('#download-network').click();await expect(page.locator('#inspector-content')).toContainText('2 junctions');assert.equal(requests,1);assert.equal(counts,1,'the count is asked once, before the download');const w=await saved(page),node=w.nodes.find(n=>n.type==='network_input');
   // The saved workflow holds a REFERENCE; the graph itself is in the large store. A street network
   // in localStorage is what stopped Bunia being kept at all on 2026-10-20.
   assert.equal(node.params.data,undefined);assert.match(node.params.dataRef,/^[0-9a-f]{16,}$/);

@@ -172,12 +172,12 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   mapping effort and population density mislead; only area totals shown, with a minimum count. Open: real boundaries
   with made-up venues, or a made-up geography. Needs a spatial count model and residual cluster tests in a tab.
 - **Done in 0.155.0.** Table leftovers from the DR Congo workflow: After shows the rows as stored, then the crosstab; a long read names its value; the `measure` column a wide read makes is said as made by the read wherever it is offered.
-- **The rest of the Inspector move** (the practitioner, 2026-11-22: *"rest of the Inspector move for app.ts"*), in five
+- **Done in 0.172.0. The rest of the Inspector move** (the practitioner, 2026-11-22: *"rest of the Inspector move for app.ts"*), in five
   batches, one release each. **A, done in 0.164.0:** Cases by period, Rate, Select rows, Total within groups, Two-by-two,
   Regression. **B, done in 0.165.0:** Transmission chains, Space-time scan, Study design (now on the standard Inspector;
-  its dialog the standard one since 0.167.0). **D done in 0.169.0** (Table output, Polygon layer, Georeferenced map image, Find satellite products, satellite files). **Done in 0.169.0 too:** Mean center, Donut and H3 geomasking, with Convex hull, Voronoi catchments and Network isochrone. **Left:** from C, Find health facilities (Deduplicate records done
-  in 0.168.0). Project to UTM retired into Table output in 0.169.0; E dropped, its three sea-level steps being retired.
-  **Then:** Street network and Reachable junctions, on the old catchment panel; Show me how for the six steps of 0.169.0.
+  its dialog the standard one since 0.167.0). **D done in 0.169.0** (Table output, Polygon layer, Georeferenced map image, Find satellite products, satellite files). **Done in 0.169.0 too:** Mean center, Donut and H3 geomasking, with Convex hull, Voronoi catchments and Network isochrone. **Done in 0.172.0:** from C, Find health facilities (Deduplicate records done
+  in 0.168.0); Street network and Reachable junctions off the old catchment panel, which is gone; Show me how for the
+  six steps of 0.169.0. Project to UTM retired into Table output in 0.169.0; E dropped, its three sea-level steps being retired.
 - **Coastal sea-level:** the PSMSL archive reader; the framework's ontology terms, waiting on the practitioner's choice
   of the CF standard name for relative sea level.
 - **Done in 0.155.0.** Boundary levels as published: Check this level says the level's own name where geoBoundaries

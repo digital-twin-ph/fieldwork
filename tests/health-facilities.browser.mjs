@@ -118,6 +118,24 @@ test.describe('retrieval',()=>{
       {message:'both retained facilities reach the map as places'});
   });
 
+  // A STEP NAMING NO COUNTRY takes the study area's, and the retrieval goes ahead: it was refused as "the workflow changed
+  // during retrieval" before 0.4.3, the country written after the workflow was noted.
+  test('a step naming no country takes the study area\'s and still retrieves',async({page})=>{
+    await page.route('https://overpass-api.de/api/interpreter',route=>route.fulfill({json:OVERPASS_REPLY}));
+    const w=workflow();
+    w.nodes[0].params.country='PHL';w.nodes[1].params.country='';
+    await page.goto('/?example=blank');
+    await page.locator('#workflow-file').setInputFiles(
+      {name:'facilities.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
+    await page.locator('[data-view="workflow"]').click();
+    await page.locator('.react-flow__node[data-id="hf"]').click();
+    await page.locator('#hf-retrieve').click();
+    await expect(page.locator('#inspector-content')).toContainText(/2 facilities/,{timeout:20000});
+    await expect(page.locator('#inspector-content')).not.toContainText(/workflow changed during retrieval/);
+    const saved=JSON.parse(await page.evaluate(()=>localStorage.getItem('fieldwork-workflow-v1')));
+    assert.equal(saved.nodes.find(n=>n.id==='hf').params.country,'PHL');
+  });
+
   test('a refusal leaves the node as it was, with the reason shown',async({page})=>{
     await page.route('https://overpass-api.de/api/interpreter',route=>
       route.fulfill({status:429,headers:{'retry-after':'1'},body:'Rate limited'}));

@@ -39,12 +39,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "aggregate_points_to_h3_cell": {
-   "version": "0.3.0",
-   "released": "2026-11-22",
+   "version": "0.4.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "On the standard Inspector: the resolution and the fewest points a cell must hold in Configure…, with the size of a cell at two resolutions; the cells kept by the last run; a manual page."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: Six made-up homes in three H3 cells at the resolution set: the cells left out for holding too few, and the cells the step makes with their counts."
     }
    ],
    "breaking": false,
@@ -266,12 +266,12 @@
    ]
   },
   "donut_geomask": {
-   "version": "0.2.0",
-   "released": "2026-11-22",
+   "version": "0.3.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "On the standard Inspector: the two distances and the seed in Configure…, the run's own check holding Apply; one sentence saying it is a teaching transformation, not a privacy guarantee; a manual page."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: A made-up home: the distance it will not stay within, the distance it will not pass, and where the seed set moves it."
     }
    ],
    "breaking": false,
@@ -329,12 +329,12 @@
    "migrationFrom": []
   },
   "find_health_facilities": {
-   "version": "0.4.2",
-   "released": "2026-11-12",
+   "version": "0.4.3",
+   "released": "2026-11-23",
    "changes": [
     {
      "kind": "patch",
-     "description": "The receipt records every count the run's sentence states about what a retrieval set aside: of a kind not asked for, without usable coordinates, without a name, and the total, beside the count outside the study area (experiment 208: \"Dropped 12582 records\" was a sum only the sentence held)."
+     "description": "Its Inspector moved to facilities-ui.ts. Retrieve facilities, for a step naming no country, fills in the study area's country before it notes the workflow, so the retrieval is no longer refused as changed while it ran."
     }
    ],
    "breaking": false,
@@ -371,12 +371,12 @@
    "migrationFrom": []
   },
   "isochrone": {
-   "version": "0.5.0",
-   "released": "2026-11-22",
+   "version": "0.6.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "On the standard Inspector, out of the shared catchment panel: one sentence of direction, times, speed and last walk; every setting in Configure…, with the distance the time buys and the run's own check holding Apply; the regions drawn and the sites that reached nothing or were routed off the network."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: A made-up street grid spaced to the time set: the walk onto the nearest junction, the streets walked until the time is spent with the ground either side, and the region the step makes."
     }
    ],
    "breaking": false,
@@ -425,12 +425,12 @@
    ]
   },
   "mean_center": {
-   "version": "0.3.0",
-   "released": "2026-11-22",
+   "version": "0.4.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "On the standard Inspector: the weight chosen from the arriving points' numeric columns in Configure…, with the UTM zone and the suggested one; the centre, the points used and the weight total of the last run; a manual page."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: Four made-up houses: the centre with each counted once, the centre counted by the weight, and the point the step makes as set."
     }
    ],
    "breaking": false,
@@ -474,40 +474,12 @@
    "migrationFrom": []
   },
   "network_input": {
-   "version": "0.13.0",
-   "released": "2026-10-22",
+   "version": "0.14.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "fix",
-     "description": "No clock ends a download that is arriving. ATTEMPT_MS was armed before the fetch and never cleared when the response came, so it ran on through the body and stopped a working transfer: a province download was cut at 59.4 MB, about 0.33 MB/s, from a panel offering 300 MB -- the clock forbade roughly four fifths of what the widget said it accepts, and the toast then reported that the service 'did not answer'. The three minutes was borrowed from OSMnx, where it is passed to Python requests and fires only when no bytes have arrived for that long; it was imported here as a total elapsed deadline. The practitioner: 'If nothing ever arrives, that means there is no download. But there is an ongoing download -- this is where we are applying that wrong cap.' The response budget now ends where the response begins and nothing replaces it."
-    },
-    {
-     "kind": "added",
-     "description": "A Stop button beside the download, because nothing else can end one now. It is hidden until a download starts, and ending one says what had arrived: 'Stopped at 59.4 MB. Nothing was changed and what arrived was not kept.' If the service goes quiet the status line reports how long it has been silent and keeps waiting; the decision to give up is the practitioner's."
-    },
-    {
-     "kind": "changed",
-     "description": "The network preview says it is the graph saved on the node, and on the download path that a download replaces it only when it finishes. It had read as the result of a download in progress."
-    },
-    {
-     "kind": "changed",
-     "description": "The panel shows the controls of the chosen input method and no others. The hand-edit JSON box, its GraphML/JSON file input and the note about an uploaded file keeping its own extent were rendered for all three methods, so choosing Geofabrik or OpenStreetMap still presented the controls of a path not taken. The practitioner: 'The dropdown selection should declutter the UI of controls for other options.' The clip margin moved the other way: it governs the extract clip exactly as it governs the download, and it was settable only on the download, so a setting in force on this path could not be seen or changed from it."
-    },
-    {
-     "kind": "changed",
-     "description": "The published-extract path asks for the file first and offers the download under it, rather than numbering them Step 1 and Step 2. The practitioner: 'A downloaded Geofabrik file may come from another user for example.' Numbering them said the only way to hold a .pbf is to have fetched it here. The input is a published extract, wherever it came from; the links are help for not having one."
-    },
-    {
-     "kind": "fix",
-     "description": "The network-file upload states which formats it takes -- GraphML with its CRS declared as EPSG:4326, raw Overpass JSON, or a network JSON this application exported, and not GeoPackage, shapefile or OSM XML -- and its real size ceiling. It was labelled 'up to 2 MB' while the enforced limit is downloadLimits().maxBytes: 30 MB at the default graph limit and 300 MB at 500,000 junctions. A stated limit that low stops someone trying a file the application would have accepted."
-    },
-    {
-     "kind": "added",
-     "description": "An area too large for one Overpass request is asked for in as many as it takes, automatically. The single request is still made first, so a town costs exactly what it cost before and no extra count is spent on an area that never needed one; only the predictive SIZE refusal -- raised from the service's own count before any bytes are sent -- turns into a plan. The grid comes from that count divided by what one response carries, never from a chosen tile size, so density decides and a sparse area stays one request. Tiles overlap by the download margin so that a way crossing a seam keeps both its ends, tiles that miss the study outline are never requested, and the responses merge by OSM id with any edge whose far end never arrived counted and reported. Stop ends the whole sequence; the pause is charged once for the total rather than per tile. The practitioner, asked whether to make it a mode to choose: 'Let's try the first approach -- this is about discovery.'"
-    },
-    {
-     "kind": "fix",
-     "description": "A downloaded network is clipped to the study area polygon, not to its bounding box. Overpass is asked about a box because that is how it is asked about an area at all, and until now the box was what arrived: the practitioner saw 'network outside the study area bounds' on the Ituri map, and had been building longer workflows with separate clip widgets to compensate. Point-in-polygon over a province needs an index rather than a loop -- an outline of 7,759 vertices against hundreds of thousands of junctions -- so the clip uses 512 latitude bands, the same shape of index the street engine uses on the .pbf path. A junction is kept when it is inside the outline OR within the download margin of it, and a segment when both its ends are. The margin is not an oversight: the widget downloads beyond the study bounds on purpose, so a journey starting near the border can leave and come back, and clipping to the bare outline would make that control a lie. Set the margin to zero and the clip is the polygon exactly. Both drop counts are in the provenance."
+     "kind": "minor",
+     "description": "On the standard Inspector: one sentence of what it holds and where it comes from, the download, file or extract that way needs, and Configure… for the way in, the travel mode, the margin, the pause and the graph limit. The Result gives the junctions and streets held. Moved off the old catchment panel to network-input-ui.ts."
     }
    ],
    "breaking": false,
@@ -664,28 +636,12 @@
    "migrationFrom": []
   },
   "reachable_nodes": {
-   "version": "0.5.0",
-   "released": "2026-10-17",
+   "version": "0.6.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "initial",
-     "description": "Street junctions within a travel budget of an origin, each carrying the budget left on arrival. Extracted from the Dijkstra inside isochrone (src/catchments.ts:76) unchanged, including the edge reversal that makes inbound a different question from outbound. Fourth of six primitives an isochrone composition needs. Settles the question that stopped the decomposition in experiment 82 -- what a reached junction travels as: the truncation downstream consumes budget minus cost at the edge's start node, which is a per-node quantity, so reached junctions travel as points with a remainingM attribute and no lines port type is needed. The corridor step that follows truncates by remainingM over lengthM and never restates the minutes or the speed. Takes no UTM zone, unlike the eight metric widgets: costs are the network's own lengthM values and nothing here re-measures geometry. Travel mode is an explicit parameter -- walking, cycling, driving or other -- checked against the speed, because the 75 metres per minute this project defaulted to everywhere is 4.5 km/h from Advanced-1 NB03 cell 10, where it is an assumption about pedestrians in Soho in 1854 and was being inherited rather than chosen. Public transport is refused as a mode, because it follows routes and a timetable rather than the street network. See docs/experiments/83-reachable-junctions.md."
-    },
-    {
-     "kind": "added",
-     "description": "Each reached junction now carries travelDirection beside remainingM. The corridor step that follows has to truncate edges the same way round as the traversal ran, and direction was a parameter of this node that its output did not state -- so the corridor would have needed its own direction parameter, free to contradict this one. Carrying it as data closes that, for the same reason remainingM is carried rather than the budget. Additive: no existing attribute changed."
-    },
-    {
-     "kind": "added",
-     "description": "Each reached junction now carries speedMPerMin and travelMode. travel_time_band has to convert its minutes into metres, and the speed was a parameter of this node that its output did not state -- so the band would have needed its own speed parameter, free to contradict this one, which is the defect the mode plausibility bands exist to catch. Carrying it as data closes it, for the same reason remainingM and travelDirection are carried. Additive: no existing attribute changed."
-    },
-    {
-     "kind": "changed",
-     "description": "The walk from the site onto the network is charged against the budget. It was measured, attached to the point and then spent by nothing, so every reachable set reached further than its time allowed. An origin whose walk alone spends the budget now reaches nothing and is reported rather than silently returning an empty set. Junctions also carry the origin’s own coordinates and its snap distance, so whatever draws a corridor can draw the first leg of the route. Experiment 114."
-    },
-    {
-     "kind": "added",
-     "description": "Attaches its own origins. It refused any point without a networkNodeId and named snap_to_network as the fix, which made a whole widget a prerequisite for one nearest-neighbour search; it now finds the junction itself, by the same nearestNetworkNode over the same projection that widget uses, so the two paths agree junction for junction and metre for metre. A point arriving already snapped is used exactly as it arrives and nothing is projected. Three parameters are therefore declared -- zone, hemisphere and maxSnapM -- and all three are OPTIONAL, because this widget's reason for having no zone stays true whenever origins arrive snapped: nothing in the Dijkstra re-measures geometry, so a run that attaches nothing has nothing to project and is not asked for a frame. Completeness is refused at run time, naming the origins that needed it, which is why no saved workflow had to be migrated and no zone had to be invented for one. Unlike snap_to_network this does NOT move the point: it reads the nearest junction, charges the distance against the budget and leaves the origin where it stands. Additive -- every workflow that ran against 0.4.0 runs unchanged. Step 1 and 2 of the snap_to_network retirement; see docs/experiments/82-snap-to-network.md."
+     "kind": "minor",
+     "description": "On the standard Inspector: one sentence of what it finds, every setting in Configure…, which holds Apply while the speed is outside the mode's range, and the run's counts in the Result. Moved off the old catchment panel to metric-steps-ui.ts. A manual page."
     }
    ],
    "breaking": false,
@@ -859,12 +815,12 @@
    "migrationFrom": []
   },
   "summarize_hull": {
-   "version": "0.2.0",
-   "released": "2026-11-22",
+   "version": "0.3.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "On the standard Inspector: name, inputs, one sentence and the area and span of the last run; the UTM zone in Configure…, with the zone the workflow's coordinates suggest and what the chosen one stretches, and a notice in Settings when they disagree."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: Six made-up cases: the band caught on the outermost, the one inside that does not shape it, and the outline the step makes with its area and widest span."
     }
    ],
    "breaking": false,
@@ -973,12 +929,12 @@
    "migrationFrom": []
   },
   "voronoi": {
-   "version": "0.2.0",
-   "released": "2026-11-22",
+   "version": "0.3.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "On the standard Inspector, out of the shared catchment panel: one sentence saying it allocates by straight-line distance, which ignores roads, rivers and travel time; the UTM zone in Configure…, with the suggested zone; the catchments drawn; a manual page."
+     "kind": "minor",
+     "description": "Show me how it works, in Configure…: Three made-up pumps in a study area: a house going to the nearest, the lines where two are equally near, and the cells the step makes, which fill the box around the area."
     }
    ],
    "breaking": false,

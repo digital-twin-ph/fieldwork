@@ -41,6 +41,10 @@ No lab notebook checks it yet. The browser test asserts that every point moved w
 
 ## History
 
+### 2026-11-23 · Show me how (0.3.0)
+
+**Configure…** offers **Show me how it works**: a made-up home: the distance it will not stay within, the distance it will not pass, and where the seed set moves it.
+
 ### 2026-11-22 · On the standard (0.2.0)
 
 Moved to the standard Inspector: the distances and the seed are in **Configure…**, and the sentence says it is a

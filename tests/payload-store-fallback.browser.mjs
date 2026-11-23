@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureNetwork} from './network-config.mjs';
 import assert from 'node:assert/strict';
 
 // The practitioner, 2026-10-20: "Store fallback is dangerous especially when the primary mode
@@ -44,7 +45,7 @@ test('a browser with no large store says so on the widget, before a download rat
   assert.match(await toasts(page),/would not open the large store/);
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
-  await page.locator('#network-input-method').selectOption('osm');
+  await configureNetwork(page,{method:'osm'});
   await expect(page.locator('#network-store-warning')).toContainText('about 5 MB in all');
   await expect(page.locator('#network-store-warning')).toBeVisible();
 });
@@ -53,6 +54,6 @@ test('the warning is absent where the large store works, so it means something w
   await page.goto('/?example=snow-isochrone');
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
-  await page.locator('#network-input-method').selectOption('osm');
+  await configureNetwork(page,{method:'osm'});
   await expect(page.locator('#network-store-warning')).toHaveCount(0);
 });

@@ -1249,7 +1249,7 @@ export function summarizeStep(node:WorkflowNode,value:unknown):StepSummary|undef
     case 'voronoi':case 'donut_geomask':case 'aggregate_points_to_h3_cell':return {features:v?.features?.length??0};
     case 'line_input':{const l=value as import('./types.js').LineLayer|undefined;if(!l?.features)return undefined;
       const km=l.features.reduce((t,f)=>t+lineLengthKm(f),0);return {lines:l.features.length,km:km<10?km.toFixed(2):Math.round(km).toLocaleString('en')};}
-    case 'isochrone':return {features:v?.features?.length??0,unconnected:v?.unconnected?.length??0,offNetwork:v?.offNetwork?.length??0};
+    case 'isochrone':case 'reachable_nodes':return {features:v?.features?.length??0,unconnected:v?.unconnected?.length??0,offNetwork:v?.offNetwork?.length??0};
     case 'mean_center':{const c=value as MeanCenter;return {longitude:c.coordinates[0],latitude:c.coordinates[1],count:c.count,
       ...(c.weight?{weightField:c.weight.field,weightTotal:c.weight.total}:{})};}
     default:return undefined;

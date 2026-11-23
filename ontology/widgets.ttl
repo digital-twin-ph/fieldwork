@@ -81,7 +81,8 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/rate.md>.
 <urn:fieldwork:widget:rate_ratio> a fw:WidgetDefinition; fw:nodeType "rate_ratio"; rdfs:label "Rate ratio with an interval".
 <urn:fieldwork:widget:reachable_corridor> a fw:WidgetDefinition; fw:nodeType "reachable_corridor"; rdfs:label "Reachable corridor".
-<urn:fieldwork:widget:reachable_nodes> a fw:WidgetDefinition; fw:nodeType "reachable_nodes"; rdfs:label "Reachable junctions".
+<urn:fieldwork:widget:reachable_nodes> a fw:WidgetDefinition; fw:nodeType "reachable_nodes"; rdfs:label "Reachable junctions";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/reachable_nodes.md>.
 <urn:fieldwork:widget:relate_table> a fw:WidgetDefinition; fw:nodeType "relate_table"; rdfs:label "Relate a column from another table";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/relate_table.md>.
 <urn:fieldwork:widget:reproject> a fw:WidgetDefinition; fw:nodeType "reproject"; rdfs:label "Reproject points".

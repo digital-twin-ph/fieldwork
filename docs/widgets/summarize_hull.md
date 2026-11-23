@@ -58,6 +58,10 @@ recomputes the outline and the area with Shapely and compares them to this widge
 
 ## History
 
+### 2026-11-23 · Show me how (0.3.0)
+
+**Configure…** offers **Show me how it works**: six made-up cases: the band caught on the outermost, the one inside that does not shape it, and the outline the step makes with its area and widest span.
+
 ### 2026-11-22 · On the standard (0.2.0)
 
 Moved to the standard Inspector: name, inputs, one sentence, and the area and span of the last run. The UTM zone is in

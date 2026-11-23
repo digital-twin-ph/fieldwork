@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureNetwork} from './network-config.mjs';
 import assert from 'node:assert/strict';
 import {payload} from './payload-store.mjs';
 
@@ -46,9 +47,9 @@ test('a street network larger than the whole localStorage quota is kept and surv
       :route.fulfill({body,contentType:'application/json'}));
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
-  await page.locator('#network-input-method').selectOption('osm');
+  await configureNetwork(page,{method:'osm'});
   await page.locator('#download-network').click();
-  await expect(page.locator('#inspector-content')).toContainText(`${NODES} nodes`,{timeout:120000});
+  await expect(page.locator('#inspector-content')).toContainText(`${NODES.toLocaleString("en")} junctions`,{timeout:120000});
 
   const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
   const node=stored.nodes.find(n=>n.type==='network_input');

@@ -23,29 +23,33 @@ const open=async(page,boundaryID)=>{
     {name:'w.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(workflowWith(boundaryID)))});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('#canvas .node').filter({hasText:'Street network'}).click();
+  await page.locator('#inspector-content #configure-step').click();
 };
+const mode=page=>page.locator('#network-config #network-travel-mode');
 
 test('a province defaults to driving, and says why',async({page})=>{
   await open(page,'COD-ADM1-63176286');
-  await expect(page.locator('#network-travel-mode')).toHaveValue('driving');
-  await expect(page.locator('.inspector-body')).toContainText('Default for a published ADM1 unit');
+  await expect(mode(page)).toHaveValue('driving');
+  await expect(page.locator('#network-config')).toContainText('Default for a published ADM1 unit');
 });
 
 test('a territory, and a boundary nobody published, stay on walking',async({page})=>{
   await open(page,'COD-ADM2-63176286');
-  await expect(page.locator('#network-travel-mode')).toHaveValue('walking');
+  await expect(mode(page)).toHaveValue('walking');
   await open(page,undefined);
-  await expect(page.locator('#network-travel-mode')).toHaveValue('walking');
-  await expect(page.locator('.inspector-body')).not.toContainText('default here');
+  await expect(mode(page)).toHaveValue('walking');
+  await expect(page.locator('#network-config')).not.toContainText('Default for a published');
 });
 
 test('and a choice, once made, is not overridden',async({page})=>{
   await open(page,'COD-ADM1-63176286');
-  await page.locator('#network-travel-mode').selectOption('walking');
-  await expect(page.locator('#network-travel-mode')).toHaveValue('walking');
+  await mode(page).selectOption('walking');
+  await page.locator('#network-config #config-apply').click();
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('for walking');
   await page.reload();
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.node',{hasText:'Street network'}).click();
-  await expect(page.locator('#network-travel-mode')).toHaveValue('walking');
-  await expect(page.locator('.inspector-body')).not.toContainText('default here');
+  await page.locator('#inspector-content #configure-step').click();
+  await expect(mode(page)).toHaveValue('walking');
+  await expect(page.locator('#network-config')).not.toContainText('Default for a published');
 });

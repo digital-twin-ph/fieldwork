@@ -39,6 +39,10 @@ The lab's [mean centre notebook](https://digital-twin-ph.github.io/validation-la
 
 ## History
 
+### 2026-11-23 · Show me how (0.4.0)
+
+**Configure…** offers **Show me how it works**: four made-up houses: the centre with each counted once, the centre counted by the weight, and the point the step makes as set.
+
 ### 2026-11-22 · On the standard (0.3.0)
 
 Moved to the standard Inspector: the weight, chosen from the arriving points' columns, and the UTM zone are in

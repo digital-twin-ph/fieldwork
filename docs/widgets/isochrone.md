@@ -107,6 +107,10 @@ the stated rule with Shapely.
 
 ## History
 
+### 2026-11-23 · Show me how (0.6.0)
+
+**Configure…** offers **Show me how it works**: a made-up street grid spaced to the time set: the walk onto the nearest junction, the streets walked until the time is spent with the ground either side, and the region the step makes.
+
 ### 2026-11-22 · On the standard (0.5.0)
 
 Moved to the standard Inspector: one sentence of direction, times, speed and last walk, and every setting in

@@ -2,11 +2,12 @@
  *  source as before; or from a list, matching each row's facility name to the registers of a catalogue generated from
  *  the ontology. The preview is the outcomes of matching, counted; the decisions are the names matching could not
  *  settle, each with its candidates. Nothing reaches the step until Apply. */
-import type {ParamsByType,Escape} from './types.js';
+import type {Boundary,ParamsByType,Escape,PointCollection,Workflow} from './types.js';
+import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {openConfigDialog} from './config-dialog.js';
-import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS} from './health-facilities.js';
-import {matchFacilityNames,matchCounts,OUTCOME_WORDS,DEFAULT_LIST_SETTINGS,registersFromLayer,
-  type FacilityListSettings,type RegisterEntry} from './facility-matching.js';
+import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,fetchHotExport,requireRunnableFindHealthFacilities} from './health-facilities.js';
+import {matchFacilityNames,matchCounts,OUTCOME_WORDS,DEFAULT_LIST_SETTINGS,registersFromLayer,fetchRegister,registerLayer,
+  type FacilityListSettings,type RegisterEntry,type LoadedRegister} from './facility-matching.js';
 
 type Params=ParamsByType['find_health_facilities'];
 export interface FacilitiesDraft {mode:'area'|'list'; source:Params['source']; country:string; kinds:string; requireName:boolean;
@@ -143,3 +144,117 @@ export function openFacilitiesConfig(view:FacilitiesConfigView,esc:Escape):void{
     apply:view.apply,
   },esc);
 }
+
+/** WHAT FIND HEALTH FACILITIES' INSPECTOR IS GIVEN BY THE APPLICATION (2026-11-23, the rest of the Inspector move). */
+export interface FacilitiesKit extends StepKit {
+  catalogue:readonly RegisterEntry[];
+  countries:readonly {iso:string;name:string}[];
+  /** The one country the study area upstream states, if it states one. */
+  stated:(nodeId:string)=>string|null;
+  /** The list's columns, and its rows where the list resolves without a run. */
+  listOn:(nodeId:string)=>{columns:string[];rows?:{key:Record<string,string>}[]};
+  /** The study area that bounds the query. */
+  boundary:(nodeId:string)=>Boundary;
+  /** Keeps a fetched layer on this device by its digest; refuses where it cannot. */
+  keepLayer:(layer:PointCollection)=>Promise<string>;
+  /** A change that must reach storage: false where it was refused. */
+  saved:(edit:(w:Workflow)=>void)=>boolean;
+  say:(message:string,failure?:boolean)=>void;
+}
+
+type FacilitiesNode=import('./types.js').WorkflowNode<'find_health_facilities'>;
+const nodeIn=(w:Workflow,id:string)=>{const n=w.nodes.find(x=>x.id===id);return n?.type==='find_health_facilities'?n as FacilitiesNode:undefined;};
+
+export const facilitiesInspector:OwnInspector<'find_health_facilities'>={
+  markup:(n,kit)=>{const k=kit as FacilitiesKit,esc=kit.esc,p=n.params,descriptor=FACILITY_SOURCES[p.source],list=p.mode==='list';
+    const fetched=list?p.registerRetrieved:p.retrieved;
+    // STALE when the registers chosen, or the country read for one covering every country, are not what was fetched.
+    const stale=list&&!!p.registerRetrieved&&!!p.list&&(p.list.registers.join()!==p.registerRetrieved.registers.map(r=>r.id).join()
+      ||p.registerRetrieved.registers.some(r=>r.country&&r.country!==p.list?.country));
+    const why=k.unfinished(n.id),ran=k.method(n.id);
+    const held=list
+      ?(p.registerRetrieved?`Holds ${p.registerRetrieved.registers.map(r=>`${r.title}: ${r.records.toLocaleString('en-US')} facilities`).join('; ')}, fetched ${p.registerRetrieved.at.slice(0,10)}.`:'No register fetched yet.')
+      :(p.retrieved?`${p.retrieved.kept} facilities from ${p.retrieved.sourceLabel}, retrieved ${p.retrieved.at.slice(0,10)}. Scope: ${p.retrieved.scope}. `
+        +((d=>d.kind+d.coordinates+d.name?`Dropped ${d.kind} of an unrequested kind, ${d.coordinates} outside the area or without coordinates, ${d.name} without a name.`:'No records dropped.')(p.retrieved.dropped))
+        +(p.retrieved.belowConfidence!==undefined?` ${p.retrieved.belowConfidence} below the confidence threshold; ${p.retrieved.unmappedCategory??0} of a health category not mapped to a facility kind.`:'')
+        :'No facilities retrieved yet. Connect a study area: it is the scope of the query.');
+    return kit.section('Name',kit.name('hf-label',p.label||k.title('find_health_facilities')))
+      +kit.section('Inputs',kit.inputs(n,{list:'The list',area:'Study area'}))
+      +kit.section('Settings',`<p class="standard-sentence">${esc(facilitiesSentence(p,k.catalogue))}</p>`
+        +`<div class="inspector-actions">${list
+          ?`<button id="hf-fetch-registers" class="button${!fetched||stale?' primary':''}"${p.list?.registers.length?'':' disabled'}>${fetched?'Fetch the registers again':'Fetch the registers'}</button>`
+          :`<button id="hf-retrieve" class="button${fetched?'':' primary'}">Retrieve facilities</button>`}`
+        +`<button id="configure-step" class="button${fetched&&!stale?' primary':''}">Configure\u2026</button></div>`
+        +`<p id="hf-status" role="status" class="description"></p>`
+        +(stale?'<p class="notice notice-warning">The registers or the country chosen are not the ones fetched. Fetch them again.</p>':'')
+        +(list?'':`<ul class="licence-links">${descriptor.links.map(l=>`<li><a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} \u2197</a></li>`).join('')}</ul>`))
+      +kit.section('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`:held)}</p>`
+        +(ran&&!why?`<p class="standard-state">${esc(ran.split('. ').slice(0,2).join('. '))}.</p>`:'')
+        // THE ATTRIBUTION THE LICENCE REQUIRES, where the facilities are: ODbL asks that it stay with the data.
+        +(!list&&p.retrieved?`<p class="description">${esc(p.retrieved.attribution)}</p>`:'')
+        +(list&&p.registerRetrieved?.registers.some(r=>r.licence.includes('odbl'))?`<p class="description">${esc(FACILITY_SOURCES['hdx-hot-export'].attribution)}</p>`:'')
+        +(list&&p.registerRetrieved?`<p class="description">${esc(p.registerRetrieved.registers.map(r=>`${r.title}, ${r.licence.includes('by/4.0')?'CC BY 4.0':r.licence}`).join('; '))}</p>`:'')
+        +'<div data-standard-result></div>');},
+  wire:(n,kit,root)=>{const k=kit as FacilitiesKit;
+    const status=()=>root.querySelector<HTMLElement>('#hf-status');
+    root.querySelector('#configure-step')?.addEventListener('click',()=>{
+      const node=nodeIn(kit.workflow(),n.id);if(!node)return;
+      const {columns,rows}=k.listOn(n.id);
+      openFacilitiesConfig({step:node.params.label||k.title('find_health_facilities'),catalogue:k.catalogue,listColumns:columns,
+        ...(rows?{listRows:rows}:{}),layer:node.params.mode==='list'?node.params.data:null,countries:[...k.countries],
+        // THE STUDY AREA ALREADY SAYS WHICH COUNTRY: filled in, never retyped (the practitioner, 2026-10-23).
+        initial:facilitiesDraftOf(node.params,k.stated(n.id)||''),
+        apply:draft=>{k.saved(w=>{const target=nodeIn(w,n.id);if(!target)return;const was=target.params.mode??'area';
+          applyFacilitiesDraft(target.params,draft);
+          // A CHANGE OF WAY IN changes the input: what was connected to the other one is disconnected, and what was
+          // fetched for the other one is not this one's.
+          if(was!==(draft.mode??'area')){w.edges=w.edges.filter(e=>e.to!==n.id);target.params.data=null;target.params.retrieved=null;
+            delete target.params.registerRetrieved;delete (target.params as {dataRef?:string}).dataRef;}});},
+      },kit.esc);
+    });
+    root.querySelector<HTMLButtonElement>('#hf-fetch-registers')?.addEventListener('click',async e=>{
+      const button=e.currentTarget as HTMLButtonElement,node=nodeIn(kit.workflow(),n.id);if(!node)return;
+      const ids=node.params.list?.registers??[],country=node.params.list?.country;
+      button.disabled=true;
+      try{
+        const loaded:LoadedRegister[]=[];
+        for(const id of ids){
+          const register=k.catalogue.find(r=>r.id===id);
+          if(!register)throw new Error(`${id} is not in the register catalogue.`);
+          const s=status();if(s)s.textContent=`Fetching ${register.title}\u2026`;
+          const forCountry=register.anyCountry?country:undefined;
+          loaded.push({register:forCountry?{...register,title:`${register.title}, ${forCountry}`}:register,
+            facilities:await fetchRegister(register,fetch,{...(forCountry?{country:forCountry}:{}),readExport:(iso,f)=>fetchHotExport(iso,f).then(got=>got.payload)})});
+        }
+        const layer=registerLayer(loaded),digest=await k.keepLayer(layer),at=new Date().toISOString();
+        if(k.saved(w=>{const target=nodeIn(w,n.id);if(!target)return;target.params.data=layer;
+          (target.params as {dataRef?:string}).dataRef=digest;
+          target.params.registerRetrieved={registers:loaded.map(({register,facilities})=>({id:register.id,title:register.title,
+            licence:register.licence,records:facilities.length,...(register.anyCountry&&country?{country}:{})})),at};}))
+          k.say(`${loaded.map(l=>`${l.facilities.length.toLocaleString('en-US')} facilities from ${l.register.title}`).join('; ')}. Run the workflow to match the list.`);
+      }catch(error){const message=error instanceof Error?error.message:String(error);const s=status();if(s)s.textContent=message;k.say(message,true);}
+      finally{button.disabled=false;}
+    });
+    root.querySelector<HTMLButtonElement>('#hf-retrieve')?.addEventListener('click',async e=>{
+      const button=e.currentTarget as HTMLButtonElement;
+      let node=nodeIn(kit.workflow(),n.id);if(!node)return;
+      button.disabled=true;button.textContent='Retrieving\u2026';
+      try{
+        // A country the study area stated and nobody touched is still the country. Written onto the node before the
+        // request, so the receipt says what was asked for rather than leaving it to be inferred from an area the
+        // workflow may later be rewired away from.
+        if(!node.params.country){const stated=k.stated(n.id);
+          if(stated){kit.change(w=>{const t=nodeIn(w,n.id);if(t)t.params.country=stated;});node=nodeIn(kit.workflow(),n.id)??node;}}
+        const baseline=JSON.stringify(kit.workflow());
+        requireRunnableFindHealthFacilities(node);
+        const boundary=k.boundary(n.id),s=status();
+        if(s)s.textContent=`Querying ${FACILITY_SOURCES[node.params.source].label}\u2026`;
+        const {parsed,retrieval}=await downloadFacilities(node,boundary,undefined,message=>{const t=status();if(t)t.textContent=message;});
+        if(JSON.stringify(kit.workflow())!==baseline)throw new Error('The workflow changed during retrieval. Press Retrieve again with the current area.');
+        if(k.saved(w=>{const t=nodeIn(w,n.id);if(!t)return;t.params.data=parsed.collection;t.params.retrieved=retrieval;}))
+          k.say(`${parsed.kept} facilities retrieved. Run the workflow to use them.`);
+      }catch(error){const message=error instanceof Error?error.message:String(error);const s=status();if(s)s.textContent=message;k.say(message);}
+      finally{button.disabled=false;button.textContent='Retrieve facilities';}
+    });
+  },
+};

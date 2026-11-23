@@ -3,7 +3,7 @@
   "note": "The Inspector is a control surface, not a record. Measured 2026-10-20 at 11,838 characters across 80 paragraphs; measured again 2026-10-21 at 22,855 across 160, which is what the practitioner was looking at when they said \"there are too many commentaries in the Inspector panel. That is not the place to keep development or agent notes.\" The rule written against that held a ceiling on TOTAL characters, and on 2026-10-23 the practitioner named its fault: \"Inspector prose should not be limited by number of characters, it should be limited by how well each component of the widget is explained concisely\" ... \"concisely and clearly\". A total is a shared budget, and the day before, the weight and ruleset explanations -- neither a development note -- were trimmed to afford a country-mismatch warning the practitioner had asked for. The budget made the Inspector worse to let something necessary in. Replaced with a per-explanation measure after the practitioner's second point: \"The prose in the UI is more qualitative review than quantitative. But it could still be scored.\"",
   "files": [
     "src/app.ts",
-    "src/catchment-ui.ts",
+    "src/network-input-ui.ts",
     "src/input-data-ui.ts",
     "src/rule-editor.ts",
     "src/deduplicate-ui.ts",
@@ -14,7 +14,7 @@
   "measuredAt": "2026-10-23",
   "concise": 240,
   "overCeiling": 1,
-  "floor": 46,
+  "floor": 60,
   "floorRule": "It may be raised freely and may never be lowered. The floor is the worst explanation currently in the Inspector, so a new one is never charged for being new -- only for reading worse than what is already there.",
   "score": {
     "what": "A proxy, and reported as one. It does not know whether an explanation is true, whether it explains the control a reader will take it to be about, or whether anyone understood it. Its job is the worst-first list it prints, which is where a human review should start. Treated as the review rather than a route to it, it is gamed by short bad sentences.",

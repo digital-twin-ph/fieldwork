@@ -15,6 +15,11 @@ import {pointRelation} from './spatial-predicates.js';
 import type {RasterGrid} from './raster.js';
 import type {AreaUnit} from './types.js';
 import {joinTableToAreas} from './area-join.js';
+import {convexHull} from './convex-hull.js';
+import {voronoi,isochrone,type Network} from './catchments.js';
+import {computeMeanCenter} from './mean-center.js';
+import {moveDonut,aggregateHex} from './geoprivacy.js';
+import {latLngToCell,cellToLatLng,cellToBoundary,gridDisk,getHexagonEdgeLengthAvg,UNITS as H3_UNITS} from 'h3-js';
 
 type Kind='input'|'area'|'look'|'result'|'gone';
 interface Shape {kind:Kind;rings?:Position[][][];point?:Position;label?:string;at?:Position;
@@ -279,4 +284,150 @@ export function summarizePointsWalkthrough(boundary:'include'|'exclude',valueFie
       +`South: ${houses(s.count)}, ${field} ${s.total}${s.missingValues?`, with ${s.missingValues} house whose ${field} is not recorded`:''}.`
       +(onEdge?' House 4 is in both, so the two counts add up to one more than the houses inside.':''),
       [...units('result',true),...P.map(p=>({...pt('gone',p.name),label:undefined}))],true)]};
+}
+
+/** THE SIX STEPS PUT ON THE STANDARD IN 0.169.0 (2026-11-23): Convex hull, Voronoi catchments, Network isochrone, Mean
+ *  center, Move points in a donut and Aggregate points to H3 cells. The metric four measure in UTM zone 36S, where these
+ *  made-up shapes lie, and say so; each last step is what the step's own function makes of them. */
+const ZONE36S={zone:36,hemisphere:'south' as const};
+const M_PER_DEGREE=111320;
+const pointsOf=(list:readonly {name:string;at:Position;props?:Record<string,unknown>}[]):PointCollection=>({type:'FeatureCollection',
+  features:list.map(p=>({type:'Feature',id:p.name,properties:{name:p.name,...p.props},geometry:{type:'Point',coordinates:p.at}}))});
+const km2=(m2:number)=>m2>=1e5?`${(m2/1e6).toLocaleString('en',{maximumFractionDigits:2})} km²`:`${Math.round(m2).toLocaleString('en')} m²`;
+const apart=(a:Position,b:Position)=>Math.hypot((a[0]-b[0])*Math.cos(a[1]*Math.PI/180),a[1]-b[1])*M_PER_DEGREE;
+const lineTo=(a:Position,b:Position):Position[][][]=>[[[a,b,a]]];
+
+const CASES:{name:string;at:Position}[]=[{name:'Case 1',at:[30.004,-1.006]},{name:'Case 2',at:[30.03,-1.002]},{name:'Case 3',at:[30.038,-1.02]},
+  {name:'Case 4',at:[30.02,-1.03]},{name:'Case 5',at:[30.002,-1.022]},{name:'Case 6',at:[30.02,-1.015]}];
+export function hullWalkthrough():Walkthrough{
+  const node={id:'walk',type:'summarize_hull',x:0,y:0,params:{label:'Walk',...ZONE36S}} as WorkflowNode<'summarize_hull'>;
+  const made=convexHull(pointsOf(CASES),node,'walkthrough','walk').value.features[0]!;
+  const pt=(kind:Kind,name:string):Shape=>({kind,point:CASES.find(c=>c.name===name)!.at,label:name});
+  const outer=CASES.filter(c=>c.name!=='Case 6').map(c=>c.name);
+  return {title:'Convex hull, step by step',tables:[],resultColumns:[],steps:[
+    step('Six made-up cases, each where it was found.',CASES.map(c=>pt('input',c.name))),
+    step('Picture a band stretched around all of them and let go: it catches on the outermost cases, 1 to 5.',
+      [...outer.map(n=>pt('look',n)),pt('input','Case 6')]),
+    step('Case 6 lies inside the band. It is in the outline, but does not shape it.',[...outer.map(n=>pt('input',n)),pt('look','Case 6')]),
+    step(`What the step passes on: the outline, ${km2(made.areaSquareMetres!)} and ${metres(Math.round(made.spanMetres!))} at its widest, measured in UTM zone 36S, where these made-up cases lie. `
+      +'It fills the ground between the cases whether anyone was there or not.',[{kind:'result',rings:partsOf(made.geometry)},...CASES.map(c=>pt('input',c.name))],true)]};
+}
+
+const PUMPS:{name:string;at:Position}[]=[{name:'Pump A',at:[30.008,-1.008]},{name:'Pump B',at:[30.031,-1.01]},{name:'Pump C',at:[30.018,-1.024]}];
+export function voronoiWalkthrough():Walkthrough{
+  const area:Boundary={type:'Polygon',coordinates:ring(AREA)[0]!};
+  const made=voronoi(pointsOf(PUMPS),area,ZONE36S.zone,ZONE36S.hemisphere);
+  const house:Position=[30.024,-1.017];
+  const nearest=[...PUMPS].sort((a,b)=>apart(house,a.at)-apart(house,b.at))[0]!;
+  const pumps=(kind:Kind):Shape[]=>PUMPS.map(p=>({kind,point:p.at,label:p.name}));
+  return {title:'Voronoi catchments, step by step',tables:[],resultColumns:[],steps:[
+    step('A study area and three made-up pumps.',[{kind:'area',rings:ring(AREA)},...pumps('input')]),
+    step(`A house in the area goes to the pump nearest it in a straight line: ${nearest.name}, ${metres(Math.round(apart(house,nearest.at)))} away.`,
+      [{kind:'area',rings:ring(AREA)},...pumps('input'),{kind:'look',point:house,label:'A house'},{kind:'look',rings:lineTo(house,nearest.at)}]),
+    step('Where two pumps are equally near, a line divides them: on each side, one of them is nearer. The lines meet where all three are equally near.',
+      [{kind:'area',rings:ring(AREA)},...made.features.map(f=>({kind:'look' as const,rings:partsOf(f.geometry)})),...pumps('input')]),
+    step(`What the step passes on: ${made.features.length} cells, each the ground nearer its pump than any other, measured in UTM zone 36S. `
+      +'They fill the box around the area; Clip polygons cuts them to its outline. Nearest in a straight line is not the way anyone walks.',
+      [...made.features.map((f,i)=>({kind:'result' as const,rings:partsOf(f.geometry),shade:i/Math.max(1,made.features.length-1)})),{kind:'area',rings:ring(AREA)},...pumps('input')],true)]};
+}
+
+/** A made-up street grid, seven junctions each way, every street both ways, the spacing a round number of metres. */
+function walkStreets(spacingM:number):Network{
+  const step=spacingM/M_PER_DEGREE,n=7,nodes:Network['nodes']=[],edges:Network['edges']=[];
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)nodes.push({id:`j${r}${c}`,coordinates:[30+c*step,-1-r*step]});
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)for(const [dr,dc] of [[0,1],[1,0]] as const){
+    if(r+dr>=n||c+dc>=n)continue;const a=`j${r}${c}`,b=`j${r+dr}${c+dc}`;
+    edges.push({from:a,to:b,lengthM:spacingM},{from:b,to:a,lengthM:spacingM});}
+  return {nodes,edges,source:'Made-up streets for the walkthrough'};
+}
+/** THE STREETS SCALED TO THE TIME SET, so the walk ends inside them: the budget is about two and a half blocks. */
+export function isochroneWalkthrough(minutes:number,speedMPerMin:number,bufferM:number):Walkthrough{
+  const fits=Number.isFinite(minutes)&&Number.isFinite(speedMPerMin)&&minutes>=0.1&&minutes<=60&&speedMPerMin>=1&&speedMPerMin<=200;
+  const t=fits?minutes:5,v=fits?speedMPerMin:80,b=Number.isFinite(bufferM)&&bufferM>=1&&bufferM<=100?bufferM:25;
+  const spacing=Math.max(10,Math.round(t*v/2.5/10)*10),network=walkStreets(spacing),at=new Map(network.nodes.map(x=>[x.id,x.coordinates]));
+  const centre=3*spacing/M_PER_DEGREE,clinic:Position=[30+centre+spacing*0.2/M_PER_DEGREE,-1-centre-spacing*0.1/M_PER_DEGREE];
+  const made=isochrone(pointsOf([{name:'Clinic',at:clinic}]),network,{label:'Walk',...ZONE36S,minutes:t,speedMPerMin:v,bufferM:b,maxSnapM:Math.max(150,spacing),direction:'outbound'});
+  const snap=made.snaps?.[0],junction=snap?at.get(snap.nodeId)!:clinic;
+  const streets=(kind:Kind):Shape[]=>network.edges.filter((_,i)=>i%2===0).map(e=>({kind,rings:lineTo(at.get(e.from)!,at.get(e.to)!)}));
+  const region=made.features[0];
+  return {title:'Network isochrone, step by step',tables:[],resultColumns:[],steps:[
+    step(`Made-up streets, ${metres(spacing)} between junctions, and a clinic beside them.`,[...streets('input'),{kind:'look',point:clinic,label:'Clinic'}]),
+    step(`${t} minutes at ${v} metres a minute is ${metres(Math.round(t*v))} of walking${fits?'':' (shown with 5 minutes at 80 metres a minute, as the time or speed set is not one the step accepts)'}. `
+      +`The walk to the nearest junction comes first: ${metres(Math.round(snap?.distanceM??0))}.`,
+      [...streets('input'),{kind:'input',point:clinic,label:'Clinic'},{kind:'look',rings:lineTo(clinic,junction)},{kind:'look',point:junction}]),
+    step(`From that junction, along the streets in every direction until the ${metres(Math.round(t*v))} are spent, a street left part-way where the time runs out. `
+      +`The ground ${b} m either side of every street walked is in reach too.`,
+      [...streets('input'),...(region?[{kind:'look' as const,rings:partsOf(region.geometry)}]:[]),{kind:'input',point:clinic,label:'Clinic'}]),
+    step(region?`What the step passes on: where the clinic can reach in ${t} minutes, ${km2(calculateArea(region.geometry,'m2').squareMetres)}, measured in UTM zone 36S. `
+      +'Ground between streets is in it only near a street: a field nobody can cross stays out.'
+      :'What the step passes on: nothing. The walk to the streets spends the whole time.',
+      [...(region?[{kind:'result' as const,rings:partsOf(region.geometry)}]:[]),...streets('input'),{kind:'input',point:clinic,label:'Clinic'}],true)]};
+}
+
+const HOMES:{name:string;at:Position;v:number}[]=[{name:'House 1',at:[30.005,-1.005],v:1},{name:'House 2',at:[30.035,-1.006],v:1},
+  {name:'House 3',at:[30.012,-1.026],v:1},{name:'House 4',at:[30.032,-1.022],v:6}];
+export function meanCenterWalkthrough(weightField:string):Walkthrough{
+  const field=weightField.trim(),shown=field||'deaths';
+  const points=pointsOf(HOMES.map(h=>({name:h.name,at:h.at,props:{[shown]:h.v}})));
+  const once=computeMeanCenter(points,{label:'Walk',...ZONE36S});
+  const weighted=computeMeanCenter(points,{label:'Walk',...ZONE36S,weightField:shown});
+  const made=field?weighted:once;
+  const homes=(kind:Kind):Shape[]=>HOMES.map(h=>({kind,point:h.at,label:`${h.name}: ${h.v}`}));
+  const table={label:'The houses, one row each',columns:['House',shown],rows:HOMES.map(h=>[h.name,String(h.v)])};
+  const total=HOMES.reduce((t,h)=>t+h.v,0);
+  return {title:'Mean center, step by step',tables:[table],resultColumns:[],steps:[
+    step(`Four made-up houses, each with its ${shown}.`,homes('input')),
+    step('Each counted once, the centre is the average of where they are: the middle of the four.',[...homes('input'),{kind:'look',point:once.coordinates,label:'Each once'}]),
+    step(`Counted by ${shown}, House 4 carries ${HOMES[3]!.v} of the ${total}, so it pulls the centre toward it.`,
+      [...homes('input'),{kind:'gone',point:once.coordinates,label:'Each once'},{kind:'look',point:weighted.coordinates,label:`By ${shown}`}],false,
+      [{table:0,row:3,state:'matched',word:`${HOMES[3]!.v} of ${total}`}]),
+    step(`What the step passes on, as set: one point, ${field?`each house counted by its ${field}`:'each house counted once'}, measured in UTM zone 36S. `
+      +'Nobody need live there: a centre can fall between houses.',[...homes('input'),{kind:'result',point:made.coordinates,label:'Centre'}],true)]};
+}
+
+/** A circle of a radius in metres, in 48 steps, near enough round at the equator. */
+const circle=(c:Position,r:number):Position[]=>Array.from({length:48},(_,i)=>{const a=2*Math.PI*i/48;
+  return [c[0]+r*Math.cos(a)/(M_PER_DEGREE*Math.cos(c[1]*Math.PI/180)),c[1]+r*Math.sin(a)/M_PER_DEGREE] as Position;});
+export function donutWalkthrough(innerM:number,outerM:number,seed:number):Walkthrough{
+  const ok=Number.isFinite(innerM)&&Number.isFinite(outerM)&&innerM>=0&&outerM>innerM&&outerM<=5000&&Number.isSafeInteger(seed)&&seed>=0&&seed<=4294967295;
+  const inner=ok?innerM:50,outer=ok?outerM:125,s=ok?seed:42;
+  const home:Position=[30.02,-1.015];
+  const moved=moveDonut(pointsOf([{name:'Home',at:home}]),{label:'Walk',innerM:inner,outerM:outer,seed:s}).features[0]!;
+  const to=moved.geometry!.coordinates as Position;
+  const close=ring(circle(home,inner)),donut:Position[][][]=[[[...circle(home,outer),circle(home,outer)[0]!],[...circle(home,inner),circle(home,inner)[0]!]]];
+  return {title:'Move points in a donut, step by step',tables:[],resultColumns:[],steps:[
+    step(`A made-up home where a case lives${ok?'':' (shown with 50 to 125 m and seed 42, as the settings are not ones the step accepts)'}.`,[{kind:'look',point:home,label:'Home'},{kind:'area',rings:ring(circle(home,outer))}]),
+    step(`It will not stay within ${metres(inner)} of where it was: so close would give the home away.`,[{kind:'gone',rings:close},{kind:'input',point:home,label:'Home'}]),
+    step(`Nor go beyond ${metres(outer)}: so far would put it where it says nothing about the case.`,[{kind:'look',rings:donut},{kind:'input',point:home,label:'Home'}]),
+    step(`What the step passes on: the point moved ${metres(Math.round(apart(home,to)))}, in the direction and by the distance seed ${s} picks inside the ring, `
+      +`named "${String(moved.properties.name)}"; nothing else of the record is carried. The same seed moves it the same way again, so this teaches the method and protects nobody.`,
+      [{kind:'gone',rings:donut},{kind:'gone',point:home},{kind:'result',point:to,label:String(moved.properties.name)}],true)]};
+}
+
+export function h3Walkthrough(resolution:number,minOccupancy:number):Walkthrough{
+  const r=Number.isInteger(resolution)&&resolution>=0&&resolution<=15?resolution:9;
+  const least=Number.isInteger(minOccupancy)&&minOccupancy>=2&&minOccupancy<=100?minOccupancy:2;
+  const middle=latLngToCell(-1.015,30.02,r),[side,other]=gridDisk(middle,1).filter(c=>c!==middle).sort();
+  const edge=getHexagonEdgeLengthAvg(r,H3_UNITS.m)/M_PER_DEGREE*0.25;
+  const near=(cell:string,dx:number,dy:number):Position=>{const [lat,lon]=cellToLatLng(cell);return [lon+dx*edge,lat+dy*edge];};
+  const H:{name:string;at:Position;cell:string}[]=[
+    {name:'Home 1',at:near(middle,-1,0.5),cell:middle},{name:'Home 2',at:near(middle,1,0.4),cell:middle},{name:'Home 3',at:near(middle,0,-1),cell:middle},
+    {name:'Home 4',at:near(side!,0,0),cell:side!},{name:'Home 5',at:near(other!,-0.6,0.3),cell:other!},{name:'Home 6',at:near(other!,0.6,-0.3),cell:other!}];
+  const made=aggregateHex(pointsOf(H),{label:'Walk',resolution:r,minOccupancy:least});
+  const cellRing=(c:string):Position[][][]=>[[cellToBoundary(c,true) as Position[]]];
+  const homes=(kind:Kind):Shape[]=>H.map(h=>({kind,point:h.at}));
+  const counts=[middle,side!,other!].map(c=>({cell:c,count:H.filter(h=>h.cell===c).length}));
+  const dropped=counts.filter(c=>c.count<least);
+  const top=Math.max(...made.features.map(f=>Number((f as {count?:number}).count??0)),1);
+  return {title:'Aggregate points to H3 cells, step by step',tables:[],resultColumns:[],steps:[
+    step('Six made-up homes.',homes('input')),
+    step(`Each falls in one H3 cell at resolution ${r}${r===resolution?'':' (shown at 9, as the resolution set is not one the step accepts)'}: three in one cell, one in the cell beside it, two in another.`,
+      [...counts.map(c=>({kind:'look' as const,rings:cellRing(c.cell),label:String(c.count),at:cellToBoundary(c.cell,true)[0] as Position})),...homes('input')]),
+    step(dropped.length?`A cell holding fewer than ${least} homes is left out: ${dropped.map(c=>`the one with ${c.count}`).join(' and ')}. A count that small could point to a household.`
+      :`Every cell holds at least ${least} homes, so none is left out.`,
+      [...counts.map(c=>({kind:(c.count<least?'gone':'look') as Kind,rings:cellRing(c.cell)})),...homes('input')]),
+    step(`What the step passes on: ${!made.features.length?`no cell, as each holds fewer than ${least} homes`:made.features.length===1?'1 cell, with its count of homes':`${made.features.length} cells, each with its count of homes`}; the homes themselves are not passed on. `
+      +'It counts locations, not what they carry, and it protects nobody on its own.',
+      [...made.features.map(f=>({kind:'result' as const,rings:partsOf(f.geometry),label:String((f as {count?:number}).count),
+        at:(f.geometry.coordinates as Position[][])[0]![0]!,shade:Number((f as {count?:number}).count??0)/top})),...homes('gone')],true)]};
 }

@@ -59,7 +59,7 @@
     {
       "id": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
       "nodeType": "aggregate_points_to_h3_cell",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -80,6 +80,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/aggregate_points_to_h3_cell/0.3.0.json",
           "sha256": "b5ba382abe38357ae80c2732122108ba8037da1da238c3f92ff081ba4e4302f7"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/aggregate_points_to_h3_cell/0.4.0.json",
+          "sha256": "8e1543cd3f9d8754c49b96dee129919535e9dd8601910d15eead9c8207fd6acc"
         }
       ],
       "previousNodeTypes": [
@@ -729,7 +734,7 @@
     {
       "id": "urn:fieldwork:widget:donut_geomask",
       "nodeType": "donut_geomask",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -740,6 +745,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/donut_geomask/0.2.0.json",
           "sha256": "9fb44609e24d2957862ffc954329b1b21e9c779203bdce54a4cb5be6f4ae719c"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/donut_geomask/0.3.0.json",
+          "sha256": "8ead7f98350d169ffb7b488b51d7da0b40ccc394da5737d632fe0d6619dd151c"
         }
       ]
     },
@@ -802,7 +812,7 @@
     {
       "id": "urn:fieldwork:widget:find_health_facilities",
       "nodeType": "find_health_facilities",
-      "currentVersion": "0.4.2",
+      "currentVersion": "0.4.3",
       "releases": [
         {
           "version": "0.1.0",
@@ -833,6 +843,11 @@
           "version": "0.4.2",
           "path": "widgets/releases/find_health_facilities/0.4.2.json",
           "sha256": "55cd5a929041041b8c18dfa81e01bfe9ab698e2a4a93ed5d91de4a91df2eb6ca"
+        },
+        {
+          "version": "0.4.3",
+          "path": "widgets/releases/find_health_facilities/0.4.3.json",
+          "sha256": "33a4db6ee9e557bbd65b06d7d16c3f3e49ee0a09bc18746e435ed7693fef3a5c"
         }
       ]
     },
@@ -963,7 +978,7 @@
     {
       "id": "urn:fieldwork:widget:isochrone",
       "nodeType": "isochrone",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -989,6 +1004,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/isochrone/0.5.0.json",
           "sha256": "2c4b1880eecb888bc4bf8c3a72489035b09959c30879b32f19c70001afb7a56b"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/isochrone/0.6.0.json",
+          "sha256": "c785c49f96fb33062eab99011a799ac3d1268c92f7fe95b4ddbca03c7033d142"
         }
       ]
     },
@@ -1456,7 +1476,7 @@
     {
       "id": "urn:fieldwork:widget:mean_center",
       "nodeType": "mean_center",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1472,6 +1492,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/mean_center/0.3.0.json",
           "sha256": "bdbddd01998bfa5a8d158d5078e9b2523807e32b66016cf95c8690a414dbc181"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/mean_center/0.4.0.json",
+          "sha256": "1c128657eb0161272c15fa97f954eb5f659de82c17b7431d8d4c2b61bf4a3f7f"
         }
       ]
     },
@@ -1552,7 +1577,7 @@
     {
       "id": "urn:fieldwork:widget:network_input",
       "nodeType": "network_input",
-      "currentVersion": "0.13.0",
+      "currentVersion": "0.14.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1618,6 +1643,11 @@
           "version": "0.13.0",
           "path": "widgets/releases/network_input/0.13.0.json",
           "sha256": "9e0d8d384725d446a0b50a33f5b5baf3ebd58072f99a6cbd784f18c3178fe3dd"
+        },
+        {
+          "version": "0.14.0",
+          "path": "widgets/releases/network_input/0.14.0.json",
+          "sha256": "1c34b9a12d140ba2af52d9674877ead16fda4158e7f3b17f6f941615aac209a4"
         }
       ]
     },
@@ -2070,7 +2100,7 @@
     {
       "id": "urn:fieldwork:widget:reachable_nodes",
       "nodeType": "reachable_nodes",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2096,6 +2126,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/reachable_nodes/0.5.0.json",
           "sha256": "05f7293f92e4833dea907e23a4931edb0a057d13d4f8e4e0ae6c359a2cd26a2c"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/reachable_nodes/0.6.0.json",
+          "sha256": "b906b629ca8768dcd202b567b13d200b8e58e3830f5841400e4ba4f6ad33c260"
         }
       ]
     },
@@ -2639,7 +2674,7 @@
     {
       "id": "urn:fieldwork:widget:summarize_hull",
       "nodeType": "summarize_hull",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2650,6 +2685,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/summarize_hull/0.2.0.json",
           "sha256": "388771b9bb4a439004552929e0bf2d6b4f4fed276b3ad9943a64c6eed7a17a51"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/summarize_hull/0.3.0.json",
+          "sha256": "eb6765d5f3be1f9edf2d5102b3c66d917cd8db0ec86308405dc499ae62372cd4"
         }
       ]
     },
@@ -3068,7 +3108,7 @@
     {
       "id": "urn:fieldwork:widget:voronoi",
       "nodeType": "voronoi",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -3079,6 +3119,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/voronoi/0.2.0.json",
           "sha256": "f236c9f62835a640026643a56d3dcea0e22d797644b28b33def5e89368394115"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/voronoi/0.3.0.json",
+          "sha256": "68a1b699b0840a234d7999cae83e9f20ea31d77de5cc30f171a959787d8fc595"
         }
       ]
     },

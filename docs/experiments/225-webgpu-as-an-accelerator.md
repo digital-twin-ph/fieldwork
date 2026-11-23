@@ -165,6 +165,41 @@ edge may be nearer to; the time in a browser rather than Node; and whether 1 km 
 question for the practitioner and the handbook, not for a timing. Dijkstra settles one cell at a time; a GPU version
 would sweep the grid many times over, so a speed-up there is not the density spike's to assume.
 
+## Kano at 30 m against 90 m, on GRID3's walking surface (2026-11-23)
+
+GRID3's walking-only travel-time friction surface for Nigeria (v1.0, 2025; CC BY-SA 4.0; 30.005 m cells in UTM 32N,
+minutes per metre; downloaded with the practitioner's yes, 3.37 GB, kept in the scratchpad), cut to the convex hull of
+Kano's health facilities widened by 10 km, and averaged three by three to 90 m. Facilities: GRID3's Nigeria health
+facilities v4.0 for Kano (CC BY 4.0), 1,847 of 2,122 kept: 264 have no coordinates, 11 are marked not functional, one
+lies at 11.98° E. Cells of constant size, as the projection gives. Measured in WebAssembly under Node on the development
+Mac.
+
+| | 30 m | 90 m |
+| --- | --- | --- |
+| Cells | 53.6 million | 6.0 million |
+| Time | 39.8 s | 2.8 s |
+| Kernel memory | 893 MB | (the same buffer) |
+| Within 30 minutes' walk | 36.4% | 33.9% |
+| 31 to 60 minutes | 31.4% | 31.5% |
+| 61 to 120 minutes | 13.2% | 14.0% |
+| More than 2 hours | 19.1% | 20.6% |
+| Median | 39 minutes | 42 minutes |
+
+Shares are of the 28.7 million 30 m cells inside the facilities' hull, each against the 90 m cell holding it.
+
+**Found:** 94.0% of the hull falls in the same band at both. The 90 m surface is slower: by 2.2 minutes at the median,
+by 23 minutes or more for one place in ten. The largest differences are barriers. A cell the surface makes almost
+impassable (friction above 1 minute a metre: water, mostly) is 1.22% of the hull at 30 m and 1.62% at 90 m, because
+averaging spreads a barrier over a crossing narrower than 90 m; and the share of places more than ten hours away
+doubles, from 1.3% to 2.7%. So 90 m places most of a state in the band 30 m does, and misplaces what lies beyond a narrow
+crossing. 30 m takes 40 seconds and 900 MB in one process, which a laptop holds; WebGPU is not needed for one state.
+
+**What this does not establish.** Kano's outline: the hull takes in about 5,800 km² of neighbouring states, where no
+facility is listed, which lengthens the slow tail at both resolutions alike. Whether averaging is the right way to
+coarsen (the slowest, or the median, would close or open different crossings; not tried). Settlements: the comparison is
+by cell, and village-level microplanning would compare by GRID3's settlements, a further download. The time in a
+browser tab. Facilities marked functional "Unknown" (808) are kept.
+
 ## What it does not establish
 
 That a density surface is the first place WebGPU will be needed is a guess; streaming rasters and the agent-based model

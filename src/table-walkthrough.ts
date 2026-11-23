@@ -98,3 +98,9 @@ export function openWalkthrough(walk:Walkthrough,esc:Escape,from?:HTMLElement):v
   document.body.append(box);draw();box.showModal();
   box.querySelector<HTMLElement>('[data-walk-step]')?.focus();
 }
+
+/** THE BUTTON EVERY CONFIGURE… OFFERS, and what it opens: the walkthrough made from the draft as it stands when pressed. */
+export const SHOW_ME='<p><button type="button" class="button" data-show-me>Show me how it works</button></p>';
+export function showMeIn(root:ParentNode,esc:Escape,walk:()=>Walkthrough):void{
+  root.querySelector<HTMLButtonElement>('[data-show-me]')?.addEventListener('click',event=>openWalkthrough(walk(),esc,event.currentTarget as HTMLElement));
+}

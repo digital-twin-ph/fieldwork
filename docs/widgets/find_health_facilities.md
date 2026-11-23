@@ -70,3 +70,11 @@ points carrying the outcome, the register's name and identifier, and the score.
 That a source records every facility that exists: an absence is not evidence of absence. That 0.88 suits every
 country's names: it was checked by hand on Sierra Leone's. That OpenStreetMap's spellings can be trusted anywhere: on
 Sierra Leone's names, 4 of 7 that could be checked against GRID3 were the wrong facility.
+
+## History
+
+### 2026-11-23 · Moved out of the application's main file (0.4.3)
+
+Its Inspector moved into this widget's own module. **Retrieve facilities**, on a step that named no country, filled in
+the study area's country and then refused the retrieval, saying the workflow had changed while it ran. It now fills in
+the country first, so the retrieval goes ahead.

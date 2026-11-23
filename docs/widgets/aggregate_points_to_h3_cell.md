@@ -38,6 +38,10 @@ The lab's [hex notebook](https://digital-twin-ph.github.io/validation-lab/lab/in
 
 ## History
 
+### 2026-11-23 · Show me how (0.4.0)
+
+**Configure…** offers **Show me how it works**: six made-up homes in three H3 cells at the resolution set: the cells left out for holding too few, and the cells the step makes with their counts.
+
 ### 2026-11-22 · On the standard (0.3.0)
 
 Moved to the standard Inspector: the resolution and the minimum count are in **Configure…**, and the sentence says it

@@ -24,14 +24,11 @@ import {chartSentence,openChartConfig,type ChartKit} from './chart-ui.js';
 import {setupLabEvaluation} from './lab-evaluation-ui.js';
 import {canvasN3} from './canvas-semantics.js';
 import appPackage from '../package.json';
-import {networkDownloadStatus} from './network-throttle.js';
-import {importNetwork} from './street-network.js';
-import {downloadOSMInTiles} from './network-tiles.js';
 import {johnSnowExample,snowExtentExample} from './john-snow.js';
 import {geoprivacyExample} from './geoprivacy-example.js';
 import {compareInspector,type CompareKit} from './point-comparison-ui.js';
-import {CATCHMENT_TYPES,defaultTravelMode} from './catchments.js';
-import {catchmentInspector} from './catchment-ui.js';
+import {CATCHMENT_TYPES} from './catchments.js';
+import {networkInspector,networkDownloadTick,type NetworkKit} from './network-input-ui.js';
 import {mountCatchmentMap,mountDensityPanel,mountDensityLayers,BASEMAP_OPTIONS,placeOnMap} from './catchment-map.js';
 import {catchmentPlot,polygonSvg,polygonPanelsSvg,panelColumns,catchmentFrame,polygonFrame} from './catchment-output.js';
 import {rasterMapPlan} from './raster-map-plan.js';
@@ -58,8 +55,8 @@ import {relateInspector,type RelateKit} from './relate-ui.js';
 import {joinInspector,type JoinKit} from './area-join-ui.js';
 import {openConfigDialog,setRunInFlight} from './config-dialog.js';
 import {ISSUE_LABEL,unreadHeadline} from './data-issues.js';
-import {openFacilitiesConfig,facilitiesDraftOf,applyFacilitiesDraft,facilitiesSentence} from './facilities-ui.js';
-import {fetchRegister,registerLayer,type RegisterEntry} from './facility-matching.js';
+import {facilitiesInspector,type FacilitiesKit} from './facilities-ui.js';
+import type {RegisterEntry} from './facility-matching.js';
 import facilityRegistersJson from '../widgets/facility-registers.json';
 const FACILITY_REGISTERS=facilityRegistersJson.registers as RegisterEntry[];
 import {relateShape,decisionMatches,relateAtShifts,shiftColumnName} from './relate-table.js';
@@ -81,7 +78,6 @@ import {openColumnsDialog} from './columns-dialog.js';
 import {castColumn,applyRepairs} from './column-profile.js';
 import {openDataQuality} from './data-quality-ui.js';
 import {settingNamed} from './authored-rules.js';
-import {FACILITY_SOURCES,FACILITY_SOURCE_KEYS,FACILITY_KINDS,downloadFacilities,fetchHotExport,requireRunnableFindHealthFacilities} from './health-facilities.js';
 
 import {evidenceInspector,openEvidenceEditor} from './evidence-ui.js';
 import {workflowDocument,importWorkflowDocument,exportEvidenceFiles,keepBytes,readPDF,storePDFs} from './evidence-storage.js';
@@ -370,22 +366,6 @@ const waitsFor=(w:Workflow):string|null=>{
   return null;
 };
 const canAutoRun=(w:Workflow)=>w.nodes.length>0&&!waitsFor(w);
-/** Why the last OSM download failed, kept until one succeeds.
- *
- *  The status line under the button reported only throttle state -- in progress, next available
- *  in N seconds, ready -- while the REASON went to a toast that clears after five seconds. So a
- *  failed download left the Inspector saying "Next OSM download available in 60 seconds", which
- *  reads as working. The practitioner, 2026-10-19, with every Overpass instance returning 502:
- *  *"OSM download did not work"* -- and nothing on screen said why, or that the service was down
- *  rather than the application. A failure that scrolls away is a failure nobody can act on. */
-let networkDownloadError:string|null=null;
-/** What a download is waiting on right now, so a pause the service asked for reads as a pause
- *  rather than as nothing happening. */
-let networkDownloadPhase:string|null=null;
-/** The last endpoint check, kept so the panel survives an Inspector redraw. Not fetched on render:
- *  a status read is a request to a free public service, and rendering is not a reason to make one. */
-let endpointStatuses:import('./street-network.js').OverpassStatus[]|null=null;
-let endpointsCheckedAt:string|null=null;
 let credentials:CredentialAccess|null=null;
 /** The shared project's section: when GitHub was last read for it, and what it was last drawn for. */
 let remoteChecked:{project:string;at:number}|null=null;
@@ -1072,7 +1052,7 @@ function drawRunProgress(){
 /** THE WIDGETS WHOSE INSPECTOR FOLLOWS THE STANDARD (experiment 186): Name, Inputs, Settings, Result, the links,
  *  Actions, in that order and nothing else, with every setting in the widget's configuration dialog. One at a time,
  *  Relate first; the set grows as each widget is moved, and a check holds them to it. */
-export const STANDARD_INSPECTOR=new Set<NodeType>(['line_input','search_satellite_catalog','find_satellite_products','transmission_chains','detect_unusual_counts','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','measure_area','clip_polygons','join_table_to_area','compare_point_sets','clip_points_to_area','summarize_points_to_polygon','summarize_hull','voronoi','isochrone','mean_center','donut_geomask','aggregate_points_to_h3_cell']);
+export const STANDARD_INSPECTOR=new Set<NodeType>(['line_input','search_satellite_catalog','find_satellite_products','transmission_chains','detect_unusual_counts','case_series','regression','point_input','chart_output','raster_input','sample_raster','measure_distance','table_output','relate_table','select_rows','table_input','find_health_facilities','group_table','apply_ruleset','map_output','deduplicate_points','rate','study_area','space_time_scan','map_image_input','two_by_two','append_rows','clip_raster','buffer_point','measure_area','clip_polygons','join_table_to_area','compare_point_sets','clip_points_to_area','summarize_points_to_polygon','summarize_hull','voronoi','isochrone','mean_center','donut_geomask','aggregate_points_to_h3_cell','reachable_nodes','network_input']);
 function samplerProduct(node:WorkflowNode){
   const up=(id:string,port:string)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port);return e?workflow.nodes.find(m=>m.id===e.from):undefined;};
   const search=up(node.id,'files'),find=search?up(search.id,'product'):undefined;
@@ -2641,18 +2621,8 @@ function renderInspector(){
     content+=(AREA_STEP_INSPECTORS[n.type as keyof typeof AREA_STEP_INSPECTORS] as OwnInspector<NodeType>).markup(n as never,areaStepKit());
   }else if(n.type==='compare_point_sets'){
     content+=compareInspector.markup(n,compareKit());
-  }else if(Object.hasOwn(CATCHMENT_TYPES,n.type)||n.type==='reachable_nodes'){
-    // The study area is handed to the Inspector so a downloaded network can be seen against the
-    // ground it was asked for. previewArea throws when nothing is connected, which is a legitimate
-    // state: the caption then says coverage is unknown rather than implying it is complete.
-    let previewBoundary,previewBoundaryID;
-    try{
-      const area=n.type==='network_input'?previewArea(workflow,n.id):undefined;
-      previewBoundary=area?.boundary;
-      // The LEVEL of the connected area, which is what decides the travel mode a province needs.
-      previewBoundaryID=area?.node.params.source==='drawn'?area.node.params.boundary?.boundaryID:undefined;
-    }catch{previewBoundary=undefined;previewBoundaryID=undefined;}
-    content+=catchmentInspector(n,esc,previewBoundary,previewBoundaryID);
+  }else if(n.type==='network_input'){
+    content+=networkInspector.markup(n,networkKit());
   }else if(n.type==='map_output'){
     content+=mapInspector.markup(n,mapKit());
   }else if(n.type==='chart_output'){
@@ -2731,41 +2701,8 @@ function renderInspector(){
       +'';
   }else if(n.type==='deduplicate_points'){
     content+=dedupInspector.markup(n,dedupKit());
-    }else if(n.type==='find_health_facilities'){
-    // THE STANDARD INSPECTOR (experiments 186 and 190): name, inputs, one sentence of what it finds and from where, the
-    // fetch that acquisition needs, Configure…, and what it holds. Every setting is in the dialog.
-    const p=n.params,descriptor=FACILITY_SOURCES[p.source],list=p.mode==='list';
-    content+=standardSection('Name',labelForm('hf-label','Name',p.label||'Find health facilities'));
-    content+=standardSection('Inputs',standardInputs(n,{list:'The list',area:'Study area'}));
-    const fetched=list?p.registerRetrieved:p.retrieved;
-    // STALE when the registers chosen, or the country read for one covering every country, are not what was fetched.
-    const stale=list&&!!p.registerRetrieved&&!!p.list&&(p.list.registers.join()!==p.registerRetrieved.registers.map(r=>r.id).join()
-      ||p.registerRetrieved.registers.some(r=>r.country&&r.country!==p.list?.country));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(facilitiesSentence(p,FACILITY_REGISTERS))}</p>`
-      +`<div class="inspector-actions">${list
-        ?`<button id="hf-fetch-registers" class="button${!fetched||stale?' primary':''}"${p.list?.registers.length?'':' disabled'}>${fetched?'Fetch the registers again':'Fetch the registers'}</button>`
-        :`<button id="hf-retrieve" class="button${fetched?'':' primary'}">Retrieve facilities</button>`}`
-      +`<button id="configure-step" class="button${fetched&&!stale?' primary':''}">Configure\u2026</button></div>`
-      +`<p id="hf-status" role="status" class="description"></p>`
-      +(stale?'<p class="notice notice-warning">The registers or the country chosen are not the ones fetched. Fetch them again.</p>':'')
-      +(list?'':`<ul class="licence-links">${descriptor.links.map(l=>`<li><a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} \u2197</a></li>`).join('')}</ul>`));
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    const ran=result?.receipts.find(r=>r.nodeId===n.id)?.method;
-    const held=list
-      ?(p.registerRetrieved?`Holds ${p.registerRetrieved.registers.map(r=>`${r.title}: ${r.records.toLocaleString('en-US')} facilities`).join('; ')}, fetched ${p.registerRetrieved.at.slice(0,10)}.`:'No register fetched yet.')
-      :(p.retrieved?`${p.retrieved.kept} facilities from ${p.retrieved.sourceLabel}, retrieved ${p.retrieved.at.slice(0,10)}. Scope: ${p.retrieved.scope}. `
-        // WHAT WAS LEFT OUT, COUNTED, as the standard Result says (experiment 186).
-        +((d=>d.kind+d.coordinates+d.name?`Dropped ${d.kind} of an unrequested kind, ${d.coordinates} outside the area or without coordinates, ${d.name} without a name.`:'No records dropped.')(p.retrieved.dropped))
-        +(p.retrieved.belowConfidence!==undefined?` ${p.retrieved.belowConfidence} below the confidence threshold; ${p.retrieved.unmappedCategory??0} of a health category not mapped to a facility kind.`:'')
-        :'No facilities retrieved yet. Connect a study area: it is the scope of the query.');
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`:held)}</p>`
-      +(ran&&!why?`<p class="standard-state">${esc(ran.split('. ').slice(0,2).join('. '))}.</p>`:'')
-      // THE ATTRIBUTION THE LICENCE REQUIRES, where the facilities are: ODbL asks that it stay with the data.
-      +(!list&&p.retrieved?`<p class="description">${esc(p.retrieved.attribution)}</p>`:'')
-      +(list&&p.registerRetrieved?.registers.some(r=>r.licence.includes('odbl'))?`<p class="description">${esc(FACILITY_SOURCES['hdx-hot-export'].attribution)}</p>`:'')
-      +(list&&p.registerRetrieved?`<p class="description">${esc(p.registerRetrieved.registers.map(r=>`${r.title}, ${r.licence.includes('by/4.0')?'CC BY 4.0':r.licence}`).join('; '))}</p>`:'')
-      +''
-      +'<div data-standard-result></div>');
+  }else if(n.type==='find_health_facilities'){
+    content+=facilitiesInspector.markup(n,facilitiesKit());
   }else if(n.type==='sample_raster'){
     content+=sampleInspector.markup(n,sampleKit());
   }else if(n.type==='raster_input'||n.type==='clip_raster'){
@@ -3091,54 +3028,7 @@ function renderInspector(){
     openStepViewer([...befores,view],
       stepLabels(inputs.map(({port})=>portSourceName(workflow,n.id,port,port))),esc);
   });
-  // FIND HEALTH FACILITIES' DIALOG (experiments 186 and 190), and the registers' fetch.
-  if(n.type==='find_health_facilities'){
-    optionalElement('#configure-step')?.addEventListener('click',()=>{
-      const node=getNode(workflow,n.id,'find_health_facilities');
-      const table=tableOnPort(workflow,n.id,'list');
-      const up=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===n.id&&e.port==='list')?.from);
-      const columns=table?[...table.keys,...(table.valueField&&!table.keys.includes(table.valueField)?[table.valueField]:[])]
-        :[...tableKeyColumns(up)];
-      openFacilitiesConfig({step:node.params.label||TYPES[n.type].title,catalogue:FACILITY_REGISTERS,listColumns:columns,
-        ...(table?{listRows:table.rows.map(r=>({key:{...Object.fromEntries(Object.entries(r.key).map(([k,v])=>[k,String(v??'')])),
-          ...(table.valueField?{[table.valueField]:String(r.value??'')}:{})}}))}:{}),
-        layer:node.params.mode==='list'?node.params.data:null,countries:COUNTRIES.map(c=>({iso:c.iso,name:c.name})),
-        // THE STUDY AREA ALREADY SAYS WHICH COUNTRY: filled in, never retyped (the practitioner, 2026-10-23).
-        initial:facilitiesDraftOf(node.params,upstreamCountry(workflow,n.id)||''),
-        apply:draft=>{change(w=>{const target=getNode(w,n.id,'find_health_facilities');const was=target.params.mode??'area';
-          applyFacilitiesDraft(target.params,draft);
-          // A CHANGE OF WAY IN changes the input: what was connected to the other one is disconnected, and what was
-          // fetched for the other one is not this one's.
-          if(was!==(draft.mode??'area')){w.edges=w.edges.filter(e=>e.to!==n.id);target.params.data=null;target.params.retrieved=null;
-            delete target.params.registerRetrieved;delete (target.params as {dataRef?:string}).dataRef;}},{requirePersistence:true});},
-      },esc);
-    });
-    optionalElement('#hf-fetch-registers')?.addEventListener('click',async e=>{
-      const button=e.currentTarget as HTMLButtonElement,status=optionalElement('#hf-status');
-      const node=getNode(workflow,n.id,'find_health_facilities'),ids=node.params.list?.registers??[];
-      button.disabled=true;
-      try{
-        const loaded:import("./facility-matching.js").LoadedRegister[]=[];
-        for(const id of ids){
-          const register=FACILITY_REGISTERS.find(r=>r.id===id);
-          if(!register)throw new Error(`${id} is not in the register catalogue.`);
-          if(status)status.textContent=`Fetching ${register.title}\u2026`;
-          const country=register.anyCountry?node.params.list?.country:undefined;
-          loaded.push({register:country?{...register,title:`${register.title}, ${country}`}:register,
-            facilities:await fetchRegister(register,fetch,{...(country?{country}:{}),readExport:(iso,f)=>fetchHotExport(iso,f).then(got=>got.payload)})});
-        }
-        const layer=registerLayer(loaded),digest=await payloadDigest(layer);
-        if(!await keepDataset(digest,layer))throw new Error('The registers could not be kept on this device, so they were not saved.');
-        const at=new Date().toISOString();
-        if(change(w=>{const target=getNode(w,n.id,'find_health_facilities');target.params.data=layer;
-          (target.params as {dataRef?:string}).dataRef=digest;
-          target.params.registerRetrieved={registers:loaded.map(({register,facilities})=>({id:register.id,title:register.title,
-            licence:register.licence,records:facilities.length,...(register.anyCountry&&node.params.list?.country?{country:node.params.list.country}:{})})),at};},{requirePersistence:true}))
-          toast(`${loaded.map(l=>`${l.facilities.length.toLocaleString('en-US')} facilities from ${l.register.title}`).join('; ')}. Run the workflow to match the list.`);
-      }catch(error){const message=errorMessage(error);if(status)status.textContent=message;toast(message,{tone:'failure'});}
-      finally{button.disabled=false;}
-    });
-  }
+  if(n.type==='find_health_facilities')facilitiesInspector.wire(n,facilitiesKit(),document);
   // SELECT ROWS' CONFIGURATION DIALOG (experiment 186): given each key column's values, and the table where it resolves
   // without a run, so the preview is the rows this draft keeps. Only Apply writes.
   // TOTAL WITHIN GROUPS' CONFIGURATION DIALOG (experiments 186 and 191): given the columns coming in and, where it
@@ -3157,12 +3047,6 @@ function renderInspector(){
   optionalElement('#remove-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>,count=node.params.pointInputCount??1;if(count>1){w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===pointPort(count-1)));node.params.pointInputCount=count-1;}}));
   document.querySelectorAll<HTMLInputElement>('#map-label,#table-label').forEach(el=>el.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title)));
   const contextToggle=document.querySelector<HTMLInputElement>('#polygon-context-toggle');if(contextToggle)contextToggle.onchange=()=>change(w=>{const target=w.nodes.find(x=>x.id===n.id);if(target?.type==='map_output'){target.params.contextPoints=contextToggle.checked;if(!contextToggle.checked)w.edges=w.edges.filter(e=>e.to!==n.id||e.port!=='context');}});
-  document.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-catchment-param]').forEach(el=>el.onchange=()=>change(w=>{const target=required(w.nodes.find(x=>x.id===n.id));const params=target.params as unknown as Record<string,unknown>;
-      // An emptied OPTIONAL field means unset, not NaN and not zero. The same shape as the
-      // ruleset setting box fixed earlier today: `Number('')` is 0 and an empty number input
-      // otherwise lands here as NaN, and both are figures nobody typed.
-      if(el.dataset.optional==='true'&&el.value.trim()===''){delete params[el.dataset.catchmentParam!];return;}
-      params[el.dataset.catchmentParam!]=el.dataset.catchmentParam==='thresholds'?(el.value.trim()?el.value.split(',').map(v=>Number(v.trim())):[]):el instanceof HTMLInputElement&&el.type==='checkbox'?el.checked:el instanceof HTMLInputElement&&el.type==='number'?(el.value===''?NaN:Number(el.value)):el.value;}));
   // CHANGING THE MAP TYPE CAN STRAND THE BASEMAP, and the select would then disagree with what is
   // stored: the list drops a vector style on the way to a static figure, the held value stays
   // `ofm-liberty`, and the control shows `None` while the node says otherwise. So the param is
@@ -3209,68 +3093,6 @@ function renderInspector(){
     getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical';
   },{spatial:false}));
   optionalElement('#polygon-output-label')?.addEventListener('change',e=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value;}));
-  optionalElement('#save-network')?.addEventListener('click',()=>{try{const text=(document.querySelector('#network-json') as HTMLTextAreaElement).value;if(text.length>2000000)throw new Error('Network JSON exceeds 2 MB.');const data=JSON.parse(text);change(w=>{getNode(w,n.id,'network_input').params.data=data;},{requirePersistence:true});}catch(e){toast(errorMessage(e),{tone:'failure'});}});
-  for(const selector of ['#network-file','#network-upload'])document.querySelector<HTMLInputElement>(selector)?.addEventListener('change',async e=>{const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;const baseline=JSON.stringify(workflow);try{const data=await importNetwork(file,getNode(workflow,n.id,'network_input').params.maxNodes);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed; import again.');const digest=await payloadDigest(data);if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it.`);if(!change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true}))await dropPayload(digest);}catch(e){toast(errorMessage(e),{tone:'failure'});}});
-  // The status panel. Rendered from the LAST check, so it survives the Inspector being redrawn,
-  // and asked for only on click: every check is a request to a donated service.
-  const paintEndpoints=()=>{
-    const box=optionalElement('#endpoint-status');if(!box)return;
-    if(!endpointStatuses){box.innerHTML='';return;}
-    box.innerHTML=endpointStatuses.map(s=>{
-      const host=s.url.replace(/^https?:\/\//,'').replace(/\/api.*$/,'');
-      const state=!s.reachable?`not answering \u2014 ${esc(s.error||'no reply')}`
-        :s.slotsAvailable===undefined?'answering; it did not say how busy it is'
-        :s.slotsAvailable>0?`${s.slotsAvailable} of ${s.rateLimit??s.slotsAvailable} slots free now`
-        :`busy${typeof s.waitSeconds==='number'?`, next slot in ${s.waitSeconds} s`:''}`;
-      const running=s.runningQueries?`, ${s.runningQueries} running`:'';
-      return `<p><strong>${esc(s.operator)}</strong> \u00b7 ${esc(state)}${esc(running)}`
-        +`<br><span class="muted">${esc(host)}</span></p>`;
-    }).join('')+`<p class="muted">Checked ${esc(endpointsCheckedAt??'')}. Each answer is that instance's own.</p>`;
-  };
-  optionalElement('#check-endpoints')?.addEventListener('click',async e=>{
-    const button=e.currentTarget as HTMLButtonElement;
-    button.disabled=true;button.textContent='Asking each instance\u2026';
-    try{
-      const {overpassStatuses}=await import('./street-network.js');
-      endpointStatuses=await overpassStatuses();
-      endpointsCheckedAt=new Date().toLocaleTimeString();
-    }catch(error){toast(errorMessage(error),{tone:'failure'});}
-    finally{button.disabled=false;button.textContent='Check endpoint status';paintEndpoints();}
-  });
-  paintEndpoints();
-  // AN EXTRACT ON THIS DEVICE. The file is never copied into either store: it is
-  // read where it sits, clipped to the study area as it is decoded, and only the
-  // network it yields is kept. See docs/experiments/129.
-  optionalElement('#network-extract')?.addEventListener('change',async event=>{
-    const input=event.target as HTMLInputElement;
-    const file=input.files?.[0];
-    if(!file)return;
-    const status=document.querySelector<HTMLElement>('#network-extract-status');
-    const say=(message:string)=>{if(status)status.textContent=message;};
-    const baseline=JSON.stringify(workflow);
-    try{
-      const {boundary,node:areaNode}=previewArea(workflow,n.id);
-      const node=getNode(workflow,n.id,'network_input');
-      const mode=node.params.travelMode??defaultTravelMode(
-        areaNode.params.source==='drawn'?areaNode.params.boundary?.boundaryID:undefined);
-      const {networkInWorker}=await import('./street-engine.js');
-      const bytes=new Uint8Array(await file.arrayBuffer());
-      // In a worker: the page stays answerable while a province is read, which is what stops the
-      // browser offering to kill it.
-      const network=await networkInWorker(bytes,{boundary,mode,marginM:node.params.marginM??250,
-        walkSpeedMPerMin:75,onPhase:say});
-      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed while the extract was read. Choose the file again.');
-      say('Keeping it on this device\u2026');
-      const digest=await payloadDigest(network);
-      if(!await keepDataset(digest,network))
-        throw new Error(`This ${(payloadBytes(network)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved.`);
-      if(change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=network;target.params.dataRef=digest;},{requirePersistence:true})){
-        say('');
-        toast(`${network.nodes.length.toLocaleString('en')} junctions read from the extract and saved on this device. Run the workflow to update results.`);
-      }else await dropPayload(digest);
-    }catch(error){say('');toast(errorMessage(error),{tone:'failure'});}
-    finally{input.value='';}
-  });
   optionalElement('#polygon-label')?.addEventListener('change',event=>change(w=>{
     getNode(w,n.id,'polygon_input').params.label=(event.target as HTMLInputElement).value;}));
   // THE GEOREFERENCED PLATE'S OWN CONTROLS, which did not exist until 2026-10-29. The widget was
@@ -3365,28 +3187,6 @@ function renderInspector(){
     }catch(error){toast(errorMessage(error),{tone:'failure'});}
     finally{button.textContent=was;platePending();}
   });
-  optionalElement('#download-network')?.addEventListener('click',async e=>{const button=e.currentTarget as HTMLButtonElement,baseline=JSON.stringify(workflow);button.disabled=true;button.textContent='Downloading bounded OSM network...';
-    // WHO ENDS AN ARRIVING DOWNLOAD. The practitioner, 2026-10-22: *"If nothing ever arrives, that
-    // means there is no download. But there is an ongoing download -- this is where we are
-    // applying that wrong cap."* No clock ends one now, so this does: the decision belongs to the
-    // person watching the megabytes climb, not to a number borrowed from another library.
-    const stop=new AbortController();
-    const stopButton=document.querySelector<HTMLButtonElement>('#stop-network-download');
-    if(stopButton){stopButton.hidden=false;stopButton.onclick=()=>{stopButton.disabled=true;
-      stopButton.textContent='Stopping\u2026';stop.abort();};}
-    try{const {boundary,node:areaNode}=previewArea(workflow,n.id);const node=getNode(workflow,n.id,'network_input');const data=await downloadOSMInTiles(boundary,node.params.marginM??250,node.params.maxNodes,(node.params.pauseSeconds??60)*1000,!!node.params.data?.nodes?.length,(phase,fraction)=>{networkDownloadPhase=phase;const line=document.querySelector<HTMLElement>('#network-download-status');if(line)line.textContent=phase;const bar=document.querySelector<HTMLButtonElement>('#download-network');if(bar){bar.textContent=phase;bar.style.backgroundImage=fraction===undefined?'':`linear-gradient(to right, var(--accent) ${Math.round(Math.min(1,fraction)*100)}%, transparent ${Math.round(Math.min(1,fraction)*100)}%)`;}},node.params.travelMode??defaultTravelMode(areaNode.params.source==='drawn'?areaNode.params.boundary?.boundaryID:undefined),stop.signal);if(JSON.stringify(workflow)!==baseline)throw new Error('Workflow changed during download; retry with the current boundary.');
-    // The graph goes to the payload store and the workflow keeps a reference, so what localStorage
-    // holds is a workflow and not a street network. Bunia is an estimated 14.2 MB against a
-    // 5,226,496-byte store written twice per save; see docs/experiments/121.
-    const digest=await payloadDigest(data);
-    if(!await keepDataset(digest,data))throw new Error(`This ${(payloadBytes(data)/1e6).toFixed(1)} MB street network could not be kept on this device, so it was not saved. Export the workflow to a file to keep it, or cover a smaller area.`);
-    // AND IF THE WORKFLOW WILL NOT TAKE IT, the payload goes back out. It was written to the store
-    // before the workflow was asked, so a refusal left the bytes behind with nothing referring to
-    // them: a device on 2026-10-21 showed "data 416.2 MB" beside this widget reading "0 nodes, 0
-    // directed edges", and nothing in the application could reach them.
-    if(change(w=>{const target=getNode(w,n.id,'network_input');target.params.data=data;target.params.dataRef=digest;},{requirePersistence:true})){networkDownloadError=null;toast('OSM network saved on this device. Run the workflow to update results.');}
-    else await dropPayload(digest);}catch(e){networkDownloadError=errorMessage(e);toast(errorMessage(e),{tone:'failure'});}finally{button.disabled=false;button.textContent='Download and save OSM network';button.style.backgroundImage='';networkDownloadPhase=null;
-      if(stopButton){stopButton.hidden=true;stopButton.disabled=false;stopButton.textContent='Stop';stopButton.onclick=null;}}});
   document.querySelectorAll<HTMLSelectElement>('[data-map-port]').forEach(el=>el.onchange=()=>change(w=>setConnection(w,el.value,n.id,el.dataset.mapPort!)));
   // Applying the suggested zone, so the advice is actionable rather than only stated. It sets
   // both the zone and the hemisphere together: a zone number without its hemisphere is half an
@@ -3401,44 +3201,6 @@ function renderInspector(){
   // Points and a table are not the same shape, so changing which one disconnects what was wired, as Rate does.
   if(n.type==='case_series')caseSeriesInspector.wire(n,seriesRateKit(),document);
   if(n.type==='rate')rateInspector.wire(n,seriesRateKit(),document);
-  const retrieve=document.querySelector<HTMLButtonElement>('#hf-retrieve');
-  if(retrieve)retrieve.onclick=async e=>{
-    const button=e.currentTarget as HTMLButtonElement;
-    const node=workflow.nodes.find(x=>x.id===n.id);
-    if(!node||node.type!=='find_health_facilities')return;
-    const status=optionalElement('#hf-status');
-    const baseline=JSON.stringify(workflow);
-    button.disabled=true;button.textContent='Retrieving\u2026';
-    try{
-      // A country the study area stated and nobody touched is still the country. Written onto the
-      // node before the request, so the receipt says what was asked for rather than leaving it to
-      // be inferred from an area the workflow may later be rewired away from.
-      if(!node.params.country){
-        const stated=upstreamCountry(workflow,n.id);
-        if(stated)change(w=>{const target=getNode(w,n.id,'find_health_facilities');target.params.country=stated;});
-      }
-      requireRunnableFindHealthFacilities(node);
-      // The area comes from the upstream node, resolved the same way the raster editor resolves
-      // it, so the query is bounded by the study area rather than by a country guess.
-      const {boundary}=previewArea(workflow,n.id);
-      if(status)status.textContent=`Querying ${FACILITY_SOURCES[node.params.source].label}\u2026`;
-      const {parsed,retrieval}=await downloadFacilities(node,boundary,undefined,
-        message=>{if(status)status.textContent=message;});
-      if(JSON.stringify(workflow)!==baseline)throw new Error('The workflow changed during retrieval. Press Retrieve again with the current area.');
-      if(change(w=>{const target=getNode(w,n.id,'find_health_facilities');
-        target.params.data=parsed.collection;target.params.retrieved=retrieval;},{requirePersistence:true}))
-        toast(`${parsed.kept} facilities retrieved. Run the workflow to use them.`);
-    }catch(error){const message=errorMessage(error);if(status)status.textContent=message;toast(message);}
-    finally{button.disabled=false;button.textContent='Retrieve facilities';}
-  };
-  document.querySelectorAll<HTMLInputElement|HTMLSelectElement>('[data-hf]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string>)[required(el.dataset.hf)]=el.value.trim();})));
-  document.querySelectorAll<HTMLInputElement>('[data-hf-number]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,number>)[required(el.dataset.hfNumber)]=Number(el.value);})));
-  document.querySelectorAll<HTMLInputElement>('[data-hf-flag]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,boolean>)[required(el.dataset.hfFlag)]=el.checked;})));
-  document.querySelectorAll<HTMLInputElement>('[data-hf-list]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string[]>)[required(el.dataset.hfList)]=el.value.split(',').map(v=>v.trim().toLowerCase()).filter(Boolean);})));
   document.querySelectorAll<HTMLInputElement>('[data-sample]').forEach(el=>el.addEventListener('change',()=>change(w=>{
     const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string>)[required(el.dataset.sample)]=el.value.trim();})));
   // The kept values are a LIST and their ORDER is the order a figure reads in, so a checkbox
@@ -3555,17 +3317,7 @@ function renderInspector(){
   // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).
   if(n.type==='raster_input'||n.type==='clip_raster')rasterInspector.wire(n as never,rasterKit(),document);
   if(n.type==='study_area')studyAreaInspector.wire(n,studyAreaKit(),document);
-  // The same gesture for every other widget. The field already saves on change, so this is the
-  // affordance rather than the mechanism: pressing it confirms, and an empty label is refused
-  // here rather than silently writing one nobody can read on the canvas.
-  optionalElement('#catchment-label-form')?.addEventListener('submit',e=>{
-    e.preventDefault();
-    const input=$('#catchment-label') as HTMLInputElement,label=input.value.trim();
-    if(!label){input.setCustomValidity('Enter a label for this widget.');input.reportValidity();return;}
-    input.setCustomValidity('');
-    change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>).label=label;});
-  });
-  optionalElement('#catchment-label')?.addEventListener('input',e=>control(e).setCustomValidity(''));
+  if(n.type==='network_input')networkInspector.wire(n,networkKit(),document);
   if(n.type==='point_input'&&workflow.edges.some(e=>e.to===n.id&&e.port==='records'))optionalElement('#configure-step')?.addEventListener('click',()=>openPointsFromTableConfig(n.id));
   else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),generationAreas(n.id),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;},
     {read:sha=>readNoteImagePayload(cachedPayload(noteImageKey(sha))),keep:(sha,payload)=>keepDataset(noteImageKey(sha),payload)}));
@@ -4991,6 +4743,29 @@ function lineKit():LineKit{
     return p?.geometry?{label:p.label||'Study area',boundary:p.geometry}:undefined;};
   return {...stepKit(),summary:id=>dirty?undefined:result?.stepSummaries?.[id],
     areasOn:id=>{const area=areaOf(id,'area'),area_2=areaOf(id,'area_2');return {...(area?{area}:{}),...(area_2?{area_2}:{})};}};
+}
+/** FIND HEALTH FACILITIES' KIT (facilities-ui.ts): the registers, the country the study area states, the list coming in. */
+function facilitiesKit():FacilitiesKit{
+  return {...stepKit(),catalogue:FACILITY_REGISTERS,countries:COUNTRIES,stated:id=>upstreamCountry(workflow,id),
+    listOn:id=>{const table=tableOnPort(workflow,id,'list');
+      if(!table){const up=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===id&&e.port==='list')?.from);return {columns:[...tableKeyColumns(up)]};}
+      return {columns:[...table.keys,...(table.valueField&&!table.keys.includes(table.valueField)?[table.valueField]:[])],
+        rows:table.rows.map(r=>({key:{...Object.fromEntries(Object.entries(r.key).map(([k,v])=>[k,String(v??'')])),
+          ...(table.valueField?{[table.valueField]:String(r.value??'')}:{})}}))};},
+    boundary:id=>previewArea(workflow,id).boundary,
+    keepLayer:async layer=>{const digest=await payloadDigest(layer);
+      if(!await keepDataset(digest,layer))throw new Error('The registers could not be kept on this device, so they were not saved.');return digest;},
+    saved:edit=>change(edit,{requirePersistence:true})!==false,
+    say:(message,failure)=>toast(message,failure?{tone:'failure'}:undefined)};
+}
+/** STREET NETWORK'S KIT (network-input-ui.ts): the study area and its published level, and the payload store. */
+function networkKit():NetworkKit{
+  return {...stepKit(),
+    area:id=>{try{const {boundary,node}=previewArea(workflow,id);
+      return {boundary,...(node.params.source==='drawn'&&node.params.boundary?.boundaryID?{boundaryID:node.params.boundary.boundaryID}:{})};}catch{return undefined;}},
+    keepNetwork:async network=>{const digest=await payloadDigest(network);return await keepDataset(digest,network)?digest:null;},
+    saved:edit=>change(edit,{requirePersistence:true})!==false,
+    say:(message,failure)=>toast(message,failure?{tone:'failure'}:undefined)};
 }
 function stepKit():StepKit{
   return {...inspectorKit(),method:id=>result?.receipts.find(r=>r.nodeId===id)?.method,
@@ -8956,7 +8731,7 @@ if(canAutoRun(workflow))setTimeout(run,350);
 renderManualFloat(true);
 renderManualPage();
 
-setInterval(()=>{const button=document.querySelector<HTMLButtonElement>('#download-network'),message=document.querySelector<HTMLElement>('#network-download-status');if(!button||!message)return;const state=networkDownloadStatus();button.disabled=busy||state.inFlight||state.waitSeconds>0;message.textContent=state.inFlight?(networkDownloadPhase??'One OSM request is in progress.'):networkDownloadError?networkDownloadError+(state.waitSeconds?' Next attempt available in '+state.waitSeconds+' seconds.':''):state.waitSeconds?'Next OSM download available in '+state.waitSeconds+' seconds. Saved graphs are available offline.':'Ready for one bounded OSM request; no automatic refresh.';},1000);
+setInterval(()=>networkDownloadTick(busy),1000);
 
 
 /** STARTUP IS OVER: every top-level handler above is bound, the stored payloads among the awaits before them. A file

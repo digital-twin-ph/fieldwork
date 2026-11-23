@@ -1,5 +1,5 @@
 /** STEPS THAT MEASURE IN METRES, ON THE STANDARD (experiment 186), 2026-11-22: Convex hull, Voronoi catchments, Network
- *  isochrone and Mean center. Moved out of app.ts and catchment-ui.ts by the rule for any widget touched: Name, Inputs,
+ *  isochrone and Mean center; Reachable junctions 2026-11-23. Moved out of app.ts and catchment-ui.ts by the rule for any widget touched: Name, Inputs,
  *  Settings in one sentence with Configure…, Result. Each dialog carries the UTM zone with the zone the workflow's data
  *  suggests and what the chosen zone stretches, which the Inspector showed below the step before. */
 import type {WorkflowNode} from './types.js';
@@ -9,7 +9,10 @@ import {openConfigDialog} from './config-dialog.js';
 import {validateCatchmentNode} from './catchments.js';
 import {validateHullNode} from './convex-hull.js';
 import {validateMeanCenterNode} from './mean-center.js';
+import {validateReachNode,MODE_SPEED_BANDS} from './reachable-nodes.js';
 import {errorMessage} from './guards.js';
+import {SHOW_ME,showMeIn} from './table-walkthrough.js';
+import {hullWalkthrough,voronoiWalkthrough,isochroneWalkthrough,meanCenterWalkthrough} from './spatial-walkthroughs.js';
 
 type Hemisphere='north'|'south';
 interface Zoned {zone:string; hemisphere:Hemisphere}
@@ -74,9 +77,9 @@ export const hullInspector:OwnInspector<'summarize_hull'>={
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog<Zoned>({id:'hull-dialog',widget:'Convex hull',step:node.params.label||'',
         draft:{zone:String(node.params.zone),hemisphere:node.params.hemisphere},
-        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'hull'),
+        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'hull'),preview:SHOW_ME,
           ...refusal(()=>validateHullNode({...node,params:{...node.params,...zoneOf(d)}}))}),
-        wire:(r,d,redraw)=>wireZone(r,d,redraw,'hull'),
+        wire:(r,d,redraw)=>{wireZone(r,d,redraw,'hull');showMeIn(r,kit.esc,hullWalkthrough);},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='summarize_hull')Object.assign(t.params,zoneOf(d));}),
       },kit.esc);
     });
@@ -95,9 +98,9 @@ export const voronoiInspector:OwnInspector<'voronoi'>={
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog<Zoned>({id:'voronoi-dialog',widget:'Voronoi catchments',step:node.params.label||'',
         draft:{zone:String(node.params.zone),hemisphere:node.params.hemisphere},
-        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'voronoi'),
+        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'voronoi'),preview:SHOW_ME,
           ...refusal(()=>validateCatchmentNode({...node,params:{...node.params,...zoneOf(d)}}))}),
-        wire:(r,d,redraw)=>wireZone(r,d,redraw,'voronoi'),
+        wire:(r,d,redraw)=>{wireZone(r,d,redraw,'voronoi');showMeIn(r,kit.esc,voronoiWalkthrough);},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='voronoi')Object.assign(t.params,zoneOf(d));}),
       },kit.esc);
     });
@@ -147,14 +150,15 @@ export const isochroneInspector:OwnInspector<'isochrone'>={
             +`<label class="field-option"><input type="checkbox" id="isochrone-fillHoles"${d.fillHoles?' checked':''}> Fill holes inside each region</label>`
             +zoneFields(kit as AreaStepKit,d,'isochrone'),
             preview:(()=>{const q=isoParams(d),far=q.minutes*q.speedMPerMin;
-              return far>0?`<p>${kit.esc(`${q.thresholds?'The longest time goes':'That goes'} up to ${metres(far)} along the streets at ${q.speedMPerMin} metres a minute.`)}</p>`:'';})(),
+              return (far>0?`<p>${kit.esc(`${q.thresholds?'The longest time goes':'That goes'} up to ${metres(far)} along the streets at ${q.speedMPerMin} metres a minute.`)}</p>`:'')+SHOW_ME;})(),
             ...refusal(()=>validateCatchmentNode({...node,params:{...p,...isoParams(d)}}))};},
         wire:(r,d,redraw)=>{
           r.querySelectorAll<HTMLInputElement>('[data-iso]').forEach(el=>el.onchange=()=>{(d as unknown as Record<string,string>)[el.dataset.iso!]=el.value;redraw();});
           r.querySelector<HTMLInputElement>('#isochrone-times')!.onchange=e=>{d.times=(e.target as HTMLInputElement).value;redraw();};
           r.querySelector<HTMLSelectElement>('#isochrone-direction')!.onchange=e=>{d.direction=(e.target as HTMLSelectElement).value as IsochroneDraft['direction'];redraw();};
           r.querySelector<HTMLInputElement>('#isochrone-fillHoles')!.onchange=e=>{d.fillHoles=(e.target as HTMLInputElement).checked;redraw();};
-          wireZone(r,d,redraw,'isochrone');},
+          wireZone(r,d,redraw,'isochrone');
+          showMeIn(r,kit.esc,()=>{const q=isoParams(d);return isochroneWalkthrough(q.minutes,q.speedMPerMin,q.bufferM);});},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type!=='isochrone')return;const q=isoParams(d);
           Object.assign(t.params,q);if(!q.thresholds)delete t.params.thresholds;if(!q.fillHoles)delete t.params.fillHoles;}),
       },kit.esc);
@@ -185,11 +189,11 @@ export const meanCenterInspector:OwnInspector<'mean_center'>={
             +[...new Set([...fields,...(d.weightField&&!fields.includes(d.weightField)?[d.weightField]:[])])].map(f=>`<option value="${kit.esc(f)}"${f===d.weightField?' selected':''}>${kit.esc(f)}</option>`).join('')+'</select>'
             :`<input id="mean-center-weight" maxlength="60" value="${kit.esc(d.weightField)}" placeholder="for example deaths">`)
           +'<small>250 addresses carrying 489 deaths have two different centres.</small></div>'
-          +zoneFields(kit as AreaStepKit,d,'mean-center'),
+          +zoneFields(kit as AreaStepKit,d,'mean-center'),preview:SHOW_ME,
           ...refusal(()=>validateMeanCenterNode({...node,params:{...node.params,...zoneOf(d),weightField:d.weightField}}))}),
         wire:(r,d,redraw)=>{
           r.querySelector<HTMLInputElement|HTMLSelectElement>('#mean-center-weight')!.onchange=e=>{d.weightField=(e.target as HTMLInputElement).value.trim();redraw();};
-          wireZone(r,d,redraw,'mean-center');},
+          wireZone(r,d,redraw,'mean-center');showMeIn(r,kit.esc,()=>meanCenterWalkthrough(d.weightField));},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type!=='mean_center')return;
           Object.assign(t.params,zoneOf(d));if(d.weightField)t.params.weightField=d.weightField;else delete t.params.weightField;}),
       },kit.esc);
@@ -197,5 +201,78 @@ export const meanCenterInspector:OwnInspector<'mean_center'>={
   },
 };
 
+/** REACHABLE JUNCTIONS (2026-11-23, off the old catchment panel). The zone, hemisphere and snap limit are optional: read
+ *  only for origins this step attaches to the network itself, and left unset where the sites were snapped first. */
+interface ReachDraft {minutes:string;speedMPerMin:string;travelMode:WorkflowNode<'reachable_nodes'>['params']['travelMode'];
+  direction:'inbound'|'outbound';zone:string;hemisphere:''|Hemisphere;maxSnapM:string}
+const optionalNumber=(v:string)=>v.trim()===''?undefined:Number(v);
+const reachParams=(d:ReachDraft)=>({minutes:Number(d.minutes),speedMPerMin:Number(d.speedMPerMin),travelMode:d.travelMode,
+  direction:d.direction,zone:optionalNumber(d.zone),hemisphere:d.hemisphere||undefined,maxSnapM:optionalNumber(d.maxSnapM)});
+const MODE_WORDS:Record<ReachDraft['travelMode'],string>={walking:'walking',cycling:'cycling',driving:'driving',other:'travelling'};
+export function reachSentence(p:WorkflowNode<'reachable_nodes'>['params']):string{
+  return `The street junctions ${p.direction==='inbound'?'that can reach each site':'each site can reach'} within ${p.minutes} minutes, `
+    +`${MODE_WORDS[p.travelMode]} at ${p.speedMPerMin} metres a minute`
+    +(p.zone&&p.hemisphere?`; a site not yet on the network is attached in UTM zone ${zoneName(p.zone,p.hemisphere)}`
+      +(p.maxSnapM!==undefined?`, marked past ${p.maxSnapM} m`:'')+'.':'.');
+}
+export const reachInspector:OwnInspector<'reachable_nodes'>={
+  markup:(n,kit)=>{const out=summaryOf(kit,n);
+    return kit.section('Name',kit.name('reach-label',n.params.label||'Reachable junctions'))
+      +kit.section('Inputs',kit.inputs(n,{sites:'The sites to travel from or to',network:'The street network'}))
+      +kit.section('Settings',sentence(kit,reachSentence(n.params))
+        +(n.params.zone&&n.params.hemisphere?zoneMismatch(kit,{zone:n.params.zone,hemisphere:n.params.hemisphere}):'')+configure)
+      +kit.section('Result',out
+        ?row(kit,'Junctions reached',count(out.features))
+          +(Number(out.unconnected)?row(kit,'Sites that reach nothing in the time',count(out.unconnected)):'')
+          +(Number(out.offNetwork)?row(kit,'Sites past the snap limit, routed anyway',count(out.offNetwork)):'')
+        :notRun);},
+  wire:(n,kit,root)=>{
+    root.querySelector('#configure-step')?.addEventListener('click',()=>{
+      const node=nodeIn(kit,n);if(!node)return;const p=node.params;
+      openConfigDialog<ReachDraft>({id:'reach-dialog',widget:'Reachable junctions',step:p.label||'',
+        draft:{minutes:String(p.minutes),speedMPerMin:String(p.speedMPerMin),travelMode:p.travelMode,direction:p.direction,
+          zone:p.zone===undefined?'':String(p.zone),hemisphere:p.hemisphere??'',maxSnapM:p.maxSnapM===undefined?'':String(p.maxSnapM)},
+        sections:d=>{const band=MODE_SPEED_BANDS[d.travelMode],q=reachParams(d);
+          const advice=q.zone&&q.hemisphere?(kit as AreaStepKit).zoneAdvice(q.zone,q.hemisphere):undefined;
+          return {settings:`<div class="field"><label class="field-label" for="reach-direction">Direction</label>`
+            +`<select id="reach-direction"><option value="outbound"${d.direction==='outbound'?' selected':''}>From each site: where it can reach</option>`
+            +`<option value="inbound"${d.direction==='inbound'?' selected':''}>To each site: who can reach it</option></select></div>`
+            +`<div class="field"><label class="field-label" for="reach-minutes">Travel time (minutes)</label>`
+            +`<input id="reach-minutes" data-reach="minutes" type="number" min="0.1" max="60" step="0.1" value="${kit.esc(d.minutes)}"></div>`
+            +`<div class="field"><label class="field-label" for="reach-travelMode">How people travel</label><select id="reach-travelMode">`
+            +(Object.keys(MODE_SPEED_BANDS) as ReachDraft['travelMode'][]).map(m=>`<option value="${m}"${d.travelMode===m?' selected':''}>${m[0]!.toUpperCase()+m.slice(1)}</option>`).join('')+'</select></div>'
+            +`<div class="field"><label class="field-label" for="reach-speedMPerMin">Speed (metres a minute)</label>`
+            +`<input id="reach-speedMPerMin" data-reach="speedMPerMin" type="number" min="1" max="1200" value="${kit.esc(d.speedMPerMin)}">`
+            +`<small>${kit.esc(`For ${d.travelMode}: ${band.minMPerMin} to ${band.maxMPerMin} metres a minute.`)}</small></div>`
+            +'<span class="inspector-section">Sites not yet on the network</span>'
+            +'<p class="muted">Read only for sites this step attaches to the nearest junction itself. Leave unset where the sites were snapped first.</p>'
+            +`<div class="field"><label class="field-label" for="reach-zone">UTM zone it measures in</label>`
+            +`<input id="reach-zone" data-reach="zone" type="number" min="1" max="60" step="1" value="${kit.esc(d.zone)}" placeholder="Not set"></div>`
+            +`<div class="field"><label class="field-label" for="reach-hemisphere">Hemisphere</label><select id="reach-hemisphere">`
+            +`<option value=""${d.hemisphere===''?' selected':''}>Not set</option><option value="north"${d.hemisphere==='north'?' selected':''}>North</option>`
+            +`<option value="south"${d.hemisphere==='south'?' selected':''}>South</option></select></div>`
+            +(advice&&!advice.matches?`<p class="notice" data-utm-advice>${kit.esc(`This workflow's ${advice.positions.toLocaleString('en')} coordinates suggest zone ${zoneName(advice.zone,advice.hemisphere)}.`)}`
+              +` <button type="button" class="button small" data-suggested-zone="${advice.zone}:${advice.hemisphere}">Use zone ${zoneName(advice.zone,advice.hemisphere)}</button></p>`:'')
+            +`<div class="field"><label class="field-label" for="reach-maxSnapM">Snap limit: a site further from a street is marked (metres)</label>`
+            +`<input id="reach-maxSnapM" data-reach="maxSnapM" type="number" min="0" max="1000" value="${kit.esc(d.maxSnapM)}" placeholder="Not set">`
+            +'<small>Unset means no limit. A site past the limit is attached and marked, not dropped.</small></div>',
+            preview:(()=>{const far=q.minutes*q.speedMPerMin;
+              return far>0?`<p>${kit.esc(`That goes up to ${metres(far)} along the streets from each site.`)}</p>`:'';})(),
+            ...refusal(()=>validateReachNode({...node,params:{...p,...reachParams(d)}}))};},
+        wire:(r,d,redraw)=>{
+          r.querySelectorAll<HTMLInputElement>('[data-reach]').forEach(el=>el.onchange=()=>{(d as unknown as Record<string,string>)[el.dataset.reach!]=el.value;redraw();});
+          r.querySelector<HTMLSelectElement>('#reach-direction')!.onchange=e=>{d.direction=(e.target as HTMLSelectElement).value as ReachDraft['direction'];redraw();};
+          r.querySelector<HTMLSelectElement>('#reach-travelMode')!.onchange=e=>{d.travelMode=(e.target as HTMLSelectElement).value as ReachDraft['travelMode'];redraw();};
+          r.querySelector<HTMLSelectElement>('#reach-hemisphere')!.onchange=e=>{d.hemisphere=(e.target as HTMLSelectElement).value as ReachDraft['hemisphere'];redraw();};
+          r.querySelector<HTMLButtonElement>('[data-suggested-zone]')?.addEventListener('click',e=>{
+            const [zone,hemisphere]=(e.currentTarget as HTMLElement).dataset.suggestedZone!.split(':');d.zone=zone!;d.hemisphere=hemisphere as Hemisphere;redraw();});},
+        // UNSET IS ABSENT: a cleared field removes its key rather than storing NaN or 0.
+        apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type!=='reachable_nodes')return;const q=reachParams(d);
+          Object.assign(t.params,q);for(const key of ['zone','hemisphere','maxSnapM'] as const)if(q[key]===undefined)delete t.params[key];}),
+      },kit.esc);
+    });
+  },
+};
+
 export const METRIC_STEP_INSPECTORS={summarize_hull:hullInspector,voronoi:voronoiInspector,isochrone:isochroneInspector,
-  mean_center:meanCenterInspector} as const;
+  mean_center:meanCenterInspector,reachable_nodes:reachInspector} as const;

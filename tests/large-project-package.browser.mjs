@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureNetwork} from './network-config.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {payload} from './payload-store.mjs';
@@ -43,9 +44,9 @@ test('a project holding a graph larger than the old 5 MB cap packages, opens and
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
-  await page.locator('#network-input-method').selectOption('osm');
+  await configureNetwork(page,{method:'osm'});
   await page.locator('#download-network').click();
-  await expect(page.locator('#inspector-content')).toContainText(`${NODES} nodes`,{timeout:120000});
+  await expect(page.locator('#inspector-content')).toContainText(`${NODES.toLocaleString("en")} junctions`,{timeout:120000});
 
   const started=Date.now();
   const pending=page.waitForEvent('download');

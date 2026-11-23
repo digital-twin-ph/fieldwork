@@ -13,7 +13,6 @@ import {AREA_KINDS,readBox,areasInWorker,retrievalProvenance,type AreaKind} from
 import {MAX_LAYER_VERTICES,readPolygonFeatures} from './polygon-layer.js';
 import {extractsFor,EXTRACT_CATALOGUE_TAKEN} from './extract-catalogue.js';
 import {geometryBounds} from './study-area.js';
-import {labelField} from './catchment-ui.js';
 import {shareAlike} from './input-provenance.js';
 import type {FeatureDecisions} from './polygon-review.js';
 /** Study areas a layer of their parts takes; the cap Map keeps on polygon layers (core's MAX_AREA_INPUTS). */

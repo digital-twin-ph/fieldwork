@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.172.0 — 2026-11-23
+
+- **The Inspector move is done.** Street network (0.14.0) and Reachable junctions (0.6.0) leave the old panel for the
+  standard Inspector: one sentence of what the step does, every setting in **Configure…**, and the run's counts in the
+  Result. Street network keeps its download, file or extract in Settings. Find health facilities' Inspector (0.4.3) moved
+  out of the application's main file. Reachable junctions has a manual page.
+- **Retrieve facilities no longer refuses itself.** On a step naming no country, it filled in the study area's country
+  and then refused the retrieval, saying the workflow had changed while it ran.
+- **Show me how** for Convex hull, Voronoi catchments, Network isochrone, Mean center, Move points in a donut and
+  Aggregate points to H3 cells, each ending on what the step makes of its made-up shapes.
+- Experiment 225 records Kano at 30 m against 90 m on GRID3's walking surface.
+
 ## 0.171.1 — 2026-11-23
 
 - Two tests made fit for CI: the line layer's tests saved pictures to a folder that exists only on the machine they were

@@ -7,8 +7,8 @@ of points joined by segments, each with a length.
 
 ## Three ways in
 
-Choosing one shows that method's controls and hides the others, so the panel describes the path
-you are on.
+Choose one in **Configure…**. The Inspector then shows only what that way needs: a download
+button, a file to choose, or an extract to read.
 
 **Upload a network file.** A GraphML or JSON graph prepared elsewhere. It keeps its own extent.
 
@@ -52,13 +52,15 @@ draw one directly.
 
 ## How to use it
 
-1. Connect a **Study area**, then open the Street network node.
-2. Leave **Input method** on *Download from OpenStreetMap*, or switch to upload if you have a file.
+1. Connect a **Study area**, then select the Street network step.
+2. In **Configure…**, choose where the network comes from, the travel mode, the margin around the
+   study area and, for a download, the pause between requests and the graph limit. Apply.
 3. Press **Check endpoint status** if you want to know what the servers can do right now: it reports
    free slots and, when there are none, when the next one frees.
 4. Press **Download and save OSM network**. This is a separate action — running the workflow does
    not start a download.
-5. If the area is large or the streets dense, raise the graph limit and download again.
+5. If the area is large or the streets dense, raise the graph limit in **Configure…** and download
+   again.
 
 Downloads are paced: one at a time, with a pause afterwards that grows with the size of what you
 received. A busy server is waited for rather than treated as a failure. A network you have already
@@ -138,6 +140,14 @@ car.
 
 **John Snow: who lived within a walk of the pump?**, in the 1854 Cholera Outbreak in London project, uses a prepared
 Soho network to draw what each pump could be reached from on foot.
+
+## History
+
+### 2026-11-23 · On the standard (0.14.0)
+
+Moved off the old panel to the standard Inspector: one sentence of what it holds and where it comes
+from, the download, file or extract that way needs, and **Configure…** for every setting. The Result
+gives the junctions and streets held, the picture of them and where they came from.
 
 ---
 

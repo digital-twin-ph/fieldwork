@@ -1,4 +1,5 @@
 import {test,expect} from './fixtures.mjs';
+import {configureNetwork} from './network-config.mjs';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 
@@ -31,9 +32,9 @@ test('an encrypted project carrying a downloaded network opens on a clean device
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
-  await page.locator('#network-input-method').selectOption('osm');
+  await configureNetwork(page,{method:'osm'});
   await page.locator('#download-network').click();
-  await expect(page.locator('#inspector-content')).toContainText('3 nodes',{timeout:60000});
+  await expect(page.locator('#inspector-content')).toContainText('3 junctions',{timeout:60000});
   // The workflow holds a reference, which is the thing the package has to carry data for.
   const digest=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1'))
     .nodes.find(n=>n.type==='network_input').params.dataRef);
@@ -61,7 +62,7 @@ test('an encrypted project carrying a downloaded network opens on a clean device
 
   await page.locator('[data-view="workflow"]').click();
     await target.locator('.react-flow__node[data-id="network"]').click();
-    await expect(target.locator('#inspector-content')).toContainText('3 nodes');
+    await expect(target.locator('#inspector-content')).toContainText('3 junctions');
 
     // THE RELOAD IS THE TEST. Before 2026-10-20 the payload was stripped on the first save and
     // the reference resolved to nothing, so this is where an imported project disappeared.
@@ -69,7 +70,7 @@ test('an encrypted project carrying a downloaded network opens on a clean device
     await expect(target.locator('#workflow-state')).toBeVisible({timeout:45000});
   await page.locator('[data-view="workflow"]').click();
     await target.locator('.react-flow__node[data-id="network"]').click();
-    await expect(target.locator('#inspector-content')).toContainText('3 nodes');
+    await expect(target.locator('#inspector-content')).toContainText('3 junctions');
     await expect(target.locator('#toast')).not.toContainText('Shared input data');
   }finally{await fresh.close();}
 });

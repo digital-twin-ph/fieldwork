@@ -1,10 +1,10 @@
 import {test,expect} from './fixtures.mjs';
+import {configureNetwork} from './network-config.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
 // The practitioner, 2026-10-20: "So before I download Bunia again, I want to be able to set
-// driving mode on the street network." The control is on the download half of the widget, so this
-// exercises the path a practitioner takes to reach it: switch the input method, choose the mode,
-// and have it survive a reload. No request is made to OpenStreetMap.
+// driving mode on the street network." Since 2026-11-23 the mode is in Configure…, beside the way in:
+// switch to a download, choose the mode, Apply, and have it survive a reload. No request is made to OpenStreetMap.
 test('a street network download can be set to driving, and the choice is saved',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/?example=snow-isochrone');
@@ -13,27 +13,28 @@ test('a street network download can be set to driving, and the choice is saved',
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
   // The example ships a prepared file, so the mode control is not offered until a download is.
-  await expect(page.locator('#network-travel-mode')).toHaveCount(0);
+  await page.locator('#inspector-content #configure-step').click();
+  const dialog=page.locator('#network-config');
+  await expect(dialog.locator('#network-travel-mode')).toHaveCount(0);
 
-  await page.locator('#network-input-method').selectOption('osm');
-  await expect(page.locator('#network-travel-mode')).toHaveValue('walking');
-  await expect(page.locator('.inspector')).toContainText('Walking keeps footways, paths and steps');
-
-  await page.locator('#network-travel-mode').selectOption('driving');
-  await expect(page.locator('#network-travel-mode')).toHaveValue('driving');
+  await dialog.locator('#network-input-method').selectOption('osm');
+  await expect(dialog.locator('#network-travel-mode')).toHaveValue('walking');
+  await expect(dialog).toContainText('Walking keeps footways, paths and steps');
+  await dialog.locator('#network-travel-mode').selectOption('driving');
+  // Keyboard-reachable and named, like every other control in the dialog.
+  await expect(dialog.locator('label[for="network-travel-mode"]')).toHaveText('Travel mode to download for');
+  await dialog.locator('#network-travel-mode').focus();
+  await expect(dialog.locator('#network-travel-mode')).toBeFocused();
+  await dialog.locator('#config-apply').click();
+  await expect(page.locator('#inspector-content .standard-sentence')).toContainText('A street network for driving, downloaded from OpenStreetMap');
 
   // A saved parameter, not a session choice: the next download must use what was chosen here.
   await page.reload();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
-  await expect(page.locator('#network-travel-mode')).toHaveValue('driving');
-
-  // Keyboard-reachable and named, like every other control in this panel.
-  const label=page.locator('label[for="network-travel-mode"]');
-  await expect(label).toHaveText('Travel mode to download for');
-  await page.locator('#network-travel-mode').focus();
-  await expect(page.locator('#network-travel-mode')).toBeFocused();
+  await page.locator('#inspector-content #configure-step').click();
+  await expect(dialog.locator('#network-travel-mode')).toHaveValue('driving');
   expect(errors).toEqual([]);
 });
 
@@ -61,7 +62,7 @@ test('an area the service will not answer for is refused before it is downloaded
 
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="network"]').click();
-  await page.locator('#network-input-method').selectOption('osm');
+  await configureNetwork(page,{method:'osm'});
   await page.locator('#download-network').click();
   await expect(page.locator('#toast')).toContainText('1,840,000 street ways',{timeout:60000});
   await expect(page.locator('#toast')).toContainText('draw a smaller study area');

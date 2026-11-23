@@ -52,6 +52,10 @@ to this widget's.
 
 ## History
 
+### 2026-11-23 · Show me how (0.3.0)
+
+**Configure…** offers **Show me how it works**: three made-up pumps in a study area: a house going to the nearest, the lines where two are equally near, and the cells the step makes, which fill the box around the area.
+
 ### 2026-11-22 · On the standard (0.2.0)
 
 Moved to the standard Inspector: name, inputs, one sentence of what it allocates, the UTM zone in **Configure…** with

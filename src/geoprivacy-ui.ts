@@ -7,6 +7,8 @@ import type {AreaStepKit} from './area-steps-ui.js';
 import {openConfigDialog} from './config-dialog.js';
 import {validatePrivacyNode} from './geoprivacy.js';
 import {errorMessage} from './guards.js';
+import {SHOW_ME,showMeIn} from './table-walkthrough.js';
+import {donutWalkthrough,h3Walkthrough} from './spatial-walkthroughs.js';
 
 const sentence=(kit:InspectorKit,text:string)=>`<p class="standard-sentence">${kit.esc(text)}</p>`;
 const configure='<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>';
@@ -38,11 +40,12 @@ export const donutInspector:OwnInspector<'donut_geomask'>={
         sections:d=>({settings:field(kit,'donut-inner','Least distance moved (metres)',d.innerM,0,5000)
           +field(kit,'donut-outer','Most distance moved (metres)',d.outerM,1,5000)
           +field(kit,'donut-seed','Seed',d.seed,0,4294967295,'The same seed moves the same points the same way, so a run can be repeated. Predictable, so not for real protection.')
-          +NOTEBOOKS,
+          +NOTEBOOKS,preview:SHOW_ME,
           ...refusal(()=>validatePrivacyNode({...node,params:params(d)}))}),
         wire:(r,d,redraw)=>{
           for(const [id,key] of [['donut-inner','innerM'],['donut-outer','outerM'],['donut-seed','seed']] as const)
-            r.querySelector<HTMLInputElement>(`#${id}`)!.onchange=e=>{d[key]=(e.target as HTMLInputElement).value;redraw();};},
+            r.querySelector<HTMLInputElement>(`#${id}`)!.onchange=e=>{d[key]=(e.target as HTMLInputElement).value;redraw();};
+          showMeIn(r,kit.esc,()=>donutWalkthrough(Number(d.innerM),Number(d.outerM),Number(d.seed)));},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='donut_geomask')Object.assign(t.params,params(d));}),
       },kit.esc);
     });
@@ -65,11 +68,12 @@ export const h3Inspector:OwnInspector<'aggregate_points_to_h3_cell'>={
         draft:{resolution:String(p.resolution),minOccupancy:String(p.minOccupancy)},
         sections:d=>({settings:field(kit,'h3-resolution','H3 resolution (0 coarsest, 15 finest)',d.resolution,0,15,'Resolution 9 cells are about 0.1 km², resolution 7 about 5 km².')
           +field(kit,'h3-min','Fewest points a cell must hold to be shown',d.minOccupancy,2,100,'A cell with fewer is left out. Holding many points does not by itself make a cell safe to share.')
-          +NOTEBOOKS,
+          +NOTEBOOKS,preview:SHOW_ME,
           ...refusal(()=>validatePrivacyNode({...node,params:params(d)}))}),
         wire:(r,d,redraw)=>{
           for(const [id,key] of [['h3-resolution','resolution'],['h3-min','minOccupancy']] as const)
-            r.querySelector<HTMLInputElement>(`#${id}`)!.onchange=e=>{d[key]=(e.target as HTMLInputElement).value;redraw();};},
+            r.querySelector<HTMLInputElement>(`#${id}`)!.onchange=e=>{d[key]=(e.target as HTMLInputElement).value;redraw();};
+          showMeIn(r,kit.esc,()=>h3Walkthrough(Number(d.resolution),Number(d.minOccupancy)));},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='aggregate_points_to_h3_cell')Object.assign(t.params,params(d));}),
       },kit.esc);
     });

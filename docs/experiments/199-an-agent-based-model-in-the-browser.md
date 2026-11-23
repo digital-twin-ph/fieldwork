@@ -1,6 +1,6 @@
 # 199 · An agent-based model in the browser, checked against Starsim
 
-_Created 2026-11-11 · Updated 2026-11-21_
+_Created 2026-11-11 · Updated 2026-11-22_
 
 **Status:** asked. A spike proposed 2026-11-10 and placed after MERS (TODO 29); moved ahead of MERS by the practitioner on
 2026-11-17 (*"Let's investigate the ABM spike next"*), on Hagelloch's measles. **Spike run 2026-11-17: yes.** A

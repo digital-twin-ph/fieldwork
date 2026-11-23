@@ -29,7 +29,7 @@ test('a route read as a line is drawn over the study area, under the points',asy
     {id:'map',type:'map_output',x:600,y:100,params:{label:'Map',basemap:'none'}}],
     edges:[{id:'e1',from:'ward',to:'map',port:'area'},{id:'e2',from:'route',to:'map',port:'lines'}]});
   await expect(page.locator('#map [data-line-layer="route"]')).toHaveCount(1);
-  await page.locator('#map').screenshot({path:'/private/tmp/claude-501/-Users-hermantolentino-workspace-digitaltwin-ph/47848448-ea4e-480c-8331-fd778ed56a81/scratchpad/lines-1.png'});
+  await page.locator('#map').screenshot({path:'test-results/line-layer-1.png'});
   expect(errors).toEqual([]);
 });
 
@@ -40,7 +40,7 @@ test('the border two study areas share is a line, drawn on a map of lines alone'
     {id:'map',type:'map_output',x:600,y:100,params:{label:'Map',basemap:'none'}}],
     edges:[{id:'e1',from:'a',to:'border',port:'area'},{id:'e2',from:'b',to:'border',port:'area_2'},{id:'e3',from:'border',to:'map',port:'lines'}]});
   await expect(page.locator('#map [data-line-layer="border"]')).toHaveCount(1);
-  await page.locator('#map').screenshot({path:'/private/tmp/claude-501/-Users-hermantolentino-workspace-digitaltwin-ph/47848448-ea4e-480c-8331-fd778ed56a81/scratchpad/lines-2.png'});
+  await page.locator('#map').screenshot({path:'test-results/line-layer-2.png'});
   expect(errors).toEqual([]);
 });
 
@@ -102,6 +102,6 @@ test('Configure… reads a GPX file\'s tracks and routes, and takes the border o
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:30000});
   await page.locator('.react-flow__node[data-id="lines"]').click();
   await expect(page.locator('#inspector-content .standard-result')).toContainText('1 line, 111 km in all.');
-  await page.screenshot({path:'/private/tmp/claude-501/-Users-hermantolentino-workspace-digitaltwin-ph/47848448-ea4e-480c-8331-fd778ed56a81/scratchpad/lines-3.png'});
+  await page.screenshot({path:'test-results/line-layer-3.png'});
   expect(errors).toEqual([]);
 });

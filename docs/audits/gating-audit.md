@@ -253,6 +253,10 @@ passed. WebKit's took 68 and failed 17 tests: 9 were WebKit's service worker ref
 access control checks", the error seen in single tests before, and the rest page errors and timeouts of the same run.
 WebKit is set back to one worker; Chromium stays at two.
 
+**0.171.0 (run 45113294353):** Chromium at two workers 36 minutes, WebKit at one 58. Both failed only on tests of their
+own making, fixed in 0.171.1: the line layer's tests wrote pictures to a local folder, and a quick drag counted as a hold
+on a loaded runner. No WebKit test failed on the service worker at one worker.
+
 **Not established:**
 
 - Why WebKit's service worker refuses the reasoning worker, and whether Safari users meet it outside tests.

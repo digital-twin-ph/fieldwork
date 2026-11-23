@@ -3,6 +3,11 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.171.1 — 2026-11-23
+
+- Two tests made fit for CI: the line layer's tests saved pictures to a folder that exists only on the machine they were
+  written on, and the georeferencing test's quick drag took longer than the 300 ms hold on a loaded runner.
+
 ## 0.171.0 — 2026-11-22
 
 - **Line layer** (0.1.0, experiment 229): routes, tracks and roads read from GPX, KML, KMZ or GeoJSON, or the border two

@@ -186,11 +186,12 @@ test('Shift + click places a point on the map; a plain click only says how; a po
   await page.keyboard.up('Shift');
   await expect(lon).not.toHaveValue('');
   const before=await lon.inputValue();
-  // A quick drag of the point does not move it.
+  // A quick drag of the point does not move it. ONE STEP, so it stays under the 300 ms hold (0.171.0 CI, Chromium at two
+  // workers: four steps on a loaded runner took longer, the drag counted as a hold, and the point moved 0.0009°).
   const mark=dialog.locator('#geo-map-pane [data-geo-point="0"]');
   let m=await mark.boundingBox();
   await page.mouse.move(m.x+m.width/2,m.y+m.height/2);await page.mouse.down();
-  await page.mouse.move(m.x+m.width/2+40,m.y+m.height/2,{steps:4});await page.mouse.up();
+  await page.mouse.move(m.x+m.width/2+40,m.y+m.height/2);await page.mouse.up();
   await expect(lon).toHaveValue(before);
   // Pressed and held, then dragged, it moves.
   m=await mark.boundingBox();

@@ -1,6 +1,6 @@
 # 229 · A line layer: routes, tracks and borders
 
-_Created 2026-11-23 · Updated 2026-11-23_
+_Created 2026-11-22 · Updated 2026-11-22_
 
 **Status:** tried. Built 2026-11-22 as Line layer 0.1.0: it reads lines from a file or takes the border of two study areas; Map draws them, static and
 interactive. Not yet in a worked example, and its name is awaiting the practitioner's review. The buffer that is its

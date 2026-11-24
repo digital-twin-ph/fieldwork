@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.184.0 — 2026-11-23
+
+- **A map carrying polygons draws its inset** (Map 0.48.0). It was composed for every other kind of map and not this
+  one, so a box picked on such a map was kept, offered in Configure… and silently never drawn. The polygon renderer
+  now takes an extent to draw over, as the other one always has, and the box is tested against its own frame — the
+  two disagree exactly when polygons are present. The enlarged part draws no key: a key belongs to the whole map.
+  Polygons also leave the picker's exclusion list. A raster, a street network and panels still cannot draw one.
+
 ## 0.183.0 — 2026-11-23
 
 - **A magnifier on the pin editor's map** (Point data 0.19.0). A glass follows the cursor and shows the basemap

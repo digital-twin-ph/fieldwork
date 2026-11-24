@@ -3893,7 +3893,34 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
     // PANELS SIDE BY SIDE, on one scale (Map's manual, History: panels): each panel its own frame, so no single basemap or point overlay
     // projects onto the figure; those are drawn on one map only.
     else if(arranged){svg.innerHTML=polygonPanelsSvg(result.polygons,arranged.panels,arranged.grid,esc);applyFrame(svg,svg.innerHTML);}
-    else{svg.innerHTML=polygonSvg(result.polygons,esc,wiredArea);applyFrame(svg,svg.innerHTML);}
+    else{
+      // AN INSET ON A MAP THAT CARRIES POLYGONS (2026-11-23). It was composed for every other kind of map and not
+      // this one: a polygon figure is drawn here and returned before the composition further down ever runs, so an
+      // inset picked on such a map was kept, offered in Configure... and silently never drawn. Reported as "the
+      // inset never appeared", and measured: 85 paths with an inset on a plain map against 43 with a polygon layer.
+      //
+      // The box is tested against THIS renderer's frame, not `staticMapFrame`'s. The two disagree exactly when
+      // polygons are present -- staticMapFrame spans the boundary, the lines, the rows and the centres and ignores
+      // polygon layers -- which is the same trap the too-small-layer note fell into earlier the same day.
+      const insetOn=mapNode?.params.inset;
+      const whole=polygonFrame(result.polygons,wiredArea);
+      if(insetOn&&whole&&boxInside(insetOn.box,whole.bounds)){
+        const part=polygonFrame(result.polygons,wiredArea,insetOn.box)!;
+        const locator=insetOn.arrange==='locator';
+        const shrink=850/(locator?insetWidth(insetOn):focusDiameter(insetOn,whole.height).diameter);
+        const drawing=(content:string,f:{height:number;scale:number;project:(c:Position)=>[number,number]})=>
+          ({content,height:f.height,project:f.project as (c:[number,number])=>[number,number],scale:f.scale});
+        const composed=composeInset(
+          drawing(polygonSvg(result.polygons,esc,wiredArea,{markScale:locator?shrink:1,withKey:!locator}),whole),
+          drawing(polygonSvg(result.polygons,esc,wiredArea,{box:insetOn.box,markScale:locator?1:shrink,withKey:locator}),part),
+          insetOn,
+          rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]),{},
+          insetFeatures(result.boundary as Boundary|undefined,rows,(locator?part:whole).project as (c:[number,number])=>[number,number]));
+        svg.innerHTML=composed.content;
+      }
+      else svg.innerHTML=polygonSvg(result.polygons,esc,wiredArea);
+      applyFrame(svg,svg.innerHTML);
+    }
     const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons,wiredArea);
     const drawnLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
     if(polygonGround&&drawnLinks?.length)
@@ -3984,8 +4011,10 @@ function insetBoxFrom(map:import('leaflet').Map,shown:Output):[number,number,num
   return clipped;
 }
 function insetPicker(mapNode:WorkflowNode<'map_output'>|undefined,shown:Output,map:import('leaflet').Map){
-  // Where the static figure can draw one: the plain map of a study area and its points, not polygons, a raster or panels.
-  if(!mapNode||!shown.boundary||mapNode.params.arrangement||shown.polygons||shown.raster||shown.network)return;
+  // WHERE THE STATIC FIGURE CAN DRAW ONE. Polygons left this list on 2026-11-23: the polygon renderer composes an
+  // inset now, and excluding them here is what kept the bar off the practitioner's map while Configure... went on
+  // offering the controls. A raster, a street network and panels still cannot, so they stay.
+  if(!mapNode||!shown.boundary||mapNode.params.arrangement||shown.raster||shown.network)return;
   const bar=document.createElement('div');bar.className='map-inset-bar leaflet-bar';
   // DRAWN FROM THE NODE AS IT IS NOW, and again after each choice: the map is kept, not remounted, so the bar redraws.
   const fill=()=>{

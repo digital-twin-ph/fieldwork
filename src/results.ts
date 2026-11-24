@@ -197,6 +197,21 @@ export interface WorkflowRun {alerts:RunAlert[]; evidence:NodeEvidence[]; proven
    *  interface has to show, and for a sharper reason than the first: the rows a relate drops are
    *  absent from the table it hands on, so the outcome cannot be read off the data. */
   relations?:Record<string,import('./relate-table.js').RelateOutcome>;
+  /** WHAT A STEP COMPUTED, NAMED, so a dialog downstream can offer it (2026-11-24).
+   *
+   *  A Configure… dialog offers the features arriving on a port by reading the SOURCE node's own `params.data`.
+   *  That works for a layer read from a file and fails for every computed one -- a border, a buffer, a clip -- whose
+   *  features live only in the run's internal values. `outputs` was consulted as a fallback and holds only the
+   *  workflow's OUTPUT nodes, so the lookup could never match an intermediate step. The result was a dialog saying
+   *  "Run the workflow once and this step will offer the points by name" about a step where running changes nothing.
+   *  Reported with a border on Geometry buffer: a text field still showing the MANILA placeholder with 32 stretches
+   *  of the South Sudan--DR Congo border connected.
+   *
+   *  CAPPED, because this is held for the whole session beside everything else a run keeps, and a clip of 50,000
+   *  points has nothing to offer a picker that a list of 500 does not. Over the cap the step is absent rather than
+   *  truncated: half a list offered as the whole one is the silent loss this project refuses elsewhere, and the
+   *  dialog can say the layer is too large to name instead. */
+  computed?:Record<string,{features:{name:string;geometry:{type:string;coordinates:unknown}}[];total:number}>;
   /** What each process step made, in a few numbers (summarizeStep in core.ts), for its Result. */
   stepSummaries?:Record<string,StepSummary>;
   /** What each Join a table to the study area joined, by step: its parts, counts and what was left over. */

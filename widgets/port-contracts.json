@@ -685,15 +685,20 @@
           "when": "default",
           "required": [
             [
-              "area",
-              "area"
-            ],
-            [
               "points",
               "points"
             ]
           ],
-          "optional": []
+          "optional": [
+            [
+              "area",
+              "area"
+            ],
+            [
+              "polygons",
+              "polygons"
+            ]
+          ]
         }
       ]
     },

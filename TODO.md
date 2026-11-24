@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-11-23_
+_Created 2026-10-10 · Updated 2026-11-24_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -3538,6 +3538,28 @@ Built (experiment 167): NYC's 1.061 and Salmonella's 96 and 18 reproduced on the
 - Later, as the design said: conditional logistic regression for individually matched studies, interactions.
 
 ## Known and recorded, not yet scheduled
+
+- **Routes and flows drawn on a map, as pushpins are placed** (2026-11-24). The practitioner: *"we should add a
+  feature like pushpins to point data. Users should be able to draw flows and routes on a map as they observe events
+  on the ground"*, and, settling the shape of it: *"Pushpins are points, Routes and flows are lines."* A third
+  `inputMethod` on **Line layer** — file, border, **drawn** — not a new widget and not an experiment: widget
+  evolution, so the dated record belongs in the widget's History.
+
+  **The symmetry is the specification.** Everything the pushpin editor already does is reused rather than rebuilt:
+  the Leaflet map, the basemap choice, Find a place, a pin at my location, full screen, the magnifier, undo, delete,
+  the id strategy, and the per-feature form fields and attribute rules. What is new is the drawing — click to add a
+  vertex, finish a line, move or insert one — and nothing else needs inventing:
+
+  - **Direction comes free.** A LineString is an ordered sequence, so the order of clicking IS the direction. A flow
+    drawn A→B must not be indistinguishable from B→A, so the editor shows the direction and offers to reverse it.
+    This is the one thing `map-links.ts` gets for nothing — infector to case is implied by the data — and a
+    hand-drawn line has no data to imply it.
+  - **A magnitude is a form field**, as household size is on a pin. Nothing special is added for "how many moved
+    along this".
+
+  **Not the same as the links a map already draws.** `map-links.ts` runs a line from each record to the record it
+  names, derived from two columns of an existing point layer. Here the geometry IS the observation and there is no
+  table behind it. That is the gap.
 
 - **Checks 26 and 40 cannot run in the lab's browser kernel**: neither rapidfuzz nor jellyfish is in Pyodide v314.0.6.
   Both pass in CPython only. Check 41 passed in the browser kernel on 2026-11-09. A Jaro-Winkler written in the lab

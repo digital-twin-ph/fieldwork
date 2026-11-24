@@ -122,6 +122,9 @@ export const zoneFor=(geometries:readonly Boundary[]):{zone:number;hemisphere:'n
 export function bufferFeatures(
   inputs:{points?:PointCollection;lines?:LineLayer;polygons?:Polygons},
   node:WorkflowNode<'buffer_point'>, runId:string,
+  /** The steps of this workflow that window a grid through a study area, by label. Empty where none does, and the
+   *  one-degree scope limit then has nothing to protect. */
+  options?:{rasterSteps?:readonly string[]},
 ):{value:AreaValue|Polygons;receipt:Receipt}{
   requireRunnableBufferPoint(node);
   const all=featuresToBuffer(inputs);
@@ -144,11 +147,20 @@ export function bufferFeatures(
   // so carrying the limit over to it would refuse the question the practitioner brought: the foraging range around
   // bat sighting points across two provinces, against the miners inside it. Extending a guard past what it guards
   // is how a prototype limit becomes a wrong answer.
-  if(node.params.yields!=='polygons'&&span>1)
+  //
+  // AND ONLY WHERE THERE IS A RASTER TO GUARD (2026-11-24). The limit was unconditional, so a workflow holding no
+  // raster at all was refused by a rule whose own sentence says it is about rasters. Reported with two study areas,
+  // a border, a buffer and a Map -- not a grid anywhere in it -- told that "a study area windows every raster this
+  // workflow reads". It read none. This is the same error the paragraph above was written about, made one level up:
+  // a guard applied past what it guards. The steps that window a grid through a scope are named in the refusal, so
+  // the reader can see WHICH one the limit is protecting rather than take the rule on trust.
+  const windowing=options?.rasterSteps??[];
+  if(node.params.yields!=='polygons'&&span>1&&windowing.length)
     throw new Error(
-      `The area drawn spans ${span.toFixed(2)}\u00b0, and a study area windows every raster this workflow reads, so this `
-      +'prototype holds a scope to one degree. Keep the buffers as a polygon layer in Configure\u2026 to draw them at '
-      +'this spread, or draw around fewer features.');
+      `The area drawn spans ${span.toFixed(2)}\u00b0, and it would window ${windowing.length===1?'the raster read by ':'the rasters read by '}`
+      +`${windowing.map(n=>`"${n}"`).join(', ')}, which at this spread serves cells too coarse to mean anything. This `
+      +'prototype holds a scope that windows a raster to one degree. Keep the buffers as a polygon layer in '
+      +'Configure\u2026 to draw them at this spread, draw around fewer features, or take the raster out of this workflow.');
   const scattered=span>SCATTERED_SPAN_DEGREES/4&&buffered.length>1;
   const {zone,hemisphere}=zoneFor(buffered.map(b=>b.geometry));
   const said=`${distanceM.toLocaleString('en')} m`;

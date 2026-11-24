@@ -3,6 +3,33 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.188.0 — In development
+
+- **Find health facilities reads the country from the study area connected to it.** The dialog already asked the
+  study area ("the country the study area says, filled in where the step names none") and the wiring already
+  supplied it, but a new step was created carrying `country: 'PHL'`, so the step always named one and the study
+  area was never consulted. A DR Congo study area offered Philippines. The default is now empty, so what the area
+  states is what the dialog shows.
+
+- **A scope is held to one degree only where a raster would be windowed through it** (Geometry buffer 0.7.0). The
+  limit was unconditional, so a workflow holding no raster at all was refused by a rule whose own sentence is about
+  rasters — reported with two study areas, a border, a buffer and a Map, told that "a study area windows every
+  raster this workflow reads" when it read none. The refusal now names the steps it is protecting, and offers the
+  way out that was always true and never said: take the raster out of the workflow.
+- **Points can be kept inside a polygon layer, not only a study area** (Keep points inside the area 0.4.0). Every
+  clip masked by a study area, so a buffer too wide to BE a study area — ten miles around 656 km of border spans
+  more than three degrees — could not be clipped by at all. Two correct rules meeting in a dead end. Both ports are
+  offered and neither is required alone; both connected is refused, because a point inside one and outside the
+  other has no single answer. A point kept by a layer records **which** polygon held it, since a layer is many
+  masks and "inside the buffer" loses which one.
+- **A computed layer is offered by name in the dialogs downstream.** A dialog read the features on a port from the
+  source node's own data, which a layer read from a file has and a computed one — a border, a buffer, a clip — does
+  not; the fallback looked in the run's outputs, which hold the workflow's output nodes alone and could never match
+  an intermediate step. So Geometry buffer showed a text field reading MANILA with 32 stretches of a border
+  connected, under the words "Run the workflow once and this step will offer the points by name" — a promise the
+  code could not keep. Each step's named layer is now kept with the run, capped at 500 features and absent rather
+  than truncated past it.
+
 ## 0.187.0 — In development
 
 - **Map a column’s terms to a vocabulary** (new widget, 0.1.0). Each term in a column gains the Wikidata entity a

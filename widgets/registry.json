@@ -245,7 +245,7 @@
     {
       "id": "urn:fieldwork:widget:buffer_point",
       "nodeType": "buffer_point",
-      "currentVersion": "0.6.0",
+      "currentVersion": "0.7.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -276,6 +276,11 @@
           "version": "0.6.0",
           "path": "widgets/releases/buffer_point/0.6.0.json",
           "sha256": "26654403031e0764861356191cf93ede41a4ba9f9cee1fb7e2167f898eac4214"
+        },
+        {
+          "version": "0.7.0",
+          "path": "widgets/releases/buffer_point/0.7.0.json",
+          "sha256": "8662167440f36ef9a3868c3e7d9d786954d997630da5514bce166c59914ea0dd"
         }
       ]
     },
@@ -553,7 +558,7 @@
     {
       "id": "urn:fieldwork:widget:clip_points_to_area",
       "nodeType": "clip_points_to_area",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -569,6 +574,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/clip_points_to_area/0.3.0.json",
           "sha256": "ed178d2c4d062ad9da5a2b84d684432d28a0b73332dbe8dc14177b7e912057c0"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/clip_points_to_area/0.4.0.json",
+          "sha256": "95935a688e22372901e6787f2ce84caec29232c9a27e31d9fbb53fe779c7d6d2"
         }
       ]
     },

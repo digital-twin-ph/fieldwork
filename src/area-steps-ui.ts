@@ -392,24 +392,43 @@ function clipPreview(kit:AreaStepKit,n:WorkflowNode,keepBoundary:boolean):string
 
 export const clipPointsInspector:OwnInspector<'clip_points_to_area'>={
   markup:(n,kit)=>{const p=n.params,keep=p.keepBoundary!==false;
+    // WHICH MASK IS CONNECTED decides the sentence (2026-11-24). The step takes a study area OR a polygon layer, so
+    // a sentence that says "the study area" whatever is wired describes a different step from the one on the canvas.
+    const w=kit.workflow(),masked=(port:string)=>w.edges.some(e=>e.to===n.id&&e.port===port);
+    const layer=masked('polygons'),both=layer&&masked('area');
+    const mask=both?'two masks':layer?'the polygon layer':'the study area';
+    const named=p.insideAttribute?.trim()||'inside_polygon';
     return kit.section('Name',kit.name('clip-points-label',p.label||'Points inside the area'))
-      +kit.section('Inputs',kit.inputs(n,{area:'The study area',points:'The points to keep or set aside'}))
-      +kit.section('Settings',sentence(kit,`Keeps the points inside the study area${keep?', and those exactly on its outline':'; those exactly on its outline are set aside'}. `
+      +kit.section('Inputs',kit.inputs(n,{area:'A study area',polygons:'Or: a polygon layer',points:'The points to keep or set aside'}))
+      +kit.section('Settings',sentence(kit,both
+        ?'A study area AND a polygon layer are connected, and a point inside one but outside the other would have no '
+          +'single answer, so the run refuses them. Disconnect whichever is not the mask you mean.'
+        :`Keeps the points inside ${mask}${keep?`, and those exactly on ${layer?'a polygon\u2019s':'its'} outline`:`; those exactly on ${layer?'a polygon\u2019s':'its'} outline are set aside`}. `
+        +(layer?`Each point kept records which polygon held it, in ${named}, because a layer is many masks. `:'')
         +`Points outside, and records with no location, are counted apart${p.showExcluded!==false?', and those outside are drawn faint on a connected map':''}.`)+configure)
       +kit.section('Result',ran(kit,n));},
   wire:(n,kit,root)=>{
     root.querySelector('#configure-step')?.addEventListener('click',()=>{
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog({id:'clip-points-dialog',widget:'Keep points inside the area',step:node.params.label||'',
-        draft:{keepBoundary:node.params.keepBoundary!==false,showExcluded:node.params.showExcluded!==false},
+        draft:{keepBoundary:node.params.keepBoundary!==false,showExcluded:node.params.showExcluded!==false,
+          insideAttribute:node.params.insideAttribute??''},
         sections:d=>({preview:clipPreview(kit as AreaStepKit,n,d.keepBoundary)+showMe,
-          settings:`<label class="field-option"><input type="checkbox" id="clip-points-boundary"${d.keepBoundary?' checked':''}> Keep points that sit exactly on the outline</label>`
+          settings:(kit.workflow().edges.some(e=>e.to===n.id&&e.port==='polygons')
+            ?`<div class="field"><label class="field-label" for="clip-points-attribute">Column naming the polygon that kept each point</label>`
+              +`<input id="clip-points-attribute" maxlength="60" value="${kit.esc(d.insideAttribute??'')}" placeholder="inside_polygon">`
+              +'<p class="description">A polygon layer is many masks, so \u201cinside the buffer\u201d loses which one. A study area has one mask and writes nothing.</p></div>'
+            :'')
+          +`<label class="field-option"><input type="checkbox" id="clip-points-boundary"${d.keepBoundary?' checked':''}> Keep points that sit exactly on the outline</label>`
           +`<label class="field-option"><input type="checkbox" id="clip-points-excluded"${d.showExcluded?' checked':''}> Show the points set aside, faint, on a connected map</label>`}),
         wire:(root2,d,redraw)=>{
           root2.querySelector<HTMLInputElement>('#clip-points-boundary')!.onchange=e=>{d.keepBoundary=(e.target as HTMLInputElement).checked;redraw();};
           root2.querySelector<HTMLInputElement>('#clip-points-excluded')!.onchange=e=>{d.showExcluded=(e.target as HTMLInputElement).checked;redraw();};
+          root2.querySelector<HTMLInputElement>('#clip-points-attribute')?.addEventListener('change',e=>{d.insideAttribute=(e.target as HTMLInputElement).value.trim();redraw();});
           showMeIn(root2,kit,()=>clipPointsWalkthrough(d.keepBoundary));},
-        apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='clip_points_to_area'){t.params.keepBoundary=d.keepBoundary;t.params.showExcluded=d.showExcluded;}}),
+        apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='clip_points_to_area'){
+          t.params.keepBoundary=d.keepBoundary;t.params.showExcluded=d.showExcluded;
+          if(d.insideAttribute?.trim())t.params.insideAttribute=d.insideAttribute.trim();else delete t.params.insideAttribute;}}),
       },kit.esc);
     });
   },

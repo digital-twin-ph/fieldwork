@@ -615,7 +615,11 @@ export interface ParamsByType {
   /** Keep the points that are in the area. `keepBoundary` decides the one case the predicate
    *  exists to name: a point exactly ON the outline is in that jurisdiction's edge, and folding
    *  it silently into either side would answer a question nobody asked. */
-  clip_points_to_area:{label:string;keepBoundary:boolean;showExcluded:boolean};
+  clip_points_to_area:{label:string;keepBoundary:boolean;showExcluded:boolean;
+    /** WHICH POLYGON KEPT A POINT, where the mask is a layer (2026-11-24). A layer is many masks, and "inside the
+     *  buffer" loses what a border question is asking: WHICH stretch this facility is near. Unused with a study
+     *  area, which has one mask and nothing to name. */
+    insideAttribute?:string};
   /** Record linkage across point layers. Every threshold is a knob and every knob reaches the
    *  receipt: the practitioner, 2026-10-21, *"Thresholds are knobs and settings should show up in
    *  N3 receipts."* `decisions` holds the review band's human answers, each pinned to a signature

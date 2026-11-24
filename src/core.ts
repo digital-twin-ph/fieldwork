@@ -48,7 +48,7 @@ import {deduplicatePoints,deduplicateReceipt} from './deduplicate-points.js';
 import {deduplicateTable} from './deduplicate-table.js';
 import {deduplicateTableReceipt} from './deduplicate-points.js';
 import type {DeduplicateResult} from './deduplicate-points.js';
-import {clipPointsToArea,clipPointsReceipt} from './clip-points.js';
+import {clipPointsToArea,clipPointsToPolygons,clipPointsReceipt} from './clip-points.js';
 import {workflowMetricCRS} from './metric-crs.js';
 // Re-exported so the registry validator can cross-check a declared rename against the one the
 // application actually performs, from the same bundle it already reads TYPES out of.
@@ -224,7 +224,10 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   deduplicate_points:{title:'Deduplicate records',group:'Comparisons and checks',icon:'⧉',color:'purple',
     description:'Find records that are the same, in two point sources or within one table, and merge the ones that agree',
     inputs:[['points','points'],['points_2','points'],['records','table']],output:'points'},
-  clip_points_to_area:{title:'Keep points inside the area',group:'Spatial operations',icon:'⊂',color:'teal',description:'Keep the points that fall inside the study area, and count what fell outside',inputs:[['area','area'],['points','points']],output:'points'},
+  // THE MASK IS A STUDY AREA OR A POLYGON LAYER (2026-11-24). Both ports are always offered, so connecting one is
+  // how the mask is chosen -- the reasoning chart_output and sample_raster already use: no type appears in two
+  // modes, so asking before the shape arrives is a question with no content.
+  clip_points_to_area:{title:'Keep points inside the area',group:'Spatial operations',icon:'⊂',color:'teal',description:'Keep the points that fall inside a study area or a polygon layer, and count what fell outside',inputs:[['area','area'],['polygons','polygons'],['points','points']],output:'points'},
   raster_input:{title:'Raster input',group:'Sources',icon:'▦',color:'blue',description:'Import a window from a local GeoTIFF around the study area',inputs:[['area','area']],output:'raster'},
   // Extracted from `access`, which derived proxy minutes inside a nearest-neighbour search. A
   // widget and not a knob: a minutes column changes every row for every consumer of `distances`,
@@ -450,6 +453,11 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // A SEARCH'S AREA MAY BE TYPED IN ITS DIALOG, as in JLT's STAC Browser, so a Study area fills it but is not required.
   // Requiring it left Search grey with no way forward inside the dialog (the practitioner, 2026-11-05).
   if(node.type==='search_satellite_catalog')return all.filter(([port])=>port!=='area');
+  // A STUDY AREA OR A POLYGON LAYER, never both and never neither (2026-11-24). The same shape as the sampler
+  // below: neither mask is required ON ITS OWN, because requiring both would refuse every workflow and requiring
+  // the area would refuse the layer. The run says which is missing, and refuses two masks, where a point inside
+  // one and outside the other would otherwise have no single answer.
+  if(node.type==='clip_points_to_area')return all.filter(([port])=>port!=='area'&&port!=='polygons');
   // POINTS OR AREAS: the sampler reads at one or the other, so neither is required on its own; the run says which is
   // missing when neither is connected (experiment 180).
   if(node.type==='sample_raster')return all.filter(([port])=>port===(node.params.source==='satellite-files'?'files':'raster'));
@@ -1329,6 +1337,19 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
   // WHAT A PROCESS STEP MADE, in a few numbers, for its Inspector's Result: only output steps keep their values after a
   // run, and a step's Result must not say "not run" of a step that ran (2026-11-22).
   const stepSummaries:Record<string,StepSummary>={};
+  /** WHAT EACH STEP COMPUTED, named, for the dialogs downstream (2026-11-24). See `computed` in results.ts for why.
+   *  Only layers of named geometry, and only while they are small enough to be worth naming one by one. */
+  const computed:Record<string,{features:{name:string;geometry:{type:string;coordinates:unknown}}[];total:number}>={};
+  const NAMEABLE=500;
+  const remember=(node:WorkflowNode,value:unknown):void=>{
+    const layer=value as {features?:{id?:unknown;name?:unknown;properties?:{name?:unknown};geometry?:{type:string;coordinates:unknown}|null}[]}|undefined;
+    const all=layer?.features;
+    if(!Array.isArray(all)||!all.length||all.length>NAMEABLE)return;
+    const features=all.filter(f=>f&&f.geometry).map(f=>({
+      name:String(f.properties?.name??f.name??f.id??'').trim(),
+      geometry:f.geometry as {type:string;coordinates:unknown}}));
+    if(features.length)computed[node.id]={features,total:all.length};
+  };
   const joins:Record<string,import('./area-join.js').AreaJoinResult>={};
   const relateShifts:Record<string,ShiftColumn[]>={};
   // NOTES THE WIDGETS MACHINED, for the write-up rather than for a panel. Four producers:
@@ -1520,9 +1541,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           facilityRegisters.registers as RegisterEntry[],runId);value=got.value as unknown as DisplayValue;receipts.push(got.receipt as unknown as Receipt);break;}
         const got=facilitiesValue(node,runId);value=got.value;receipts.push(got.receipt);break;
       }
-      case 'buffer_point':{const made=bufferFeatures(
+      case 'buffer_point':{
+        // WHICH STEPS WOULD WINDOW A GRID THROUGH THIS SCOPE. The one-degree limit exists for them and for nothing
+        // else, so a workflow with no raster in it is not held to it.
+        const rasterSteps=workflow.nodes.filter(n=>n.type==='raster_input'||n.type==='clip_raster'||n.type==='sample_raster')
+          .map(n=>n.params.label||TYPES[n.type].title);
+        const made=bufferFeatures(
         {points:inputs.points,lines:(inputs as unknown as {lines?:import('./types.js').LineLayer}).lines,
-          polygons:inputs.polygons},node,runId);
+          polygons:inputs.polygons},node,runId,{rasterSteps});
         value=made.value as unknown as DisplayValue;receipts.push(made.receipt);break;}
       case 'space_time_scan':{
         // DETECT (experiment 200): the scan runs in a worker; a date column is named, never guessed.
@@ -2323,7 +2349,16 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         break;
       }
       case 'clip_points_to_area':{
-        const clipped=clipPointsToArea(inputs.points,inputs.area.boundary,node.params.keepBoundary!==false);
+        // ONE MASK, NOT TWO. Both connected is ambiguous -- a point inside the area and outside every polygon has
+        // two answers -- so it is refused rather than resolved by a rule nobody chose.
+        const layer=(inputs as unknown as {polygons?:{features?:{id?:unknown;name?:unknown;geometry:never}[]}}).polygons;
+        if(layer&&inputs.area)throw new Error('Connect a study area or a polygon layer to keep points inside, not both: '
+          +'with two masks a point inside one and outside the other has no single answer. Disconnect one of them.');
+        if(!layer&&!inputs.area)throw new Error('Connect the study area, or the polygon layer, the points are kept inside.');
+        const clipped=layer
+          ?clipPointsToPolygons(inputs.points,layer as never,node.params.keepBoundary!==false,
+            node.params.insideAttribute?.trim()||'inside_polygon')
+          :clipPointsToArea(inputs.points,inputs.area.boundary,node.params.keepBoundary!==false);
         if(!clipped.collection.features.length)throw new Error(
           `No points fall inside "${inputs.area.label||'the study area'}". `
           +`${clipped.outside} of ${clipped.inside+clipped.boundary+clipped.outside+clipped.missing} are outside it`
@@ -2982,7 +3017,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='lines')!,from=workflow.nodes.find(n=>n.id===edge.from);
       (value as unknown as {lines:unknown}).lines=[{...structuredClone((inputs as unknown as {lines:import('./types.js').LineLayer}).lines),
         sourceNodeId:edge.from,label:(from?.params as {label?:string})?.label||edge.from}];}
-    values.set(node.id,value);{const summary=summarizeStep(node,value);if(summary)stepSummaries[node.id]=summary;}trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
+    values.set(node.id,value);{remember(node,value);const summary=summarizeStep(node,value);if(summary)stepSummaries[node.id]=summary;}trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // A RASTER IS LET GO once every step that reads it has run (2026-11-13): three national windows at 100 m held to the
     // end of Botswana's run stalled the tab, and nothing after the steps reading a raster reads it again. A step showing it,
     // a map, holds its own reference.
@@ -3084,6 +3119,7 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
     ...(Object.keys(linkages).length?{linkages}:{}),
     ...(Object.keys(relations).length?{relations}:{}),
     ...(Object.keys(stepSummaries).length?{stepSummaries}:{}),
+    ...(Object.keys(computed).length?{computed}:{}),
     ...(Object.keys(joins).length?{joins}:{}),
     ...(Object.keys(relateShifts).length?{relateShifts}:{}),
     ...(Object.keys(machined).length?{machined:signedByWidget(machined,workflow)}:{}),

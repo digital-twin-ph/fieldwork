@@ -39,6 +39,54 @@ export interface ClipPointsResult {collection:PointCollection; inside:number; bo
    *  made from the number 526. */
   excluded:PointFeature[]}
 
+/** THE SAME CLIP, MASKED BY A POLYGON LAYER instead of one study area (2026-11-24).
+ *
+ *  The practitioner, with health facilities and a 10-mile buffer of the South Sudan–DR Congo border: *"I can find
+ *  the facilities using the study area and extract the facilities within the buffer polygon. That is the intended
+ *  workflow."* It could not be built. Every clip in the tree masks by an `area` — `clip_points_to_area`,
+ *  `clip_polygons`, `clip_raster` — and a buffer around 656 km of border spans 3.59°, which the one-degree scope
+ *  limit rightly refuses to call a study area because a study area windows every raster in the workflow. So the
+ *  buffer could only be a polygon layer, and nothing clips by one. Two rules, each correct alone, met in a dead end.
+ *
+ *  A POLYGON LAYER WINDOWS NO RASTER, so the limit that blocked the scope has nothing to say here, and the
+ *  operation is the one that already exists: a point is kept where it falls inside the mask. Only the shape of the
+ *  mask differs, which is why this extends the clip rather than adding a widget beside it.
+ *
+ *  WHICH POLYGON KEPT IT is recorded on the point. A layer is many masks, and "inside the buffer" loses the thing a
+ *  border question is actually asking — WHICH stretch of border this facility is near. The study-area clip has one
+ *  mask and nothing to name, so it writes nothing and is unchanged. */
+export function clipPointsToPolygons(points:PointCollection,polygons:{features:readonly {id?:unknown;name?:unknown;geometry:Boundary}[]},
+  keepBoundary:boolean,attribute='inside_polygon'):ClipPointsResult{
+  const kept:PointFeature[]=[],excluded:PointFeature[]=[];
+  let inside=0,boundary=0,outside=0,missing=0;
+  for(const feature of points.features||[]){
+    let held:{name:string;relation:'Inside'|'Boundary'}|undefined;
+    for(const polygon of polygons.features||[]){
+      const relation=pointRelation(feature.geometry?.coordinates,polygon.geometry);
+      if(relation==='MissingLocation'){held=undefined;break;}
+      if(relation==='Inside'||relation==='Boundary'){
+        const name=String(polygon.name??polygon.id??'').trim();
+        // INSIDE BEATS BOUNDARY, and the first polygon that holds it outright is the one named: a point on the
+        // seam of two buffers is inside one of them, and reporting it as a boundary case of whichever came first
+        // would make the answer depend on the layer's order.
+        if(!held||relation==='Inside'&&held.relation==='Boundary')held={name,relation};
+        if(relation==='Inside')break;
+      }
+    }
+    const where=feature.geometry?.coordinates;
+    if(!held){
+      if(pointRelation(where,(polygons.features?.[0]?.geometry)??{type:'Polygon',coordinates:[]} as Boundary)==='MissingLocation'||!where)missing++;
+      else outside++;
+      excluded.push(feature);continue;
+    }
+    if(held.relation==='Inside'){inside++;kept.push({...feature,properties:{...feature.properties,[attribute]:held.name}});continue;}
+    boundary++;
+    if(keepBoundary)kept.push({...feature,properties:{...feature.properties,[attribute]:held.name}});
+    else excluded.push(feature);
+  }
+  return {collection:{...points,features:kept},inside,boundary,outside,missing,excluded};
+}
+
 export function clipPointsToArea(points:PointCollection,area:Boundary,keepBoundary:boolean):ClipPointsResult{
   const kept:PointFeature[]=[],excluded:PointFeature[]=[];
   let inside=0,boundary=0,outside=0,missing=0;

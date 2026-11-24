@@ -179,3 +179,49 @@ test('the preview puts ground under the area when the tiles arrive',async({page}
   await expect(dialog.locator('svg[data-buffer-frame] path')).not.toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+/** A COMPUTED INPUT IS OFFERED BY NAME (2026-11-24). The dialog offered the features arriving on a port by reading
+ *  the SOURCE node's own `params.data`, which a layer read from a file has and a COMPUTED one -- a border, a
+ *  buffer, a clip -- does not. The fallback looked the source up in `result.outputs`, which holds the workflow's
+ *  OUTPUT nodes only and so could never match an intermediate step. The practitioner, with 32 stretches of the
+ *  South Sudan--DR Congo border connected: *"Still does not show what input is (see MANILA) ... The appearance is
+ *  going to confuse users, expecting they would see the input on that screen and they see a text field with
+ *  MANILA."* Running the workflow could not help, because the promise "run it once and this step will offer the
+ *  points by name" was one the code could not keep for a computed layer. */
+const ring=(x0,y0,x1,y1)=>[[x0,y0],[x1,y0],[x1,y1],[x0,y1],[x0,y0]];
+test('a border computed upstream is offered by name, not a placeholder',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org|basemaps|tiles/,r=>r.abort('failed'));
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.evaluate(w=>localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(w)),
+    {schema:'fieldwork/workflow/1',id:'bd',label:'Border',exampleId:'blank',nodes:[
+      {id:'drc',type:'study_area',x:20,y:20,params:{label:'DR Congo',source:'drawn',selectionMode:'polygon',
+        geometry:{type:'Polygon',coordinates:[ring(27.5,1,31,4.5)]}}},
+      {id:'ssd',type:'study_area',x:20,y:260,params:{label:'South Sudan',source:'drawn',selectionMode:'polygon',
+        geometry:{type:'Polygon',coordinates:[ring(27.5,4.45,31,8)]}}},
+      {id:'line',type:'line_input',x:340,y:120,params:{label:'Line layer',inputMethod:'border'}},
+      {id:'buf',type:'buffer_point',x:640,y:120,params:{label:'Geometry buffer',pointId:'',distanceM:5000,yields:'area'}},
+      {id:'map',type:'map_output',x:940,y:120,params:{label:'Map'}}],
+      edges:[{id:'e1',from:'drc',to:'line',port:'area'},{id:'e2',from:'ssd',to:'line',port:'area_2'},
+        {id:'e3',from:'line',to:'buf',port:'lines'},{id:'e4',from:'buf',to:'map',port:'area'}]});
+  await page.goto('/');
+  await page.waitForSelector('html[data-ready]');
+  await page.locator('#run-button').click();
+  // THE RUN MUST COMPLETE. This workflow holds no raster, so the one-degree scope limit has nothing to guard and
+  // must not refuse a border buffer spanning degrees.
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="buf"]').click();
+  await page.locator('#inspector-content #configure-step').click();
+  const dialog=page.locator('#buffer-point-dialog');
+  await expect(dialog).toBeVisible();
+  // The computed border is named in the picker, and the placeholder's promise is gone.
+  const options=await dialog.locator('#bp-point option').allTextContents();
+  expect(options.length).toBeGreaterThan(1);
+  expect(options.join(' ')).toContain('DR Congo');
+  await expect(dialog).not.toContainText('offer the points by name');
+  // And the picture draws, which it cannot do without the geometry the same lookup provides.
+  await expect(dialog.locator('svg[data-buffer-frame] path').first()).toBeAttached();
+  expect(errors).toEqual([]);
+});

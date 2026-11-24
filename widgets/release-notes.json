@@ -105,12 +105,12 @@
    "migrationFrom": []
   },
   "buffer_point": {
-   "version": "0.6.0",
+   "version": "0.7.0",
    "released": "2026-11-24",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The preview draws the points the area is drawn around, and puts OpenStreetMap ground behind them where it can be fetched, so a radius can be judged against the ground and against the pin before anything is run. Its caption also no longer contradicts the setting above it: one area was described as “kept apart” under a step set to combine into one study area, because nothing was dissolved when there was nothing to dissolve."
+     "kind": "fixed",
+     "description": "The one-degree scope limit now applies only where the workflow actually reads a raster through the scope, and the refusal names the steps it is protecting. It was unconditional, so a workflow holding no raster at all was refused by a rule whose own sentence is about rasters: reported with two study areas, a border, a buffer and a Map, told that “a study area windows every raster this workflow reads” when it read none. The same error the polygon-layer fix of 2026-11-23 was written about, one level up — a guard applied past what it guards."
     }
    ],
    "breaking": false,
@@ -160,12 +160,12 @@
    ]
   },
   "clip_points_to_area": {
-   "version": "0.3.0",
-   "released": "2026-11-23",
+   "version": "0.4.0",
+   "released": "2026-11-24",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Preview counts what the clip will keep before it runs -- inside, exactly on the outline, outside, and records with no usable location -- and the outline setting moves records between kept and set aside as it is ticked. Computed with the step's own function, so what is previewed is what it does. Where the area or the points only exist after a run, it says so rather than implying nothing falls inside."
+     "kind": "added",
+     "description": "The mask may be a polygon layer as well as a study area. Both ports are always offered and neither is required on its own; the run refuses two masks, because a point inside one and outside the other has no single answer. A point kept by a layer records WHICH polygon held it, since a layer is many masks and “inside the buffer” loses which one. Built because a buffer around 656 km of border spans 3.59°, which the one-degree scope limit rightly refuses to call a study area, leaving the buffer as a polygon layer that nothing could clip by."
     }
    ],
    "breaking": false,

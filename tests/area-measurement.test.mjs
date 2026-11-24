@@ -62,7 +62,11 @@ test('area enrichment preserves source attributes and can feed downstream spatia
   assert.equal(measured.inside,plain.inside);assert.equal(measured.outside,plain.outside);
   assert.match(clipPointsReceipt(w.nodes[2],measured,'measured','measure','observations',enriched.areaFacts).facts,/geo:hasMetricArea/);
   w.nodes.push(node);w.edges.find(e=>e.port==='area').from='measure';w.edges.push({id:'measure-link',from:'scope',to:'measure',port:'area'});
-  assert.deepEqual(executionPlan(w).map(n=>n.id),['scope','measure','observations','clip','map']);
+  // THE ORDER MOVED ON 2026-11-24, and both orders are correct. Keep points inside the area gained a polygon-layer
+// mask, so neither mask is REQUIRED on its own and the plan no longer walks the area chain first on the clip's
+// behalf; it reaches `measure` through the edges instead. Every dependency still holds -- scope before measure,
+// measure and observations both before clip -- which is what this line is really asserting.
+assert.deepEqual(executionPlan(w).map(n=>n.id),['scope','observations','measure','clip','map']);
   enriched.metadata.owner='Changed';enriched.boundary.coordinates[0][0][0]=0;assert.deepEqual(source,before);
   w.nodes.push({...newAreaMeasurement(),id:'second',x:500,y:0});w.edges.push({id:'second-link',from:'measure',to:'second',port:'area'});
   assert.doesNotThrow(()=>validateWorkflow(w));

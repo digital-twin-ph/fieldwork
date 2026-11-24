@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {bufferPoint,validateBufferPointNode,requireRunnableBufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
+import {bufferPoint,bufferFeatures,validateBufferPointNode,requireRunnableBufferPoint,BUFFER_POINT_STEPS} from '../build/buffer-point.js';
 
 const gauges={type:'FeatureCollection',features:[
   {type:'Feature',id:'145',properties:{name:'MANILA'},geometry:{type:'Point',coordinates:[120.97,14.58]}},
@@ -120,4 +120,53 @@ test('the radius sets the size, in proportion',()=>{
   const small=radiusM(5000),large=radiusM(50000);
   assert.ok(Math.abs(small-5000)<60,`5 km asked, ${(small/1000).toFixed(2)} km drawn`);
   assert.ok(Math.abs(large/small-10)<0.01,'ten times the radius is ten times the distance across');
+});
+
+/** THE ONE-DEGREE LIMIT GUARDS A RASTER, AND ONLY A RASTER (2026-11-24). It was unconditional, so a workflow with
+ *  no grid in it at all was refused by a rule whose own sentence is about grids. Reported with two study areas, a
+ *  border, a buffer and a Map — told that "a study area windows every raster this workflow reads" when it read
+ *  none. The same error the polygon-layer fix of the day before was written about, made one level up: a guard
+ *  applied past what it guards. */
+const borderStretches=Array.from({length:32},(_,i)=>{
+  const x=27.5+i*(3.5/32);
+  return {type:'Feature',id:`s${i}`,properties:{name:`Stretch ${i+1}`},
+    geometry:{type:'LineString',coordinates:[[x,4.4],[x+3.5/32,4.45]]}};
+});
+const border={kind:'lines',source:'border',features:borderStretches};
+const scope=(params)=>({id:'b',type:'buffer_point',x:0,y:0,
+  params:{label:'Geometry buffer',pointId:'',distanceM:5000,yields:'area',...params}});
+
+test('a scope spanning degrees is allowed where no raster would be windowed through it',()=>{
+  const {value}=bufferFeatures({lines:border},scope(),'r',{rasterSteps:[]});
+  assert.equal(value.kind,'study-area');
+  const span=value.bounds[2]-value.bounds[0];
+  assert.ok(span>3,`the border buffer spans ${span.toFixed(2)}°, well past the old limit`);
+});
+
+test('and refused where one would be, naming the step it protects',()=>{
+  assert.throws(()=>bufferFeatures({lines:border},scope(),'r',{rasterSteps:['Population (WorldPop)']}),
+    err=>{
+      assert.match(err.message,/Population \(WorldPop\)/,'the refusal names the step, not just the rule');
+      assert.match(err.message,/cells too coarse to mean anything/);
+      // The three ways out, including the one that was always true and never said.
+      assert.match(err.message,/polygon layer/);
+      assert.match(err.message,/fewer features/);
+      assert.match(err.message,/take the raster out of this workflow/);
+      return true;
+    });
+});
+
+test('a polygon layer is never held to the limit, raster or not',()=>{
+  for(const rasterSteps of [[],['Population (WorldPop)']]){
+    const {value}=bufferFeatures({lines:border},scope({yields:'polygons'}),'r',{rasterSteps});
+    assert.equal(value.features.length,32,'every stretch kept, whatever else the workflow reads');
+  }
+});
+
+test('a scope under a degree is unaffected by either',()=>{
+  const one={kind:'lines',source:'border',features:[borderStretches[0]]};
+  for(const rasterSteps of [[],['Population (WorldPop)']]){
+    const {value}=bufferFeatures({lines:one},scope(),'r',{rasterSteps});
+    assert.equal(value.kind,'study-area');
+  }
 });

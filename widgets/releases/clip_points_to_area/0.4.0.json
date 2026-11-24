@@ -1,0 +1,80 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:clip_points_to_area",
+ "nodeType": "clip_points_to_area",
+ "version": "0.4.0",
+ "title": "Keep points inside the area",
+ "released": "2026-11-24",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['clip_points_to_area']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "polygons",
+    "type": "polygons"
+   },
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "points",
+  "note": "The mask is a study area OR a polygon layer: neither is required on its own, exactly one is required at run time, and both connected is refused. The points are always required. A polygon layer windows no raster, so the one-degree scope limit that applies to a study area has nothing to say about this mask.",
+  "optionalInputs": [
+   "area",
+   "polygons"
+  ]
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:PointInPolygonClip",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Asserts the OGC predicate the kept set answers to (sfWithin, with boundary points being sfTouches), whether boundary points were kept, and the three counts. The predicate itself is pointRelation in src/spatial-predicates.ts, shared with the coverage check, the map, input data, the raster mask and catchments.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/clip-points.ts",
+   "src/spatial-predicates.ts",
+   "src/core.ts",
+   "src/area-steps-ui.ts",
+   "src/spatial-walkthroughs.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "added",
+   "description": "The mask may be a polygon layer as well as a study area. Both ports are always offered and neither is required on its own; the run refuses two masks, because a point inside one and outside the other has no single answer. A point kept by a layer records WHICH polygon held it, since a layer is many masks and “inside the buffer” loses which one. Built because a buffer around 656 km of border spans 3.59°, which the one-degree scope limit rightly refuses to call a study area, leaving the buffer as a polygon layer that nothing could clip by."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "The membership test is the one the coverage check and the map already use, and the lab checks it there. What is new here is the operation and its receipt, not the arithmetic. 0.9.0: tests/clip-points-preview.browser.mjs (3 of 4 kept with one exactly on the outline; unticking moves it to set aside and the count to 2 of 4; ticking returns it). Chromium, 2026-11-23."
+ }
+}

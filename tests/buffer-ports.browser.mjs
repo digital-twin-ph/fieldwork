@@ -1,9 +1,9 @@
 import {test,expect} from './fixtures.mjs';
 import assert from 'node:assert/strict';
 
-// ONE PORT, NOT THREE. Area around a point grew `lines` and `polygons` on 2026-11-23 and the canvas drew a bare
+// ONE PORT, NOT THREE. Geometry buffer grew `lines` and `polygons` on 2026-11-23 and the canvas drew a bare
 // handle per declared input, unlabelled, because `spatialPorts` was a hardcoded list the step was not on. The
-// practitioner, the same afternoon: *"Area around a point won't accept a point (mines pushpin)"* -- three dots had
+// practitioner, the same afternoon: *"Geometry buffer won't accept a point (mines pushpin)"* -- three dots had
 // appeared and only the first one took points.
 test('the buffer step shows one named port, and a points source binds to it',async({page})=>{
   await page.goto('/?example=blank');
@@ -11,7 +11,7 @@ test('the buffer step shows one named port, and a points source binds to it',asy
   await page.locator('#node-library [data-add="point_input"]').click();
   await page.locator('#node-library [data-add="buffer_point"]').click();
   await page.locator('[data-view="workflow"]').click();
-  const node=page.locator('.react-flow__node').filter({hasText:'Area around a point'}).first();
+  const node=page.locator('.react-flow__node').filter({hasText:'Geometry buffer'}).first();
   await expect(node).toBeVisible({timeout:20000});
 
   const drawn=await node.evaluate(el=>({

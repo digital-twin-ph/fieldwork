@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.182.0 — 2026-11-23
+
+- **Area around a point is now Geometry buffer** (0.5.0). The step took lines and polygon layers as well as points
+  from 0.4.0, and the old name said point. *Buffer* is the glossary's own word — Compute reads "Derive geometry for
+  each feature — buffer, clip, catchment, reproject, sample a raster onto points". The node type is unchanged, so
+  saved workflows are untouched, and a label already typed on a node stays as it was.
+
 ## 0.181.0 — 2026-11-23
 
 - **A layer drawn too small to read says so** (Map 0.47.0). A 10 km area beside country-sized polygons was drawn 2.6

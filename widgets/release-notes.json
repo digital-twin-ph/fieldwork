@@ -105,28 +105,12 @@
    "migrationFrom": []
   },
   "buffer_point": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-23",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Buffers points, lines or polygons, not one point. Nothing named draws an area around every feature connected; a name still picks one. Asked for 2026-11-23: the step is also supposed to work for polygons and lines."
-    },
-    {
-     "kind": "minor",
-     "description": "Configure... offers to combine the buffers into one study area or keep each one separate as a polygon layer, and says what combining costs: the summed area of the parts, the area once combined, and how much is covered more than once. The dissolve and that arithmetic are combined-area.ts's, not a second implementation."
-    },
-    {
-     "kind": "minor",
-     "description": "Preview draws the areas to scale with their overlaps, from the same construction the run uses, so a radius can be judged before anything runs."
-    },
-    {
-     "kind": "fixed",
-     "description": "The dialog capped the radius at 5,000 m while the rule allowed 50,000, so a radius the step would have accepted could not be typed. One number now, read by both. A 50 km question about a mine is what made it bite."
-    },
-    {
-     "kind": "fixed",
-     "description": "The one-degree span limit is held to study areas, which window every raster a workflow reads, and no longer applied to a polygon layer, which windows nothing. Applied to a layer it refused foraging ranges across two provinces -- a prototype limit extended past what it guards."
+     "kind": "changed",
+     "description": "Renamed from \"Area around a point\" to \"Geometry buffer\". The step grew lines and polygon layers on 2026-11-23 and the old name stopped describing what it does -- it had said point when it takes three kinds of geometry. \"Buffer\" is the glossary's own word for it: Compute reads \"Derive geometry for each feature -- buffer, clip, catchment, reproject, sample a raster onto points.\" The node type is unchanged, so saved workflows are untouched, and a label already typed on a node stays as it was; only the default for a new one changes. Recorded in widgets/name-review.json as reviewed and accepted by the practitioner, the first accepted entry in that ledger."
     }
    ],
    "breaking": false,

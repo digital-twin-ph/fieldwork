@@ -245,7 +245,7 @@
     {
       "id": "urn:fieldwork:widget:buffer_point",
       "nodeType": "buffer_point",
-      "currentVersion": "0.4.0",
+      "currentVersion": "0.5.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -266,6 +266,11 @@
           "version": "0.4.0",
           "path": "widgets/releases/buffer_point/0.4.0.json",
           "sha256": "011ada30a268a9b09f28395b602f8732ecd1351b19fc70d74cc4e37a3e619713"
+        },
+        {
+          "version": "0.5.0",
+          "path": "widgets/releases/buffer_point/0.5.0.json",
+          "sha256": "5ca215183b5eca69e7bd87e8f3d54258aea009842ca8f733b07021941accc9a0"
         }
       ]
     },

@@ -10,7 +10,7 @@ import {sampleRaster} from '../build/sample-raster.js';
 // synthetic data and no external dependency. The sea-level example remains the teaching
 // artifact; it is not what admits these primitives. See docs/audits/ontology-audit.md.
 //
-//   Area around a point  ->  Clip raster  ->  Sample raster at points
+//   Geometry buffer  ->  Clip raster  ->  Sample raster at points
 //          (area)              (raster)             (points)
 
 const gauge={type:'FeatureCollection',features:[

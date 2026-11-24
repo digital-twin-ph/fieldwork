@@ -66,7 +66,7 @@ export function featuresToBuffer(inputs:{points?:PointCollection;lines?:LineLaye
 export function validateBufferPointNode(node:WorkflowNode<'buffer_point'>):void{
   validateBuffer(node.params.distanceM);
   if(node.params.yields!==undefined&&!['area','polygons'].includes(node.params.yields))
-    throw new Error('Area around a point yields one area or a polygon layer.');
+    throw new Error('Geometry buffer yields one area or a polygon layer.');
 }
 
 /** What must hold to run. The named feature is OPTIONAL now: empty means every feature connected, which is what
@@ -126,12 +126,12 @@ export function bufferFeatures(
   requireRunnableBufferPoint(node);
   const all=featuresToBuffer(inputs);
   if(!all.length)throw new Error(
-    'Connect points, lines or a polygon layer: Area around a point draws its area around what is connected.');
+    'Connect points, lines or a polygon layer: Geometry buffer draws its area around what is connected.');
   const wanted=text(node.params.pointId);
   // ONE NAMED FEATURE, where one is named. Matched on the id or the name, as it always was.
   const chosen=wanted?all.filter(f=>f.id===wanted||f.name===wanted):all;
   if(wanted&&!chosen.length)throw new Error(
-    `Nothing called "${wanted}" is connected to Area around a point. Choose one of the ${all.length.toLocaleString('en')} `
+    `Nothing called "${wanted}" is connected to Geometry buffer. Choose one of the ${all.length.toLocaleString('en')} `
     +'features connected, or leave it unset to draw an area around every one of them.');
   const distanceM=node.params.distanceM;
   const buffered=chosen.map(f=>bufferOne(f,distanceM));

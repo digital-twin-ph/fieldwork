@@ -8,7 +8,7 @@ const gauges={type:'FeatureCollection',features:[
   {type:'Feature',id:'x',properties:{name:'UNLOCATED'},geometry:null},
 ]};
 const node=(params)=>({id:'scope',type:'buffer_point',x:0,y:0,
-  params:{label:'Area around a point',pointId:'MANILA',distanceM:5000,...params}});
+  params:{label:'Geometry buffer',pointId:'MANILA',distanceM:5000,...params}});
 
 test('the scope is a circle to within a tenth of a percent, and says so',()=>{
   const {value,receipt}=bufferPoint(gauges,node(),'r1');

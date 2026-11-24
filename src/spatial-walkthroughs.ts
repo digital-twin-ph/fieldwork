@@ -1,4 +1,4 @@
-/** FOUR AREA STEPS SHOWN ON MADE-UP SHAPES (2026-11-20). The practitioner, moving Area around a point, Buffer study area,
+/** FOUR AREA STEPS SHOWN ON MADE-UP SHAPES (2026-11-20). The practitioner, moving Geometry buffer, Buffer study area,
  *  Calculate area and Clip polygons to the standard: *"we can also opportunistically include the show me how animation during the
  *  standardization."* The table walkthroughs' player (table-walkthrough.ts) draws each step; here the shapes are fixed in
  *  the code, near the equator so a degree is close to a degree each way, and never read from a port. Each walkthrough's
@@ -60,7 +60,7 @@ export function bufferPointWalkthrough(distanceM:number):Walkthrough{
   const node={id:'walk',type:'buffer_point',x:0,y:0,params:{label:'Walk',pointId:'Well A',distanceM:d}} as WorkflowNode<'buffer_point'>;
   const made=bufferPoint(points,node,'walkthrough').value.boundary;
   const edge:Position=[WELL[0]+d/111320,WELL[1]];
-  return {title:'Area around a point, step by step',tables:[],resultColumns:[],steps:[
+  return {title:'Geometry buffer, step by step',tables:[],resultColumns:[],steps:[
     step('The point the area is drawn around: Well A, chosen by its name. One point, never several.',[{kind:'look',point:WELL,label:'Well A'}]),
     step(`Everything within ${metres(d)} of it, in every direction${d!==distanceM?' (shown with 500 m, because the distance set is not one the step accepts)':''}.`,
       [{kind:'input',point:WELL,label:'Well A'},{kind:'look',rings:[[[WELL,edge,WELL]]],label:metres(d),at:[(WELL[0]+edge[0])/2,WELL[1]]}]),

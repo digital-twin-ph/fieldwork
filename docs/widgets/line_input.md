@@ -60,4 +60,4 @@ Nothing reaches the workflow until **Apply**.
 ### 2026-11-22 · First release (0.1.0)
 
 Lines read from a file or taken as the border of two study areas, and drawn on Map. Its first
-use, a buffer along a border to find the health facilities just inside it, waits on Area around a point taking lines.
+use, a buffer along a border to find the health facilities just inside it, waits on Geometry buffer taking lines.

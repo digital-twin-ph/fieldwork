@@ -62,7 +62,7 @@ import {TYPES} from '../build/core.js';
 // gains a second end is no longer one and must leave, and one whose reason stops holding is folded back. The history
 // above is kept; the last count was 9.
 // `lines` LEFT THIS LIST 2026-11-23, by the resolution its own entry named. It read: "Resolved by its second
-// consumer, Area around a point taking lines (the buffer, TODO), when it is no longer a stud." Area around a point
+// consumer, Geometry buffer taking lines (the buffer, TODO), when it is no longer a stud." Geometry buffer
 // took points, lines or polygons that day, so the port fits two blocks and the hard stop it asked for is no longer
 // what holds it. A stud whose stated resolution arrives is the ratchet working: the entry is removed rather than
 // rewritten, and this note is what it leaves behind.

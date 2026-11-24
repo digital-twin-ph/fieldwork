@@ -1,546 +1,547 @@
 {
-  "schema": "fieldwork/widget-name-review/1",
-  "note": "The human half of the naming gate. scripts/validate-naming.mjs checks the six mechanical rules; this records a practitioner's judgement on the rule that cannot be mechanised -- whether the name is what someone would say to ask for the operation. Review docs/widget-names.md, which is generated, and record verdicts here. A verdict is pinned to the digest of (nodeType, title, group): change any of the three and the review goes stale rather than carrying over.",
-  "stampedAt": "2026-10-26",
-  "reviewer": "practitioner",
-  "pendingCeiling": 44,
-  "ceilingRule": "pendingCeiling may be lowered freely. It may be raised only when a widget is added whose FUNCTION DID NOT EXIST BEFORE -- the practitioner's rule, 2026-10-25: \"we can add a widget if its function did not exist before\" -- with an entry in ceilingRaises naming the widget and what it does that nothing did. That is D2 of the admission audit asked of the ceiling: a widget duplicating an existing function must not buy itself room by raising this, and a widget carrying a function the framework lacked is not review debt incurred carelessly. The ratchet exists so review debt cannot grow SILENTLY, not so that nothing may be added. As first written this rule said 'never raised' and also that the pending list 'can only shrink', which cannot both hold: a widget added after 2026-10-13 has no entry, fails the build until one is written, and a written entry starts pending. The contradiction surfaced on 2026-10-25, when rate_ratio was the second widget added in one day and the first to find no slack left.",
-  "verdicts": {
-    "accepted": "The name is what a practitioner would say to ask for this operation.",
-    "flagged": "Raised in review; carries a note and appears in every build until resolved.",
-    "pending": "Not yet reviewed. Seeded for the widgets that existed when this gate was added."
+ "schema": "fieldwork/widget-name-review/1",
+ "note": "The human half of the naming gate. scripts/validate-naming.mjs checks the six mechanical rules; this records a practitioner's judgement on the rule that cannot be mechanised -- whether the name is what someone would say to ask for the operation. Review docs/widget-names.md, which is generated, and record verdicts here. A verdict is pinned to the digest of (nodeType, title, group): change any of the three and the review goes stale rather than carrying over.",
+ "stampedAt": "2026-10-26",
+ "reviewer": "practitioner",
+ "pendingCeiling": 44,
+ "ceilingRule": "pendingCeiling may be lowered freely. It may be raised only when a widget is added whose FUNCTION DID NOT EXIST BEFORE -- the practitioner's rule, 2026-10-25: \"we can add a widget if its function did not exist before\" -- with an entry in ceilingRaises naming the widget and what it does that nothing did. That is D2 of the admission audit asked of the ceiling: a widget duplicating an existing function must not buy itself room by raising this, and a widget carrying a function the framework lacked is not review debt incurred carelessly. The ratchet exists so review debt cannot grow SILENTLY, not so that nothing may be added. As first written this rule said 'never raised' and also that the pending list 'can only shrink', which cannot both hold: a widget added after 2026-10-13 has no entry, fails the build until one is written, and a written entry starts pending. The contradiction surfaced on 2026-10-25, when rate_ratio was the second widget added in one day and the first to find no slack left.",
+ "verdicts": {
+  "accepted": "The name is what a practitioner would say to ask for this operation.",
+  "flagged": "Raised in review; carries a note and appears in every build until resolved.",
+  "pending": "Not yet reviewed. Seeded for the widgets that existed when this gate was added."
+ },
+ "reviews": [
+  {
+   "nodeType": "aggregate_points_to_h3_cell",
+   "title": "Aggregate points to H3 cells",
+   "group": "Spatial operations",
+   "fingerprint": "44ca30c6580b",
+   "verdict": "accepted",
+   "reviewed": "2026-10-19",
+   "reviewedBy": "practitioner",
+   "note": "Renamed from `hex_aggregate` on 2026-10-19, as the sibling of the above: same operation, different areal unit, and it had the verb after its object with the unit unstated. The unit is the ontology's own term (`fw:HexCell`, \"H3 cell\") rather than \"hexbin\", because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index at a stated resolution. Hexbin is what practitioners say, so it is a glossary pointer to H3 cell and sits in the widget's description, which is what the palette search matches."
   },
-  "reviews": [
-    {
-      "nodeType": "aggregate_points_to_h3_cell",
-      "title": "Aggregate points to H3 cells",
-      "group": "Spatial operations",
-      "fingerprint": "44ca30c6580b",
-      "verdict": "accepted",
-      "reviewed": "2026-10-19",
-      "reviewedBy": "practitioner",
-      "note": "Renamed from `hex_aggregate` on 2026-10-19, as the sibling of the above: same operation, different areal unit, and it had the verb after its object with the unit unstated. The unit is the ontology's own term (`fw:HexCell`, \"H3 cell\") rather than \"hexbin\", because a plotting library's hexbin is a lattice fitted to its data and these cells come from a fixed global index at a stated resolution. Hexbin is what practitioners say, so it is a glossary pointer to H3 cell and sits in the widget's description, which is what the palette search matches."
-    },
-    {
-      "nodeType": "apply_ruleset",
-      "title": "Apply ruleset",
-      "group": "Semantic reasoning",
-      "fingerprint": "271a02e20aa5",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "buffer_point",
-      "title": "Area around a point",
-      "group": "Spatial operations",
-      "fingerprint": "3005fd279e14",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "case_series",
-      "title": "Cases by period",
-      "group": "Epidemiology",
-      "fingerprint": "e951d60bd62f",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "Group changed from Summaries to Epidemiology on 2026-10-25, on the practitioner's call after they looked at the palette and said \"I do not see any epi widget\". The name is unchanged and was not re-argued; what changed is where a practitioner looks for it. Still pending on the name itself."
-    },
-    {
-      "nodeType": "chart_output",
-      "title": "Chart",
-      "group": "Outputs",
-      "fingerprint": "b725f6ecc432",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "clip_points_to_area",
-      "title": "Keep points inside the area",
-      "group": "Spatial operations",
-      "fingerprint": "4a4fffba69b2",
-      "verdict": "accepted",
-      "reviewed": "2026-10-20",
-      "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
-      "note": "Named against the rule this ledger states: a transform verb, then what it acts on, with the second operand carried by a preposition -- clip_points_to_area beside summarize_points_to_polygon and snap_to_network. The palette words say the result rather than the operation, \"Keep points inside the area\", because that is the sentence a practitioner is holding when they look for it; the identifier keeps the discipline's verb."
-    },
-    {
-      "nodeType": "clip_polygons",
-      "title": "Clip polygons",
-      "group": "Spatial operations",
-      "fingerprint": "69ed2e99d3b8",
-      "verdict": "accepted",
-      "reviewed": "2026-10-26",
-      "reviewedBy": "practitioner",
-      "note": "Accepted 2026-10-26. A transform verb and what it acts on, which is the rule this ledger states."
-    },
-    {
-      "nodeType": "clip_raster",
-      "title": "Clip raster",
-      "group": "Spatial operations",
-      "fingerprint": "077bde7c10c4",
-      "verdict": "accepted",
-      "reviewed": "2026-10-26",
-      "reviewedBy": "practitioner",
-      "note": "Accepted 2026-10-26. A transform verb and what it acts on, which is the rule this ledger states."
-    },
-    {
-      "nodeType": "compare_point_sets",
-      "title": "Compare point sets",
-      "group": "Spatial operations",
-      "fingerprint": "3342491e3fec",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "deduplicate_points",
-      "title": "Deduplicate records",
-      "group": "Comparisons and checks",
-      "fingerprint": "de453fa41ffa",
-      "verdict": "accepted",
-      "reviewed": "2026-11-02",
-      "reviewedBy": "the practitioner and Claude, in the exchange that generalised it",
-      "note": "A transform verb and what it acts on, which is the rule this ledger states: deduplicate_points beside clip_points_to_area and compare_point_sets. The palette says \"Deduplicate point records\" rather than \"Link records\" because the practitioner asked for deduplication and that is the sentence they are holding; RECORD LINKAGE is the method and is named as such in the receipt and the manual, where the distinction is worth drawing. It is in Comparisons and checks rather than Spatial operations because the question it answers is about two records being one thing, which the distance only helps decide. Re-reviewed 2026-11-02: the practitioner asked for this widget to be generalised rather than a second one added (\"I would rather use the deduplicate widget, generalized to handle different formats\"), so the palette now says Deduplicate records. The node type keeps its old name until the rename is taken as its own step; see experiment 164."
-    },
-    {
-      "nodeType": "donut_geomask",
-      "title": "Move points in a donut",
-      "group": "Spatial operations",
-      "fingerprint": "cce78d165c70",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "fill_interior_gaps",
-      "title": "Fill interior gaps",
-      "group": "Spatial operations",
-      "fingerprint": "572a68ab0ee6",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "find_health_facilities",
-      "title": "Find health facilities",
-      "group": "Sources",
-      "fingerprint": "b239f0bd9433",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "group_table",
-      "title": "Total within groups",
-      "group": "Summaries",
-      "fingerprint": "1fd0fd5ce4af",
-      "verdict": "accepted",
-      "reviewed": "2026-10-26",
-      "reviewedBy": "practitioner",
-      "note": "a classic analysis package's command is GROUP, but \"group\" alone does not say that the values are added up, and this widget offers only a sum because summing a rate is meaningless. \"Total within groups\" says the operation and leaves the grouping implicit in the columns kept. For review: whether a practitioner would look under \"total\", \"sum\", \"aggregate\" or \"group\". ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"). The title names the operation rather than a classic analysis package's command, which is the one place in these three where recognisability lost to accuracy on purpose: GROUP does not say the values are added up, and this widget only adds them up."
-    },
-    {
-      "nodeType": "isochrone",
-      "title": "Network isochrone",
-      "group": "Spatial operations",
-      "fingerprint": "81ecde16de25",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "join_table_to_area",
-      "title": "Join a table to the study area",
-      "group": "Summaries",
-      "fingerprint": "e066a26cbce0",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "Pending because the practitioner named the tension while the widget was being designed, 2026-10-25: \"We are not strictly joining table to polygon here. What we are joining are a table and another table with geometry.\" The title says \"to the study area\", which is the object a practitioner points at, and the identifier says `area`, which is the port. Neither says that the area carries a table of named parts and that the join is table-to-table on those names. Whether that matters to a reader is the question a review has to answer; it is not settled by the author who chose the name."
-    },
-    {
-      "nodeType": "map_image_input",
-      "title": "Georeferenced map image",
-      "group": "Sources",
-      "fingerprint": "0c82fa08e890",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "map_output",
-      "title": "Map",
-      "group": "Outputs",
-      "fingerprint": "86ca10007463",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "mean_center",
-      "title": "Mean center",
-      "group": "Spatial operations",
-      "fingerprint": "1b17a23f9180",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "measure_area",
-      "title": "Calculate area",
-      "group": "Spatial operations",
-      "fingerprint": "9ce9cec4e8c2",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "measure_distance",
-      "title": "Measure distance",
-      "group": "Spatial operations",
-      "fingerprint": "eb6d703f44b1",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "network_input",
-      "title": "Street network",
-      "group": "Sources",
-      "fingerprint": "8a50b03b1cba",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "point_grid",
-      "title": "Point grid",
-      "group": "Spatial operations",
-      "fingerprint": "15dc526b7b7e",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "point_input",
-      "title": "Point data",
-      "group": "Sources",
-      "fingerprint": "ec45be738aa6",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "polygon_input",
-      "title": "Polygon layer",
-      "group": "Sources",
-      "fingerprint": "9b905d9fd734",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "raster_input",
-      "title": "Raster input",
-      "group": "Sources",
-      "fingerprint": "4fe81b5361ac",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "rate",
-      "title": "Rate with a denominator",
-      "group": "Epidemiology",
-      "fingerprint": "a40b7ac30c66",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "Group changed from Summaries to Epidemiology on 2026-10-25, on the practitioner's call after they looked at the palette and said \"I do not see any epi widget\". The name is unchanged and was not re-argued; what changed is where a practitioner looks for it. Still pending on the name itself."
-    },
-    {
-      "nodeType": "reachable_corridor",
-      "title": "Reachable corridor",
-      "group": "Spatial operations",
-      "fingerprint": "e3f6a1f3e66b",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "reachable_nodes",
-      "title": "Reachable junctions",
-      "group": "Spatial operations",
-      "fingerprint": "338c7de1440b",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "relate_table",
-      "title": "Relate a column from another table",
-      "group": "Summaries",
-      "fingerprint": "ef005a35ed71",
-      "verdict": "accepted",
-      "reviewed": "2026-10-26",
-      "reviewedBy": "practitioner",
-      "note": "a classic analysis package's own word, kept deliberately: RELATE is one of its three join commands and the one this matches, while MERGE and MATCH do different things. The tension for review is that a practitioner asking for this would probably say \"join\" -- and `join_table_to_area` already uses that word for putting a value onto a boundary, which is a different operation. The title is long and says what the row count does not do. ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"), with the tension above left standing rather than resolved: \"join\" stays the word a practitioner would reach for, and this keeps a classic analysis package's narrower one because the operation is the narrow one. If the general join is ever built, MERGE is the name waiting for it and nothing has been spent."
-    },
-    {
-      "nodeType": "sample_raster",
-      "title": "Sample a raster at points or over areas",
-      "group": "Spatial operations",
-      "fingerprint": "40705ace3af9",
-      "verdict": "accepted",
-      "reviewed": "2026-11-11",
-      "reviewedBy": "the practitioner, choosing among four titles when the satellite sampler was merged into this widget (experiment 205)",
-      "note": "\"Sample a raster at points or over areas\". The practitioner, 2026-11-11: \"sample satellite files does not explicitly say it takes rasters that might be a problem.\" The node type sample_raster is kept; sample_satellite_files_at_points is retired into it."
-    },
-    {
-      "nodeType": "select_rows",
-      "title": "Select rows by value",
-      "group": "Summaries",
-      "fingerprint": "7df0ca349bf8",
-      "verdict": "accepted",
-      "reviewed": "2026-10-26",
-      "reviewedBy": "practitioner",
-      "note": "Renamed from `keep_rows` on 2026-10-26 at the practitioner's verdict -- \"keep_rows is not intuitive\". SELECT is the command epidemiologists already know for choosing a subset before analysis, so the name needs no translation; `keep_rows` named the mechanics, and `rows` is the kind of category noun this ledger's rule rejects. Renamed before release, so no saved workflow carried the old identifier."
-    },
-    {
-      "nodeType": "snap_to_network",
-      "title": "Snap to street network",
-      "group": "Spatial operations",
-      "fingerprint": "61882642cc42",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "study_area",
-      "title": "Study area",
-      "group": "Sources",
-      "fingerprint": "2357dce21929",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "study_design",
-      "title": "Study design",
-      "group": "Epidemiology",
-      "fingerprint": "c2616f0aecb4",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "summarize_combined_area",
-      "title": "Combined area",
-      "group": "Summaries",
-      "fingerprint": "b6944c9e7541",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "summarize_hull",
-      "title": "Convex hull",
-      "group": "Summaries",
-      "fingerprint": "8204cdb51897",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "summarize_points_to_polygon",
-      "title": "Summarize points to polygons",
-      "group": "Summaries",
-      "fingerprint": "f06883b9b4b5",
-      "verdict": "accepted",
-      "reviewed": "2026-10-19",
-      "reviewedBy": "practitioner",
-      "note": "Renamed from `summarize_polygons` on 2026-10-19 after the practitioner asked whether it should be \"summarize points or summarize polygons\". Neither alone: the operation reduces POINTS and the polygons are the areal units it reduces them to, so both operands are named and the second carries a preposition. `summarize_combined_area` is the widget that genuinely summarizes polygons. The mechanical gate recorded no violation for the old name, which is why this ledger exists."
-    },
-    {
-      "nodeType": "table_input",
-      "title": "Tabular data",
-      "group": "Sources",
-      "fingerprint": "139e1d3526c1",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "table_output",
-      "title": "Table",
-      "group": "Outputs",
-      "fingerprint": "61fab00f2451",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "travel_time_band",
-      "title": "Travel time band",
-      "group": "Spatial operations",
-      "fingerprint": "cf220573a25a",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "two_by_two",
-      "title": "Two-by-two table",
-      "group": "Epidemiology",
-      "fingerprint": "618b9fe578f0",
-      "verdict": "accepted",
-      "reviewed": "2026-10-26",
-      "reviewedBy": "practitioner",
-      "note": "The name the discipline uses, and the one an FETP-trained reader will search for. For review: whether the title should also carry what it computes -- a reader looking for \"risk ratio\" or \"odds ratio\" will not find those words in the title, only in the description, which is what the palette search matches. Against that, naming one estimate in the title would make the other two look secondary. ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"). The estimates stay out of the title and in the description, which is what the palette search matches -- so a reader hunting \"risk ratio\" still finds it, and no one estimate is promoted over the other two."
-    },
-    {
-      "nodeType": "voronoi",
-      "title": "Voronoi catchments",
-      "group": "Spatial operations",
-      "fingerprint": "ea377e7899f3",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null
-    },
-    {
-      "nodeType": "append_rows",
-      "title": "Append rows",
-      "group": "Summaries",
-      "fingerprint": "805a37206cc5",
-      "verdict": "accepted",
-      "reviewed": "2026-11-03",
-      "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
-      "note": "A transform verb and what it acts on, beside select_rows. The practitioner framed it by pandas: \"think about how pandas merges dataframes - relate or append\". Append is what a practitioner says for stacking rows; concat is the pandas word and is named in the manual, where the comparison helps. In Summaries beside Select rows and Relate, because it reshapes a table and computes nothing. Experiment 166."
-    },
-    {
-      "nodeType": "regression",
-      "title": "Regression",
-      "group": "Epidemiology",
-      "fingerprint": "d682e4bbecb9",
-      "verdict": "accepted",
-      "reviewed": "2026-11-04",
-      "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
-      "note": "The practitioner's own word: \"So do we need a regression widget?\" (2026-11-03) and \"Why don't we develop the regression widget\" (2026-11-04). One widget for logistic and Poisson regression, because the choice between them is the model, not the operation; the Inspector names each by what it reports. In Epidemiology beside the two-by-two, whose crude measures it adjusts."
-    },
-    {
-      "nodeType": "find_satellite_products",
-      "title": "Find satellite products",
-      "group": "Sources",
-      "fingerprint": "ca6d2fe70a99",
-      "verdict": "accepted",
-      "reviewed": "2026-11-05",
-      "reviewedBy": "the practitioner, choosing among three pairs offered",
-      "note": "The practitioner chose \"Find products / Search catalog\" over \"EO products / STAC search\" (the protocol, not the operation) and \"Satellite guide / catalog\" (category nouns). What they had called it: \"EO identifies the satellite groups for those variables\". Under Sources because it chooses where data will come from and takes none."
-    },
-    {
-      "nodeType": "search_satellite_catalog",
-      "title": "Search a satellite catalog",
-      "group": "Sources",
-      "fingerprint": "80125bd3d2d8",
-      "verdict": "accepted",
-      "reviewed": "2026-11-05",
-      "reviewedBy": "the practitioner, choosing among three pairs offered",
-      "note": "The practitioner chose \"Find products / Search catalog\". What they had called it: \"STAC zeroes in on the source URLs\". STAC is the method, named in the description and the receipt, as the convention asks. Under Sources because it acquires, with the study area as its scope."
-    },
-    {
-      "nodeType": "space_time_scan",
-      "title": "Space-time scan",
-      "group": "Epidemiology",
-      "fingerprint": "b4e27d407437",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "SaTScan calls the method a scan; \"space-time\" says what is scanned. For review: whether a practitioner would look under \"cluster\", \"scan\" or \"SaTScan\". Moved from \"Detect\" to Epidemiology on 2026-11-11 by the practitioner: \"No 717 categories here.\""
-    },
-    {
-      "nodeType": "transmission_chains",
-      "title": "Transmission chains",
-      "group": "Summaries",
-      "fingerprint": "9d89bc900478",
-      "verdict": "accepted",
-      "reviewed": "2026-11-14",
-      "reviewedBy": "the practitioner, choosing between two designs offered",
-      "note": "The practitioner chose \"New step: Transmission chains\" over a link-following rule in Apply ruleset (experiment 216). The name says what is handed on; the columns are chain, generation, offspring and chain_size."
-    },
-    {
-      "nodeType": "detect_unusual_counts",
-      "title": "Detect unusual counts",
-      "group": "Epidemiology",
-      "fingerprint": "58d0de0a307c",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "Proposed 2026-11-21 for CUSUM, EWMA and the EARS methods, which the practitioner asked for by name. Aberration detection is the field's term; the name says what the step does in a practitioner's words. Awaiting the practitioner's review."
-    },
-    {
-      "nodeType": "line_input",
-      "title": "Line layer",
-      "group": "Sources",
-      "fingerprint": "c7f950d8fd81",
-      "verdict": "pending",
-      "reviewed": null,
-      "reviewedBy": null,
-      "note": "Proposed 2026-11-22 beside Polygon layer, whose name it follows: routes, tracks and borders are lines, and a layer is what Map draws. Awaiting the practitioner's review."
-    }
-  ],
-  "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",
-  "ceilingRaises": [
-    {
-      "at": "2026-10-25",
-      "from": 44,
-      "to": 45,
-      "widget": "rate_ratio",
-      "functionThatDidNotExist": "Dividing one rate by another, with an interval. src/rate.ts computed one group's measure and stopped; nothing in the framework compared two measures to each other. slr_threshold_comparison compares a value to a threshold, which is not the same operation. So the framework could map Snow's mortality rates and could not state his argument.",
-      "why": "The ceiling had exactly one place left and join_table_to_area took it earlier the same day. Nothing about rate_ratio's name was reviewed to make room: the debt genuinely rose by one, and is recorded rather than absorbed. Lowering it again means reviewing a pending name, which is a practitioner's judgement and not an author's."
-    },
-    {
-      "at": "2026-10-26",
-      "from": 43,
-      "to": 45,
-      "widget": "derive_value, select_rows",
-      "functionThatDidNotExist": "Arithmetic over a table, and selection of its rows. Rules conclude a TERM about a record and never a number computed from other numbers -- authoredProjection says so in place, \"the value field is untouched\" -- so no step could compute one value from two others. Nothing selected rows of a table either: clip_points_to_area filters points by geometry, and no equivalent existed for a table. The 0.12.0 release notes record the cost as a validation limit: South London's contingency table is prepared outside the application because nothing derives a column from others.",
-      "why": "Two widgets, two places. Raised rather than absorbed, because absorbing it would mean recording a practitioner's verdict on a name nobody has reviewed. Both entries are pending and the ceiling carries the debt until they are read."
-    },
-    {
-      "at": "2026-10-26",
-      "from": 41,
-      "to": 44,
-      "widget": "relate_table, group_table, two_by_two",
-      "functionThatDidNotExist": "Joining two tables, totalling a table within groups, and the analysis under a two-by-two. Nothing joined two tables on a shared column: the 0.12.0 release notes record that as the reason South London's contingency table is prepared outside the application, and `join_table_to_area` puts a value onto a boundary rather than onto rows. Nothing totalled a table either -- `rate` groups and sums internally and emits a RATE, so the totals are consumed on the way out and no other step can use them. And nothing computed a risk, a risk ratio, an odds ratio or a risk difference: the application drew a 2x2 with counts and margins and no analysis, while the only ratio on the canvas was a RATE ratio, a different estimand.",
-      "why": "Three widgets, three places of review debt, raised rather than absorbed -- because lowering the ceiling means a practitioner reviewing a pending name, and that is not an author's to do. NOT because room had to be found: the practitioner, 2026-10-26, \"Forget the widget ceiling for epi kernel, it is a natural consequence of making progress.\" An earlier draft of this field said the room would come from retirements they would name, which treated new function as borrowed. What this ceiling tracks is UNREVIEWED NAMES, which is a different thing from the size of the set: the debt is real and is owed to whoever reads the palette, and it falls when a name is reviewed."
-    },
-    {
-      "at": "2026-10-27",
-      "from": 41,
-      "to": 42,
-      "widget": "map_image_input",
-      "functionThatDidNotExist": "Drawing a supplied georeferenced image as ground. raster_input reads a GeoTIFF into VALUES for clip_raster and sample_raster to measure; a basemap is a tile service or a bundled vector outline, neither of which is a file the practitioner supplies. Nothing could place a scanned or published map under a workflow. The South London example has carried map2-georeference.json, two world files and the plate's digests since 2026-10-24 with no widget able to read any of them, which answers D11 with three days of inert data rather than with an argument.",
-      "why": "D2's near miss is raster_input and is the reason this is separate rather than an extension of it: a raster carries measurements, a plate carries a printer's ink, and sampling ink returns the colour of a line. Reusing the raster port would have made that connection offerable, so the `ground` port type is a hard stop under D4 and a deliberate change to the closed union. The debt rises by one and is recorded rather than absorbed; the name goes to review pending a verdict like every other."
-    },
-    {
-      "at": "2026-10-28",
-      "from": 42,
-      "to": 43,
-      "widget": "polygon_input",
-      "functionThatDidNotExist": "Reading a polygon layer from a published file. Seven node types emitted the `polygons` port type and every one of them DERIVED its polygons from something else -- points allocated to cells, a table joined to a study area, a convex hull, a street corridor, a stack of other layers. None was a source. So a layer that existed as a file had no way into a workflow at all, which is not a high cost but an infinite one: South London's geo/map2-water-supply-zones.geojson had been in that repository since 2026-10-24 and had reached a workflow never. `study_area` is the near neighbour and is not the same function -- it is the FRAME, one boundary, consumed by 27 references to the `area` port, where this is a LAYER of many attributed features. The practitioner settled that distinction by revising the study area to the extent enclosing Snow's Map 2, so the sub-districts and the river become layers within it.",
-      "why": "The ceiling had no slack. The name itself is NOT reviewed by this raise -- it enters pending like every other unreviewed name, and `polygon_input` is asserted only to match the four sibling sources it stands beside (point_input, table_input, raster_input, map_image_input) and to say what it carries rather than what it is for. Admission review: docs/experiments/145-polygons-as-a-source.md."
-    },
-    {
-      "at": "2026-10-31",
-      "from": 43,
-      "to": 44,
-      "widget": "study_design",
-      "functionThatDidNotExist": "Declaring what KIND of study a workflow is, so the computations downstream are the ones its design can estimate. Searched 2026-10-28 and again 2026-10-31 for D2 of the admission audit: `case-control`, `cohort`, `cross-sectional` and `estimable` appear nowhere in two-by-two.ts, epi-estimate.ts or rate-ratio.ts, and no design is declared anywhere in src/, the glossary or widgets/*.json. The framework had vocabulary for the QUANTITIES -- denominatorUnit carries person-time, and the widget is named rate_ratio rather than risk ratio -- and none for the design that decides which of them is estimable. Nothing else can carry it: a design is not a parameter of one computation, because one declaration governs every epi widget in a workflow, and decomposing it into a parameter on each would permit three answers to one question. Experiment 154."
-    }
-  ]
+  {
+   "nodeType": "apply_ruleset",
+   "title": "Apply ruleset",
+   "group": "Semantic reasoning",
+   "fingerprint": "271a02e20aa5",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "buffer_point",
+   "title": "Geometry buffer",
+   "group": "Spatial operations",
+   "fingerprint": "51f0fa429b21",
+   "verdict": "accepted",
+   "reviewed": "2026-11-23",
+   "reviewedBy": "practitioner",
+   "note": "Renamed from \"Area around a point\" on 2026-11-23, when the step grew lines and polygon layers and the old name stopped describing what it does. \"Buffer\" is the glossary\u2019s own word: Compute reads \"Derive geometry for each feature \u2014 buffer, clip, catchment, reproject, sample a raster onto points.\""
+  },
+  {
+   "nodeType": "case_series",
+   "title": "Cases by period",
+   "group": "Epidemiology",
+   "fingerprint": "e951d60bd62f",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Group changed from Summaries to Epidemiology on 2026-10-25, on the practitioner's call after they looked at the palette and said \"I do not see any epi widget\". The name is unchanged and was not re-argued; what changed is where a practitioner looks for it. Still pending on the name itself."
+  },
+  {
+   "nodeType": "chart_output",
+   "title": "Chart",
+   "group": "Outputs",
+   "fingerprint": "b725f6ecc432",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "clip_points_to_area",
+   "title": "Keep points inside the area",
+   "group": "Spatial operations",
+   "fingerprint": "4a4fffba69b2",
+   "verdict": "accepted",
+   "reviewed": "2026-10-20",
+   "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
+   "note": "Named against the rule this ledger states: a transform verb, then what it acts on, with the second operand carried by a preposition -- clip_points_to_area beside summarize_points_to_polygon and snap_to_network. The palette words say the result rather than the operation, \"Keep points inside the area\", because that is the sentence a practitioner is holding when they look for it; the identifier keeps the discipline's verb."
+  },
+  {
+   "nodeType": "clip_polygons",
+   "title": "Clip polygons",
+   "group": "Spatial operations",
+   "fingerprint": "69ed2e99d3b8",
+   "verdict": "accepted",
+   "reviewed": "2026-10-26",
+   "reviewedBy": "practitioner",
+   "note": "Accepted 2026-10-26. A transform verb and what it acts on, which is the rule this ledger states."
+  },
+  {
+   "nodeType": "clip_raster",
+   "title": "Clip raster",
+   "group": "Spatial operations",
+   "fingerprint": "077bde7c10c4",
+   "verdict": "accepted",
+   "reviewed": "2026-10-26",
+   "reviewedBy": "practitioner",
+   "note": "Accepted 2026-10-26. A transform verb and what it acts on, which is the rule this ledger states."
+  },
+  {
+   "nodeType": "compare_point_sets",
+   "title": "Compare point sets",
+   "group": "Spatial operations",
+   "fingerprint": "3342491e3fec",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "deduplicate_points",
+   "title": "Deduplicate records",
+   "group": "Comparisons and checks",
+   "fingerprint": "de453fa41ffa",
+   "verdict": "accepted",
+   "reviewed": "2026-11-02",
+   "reviewedBy": "the practitioner and Claude, in the exchange that generalised it",
+   "note": "A transform verb and what it acts on, which is the rule this ledger states: deduplicate_points beside clip_points_to_area and compare_point_sets. The palette says \"Deduplicate point records\" rather than \"Link records\" because the practitioner asked for deduplication and that is the sentence they are holding; RECORD LINKAGE is the method and is named as such in the receipt and the manual, where the distinction is worth drawing. It is in Comparisons and checks rather than Spatial operations because the question it answers is about two records being one thing, which the distance only helps decide. Re-reviewed 2026-11-02: the practitioner asked for this widget to be generalised rather than a second one added (\"I would rather use the deduplicate widget, generalized to handle different formats\"), so the palette now says Deduplicate records. The node type keeps its old name until the rename is taken as its own step; see experiment 164."
+  },
+  {
+   "nodeType": "donut_geomask",
+   "title": "Move points in a donut",
+   "group": "Spatial operations",
+   "fingerprint": "cce78d165c70",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "fill_interior_gaps",
+   "title": "Fill interior gaps",
+   "group": "Spatial operations",
+   "fingerprint": "572a68ab0ee6",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "find_health_facilities",
+   "title": "Find health facilities",
+   "group": "Sources",
+   "fingerprint": "b239f0bd9433",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "group_table",
+   "title": "Total within groups",
+   "group": "Summaries",
+   "fingerprint": "1fd0fd5ce4af",
+   "verdict": "accepted",
+   "reviewed": "2026-10-26",
+   "reviewedBy": "practitioner",
+   "note": "a classic analysis package's command is GROUP, but \"group\" alone does not say that the values are added up, and this widget offers only a sum because summing a rate is meaningless. \"Total within groups\" says the operation and leaves the grouping implicit in the columns kept. For review: whether a practitioner would look under \"total\", \"sum\", \"aggregate\" or \"group\". ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"). The title names the operation rather than a classic analysis package's command, which is the one place in these three where recognisability lost to accuracy on purpose: GROUP does not say the values are added up, and this widget only adds them up."
+  },
+  {
+   "nodeType": "isochrone",
+   "title": "Network isochrone",
+   "group": "Spatial operations",
+   "fingerprint": "81ecde16de25",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "join_table_to_area",
+   "title": "Join a table to the study area",
+   "group": "Summaries",
+   "fingerprint": "e066a26cbce0",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Pending because the practitioner named the tension while the widget was being designed, 2026-10-25: \"We are not strictly joining table to polygon here. What we are joining are a table and another table with geometry.\" The title says \"to the study area\", which is the object a practitioner points at, and the identifier says `area`, which is the port. Neither says that the area carries a table of named parts and that the join is table-to-table on those names. Whether that matters to a reader is the question a review has to answer; it is not settled by the author who chose the name."
+  },
+  {
+   "nodeType": "map_image_input",
+   "title": "Georeferenced map image",
+   "group": "Sources",
+   "fingerprint": "0c82fa08e890",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "map_output",
+   "title": "Map",
+   "group": "Outputs",
+   "fingerprint": "86ca10007463",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "mean_center",
+   "title": "Mean center",
+   "group": "Spatial operations",
+   "fingerprint": "1b17a23f9180",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "measure_area",
+   "title": "Calculate area",
+   "group": "Spatial operations",
+   "fingerprint": "9ce9cec4e8c2",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "measure_distance",
+   "title": "Measure distance",
+   "group": "Spatial operations",
+   "fingerprint": "eb6d703f44b1",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "network_input",
+   "title": "Street network",
+   "group": "Sources",
+   "fingerprint": "8a50b03b1cba",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "point_grid",
+   "title": "Point grid",
+   "group": "Spatial operations",
+   "fingerprint": "15dc526b7b7e",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "point_input",
+   "title": "Point data",
+   "group": "Sources",
+   "fingerprint": "ec45be738aa6",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "polygon_input",
+   "title": "Polygon layer",
+   "group": "Sources",
+   "fingerprint": "9b905d9fd734",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "raster_input",
+   "title": "Raster input",
+   "group": "Sources",
+   "fingerprint": "4fe81b5361ac",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "rate",
+   "title": "Rate with a denominator",
+   "group": "Epidemiology",
+   "fingerprint": "a40b7ac30c66",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Group changed from Summaries to Epidemiology on 2026-10-25, on the practitioner's call after they looked at the palette and said \"I do not see any epi widget\". The name is unchanged and was not re-argued; what changed is where a practitioner looks for it. Still pending on the name itself."
+  },
+  {
+   "nodeType": "reachable_corridor",
+   "title": "Reachable corridor",
+   "group": "Spatial operations",
+   "fingerprint": "e3f6a1f3e66b",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "reachable_nodes",
+   "title": "Reachable junctions",
+   "group": "Spatial operations",
+   "fingerprint": "338c7de1440b",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "relate_table",
+   "title": "Relate a column from another table",
+   "group": "Summaries",
+   "fingerprint": "ef005a35ed71",
+   "verdict": "accepted",
+   "reviewed": "2026-10-26",
+   "reviewedBy": "practitioner",
+   "note": "a classic analysis package's own word, kept deliberately: RELATE is one of its three join commands and the one this matches, while MERGE and MATCH do different things. The tension for review is that a practitioner asking for this would probably say \"join\" -- and `join_table_to_area` already uses that word for putting a value onto a boundary, which is a different operation. The title is long and says what the row count does not do. ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"), with the tension above left standing rather than resolved: \"join\" stays the word a practitioner would reach for, and this keeps a classic analysis package's narrower one because the operation is the narrow one. If the general join is ever built, MERGE is the name waiting for it and nothing has been spent."
+  },
+  {
+   "nodeType": "sample_raster",
+   "title": "Sample a raster at points or over areas",
+   "group": "Spatial operations",
+   "fingerprint": "40705ace3af9",
+   "verdict": "accepted",
+   "reviewed": "2026-11-11",
+   "reviewedBy": "the practitioner, choosing among four titles when the satellite sampler was merged into this widget (experiment 205)",
+   "note": "\"Sample a raster at points or over areas\". The practitioner, 2026-11-11: \"sample satellite files does not explicitly say it takes rasters that might be a problem.\" The node type sample_raster is kept; sample_satellite_files_at_points is retired into it."
+  },
+  {
+   "nodeType": "select_rows",
+   "title": "Select rows by value",
+   "group": "Summaries",
+   "fingerprint": "7df0ca349bf8",
+   "verdict": "accepted",
+   "reviewed": "2026-10-26",
+   "reviewedBy": "practitioner",
+   "note": "Renamed from `keep_rows` on 2026-10-26 at the practitioner's verdict -- \"keep_rows is not intuitive\". SELECT is the command epidemiologists already know for choosing a subset before analysis, so the name needs no translation; `keep_rows` named the mechanics, and `rows` is the kind of category noun this ledger's rule rejects. Renamed before release, so no saved workflow carried the old identifier."
+  },
+  {
+   "nodeType": "snap_to_network",
+   "title": "Snap to street network",
+   "group": "Spatial operations",
+   "fingerprint": "61882642cc42",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "study_area",
+   "title": "Study area",
+   "group": "Sources",
+   "fingerprint": "2357dce21929",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "study_design",
+   "title": "Study design",
+   "group": "Epidemiology",
+   "fingerprint": "c2616f0aecb4",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "summarize_combined_area",
+   "title": "Combined area",
+   "group": "Summaries",
+   "fingerprint": "b6944c9e7541",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "summarize_hull",
+   "title": "Convex hull",
+   "group": "Summaries",
+   "fingerprint": "8204cdb51897",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "summarize_points_to_polygon",
+   "title": "Summarize points to polygons",
+   "group": "Summaries",
+   "fingerprint": "f06883b9b4b5",
+   "verdict": "accepted",
+   "reviewed": "2026-10-19",
+   "reviewedBy": "practitioner",
+   "note": "Renamed from `summarize_polygons` on 2026-10-19 after the practitioner asked whether it should be \"summarize points or summarize polygons\". Neither alone: the operation reduces POINTS and the polygons are the areal units it reduces them to, so both operands are named and the second carries a preposition. `summarize_combined_area` is the widget that genuinely summarizes polygons. The mechanical gate recorded no violation for the old name, which is why this ledger exists."
+  },
+  {
+   "nodeType": "table_input",
+   "title": "Tabular data",
+   "group": "Sources",
+   "fingerprint": "139e1d3526c1",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "table_output",
+   "title": "Table",
+   "group": "Outputs",
+   "fingerprint": "61fab00f2451",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "travel_time_band",
+   "title": "Travel time band",
+   "group": "Spatial operations",
+   "fingerprint": "cf220573a25a",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "two_by_two",
+   "title": "Two-by-two table",
+   "group": "Epidemiology",
+   "fingerprint": "618b9fe578f0",
+   "verdict": "accepted",
+   "reviewed": "2026-10-26",
+   "reviewedBy": "practitioner",
+   "note": "The name the discipline uses, and the one an FETP-trained reader will search for. For review: whether the title should also carry what it computes -- a reader looking for \"risk ratio\" or \"odds ratio\" will not find those words in the title, only in the description, which is what the palette search matches. Against that, naming one estimate in the title would make the other two look secondary. ACCEPTED 2026-10-26 by the practitioner (\"Good names.\"). The estimates stay out of the title and in the description, which is what the palette search matches -- so a reader hunting \"risk ratio\" still finds it, and no one estimate is promoted over the other two."
+  },
+  {
+   "nodeType": "voronoi",
+   "title": "Voronoi catchments",
+   "group": "Spatial operations",
+   "fingerprint": "ea377e7899f3",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null
+  },
+  {
+   "nodeType": "append_rows",
+   "title": "Append rows",
+   "group": "Summaries",
+   "fingerprint": "805a37206cc5",
+   "verdict": "accepted",
+   "reviewed": "2026-11-03",
+   "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
+   "note": "A transform verb and what it acts on, beside select_rows. The practitioner framed it by pandas: \"think about how pandas merges dataframes - relate or append\". Append is what a practitioner says for stacking rows; concat is the pandas word and is named in the manual, where the comparison helps. In Summaries beside Select rows and Relate, because it reshapes a table and computes nothing. Experiment 166."
+  },
+  {
+   "nodeType": "regression",
+   "title": "Regression",
+   "group": "Epidemiology",
+   "fingerprint": "d682e4bbecb9",
+   "verdict": "accepted",
+   "reviewed": "2026-11-04",
+   "reviewedBy": "the practitioner and Claude, in the exchange that asked for it",
+   "note": "The practitioner's own word: \"So do we need a regression widget?\" (2026-11-03) and \"Why don't we develop the regression widget\" (2026-11-04). One widget for logistic and Poisson regression, because the choice between them is the model, not the operation; the Inspector names each by what it reports. In Epidemiology beside the two-by-two, whose crude measures it adjusts."
+  },
+  {
+   "nodeType": "find_satellite_products",
+   "title": "Find satellite products",
+   "group": "Sources",
+   "fingerprint": "ca6d2fe70a99",
+   "verdict": "accepted",
+   "reviewed": "2026-11-05",
+   "reviewedBy": "the practitioner, choosing among three pairs offered",
+   "note": "The practitioner chose \"Find products / Search catalog\" over \"EO products / STAC search\" (the protocol, not the operation) and \"Satellite guide / catalog\" (category nouns). What they had called it: \"EO identifies the satellite groups for those variables\". Under Sources because it chooses where data will come from and takes none."
+  },
+  {
+   "nodeType": "search_satellite_catalog",
+   "title": "Search a satellite catalog",
+   "group": "Sources",
+   "fingerprint": "80125bd3d2d8",
+   "verdict": "accepted",
+   "reviewed": "2026-11-05",
+   "reviewedBy": "the practitioner, choosing among three pairs offered",
+   "note": "The practitioner chose \"Find products / Search catalog\". What they had called it: \"STAC zeroes in on the source URLs\". STAC is the method, named in the description and the receipt, as the convention asks. Under Sources because it acquires, with the study area as its scope."
+  },
+  {
+   "nodeType": "space_time_scan",
+   "title": "Space-time scan",
+   "group": "Epidemiology",
+   "fingerprint": "b4e27d407437",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "SaTScan calls the method a scan; \"space-time\" says what is scanned. For review: whether a practitioner would look under \"cluster\", \"scan\" or \"SaTScan\". Moved from \"Detect\" to Epidemiology on 2026-11-11 by the practitioner: \"No 717 categories here.\""
+  },
+  {
+   "nodeType": "transmission_chains",
+   "title": "Transmission chains",
+   "group": "Summaries",
+   "fingerprint": "9d89bc900478",
+   "verdict": "accepted",
+   "reviewed": "2026-11-14",
+   "reviewedBy": "the practitioner, choosing between two designs offered",
+   "note": "The practitioner chose \"New step: Transmission chains\" over a link-following rule in Apply ruleset (experiment 216). The name says what is handed on; the columns are chain, generation, offspring and chain_size."
+  },
+  {
+   "nodeType": "detect_unusual_counts",
+   "title": "Detect unusual counts",
+   "group": "Epidemiology",
+   "fingerprint": "58d0de0a307c",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Proposed 2026-11-21 for CUSUM, EWMA and the EARS methods, which the practitioner asked for by name. Aberration detection is the field's term; the name says what the step does in a practitioner's words. Awaiting the practitioner's review."
+  },
+  {
+   "nodeType": "line_input",
+   "title": "Line layer",
+   "group": "Sources",
+   "fingerprint": "c7f950d8fd81",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Proposed 2026-11-22 beside Polygon layer, whose name it follows: routes, tracks and borders are lines, and a layer is what Map draws. Awaiting the practitioner's review."
+  }
+ ],
+ "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",
+ "ceilingRaises": [
+  {
+   "at": "2026-10-25",
+   "from": 44,
+   "to": 45,
+   "widget": "rate_ratio",
+   "functionThatDidNotExist": "Dividing one rate by another, with an interval. src/rate.ts computed one group's measure and stopped; nothing in the framework compared two measures to each other. slr_threshold_comparison compares a value to a threshold, which is not the same operation. So the framework could map Snow's mortality rates and could not state his argument.",
+   "why": "The ceiling had exactly one place left and join_table_to_area took it earlier the same day. Nothing about rate_ratio's name was reviewed to make room: the debt genuinely rose by one, and is recorded rather than absorbed. Lowering it again means reviewing a pending name, which is a practitioner's judgement and not an author's."
+  },
+  {
+   "at": "2026-10-26",
+   "from": 43,
+   "to": 45,
+   "widget": "derive_value, select_rows",
+   "functionThatDidNotExist": "Arithmetic over a table, and selection of its rows. Rules conclude a TERM about a record and never a number computed from other numbers -- authoredProjection says so in place, \"the value field is untouched\" -- so no step could compute one value from two others. Nothing selected rows of a table either: clip_points_to_area filters points by geometry, and no equivalent existed for a table. The 0.12.0 release notes record the cost as a validation limit: South London's contingency table is prepared outside the application because nothing derives a column from others.",
+   "why": "Two widgets, two places. Raised rather than absorbed, because absorbing it would mean recording a practitioner's verdict on a name nobody has reviewed. Both entries are pending and the ceiling carries the debt until they are read."
+  },
+  {
+   "at": "2026-10-26",
+   "from": 41,
+   "to": 44,
+   "widget": "relate_table, group_table, two_by_two",
+   "functionThatDidNotExist": "Joining two tables, totalling a table within groups, and the analysis under a two-by-two. Nothing joined two tables on a shared column: the 0.12.0 release notes record that as the reason South London's contingency table is prepared outside the application, and `join_table_to_area` puts a value onto a boundary rather than onto rows. Nothing totalled a table either -- `rate` groups and sums internally and emits a RATE, so the totals are consumed on the way out and no other step can use them. And nothing computed a risk, a risk ratio, an odds ratio or a risk difference: the application drew a 2x2 with counts and margins and no analysis, while the only ratio on the canvas was a RATE ratio, a different estimand.",
+   "why": "Three widgets, three places of review debt, raised rather than absorbed -- because lowering the ceiling means a practitioner reviewing a pending name, and that is not an author's to do. NOT because room had to be found: the practitioner, 2026-10-26, \"Forget the widget ceiling for epi kernel, it is a natural consequence of making progress.\" An earlier draft of this field said the room would come from retirements they would name, which treated new function as borrowed. What this ceiling tracks is UNREVIEWED NAMES, which is a different thing from the size of the set: the debt is real and is owed to whoever reads the palette, and it falls when a name is reviewed."
+  },
+  {
+   "at": "2026-10-27",
+   "from": 41,
+   "to": 42,
+   "widget": "map_image_input",
+   "functionThatDidNotExist": "Drawing a supplied georeferenced image as ground. raster_input reads a GeoTIFF into VALUES for clip_raster and sample_raster to measure; a basemap is a tile service or a bundled vector outline, neither of which is a file the practitioner supplies. Nothing could place a scanned or published map under a workflow. The South London example has carried map2-georeference.json, two world files and the plate's digests since 2026-10-24 with no widget able to read any of them, which answers D11 with three days of inert data rather than with an argument.",
+   "why": "D2's near miss is raster_input and is the reason this is separate rather than an extension of it: a raster carries measurements, a plate carries a printer's ink, and sampling ink returns the colour of a line. Reusing the raster port would have made that connection offerable, so the `ground` port type is a hard stop under D4 and a deliberate change to the closed union. The debt rises by one and is recorded rather than absorbed; the name goes to review pending a verdict like every other."
+  },
+  {
+   "at": "2026-10-28",
+   "from": 42,
+   "to": 43,
+   "widget": "polygon_input",
+   "functionThatDidNotExist": "Reading a polygon layer from a published file. Seven node types emitted the `polygons` port type and every one of them DERIVED its polygons from something else -- points allocated to cells, a table joined to a study area, a convex hull, a street corridor, a stack of other layers. None was a source. So a layer that existed as a file had no way into a workflow at all, which is not a high cost but an infinite one: South London's geo/map2-water-supply-zones.geojson had been in that repository since 2026-10-24 and had reached a workflow never. `study_area` is the near neighbour and is not the same function -- it is the FRAME, one boundary, consumed by 27 references to the `area` port, where this is a LAYER of many attributed features. The practitioner settled that distinction by revising the study area to the extent enclosing Snow's Map 2, so the sub-districts and the river become layers within it.",
+   "why": "The ceiling had no slack. The name itself is NOT reviewed by this raise -- it enters pending like every other unreviewed name, and `polygon_input` is asserted only to match the four sibling sources it stands beside (point_input, table_input, raster_input, map_image_input) and to say what it carries rather than what it is for. Admission review: docs/experiments/145-polygons-as-a-source.md."
+  },
+  {
+   "at": "2026-10-31",
+   "from": 43,
+   "to": 44,
+   "widget": "study_design",
+   "functionThatDidNotExist": "Declaring what KIND of study a workflow is, so the computations downstream are the ones its design can estimate. Searched 2026-10-28 and again 2026-10-31 for D2 of the admission audit: `case-control`, `cohort`, `cross-sectional` and `estimable` appear nowhere in two-by-two.ts, epi-estimate.ts or rate-ratio.ts, and no design is declared anywhere in src/, the glossary or widgets/*.json. The framework had vocabulary for the QUANTITIES -- denominatorUnit carries person-time, and the widget is named rate_ratio rather than risk ratio -- and none for the design that decides which of them is estimable. Nothing else can carry it: a design is not a parameter of one computation, because one declaration governs every epi widget in a workflow, and decomposing it into a parameter on each would permit three answers to one question. Experiment 154."
+  }
+ ]
 }

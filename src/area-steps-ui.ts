@@ -1,4 +1,4 @@
-/** FOUR AREA STEPS ON THE STANDARD (experiment 186), 2026-11-20: Area around a point, Buffer study area, Calculate area and
+/** FOUR AREA STEPS ON THE STANDARD (experiment 186), 2026-11-20: Geometry buffer, Buffer study area, Calculate area and
  *  Clip polygons. Touched for their receipts, which now name the study area's shape by its digest, they move to the
  *  standard Inspector -- Name, Inputs, Settings in one sentence with Configure…, Result -- and out of app.ts, by the
  *  practitioner's rule for any widget changed (*"Apply standardization rule"*). Each dialog, and Clip polygons'
@@ -115,14 +115,14 @@ const collectPaths=(g:{type:string;coordinates:unknown}):[number,number][][]=>{
 
 export const bufferPointInspector:OwnInspector<'buffer_point'>={
   markup:(n,kit)=>{const k=kit as AreaStepKit,p=n.params;
-    return kit.section('Name',kit.name('bp-label',p.label||'Area around a point'))
+    return kit.section('Name',kit.name('bp-label',p.label||'Geometry buffer'))
       +kit.section('Inputs',kit.inputs(n,{points:'Points',lines:'Lines',polygons:'Polygon layer'}))
       +kit.section('Settings',sentence(kit,bufferSentence(p))+configure)
       +kit.section('Result',areaResult(k,n,'The area drawn'));},
   wire:(n,kit,root)=>{
     root.querySelector('#configure-step')?.addEventListener('click',()=>{
       const node=nodeIn(kit,n);if(!node)return;
-      openConfigDialog({id:'buffer-point-dialog',widget:'Area around a point',step:node.params.label||'',
+      openConfigDialog({id:'buffer-point-dialog',widget:'Geometry buffer',step:node.params.label||'',
         // ONE POINT ARRIVING IS NOT A CHOICE. Where the connected layer offers exactly one and none has been
         // chosen, the dialog opens on it: the practitioner's Mines layer holds a single mine, and asking which
         // one it is is asking them to type back what the wire already says. Several, and they pick.

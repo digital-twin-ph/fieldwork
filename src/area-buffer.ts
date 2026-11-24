@@ -8,7 +8,7 @@ import {bboxPolygon} from './study-area.js';
  *  circle around a point and not a 6 km margin around a boundary, and nothing explained the
  *  difference. The substantive guards are separate and unchanged: a boundary spanning at most one
  *  degree, below 80° latitude. Buffer study area, which used this range for a margin around a boundary, was retired
- *  2026-11-06 and its code removed 2026-11-21 (0.158.0); Area around a point keeps it.
+ *  2026-11-06 and its code removed 2026-11-21 (0.158.0); Geometry buffer keeps it.
  *
  *  Raised to 50,000 on 2026-10-12 after the Old Naledi facility selection turned out to need 6 km.
  *  That selection is a 6 km circle at the boundary's bounding-box centre, and a 6 km margin around

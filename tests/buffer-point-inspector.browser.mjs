@@ -10,7 +10,7 @@ const workflowWith=(features)=>({schema:'fieldwork/workflow/1',id:'bp',label:'Ar
   nodes:[
     {id:'mines',type:'point_input',x:40,y:40,params:{label:'Mines',fields:[],
       data:{type:'FeatureCollection',features}}},
-    {id:'around',type:'buffer_point',x:40,y:240,params:{label:'Area around a point',pointId:'',distanceM:5000}},
+    {id:'around',type:'buffer_point',x:40,y:240,params:{label:'Geometry buffer',pointId:'',distanceM:5000}},
   ],
   edges:[{id:'e1',from:'mines',to:'around',port:'points'}]});
 
@@ -22,7 +22,7 @@ const open=async(page,features)=>{
   await page.goto('/');
   await page.waitForSelector('html[data-ready]');
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node').filter({hasText:'Area around a point'}).first().click();
+  await page.locator('.react-flow__node').filter({hasText:'Geometry buffer'}).first().click();
   await page.locator('#inspector-content #configure-step').click();
   const dialog=page.locator('#buffer-point-dialog');
   await expect(dialog).toBeVisible();

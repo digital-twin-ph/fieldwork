@@ -517,10 +517,10 @@ const builders={
     const pumps=example.nodes.find(n=>n.id==='pumps').params.data;
     const pointId=String(pumps.features[0].id),radiusM=500;
     const point=bufferPoint(pumps,{id:'scope',type:'buffer_point',x:0,y:0,
-      params:{label:'Area around a point',pointId,distanceM:radiusM}},'fixture');
+      params:{label:'Geometry buffer',pointId,distanceM:radiusM}},'fixture');
     const fraction=Number(/fw:circleAreaFraction "([0-9.]+)"/.exec(point.receipt.facts)[1]);
     return {fixture:{
-      ...base('buffer-point-soho-001','buffer_point','Area around a point','src/buffer-point.ts#bufferPoint'),
+      ...base('buffer-point-soho-001','buffer_point','Geometry buffer','src/buffer-point.ts#bufferPoint'),
       declaredParameters:{
         computationCRS:'OGC:CRS84',
         projection:'Turf/JSTS local azimuthal equidistant, metres',

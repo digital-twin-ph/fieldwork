@@ -1,4 +1,4 @@
-# Area around a point
+# Geometry buffer
 
 _Created 2026-11-20 · Updated 2026-11-23_
 

@@ -188,12 +188,12 @@
    "migrationFrom": []
   },
   "clip_polygons": {
-   "version": "0.3.0",
-   "released": "2026-11-21",
+   "version": "0.4.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "Configure… says there is nothing to set and holds Show me how, which was in the panel."
+     "kind": "minor",
+     "description": "Preview says how many polygons survive the cut and how much ground they cover before and after it. A polygon wholly outside is gone and one straddling the edge is kept smaller, neither of which is visible from the settings."
     }
    ],
    "breaking": false,
@@ -456,12 +456,12 @@
    "migrationFrom": []
   },
   "measure_area": {
-   "version": "0.2.0",
-   "released": "2026-11-20",
+   "version": "0.3.0",
+   "released": "2026-11-23",
    "changes": [
     {
      "kind": "minor",
-     "description": "The standard Inspector, the unit set in Configure…, the input chosen under Inputs, with Show me how it works on a made-up district. The receipt names the area by its GeoJSON's SHA-256."
+     "description": "Preview measures the connected area now, in the unit chosen above it, so the unit is judged where it is set rather than after a run."
     }
    ],
    "breaking": false,
@@ -846,12 +846,12 @@
    "migrationFrom": []
   },
   "summarize_points_to_polygon": {
-   "version": "0.3.0",
-   "released": "2026-11-22",
+   "version": "0.4.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "On the standard Inspector: the edge rule and the number to add up in Configure…, the arriving points' numeric columns offered, with Show me how it works on two made-up units sharing an edge; a manual page."
+     "kind": "minor",
+     "description": "Preview says how the points fall: how many land in a polygon, how many in none, how many with no usable location, and how many fall in more than one -- the last being the number a reader must not add up. The boundary setting above it changes the count."
     }
    ],
    "breaking": false,

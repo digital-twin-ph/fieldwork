@@ -1,0 +1,68 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:measure_area",
+ "version": "0.3.0",
+ "nodeType": "measure_area",
+ "title": "Calculate area",
+ "released": "2026-11-23",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['measure_area']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "area",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:AreaComputation",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Existing ontology alignment; full configuration and port shape contracts remain to be defined.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/area-computation.ts",
+   "src/area-measurement.ts",
+   "src/area-steps-ui.ts",
+   "src/spatial-walkthroughs.ts",
+   "src/inspector-kit.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "Preview measures the connected area now, in the unit chosen above it, so the unit is judged where it is set rather than after a run."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently. 0.3.0: the area said in km2 and again in hectares when the unit is changed. Chromium, 2026-11-23: tests/area-step-previews.browser.mjs."
+ }
+}

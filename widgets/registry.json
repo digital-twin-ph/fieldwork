@@ -565,7 +565,7 @@
     {
       "id": "urn:fieldwork:widget:clip_polygons",
       "nodeType": "clip_polygons",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -581,6 +581,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/clip_polygons/0.3.0.json",
           "sha256": "19f46ae081ee1f779f04aec9bfac7c044aec00165d250938febdaf5e2ef38689"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/clip_polygons/0.4.0.json",
+          "sha256": "d90f7d95bdbfca25a1d931cdbcaed021892d1ca469468825db6f642bf1ea31f0"
         }
       ]
     },
@@ -1538,7 +1543,7 @@
     {
       "id": "urn:fieldwork:widget:measure_area",
       "nodeType": "measure_area",
-      "currentVersion": "0.2.0",
+      "currentVersion": "0.3.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1549,6 +1554,11 @@
           "version": "0.2.0",
           "path": "widgets/releases/measure_area/0.2.0.json",
           "sha256": "2e4aebd70851d383ec1885b3d4fabfcdac14c43a83dc937189cb6ff92ef9cd47"
+        },
+        {
+          "version": "0.3.0",
+          "path": "widgets/releases/measure_area/0.3.0.json",
+          "sha256": "9c484e27a4464bdad743e7e11d0cf67dee8eff4cdb6eea67b429a9aef3a5b062"
         }
       ]
     },
@@ -2776,7 +2786,7 @@
     {
       "id": "urn:fieldwork:widget:summarize_points_to_polygon",
       "nodeType": "summarize_points_to_polygon",
-      "currentVersion": "0.3.0",
+      "currentVersion": "0.4.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2792,6 +2802,11 @@
           "version": "0.3.0",
           "path": "widgets/releases/summarize_points_to_polygon/0.3.0.json",
           "sha256": "64156490f346b028a9ff89d61510afb2fbda08b9751c7cdd7ab1549e4d46d624"
+        },
+        {
+          "version": "0.4.0",
+          "path": "widgets/releases/summarize_points_to_polygon/0.4.0.json",
+          "sha256": "e2397df0db4f468ef14ce35683fc703659c77a6c77706b490d221ae27d3638ed"
         }
       ],
       "previousNodeTypes": [

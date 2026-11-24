@@ -9,6 +9,7 @@ import {openConfigDialog} from './config-dialog.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {MAX_BUFFER_M} from './area-buffer.js';
 import {clipPointsToArea} from './clip-points.js';
+import {clipPolygons,summarizePolygons} from './catchments.js';
 import {previewBuffers} from './buffer-point.js';
 import {bufferPointWalkthrough,measureAreaWalkthrough,clipPolygonsWalkthrough,clipPointsWalkthrough,summarizePointsWalkthrough} from './spatial-walkthroughs.js';
 import {areaUnitOptions} from './area-measurement.js';
@@ -178,6 +179,82 @@ export const bufferPointInspector:OwnInspector<'buffer_point'>={
   },
 };
 
+/** WHAT IS CONNECTED, where it is already on this device: a boundary from a study area's own geometry or from the
+ *  last run, and a polygon layer from its source's records or from the last run. The previews below are all the same
+ *  shape -- the step's own function, run on what is there, before anything is run. */
+const boundaryOn=(kit:AreaStepKit,nodeId:string,port='area'):import('./types.js').Boundary|undefined=>{
+  const from=kit.workflow().edges.find(e=>e.to===nodeId&&e.port===port)?.from;
+  if(!from)return undefined;
+  return (kit.current()?kit.output(from)?.boundary:undefined)
+    ??(kit.workflow().nodes.find(x=>x.id===from)?.params as {geometry?:import('./types.js').Boundary}|undefined)?.geometry;
+};
+const polygonsOn=(kit:AreaStepKit,nodeId:string,port='polygons'):import('./catchments.js').Polygons|undefined=>{
+  const from=kit.workflow().edges.find(e=>e.to===nodeId&&e.port===port)?.from;
+  if(!from)return undefined;
+  const ran=kit.current()?(kit.output(from) as {polygons?:import('./catchments.js').Polygons}|undefined)?.polygons:undefined;
+  const held=(kit.workflow().nodes.find(x=>x.id===from)?.params as
+    {data?:import('./catchments.js').Polygons}|undefined)?.data;
+  const found=ran??held;
+  if(!found?.features?.length)return undefined;
+  // THE FIELDS THE STEP FUNCTIONS READ. A layer kept by Polygon layer holds its features and little else, while
+  // `clipPolygons` and `summarizePolygons` spread `input.notes` and carry `sites` through -- so a preview built
+  // from stored records threw where the same call in a run does not. Filled in here rather than caught and hidden.
+  return {...found,sites:found.sites??[],method:found.method??'',crs:found.crs??'CRS84',notes:found.notes??[]};
+};
+/** SAID, NOT SWALLOWED. A preview that cannot be computed used to return nothing, which reads as a Preview section
+ *  that does not work -- the complaint these previews exist to answer. */
+const cannot=(kit:InspectorKit,error:unknown)=>
+  `<p class="muted">This cannot be counted yet: ${kit.esc(error instanceof Error?error.message:String(error))}</p>`;
+const waiting=(what:string)=>`<p class="muted">${what} arrives when the workflow runs, and what this step makes is counted here then.</p>`;
+
+/** THE AREA, MEASURED NOW. The practitioner, 2026-11-23: the Preview section held only a walkthrough. The measurement
+ *  IS this step's result, and the unit above it changes how it reads, so the preview is where the unit is judged. */
+function measureAreaPreview(kit:AreaStepKit,n:WorkflowNode,unit:AreaUnit):string{
+  const boundary=boundaryOn(kit,n.id);
+  if(!boundary)return waiting('The study area');
+  try{return `<p class="standard-result"><strong>${kit.esc(formatArea(calculateArea(boundary,unit)))}</strong>, measured on the curved Earth.</p>`;}
+  catch(error){return cannot(kit,error);}
+}
+
+/** WHAT THE CUT LEAVES: how many polygons survive it, and how much ground. A polygon that falls wholly outside is
+ *  gone, and one that straddles the edge is kept smaller -- neither is visible from the setting alone. */
+function clipPolygonsPreview(kit:AreaStepKit,n:WorkflowNode):string{
+  const boundary=boundaryOn(kit,n.id),polygons=polygonsOn(kit,n.id);
+  if(!boundary)return waiting('The study area');
+  if(!polygons)return waiting('The polygon layer');
+  try{
+    const cut=clipPolygons(polygons,boundary);
+    const before=polygons.features.length,after=cut.features.length;
+    // Summed in square metres and said once in km2, so two measurements are never added in different units.
+    const area=(p:import('./catchments.js').Polygons)=>p.features.reduce((t,f)=>t+calculateArea(f.geometry,'km2').squareMetres,0);
+    const said=(m2:number)=>`${new Intl.NumberFormat('en',{maximumSignificantDigits:4}).format(m2/1e6)} km\u00b2`;
+    return `<p class="standard-result"><strong>${after.toLocaleString('en')} of ${before.toLocaleString('en')} polygons kept.</strong> `
+      +`${kit.esc(said(area(polygons)))} before the cut, ${kit.esc(said(area(cut)))} after.</p>`;
+  }catch(error){return cannot(kit,error);}
+}
+
+/** HOW THE POINTS FALL INTO THE POLYGONS, which is the whole of this step: how many were matched, how many fell in
+ *  none, how many fell in more than one -- the last being the number a reader must not add up. */
+function summarizePointsPreview(kit:AreaStepKit,n:WorkflowNode,params:{boundary:'include'|'exclude';valueField:string}):string{
+  const polygons=polygonsOn(kit,n.id);
+  if(!polygons)return waiting('The polygon layer');
+  const {features}=kit.pointChoices(n.id,'points');
+  if(!features.length)return waiting('The points');
+  const points={type:'FeatureCollection' as const,
+    features:features.map((f,i)=>({type:'Feature' as const,id:String(i),properties:{name:f.name},
+      geometry:f.geometry as {type:'Point';coordinates:[number,number]}}))};
+  try{
+    const made=summarizePolygons(polygons,points as never,{label:'',...params} as never);
+    const s=made.summary!;
+    const n0=(v:number)=>v.toLocaleString('en');
+    return `<p class="standard-result"><strong>${n0(s.matched)} of ${n0(s.records)} points fall in a polygon.</strong> `
+      +`${n0(s.unmatched)} fall in none`
+      +(s.missingLocation?`, ${n0(s.missingLocation)} have no usable location`:'')
+      +(s.multiple?`, and ${n0(s.multiple)} fall in more than one, so the counts must not be added up`:'')
+      +'.</p>';
+  }catch(error){return cannot(kit,error);}
+}
+
 export const measureAreaInspector:OwnInspector<'measure_area'>={
   markup:(n,kit)=>{const k=kit as AreaStepKit,p=n.params;
     return kit.section('Name',kit.name('measure-label',p.label||'Calculate area'))
@@ -190,7 +267,8 @@ export const measureAreaInspector:OwnInspector<'measure_area'>={
       openConfigDialog({id:'measure-area-dialog',widget:'Calculate area',step:node.params.label||'',
         draft:{unit:node.params.unit},
         sections:d=>({settings:`<div class="field"><label class="field-label" for="area-unit">Area unit</label>`
-          +`<select id="area-unit">${areaUnitOptions(d.unit)}</select></div>`,preview:showMe}),
+          +`<select id="area-unit">${areaUnitOptions(d.unit)}</select></div>`,
+          preview:measureAreaPreview(kit as AreaStepKit,n,d.unit as AreaUnit)+showMe}),
         wire:(root,d,redraw)=>{
           root.querySelector<HTMLSelectElement>('#area-unit')!.onchange=e=>{d.unit=(e.target as HTMLSelectElement).value as AreaUnit;redraw();};
           showMeIn(root,kit,()=>measureAreaWalkthrough(d.unit));},
@@ -214,7 +292,8 @@ export const clipPolygonsInspector:OwnInspector<'clip_polygons'>={
     root.querySelector('#configure-step')?.addEventListener('click',()=>{
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog({id:'clip-polygons-dialog',widget:'Clip polygons',step:node.params.label||'',draft:{},
-        sections:()=>({settings:'<p class="muted">Nothing to set: each polygon is cut to the study area connected.</p>',preview:showMe}),
+        sections:()=>({settings:'<p class="muted">Nothing to set: each polygon is cut to the study area connected.</p>',
+          preview:clipPolygonsPreview(kit as AreaStepKit,n)+showMe}),
         wire:root2=>{showMeIn(root2,kit,()=>clipPolygonsWalkthrough());},
         apply:()=>{},
       },kit.esc);
@@ -303,7 +382,8 @@ export const summarizePointsInspector:OwnInspector<'summarize_points_to_polygon'
           +`<div class="field"><label class="field-label" for="summarize-value">A number to add up (optional)</label>`
           +(fields.length?`<select id="summarize-value"><option value="">None: count the points only</option>${[...new Set([...fields,...(d.valueField&&!fields.includes(d.valueField)?[d.valueField]:[])])].map(f=>`<option value="${kit.esc(f)}"${f===d.valueField?' selected':''}>${kit.esc(f)}</option>`).join('')}</select>`
             :`<input id="summarize-value" maxlength="100" value="${kit.esc(d.valueField)}" placeholder="for example deaths">`)
-          +'<small>A missing or non-numeric value is counted apart, never as 0.</small></div>',preview:showMe}),
+          +'<small>A missing or non-numeric value is counted apart, never as 0.</small></div>',
+          preview:summarizePointsPreview(kit as AreaStepKit,n,{boundary:d.boundary,valueField:d.valueField})+showMe}),
         wire:(root2,d,redraw)=>{
           root2.querySelector<HTMLSelectElement>('#summarize-boundary')!.onchange=e=>{d.boundary=(e.target as HTMLSelectElement).value as 'include'|'exclude';redraw();};
           root2.querySelector<HTMLInputElement|HTMLSelectElement>('#summarize-value')!.onchange=e=>{d.valueField=(e.target as HTMLInputElement).value.trim();redraw();};

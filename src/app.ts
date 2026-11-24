@@ -4555,9 +4555,13 @@ function areaStepKit():AreaStepKit{
     summary:id=>dirty?undefined:result?.stepSummaries?.[id],
     // THE POINTS ARRIVING, named: the source's own records where it holds them, the last run's where it does not.
     pointChoices:(id,port)=>{
-      // EVERY PORT THE STEP BUFFERS, not one: points, lines and a polygon layer share a group on the canvas and a
-      // feature from any of them can be the one named (2026-11-23).
-      const ports=port==='points'?['points','lines','polygons']:[port];
+      // THE PORTS THIS STEP SHOWS AS ONE, and only those. Area around a point buffers points, lines or a polygon
+      // layer through a single group, so a feature from any of them can be the one named. Expanding that to every
+      // step counted Summarize points to polygons' OWN polygon layer as points -- 5 where 3 were connected
+      // (2026-11-23). The group a port belongs to is the right answer; a port in no group stands alone.
+      const type=workflow.nodes.find(x=>x.id===id)?.type;
+      const group=type?Object.values(PORT_GROUPS[type]??{}).find(ports=>ports.includes(port)):undefined;
+      const ports=group?[...group]:[port];
       const features:{name:string;geometry:{type:string;coordinates:unknown}}[]=[];
       for(const wanted of ports){
         const e=workflow.edges.find(x=>x.to===id&&x.port===wanted);

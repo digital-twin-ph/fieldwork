@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.180.0 — 2026-11-23
+
+- **Three more Preview sections say what the step makes**, instead of holding only a walkthrough of a made-up case:
+  Calculate area measures the connected area in the unit chosen (0.3.0); Clip polygons says how many survive the cut
+  and how much ground before and after (0.4.0); Summarize points to polygons says how many points fall in a polygon,
+  in none, and in more than one — the last being the number a reader must not add up (0.4.0). Each is computed with
+  the step's own function, so what is previewed is what it does, and a preview that cannot be computed says why
+  rather than showing nothing.
+- **A step's own ports are no longer widened to its neighbours'.** Asking Area around a point which features it may
+  buffer rightly spans its points, lines and polygon ports, because it shows them as one; applying that to every step
+  made Summarize points to polygons count its own polygon layer as points.
+
 ## 0.179.0 — 2026-11-23
 
 - **Tabular data takes a table you type** (0.20.0). A sixth tab, **Type or paste**: a short table written or pasted

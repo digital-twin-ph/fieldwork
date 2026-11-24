@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.193.1 — In development
+
+- **Corrected in the CI audit**: removing the Chromium leg of `verify` halves the runner *minutes*, not the
+  wall-clock. The matrix ran the two engines as parallel jobs, so a verdict already took one engine's time, not two.
+  The first run under the new arrangement — dispatched by hand rather than waited for, since a broken `verify.yml`
+  would have meant no verification at all — took **59 minutes for WebKit alone**. So dropping Chromium could never
+  have made verification fit a 24-to-48-minute release cadence; the nightly schedule is what does that. The claim
+  was offered as a reason for the choice, which is why it is corrected rather than quietly dropped.
+- That run reached a verdict: **3 failed, 617 passed**, one `verify` job rather than two, inside the 75-minute bound.
+  All three are WebKit UI timing — `buffer-point-inspector`, `relate-proposed-keys`,
+  `sample-satellite-areas-offline` — and are recorded in the audit for manual testing rather than fixed here.
+- Also recorded: `large-study-area-map`'s WebKit fetch error is **intermittent**, not deterministic. It failed on
+  `a3458e79` and on this machine, and passed on `568ab175`, which changed no `src` file. Reporting it as
+  reproducible was true of two attempts rather than of the test.
+
 ## 0.193.0 — In development
 
 - **A rate's two vintages are compared on the year, not as text** (Rate 0.6.0, experiment 230). It was

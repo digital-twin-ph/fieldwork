@@ -1,6 +1,6 @@
 # 230 · Years carried and compared
 
-_Created 2026-11-23 · Updated 2026-11-23_
+_Created 2026-11-23 · Updated 2026-11-24_
 
 **Status:** tried, in its first step. The three open questions below were answered on 2026-11-24 and are recorded
 there; `src/reference-period.ts` and Rate's comparison are built and unit tested. Nothing CARRIES a period yet: every

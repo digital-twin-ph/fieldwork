@@ -74,8 +74,20 @@ to a race in the test rather than in the application, and fixed in 0.191.1.
 Two changes, chosen by the practitioner from three offered:
 
 **The Chromium leg of the matrix goes.** The release gate covers Chromium on this machine before every push, so that
-leg verified what had just been verified. Removing it halves the browser work and leaves the engine that nothing else
+leg verified what had just been verified. Removing it halves the runner MINUTES and leaves the engine nothing else
 exercises.
+
+> **Corrected 2026-11-24, the same day.** This first said that removing the Chromium leg "halves verify's wall-clock,
+> which would let it finish inside your release cadence". That was wrong, and the correction matters because it was
+> offered as a reason for the choice. The matrix ran the two engines as PARALLEL jobs -- the job's own comment, moved
+> into `verify.yml`, says *"ONE JOB PER BROWSER, side by side ... neither waits on the other"* -- so the wall-clock was
+> already one engine's duration, not two. Dropping Chromium halves what the runner spends, not how long a verdict
+> takes.
+>
+> Measured immediately afterwards: the first nightly-shaped run, dispatched by hand on `568ab175`, took **59 minutes**
+> for WebKit alone, 55.1 of them browser tests. So option 3 by itself would never have fitted a 24-to-48-minute
+> release cadence. What makes verification reach a verdict is option 2, the schedule. Option 3 earns its place by not
+> paying twice for Chromium, which is a smaller and different claim.
 
 **Verification moves off the push and onto a nightly schedule**, against whatever `main` holds at the time, with
 `workflow_dispatch` for when someone wants it sooner. Per-commit verification was never achieved in practice; one
@@ -95,3 +107,23 @@ A WebKit regression can now live on `main` for up to a day before anything repor
 have been caught within the hour. Against that: within this stretch it would have been caught within the hour once in
 fourteen releases. The trade is a worse bound in theory for a better one in practice, and `workflow_dispatch` is
 there for the day a WebKit-shaped change makes waiting for the night the wrong call.
+
+## The first run under the new arrangement (2026-11-24, dispatched by hand)
+
+Dispatched rather than waited for, because a `verify.yml` that did not work would have meant no verification at all --
+strictly worse than four-in-fourteen, and not discoverable until the morning.
+
+It ran: 59 minutes on `568ab175`, **3 failed, 617 passed**, well inside the 75-minute bound, with one `verify` job
+rather than two. All three failures are WebKit and all three are UI timing -- `buffer-point-inspector`,
+`relate-proposed-keys` and `sample-satellite-areas-offline`, failing on "element(s) not found", `toBeVisible` and
+`toHaveValue`.
+
+**A fourth failure from the run before it did not recur.** `large-study-area-map` failed on WebKit in the run for
+`a3458e79` with *"Fetch API cannot load ... /build/asset-manifest.json due to access control checks"*, and reproduced
+on this machine under WebKit; `568ab175` changed no `src` file, and it passed here. So that one is intermittent, not
+deterministic, and the earlier report of it as reproducible was true of two attempts rather than of the test.
+
+What this says about the engine, stated carefully: WebKit has several real disagreements with Chromium in this suite,
+and they were not visible while verification was being cancelled. It does not say they are new, or that they are
+defects in the application rather than in the tests' assumptions about timing -- three of the four are waits, and the
+fourth is a fetch the application already catches.

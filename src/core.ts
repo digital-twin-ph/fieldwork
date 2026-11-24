@@ -57,7 +57,7 @@ import type {Reasoner} from './worker-types.js';
 import type {AreaValue,CoverageValue,DisplayValue,WorkflowRun,Output,Receipt,NearestRow,StepSummary} from './results.js';
 import {declarationGaps,dataIssuesOf} from './results.js';
 import {isRecord,required} from './guards.js';
-interface ExecutionInputs {samples:PointCollection&{sourceNodeId?:string;sourceKind?:string};area:import('./results.js').AreaValue;area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;list:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
+interface ExecutionInputs {samples:PointCollection&{sourceNodeId?:string;sourceKind?:string};area:import('./results.js').AreaValue;area2:AreaValue;polygons:Polygons;subjects:PointCollection;network:Network;sites:PointCollection;reached:PointCollection;points:PointCollection&{spatialReference?:import('./types.js').AnySpatialReference};original:PointCollection;moved:PointCollection;pumps:PointCollection;originalCenter:MeanCenter;movedCenter:MeanCenter;comparison:PointComparison;raster:RasterGrid;friction:RasterGrid;origins:PointCollection;places:PointCollection;table:import('./data-table.js').DataTable;projections:import('./sea-level.js').ProjectionTable;series:import('./case-series.js').SeriesTable;records:PointCollection;cases:import('./data-table.js').DataTable;related:import('./data-table.js').DataTable;list:import('./data-table.js').DataTable;rates:import('./data-table.js').DataTable&{rate?:import('./rate.js').RateResult};assignments:import('./sea-level.js').AssignmentTable;coverage?:CoverageValue;candidates:PointCollection;distances:{rows:NearestRow[];centers:PointFeature[];method:string};alert:ParamsByType['alert'];decisions:DisplayValue;design:import('./study-design.js').DeclaredDesign}
 import classification from '../widgets/classification.json' with {type:'json'};
 import facilityRegisters from '../widgets/facility-registers.json' with {type:'json'};
 import {listFacilitiesValue,type RegisterEntry} from './facility-matching.js';
@@ -261,6 +261,11 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
     description:'Read a raster, or satellite files, at each point or over each area: the cell\'s value at a point, the total of the cells in an area, and say where there is no value and why',
     inputs:[['points','points'],['areas','polygons'],['area','area'],['raster','raster'],['files','satellite-files']],output:'points'},
   clip_raster:{title:'Clip raster',group:'Spatial operations',icon:'✂',color:'teal',description:'Mask raster cells with a clipping boundary',inputs:[['area','area'],['raster','raster']],output:'raster'},
+  // TRAVEL TIME OVER GROUND (experiment 231), for where the streets are not the way people move: a friction surface
+  // states what crossing a metre of each cell costs, and the walk accumulates that cost cell to cell.
+  travel_over_ground:{title:'Travel time over ground',group:'Spatial operations',icon:'◵',color:'teal',
+    description:'Minutes to the nearest starting point across a friction surface, written onto each place, for where the walk is not along mapped streets',
+    inputs:[['friction','raster'],['origins','points'],['places','points']],output:'points'},
   places: {title:'Neighborhoods', group:'Sources', icon:'▦', color:'blue', description:'Local neighborhood locations', inputs:[], output:'points'},
   centers: {title:'Cooling centers', group:'Sources', icon:'⌂', color:'blue', description:'Local facility locations', inputs:[], output:'points'},
   alert: {title:'Heat alert', group:'Sources', icon:'☀', color:'amber', description:'Assessment context', inputs:[], output:'alert'},
@@ -1024,6 +1029,14 @@ export function validateWorkflow(raw:unknown):Workflow {
     }
     if(n.type==='clip_raster'&&n.params.cutline!==undefined){if(!n.params.cutline||!['bbox','polygon'].includes(n.params.cutline.selectionMode))throw new Error('Invalid clip boundary settings.');validateDrawnGeometry(n.params.cutline.geometry);}
     if(n.type==='raster_input'||n.type==='clip_raster'){if(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>60)throw new Error('Raster node names require 1-60 characters.');if(n.type==='raster_input'&&n.params.asset)validateRasterAsset(n.params.asset);if(n.type==='clip_raster'){if(!n.params.method)throw new Error('Choose a raster mask method.');validateClipOptions(n.params);}}
+    // TRAVEL TIME OVER GROUND (experiment 231): the attribute name and the ceiling, checked here rather than inside
+    // the walk, so a draft is refused before a surface is read.
+    if(n.type==='travel_over_ground'){
+      if(typeof n.params.attribute!=='string'||!n.params.attribute.trim()||n.params.attribute.length>60)
+        throw new Error('Name the column the travel time is written into, in 1 to 60 characters.');
+      if(n.params.maxMinutes!==undefined&&(typeof n.params.maxMinutes!=='number'||!Number.isFinite(n.params.maxMinutes)||n.params.maxMinutes<=0))
+        throw new Error('A travel time ceiling must be a number of minutes greater than zero, or left unset for no ceiling.');
+    }
     if (n.type==='output') {
       n.params.view ??= 'map';
       if (!['map','table','bars'].includes(n.params.view)) throw new Error('Visual outputs must use a map, table, or bar chart.');
@@ -1251,6 +1264,11 @@ export function summarizeStep(node:WorkflowNode,value:unknown):StepSummary|undef
     case 'line_input':{const l=value as import('./types.js').LineLayer|undefined;if(!l?.features)return undefined;
       const km=l.features.reduce((t,f)=>t+lineLengthKm(f),0);return {lines:l.features.length,km:km<10?km.toFixed(2):Math.round(km).toLocaleString('en')};}
     case 'isochrone':case 'reachable_nodes':return {features:v?.features?.length??0,unconnected:v?.unconnected?.length??0,offNetwork:v?.offNetwork?.length??0};
+    // The unreached places are half of what a microplan reads, so the run's summary counts them beside the answered.
+    case 'travel_over_ground':{const attribute=(node.params as {attribute?:string}).attribute?.trim()||'minutes';
+      const answered=((value as {features?:{properties?:Record<string,unknown>}[]}|undefined)?.features??[])
+        .filter(f=>typeof f.properties?.[attribute]==='number').length;
+      return {places:v?.features?.length??0,answered,unreached:(v?.features?.length??0)-answered};}
     case 'mean_center':{const c=value as MeanCenter;return {longitude:c.coordinates[0],latitude:c.coordinates[1],count:c.count,
       ...(c.weight?{weightField:c.weight.field,weightTotal:c.weight.total}:{})};}
     default:return undefined;
@@ -1446,6 +1464,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'snap_to_network':{
         const made=snapToNetwork(inputs.sites,inputs.network,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='sites')!.from);
         value=made.value;receipts.push(made.receipt);break;
+      }
+      case 'travel_over_ground':{
+        // THE PLACES ARE THE SOURCE the receipt cites: the answer is written onto them, and the friction surface and
+        // the origins are named in the facts rather than claimed as what this layer derives from.
+        const {travelValue}=await import('./friction-travel.js');
+        const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='places');
+        if(!edge)throw new Error('Connect the places to answer for to this step’s Places port.');
+        const made=travelValue(inputs.friction as never,inputs.origins as never,inputs.places as never,node,runId,edge.from);
+        value=made.value as unknown as DisplayValue;receipts.push(made.receipt);break;
       }
       case 'summarize_combined_area':{
         // Given areas it combines areas; given polygons it combines polygons. Same widget, same

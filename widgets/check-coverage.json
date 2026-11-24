@@ -6,11 +6,11 @@
     "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
     "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
   },
-  "measuredAt": "2026-11-22",
+  "measuredAt": "2026-11-24",
   "counts": {
-    "widgets": 51,
+    "widgets": 52,
     "covered": 31,
-    "awaiting": 10,
+    "awaiting": 11,
     "none": 9,
     "blocked": 1
   },
@@ -300,6 +300,12 @@
       "expectation": "parity",
       "reason": "TWO CLAIMS AN OUTSIDE READER CAN CHECK. Read from a file, the lines handed on are the file's own, every position in order, with the lines of fewer than two positions dropped and the points and areas counted: GDAL or fiona reading the same GPX, KML or GeoJSON recomputes it. Taken from two areas, the border is the stretch of the first's outline within a stated distance of the second's: shapely (the first's boundary, kept where its distance to the second's boundary is within the distance) recomputes the stretches and their lengths. What a check could NOT establish is that two sources' outlines put the border where it is.",
       "computes": "Lines read from GPX tracks and routes, KML LineString and gx:Track, and GeoJSON LineString and MultiLineString; their lengths on the sphere; and the stretches of one area's outline lying within a distance of another's."
+    },
+    {
+      "nodeType": "travel_over_ground",
+      "expectation": "parity",
+      "computes": "Minutes from the nearest of several origins to each stated place, accumulated cell by cell across a friction surface: eight-neighbour least-cost accumulation where a step costs the metres between two cell centres times the mean of the two cells' friction, with metres per cell computed per row from its latitude.",
+      "reason": "THIS IS THE STANDARD OPERATION OF AN ESTABLISHED LITERATURE, so an outside reading exists and should be taken. skimage.graph.MCP_Geometric, GRASS r.cost, or the Malaria Atlas Project's own published accessibility method each recompute a least-cost accumulation over the same grid, and a parity entry is what would show whether this one agrees with them -- above all at the diagonals and at the edge of no-data, which is where implementations usually differ. What a check could NOT establish is that the minutes resemble a real walk: that depends on the surface being right about the ground, and no recomputation can tell."
     }
   ]
 }

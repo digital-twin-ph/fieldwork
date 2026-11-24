@@ -165,7 +165,7 @@ fw:NetworkReachability a owl:Class;
   rdfs:comment "Cheapest-path traversal of a street network from an origin up to a travel budget, emitting the reached junctions with the budget left at each. Cost is supplied street length over one constant speed: a geometry of the graph, not a geography of access.".
 fw:originCount a owl:DatatypeProperty; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Number of origins traversed from";
-  rdfs:comment "No domain: asserted by both fw:NetworkReachability and fw:ReachableCorridor. Keeping the reachability domain would have made every corridor an inferred traversal, which it is not.".
+  rdfs:comment "No domain: asserted by fw:NetworkReachability, fw:ReachableCorridor and fw:GroundTravelTime. Keeping the reachability domain would have made every corridor an inferred traversal, which it is not. On fw:GroundTravelTime it counts the origins that could START a walk, which is fewer than the layer held where any stood outside the surface or on a cell with no usable friction; fw:skippedOriginCount names the rest.".
 fw:reachedNodeCount a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:nonNegativeInteger;
   rdfs:label "Reached junctions, summed over the origins".
 fw:travelBudgetMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:decimal;
@@ -191,6 +191,31 @@ fw:attachmentLimitMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkReachabil
 fw:edgeLengthSource a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
   rdfs:label "Where the street lengths came from";
   rdfs:comment "This activity re-measures no geometry, so it needs no projected CRS and takes the lengths on trust. Naming the source is the only check available to a reader.".
+fw:GroundTravelTime a owl:Class;
+  rdfs:label "Travel time over ground"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
+  rdfs:comment "Cheapest accumulated cost from the nearest of several origins across a friction surface -- a raster whose cell value is the cost of crossing one metre of that cell -- read at stated places. Distinct from fw:NetworkReachability, which traverses a published street graph at one assumed speed: this traverses ground, and the cost comes from the file rather than from an assumption. It is NOT a route. The walk steps between cell centres in eight directions and charges the metres between them times the mean friction of the pair, so no line it implies is a path anybody takes, and two places in one cell cannot be told apart. The answer is asserted at points and never as a raster, because a computed surface has no file and would otherwise carry the source raster's digest while holding values those bytes do not produce.".
+fw:reachedPlaceCount a owl:DatatypeProperty; rdfs:domain fw:GroundTravelTime; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Places the walk reached".
+fw:unreachedPlaceCount a owl:DatatypeProperty; rdfs:domain fw:GroundTravelTime; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Places the walk did not reach";
+  rdfs:comment "Those places are still in the result, carrying no travel time and a stated reason. A place nobody can reach is a finding rather than a gap, so it is never dropped and never given a large number standing in for unreachable.".
+fw:unreachedPlaces a owl:DatatypeProperty; rdfs:domain fw:GroundTravelTime; rdfs:range xsd:string;
+  rdfs:label "The unreached places and why, as JSON";
+  rdfs:comment "One entry per place, with the reason: outside the raster, or no path within the surface. A ceiling makes the second of these mean 'not within the ceiling', which is not the same as unreachable; fw:travelCeilingMinutes is what distinguishes them.".
+fw:skippedOriginCount a owl:DatatypeProperty; rdfs:domain fw:GroundTravelTime; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Origins that could not start a walk".
+fw:skippedOrigins a owl:DatatypeProperty; rdfs:domain fw:GroundTravelTime; rdfs:range xsd:string;
+  rdfs:label "The origins that could not start a walk and why, as JSON";
+  rdfs:comment "An origin outside the surface, or standing on a cell with no usable friction. Named rather than dropped, because every time reported is to the nearest of the origins that remained and a reader cannot otherwise tell which those were.".
+fw:frictionCellCount a owl:DatatypeProperty; rdfs:domain fw:GroundTravelTime; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Cells in the friction surface the walk crossed";
+  rdfs:comment "Emitted because the cell is the finest distinction the answer can make and because it is the one quantity this activity refuses on: a surface larger than one pass crosses is refused in words rather than sampled down. The limit was measured, not chosen -- the cost is linear in the cells and memory binds before time does.".
+fw:travelCeilingMinutes a owl:DatatypeProperty; rdfs:domain fw:GroundTravelTime; rdfs:range xsd:decimal;
+  rdfs:label "Minutes at which the walk stopped";
+  rdfs:comment "Absent means the walk went as far as the surface allowed. Where it is present, an unreached place may be reachable beyond it, and the two cases are not distinguishable from the place's own row.".
+fw:travelTimeAttribute a owl:DatatypeProperty; rdfs:domain fw:GroundTravelTime; rdfs:range xsd:string;
+  rdfs:label "Column the travel time was written into";
+  rdfs:comment "Named by the practitioner, so the evidence states which column of the result the minutes are in rather than leaving a reader to guess from the table.".
 fw:NetworkSnap a owl:Class;
   rdfs:label "Network snap computation"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Attaches each site to its nearest network node by straight-line distance in a projected CRS. The distance is recorded and not charged to any later travel time, so a site set back from the road is treated as if it were on it.".

@@ -1041,6 +1041,29 @@
         }
       ]
     },
+    "travel_over_ground": {
+      "output": "points",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "friction",
+              "raster"
+            ],
+            [
+              "origins",
+              "points"
+            ],
+            [
+              "places",
+              "points"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "places": {
       "output": "points",
       "contracts": [

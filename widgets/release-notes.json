@@ -1039,6 +1039,18 @@
    ],
    "breaking": false,
    "migrationFrom": []
+  },
+  "travel_over_ground": {
+   "version": "0.1.0",
+   "released": "2026-11-24",
+   "changes": [
+    {
+     "kind": "added",
+     "description": "Minutes to the nearest starting point across a friction surface, written onto each place, for where the walk is not along mapped streets (experiment 231)."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   }
  }
 }

@@ -3512,6 +3512,18 @@
           "sha256": "0af63ac0722d7734c206a73e42840e837bcd94600184b83340ddefcafaa97785"
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:widget:travel_over_ground",
+      "nodeType": "travel_over_ground",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/travel_over_ground/0.1.0.json",
+          "sha256": "92efed7fa0382c6e88b39377de28c9d641371580e7cc7bc0b00b5587a90af2bb"
+        }
+      ]
     }
   ]
 }

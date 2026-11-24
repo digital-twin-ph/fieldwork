@@ -133,3 +133,5 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/detect_unusual_counts.md>.
 <urn:fieldwork:widget:line_input> a fw:WidgetDefinition; fw:nodeType "line_input"; rdfs:label "Line layer";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/line_input.md>.
+<urn:fieldwork:widget:travel_over_ground> a fw:WidgetDefinition; fw:nodeType "travel_over_ground"; rdfs:label "Travel time over ground";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/travel_over_ground.md>.

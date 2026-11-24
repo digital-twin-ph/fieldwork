@@ -10,6 +10,8 @@ export const PORT_NAMES:Partial<Record<NodeType,Record<string,string>>>={
   join_table_to_area:{records:'Table',parts:'Study area or polygon layer',area:'Study area',polygons:'Polygon layer'},
   // 2026-11-23: the step took one points port and now buffers points, lines or polygons, so the canvas shows one.
   buffer_point:{around:'Points, lines or polygons',points:'Points',lines:'Lines',polygons:'Polygon layer'},
+  // 2026-11-24: two of its three ports take points, so each says which end of the walk it is (experiment 231).
+  travel_over_ground:{friction:'Friction surface',origins:'Start from',places:'Places'},
 };
 /** PORTS SHOWN AS ONE (2026-11-13, the practitioner: "Raster still shows multiple input ports"). Sample a raster reads one
  *  raster or set of satellite files at one kind of place, so the canvas and the Inspector show two: what it reads, and

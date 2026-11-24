@@ -145,7 +145,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // name pending the practitioner's review.
   // 50 on 2026-11-22: reproject retired into Table output (docs/audits/reproject-retired.md).
   // 51 on 2026-11-22: line_input, routes, tracks and borders (experiment 229); its name pending the practitioner's review.
-  assert.equal(review.reviews.length,51);
+  // 52 on 2026-11-24: travel_over_ground, minutes to the nearest origin across a friction surface (experiment 231); its
+  // name pending the practitioner's review.
+  assert.equal(review.reviews.length,52);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

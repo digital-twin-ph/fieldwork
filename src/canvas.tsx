@@ -30,8 +30,13 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   // node shows a dot per underlying port, unlabelled, where a drop on the wrong one is refused. Reported 2026-11-23,
   // the moment Area around a point grew lines and polygons: *"Area around a point won't accept a point (mines
   // pushpin)"* -- three dots had appeared and only the first took points.
-  const spatialPorts=['map_output','table_output','chart_output','coverage_check','raster_input','clip_raster','sample_raster','join_table_to_area'].includes(data.type)
-    ||!!PORT_GROUPS[data.type as NodeType];
+  // A WIDGET THAT NAMES ITS PORTS SHOWS THEM AS NAMED ROWS. Added 2026-11-24, when Travel time over ground named its
+  // three ports in `PORT_NAMES`, was in neither the list above nor `PORT_GROUPS`, and drew three bare dots -- the same
+  // defect as the one reported the day before, reached by the other route. Naming ports and showing them named were
+  // two facts that had to agree and were kept in two places; this is the one place. No widget's rendering changes:
+  // every type in `PORT_NAMES` today is either in the list or in `PORT_GROUPS`.
+  const spatialPorts=['map_output','table_output','coverage_check','raster_input','clip_raster'].includes(data.type)
+    ||!!PORT_NAMES[data.type as NodeType]||!!PORT_GROUPS[data.type as NodeType];
   const portLabel=(port:string)=>PORT_NAMES[data.type as NodeType]?.[port]??(port==='context'?'Context points':port==='polygons'?(t.inputs.some(([p])=>p==='polygons_2')?'Areas 1':'Areas'):/^polygons_\d$/.test(port)?`Areas ${port.split('_')[1]}`:port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
     // NAMED, NEVER "Points undefined" (2026-11-10, a georeferenced map image on the ground port): a port this list does not
     // know is shown by its own name, and only a numbered point port is called Points.

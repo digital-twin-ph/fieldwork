@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.187.0 — In development
+
+- **Travel time over ground** (new widget, 0.1.0). It reads a friction surface — a raster whose cell value is the
+  cost of crossing one metre of that cell — and writes onto each place the minutes to the nearest starting point,
+  spreading out from every starting point at once so "nearest" costs nothing extra to ask. It is for where the walk
+  is mostly not on a mapped road, which is where **Reachable junctions** and its street network describe the wrong
+  journey. A place the walk cannot reach keeps its row, with nothing in the time column and the reason beside it: a
+  settlement nobody can reach is usually the finding. The answer is at points and never as a new raster, because a
+  computed surface has no file and would otherwise carry the source raster's digest while holding values those bytes
+  do not produce. No worked example uses it yet, and it has never been run against a published friction surface.
+- **Its cell limit was measured rather than chosen.** 16,000,000 cells, where the cost is linear at about a quarter
+  of a microsecond a cell in Chromium and memory binds before patience does. The first reading of that limit was
+  four times lower and measured the queue instead of the ground; see
+  [experiment 231](docs/experiments/231-travel-time-over-ground.md).
+
 ## 0.186.0 — 2026-11-23
 
 - **A typed table no longer claims a file it does not have** (Tabular data 0.21.0). It was stored as `typed.csv`,

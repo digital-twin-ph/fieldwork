@@ -492,6 +492,16 @@
    "reviewed": null,
    "reviewedBy": null,
    "note": "Proposed 2026-11-22 beside Polygon layer, whose name it follows: routes, tracks and borders are lines, and a layer is what Map draws. Awaiting the practitioner's review."
+  },
+  {
+   "nodeType": "travel_over_ground",
+   "title": "Travel time over ground",
+   "group": "Spatial operations",
+   "fingerprint": "5609fcabeb94",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Proposed 2026-11-24. \"Travel time\" is the field's term for what a friction surface answers, and \"over ground\" is what distinguishes it from Reachable junctions, which travels over a street network. The convention's object slot holds what the verb acts on, and here the operation is named for the quantity rather than a verb, as isochrone and voronoi are. Awaiting the practitioner's review."
   }
  ],
  "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",

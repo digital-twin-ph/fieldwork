@@ -1,0 +1,93 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:travel_over_ground",
+ "version": "0.1.0",
+ "nodeType": "travel_over_ground",
+ "title": "Travel time over ground",
+ "released": "2026-11-24",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['travel_over_ground']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "note": "The column the minutes are written into is 1 to 60 characters; a ceiling, where set, is a number of minutes greater than zero. There is no speed to set: the friction surface states what crossing a metre of each cell costs, which is the reason for reading one. A surface of more than 16,000,000 cells is refused in words, a limit measured rather than chosen."
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "friction",
+    "type": "raster"
+   },
+   {
+    "name": "origins",
+    "type": "points"
+   },
+   {
+    "name": "places",
+    "type": "points"
+   }
+  ],
+  "output": "points",
+  "optionalInputs": [],
+  "note": "All three are required at run time: a walk needs ground to cross, somewhere to start and somewhere to answer for. The raster port is a hard stop against a street network being connected instead, which is the operation this one is not."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:GroundTravelTime",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Partial: every term the receipt asserts is declared in ontology/fieldwork.ttl, but no widget-specific SHACL shape checks the result, so the status is not raised past what is actually enforced. The receipt asserts the origins that could start a walk, the places reached and not reached with reasons, the cells crossed, the column written and the ceiling where one was set, and names the surface's filename and digest through the undomained fw:sourceFile and fw:sourceDigest.",
+  "emits": {
+   "classes": [
+    "GroundTravelTime"
+   ],
+   "properties": [
+    "frictionCellCount",
+    "originCount",
+    "reachedPlaceCount",
+    "skippedOriginCount",
+    "skippedOrigins",
+    "sourceDigest",
+    "sourceFile",
+    "travelCeilingMinutes",
+    "travelTimeAttribute",
+    "unreachedPlaceCount",
+    "unreachedPlaces"
+   ]
+  }
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts",
+   "src/friction-travel.ts",
+   "src/travel-ground-ui.ts",
+   "src/types.ts",
+   "src/port-names.ts",
+   "src/app.ts"
+  ],
+  "definition": "src/friction-travel.ts"
+ },
+ "changes": [
+  {
+   "kind": "added",
+   "description": "Minutes to the nearest starting point across a friction surface, written onto each place, for where the walk is not along mapped streets (experiment 231)."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested on synthetic grids: zero on the origin, a known friction one cell east, the nearest of several origins in one pass, cheap ground against dear, a no-data wall leaving a place unreached with its reason, an origin on no-data named rather than dropped, a ceiling leaving a place unreached rather than numbered, and the cell cap refused with its figure. The cell limit was measured in Chromium and Node 22 (experiment 231): linear at about 0.25 microseconds a cell, memory binding before time. NOT established: the walk has never been run against a published friction surface, so whether its minutes resemble a real walk is untested. No worked example instantiates it yet."
+ }
+}

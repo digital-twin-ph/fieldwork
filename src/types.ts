@@ -577,6 +577,10 @@ export interface ParamsByType {
   /** `pointId` names ONE feature to buffer; empty means every feature connected (2026-11-23, several points).
    *  `yields` is the union offer: an area dissolves the buffers into one scope, polygons keeps them apart. */
   buffer_point:{label:string;pointId:string;distanceM:number;yields?:'area'|'polygons'};
+  /** TRAVEL TIME OVER GROUND (experiment 231): minutes to the nearest origin across a friction surface. `attribute`
+   *  names the column the minutes are written into; `maxMinutes` stops the walk, where a microplan only cares up to
+   *  an hour. There is no speed to set — the surface states what crossing the ground costs, which is why one is used. */
+  travel_over_ground:{label:string;attribute:string;maxMinutes?:number};
   /** SAMPLE A RASTER AT POINTS OR OVER AREAS (experiment 205): one sampler for a Raster input or satellite files. */
   sample_raster:{label:string;attribute:string;valueUnit:string;
     /** How a value is read at a point: the cell containing it (the default), or between the four nearest cell centres,

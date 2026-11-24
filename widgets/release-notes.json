@@ -105,12 +105,12 @@
    "migrationFrom": []
   },
   "buffer_point": {
-   "version": "0.5.0",
-   "released": "2026-11-23",
+   "version": "0.6.0",
+   "released": "2026-11-24",
    "changes": [
     {
      "kind": "changed",
-     "description": "Renamed from \"Area around a point\" to \"Geometry buffer\". The step grew lines and polygon layers on 2026-11-23 and the old name stopped describing what it does -- it had said point when it takes three kinds of geometry. \"Buffer\" is the glossary's own word for it: Compute reads \"Derive geometry for each feature -- buffer, clip, catchment, reproject, sample a raster onto points.\" The node type is unchanged, so saved workflows are untouched, and a label already typed on a node stays as it was; only the default for a new one changes. Recorded in widgets/name-review.json as reviewed and accepted by the practitioner, the first accepted entry in that ledger."
+     "description": "The preview draws the points the area is drawn around, and puts OpenStreetMap ground behind them where it can be fetched, so a radius can be judged against the ground and against the pin before anything is run. Its caption also no longer contradicts the setting above it: one area was described as “kept apart” under a step set to combine into one study area, because nothing was dissolved when there was nothing to dissolve."
     }
    ],
    "breaking": false,
@@ -406,12 +406,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.48.0",
-   "released": "2026-11-23",
+   "version": "0.48.1",
+   "released": "2026-11-24",
    "changes": [
     {
      "kind": "fixed",
-     "description": "A map carrying polygons draws its inset. The inset was composed for every other kind of map and not this one: a polygon figure is drawn by polygonSvg and returned before the composition ever ran, so a box picked on such a map was kept, offered in Configure... and silently never drawn -- reported as \"the inset never appeared\". Measured before the fix: 85 paths with an inset on a plain map against 43 with a polygon layer, the same box either way. polygonFrame and polygonSvg now take an extent to draw over, as staticMapFrame has all along, and the box is tested against the polygon renderer's own frame -- the two frames disagree exactly when polygons are present. The enlarged part draws no key, because a key belongs to the whole map and two invite reading them as two scales; the classes are the same in both drawings because both are made from the same features and only the extent differs. Polygons also leave the picker's exclusion list, which is what kept the pick bar off such a map while Configure... went on offering the controls. A raster, a street network and panels still cannot draw one."
+     "description": "On a map carrying a polygon layer, a locator inset drew the areas zoomed to its box while the point marks, the link lines and the basemap stayed at the whole extent. An area drawn around a pin was therefore drawn about six times too wide and off to one side of the pin it belongs to. The marks, the lines and the ground now use the frame the main plot was composed in, as the boundary renderer always has."
     }
    ],
    "breaking": false,
@@ -575,12 +575,12 @@
    "migrationFrom": []
   },
   "raster_input": {
-   "version": "0.15.0",
-   "released": "2026-11-23",
+   "version": "0.16.0",
+   "released": "2026-11-24",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A window first read at a web address can be read again from a copy of that file on this device, where the practitioner has one: it is read where it sits, never copied, and the window read from it is checked against the window that was kept, so another file is refused by name. A streamed raster then reads its full cells from that copy at each run rather than asking the host."
+     "kind": "changed",
+     "description": "A GeoTIFF that states where its cells sit as one 4×4 ModelTransformation is now read, where that matrix only scales and shifts. It was refused outright, with a message blaming a rotated transform, which refused every raster window pulled from a WCS — GeoServer writes the matrix form — and sent the reader looking for a rotation the file does not have. A matrix whose cross terms turn or shear the grid is still refused, now for being unfit rather than for carrying the tag."
     }
    ],
    "breaking": false,

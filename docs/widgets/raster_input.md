@@ -147,6 +147,22 @@ under the old limit is still read and drawn. When a run needs a streamed file ag
 it; Chrome and Edge remember the file across sessions. **Configure…** always opens, even where the kept bytes cannot be
 read on this device.
 
+### 2026-11-24 · A coverage placed by a matrix is read (0.16.0)
+
+A GeoTIFF says where its cells sit in one of two ways: a pixel scale with a tie point, or one 4×4 matrix. Only the
+first was read. The second was refused with *"Use a north-up GeoTIFF without a rotated transform"* — which named a
+rotation that, in the ordinary case, is not in the file.
+
+The cost was larger than it looks. **GeoServer's WCS writes the matrix form**, so a raster window pulled from any WCS
+was refused, and the message sent you hunting for a rotation that was not there. Found pulling the Malaria Atlas
+Project's walking friction surface for a Nigeria microplanning example: its matrix is a pure scale and shift, every
+rotation and shear term exactly zero, and Fieldwork was already reading the correct origin and resolution from it
+before refusing the file.
+
+A matrix that **turns or shears** the grid is still refused, because a cell is then not a rectangle in longitude and
+latitude and every window, clip and sample here places cells by arithmetic on an origin and a resolution. It is now
+refused for being unfit, and says so: *"This GeoTIFF is turned or sheared on the ground."*
+
 ---
 
 *How this widget is built, what it assumes, and what has been measured about it:

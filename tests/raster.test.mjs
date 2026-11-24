@@ -172,3 +172,51 @@ test('a window read into its saved file\'s place is saved in place, to the same 
   // A grid whose cells lie elsewhere is copied, as before.
   assert.deepEqual(encodeRaster({...read,values:new Float32Array(read.values)}),ordinary);
 });
+
+/** A COVERAGE PLACED BY A MATRIX (2026-11-24). A GeoTIFF says where its cells sit either as a pixel scale with a
+ *  tie point, or as one 4x4 ModelTransformation. Fieldwork refused the second outright and blamed a rotation, which
+ *  refused every raster window pulled from a WCS -- GeoServer writes the matrix form -- and sent the reader looking
+ *  for a rotation that is not in the file. Found pulling the Malaria Atlas Project's walking friction surface for
+ *  the Nigeria microplanning example. What is still refused is a matrix whose CROSS TERMS turn or shear the grid,
+ *  because a cell is then not a rectangle in longitude and latitude and every window, clip and sample in this
+ *  prototype indexes cells by arithmetic on origin and resolution. */
+const placedBy=transform=>new Blob([writeArrayBuffer(new Float32Array([1,2,3,4,5,6,7,8,9]),
+  {width:3,height:3,ModelTransformation:transform,
+    GeographicTypeGeoKey:4326,GTModelTypeGeoKey:2,GTRasterTypeGeoKey:1})]);
+// Row-major: [sx, shear_x, 0, x0,  shear_y, sy, 0, y0,  0,0,0,0,  0,0,0,1].
+const northUp=[0.01,0,0,10, 0,-0.01,0,20, 0,0,0,0, 0,0,0,1];
+
+test('a raster placed by an unrotated matrix is read, and says where its cells sit',async()=>{
+  const m=await inspectRaster(placedBy(northUp));
+  assert.deepEqual(m.origin,[10,20],'the matrix’s translation is the origin');
+  assert.deepEqual(m.resolution,[0.01,-0.01],'and its scale is the resolution, y negative because rows run south');
+  assert.deepEqual(m.bounds,[10,19.97,10.03,20],'so the bounds follow as they do from a scale and a tie point');
+  assert.equal(m.rasterType,'PixelIsArea');
+});
+
+test('the same grid states the same placement whichever tag carries it',async()=>{
+  const matrix=await inspectRaster(placedBy(northUp));
+  const scaled=await inspectRaster(new Blob([writeArrayBuffer(new Float32Array([1,2,3,4,5,6,7,8,9]),
+    {width:3,height:3,ModelPixelScale:[0.01,0.01,0],ModelTiepoint:[0,0,0,10,20,0],
+      GeographicTypeGeoKey:4326,GTModelTypeGeoKey:2,GTRasterTypeGeoKey:1})]));
+  // The two tags are two spellings of one placement, so nothing downstream may be able to tell them apart.
+  assert.deepEqual([matrix.origin,matrix.resolution,matrix.bounds],[scaled.origin,scaled.resolution,scaled.bounds]);
+});
+
+test('a raster turned or sheared on the ground is refused, for being unfit and not for the tag',async()=>{
+  for(const [what,transform] of [
+    ['turned',[0.01,0.002,0,10, 0.002,-0.01,0,20, 0,0,0,0, 0,0,0,1]],
+    ['sheared in x',[0.01,0.0005,0,10, 0,-0.01,0,20, 0,0,0,0, 0,0,0,1]],
+    ['sheared in y',[0.01,0,0,10, 0.0005,-0.01,0,20, 0,0,0,0, 0,0,0,1]],
+  ]){
+    await assert.rejects(()=>inspectRaster(placedBy(transform)),
+      /turned or sheared on the ground/,`a ${what} grid is refused`);
+  }
+});
+
+test('floating-point dust in a matrix is not a shear',async()=>{
+  // Reprojection arithmetic leaves cross terms of this order. A billionth of the cell size cannot move a cell by a
+  // millimetre across any grid this prototype accepts, so it is read rather than refused.
+  const m=await inspectRaster(placedBy([0.01,1e-20,0,10, -1e-20,-0.01,0,20, 0,0,0,0, 0,0,0,1]));
+  assert.deepEqual(m.resolution,[0.01,-0.01]);
+});

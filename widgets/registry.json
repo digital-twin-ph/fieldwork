@@ -245,7 +245,7 @@
     {
       "id": "urn:fieldwork:widget:buffer_point",
       "nodeType": "buffer_point",
-      "currentVersion": "0.5.0",
+      "currentVersion": "0.6.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -271,6 +271,11 @@
           "version": "0.5.0",
           "path": "widgets/releases/buffer_point/0.5.0.json",
           "sha256": "5ca215183b5eca69e7bd87e8f3d54258aea009842ca8f733b07021941accc9a0"
+        },
+        {
+          "version": "0.6.0",
+          "path": "widgets/releases/buffer_point/0.6.0.json",
+          "sha256": "26654403031e0764861356191cf93ede41a4ba9f9cee1fb7e2167f898eac4214"
         }
       ]
     },
@@ -1154,7 +1159,7 @@
     {
       "id": "urn:fieldwork:widget:map_output",
       "nodeType": "map_output",
-      "currentVersion": "0.48.0",
+      "currentVersion": "0.48.1",
       "releases": [
         {
           "version": "0.1.0",
@@ -1525,6 +1530,11 @@
           "version": "0.48.0",
           "path": "widgets/releases/map_output/0.48.0.json",
           "sha256": "a8f924280c216e9ba27c8edeb234a02ef2b45e0ce6f674c2663509da6a6b53ba"
+        },
+        {
+          "version": "0.48.1",
+          "path": "widgets/releases/map_output/0.48.1.json",
+          "sha256": "1e0a3d930b8538a6ac97880143db509138054964ffbbdaa7c24bb2b484668271"
         }
       ]
     },
@@ -1982,7 +1992,7 @@
     {
       "id": "urn:fieldwork:widget:raster_input",
       "nodeType": "raster_input",
-      "currentVersion": "0.15.0",
+      "currentVersion": "0.16.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -2103,6 +2113,11 @@
           "version": "0.15.0",
           "path": "widgets/releases/raster_input/0.15.0.json",
           "sha256": "309d44ffa6f51cfab11560e33608cb5a2659d97543ade874d9afffccb6f82ba8"
+        },
+        {
+          "version": "0.16.0",
+          "path": "widgets/releases/raster_input/0.16.0.json",
+          "sha256": "acb23cf11aa1919d31ead75fcf01a4fddeceebea578bf4c470430ffcb1e44014"
         }
       ]
     },

@@ -3894,6 +3894,10 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
     const banded=result.polygons.features.some(f=>f.minutes!==undefined);
     // The study area drawn under the polygons only where one is wired to this Map, so it is the area, not the polygons' own.
     const wiredArea=own.edges.some(e=>e.to===mapNode?.id&&e.port==='area')?result.boundary:undefined;
+    // THE FRAME THE MAIN PLOT WAS DRAWN IN, where an inset was composed. A locator's main plot is the PART, not the
+    // whole, and the marks, the link lines and the ground all have to be placed in that same frame or they describe
+    // a different map from the one drawn. Set by the composition below and read where those three are drawn.
+    let composedMain:ReturnType<typeof polygonFrame>|null=null;
     if(banded){svg.setAttribute('viewBox','0 0 850 650');svg.innerHTML=catchmentPlot(result.polygons,esc,result.contextPoints);}
     // PANELS SIDE BY SIDE, on one scale (Map's manual, History: panels): each panel its own frame, so no single basemap or point overlay
     // projects onto the figure; those are drawn on one map only.
@@ -3922,11 +3926,19 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
           rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]),{},
           insetFeatures(result.boundary as Boundary|undefined,rows,(locator?part:whole).project as (c:[number,number])=>[number,number]));
         svg.innerHTML=composed.content;
+        composedMain=locator?part:whole;
       }
       else svg.innerHTML=polygonSvg(result.polygons,esc,wiredArea);
       applyFrame(svg,svg.innerHTML);
     }
-    const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints):polygonFrame(result.polygons,wiredArea);
+    // A LOCATOR'S MARKS AND GROUND BELONG TO THE PART, NOT THE WHOLE (2026-11-24). This read the whole frame
+    // whatever had been composed, so on a polygon map with a locator inset the areas were drawn zoomed to the box
+    // while the marks and the basemap stayed at the full extent: the pin sat on the ground it belongs to and the
+    // area around it was drawn about six times too wide and off to one side. Reported from the Kibali mine's 50 km
+    // buffer, seen by two readers. The boundary renderer had always chosen the frame this way (`ground(locator ?
+    // partFrame : wholeFrame)`); this one never did.
+    const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints)
+      :composedMain??polygonFrame(result.polygons,wiredArea);
     const drawnLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
     if(polygonGround&&drawnLinks?.length)
       svg.insertAdjacentHTML('beforeend',linkLinesSvg(drawnLinks,rows,c=>polygonGround.project(c) as [number,number],hidden));

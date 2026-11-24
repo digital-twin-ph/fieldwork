@@ -40,3 +40,15 @@ you have set.
 ## Where it is used
 
 No worked example uses it today.
+
+### 2026-11-24 · The preview shows the ground and the point (0.6.0)
+
+The picture now draws **the points the area is drawn around**, and puts OpenStreetMap ground behind them where it
+can be fetched. A radius is a claim about reach *from* something, and a picture of the reach without the thing it
+reaches from cannot be checked against the ground or against the pin on the map. With no network the preview keeps
+its plain background and says the ground is not shown.
+
+Its caption also no longer contradicts the setting above it. One area was captioned "kept apart" under a step set
+to **combine into one study area**, because nothing is dissolved when there is nothing to dissolve and the caption
+read that absence as the layer setting.
+

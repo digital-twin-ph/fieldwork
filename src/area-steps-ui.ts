@@ -94,19 +94,69 @@ function bufferPreview(kit:AreaStepKit,nodeId:string,d:{pointId:string;distanceM
   const box=360,pad=12,scale=Math.min((box-2*pad)/w,(180-2*pad)/h);
   const px=(x:number)=>pad+((x-xmin)*cos)*scale,py=(y:number)=>180-pad-(y-ymin)*scale;
   const path=(ring:[number,number][])=>'M'+ring.map(([x,y])=>`${px(x).toFixed(1)},${py(y).toFixed(1)}`).join('L')+'Z';
+  // WHAT THE AREA IS DRAWN AROUND, drawn (the practitioner, 2026-11-24: "The preview should also include the OSM
+  // basemap and the pushpin point being buffered"). A radius is a claim about reach FROM something, and a picture of
+  // the reach without the thing it reaches from cannot be checked against the ground or against the pin on the map.
+  const marks=chosen.map(f=>{
+    const g=f.geometry as {type:string;coordinates:unknown};
+    if(g.type!=='Point')return '';
+    const [x,y]=g.coordinates as [number,number];
+    return `<circle cx="${px(x).toFixed(1)}" cy="${py(y).toFixed(1)}" r="4" fill="#1d4ed8" stroke="#fff" stroke-width="1.5"/>`;
+  }).join('');
   // Each area drawn in its own right and semi-transparent, so where two overlap reads darker: that is the picture
   // the practitioner asked to see, and combining them is the thing that would erase it.
   const drawn=made.each.map(b=>collectPaths(b.geometry as {type:string;coordinates:unknown}).map(path).join(''))
     .map(dd=>`<path d="${dd}" fill="#3f6f55" fill-opacity="0.28" stroke="#2c5340" stroke-width="1"/>`).join('');
   const m2=(v:number)=>v>=1e6?`${(v/1e6).toFixed(1)} km\u00b2`:`${Math.round(v).toLocaleString('en')} m\u00b2`;
-  const said=made.combined
-    ?`${made.each.length.toLocaleString('en')} areas covering ${m2(made.partsArea)} between them, `
-      +`${m2(made.combinedM2!)} once combined into ${made.pieces} piece${made.pieces===1?'':'s'}`
-      +(made.overlapM2>=1?`; ${m2(made.overlapM2)} is covered more than once, and combining discards which one reached it.`:'.')
-    :`${made.each.length.toLocaleString('en')} area${made.each.length===1?'':'s'}, ${m2(made.partsArea)} between them, kept apart.`;
-  return `<svg viewBox="0 0 ${box} 180" width="100%" height="180" role="img" aria-label="The areas this step draws">`
-    +`<rect width="${box}" height="180" fill="var(--surface-raised-1)"/>${drawn}</svg>`
-    +`<p class="description">${kit.esc(said)} Drawn to scale; the ground beneath is not shown.</p>`;
+  // ONE AREA IS NEITHER COMBINED NOR KEPT APART (2026-11-24). `previewBuffers` returns no dissolve where there is
+  // nothing to dissolve -- one feature, or the layer setting -- and this read that absence as "kept apart", so a
+  // step set to COMBINE INTO ONE STUDY AREA captioned its own picture "kept apart", directly under the setting that
+  // said otherwise. Reported from a buffer around one mine. The two states the step can be in are what it MAKES, so
+  // the sentence is chosen from the setting, and the count only decides whether there is an overlap to report.
+  const one=made.each.length===1;
+  const combining=d.yields!=='polygons';
+  const said=one
+    ? `One area of ${m2(made.partsArea)}${combining?', which becomes this workflow’s study area.':', kept as a polygon layer.'}`
+    : combining
+      ? `${made.each.length.toLocaleString('en')} areas covering ${m2(made.partsArea)} between them, `
+        +`${m2(made.combinedM2!)} once combined into ${made.pieces} piece${made.pieces===1?'':'s'}`
+        +(made.overlapM2>=1?`; ${m2(made.overlapM2)} is covered more than once, and combining discards which one reached it.`:'.')
+      : `${made.each.length.toLocaleString('en')} areas, ${m2(made.partsArea)} between them, kept apart.`;
+  // The ground goes in behind, once the tiles arrive: `data-buffer-ground` is filled by the wiring below, and stays
+  // empty where there is no network. A preview without ground is still a true preview; one that refuses to draw
+  // because a tile server was slow is not.
+  return `<svg viewBox="0 0 ${box} 180" width="100%" height="180" role="img" aria-label="The areas this step draws"`
+    +` data-buffer-frame="${[xmin,ymin,xmax,ymax].join(',')}">`
+    +`<rect width="${box}" height="180" fill="var(--surface-raised-1)"/>`
+    +'<g data-buffer-ground></g>'
+    +`${drawn}${marks}</svg>`
+    +`<p class="description">${kit.esc(said)} Drawn to scale<span data-buffer-ground-said>; the ground beneath is not shown</span>.</p>`;
+}
+
+/** THE GROUND UNDER THE PREVIEW, fetched after it is drawn. The same tiles, the same provider and the same placing
+ *  as a baked figure's (`basemap-tiles.ts`), projected with this preview's own frame rather than assumed to be Web
+ *  Mercator. A stamp guards against a slow fetch painting over a newer draw, which redrawing on every keystroke in
+ *  the radius field makes an ordinary event rather than a rare one. */
+let groundStamp=0;
+async function drawBufferGround(root:ParentNode):Promise<void>{
+  const svg=root.querySelector<SVGSVGElement>('svg[data-buffer-frame]');
+  const into=svg?.querySelector('[data-buffer-ground]');
+  if(!svg||!into)return;
+  const [xmin,ymin,xmax,ymax]=svg.dataset.bufferFrame!.split(',').map(Number) as [number,number,number,number];
+  const mine=++groundStamp;
+  const cos=Math.cos((ymin+ymax)/2*Math.PI/180)||1;
+  const w=Math.max((xmax-xmin)*cos,1e-9),h=Math.max(ymax-ymin,1e-9);
+  const box=360,pad=12,scale=Math.min((box-2*pad)/w,(180-2*pad)/h);
+  const project=(c:readonly number[]):[number,number]=>
+    [pad+((c[0]!-xmin)*cos)*scale,180-pad-(c[1]!-ymin)*scale];
+  try{
+    const {TILE_PROVIDERS,basemapImages,fetchTileAsDataURI}=await import('./basemap-tiles.js');
+    const got=await basemapImages([xmin,ymin,xmax,ymax],project as never,TILE_PROVIDERS.osm,fetchTileAsDataURI,9);
+    if(mine!==groundStamp||!into.isConnected)return;
+    into.innerHTML=got.markup;
+    const said=svg.parentElement?.querySelector('[data-buffer-ground-said]');
+    if(said&&got.drawn)said.textContent=', over © OpenStreetMap contributors, ODbL';
+  }catch{/* No network, or the tiles refused: the preview keeps its plain background and says so. */}
 }
 const collectPaths=(g:{type:string;coordinates:unknown}):[number,number][][]=>{
   const parts=g.type==='MultiPolygon'?g.coordinates as number[][][][]:[g.coordinates as number[][][]];
@@ -170,7 +220,9 @@ export const bufferPointInspector:OwnInspector<'buffer_point'>={
             e=>{d.pointId=(e.target as HTMLInputElement|HTMLSelectElement).value;redraw();};
           root.querySelector<HTMLInputElement>('#bp-distance')!.onchange=e=>{d.distanceM=(e.target as HTMLInputElement).value;redraw();};
           root.querySelector<HTMLSelectElement>('#bp-yields')!.onchange=e=>{d.yields=(e.target as HTMLSelectElement).value;redraw();};
-          showMeIn(root,kit,()=>bufferPointWalkthrough(Number(d.distanceM)));},
+          showMeIn(root,kit,()=>bufferPointWalkthrough(Number(d.distanceM)));
+          // The ground arrives after the dialog is drawn, and again after every redraw.
+          void drawBufferGround(root);},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='buffer_point'){
           t.params.pointId=d.pointId.trim();t.params.distanceM=Number(d.distanceM);
           t.params.yields=d.yields==='polygons'?'polygons':'area';}}),

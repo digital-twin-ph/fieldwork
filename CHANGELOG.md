@@ -5,6 +5,20 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.187.0 — In development
 
+- **A locator inset no longer moves the areas away from their marks** (Map 0.48.1). On a map carrying a polygon
+  layer, the areas were drawn zoomed to the locator's box while the point marks, the link lines and the basemap
+  stayed at the whole extent — so an area drawn around a pin appeared about six times too wide and off to one side
+  of it. Reported from a 50 km buffer around a mine and seen by two readers; the buffer's own geometry was correct
+  to within a millionth of a degree. The boundary renderer had always chosen the frame this way; the polygon one
+  had not.
+- **Geometry buffer's preview shows the ground and the point** (0.6.0), so a radius can be judged against the
+  ground and against the pin before a run. Its caption no longer says "kept apart" under a step set to combine.
+- **A raster placed by a matrix is read** (Raster input 0.16.0). A GeoTIFF states where its cells sit either as a
+  pixel scale with a tie point or as one 4×4 matrix; only the first was read, and the second was refused with a
+  message blaming a rotated transform. GeoServer's WCS writes the matrix form, so **every raster window pulled from a
+  WCS was refused**, and the message sent the reader looking for a rotation the file does not have. Found pulling the
+  Malaria Atlas Project's walking friction surface, whose matrix is a pure scale and shift. A matrix that turns or
+  shears the grid is still refused, now for being unfit rather than for carrying the tag.
 - **Travel time over ground** (new widget, 0.1.0). It reads a friction surface — a raster whose cell value is the
   cost of crossing one metre of that cell — and writes onto each place the minutes to the nearest starting point,
   spreading out from every starting point at once so "nearest" costs nothing extra to ask. It is for where the walk

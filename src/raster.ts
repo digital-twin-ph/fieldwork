@@ -83,7 +83,36 @@ export async function inspectRaster(blob:RasterSource):Promise<RasterMetadata>{
   check(kind.kind==='values',`This GeoTIFF holds ${kind.said}. Add it with Georeferenced map image, which draws it as ground under a map; Raster input measures values.`);
   check(h.samplesPerPixel===1,'Choose a single-band GeoTIFF. Multi-band selection is not implemented yet.');
   check(keys.GeographicTypeGeoKey===4326&&keys.GTModelTypeGeoKey===2,'This raster needs reprojection: the prototype requires explicit WGS84 / EPSG:4326.');
-  check((keys.GTRasterTypeGeoKey===1||keys.GTRasterTypeGeoKey===2)&&!h.has('ModelTransformation'),'Use a north-up GeoTIFF without a rotated transform.');
+  check(keys.GTRasterTypeGeoKey===1||keys.GTRasterTypeGeoKey===2,
+    'This GeoTIFF does not say whether its tie point is a cell centre or a cell corner, so its cells cannot be placed on the ground.');
+  /** A COVERAGE PLACED BY A MATRIX IS STILL NORTH-UP, where the matrix only scales and shifts (2026-11-24).
+   *
+   *  A GeoTIFF states where its cells sit either as a pixel scale with a tie point, or as one 4×4
+   *  `ModelTransformation`. Until today this refused the second outright, and said "Use a north-up GeoTIFF without a
+   *  rotated transform" — which named a rotation that in the usual case is not there. GeoServer's WCS writes the
+   *  matrix form, so **every raster window pulled from a WCS was refused**, and the message sent the practitioner
+   *  looking for a rotation in a file that has none. Found pulling the Malaria Atlas Project's friction surface for
+   *  the Nigeria microplanning example: its matrix is a pure scale and translation, every rotation and shear term
+   *  exactly zero, and `TiffHeader` already reads the same origin and resolution off it that it reads off the other
+   *  two tags.
+   *
+   *  What makes a matrix unreadable here is the cross terms. With m[1] or m[4] non-zero the grid is turned or
+   *  sheared on the ground, a cell is no longer a rectangle in longitude and latitude, and every window, clip and
+   *  sample in this prototype — all of which index cells by arithmetic on origin and resolution — would be wrong
+   *  without saying so. That is the file this must still refuse, and now it is refused for the reason it is unfit
+   *  rather than for carrying the tag.
+   *
+   *  The tolerance is relative to the cell size: a cross term below a billionth of it cannot move a cell by a
+   *  millimetre across any grid this prototype accepts, and reprojection arithmetic leaves dust of that order. */
+  const transform=h.has('ModelTransformation')?await h.value('ModelTransformation'):undefined;
+  if(transform!==undefined){
+    const m=Array.isArray(transform)?transform:[transform as number];
+    check(m.length>=8,'This GeoTIFF’s placement matrix is too short to say where its cells sit.');
+    const dust=Math.max(Math.abs(m[0]??0),Math.abs(m[5]??0))*1e-9;
+    check([m[1],m[2],m[4],m[6]].every(v=>Math.abs(v??0)<=dust),
+      'This GeoTIFF is turned or sheared on the ground, so its cells are not rectangles in longitude and latitude. '
+      +'Reproject it to a north-up EPSG:4326 grid first.');
+  }
   // A POINT-REGISTERED GRID's tie point is its first node; the cell around that node starts half a cell out. Read as
   // cells, its corners are shifted by half a cell, and that is recorded, not hidden (experiment 198).
   const point=keys.GTRasterTypeGeoKey===2;

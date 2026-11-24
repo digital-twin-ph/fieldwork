@@ -190,6 +190,17 @@ The receipt names a study area's shape by the SHA-256 of its GeoJSON instead of 
 subtitle and source note take {country}, {units}, {unit} and {census} from the workflow; a copy of a workflow leaves
 the subtitle empty.
 
+### 2026-11-24 · A locator's marks sit where its areas do (0.48.1)
+
+On a map carrying a **polygon layer**, a locator inset drew the areas zoomed to its box while the point marks, the
+link lines and the basemap stayed at the whole map's extent. The two frames describe different maps, so an area
+drawn around a pin appeared about **six times too wide and off to one side** of the pin it belongs to.
+
+Reported from a 50 km buffer around the Kibali mine, and seen by two readers before it was found. The buffer was
+not at fault: its circle is centred on the pin to within a millionth of a degree. The boundary renderer had always
+picked the frame this way; the polygon renderer never did, which is why it showed only on a map carrying a polygon
+layer *and* a point layer.
+
 ---
 
 *How this widget is built, what it assumes, and what has been measured about it:

@@ -81,3 +81,43 @@ test('a circle refuses a centre or radius it cannot honour',()=>{
   assert.throws(()=>circleAround([120.97,14.58],50001),/1 to 50,000 metres/);
   assert.throws(()=>circleAround([Number.NaN,14.58],5000),/below 80/);
 });
+
+/** WHERE THE AREA IS DRAWN, AND HOW BIG (2026-11-24). Reported from a buffer around the Kibali mine: the circle on
+ *  the map looked off-centre and several times too wide. The geometry was not at fault, and these are the checks
+ *  that say so the next time -- the centre and the radius, measured off the ring rather than taken from the
+ *  receipt's own arithmetic, because a receipt computed from a wrong ring would agree with it. */
+const mines={type:'FeatureCollection',features:[
+  {type:'Feature',id:'m1',properties:{name:'Kibali Mining Site'},geometry:{type:'Point',coordinates:[29.6833,3.1167]}},
+  {type:'Feature',id:'m2',properties:{name:'Second mine'},geometry:{type:'Point',coordinates:[30.9,2.2]}},
+]};
+const ringBounds=g=>{let b=[Infinity,Infinity,-Infinity,-Infinity];
+  const walk=c=>{if(typeof c[0]==='number'){b[0]=Math.min(b[0],c[0]);b[1]=Math.min(b[1],c[1]);b[2]=Math.max(b[2],c[0]);b[3]=Math.max(b[3],c[1]);}else c.forEach(walk);};
+  walk(g.coordinates);return b;};
+
+test('the area is centred on the feature named, at the radius given',()=>{
+  for(const named of ['Kibali Mining Site','m1']){
+    const {value}=bufferPoint(mines,{id:'b',type:'buffer_point',x:0,y:0,
+      params:{label:'Geometry buffer',pointId:named,distanceM:50000,yields:'area'}},'r');
+    const [west,south,east,north]=ringBounds(value.boundary);
+    const cx=(west+east)/2,cy=(south+north)/2;
+    assert.ok(Math.abs(cx-29.6833)<1e-6&&Math.abs(cy-3.1167)<1e-6,
+      `${named}: centred on the mine, not at ${cx.toFixed(4)}, ${cy.toFixed(4)}`);
+    // Half-height in metres: a degree of latitude is 111.32 km wherever you stand.
+    const halfHeightM=(north-south)/2*111320;
+    assert.ok(Math.abs(halfHeightM-50000)<600,`${named}: 50 km across the radius, not ${(halfHeightM/1000).toFixed(1)} km`);
+    // And the second mine is NOT in it: naming one feature draws around that one only.
+    assert.ok(east<30.9,`${named}: the area stops short of the mine that was not named`);
+  }
+});
+
+test('the radius sets the size, in proportion',()=>{
+  const radiusM=distanceM=>{
+    const {value}=bufferPoint(mines,{id:'b',type:'buffer_point',x:0,y:0,
+      params:{label:'Geometry buffer',pointId:'m1',distanceM,yields:'area'}},'r');
+    const [,south,,north]=ringBounds(value.boundary);
+    return (north-south)/2*111320;
+  };
+  const small=radiusM(5000),large=radiusM(50000);
+  assert.ok(Math.abs(small-5000)<60,`5 km asked, ${(small/1000).toFixed(2)} km drawn`);
+  assert.ok(Math.abs(large/small-10)<0.01,'ten times the radius is ten times the distance across');
+});

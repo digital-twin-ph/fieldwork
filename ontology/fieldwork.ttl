@@ -782,6 +782,9 @@ fw:heatAlert a owl:DatatypeProperty; rdfs:range xsd:boolean;
 
 fw:sourceFile a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "Name of the file a table was read from".
+fw:enteredByHand a owl:DatatypeProperty; rdfs:range xsd:boolean;
+  rdfs:label "The rows were typed into the step, not read from a file";
+  rdfs:comment "Asserted instead of fw:sourceFile for a table written or pasted in Tabular data's Type or paste tab (2026-11-23). Such a table has no file, and naming one would put a filename that does not exist into the evidence. The digest still stands: fw:sourceDigest is of the rows as read. Where the values came from, and under what licence, is the practitioner's to state and is not asserted here.".
 fw:sourceDigest a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:label "SHA-256 of the file as read";
   rdfs:comment "Recorded so a table can be shown to be the one the analysis used, rather than a file with the same name.".

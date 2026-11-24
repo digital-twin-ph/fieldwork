@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.186.0 — 2026-11-23
+
+- **A typed table no longer claims a file it does not have** (Tabular data 0.21.0). It was stored as `typed.csv`,
+  which the machined note stated as "Read from `typed.csv`" and the receipt asserted as `fw:sourceFile`. The note
+  now says the rows were typed into the step and the receipt records `fw:enteredByHand` with their digest. Where the
+  values came from, and under what licence, stays yours to state in Describe columns.
+
 ## 0.185.0 — 2026-11-23
 
 - **Three workers are typechecked as workers.** `netcdf-worker`, `sha256-worker` and `space-time-scan-worker` were

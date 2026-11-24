@@ -243,6 +243,12 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<p id="table-typed-says" class="muted" role="status"></p>'
     +'<p><button type="button" id="table-typed-save" class="button small" disabled>Save as CSV</button>'
     +' <span class="muted">Saves the table as Fieldwork read it, so the file reads back the same way.</span></p>'
+    // WHAT IS STILL THE PRACTITIONER'S TO SAY. A table typed here has no file and no authority behind it but the
+    // person who wrote it, and the licence of their own rows is not something this step can assume. It says so
+    // rather than filling a source in on their behalf.
+    +'<p class="description">A table typed here has no source of its own. Say where the values came from, and under '
+    +'what licence, in <strong>Describe columns</strong>: the receipt records that these rows were entered by hand, '
+    +'and nothing else about them is claimed.</p>'
     +'<div id="table-typed-preview"></div></section>'
     // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
     // rows: another device fetches the same file when it opens. Experiment 170.
@@ -539,7 +545,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         }
         table=wideDataTable(parsed,{keys,valueFields,measureKey,valueField,...roles,...(unit?{unit}:{})});
         imported={data:table,...(file.name==='typed.csv'?{typedText:typed.value}:{}),
-          source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
+          source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount,
+            ...(file.name==='typed.csv'?{typed:true as const}:{})},
           keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey},
           source_table:{headers:parsed.headers.map(h=>h.trim()),rows:parsed.rows}};
         const untaken=renderBefore(keys,valueFields);
@@ -569,7 +576,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         const valueAs=q<HTMLInputElement>('#table-long-value-name').value.trim();
         table=dataTable(parsed,{keys,valueField,...(valueAs&&valueAs!==valueField?{valueAs}:{}),...roles,...(unit?{unit}:{})});
         imported={data:table,...(file.name==='typed.csv'?{typedText:typed.value}:{}),
-          source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
+          source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount,
+            ...(file.name==='typed.csv'?{typed:true as const}:{})},
           keys,valueField:table.valueField,...(table.valueField!==valueField?{valueColumn:valueField}:{}),...(unit?{unit}:{})};
         const untaken=renderBefore(keys,[valueField]);
         showAfter(table);

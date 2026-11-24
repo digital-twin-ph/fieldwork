@@ -17,7 +17,12 @@ export const MAX_TABLE_ROWS=250_000;
 /** The file a table is read from. Rows are the measured limit; a 1,000,000-row, 42 MB file was read in 10 s. */
 export const MAX_TABLE_FILE_BYTES=40_000_000;
 export interface DataTableSource {filename:string; bytes:number; sha256:string; rows:number;
-  /** The sheet read, for an Excel workbook (2026-11-08). */ sheet?:string}
+  /** The sheet read, for an Excel workbook (2026-11-08). */ sheet?:string;
+  /** TYPED HERE, not read from anywhere (2026-11-23). A short table written or pasted in the Type or paste tab has
+   *  no file behind it, and the surfaces that name a source were saying `typed.csv` -- a filename that does not
+   *  exist, in a machined note and in `fw:sourceFile`. What it has instead is an author and a moment, and only the
+   *  practitioner can say where the values came from, so nothing claims a source on their behalf. */
+  typed?:true}
 /** WHAT IS WRONG WITH A TABLE, FOUND ON READING IT. The practitioner, 2026-11-02: *"We cannot refuse an
  *  upload because of a quality problem."* A refused file cannot be looked at, so the table loads and
  *  these say what to look at. Row numbers are the file's, from 1. Experiment 164. */
@@ -333,7 +338,10 @@ export function tableReceipt(node:{id:string;params:{label:string;unit?:string;d
   const quote=(value:string)=>JSON.stringify(value);
   const facts=`@prefix fw: <urn:fieldwork:>.\n@prefix prov: <http://www.w3.org/ns/prov#>.\n@prefix dcat: <http://www.w3.org/ns/dcat#>.\n@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.\n`
     +`${activity} a fw:TabularInput, prov:Activity; prov:generated ${entity}`
-    +(table.source?`; fw:sourceFile ${quote(table.source.filename)}; fw:sourceDigest ${quote(table.source.sha256)}`:'')+`.\n`
+    +(table.source?(table.source.typed
+      // A table nobody published has no source file to cite. The digest still stands: it is the rows as read.
+      ?`; fw:enteredByHand true; fw:sourceDigest ${quote(table.source.sha256)}`
+      :`; fw:sourceFile ${quote(table.source.filename)}; fw:sourceDigest ${quote(table.source.sha256)}`):'')+`.\n`
     +`${entity} a fw:DataTable, dcat:Dataset, prov:Entity; prov:wasGeneratedBy ${activity}; `
     +table.keys.map(name=>`fw:keyField ${quote(name)}`).join('; ')+'; '
     +`fw:valueField ${quote(table.valueField)}; fw:valueUnitStatus ${quote(table.unit?'stated':'unstated')}`

@@ -101,7 +101,12 @@ export function tableDescriptionNote(table:DataTable,label:string|undefined,node
   // THE SOURCE FILE, where the table came in as one and the digest is on it. A published table
   // whose origin is a file should say which file, and `DataTableSource` already holds it.
   if(table.source)
-    text+=` Read from \`${table.source.filename}\`, ${count(table.source.rows,'row')}`
+    text+=(table.source.typed
+      // Typed here, so there is no file to name and no authority but the person who wrote it. The note says that
+      // rather than naming a file that does not exist, and says nothing about where the values came from, which
+      // is theirs to state.
+      ?` Typed into this step, ${count(table.source.rows,'row')}`
+      :` Read from \`${table.source.filename}\`, ${count(table.source.rows,'row')}`)
       +`, sha256 \`${table.source.sha256.slice(0,12)}\u2026\`.`;
   return describes(nodeId,text);
 }

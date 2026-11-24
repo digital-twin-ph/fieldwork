@@ -838,16 +838,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.20.0",
+   "version": "0.21.0",
    "released": "2026-11-23",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A sixth tab, Type or paste: a short table written or pasted as free text, read by the same reader a chosen file goes through. The delimiter is taken from the header line, so a paste from a spreadsheet reads the same as typing; the columns and rows are counted and drawn as a table while you type; a ragged line is named with its number rather than padded; and Save as CSV writes the table to the device as Fieldwork read it. The text is kept, so reopening shows what was written."
-    },
-    {
-     "kind": "minor",
-     "description": "Capped at 500 rows, said in the label: a textarea is for a species list or a lookup, not a census."
+     "kind": "fixed",
+     "description": "A table typed in the Type or paste tab no longer claims a file. It was stored as `typed.csv`, which a machined note stated as \"Read from `typed.csv`\" and the receipt as fw:sourceFile -- a filename that does not exist, asserted in the evidence. The note now says the rows were typed into the step, and the receipt records fw:enteredByHand with the digest of the rows as read and no source file. Where the values came from, and under what licence, is the practitioner's to state in Describe columns, and the tab says so rather than filling it in on their behalf."
     }
    ],
    "breaking": false,

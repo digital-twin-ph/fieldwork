@@ -3,6 +3,18 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.189.0 — In development
+
+- **Routes and flows drawn on a map** (Line layer 0.2.0), as pushpins place points. Click to lay down each
+  position, finish the line, name it. **The order of clicking is the direction** — a flow drawn from a camp to a
+  clinic is not the same as one drawn the other way — so both ends are shown and Reverse turns a line round
+  instead of making you draw it again. Nothing new had to be invented for that: a line is an ordered sequence
+  already, which is the one thing a hand-drawn line carries that a derived one gets from its data.
+- A drawn layer **names no file**, because there is none, and a layer set to be drawn with nothing drawn is
+  refused in those words rather than being sent after a GPX.
+- A refusal in the drawing editor **stays on screen**. "Finish the line" wrote why it would not and the running
+  commentary overwrote it on the same tick, so it looked like the button did nothing.
+
 ## 0.188.0 — In development
 
 - **Find health facilities reads the country from the study area connected to it.** The dialog already asked the

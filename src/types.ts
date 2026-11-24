@@ -348,7 +348,10 @@ export interface ParamsByType {
    *  silently would hand on a different shape from the one its author published. */
   /** LINES (experiment 229, 2026-11-22): routes, tracks and borders, read from a GPX, KML, KMZ or GeoJSON file, or made
    *  from two study areas as the stretch of the first's outline within `toleranceM` of the second's. See line-layer.ts. */
-  line_input:{label:string;inputMethod:'file'|'border';data?:LineLayer;file?:string;toleranceM?:number};
+  /** ROUTES AND FLOWS DRAWN ON A MAP joined the file and the border on 2026-11-24, as pushpins place points. A
+   *  drawn layer keeps its lines in `data`, as a file's does; nothing else differs, because the order of the
+   *  positions already carries the direction a flow needs. */
+  line_input:{label:string;inputMethod:'file'|'border'|'drawn';data?:LineLayer;file?:string;toleranceM?:number};
   polygon_input:{
     hidden?:string[];
     /** Cut each feature to the box the read was scoped to, dropping what falls wholly outside.

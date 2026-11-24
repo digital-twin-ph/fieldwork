@@ -145,6 +145,9 @@ export function sharedBorder(a:Boundary,b:Boundary,toleranceM:number):Position[]
 export function lineSentence(layer:LineLayer):string{
   const n=layer.features.length,km=layer.features.reduce((t,f)=>t+lengthKm(f),0);
   const left=layer.notLines,said=[left?.points?`${left.points} ${left.points===1?'point':'points'}`:'',left?.areas?`${left.areas} ${left.areas===1?'area':'areas'}`:''].filter(Boolean);
-  return `${n} ${n===1?'line':'lines'}, ${km<10?km.toFixed(2):Math.round(km).toLocaleString('en')} km in all, from ${layer.source}.`
+  // "from drawn" is not English. A drawn layer has no source to name -- it IS the observation -- so it says who
+  // made it rather than what it was read from (2026-11-24).
+  const where=layer.source==='drawn'?'drawn here':`from ${layer.source}`;
+  return `${n} ${n===1?'line':'lines'}, ${km<10?km.toFixed(2):Math.round(km).toLocaleString('en')} km in all, ${where}.`
     +(said.length?` ${said.join(' and ')} ${said.length===1&&(left!.points+left!.areas)===1?'is':'are'} not lines and ${said.length===1&&(left!.points+left!.areas)===1?'was':'were'} not imported.`:'');
 }

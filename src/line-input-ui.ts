@@ -6,6 +6,11 @@ import type {Boundary,Escape,LineLayer,ParamsByType,Workflow} from './types.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {openConfigDialog} from './config-dialog.js';
 import {readLinesGpx,readLinesKml,readLinesKmz,readLinesGeoJson,sharedBorder,lineSentence,lengthKm,BORDER_TOLERANCE_M} from './line-layer.js';
+import {type DrawnLine,addVertex,finishLine,reverseLine,endsOf,drawnLayer,linesFromLayer,LINE_MINIMUM} from './line-draw.js';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import {rasterBasemap,PIN_BASEMAPS,BASEMAP_LABELS} from './catchment-map.js';
+import type {BasemapChoice} from './basemaps.js';
 
 type Params=ParamsByType['line_input'];
 export type LineDraft=Omit<Params,'label'>;
@@ -36,6 +41,10 @@ export function lineSettingsSentence(p:Pick<Params,'inputMethod'|'data'|'file'|'
     const d=(p.toleranceM??BORDER_TOLERANCE_M).toLocaleString('en');
     return areas.area&&areas.area_2?`The border of ${areas.area.label} and ${areas.area_2.label}: where their outlines lie within ${d} m of each other.`
       :`The border of the two study areas connected, where their outlines lie within ${d} m of each other.`;}
+  if(p.inputMethod==='drawn')
+    return p.data?.features.length
+      ?`${lineSentence(p.data)} Each is drawn in the direction it was clicked, so a flow is not the same the other way.`
+      :'Routes and flows drawn on a map, once they are drawn in Configure….';
   return p.data?`${p.file?`${p.file}: `:''}${lineSentence(p.data)}`:'Lines read from a GPX, KML, KMZ or GeoJSON file, once one is chosen in Configure….';
 }
 
@@ -55,17 +64,106 @@ export function linesPreviewSvg(lines:LineLayer|undefined,outlines:Boundary[],es
     +(parts.length?`<path d="${path(parts,false)}" class="line-preview-line"/>`:'')+'</svg></figure>';
 }
 
+/** THE DRAWING SURFACE. Held in module state for the life of one dialog, because `redraw()` rewrites the markup
+ *  and would take a Leaflet map with it: the map is mounted once by `wire` and everything it shows afterwards is
+ *  written straight to the DOM, as the pin editor does for the same reason. */
+let drawing:{lines:DrawnLine[];pending:[number,number][];selected:string|null;refused:string}=
+  {lines:[],pending:[],selected:null,refused:''};
+let drawnMap:L.Map|null=null;
+
+/** The settings and the picture, for a layer drawn by hand. */
+function drawnSections(d:LineDraft,method:string,esc:Escape){
+  const settings=method
+    +'<div class="field"><p class="description">Click the map to lay down a route or a flow, one position at a '
+    +'time, then <strong>Finish the line</strong>. The order you click is the direction: a flow drawn from a camp '
+    +'to a clinic is not the same as one drawn the other way, and <strong>Reverse</strong> turns it round.</p></div>'
+    +`<div class="field"><label class="field-label" for="line-basemap">Basemap</label><select id="line-basemap">`
+    +PIN_BASEMAPS.map(b=>`<option value="${b}">${esc(BASEMAP_LABELS[b])}</option>`).join('')+'</select></div>'
+    +'<div id="line-map" style="height:380px"></div>'
+    +'<div class="inspector-actions">'
+    +'<button id="line-finish" class="button small" type="button">Finish the line</button>'
+    +'<button id="line-undo" class="button small" type="button">Undo the last position</button>'
+    +'<button id="line-reverse" class="button small" type="button">Reverse the selected line</button>'
+    +'<button id="line-remove" class="button small danger" type="button">Delete the selected line</button></div>'
+    +'<p id="line-draw-status" role="status" class="description"></p>'
+    +`<div class="field"><label class="field-label" for="line-name">Name of the selected line</label>`
+    +'<input id="line-name" maxlength="80" placeholder="Team 1, day 1"></div>';
+  return {settings,preview:`<fieldset class="line-after"><legend>After</legend>`
+    +`<p data-line-sentence>${esc(lineSettingsSentence(d))}</p>`
+    +'<div class="table-scroll"><table><thead><tr><th scope="col">Line</th><th scope="col">Positions</th>'
+    +'<th scope="col">Length, km</th></tr></thead><tbody data-line-rows></tbody></table></div></fieldset>'};
+}
+
+/** What the map shows: every finished line with its two ends, and the one being drawn. */
+function paintDrawn(esc:Escape):void{
+  if(!drawnMap)return;
+  drawnMap.eachLayer(l=>{if((l as {_fwDrawn?:boolean})._fwDrawn)drawnMap!.removeLayer(l);});
+  const mark=(at:[number,number],fill:string,title:string)=>{
+    const m=L.circleMarker([at[1],at[0]],{radius:5,color:'#1d4ed8',weight:2,fillColor:fill,fillOpacity:1});
+    (m as {_fwDrawn?:boolean})._fwDrawn=true;m.bindTooltip(title);m.addTo(drawnMap!);};
+  for(const line of drawing.lines){
+    const chosen=line.id===drawing.selected;
+    const poly=L.polyline(line.vertices.map(v=>[v[1],v[0]] as [number,number]),
+      {color:chosen?'#1d4ed8':'#3f6f55',weight:chosen?5:3,opacity:0.9});
+    (poly as {_fwDrawn?:boolean})._fwDrawn=true;
+    poly.bindTooltip(esc(line.name));
+    poly.on('click',()=>{drawing.selected=line.id;paintDrawn(esc);syncDrawn(esc);});
+    poly.addTo(drawnMap);
+    const ends=endsOf(line);
+    // THE DIRECTION, SHOWN: hollow where the line starts, filled where it ends. A flow nobody can read the
+    // direction of is a flow drawn wrong half the time.
+    if(ends){mark(ends.from,'#ffffff',`${line.name}: from here`);mark(ends.to,'#1d4ed8',`${line.name}: to here`);}
+  }
+  if(drawing.pending.length){
+    const poly=L.polyline(drawing.pending.map(v=>[v[1],v[0]] as [number,number]),
+      {color:'#b45309',weight:4,dashArray:'6 4'});
+    (poly as {_fwDrawn?:boolean})._fwDrawn=true;poly.addTo(drawnMap);
+    for(const v of drawing.pending)mark(v,'#b45309','Being drawn');
+  }
+}
+
+/** The sentence, the table and the name field, written straight to the DOM so no redraw unmounts the map. */
+function syncDrawn(esc:Escape,d?:LineDraft):void{
+  const root=document.querySelector('#line-config');if(!root)return;
+  if(d)d.data=drawnLayer(drawing.lines);
+  const said=root.querySelector('[data-line-sentence]');
+  if(said&&d)said.textContent=lineSettingsSentence(d);
+  const rows=root.querySelector('[data-line-rows]');
+  if(rows)rows.innerHTML=drawing.lines.map(l=>{
+    const layer=drawnLayer([l]).features[0];
+    return `<tr${l.id===drawing.selected?' class="is-open"':''}><td>${esc(l.name)}</td>`
+      +`<td>${l.vertices.length}</td><td>${layer?km(lengthKm(layer)):'0'}</td></tr>`;}).join('');
+  const name=root.querySelector<HTMLInputElement>('#line-name');
+  const chosen=drawing.lines.find(l=>l.id===drawing.selected);
+  if(name)name.value=chosen?chosen.name:'';
+  const status=root.querySelector('#line-draw-status');
+  // A REFUSAL IS WHAT THE READER NEEDS, so it survives the running commentary that follows it. Written and then
+  // immediately overwritten by this very line until 2026-11-24, which made "Finish the line" look like it did
+  // nothing when it had said exactly why it would not.
+  if(status&&drawing.refused){status.textContent=drawing.refused;return;}
+  if(status)status.textContent=drawing.pending.length
+    ?`${drawing.pending.length} position${drawing.pending.length===1?'':'s'} so far; ${LINE_MINIMUM} are needed.`
+    :drawing.lines.length?`${drawing.lines.length} line${drawing.lines.length===1?'':'s'} drawn. Click the map to start another.`
+    :'Click the map to start a line.';
+}
+
 interface LineView {step:string;initial:LineDraft;areas:{area?:Area;area_2?:Area};apply:(d:LineDraft)=>void}
 
 export function openLineConfig(view:LineView,esc:Escape):void{
   const draft:LineDraft={...view.initial};
+  // ONE DIALOG, ONE DRAWING. Opened again, it starts from the lines the step holds rather than from whatever the
+  // last dialog left in module state.
+  drawnMap=null;
+  drawing={lines:view.initial.inputMethod==='drawn'?linesFromLayer(view.initial.data):[],pending:[],selected:null,refused:''};
   let error='';
   openConfigDialog<LineDraft>({
     id:'line-config',widget:'Line layer',step:view.step,draft,wide:true,
     sections:d=>{
       const method=`<div class="field"><label class="field-label" for="line-method">Where the lines come from</label><select id="line-method">`
         +`<option value="file"${d.inputMethod==='file'?' selected':''}>A file: GPX, KML, KMZ or GeoJSON</option>`
-        +`<option value="border"${d.inputMethod==='border'?' selected':''}>The border of two study areas</option></select></div>`;
+        +`<option value="border"${d.inputMethod==='border'?' selected':''}>The border of two study areas</option>`
+        +`<option value="drawn"${d.inputMethod==='drawn'?' selected':''}>Drawn on a map: routes and flows you observed</option></select></div>`;
+      if(d.inputMethod==='drawn')return drawnSections(d,method,esc);
       if(d.inputMethod==='file'){
         const settings=method+`<div class="field"><label class="field-label" for="line-file">File</label>`
           +`<input id="line-file" type="file" accept=".gpx,.kml,.kmz,.geojson,.json">`
@@ -98,7 +196,51 @@ export function openLineConfig(view:LineView,esc:Escape):void{
       return {settings,preview:before+after,...(stretches.length?{}:{message:{tone:'warning' as const,text:'No border at this distance: widen it, or check the two areas are neighbours.'}})};
     },
     wire:(root,d,redraw)=>{
-      root.querySelector<HTMLSelectElement>('#line-method')?.addEventListener('change',e=>{d.inputMethod=(e.target as HTMLSelectElement).value as LineDraft['inputMethod'];error='';redraw();});
+      root.querySelector<HTMLSelectElement>('#line-method')?.addEventListener('change',e=>{
+        d.inputMethod=(e.target as HTMLSelectElement).value as LineDraft['inputMethod'];error='';
+        drawnMap=null;
+        if(d.inputMethod==='drawn')drawing={lines:linesFromLayer(d.data),pending:[],selected:null,refused:''};
+        redraw();});
+      // THE MAP, MOUNTED ONCE. Everything after this writes to the DOM rather than calling redraw(), which would
+      // rewrite the markup and take the map with it.
+      const host=root.querySelector<HTMLElement>('#line-map');
+      if(host&&d.inputMethod==='drawn'&&!drawnMap){
+        const map=L.map(host,{center:[3,29.6],zoom:6,zoomAnimation:false,fadeAnimation:false,doubleClickZoom:false});
+        drawnMap=map;
+        let tiles=rasterBasemap('osm' as BasemapChoice).layer;
+        if(tiles)tiles.addTo(map);
+        root.querySelector<HTMLSelectElement>('#line-basemap')?.addEventListener('change',ev=>{
+          if(tiles)map.removeLayer(tiles);
+          tiles=rasterBasemap((ev.target as HTMLSelectElement).value as BasemapChoice).layer;
+          if(tiles)tiles.addTo(map);});
+        map.on('click',ev=>{
+          drawing.refused='';
+          drawing.pending=addVertex(drawing.pending,[ev.latlng.lng,ev.latlng.lat]);
+          paintDrawn(esc);syncDrawn(esc,d);});
+        // Where lines are already drawn, the map opens on them rather than on a default somewhere else.
+        const all=drawing.lines.flatMap(l=>l.vertices);
+        if(all.length)map.fitBounds(L.latLngBounds(all.map(v=>[v[1],v[0]] as [number,number])).pad(0.2));
+        paintDrawn(esc);syncDrawn(esc,d);
+      }
+      const act=(sel:string,f:()=>void)=>root.querySelector<HTMLButtonElement>(sel)
+        ?.addEventListener('click',()=>{f();paintDrawn(esc);syncDrawn(esc,d);});
+      act('#line-finish',()=>{
+        const made=finishLine(drawing.lines,drawing.pending);
+        if('refused' in made){drawing.refused=made.refused;return;}
+        drawing.refused='';
+        drawing.lines=made.lines;drawing.selected=made.lines[made.lines.length-1]!.id;drawing.pending=[];});
+      act('#line-undo',()=>{
+        if(drawing.pending.length){drawing.pending=drawing.pending.slice(0,-1);return;}
+        // Nothing half-drawn: the last FINISHED line is taken back up for more, rather than the click doing nothing.
+        const last=drawing.lines[drawing.lines.length-1];
+        if(last){drawing.pending=[...last.vertices];drawing.lines=drawing.lines.slice(0,-1);drawing.selected=null;}});
+      act('#line-reverse',()=>{drawing.lines=drawing.lines.map(l=>l.id===drawing.selected?reverseLine(l):l);});
+      act('#line-remove',()=>{drawing.lines=drawing.lines.filter(l=>l.id!==drawing.selected);drawing.selected=null;});
+      root.querySelector<HTMLInputElement>('#line-name')?.addEventListener('change',e=>{
+        const value=(e.target as HTMLInputElement).value.trim();
+        if(!value||!drawing.selected)return;
+        drawing.lines=drawing.lines.map(l=>l.id===drawing.selected?{...l,name:value}:l);
+        paintDrawn(esc);syncDrawn(esc,d);});
       root.querySelector<HTMLInputElement>('#line-tolerance')?.addEventListener('change',e=>{const raw=(e.target as HTMLInputElement).value.trim();
         if(raw==='')delete d.toleranceM;else d.toleranceM=Number(raw);redraw();});
       root.querySelector<HTMLInputElement>('#line-file')?.addEventListener('change',async e=>{
@@ -112,8 +254,11 @@ export function openLineConfig(view:LineView,esc:Escape):void{
 
 /** A file's layer is kept; a border's lines are made at run time from the areas, so none is stored with it. */
 function kept(d:LineDraft):LineDraft{
-  return d.inputMethod==='border'?{inputMethod:'border',...(d.toleranceM!==undefined?{toleranceM:d.toleranceM}:{})}
-    :{inputMethod:'file',...(d.data?{data:d.data}:{}),...(d.file?{file:d.file}:{})};
+  if(d.inputMethod==='border')return {inputMethod:'border',...(d.toleranceM!==undefined?{toleranceM:d.toleranceM}:{})};
+  // A DRAWN LAYER KEEPS ITS LINES AND NO FILENAME: there is no file, and naming one would put into the evidence a
+  // source that does not exist -- the same thing a typed table was saying until 2026-11-23.
+  if(d.inputMethod==='drawn')return {inputMethod:'drawn',...(d.data?{data:d.data}:{})};
+  return {inputMethod:'file',...(d.data?{data:d.data}:{}),...(d.file?{file:d.file}:{})};
 }
 
 export const lineInspector:OwnInspector<'line_input'>={

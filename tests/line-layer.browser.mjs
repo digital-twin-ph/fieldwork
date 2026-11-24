@@ -105,3 +105,69 @@ test('Configure… reads a GPX file\'s tracks and routes, and takes the border o
   await page.screenshot({path:'test-results/line-layer-3.png'});
   expect(errors).toEqual([]);
 });
+
+/** ROUTES AND FLOWS DRAWN ON A MAP (2026-11-24). The practitioner: *"we should add a feature like pushpins to
+ *  point data. Users should be able to draw flows and routes on a map as they observe events on the ground"*, and
+ *  *"Pushpins are points, Routes and flows are lines."* The symmetry is the specification; direction is the one
+ *  thing a hand-drawn line carries that a derived one gets for nothing. */
+test('a route is drawn on the map, named, reversed, and runs',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org|basemaps|tiles/,r=>r.abort('failed'));
+  // SEEDED WITHOUT RUNNING: a drawn layer with nothing drawn rightly refuses, and the refusal is checked below.
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.evaluate(w=>localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(w)),
+    {schema:'fieldwork/workflow/1',id:'dr',exampleId:'blank',label:'Drawn routes',nodes:[
+      {id:'line',type:'line_input',x:40,y:40,params:{label:'Team routes',inputMethod:'drawn'}},
+      {id:'map',type:'map_output',x:400,y:40,params:{label:'Map',basemap:'none'}}],
+      edges:[{id:'e1',from:'line',to:'map',port:'lines'}]});
+  await page.goto('/');
+  await page.waitForSelector('html[data-ready]');
+  // NOTHING DRAWN YET: the refusal names the method it is set to, and does not send the reader after a file.
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run failed',{timeout:45000});
+  const said=(await page.locator('#toast').textContent().catch(()=>''))||'';
+  expect(said).toContain('Draw at least one route');
+  expect(said).not.toContain('GPX');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="line"]').click();
+  await page.locator('#inspector-content #configure-step').click();
+  const d=page.locator('#line-config');
+  await expect(d.locator('#line-map')).toBeVisible();
+  const box=await d.locator('#line-map').boundingBox();
+  const click=async(dx,dy)=>{await page.mouse.click(box.x+dx,box.y+dy);await page.waitForTimeout(120);};
+
+  // ONE CLICK IS A PLACE, NOT A ROUTE: the step says how many positions it has and how many it needs.
+  await click(120,120);
+  await expect(d.locator('#line-draw-status')).toContainText('1 position');
+  await d.locator('#line-finish').click();
+  await expect(d.locator('#line-draw-status')).toContainText('needs 2 positions');
+
+  await click(200,160); await click(260,220);
+  await d.locator('#line-finish').click();
+  await expect(d.locator('[data-line-rows] tr')).toHaveCount(1);
+  await expect(d.locator('[data-line-sentence]')).toContainText('drawn here');
+  // Not "from drawn": a drawn layer has no source to name, it IS the observation.
+  await expect(d.locator('[data-line-sentence]')).not.toContainText('from drawn');
+
+  await d.locator('#line-name').fill('Team 1, day 1');
+  await d.locator('#line-name').dispatchEvent('change');
+  await expect(d.locator('[data-line-rows] tr').first()).toContainText('Team 1, day 1');
+
+  // DIRECTION: reversing swaps the ends, and the line itself is otherwise the same.
+  const ends=()=>d.locator('svg path, .leaflet-interactive').count();
+  const before=await ends();
+  await d.locator('#line-reverse').click();
+  await page.waitForTimeout(150);
+  expect(await ends()).toBe(before);
+  await expect(d.locator('[data-line-rows] tr')).toHaveCount(1);
+
+  await d.locator('#config-apply').click();
+  await expect(d).toHaveCount(0);
+  await page.locator('#run-button').click();
+  await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
+  // And the drawn line reaches the map it is wired to.
+  await page.locator('[data-view="results"]').click();
+  await expect(page.locator('#map [data-line-layer="line"]')).toHaveCount(1);
+  expect(errors).toEqual([]);
+});

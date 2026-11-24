@@ -3529,12 +3529,17 @@
     {
       "id": "urn:fieldwork:widget:line_input",
       "nodeType": "line_input",
-      "currentVersion": "0.1.0",
+      "currentVersion": "0.2.0",
       "releases": [
         {
           "version": "0.1.0",
           "path": "widgets/releases/line_input/0.1.0.json",
           "sha256": "0af63ac0722d7734c206a73e42840e837bcd94600184b83340ddefcafaa97785"
+        },
+        {
+          "version": "0.2.0",
+          "path": "widgets/releases/line_input/0.2.0.json",
+          "sha256": "69c5a14260b7b0bba2a208dc0ec96cc534ffcd375386c8749370fbb244e48ead"
         }
       ]
     },

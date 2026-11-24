@@ -1072,7 +1072,7 @@ export function validateWorkflow(raw:unknown):Workflow {
     if (n.type==='alert' && (![true,false,null].includes(n.params.active) || !/^\d{4}-\d{2}-\d{2}$/.test(n.params.date) || !Number.isFinite(Date.parse(n.params.date)) || new Date(n.params.date).toISOString().slice(0,10)!==n.params.date)) throw new Error('Invalid heat alert or assessment date.');
     if(n.type==='measure_area')validateAreaUnit(n.params.unit);
     if(n.type==='line_input'){if(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>100)throw new Error('Name the line layer using 1–100 characters.');
-      if(n.params.inputMethod!=='file'&&n.params.inputMethod!=='border')throw new Error('A line layer is read from a file or taken from two study areas\' border.');
+      if(!['file','border','drawn'].includes(n.params.inputMethod))throw new Error('A line layer is read from a file, taken from two study areas\' border, or drawn on a map.');
       if(n.params.toleranceM!==undefined&&!(n.params.toleranceM>0&&n.params.toleranceM<=10_000))throw new Error('The distance within which two outlines count as one border is more than 0 m and at most 10 km.');}
     if(n.type==='detect_unusual_counts'){if(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>100)throw new Error('Name the detection using 1–100 characters.');detectSettings(n.params);}
     if(n.type==='append_rows'&&n.params.tableCount!==undefined&&(!Number.isInteger(n.params.tableCount)||n.params.tableCount<2))throw new Error('Append rows stacks two tables or more.');
@@ -2201,7 +2201,11 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
               properties:{name:stretches.length===1?`${a.label} and ${b.label}`:`${a.label} and ${b.label}, ${i+1} of ${stretches.length}`},
               geometry:{type:'LineString',coordinates}}))} as unknown as DisplayValue;
         }else{
-          if(!node.params.data?.features?.length)throw new Error(`Read a file of lines into "${node.params.label}" before running: a GPX, KML, KMZ or GeoJSON file, in Configure….`);
+          // THE REFUSAL MATCHES THE METHOD (2026-11-24). A layer set to be DRAWN was told to read a file, which is
+          // advice for a different setting and sends the reader to a control the dialog is not showing them.
+          if(!node.params.data?.features?.length)throw new Error(node.params.inputMethod==='drawn'
+            ?`Draw at least one route or flow into "${node.params.label}" before running: click the map in Configure…, then Finish the line.`
+            :`Read a file of lines into "${node.params.label}" before running: a GPX, KML, KMZ or GeoJSON file, in Configure….`);
           value=structuredClone(node.params.data) as unknown as DisplayValue;
         }
         break;}

@@ -1029,12 +1029,12 @@
    "migrationFrom": []
   },
   "line_input": {
-   "version": "0.1.0",
-   "released": "2026-11-22",
+   "version": "0.2.0",
+   "released": "2026-11-24",
    "changes": [
     {
      "kind": "added",
-     "description": "Routes, tracks and roads read from GPX, KML, KMZ or GeoJSON, and the border two study areas share, as lines (experiment 229)."
+     "description": "Routes and flows drawn on a map, as pushpins place points: click to lay down each position, finish the line, name it. The order of clicking IS the direction, so a flow drawn from a camp to a clinic is not the same as one drawn the other way, and the editor shows both ends and offers to reverse. A drawn layer keeps its lines and names no file, because there is none. A layer set to be drawn with nothing drawn is refused in those words rather than being told to read a GPX."
     }
    ],
    "breaking": false,

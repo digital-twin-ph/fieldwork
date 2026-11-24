@@ -57,6 +57,21 @@ Nothing reaches the workflow until **Apply**.
 
 ## History
 
+### 2026-11-24 · Routes and flows drawn on a map (0.2.0)
+
+A third way to make a layer, beside a file and a border: **draw it**. Click the map to lay down each position of a
+route or a flow, press **Finish the line**, and name it. It is what pushpins are for points.
+
+**The order you click is the direction.** A flow drawn from a camp to a clinic is not the same as one drawn from
+the clinic to the camp, so the map shows where each line starts and where it ends, and **Reverse** turns one round
+rather than making you draw it again. Nothing else had to be invented for this: a line is an ordered sequence
+already.
+
+A drawn layer names no file, because there is none — what it has instead is you and the day you drew it. One click
+is a place rather than a route, so a line of one position is refused and says how to continue it. Two hundred
+lines is as many as drawing one by one is good for; past that, read them from a file.
+
+
 ### 2026-11-22 · First release (0.1.0)
 
 Lines read from a file or taken as the border of two study areas, and drawn on Map. Its first

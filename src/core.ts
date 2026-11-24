@@ -1,4 +1,5 @@
 import {readPinPhotos} from './pin-photos.js';
+import {staticMapFrame} from './static-map.js';
 import {setFigureWords,figureWordsOf} from './figure-words.js';
 ﻿import {sampleRaster,sampleReceipt,validateSampleNode} from './sample-raster.js';
 import {computeSpaceTimeScan,computeSpaceTimeReplay,scanValue,replayValue,validateScanParams} from './space-time-scan.js';
@@ -29,7 +30,7 @@ import {detectSettings,detectTable,detectSentence} from './aberration.js';
 export const MAX_AREA_INPUTS=6;
 import {CATCHMENT_TYPES,validateNetwork,validateCatchmentNode,voronoi,clipPolygons,summarizePolygons,catchmentReceipt,unconnectedSites,offNetworkSites} from './catchments.js';
 import type {Polygons,Network} from './catchments.js';
-import {polygonDisplay,polygonPresentationReceipt,shadeFeaturesOf} from './catchment-output.js';
+import {polygonFrame,polygonDisplay,polygonPresentationReceipt,shadeFeaturesOf} from './catchment-output.js';
 import {loadRaster,clipRaster,rasterReceipt,validateRasterAsset} from './raster-workflow.js';
 import {validateClipOptions} from './raster.js';
 import {projectFiles} from './project-files.js';
@@ -2849,7 +2850,41 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           })],originOf);
       assertSomethingToDraw(plan,node.params.label||node.id);
       (value as unknown as {mapLayers?:MapLayer[]}).mapLayers=plan;
-      const described=mapDescriptionNote(plan,node.params.label,node.id);
+      // HOW WIDE EACH LAYER IS DRAWN, in the figure's own units. `staticMapFrame` is deterministic from the value,
+      // so the scale the figure will use is known here, before anything is drawn: a layer's own bounds times that
+      // scale is the width a reader will see. Only the layers whose ground has an extent -- the study area and the
+      // polygon layers -- because a point layer's marks are a fixed size and are never the ones that vanish.
+      const drawnExtents=(():{id:string;units:number}[]=>{
+        try{
+          // THE FRAME THE FIGURE WILL USE, which is not one function. A map carrying polygons is drawn by
+          // `polygonSvg` in `polygonFrame`, which spans the polygons; `staticMapFrame` spans the boundary, the
+          // lines, the rows and the centres and ignores polygon layers entirely. Measuring with the wrong one said
+          // a 10 km buffer filled the figure when the drawn figure gave it 2.6 of 850 units (2026-11-23).
+          const polygons=(value as {polygons?:import('./catchments.js').Polygons}).polygons;
+          const frame=polygons?.features?.length
+            ?polygonFrame(polygons,(value as {boundary?:import('./types.js').Boundary}).boundary??null)
+            :staticMapFrame(value as never);
+          if(!frame)return [];
+          const widthOf=(g:import('./types.js').Boundary|undefined):number|undefined=>{
+            if(!g)return undefined;
+            const [x0,y0,x1,y1]=geometryBounds(g);
+            const [ax,ay]=frame.project([x0,y0] as [number,number]),[bx,by]=frame.project([x1,y1] as [number,number]);
+            return Math.max(Math.abs(bx-ax),Math.abs(by-ay));
+          };
+          const out:{id:string;units:number}[]=[];
+          for(const layer of plan){
+            const width=layer.kind==='AreaLayer'?widthOf((value as {boundary?:import('./types.js').Boundary}).boundary)
+              :layer.kind==='PolygonsLayer'?widthOf({type:'MultiPolygon',
+                coordinates:((value as {polygons?:{features?:{geometry:import('./types.js').Boundary}[]}}).polygons?.features??[])
+                  .flatMap(f=>f.geometry.type==='MultiPolygon'
+                    ?f.geometry.coordinates as Position[][][]:[f.geometry.coordinates as Position[][]])} as import('./types.js').Boundary)
+              :undefined;
+            if(width!==undefined&&Number.isFinite(width))out.push({id:layer.id,units:width});
+          }
+          return out;
+        }catch{return [];}
+      })();
+      const described=mapDescriptionNote(plan,node.params.label,node.id,drawnExtents);
       const note=described&&{...described,section:figureSection(node.params,node.type)};
       if(!inWriteUp(node.params))withArtifact(receipts,runId,node.id,
         {kind:'map',layerCount:plan.filter(l=>l.drawn).length,leftOut:true});

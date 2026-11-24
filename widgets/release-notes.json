@@ -422,16 +422,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.46.0",
+   "version": "0.47.0",
    "released": "2026-11-23",
    "changes": [
     {
      "kind": "minor",
-     "description": "A record's popup says what the record IS, not only where it is: its columns, in the order the source holds them, skipping empty values and the NA a file writes, capped at 14 with the count of what was left. Reported 2026-11-23, of a species list joined onto 55,227 bat records: \"Without the species in the tool tip I have no way of directly verifying whether the relate two tables worked.\""
-    },
-    {
-     "kind": "fixed",
-     "description": "Configure...'s layer controls are keyed and named by the layers the map drew, not by the nodes wired to it. Keyed by the edge, a slider for a layer that arrived through a clip wrote a setting nothing read, the defaults each list resolved by position landed on different layers -- so the mark sliders were crossed -- and the Pin class picker offered nothing, because a clip stores no records while the input behind it holds them all. The third surface to keep its own notion of what a layer is."
+     "description": "A layer drawn smaller than the marks over it says so, in the figure's own note. Measured 2026-11-23 on a 10 km area beside country-sized polygons: drawn 2.6 of the figure's 850 units, under an 8-unit mark, and reported as a layer that does not show up even though the layer list names it. It was drawn; it could not be seen. The threshold is the mark rather than a chosen number, and the fact is said rather than fixed, because the frame is deliberately the union of everything drawn -- a study area is a starting scope, not a clamp on what may be seen."
     }
    ],
    "breaking": false,

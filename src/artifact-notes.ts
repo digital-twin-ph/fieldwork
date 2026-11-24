@@ -39,6 +39,7 @@
  *  rendered, from its position in the IMRaD outline and the venue's own convention.
  */
 import type {DataTable} from './data-table.js';
+import {MARK_RADIUS_DEFAULT} from './presentation.js';
 import {recordsSaid} from './data-table.js';
 import type {MachinedNote,FigureSection} from './notes.js';
 import {DEFAULT_FIGURE_SECTION} from './notes.js';
@@ -115,8 +116,18 @@ export function tableDescriptionNote(table:DataTable,label:string|undefined,node
  *
  *  BOTTOM TO TOP, because that is what the order means on a map and a reader looking at the
  *  figure is looking at the stack. */
+/** A LAYER DRAWN SMALLER THAN THE MARKS OVER IT. Measured 2026-11-23 on a 10 km area beside country-sized polygons:
+ *  it was drawn 2.6 units wide on the 850-unit figure, under an 8-unit mark, and the practitioner reported it as a
+ *  layer that "does not show up even if I see it in the layers". It was drawn; it could not be seen.
+ *
+ *  The threshold is not a chosen number. A point mark is MARK_RADIUS_DEFAULT*2 units across, so a layer narrower
+ *  than that is smaller than the things standing on it -- which is when a reader stops being able to find it. Said
+ *  rather than fixed, because the frame is the union of everything drawn and that is deliberate: a study area is a
+ *  starting scope, not a clamp on what may be seen, so the remedy is the practitioner's to choose. */
+export const TOO_SMALL_UNITS=MARK_RADIUS_DEFAULT*2;
+export interface LayerExtent {id:string; units:number}
 export function mapDescriptionNote(layers:readonly MapLayer[],label:string|undefined,
-  nodeId:string):MachinedNote|null{
+  nodeId:string,extents:readonly LayerExtent[]=[]):MachinedNote|null{
   if(!layers?.length)return null;
   const drawn=[...layers].filter(l=>l.drawn).sort((a,b)=>a.index-b.index);
   if(!drawn.length)return null;
@@ -131,6 +142,14 @@ export function mapDescriptionNote(layers:readonly MapLayer[],label:string|undef
   if(hidden.length)
     text+=` ${count(hidden.length,'further layer is','further layers are')} connected and not `
       +`drawn: ${hidden.map(l=>l.label).join('; ')}.`;
+  // DRAWN, AND TOO SMALL TO READ. The same distinction `fw:layerDrawn` draws between connected and drawn, one step
+  // further: drawn and findable is not the same as drawn.
+  const tiny=drawn.flatMap(l=>{const at=extents.find(e=>e.id===l.id);
+    return at&&at.units<TOO_SMALL_UNITS?[{label:l.label,units:at.units}]:[];});
+  if(tiny.length)
+    text+=` ${tiny.map(t=>`${t.label} is drawn about ${Math.max(1,Math.round(t.units))} of the figure\u2019s `
+      +`850 units across`).join(', and ')}, smaller than the marks over it: on this map it is there to be found `
+      +`rather than read.`;
   return describes(nodeId,text);
 }
 

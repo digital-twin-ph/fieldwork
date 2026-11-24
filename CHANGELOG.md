@@ -3,6 +3,13 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.181.0 — 2026-11-23
+
+- **A layer drawn too small to read says so** (Map 0.47.0). A 10 km area beside country-sized polygons was drawn 2.6
+  of the figure's 850 units, under an 8-unit mark — drawn, listed, and impossible to find. The figure's note now
+  names it and gives its width. The threshold is the mark rather than a chosen number, and the fact is said rather
+  than fixed: the frame is deliberately the union of everything drawn.
+
 ## 0.180.0 — 2026-11-23
 
 - **Three more Preview sections say what the step makes**, instead of holding only a walkthrough of a made-up case:

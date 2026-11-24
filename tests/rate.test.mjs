@@ -83,3 +83,42 @@ test('the result is a table and a chart, and its receipt conforms', async () => 
   // A receipt that does not say what the denominator counts must not conform.
   assert.equal((await validateGraph(new Store(new Parser().parse(facts.replace(/fw:denominatorUnit "houses"; /g,''))))).conforms,false);
 });
+
+/** VINTAGES COMPARED ON THE YEAR (experiment 230, 2026-11-24). The comparison was `numeratorPeriod ===
+ *  denominatorVintage` as text, so a census stated at one precision and cases stated at another were reported as two
+ *  vintages for one year. Census tables holds four precisions, which is where this was noticed. */
+const dated=(numeratorPeriod,denominatorVintage)=>computeRate(houses,{...base,numeratorPeriod,denominatorVintage});
+
+test('THE DEFECT: a denominator of 2022-08 and a numerator of 2022 are one year, not two vintages',()=>{
+  const r=dated('2022','2022-08');   // cases of 2022, Rwanda's census of August 2022
+  assert.equal(r.vintagesAgree,true);
+  assert.equal(r.vintageGap,0);
+  assert.doesNotMatch(rateChart(r).caption,/vintage/,'nothing to say, so nothing said');
+});
+
+test('a gap is reported with its size, because one year and forty-one are different findings',()=>{
+  const near=dated('2025','2022');
+  assert.equal(near.vintagesAgree,false);
+  assert.equal(near.vintageGap,3);
+  assert.match(rateChart(near).caption,/vintages 3 years apart/);
+  // DR Congo's census is of 1984 and the population rasters are of 2025.
+  const far=dated('2025','1984-07-01');
+  assert.equal(far.vintageGap,41);
+  assert.match(rateChart(far).caption,/vintages 41 years apart/);
+  assert.match(rateChart(dated('2023','2022')).caption,/vintages 1 year apart/,'one year, singular');
+});
+
+test('periods no year can be read from keep the comparison they had',()=>{
+  // NOT A REGRESSION. Someone who typed the same words in both fields meant them to agree, and did agree before the
+  // year comparison existed; failing to read a year out of either is no reason to start contradicting them.
+  assert.equal(dated('1854 outbreak','1854 outbreak').vintagesAgree,true);
+  assert.equal(dated('1854 outbreak','1855 map').vintagesAgree,false);
+  assert.equal(dated('1854 outbreak','1855 map').vintageGap,null,'no readable years, so no distance');
+  assert.match(rateChart(dated('1854 outbreak','1855 map')).caption,/different vintages/,
+    'said without a size, because the size is unknown');
+});
+
+test('the receipt carries the gap where there is one, and omits it where there is none',()=>{
+  assert.match(rateReceipt({id:'rate'},dated('2025','2022'),'r1','source').facts,/fw:vintageGapYears "3"/);
+  assert.doesNotMatch(rateReceipt({id:'rate'},dated('1854 outbreak','1855 map'),'r1','source').facts,/fw:vintageGapYears/);
+});

@@ -62,6 +62,21 @@ municipality), and Sierra Leone (cases per 100,000 people by district, over the 
 
 ## History
 
+### 2026-11-24 · The two vintages are compared on the year (0.6.0)
+
+A census of **2022-08** and cases of **2022** are the same year. They used to be reported as two different vintages,
+because the two fields were compared as text — so you were shown a disagreement and had to work out that it wasn't
+one. Census tables states its reference dates at four precisions, so this was the ordinary case, not an odd one.
+
+Where the two really are apart, the figure now says **how far**: "vintages 3 years apart" rather than "different
+vintages". One year and forty-one are not the same finding, and DR Congo's census is of 1984.
+
+If you write something no year can be read from — "the 1854 outbreak" — the two fields are compared as words, exactly
+as before, and no distance is claimed.
+
+You still type both periods. Filling them from what the source already states is the rest of
+[experiment 230](../experiments/230-years-carried-and-compared.md).
+
 ### 2026-11-22 · A denominator of zero gives no rate (0.5.0)
 
 Found by the stress tests of the table operations. A group counted against a population of 0 was refused as a

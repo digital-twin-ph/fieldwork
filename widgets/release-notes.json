@@ -603,12 +603,16 @@
    "migrationFrom": []
   },
   "rate": {
-   "version": "0.5.0",
-   "released": "2026-11-22",
+   "version": "0.6.0",
+   "released": "2026-11-24",
    "changes": [
     {
-     "kind": "changed",
-     "description": "A denominator of zero gives no rate, saying how many were counted against it, rather than a refusal about proportions."
+     "kind": "fixed",
+     "description": "THE TWO VINTAGES ARE COMPARED ON THE YEAR, not as text. It was `numeratorPeriod === denominatorVintage`, so a denominator stated at one precision and a numerator stated at another were reported as two vintages for one year: Rwanda's census of \"2022-08\" against cases of \"2022\". Census tables holds four precisions -- 2022, 2022-08, 2022-07-31, 1984-07-01 -- and boundary-source.ts records geoBoundaries returning \"2010.0\" for one level, so a year reaching a comparison in a form other than four bare digits is the ordinary case. A period no year can be read from keeps the text comparison it had, because somebody who typed the same words in both fields meant them to agree and did agree before this."
+    },
+    {
+     "kind": "added",
+     "description": "THE SIZE OF A DISAGREEMENT, where both periods read as years: \"vintages 3 years apart\" rather than \"different vintages\", and `fw:vintageGapYears` in the receipt. One year and forty-one are different findings, and DR Congo's census is of 1984, so a 2025 denominator beside it is forty-one years out and nothing said so. Omitted, in the sentence and the receipt, where no year can be read: an unknown distance is not a distance."
     }
    ],
    "breaking": false,

@@ -2,8 +2,10 @@
 
 _Created 2026-11-23 · Updated 2026-11-23_
 
-**Status:** asked. Nothing built; this is the design and the questions it waits on. Written before the design is tried, so the choices below can be reviewed apart from
-the change that makes them.
+**Status:** tried, in its first step. The three open questions below were answered on 2026-11-24 and are recorded
+there; `src/reference-period.ts` and Rate's comparison are built and unit tested. Nothing CARRIES a period yet: every
+period still reaches Rate by being typed, so the design's central claim -- that the year travels the way the unit
+travels -- is not yet exercised.
 
 ## The question
 
@@ -106,3 +108,51 @@ is the person's judgement, and this only puts the years where it can be made.
 - Year only, or month where the source states one?
 - Should a boundary's year count beside the data's?
 - Which steps first: Append rows and Rate, where the population example meets it, or every step at once?
+
+## The open questions, answered 2026-11-24
+
+| Question | Answer | Why |
+| --- | --- | --- |
+| Year only, or month where the source states one? | **Carry what is stated, compare on the year.** | Census tables holds four precisions and reducing them on read would discard what the statistics office published; comparing at the finest shared precision would report Rwanda's `2022-08` against Botswana's `2022` as a difference, which is the defect, not a finding |
+| Should a boundary's year count beside the data's? | **Carried and said, kept separate.** | A boundary's year is about where the units are, not how many people they hold. Folding the two together would report "the counts are three years apart" and "the districts may have been redrawn" as one sentence, when only the second is about the boundary |
+| Which steps first? | **Append rows and Rate**, where the population example meets it | Rate had a live defect attached, so the smallest change proved the design against something already wrong |
+
+## First step, built 2026-11-24 (Rate 0.6.0)
+
+`src/reference-period.ts` holds the period and the comparison, apart from any widget: `yearsOf` reads the four
+precisions Census tables states and the ISO range form, `yearGap` counts whole years between the nearest years two
+periods cover, `periodWords` says a period with its kind, and `periodDifference` says what to say where two meet --
+including where they are of one year and different kinds, which is two claims about the same calendar year.
+
+Rate now compares its two fields on the year rather than as text, and says the size of a disagreement:
+*"vintages 3 years apart"* instead of *"different vintages"*, with `fw:vintageGapYears` in the receipt.
+
+**A period no year can be read from keeps the text comparison it had.** Somebody who typed "the 1854 outbreak" in
+both fields meant them to agree, and they agreed before this change; failing to read a year out of either is not a
+reason to start contradicting them. The existing tests of the Snow workflow's prose vintages pass untouched, which is
+the evidence that this is not a regression rather than an assurance that it is not.
+
+### What is built, and what the design still claims
+
+| Part of the design | State |
+| --- | --- |
+| A reference period: start, end, and its kind | **Built**, as `ReferencePeriod` |
+| Compared by their years; the gap stated in years | **Built** |
+| Rate: the two periods compared | **Built**, on the year |
+| Rate: the two periods *filled* from what the data states | **Not built.** Still typed |
+| Raster input → Sample a raster's table | **Not built** |
+| Census tables → the table | **Not built.** The catalogue holds `referenceDate` for all eight countries and nothing reads it as a period |
+| Append rows: one period per source, the difference said | **Not built** |
+| Relate, Join to area: both sides' periods kept | **Not built** |
+| A finding in the data quality tab | **Not built.** No `TableFinding` kind for it yet |
+
+So the comparison exists and the carrying does not, which is the half that was easy. The population example still
+says its years only in the labels the practitioner typed, and experiment 224's step 4 -- Rate's vintage pre-filled
+from an accepted census date -- is still open, now with somewhere for the date to go.
+
+## What the first step does not establish
+
+That a period survives being carried: nothing carries one yet. That the sentence reads as information rather than as
+an error to fix -- Rate's new wording has not been in front of anyone. And the observation written before the result
+stands unobserved: whether a trainee offered a 1984 census beside a 2025 raster reads the gap as the finding it is.
+

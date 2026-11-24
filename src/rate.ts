@@ -1,6 +1,7 @@
 import type {PointCollection,Scalar,WorkflowNode} from './types.js';
 import type {DataTable} from './data-table.js';
 import type {ChartSummary,Receipt} from './results.js';
+import {sameYear,yearGap} from './reference-period.js';
 
 /** Rates with a declared denominator: the person axis.
  *
@@ -32,6 +33,10 @@ export interface RateRow {
 export interface RateResult {
   kind:'rate'; rows:RateRow[]; options:RateOptions; totalNumerator:number; totalDenominator:number;
   overall:number|null; suppressed:number; vintagesAgree:boolean;
+  /** HOW MANY YEARS APART the two periods are, where both read as years (experiment 230): 0 where they are of the
+   *  same year, and null where either was written as something no year can be read from. Said in the sentence, so a
+   *  reader learns the size of the difference and not only that there is one. */
+  vintageGap:number|null;
 }
 
 const text=(value:unknown)=>typeof value==='string'?value.trim():'';
@@ -102,7 +107,19 @@ export function computeRate(records:{id:string;properties:Record<string,Scalar>}
   return {kind:'rate',rows,options,totalNumerator,totalDenominator,
     overall:totalDenominator?totalNumerator/totalDenominator*multiplier:null,
     suppressed:rows.filter(row=>row.rate===null).length,
-    vintagesAgree:text(options.numeratorPeriod)===text(options.denominatorVintage)};
+    // COMPARED ON THE YEAR, NOT AS TEXT (experiment 230; the practitioner, 2026-11-24: "Carry what's stated,
+    // compare on the year"). This was a string comparison, so Rwanda's census of "2022-08" against cases of "2022"
+    // was reported as two vintages for one year -- a difference the reader then had to dismiss. Census tables holds
+    // four precisions, and `boundary-source.ts` records geoBoundaries returning "2010.0" for one level, so a year
+    // reaching a comparison in a form other than four bare digits is the ordinary case rather than the odd one.
+    //
+    // THE TEXT COMPARISON SURVIVES AS THE FALLBACK, for the periods no year can be read from. A practitioner who
+    // typed "the 2022 census" in both fields meant them to agree, and they did agree before this change; reading no
+    // year out of either is not a reason to start contradicting them.
+    vintagesAgree:sameYear(options.numeratorPeriod,options.denominatorVintage)
+      ||(yearGap(options.numeratorPeriod,options.denominatorVintage)===null
+        &&text(options.numeratorPeriod)===text(options.denominatorVintage)),
+    vintageGap:yearGap(options.numeratorPeriod,options.denominatorVintage)};
 }
 
 export const fromPoints=(points:PointCollection)=>points.features.map(feature=>
@@ -194,7 +211,11 @@ export function rateChart(result:RateResult):ChartSummary{
     categoryTitle:RATE_TABLE_KEYS[0],
     total:Math.round(result.totalNumerator),
     caption:`${numeratorField} per ${multiplier.toLocaleString()} ${denominatorUnit} (${rateKind})`
-      +(result.vintagesAgree?'':' · numerator and denominator come from different vintages')
+      // THE SIZE OF THE DIFFERENCE, where it can be read: "different vintages" alone left a reader to work out
+      // whether that meant one year or forty-one. DR Congo's census is of 1984.
+      +(result.vintagesAgree?''
+        :result.vintageGap===null?' · numerator and denominator come from different vintages'
+        :` · numerator and denominator come from vintages ${result.vintageGap} year${result.vintageGap===1?'':'s'} apart`)
       +(result.suppressed?` · ${result.suppressed} group(s) without a reportable rate`:''),
     bins:result.rows.map(row=>({key:row.group,label:row.label,count:row.rate??0}))};
 }
@@ -211,7 +232,8 @@ export function rateReceipt(node:{id:string},result:RateResult,runId:string,sour
     +`fw:numeratorPeriod ${quote(o.numeratorPeriod)}; fw:denominatorVintage ${quote(o.denominatorVintage)}.\n`
     +`${entity} a fw:RateResult, prov:Entity; prov:wasGeneratedBy ${activity}; `
     +`fw:denominatorUnit ${quote(o.denominatorUnit)}; fw:rateKind ${quote(o.rateKind)}; `
-    +`fw:suppressedGroupCount "${result.suppressed}"^^xsd:integer; fw:vintagesAgree ${result.vintagesAgree}.\n`;
+    +`fw:suppressedGroupCount "${result.suppressed}"^^xsd:integer; fw:vintagesAgree ${result.vintagesAgree}`
+    +(result.vintageGap===null?'':`; fw:vintageGapYears "${result.vintageGap}"^^xsd:integer`)+'.\n';
   for(const [index,row] of result.rows.entries())
     facts+=`${entity} fw:rateGroup <${base}output:${node.id}:group:${index}>.\n<${base}output:${node.id}:group:${index}> a fw:RateGroup; `
       +`fw:groupLabel ${quote(row.label)}; fw:numeratorCount "${row.numerator}"^^xsd:decimal; `

@@ -3,6 +3,28 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.193.0 — In development
+
+- **A rate's two vintages are compared on the year, not as text** (Rate 0.6.0, experiment 230). It was
+  `numeratorPeriod === denominatorVintage`, so a denominator stated at one precision and a numerator stated at
+  another were reported as two vintages for one year — Rwanda's census of `2022-08` against cases of `2022`. Census
+  tables states its reference dates at four precisions (`2022`, `2022-08`, `2022-07-31`, `1984-07-01`), and
+  `boundary-source.ts` already records geoBoundaries returning `2010.0` for one level, so a year arriving in a form
+  other than four bare digits is the ordinary case rather than the odd one.
+- **A disagreement is reported with its size**: "vintages 3 years apart" rather than "different vintages", and
+  `fw:vintageGapYears` in the receipt. One year and forty-one are different findings, and DR Congo's census is of
+  1984, so a 2025 denominator beside it is forty-one years out and nothing said so.
+- A period no year can be read from **keeps the comparison it had**. Somebody who typed "the 1854 outbreak" in both
+  fields meant them to agree, and did agree before this; failing to read a year out of either is no reason to start
+  contradicting them. The Snow workflow's prose vintages pass untouched.
+- `src/reference-period.ts` is new and holds this apart from any widget: the period, its kind
+  (enumerated, estimated, projected, not stated), and the comparison. The practitioner answered the three questions
+  experiment 230 was waiting on — carry what is stated and compare on the year; carry a boundary's year but keep it
+  separate; start at Append rows and Rate.
+- **Nothing carries a period yet**, which is the half of experiment 230 still open: the census catalogue holds
+  `referenceDate` for all eight countries and nothing reads it, so Rate's two fields are still typed. Recorded in the
+  experiment rather than implied.
+
 ## 0.192.0 — In development
 
 - **Verification moved off every push and onto a nightly schedule, on WebKit alone**

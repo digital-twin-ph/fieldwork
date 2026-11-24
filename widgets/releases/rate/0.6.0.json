@@ -1,0 +1,80 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:rate",
+ "nodeType": "rate",
+ "version": "0.6.0",
+ "title": "Rate with a denominator",
+ "released": "2026-11-24",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['rate']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "points"
+   }
+  ],
+  "output": "table",
+  "optionalInputs": [],
+  "note": "Records in, a keyed table of rates out, so a Table output displays them and a Chart output draws them. The declared port is the static one; the type it accepts follows the stated kind of input, so with a table selected the same `records` port takes a table instead. The port keeps its name either way, because what it carries is the records to divide. A denominator usually arrives as a table -- Snow's two water companies are rows, not places -- which is why the table variant exists. The person axis needs no new port type: the counts are already attributes of the input."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:RateComputation",
+    "file": "ontology/runtime.ttl"
+   },
+   {
+    "role": "entity",
+    "iri": "urn:fieldwork:RateResult",
+    "file": "ontology/runtime.ttl"
+   }
+  ],
+  "note": "fw:RateResultShape requires the denominator unit and the rate kind from closed sets and records whether the numerator period and denominator vintage agree, so a rate that does not say what it is a rate of cannot conform. Verified in tests; this registry version records application validation only.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/core.ts",
+   "src/equations.ts",
+   "src/notes.ts",
+   "src/rate.ts",
+   "src/reference-period.ts",
+   "src/series-rate-ui.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "fixed",
+   "description": "THE TWO VINTAGES ARE COMPARED ON THE YEAR, not as text. It was `numeratorPeriod === denominatorVintage`, so a denominator stated at one precision and a numerator stated at another were reported as two vintages for one year: Rwanda's census of \"2022-08\" against cases of \"2022\". Census tables holds four precisions -- 2022, 2022-08, 2022-07-31, 1984-07-01 -- and boundary-source.ts records geoBoundaries returning \"2010.0\" for one level, so a year reaching a comparison in a form other than four bare digits is the ordinary case. A period no year can be read from keeps the text comparison it had, because somebody who typed the same words in both fields meant them to agree and did agree before this."
+  },
+  {
+   "kind": "added",
+   "description": "THE SIZE OF A DISAGREEMENT, where both periods read as years: \"vintages 3 years apart\" rather than \"different vintages\", and `fw:vintageGapYears` in the receipt. One year and forty-one are different findings, and DR Congo's census is of 1984, so a 2025 denominator beside it is forty-one years out and nothing said so. Omitted, in the sentence and the receipt, where no year can be read: an unknown distance is not a distance."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit checks cover the required declarations, refusal of a proportion exceeding one, banding and order, suppression at a zero or small denominator with the counts still reported, refusal of non-numeric and negative values, and comparison of the two vintages. Division is arithmetic; nothing here establishes that a denominator is the right population at risk, which is a judgment about the data. The table path is checked against Snow's Table IX (1855), published outside this project: the pivot reproduces its houses and deaths columns, and the rates computed from them are 315.39, 37.54 and 55.46 per 10,000 houses. Snow printed 315, 37 and 59. Four of his five printed rates are the quotient with the fraction dropped; Rest of London is not reproduced under either rounding rule, because 59 per 10,000 from 1,422 deaths implies about 241,000 houses rather than the 256,423 printed beside it. The widget divides the columns and does not reproduce 59, which is a discrepancy in the source and is recorded, not smoothed away. The equation note added in 0.3.0 is covered by tests/equations.test.mjs (13 unit checks, including that a method reference either renders completely or is null, that no note carries a table or a heading, and that a column name with an underscore is escaped rather than read as a subscript) and by tests/equation-notes.browser.mjs over the South London example on Chromium and WebKit, which is where it is established that the LaTeX is typeset to MathML rather than shown as its source. Both suites were mutation-checked by removing the behaviour and confirming they fail. 0.5.0: tests/table-stress.test.mjs (the second pass); Node with the reasoner, 2026-11-22.\n\nVINTAGES ON THE YEAR (experiment 230, 2026-11-24). Unit tested: the four precisions Census tables holds; a denominator of 2022-08 against a numerator of 2022 agreeing with a gap of 0 and nothing said; gaps of 1, 3 and 41 years said with their size; a range spanning the other's year counting as the same year; prose on both sides keeping the text comparison, and reporting no distance; the receipt carrying fw:vintageGapYears where there is a gap and omitting it where there is none. NOT established: that the periods are FILLED from what a source states -- they are still typed, which is the rest of experiment 230."
+ }
+}

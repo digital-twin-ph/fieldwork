@@ -533,6 +533,8 @@ fw:numeratorPeriod a owl:DatatypeProperty; rdfs:range xsd:string.
 fw:denominatorVintage a owl:DatatypeProperty; rdfs:range xsd:string;
   rdfs:comment "When the population at risk was counted. Recorded beside the numerator's period so a reader can see whether the two describe the same moment; they often do not.".
 fw:vintagesAgree a owl:DatatypeProperty; rdfs:range xsd:boolean.
+fw:vintageGapYears a owl:DatatypeProperty; rdfs:range xsd:integer;
+  rdfs:comment "How many whole years separate the numerator's period from the denominator's, where a year can be read from both. Written beside fw:vintagesAgree so a reader learns the size of a disagreement and not only that there was one: DR Congo's census is of 1984, and a denominator forty-one years from its numerator is a different finding from one a year off. Absent where either period was written as something no year can be read from. Experiment 230.".
 fw:suppressedGroupCount a owl:DatatypeProperty; rdfs:range xsd:integer.
 fw:rateGroup a owl:ObjectProperty; rdfs:domain fw:RateResult; rdfs:range fw:RateGroup.
 fw:groupLabel a owl:DatatypeProperty; rdfs:domain fw:RateGroup; rdfs:range xsd:string.

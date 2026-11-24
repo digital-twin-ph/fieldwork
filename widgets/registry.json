@@ -2144,7 +2144,7 @@
   {
    "id": "urn:fieldwork:widget:rate",
    "nodeType": "rate",
-   "currentVersion": "0.5.0",
+   "currentVersion": "0.6.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -2180,6 +2180,11 @@
      "version": "0.5.0",
      "path": "widgets/releases/rate/0.5.0.json",
      "sha256": "0335affc838f0ab34eebe4b3640f79b4068eb2c19b02d880cdd9d848ed548632"
+    },
+    {
+     "version": "0.6.0",
+     "path": "widgets/releases/rate/0.6.0.json",
+     "sha256": "df4c9b3043628a630afef84ff00176e7cd955fa043440814facbf797f632a6c1"
     }
    ]
   },

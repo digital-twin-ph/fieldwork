@@ -3539,7 +3539,7 @@
   {
    "id": "urn:fieldwork:widget:line_input",
    "nodeType": "line_input",
-   "currentVersion": "0.3.0",
+   "currentVersion": "0.4.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3555,6 +3555,11 @@
      "version": "0.3.0",
      "path": "widgets/releases/line_input/0.3.0.json",
      "sha256": "492ff4138dca29b2494c22ab13a6eee51fc52f34f24c23ec38633878da7da0e4"
+    },
+    {
+     "version": "0.4.0",
+     "path": "widgets/releases/line_input/0.4.0.json",
+     "sha256": "632a0b3a8cb50c7119e4f7bd18547f972795f1e4d50c687c863769e2adfae51f"
     }
    ]
   },

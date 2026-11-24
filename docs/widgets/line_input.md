@@ -57,6 +57,22 @@ Nothing reaches the workflow until **Apply**.
 
 ## History
 
+### 2026-11-24 · The map pans until you start a line (0.4.0)
+
+Press **Start a line**, then click to lay down each position. Until you press it, dragging pans the map and a click
+does nothing.
+
+Before this, every click laid down a position — and a press-and-release that barely moves *is* a click as far as the
+map is concerned, so there was no way to look around without leaving a point behind. Finishing a line now returns
+the map to panning, so the next click starts nothing you did not ask for.
+
+You can still pan while drawing: drag to move the map, click to lay down a position. A route can be longer than one
+screen, so that had to keep working.
+
+The mode is shown three ways — the button looks pressed, the pointer becomes a crosshair, and the map gets an
+outline — because one small visual cue is easy to miss. The line of text under the map says what the mouse will do
+next, and it was blank when the dialog opened until now.
+
 ### 2026-11-24 · An arrowhead, and a map that shows (0.3.0)
 
 The line you are drawing now ends in an **arrowhead** pointing the way it runs, instead of a filled dot. The hollow

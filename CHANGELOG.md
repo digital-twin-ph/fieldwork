@@ -3,6 +3,27 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.191.0 — In development
+
+- **The drawing map pans until you start a line** (Line layer 0.4.0). The practitioner: *"If I try to pan with my
+  mouse, it draws a point instead of panning. Perhaps we should have a 'Start Line' button together with the 'Finish
+  Line' button. So unless 'Start button' is pressed the mouse should be able to pan the map."* The editor bound
+  `click` unconditionally, and Leaflet treats a press and release that barely moves as a click, so every attempt to
+  look around the map left a position behind. **Start a line** arms the drawing; until it is pressed a click does
+  nothing. Finishing returns the map to panning, so the next click starts nothing. The study area's dialog has had a
+  tool mode since it was built — `setTool('pan')`, and it opens in it — and this is the same thing under the
+  practitioner's own name for it.
+- One deliberate divergence from that dialog: it disables dragging while drawing and this does not, because a route
+  can be longer than one screen. Leaflet does not fire `click` when the map moved under the mouse, so a drag pans
+  and a click lays down a position, and the two do not collide.
+- The mode is shown three ways — the button's pressed state, a crosshair cursor and an outline round the map —
+  because one small cue is easy to miss.
+- **The status sentence under the drawing map was blank when the dialog opened**, so the one line telling the reader
+  what to do was missing exactly when it was needed. It was written by a function that looked the dialog up by its
+  id, which is not resolvable while the dialog is being wired; it now writes into the element the caller already
+  holds, and is rewritten after every redraw. Found while fixing the panning, and it compounded it: there was
+  neither a mode to see nor a sentence saying what the mouse would do.
+
 ## 0.190.0 — In development
 
 

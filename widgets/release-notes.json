@@ -1045,16 +1045,16 @@
    "migrationFrom": []
   },
   "line_input": {
-   "version": "0.3.0",
+   "version": "0.4.0",
    "released": "2026-11-24",
    "changes": [
     {
      "kind": "changed",
-     "description": "A drawn line now ends in an ARROWHEAD rather than a filled dot, pointing the way the line runs; the hollow marker at its start is unchanged. It is the same head the Map draws when its Configure dialog is set to mark direction, so the editor reads the way the figure will. Two marks for one fact was clutter, and the dot said which end was the end without saying which way the line went."
+     "description": "PANNING AND DRAWING ARE TWO MODES, and the map opens in the one that does nothing. The practitioner: \"If I try to pan with my mouse, it draws a point instead of panning. Perhaps we should have a 'Start Line' button together with the 'Finish Line' button. So unless 'Start button' is pressed the mouse should be able to pan the map.\" The editor bound click unconditionally, and Leaflet treats a press and release that barely moves as a click, so every attempt to look around the map left a position behind. START A LINE arms the drawing; until it is pressed a click does nothing and the map pans. Finishing returns to panning, so the next click starts nothing. Dragging stays enabled while drawing -- a route can be longer than one screen -- and Leaflet does not fire click when the map moved, so a drag pans and a click lays down a position. The mode is shown three ways: the pressed state of the button, a crosshair cursor, and an outline round the map."
     },
     {
      "kind": "fixed",
-     "description": "The drawing map showed one tile in a corner with grey around it. The dialog's panel has no size yet when the map is mounted, so Leaflet measured a container of nothing and asked for a single tile. It is now settled after layout and watched for every later change of size, full screen among them, as the pin editor and the georeference dialog are."
+     "description": "The status sentence under the map was BLANK when the dialog opened, so the one line telling the reader what to do was missing exactly when it was needed. It was written by a function that found the dialog by its id, which is not resolvable while the dialog is being wired. It is now written from the element the caller already holds, and rewritten after every redraw, so what it says always describes the state the editor is in. Found while fixing the panning, and it compounded it: there was neither a mode to see nor a sentence saying what the mouse would do."
     }
    ],
    "breaking": false,

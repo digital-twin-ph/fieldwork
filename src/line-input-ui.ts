@@ -75,16 +75,35 @@ let drawnMap:L.Map|null=null;
  *  reopened or a method changed does not leave one watching a host that is gone. */
 let drawnFit:ResizeObserver|null=null;
 
+/** PANNING AND DRAWING ARE TWO MODES, and the map starts in the one that does nothing (the practitioner, 2026-11-24:
+ *  *"If I try to pan with my mouse, it draws a point instead of panning. Perhaps we should have a 'Start Line'
+ *  button together with the 'Finish Line' button. So unless 'Start button' is pressed the mouse should be able to
+ *  pan the map."*).
+ *
+ *  The editor bound `click` unconditionally, so there was no way to look around the map: Leaflet treats a press and
+ *  release that barely moves as a click, so every attempt to pan left a position behind. The study area's drawing
+ *  dialog has had a tool mode since it was built -- `setTool('pan')`, and it opens in it -- and this is the same
+ *  thing under the practitioner's own name for it.
+ *
+ *  ONE DIVERGENCE FROM THAT DIALOG, DELIBERATE: it disables `map.dragging` while drawing, and this does not. A route
+ *  can be longer than one screen -- a border crossing, a referral between towns -- so panning has to stay available
+ *  mid-line. Leaflet does not fire `click` when the map moved under the mouse, so a drag pans and a click lays down
+ *  a position, and the two do not collide. */
+type LineTool='pan'|'draw';
+let drawTool:LineTool='pan';
+
 /** The settings and the picture, for a layer drawn by hand. */
 function drawnSections(d:LineDraft,method:string,esc:Escape){
   const settings=method
-    +'<div class="field"><p class="description">Click the map to lay down a route or a flow, one position at a '
-    +'time, then <strong>Finish the line</strong>. The order you click is the direction: a flow drawn from a camp '
-    +'to a clinic is not the same as one drawn the other way, and <strong>Reverse</strong> turns it round.</p></div>'
+    +'<div class="field"><p class="description">Press <strong>Start a line</strong>, then click the map to lay down '
+    +'each position and <strong>Finish the line</strong> when you are done. Until you start one, dragging pans the '
+    +'map and a click does nothing. The order you click is the direction: a flow drawn from a camp to a clinic is '
+    +'not the same as one drawn the other way, and <strong>Reverse</strong> turns it round.</p></div>'
     +`<div class="field"><label class="field-label" for="line-basemap">Basemap</label><select id="line-basemap">`
     +PIN_BASEMAPS.map(b=>`<option value="${b}">${esc(BASEMAP_LABELS[b])}</option>`).join('')+'</select></div>'
     +'<div id="line-map" style="height:380px"></div>'
     +'<div class="inspector-actions">'
+    +'<button id="line-start" class="button small" type="button" aria-pressed="false">Start a line</button>'
     +'<button id="line-finish" class="button small" type="button">Finish the line</button>'
     +'<button id="line-undo" class="button small" type="button">Undo the last position</button>'
     +'<button id="line-reverse" class="button small" type="button">Reverse the selected line</button>'
@@ -109,6 +128,18 @@ function arrowAt(vertices:readonly [number,number][],colour:string,title:string)
   const m=L.marker(L.latLng([end[1],end[0]]),{interactive:false,keyboard:false,
     icon:L.divIcon({className:'line-arrow',iconSize:[20,20],iconAnchor:[10,10],html:arrowIconSvg(angle,colour)})});
   (m as {_fwDrawn?:boolean})._fwDrawn=true;m.bindTooltip(title);m.addTo(map);
+}
+
+/** THE MODE, APPLIED: the cursor over the map, the pressed state of Start a line, and nothing else. Clicks are
+ *  gated on `drawTool` where they arrive, and dragging is left enabled for the reason given above. */
+function setLineTool(next:LineTool,within?:ParentNode):void{
+  drawTool=next;
+  // THE DIALOG IS PASSED IN WHERE THE CALLER HAS IT, because at `wire` time it is not yet findable by its id: the
+  // markup exists and has not been given to the document under `#line-config` yet. Looking it up anyway is what
+  // left the status sentence blank on open.
+  const root=within??document.querySelector('#line-config');
+  root?.querySelector('#line-map')?.classList.toggle('map-drawing',next==='draw');
+  root?.querySelector('#line-start')?.setAttribute('aria-pressed',String(next==='draw'));
 }
 
 /** What the map shows: every finished line with its start, the way it runs, and the one being drawn. */
@@ -147,8 +178,8 @@ function paintDrawn(esc:Escape):void{
 }
 
 /** The sentence, the table and the name field, written straight to the DOM so no redraw unmounts the map. */
-function syncDrawn(esc:Escape,d?:LineDraft):void{
-  const root=document.querySelector('#line-config');if(!root)return;
+function syncDrawn(esc:Escape,d?:LineDraft,within?:ParentNode):void{
+  const root=within??document.querySelector('#line-config');if(!root)return;
   if(d)d.data=drawnLayer(drawing.lines);
   const said=root.querySelector('[data-line-sentence]');
   if(said&&d)said.textContent=lineSettingsSentence(d);
@@ -165,10 +196,14 @@ function syncDrawn(esc:Escape,d?:LineDraft):void{
   // immediately overwritten by this very line until 2026-11-24, which made "Finish the line" look like it did
   // nothing when it had said exactly why it would not.
   if(status&&drawing.refused){status.textContent=drawing.refused;return;}
-  if(status)status.textContent=drawing.pending.length
-    ?`${drawing.pending.length} position${drawing.pending.length===1?'':'s'} so far; ${LINE_MINIMUM} are needed.`
-    :drawing.lines.length?`${drawing.lines.length} line${drawing.lines.length===1?'':'s'} drawn. Click the map to start another.`
-    :'Click the map to start a line.';
+  // WHICH MODE THE MAP IS IN, in the first clause, because that is what decides what a click will do.
+  if(status)status.textContent=drawTool==='draw'
+    ?(drawing.pending.length
+      ?`Drawing: ${drawing.pending.length} position${drawing.pending.length===1?'':'s'} so far, ${LINE_MINIMUM} needed. Drag to pan without laying one down.`
+      :'Drawing: click the map to lay down the first position.')
+    :(drawing.lines.length
+      ?`${drawing.lines.length} line${drawing.lines.length===1?'':'s'} drawn. Dragging pans the map; press Start a line to draw another.`
+      :'Dragging pans the map. Press Start a line to draw one.');
 }
 
 interface LineView {step:string;initial:LineDraft;areas:{area?:Area;area_2?:Area};apply:(d:LineDraft)=>void}
@@ -177,7 +212,7 @@ export function openLineConfig(view:LineView,esc:Escape):void{
   const draft:LineDraft={...view.initial};
   // ONE DIALOG, ONE DRAWING. Opened again, it starts from the lines the step holds rather than from whatever the
   // last dialog left in module state.
-  drawnMap=null;drawnFit?.disconnect();drawnFit=null;
+  drawnMap=null;drawnFit?.disconnect();drawnFit=null;drawTool='pan';
   drawing={lines:view.initial.inputMethod==='drawn'?linesFromLayer(view.initial.data):[],pending:[],selected:null,refused:''};
   let error='';
   openConfigDialog<LineDraft>({
@@ -222,7 +257,7 @@ export function openLineConfig(view:LineView,esc:Escape):void{
     wire:(root,d,redraw)=>{
       root.querySelector<HTMLSelectElement>('#line-method')?.addEventListener('change',e=>{
         d.inputMethod=(e.target as HTMLSelectElement).value as LineDraft['inputMethod'];error='';
-        drawnMap=null;drawnFit?.disconnect();drawnFit=null;
+        drawnMap=null;drawnFit?.disconnect();drawnFit=null;drawTool='pan';
         if(d.inputMethod==='drawn')drawing={lines:linesFromLayer(d.data),pending:[],selected:null,refused:''};
         redraw();});
       // THE MAP, MOUNTED ONCE. Everything after this writes to the DOM rather than calling redraw(), which would
@@ -247,26 +282,36 @@ export function openLineConfig(view:LineView,esc:Escape):void{
         drawnFit?.disconnect();drawnFit=fit;
         requestAnimationFrame(()=>requestAnimationFrame(()=>{if(drawnMap===map)map.invalidateSize({pan:false});}));
         map.on('click',ev=>{
+          // IN PAN MODE A CLICK DOES NOTHING, which is the whole point: the map is there to be looked around.
+          if(drawTool!=='draw')return;
           drawing.refused='';
           drawing.pending=addVertex(drawing.pending,[ev.latlng.lng,ev.latlng.lat]);
           paintDrawn(esc);syncDrawn(esc,d);});
         // Where lines are already drawn, the map opens on them rather than on a default somewhere else.
         const all=drawing.lines.flatMap(l=>l.vertices);
         if(all.length)map.fitBounds(L.latLngBounds(all.map(v=>[v[1],v[0]] as [number,number])).pad(0.2));
-        paintDrawn(esc);syncDrawn(esc,d);
       }
       const act=(sel:string,f:()=>void)=>root.querySelector<HTMLButtonElement>(sel)
         ?.addEventListener('click',()=>{f();paintDrawn(esc);syncDrawn(esc,d);});
+      act('#line-start',()=>{drawing.refused='';setLineTool('draw');});
       act('#line-finish',()=>{
+        // NOT DRAWING YET is its own answer, rather than "a line needs 2 positions; this one has 0", which tells
+        // the reader about a line they never started.
+        if(drawTool!=='draw'&&!drawing.pending.length){drawing.refused='Press Start a line first, then click the map.';return;}
         const made=finishLine(drawing.lines,drawing.pending);
         if('refused' in made){drawing.refused=made.refused;return;}
         drawing.refused='';
-        drawing.lines=made.lines;drawing.selected=made.lines[made.lines.length-1]!.id;drawing.pending=[];});
+        drawing.lines=made.lines;drawing.selected=made.lines[made.lines.length-1]!.id;drawing.pending=[];
+        // FINISHED MEANS FINISHED: the map goes back to panning, so the next click does not start a line nobody
+        // asked for. The study area's dialog returns to 'pan' on Finish polygon for the same reason.
+        setLineTool('pan');});
       act('#line-undo',()=>{
+        drawing.refused='';
         if(drawing.pending.length){drawing.pending=drawing.pending.slice(0,-1);return;}
         // Nothing half-drawn: the last FINISHED line is taken back up for more, rather than the click doing nothing.
+        // Taking it up again IS drawing, so the mode follows -- otherwise the next click would be swallowed.
         const last=drawing.lines[drawing.lines.length-1];
-        if(last){drawing.pending=[...last.vertices];drawing.lines=drawing.lines.slice(0,-1);drawing.selected=null;}});
+        if(last){drawing.pending=[...last.vertices];drawing.lines=drawing.lines.slice(0,-1);drawing.selected=null;setLineTool('draw');}});
       act('#line-reverse',()=>{drawing.lines=drawing.lines.map(l=>l.id===drawing.selected?reverseLine(l):l);});
       act('#line-remove',()=>{drawing.lines=drawing.lines.filter(l=>l.id!==drawing.selected);drawing.selected=null;});
       root.querySelector<HTMLInputElement>('#line-name')?.addEventListener('change',e=>{
@@ -280,6 +325,15 @@ export function openLineConfig(view:LineView,esc:Escape):void{
         const file=(e.target as HTMLInputElement).files?.[0];if(!file)return;
         try{d.data=await readLineFile(file);d.file=file.name;error='';}catch(err){delete d.data;delete d.file;error=err instanceof Error?err.message:String(err);}
         redraw();});
+      // AFTER EVERY WIRE, NOT ONLY THE FIRST (2026-11-24). `redraw()` rewrites this markup, so the mode's pressed
+      // state, the map's cursor and the status sentence are all new and empty elements; the map itself survives
+      // because it is mounted once and written to directly. Painting here, at the end, means what the reader sees
+      // always describes the state the editor is actually in -- the status was blank on open until this moved.
+      if(d.inputMethod==='drawn'){
+        // IN PAN MODE unless a line is half-drawn, so the first thing the map does is let you find your ground.
+        setLineTool(drawing.pending.length?'draw':drawTool,root);
+        paintDrawn(esc);syncDrawn(esc,d,root);
+      }
     },
     apply:d=>view.apply(d),
   },esc);

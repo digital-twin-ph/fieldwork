@@ -142,6 +142,22 @@ test('a route is drawn on the map, named, reversed, and runs',async({page})=>{
   const box=await d.locator('#line-map').boundingBox();
   const click=async(dx,dy)=>{await page.mouse.click(box.x+dx,box.y+dy);await page.waitForTimeout(120);};
 
+  // THE MAP PANS UNTIL A LINE IS STARTED (the practitioner, 2026-11-24: "If I try to pan with my mouse, it draws a
+  // point instead of panning"). A click before Start a line lays down nothing, and the status says what the mouse
+  // will do rather than leaving the reader to find out by leaving a position behind.
+  await expect(d.locator('#line-draw-status')).toContainText('Dragging pans the map');
+  await expect(d.locator('#line-start')).toHaveAttribute('aria-pressed','false');
+  await click(120,120);
+  await expect(d.locator('#line-draw-status')).toContainText('Dragging pans the map');
+  await expect(d.locator('[data-line-rows] tr')).toHaveCount(0);
+  // Finishing a line nobody started says so, instead of reporting a line of no positions.
+  await d.locator('#line-finish').click();
+  await expect(d.locator('#line-draw-status')).toContainText('Press Start a line first');
+
+  await d.locator('#line-start').click();
+  await expect(d.locator('#line-start')).toHaveAttribute('aria-pressed','true');
+  await expect(d.locator('#line-map')).toHaveClass(/map-drawing/);
+
   // ONE CLICK IS A PLACE, NOT A ROUTE: the step says how many positions it has and how many it needs.
   await click(120,120);
   await expect(d.locator('#line-draw-status')).toContainText('1 position');
@@ -150,6 +166,9 @@ test('a route is drawn on the map, named, reversed, and runs',async({page})=>{
 
   await click(200,160); await click(260,220);
   await d.locator('#line-finish').click();
+  // FINISHED MEANS FINISHED: the map is back to panning, so the next click starts nothing.
+  await expect(d.locator('#line-start')).toHaveAttribute('aria-pressed','false');
+  await expect(d.locator('#line-map')).not.toHaveClass(/map-drawing/);
   await expect(d.locator('[data-line-rows] tr')).toHaveCount(1);
   await expect(d.locator('[data-line-sentence]')).toContainText('drawn here');
   // Not "from drawn": a drawn layer has no source to name, it IS the observation.

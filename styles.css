@@ -1526,6 +1526,12 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 }
 /* The inset picker under the interactive map (experiment 213). */
 .map-inset-bar{display:flex;flex-direction:column;gap:6px;padding:6px;background:var(--surface-raised);font-size:14px}
+/* DRAWING, NOT PANNING: the cursor says which, because a pressed button is a small thing to read and the
+   practitioner reads fine print poorly. The outline is the same signal again, for anyone who cannot tell one
+   cursor from another. Added 2026-11-24 with Start a line. */
+.map-drawing,.map-drawing .leaflet-grab,.map-drawing .leaflet-interactive{cursor:crosshair}
+.map-drawing{outline:3px solid var(--accent);outline-offset:-3px}
+
 /* THE TAB BAR WRAPS RATHER THAN OVERLAPS (2026-11-15: the Widgets tab cut off behind the library button, the run state
    on two lines). The tabs keep one row of their own; the actions move to a second row when there is no room. */
 .canvas-toolbar{height:auto;min-height:48px;flex-wrap:wrap;column-gap:16px}

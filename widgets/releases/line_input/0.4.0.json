@@ -1,0 +1,78 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:line_input",
+ "version": "0.4.0",
+ "nodeType": "line_input",
+ "title": "Line layer",
+ "released": "2026-11-24",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['line_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "note": "A line layer is read from a file, taken from the border two study areas share, or drawn on a map. A drawn line needs two positions at least; one click is a place, not a route, and the refusal says so and stays on screen. At most 200 lines are drawn one by one, past which a file is the right instrument. A drawn layer carries source 'drawn' so a reader can tell an observation somebody made from a file somebody published."
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "area",
+    "type": "area"
+   },
+   {
+    "name": "area_2",
+    "type": "area"
+   }
+  ],
+  "output": "lines",
+  "optionalInputs": [
+   "area",
+   "area_2"
+  ],
+  "note": "The two areas are inputs only where the layer is a border, and then both are required: the border is the stretch of the first's outline within the stated distance of the second's. Read from a file, the layer has no inputs."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "No ontology mapping yet, and no receipt of its own: the lines are handed on as GeoJSON, and a border's source names the two areas and the distance.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/core.ts",
+   "src/line-draw.ts",
+   "src/line-input-ui.ts",
+   "src/line-layer.ts",
+   "src/map-lines.ts",
+   "src/types.ts",
+   "styles.css"
+  ],
+  "definition": "src/line-layer.ts"
+ },
+ "changes": [
+  {
+   "kind": "changed",
+   "description": "PANNING AND DRAWING ARE TWO MODES, and the map opens in the one that does nothing. The practitioner: \"If I try to pan with my mouse, it draws a point instead of panning. Perhaps we should have a 'Start Line' button together with the 'Finish Line' button. So unless 'Start button' is pressed the mouse should be able to pan the map.\" The editor bound click unconditionally, and Leaflet treats a press and release that barely moves as a click, so every attempt to look around the map left a position behind. START A LINE arms the drawing; until it is pressed a click does nothing and the map pans. Finishing returns to panning, so the next click starts nothing. Dragging stays enabled while drawing -- a route can be longer than one screen -- and Leaflet does not fire click when the map moved, so a drag pans and a click lays down a position. The mode is shown three ways: the pressed state of the button, a crosshair cursor, and an outline round the map."
+  },
+  {
+   "kind": "fixed",
+   "description": "The status sentence under the map was BLANK when the dialog opened, so the one line telling the reader what to do was missing exactly when it was needed. It was written by a function that found the dialog by its id, which is not resolvable while the dialog is being wired. It is now written from the element the caller already holds, and rewritten after every redraw, so what it says always describes the state the editor is in. Found while fixing the panning, and it compounded it: there was neither a mode to see nor a sentence saying what the mouse would do."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested: the order of clicking as the direction, reversing without redrawing, a repeated click as one position, a one-position line refused with how to continue it, names that never collide, the 200-line limit, a drawn layer reopening to be added to, and the end bearing of a line whose last segment has no length (no arrowhead, rather than one at an arbitrary angle). Browser tested on Chromium: a route drawn on the map, refused at one position, finished, named, reversed, applied and run, reaching the Map it is wired to. NOT established: that anything checks a drawn route against the ground it was drawn over, and the arrowhead's bearing is not asserted in a browser test -- it is checked in the static renderer, which computes it the same way.\n\nPANNING (2026-11-24). Browser tested on Chromium: the dialog opens saying dragging pans the map with Start a line unpressed; a click before it is pressed lays down nothing and leaves the table empty; Finish the line before starting one says to start one rather than reporting a line of no positions; Start a line sets its pressed state and the map's crosshair class; and finishing a line clears both. NOT established: that a drag actually pans without laying down a position, which is Leaflet's own click suppression rather than this module's code."
+ }
+}

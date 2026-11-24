@@ -3,6 +3,26 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.192.0 — In development
+
+- **Verification moved off every push and onto a nightly schedule, on WebKit alone**
+  ([docs/audits/ci-verification-audit.md](docs/audits/ci-verification-audit.md)). Counted over the fifteen runs of
+  Publish GitHub Pages to 2026-11-24, `verify` reached a verdict **four times in fourteen**: ten cancelled, three
+  failed, one clean. A complete run takes 60 to 75 minutes and that day's releases landed 24 to 48 minutes apart, so
+  each release cancelled the verification of the one before it. The `cancel-in-progress: true` rule did exactly what
+  it said; the cadence changed under it, and nobody chose to stop verifying. The cost was specific: the release gate
+  run before every push is Chromium only, so WebKit — the one engine nothing else exercises — was the one almost
+  never verified. When it did run, on 0.188.0, it found a real failure no Chromium run could have.
+- The Chromium leg of that matrix is gone. The local gate covers Chromium on every push, so it verified what had
+  just been verified; dropping it halves the browser work and leaves the engine that needs it.
+- It lives in its own `verify.yml` rather than on a schedule inside `pages.yml`, because a `schedule:` trigger there
+  would fire `build` and `deploy` nightly too, republishing an unchanged site, unless every job were gated on the
+  event name — editing the publishing path in order to change the verification path. `pages.yml` is `0 added, 213
+  deleted`: `build` and `deploy` are byte-for-byte what they were.
+- What this gives up, stated in the audit: a WebKit regression can now sit on `main` for up to a day, against a
+  theoretical within-the-hour that was in fact achieved once in fourteen releases. `workflow_dispatch` is there for
+  the day that is the wrong trade.
+
 ## 0.191.1 — In development
 
 - **A shared-project test waited on the wrong thing**, and it had been red on CI for one run while passing locally

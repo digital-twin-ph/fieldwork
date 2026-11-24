@@ -263,6 +263,11 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   clip_raster:{title:'Clip raster',group:'Spatial operations',icon:'✂',color:'teal',description:'Mask raster cells with a clipping boundary',inputs:[['area','area'],['raster','raster']],output:'raster'},
   // TRAVEL TIME OVER GROUND (experiment 231), for where the streets are not the way people move: a friction surface
   // states what crossing a metre of each cell costs, and the walk accumulates that cost cell to cell.
+  // A COLUMN'S TERMS LINKED TO WIKIDATA (experiment 232). Semantic reasoning, beside Apply ruleset: attaching an
+  // identity from an outside authority is a semantic act, not a summary.
+  map_terms_to_vocabulary:{title:'Map a column\u2019s terms to a vocabulary',group:'Semantic reasoning',icon:'\u2387',color:'purple',
+    description:'Give each term in a column the entity a person judged it to name in a published vocabulary, so the rows carry an identifier that means something outside this workflow',
+    inputs:[['records','table']],output:'table'},
   travel_over_ground:{title:'Travel time over ground',group:'Spatial operations',icon:'◵',color:'teal',
     description:'Minutes to the nearest starting point across a friction surface, written onto each place, for where the walk is not along mapped streets',
     inputs:[['friction','raster'],['origins','points'],['places','points']],output:'points'},
@@ -1029,6 +1034,18 @@ export function validateWorkflow(raw:unknown):Workflow {
     }
     if(n.type==='clip_raster'&&n.params.cutline!==undefined){if(!n.params.cutline||!['bbox','polygon'].includes(n.params.cutline.selectionMode))throw new Error('Invalid clip boundary settings.');validateDrawnGeometry(n.params.cutline.geometry);}
     if(n.type==='raster_input'||n.type==='clip_raster'){if(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>60)throw new Error('Raster node names require 1-60 characters.');if(n.type==='raster_input'&&n.params.asset)validateRasterAsset(n.params.asset);if(n.type==='clip_raster'){if(!n.params.method)throw new Error('Choose a raster mask method.');validateClipOptions(n.params);}}
+    if(n.type==='map_terms_to_vocabulary'){
+      if(typeof n.params.column!=='string')throw new Error('Choose the column whose terms are linked.');
+      if(n.params.linkColumn!==undefined&&(typeof n.params.linkColumn!=='string'||n.params.linkColumn.length>60))
+        throw new Error('The column the links go into needs a name of at most 60 characters.');
+      if(n.params.decisions!==undefined&&(typeof n.params.decisions!=='object'||n.params.decisions===null))
+        throw new Error('The Wikidata choices are kept as a set of terms and what each one names.');
+      for(const [term,d] of Object.entries(n.params.decisions??{})){
+        if(d===null)continue;
+        if(typeof d!=='object'||!/^Q\d+$/.test(String((d as {qid?:string}).qid)))
+          throw new Error(`The Wikidata choice for "${term}" is not an entity identifier.`);
+      }
+    }
     // TRAVEL TIME OVER GROUND (experiment 231): the attribute name and the ceiling, checked here rather than inside
     // the walk, so a draft is refused before a surface is read.
     if(n.type==='travel_over_ground'){
@@ -1464,6 +1481,14 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
       case 'snap_to_network':{
         const made=snapToNetwork(inputs.sites,inputs.network,node,runId,workflow.edges.find(e=>e.to===node.id&&e.port==='sites')!.from);
         value=made.value;receipts.push(made.receipt);break;
+      }
+      case 'map_terms_to_vocabulary':{
+        // NO NETWORK HERE. The choosing happened in Configure…; this applies what was chosen.
+        const {linkTerms}=await import('./vocabulary-map.js');
+        const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='records');
+        if(!edge)throw new Error('Connect the table whose terms are linked.');
+        const made=linkTerms(inputs.records as never,node,runId,edge.from);
+        value=made.value as unknown as DisplayValue;receipts.push(made.receipt);break;
       }
       case 'travel_over_ground':{
         // THE PLACES ARE THE SOURCE the receipt cites: the answer is written onto them, and the friction surface and

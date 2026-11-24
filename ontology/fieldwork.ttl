@@ -191,6 +191,30 @@ fw:attachmentLimitMetres a owl:DatatypeProperty; rdfs:domain fw:NetworkReachabil
 fw:edgeLengthSource a owl:DatatypeProperty; rdfs:domain fw:NetworkReachability; rdfs:range xsd:string;
   rdfs:label "Where the street lengths came from";
   rdfs:comment "This activity re-measures no geometry, so it needs no projected CRS and takes the lengths on trust. Naming the source is the only check available to a reader.".
+fw:TermLinking a owl:Class;
+  rdfs:label "Term linked to an outside authority"; fw:implementationStatus "implemented";
+  rdfs:comment "Attaches to each term in a column an entity in an outside knowledge base that a PERSON judged the term to name. It is not a claim that the record is that entity, and it is not the result of a search: a search returns candidates, and on the terms this was designed against the first candidate was the wrong one about once in four, confusing a city with the state of the same name and a pathogen with the disease it causes. The judgement, its date and how many candidates were on offer are what is asserted, so a reader can weigh the link rather than inherit it. The authority is editable and changes; an activity records what was decided, never what is current.".
+fw:linkedTermColumn a owl:DatatypeProperty; rdfs:domain fw:TermLinking; rdfs:range xsd:string;
+  rdfs:label "Column whose terms were linked".
+fw:linkColumn a owl:DatatypeProperty; rdfs:domain fw:TermLinking; rdfs:range xsd:string;
+  rdfs:label "Column the links were written into".
+fw:distinctTermCount a owl:DatatypeProperty; rdfs:domain fw:TermLinking; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Distinct terms the column holds".
+fw:linkedTermCount a owl:DatatypeProperty; rdfs:domain fw:TermLinking; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Distinct terms given an entity".
+fw:unlinkedTermCount a owl:DatatypeProperty; rdfs:domain fw:TermLinking; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Distinct terms with no entity";
+  rdfs:comment "Two different states are counted together here and told apart in the activity's method: a term somebody looked up and judged to name nothing in the authority, which is a finding about the term, and a term nobody has looked at yet, which is unfinished work. Neither is a statement that the term is absent from the authority.".
+fw:linkedRowCount a owl:DatatypeProperty; rdfs:domain fw:TermLinking; rdfs:range xsd:nonNegativeInteger;
+  rdfs:label "Rows that carry a link".
+fw:chosenEntities a owl:DatatypeProperty; rdfs:domain fw:TermLinking; rdfs:range xsd:string;
+  rdfs:label "What was chosen for each term, as JSON";
+  rdfs:comment "Each entry carries the term, the entity, the name the authority gave it, the date of the judgement and how many candidates were on offer. The count is the weight of the judgement: one candidate is a different thing from one of ten.".
+fw:linkAuthority a owl:DatatypeProperty; rdfs:domain fw:TermLinking; rdfs:range xsd:string;
+  rdfs:label "The outside knowledge base the entities belong to".
+fw:namedByTerm a owl:DatatypeProperty; rdfs:range xsd:string;
+  rdfs:label "A term a person judged to name this entity";
+  rdfs:comment "No domain: the subject is an entity in an outside authority rather than anything this vocabulary defines, which is the point of asserting it. It reads from the entity back to the local term, so a reader following the link can see what it was taken to mean here.".
 fw:GroundTravelTime a owl:Class;
   rdfs:label "Travel time over ground"; fw:implementationStatus "implemented"; rdfs:subClassOf fw:SpatialOperation;
   rdfs:comment "Cheapest accumulated cost from the nearest of several origins across a friction surface -- a raster whose cell value is the cost of crossing one metre of that cell -- read at stated places. Distinct from fw:NetworkReachability, which traverses a published street graph at one assumed speed: this traverses ground, and the cost comes from the file rather than from an assumption. It is NOT a route. The walk steps between cell centres in eight directions and charges the metres between them times the mean friction of the pair, so no line it implies is a path anybody takes, and two places in one cell cannot be told apart. The answer is asserted at points and never as a raster, because a computed surface has no file and would otherwise carry the source raster's digest while holding values those bytes do not produce.".

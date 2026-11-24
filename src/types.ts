@@ -577,6 +577,16 @@ export interface ParamsByType {
   /** `pointId` names ONE feature to buffer; empty means every feature connected (2026-11-23, several points).
    *  `yields` is the union offer: an area dissolves the buffers into one scope, polygons keeps them apart. */
   buffer_point:{label:string;pointId:string;distanceM:number;yields?:'area'|'polygons'};
+  /** A COLUMN'S TERMS LINKED TO WIKIDATA (experiment 232). `decisions` is the whole of what this step keeps: a
+   *  person's judgement per distinct term, `null` where they looked and chose none. A run reads only this, so it
+   *  touches no network and a saved workflow reproduces exactly. */
+  map_terms_to_vocabulary:{label:string;column:string;
+    /** WHICH PUBLISHED VOCABULARY the terms are mapped to. One today; the name says "a vocabulary" because adding
+     *  GeoNames or a clinical code system is a value here rather than another widget. */
+    vocabulary?:'wikidata';
+    language?:string;linkColumn?:string;
+    alsoQid?:boolean;alsoLabel?:boolean;kindFilter?:string;
+    decisions:Record<string,{qid:string;label:string;description?:string;decidedAt:string;ofCandidates:number}|null>};
   /** TRAVEL TIME OVER GROUND (experiment 231): minutes to the nearest origin across a friction surface. `attribute`
    *  names the column the minutes are written into; `maxMinutes` stops the walk, where a microplan only cares up to
    *  an hour. There is no speed to set — the surface states what crossing the ground costs, which is why one is used. */

@@ -1051,6 +1051,18 @@
    ],
    "breaking": false,
    "migrationFrom": []
+  },
+  "map_terms_to_vocabulary": {
+   "version": "0.1.0",
+   "released": "2026-11-24",
+   "changes": [
+    {
+     "kind": "added",
+     "description": "Each term in a column given the Wikidata entity a person judged it to name, so rows carry an identifier that means something outside this workflow (experiment 232). The choosing happens in Configure…; a run asks Wikidata nothing."
+    }
+   ],
+   "breaking": false,
+   "migrationFrom": []
   }
  }
 }

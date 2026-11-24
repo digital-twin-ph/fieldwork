@@ -3539,6 +3539,18 @@
           "sha256": "92efed7fa0382c6e88b39377de28c9d641371580e7cc7bc0b00b5587a90af2bb"
         }
       ]
+    },
+    {
+      "id": "urn:fieldwork:widget:map_terms_to_vocabulary",
+      "nodeType": "map_terms_to_vocabulary",
+      "currentVersion": "0.1.0",
+      "releases": [
+        {
+          "version": "0.1.0",
+          "path": "widgets/releases/map_terms_to_vocabulary/0.1.0.json",
+          "sha256": "99744578b93e7e6d8ed18d3715612545b2da81c4f508cd475549c0b3606c4513"
+        }
+      ]
     }
   ]
 }

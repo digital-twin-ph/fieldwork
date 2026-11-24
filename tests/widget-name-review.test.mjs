@@ -147,7 +147,9 @@ test('the shipped ledger passes and covers every live widget', ()=>{
   // 51 on 2026-11-22: line_input, routes, tracks and borders (experiment 229); its name pending the practitioner's review.
   // 52 on 2026-11-24: travel_over_ground, minutes to the nearest origin across a friction surface (experiment 231); its
   // name pending the practitioner's review.
-  assert.equal(review.reviews.length,52);
+  // 53 on 2026-11-24: map_terms_to_vocabulary, a column's terms given the entity a person judged each to name
+  // (experiment 232); its name pending the practitioner's review.
+  assert.equal(review.reviews.length,53);
 });
 
 test('the generated table shows the palette words beside the identifier', ()=>{

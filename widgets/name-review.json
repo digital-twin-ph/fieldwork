@@ -38,7 +38,7 @@
    "verdict": "accepted",
    "reviewed": "2026-11-23",
    "reviewedBy": "practitioner",
-   "note": "Renamed from \"Area around a point\" on 2026-11-23, when the step grew lines and polygon layers and the old name stopped describing what it does. \"Buffer\" is the glossary\u2019s own word: Compute reads \"Derive geometry for each feature \u2014 buffer, clip, catchment, reproject, sample a raster onto points.\""
+   "note": "Renamed from \"Area around a point\" on 2026-11-23, when the step grew lines and polygon layers and the old name stopped describing what it does. \"Buffer\" is the glossary’s own word: Compute reads \"Derive geometry for each feature — buffer, clip, catchment, reproject, sample a raster onto points.\""
   },
   {
    "nodeType": "case_series",
@@ -502,6 +502,16 @@
    "reviewed": null,
    "reviewedBy": null,
    "note": "Proposed 2026-11-24. \"Travel time\" is the field's term for what a friction surface answers, and \"over ground\" is what distinguishes it from Reachable junctions, which travels over a street network. The convention's object slot holds what the verb acts on, and here the operation is named for the quantity rather than a verb, as isochrone and voronoi are. Awaiting the practitioner's review."
+  },
+  {
+   "nodeType": "map_terms_to_vocabulary",
+   "title": "Map a column’s terms to a vocabulary",
+   "group": "Semantic reasoning",
+   "fingerprint": "6aa77a1ec061",
+   "verdict": "pending",
+   "reviewed": null,
+   "reviewedBy": null,
+   "note": "Proposed 2026-11-24, renamed from link_terms_to_wikidata before anything was published, so no release ever shipped under the narrower name and no migration is owed. \"Map\" is the verb health informatics already uses for taking local terms to a published code system, which the writing rules prefer to anything invented here; \"vocabulary\" covers Wikidata, GeoNames and a clinical code system without naming one. The convention holds: the verb acts on terms, the operand follows a preposition. Awaiting the practitioner’s review."
   }
  ],
  "rule": "After a transform verb the slot names what the verb acts ON. A second operand is stated with a preposition -- summarize_points_to_polygon, aggregate_points_to_h3_cell, snap_to_network -- never left to the reader and never put in the object slot. A method name stands in for the operation only where the method name IS the practitioner's term, which is the existing exemption that keeps `voronoi`, `isochrone` and `summarize_hull`. Recorded 2026-10-19 with the first two reviews; see docs/audits/ontology-audit.md for the convention it corrects.",

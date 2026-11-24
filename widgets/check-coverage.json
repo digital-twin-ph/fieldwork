@@ -8,10 +8,10 @@
   },
   "measuredAt": "2026-11-24",
   "counts": {
-    "widgets": 52,
+    "widgets": 53,
     "covered": 31,
     "awaiting": 11,
-    "none": 9,
+    "none": 10,
     "blocked": 1
   },
   "widgets": [
@@ -306,6 +306,12 @@
       "expectation": "parity",
       "computes": "Minutes from the nearest of several origins to each stated place, accumulated cell by cell across a friction surface: eight-neighbour least-cost accumulation where a step costs the metres between two cell centres times the mean of the two cells' friction, with metres per cell computed per row from its latitude.",
       "reason": "THIS IS THE STANDARD OPERATION OF AN ESTABLISHED LITERATURE, so an outside reading exists and should be taken. skimage.graph.MCP_Geometric, GRASS r.cost, or the Malaria Atlas Project's own published accessibility method each recompute a least-cost accumulation over the same grid, and a parity entry is what would show whether this one agrees with them -- above all at the diagonals and at the edge of no-data, which is where implementations usually differ. What a check could NOT establish is that the minutes resemble a real walk: that depends on the surface being right about the ground, and no recomputation can tell."
+    },
+    {
+      "nodeType": "map_terms_to_vocabulary",
+      "expectation": "none",
+      "computes": "Nothing numerical. The run maps each term to the entity a person chose for it and counts the outcomes; the judgement is the practitioner's and the arithmetic is a lookup in a table they wrote.",
+      "reason": "NOTHING TO RECOMPUTE. A parity check asks whether another implementation gets the same number from the same input; here the input IS the answer, so recomputing it would only confirm that a dictionary lookup works, which the unit tests do offline. What WOULD be worth measuring is not parity but coverage \u2014 what share of a country's administrative units can be resolved at all, and how often the first candidate is wrong \u2014 and that is a finding about Wikidata rather than a check of this widget. Recorded here so the absence is a decision and not an omission."
     }
   ]
 }

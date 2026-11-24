@@ -26,11 +26,13 @@ output; **Not built**; **Policy** is a rule the project keeps rather than a feat
 | --- | --- | --- | --- | --- |
 | A project as a repository | git, one file per workflow | **Built** | `fieldwork-project-template`; Save to the repository as one commit; Get the latest; Load the project | [150](../experiments/150-can-several-authors-collaborate-in-a-project-repository.md) |
 | Every step's provenance | W3C PROV-O | **Built** | Run receipts and evidence for each workflow step | `docs/audits/ontology-audit.md` |
-| Independent recomputation | Validation Lab | **Partial** | 31 of 40 computing widgets checked (count of 2026-11-16) | [validation](validation.md) |
+| Independent recomputation | Validation Lab | **Partial** | 31 of 42 computing widgets checked (count of 2026-11-24) | [validation](validation.md) |
 | The vocabulary, published | OWL, SHACL | **Built** | Read-only view at digital-twin-ph.github.io/fieldwork-ontology | `ontology/` |
 | What each column means | Data dictionaries, column metadata | **Built** | Described by the practitioner; source metadata pre-fills | [211](../experiments/211-the-measurement-scale-of-a-column.md) |
 | Worked examples as their own repositories | Pinned by digest | **Built** | Eleven example repositories, each with its terms | `widgets/examples.json` |
 | Sources cited by DOI | DOI | **Built** | Citations keep a DOI and are matched by it | `src/references.ts` |
+| A term linked to a published vocabulary | Wikidata QID, linked data | **Built** 2026-11-24 | **Map a column’s terms to a vocabulary**: each term carries the entity a person judged it to name, asserted so an outside reader can resolve it. Until this, every term meant something only inside the workflow that held it. One vocabulary so far | `src/vocabulary-map.ts`, [232](../experiments/232-terms-looked-up-and-appraised.md) |
+| Literature found for a term, and appraised | OpenAlex, Semantic Scholar | **Not built** | **Find literature for each term** is named and designed, not written. It would carry each work’s open-access status into the dialog where the judgement is made, and record include, exclude and the reason | [232](../experiments/232-terms-looked-up-and-appraised.md) |
 | Data availability statement | Journal practice | **Built** | A part of the publication the author writes | `src/publication.ts` |
 | Decisions recorded in the open | GitHub Discussions | **Partial** | Discussions listed and posted from the project. A decision does not come back into the project | [150](../experiments/150-can-several-authors-collaborate-in-a-project-repository.md) |
 
@@ -43,7 +45,7 @@ output; **Not built**; **Policy** is a rule the project keeps rather than a feat
 | A project's persistent identifier | DOI through DataCite, by Zenodo deposit | **Not built** | The Zenodo community exists; a deposit is the practitioner's to approve | zenodo.org/communities/fieldwork |
 | How to cite a project | `CITATION.cff` | **Not built** | Neither a project repository nor Fieldwork itself carries one | — |
 | Fieldwork's own licence | Apache 2.0 | **Built** | `LICENSE` at the repository root | `LICENSE` |
-| Open copies of evidence | — | **Policy** | Closed papers are not cited where an open copy exists; the gap is stated otherwise | — |
+| Open copies of evidence | — | **Policy** | Closed papers are not cited where an open copy exists; the gap is stated otherwise. **Find literature for each term** would make this checkable rather than remembered: OpenAlex states `is_oa` and `oa_status` per work, so the status would sit beside each item at the moment of judgement | [232](../experiments/232-terms-looked-up-and-appraised.md) |
 
 ## Not yet considered
 

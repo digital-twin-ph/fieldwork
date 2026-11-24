@@ -135,3 +135,5 @@
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/line_input.md>.
 <urn:fieldwork:widget:travel_over_ground> a fw:WidgetDefinition; fw:nodeType "travel_over_ground"; rdfs:label "Travel time over ground";
   fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/travel_over_ground.md>.
+<urn:fieldwork:widget:map_terms_to_vocabulary> a fw:WidgetDefinition; fw:nodeType "map_terms_to_vocabulary"; rdfs:label "Map a column’s terms to a vocabulary";
+  fw:userManual <https://github.com/digital-twin-ph/fieldwork/blob/main/docs/widgets/map_terms_to_vocabulary.md>.

@@ -5,6 +5,14 @@ shown in a local build is not a claim that it has been published.
 
 ## 0.187.0 — In development
 
+- **Map a column’s terms to a vocabulary** (new widget, 0.1.0). Each term in a column gains the Wikidata entity a
+  person judged it to name, so rows carry an identifier that means something outside the workflow. **You choose
+  each link**, and the reason is measured: on four terms from work in hand, Wikidata's own first result was the
+  wrong one once in four — searching "Kano" returns the city, where a table of Nigerian LGAs means the state,
+  fourth down. Three of the four carried a competing entity of another kind in the top four, a ward against its
+  local government area and a pathogen against its disease. A run asks Wikidata nothing: the choosing happens in
+  Configure…, so a run needs no network and a saved workflow reproduces exactly. "None of these name it" is kept as
+  a decision and held apart from a term nobody has looked up. No worked example uses it yet.
 - **A locator inset no longer moves the areas away from their marks** (Map 0.48.1). On a map carrying a polygon
   layer, the areas were drawn zoomed to the locator's box while the point marks, the link lines and the basemap
   stayed at the whole extent — so an area drawn around a pin appeared about six times too wide and off to one side

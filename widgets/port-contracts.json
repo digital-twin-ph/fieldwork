@@ -1041,6 +1041,21 @@
         }
       ]
     },
+    "map_terms_to_vocabulary": {
+      "output": "table",
+      "contracts": [
+        {
+          "when": "default",
+          "required": [
+            [
+              "records",
+              "table"
+            ]
+          ],
+          "optional": []
+        }
+      ]
+    },
     "travel_over_ground": {
       "output": "points",
       "contracts": [

@@ -1,0 +1,82 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:map_terms_to_vocabulary",
+ "version": "0.1.0",
+ "nodeType": "map_terms_to_vocabulary",
+ "title": "Map a column’s terms to a vocabulary",
+ "released": "2026-11-24",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['map_terms_to_vocabulary']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": [],
+  "note": "The column is required; the column the links go into defaults to <column>_wikidata and is refused where the table already has one of that name. Every kept choice must be a Wikidata entity identifier. A choice may be null, which records that a person looked and judged that nothing in Wikidata names the term; that is held apart from a term nobody has looked up."
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "table"
+   }
+  ],
+  "output": "table",
+  "optionalInputs": [],
+  "note": "One table in, the same table out with a link column added. The terms offered for linking are the distinct values of the chosen column, so the table must have run once before the dialog has anything to show."
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:TermLinking",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "Partial: every term the receipt asserts is declared in ontology/fieldwork.ttl, and no widget-specific SHACL shape checks the result. The activity asserts the column linked, the distinct, linked and unlinked term counts, the rows carrying a link, the authority, and what was chosen for each term with the date and how many candidates were on offer. Each chosen entity is also a subject carrying fw:namedByTerm, so a reader following the link sees what the term was taken to mean here.",
+  "emits": {
+   "classes": [
+    "TermLinking"
+   ],
+   "properties": [
+    "chosenEntities",
+    "distinctTermCount",
+    "linkAuthority",
+    "linkColumn",
+    "linkedRowCount",
+    "linkedTermColumn",
+    "linkedTermCount",
+    "namedByTerm",
+    "unlinkedTermCount"
+   ]
+  }
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts",
+   "src/vocabulary-map.ts",
+   "src/vocabulary-map-ui.ts",
+   "src/types.ts",
+   "src/app.ts"
+  ],
+  "definition": "src/vocabulary-map.ts"
+ },
+ "changes": [
+  {
+   "kind": "added",
+   "description": "Each term in a column given the Wikidata entity a person judged it to name, so rows carry an identifier that means something outside this workflow (experiment 232). The choosing happens in Configure…; a run asks Wikidata nothing."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit tested offline: the distinct terms a person is asked about; a deliberate decision not to link held apart from a term nobody looked up; the link column added and refused where it would overwrite; the search parsed with properties and id-less rows rejected; and narrowing that reorders candidates without removing any. Measured 2026-11-24 against Wikidata's own search on four terms in hand: one top hit of four was wrong (Kano returns the city where an LGA table means the state, ranked fourth) and three of four carried a competing entity of another kind in the top four. NOT established: that Wikidata is right about anything, what share of terms resolve for any country, or that a generic client name satisfies Wikimedia's User-Agent policy for a tool many people may run. No worked example instantiates it yet."
+ }
+}

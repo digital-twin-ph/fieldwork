@@ -76,7 +76,11 @@ export function openFacilitiesConfig(view:FacilitiesConfigView,esc:Escape):void{
           +`<div class="field"><label class="field-label" for="hf-kinds">Facility kinds</label><input id="hf-kinds" value="${esc(draft.kinds)}" placeholder="hospital, clinic">`
           +`<p class="muted">Known kinds: ${esc(FACILITY_KINDS.join(', '))}.</p></div>`
           +`<label class="check"><input type="checkbox" id="hf-require-name"${draft.requireName?' checked':''}> Keep only facilities that carry a name</label>`;
-        return {settings,preview:'<p class="muted">Retrieve under Settings once the study area is connected: the area is the scope of the query.</p>'};
+        // WHERE THE BUTTON ACTUALLY IS (2026-11-24). This said "under Settings", which was where it used to be
+        // and was never where a reader would then look: the practitioner's report named this dialog and that button
+        // together. Retrieval is in Result, beside what it produces.
+        return {settings,preview:'<p class="muted">Apply these settings, then press <b>Retrieve facilities</b> under '
+          +'Result. A study area must be connected first: the area is the scope of the query.</p>'};
       }
       const l=draft.list,cols=view.listColumns.map(c=>[c,c] as [string,string]);
       settings+=(cols.length?'':'<p class="notice">Connect the list first: a table with a column naming each facility.</p>')
@@ -85,7 +89,8 @@ export function openFacilitiesConfig(view:FacilitiesConfigView,esc:Escape):void{
         +`<fieldset class="field"><legend class="field-label">Registers, matched in this order</legend>`
         +view.catalogue.map(r=>`<label class="check"><input type="checkbox" data-hf-register="${esc(r.id)}"${l.registers.includes(r.id)?' checked':''}${r.readable?'':' disabled'}> `
           +`${esc(r.title)} · ${esc(r.anyCountry?'any country':r.country??'')}${r.nameOnly?' · matched by name only':''}${r.readable?'':' · not readable'}</label>`).join('')
-        +'<p class="muted">From the facility registers declared in the ontology. A register is fetched once, under Settings.</p></fieldset>'
+        +'<p class="muted">From the facility registers declared in the ontology. A register is fetched once, with '
+        +'<b>Fetch the registers</b> under Result.</p></fieldset>'
         // A REGISTER FOR EVERY COUNTRY needs the one to read: offered first is the country of the other registers chosen.
         +((any=>any?select('hf-list-country',`Country to read ${any.title} for`,view.countries.map(c=>[c.iso,`${c.name} (${c.iso})`]),l.country??'','Choose a country…')
           +'<p class="muted">A register matched by name only has no facility types: a name it matches allowing for spelling is held for you to review.</p>':'')
@@ -95,10 +100,11 @@ export function openFacilitiesConfig(view:FacilitiesConfigView,esc:Escape):void{
         +`<div class="field"><label class="field-label" for="hf-area-words">Words that mark a name as an area, not a facility</label>`
         +`<input id="hf-area-words" value="${esc(l.areaMarkers.join(', '))}" placeholder="Communities"></div>`;
       if(!l.nameColumn||!l.registers.length)return {settings,preview:'<p class="muted">Choose the name column and a register to see how the names match.</p>'};
-      if(!view.layer||!view.listRows)return {settings,preview:'<p class="muted">Fetch the register under Settings, and run the workflow once with the list connected, '
-        +'and the matches are shown here before they are applied.</p>'};
+      if(!view.layer||!view.listRows)return {settings,preview:'<p class="muted">Apply these settings, press <b>Fetch the '
+        +'registers</b> under Result, and run the workflow once with the list connected: the matches are then shown '
+        +'here before they are applied.</p>'};
       const loaded=registersFromLayer(view.layer,view.catalogue,l.registers);
-      if(!loaded.some(r=>r.facilities.length))return {settings,message:{tone:'warning',text:'The registers chosen are not the ones fetched: fetch again under Settings.'}};
+      if(!loaded.some(r=>r.facilities.length))return {settings,message:{tone:'warning',text:'The registers chosen are not the ones fetched: apply these settings and press Fetch the registers under Result.'}};
       const list=view.listRows.map(r=>({name:String(r.key[l.nameColumn]??'').trim(),area:l.areaColumn?String(r.key[l.areaColumn]??'').trim():''})).filter(r=>r.name);
       const matches=matchFacilityNames(list,loaded,l);
       const counts=matchCounts(list.map(r=>r.name),matches);
@@ -180,16 +186,26 @@ export const facilitiesInspector:OwnInspector<'find_health_facilities'>={
         :'No facilities retrieved yet. Connect a study area: it is the scope of the query.');
     return kit.section('Name',kit.name('hf-label',p.label||k.title('find_health_facilities')))
       +kit.section('Inputs',kit.inputs(n,{list:'The list',area:'Study area'}))
+      // SETTINGS HOLDS CONFIGURE..., AND NOTHING ELSE (2026-11-24). The practitioner: *"The Inspector for Find
+      // health facilities seem to be non-standard, looking at the Configure button and the Retrieve facilities
+      // button."* Both sat in one row and the `primary` emphasis moved between them with the step's state, so the
+      // one thing to do next was whichever the markup had decided, beside a button no other standard widget shares
+      // its row with. Every other standard Inspector puts `Configure...` alone and primary here, and this one now
+      // does. The retrieval is a DIFFERENT KIND OF ACT -- it reaches the network and changes what the step holds,
+      // where Configure... only opens a dialog -- and it belongs with what it produces, in Result.
       +kit.section('Settings',`<p class="standard-sentence">${esc(facilitiesSentence(p,k.catalogue))}</p>`
-        +`<div class="inspector-actions">${list
-          ?`<button id="hf-fetch-registers" class="button${!fetched||stale?' primary':''}"${p.list?.registers.length?'':' disabled'}>${fetched?'Fetch the registers again':'Fetch the registers'}</button>`
-          :`<button id="hf-retrieve" class="button${fetched?'':' primary'}">Retrieve facilities</button>`}`
-        +`<button id="configure-step" class="button${fetched&&!stale?' primary':''}">Configure\u2026</button></div>`
-        +`<p id="hf-status" role="status" class="description"></p>`
+        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>'
         +(stale?'<p class="notice notice-warning">The registers or the country chosen are not the ones fetched. Fetch them again.</p>':'')
         +(list?'':`<ul class="licence-links">${descriptor.links.map(l=>`<li><a href="${esc(l.href)}" target="_blank" rel="noopener noreferrer">${esc(l.label)} \u2197</a></li>`).join('')}</ul>`))
       +kit.section('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`:held)}</p>`
         +(ran&&!why?`<p class="standard-state">${esc(ran.split('. ').slice(0,2).join('. '))}.</p>`:'')
+        // THE ONE THING TO DO NEXT, so it looks like it -- the shape Tabular data took on 2026-11-14 for the same
+        // complaint, *"the Fetch the table is there, just not conspicuous"*. Primary until there is something, and
+        // primary again when what is held is not what the settings now ask for.
+        +`<div class="inspector-actions">${list
+          ?`<button id="hf-fetch-registers" class="button${!fetched||stale?' primary':''}"${p.list?.registers.length?'':' disabled'}>${fetched?'Fetch the registers again':'Fetch the registers'}</button>`
+          :`<button id="hf-retrieve" class="button${fetched?'':' primary'}">${fetched?'Retrieve facilities again':'Retrieve facilities'}</button>`}</div>`
+        +`<p id="hf-status" role="status" class="description"></p>`
         // THE ATTRIBUTION THE LICENCE REQUIRES, where the facilities are: ODbL asks that it stay with the data.
         +(!list&&p.retrieved?`<p class="description">${esc(p.retrieved.attribution)}</p>`:'')
         +(list&&p.registerRetrieved?.registers.some(r=>r.licence.includes('odbl'))?`<p class="description">${esc(FACILITY_SOURCES['hdx-hot-export'].attribution)}</p>`:'')

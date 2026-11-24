@@ -1,5 +1,6 @@
 import {readPinPhotos} from './pin-photos.js';
 import {staticMapFrame} from './static-map.js';
+import {lineLayersOf} from './map-lines.js';
 import {setFigureWords,figureWordsOf} from './figure-words.js';
 ﻿import {sampleRaster,sampleReceipt,validateSampleNode} from './sample-raster.js';
 import {computeSpaceTimeScan,computeSpaceTimeReplay,scanValue,replayValue,validateScanParams} from './space-time-scan.js';
@@ -2763,7 +2764,9 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           // lose the hue per feature, which says "different things" about ground a point is placed on.
           value={...mapped.value,
             polygons:shadeFeaturesOf(shown.polygons as NonNullable<DisplayValue['polygons']>,
-              (beside.length>0||!!node.params.contextPoints)&&shown.polygons?.fromStudyAreas===true,
+              // A LINE LAYER COUNTS AS A SUBJECT, as points do (the practitioner, 2026-11-24).
+              (beside.length>0||!!node.params.contextPoints
+                ||!!(inputs as unknown as {lines?:unknown}).lines)&&shown.polygons?.fromStudyAreas===true,
               node.params.shadeFeatures),
             polygonPresentation:node.params.presentation||'plot'} as unknown as DisplayValue;
           if(node.params.contextPoints)
@@ -2927,6 +2930,15 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         nodeId:node.id,text:`**${node.params.label||'Who infected whom'}.** ${sentence}`};
         machined[node.id]=[note];withNote(receipts,runId,node.id,[note]);}
     }
+    // LINES JOIN EVERY MAP, whichever renderer leads: a map's layers are not a mode (experiment 229).
+    //
+    // ATTACHED BEFORE THE LAYER LIST IS BUILT, not after (2026-11-24). It ran below the block that follows, so
+    // `mapLayerList` could not see a line layer and `drawnExtents` measured in a frame that did not span one --
+    // which is exactly the wrong-frame trap that block's own comment warns of.
+    if(node.type==='map_output'&&value&&(inputs as unknown as {lines?:import('./types.js').LineLayer}).lines){
+      const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='lines')!,from=workflow.nodes.find(n=>n.id===edge.from);
+      (value as unknown as {lines:unknown}).lines=[{...structuredClone((inputs as unknown as {lines:import('./types.js').LineLayer}).lines),
+        sourceNodeId:edge.from,label:(from?.params as {label?:string})?.label||edge.from}];}
     if(node.type==='map_output'&&isRecord(value)){
       const originOf=layerOrigins((value as {pointLayers?:{sourceNodeId:string;port?:string}[]}).pointLayers);
       const plan=mapLayerList(node,workflow.edges,
@@ -2953,7 +2965,8 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
           // a 10 km buffer filled the figure when the drawn figure gave it 2.6 of 850 units (2026-11-23).
           const polygons=(value as {polygons?:import('./catchments.js').Polygons}).polygons;
           const frame=polygons?.features?.length
-            ?polygonFrame(polygons,(value as {boundary?:import('./types.js').Boundary}).boundary??null)
+            ?polygonFrame(polygons,(value as {boundary?:import('./types.js').Boundary}).boundary??null,undefined,
+              lineLayersOf(value as never))
             :staticMapFrame(value as never);
           if(!frame)return [];
           const widthOf=(g:import('./types.js').Boundary|undefined):number|undefined=>{
@@ -3016,11 +3029,6 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         withNote(receipts,runId,node.id,[note]);
       }
     }
-    // LINES JOIN EVERY MAP, whichever renderer leads: a map's layers are not a mode (experiment 229).
-    if(node.type==='map_output'&&value&&(inputs as unknown as {lines?:import('./types.js').LineLayer}).lines){
-      const edge=workflow.edges.find(e=>e.to===node.id&&e.port==='lines')!,from=workflow.nodes.find(n=>n.id===edge.from);
-      (value as unknown as {lines:unknown}).lines=[{...structuredClone((inputs as unknown as {lines:import('./types.js').LineLayer}).lines),
-        sourceNodeId:edge.from,label:(from?.params as {label?:string})?.label||edge.from}];}
     values.set(node.id,value);{remember(node,value);const summary=summarizeStep(node,value);if(summary)stepSummaries[node.id]=summary;}trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // A RASTER IS LET GO once every step that reads it has run (2026-11-13): three national windows at 100 m held to the
     // end of Botswana's run stalled the tab, and nothing after the steps reading a raster reads it again. A step showing it,

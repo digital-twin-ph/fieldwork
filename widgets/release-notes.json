@@ -328,12 +328,16 @@
    "migrationFrom": []
   },
   "find_health_facilities": {
-   "version": "0.4.3",
-   "released": "2026-11-23",
+   "version": "0.5.0",
+   "released": "2026-11-24",
    "changes": [
     {
-     "kind": "patch",
-     "description": "Its Inspector moved to facilities-ui.ts. Retrieve facilities, for a step naming no country, fills in the study area's country before it notes the workflow, so the retrieval is no longer refused as changed while it ran."
+     "kind": "changed",
+     "description": "THE INSPECTOR IS ON THE STANDARD. Settings holds Configure... alone and primary, as every other standard step's does; Retrieve facilities -- or Fetch the registers -- moves to Result, beside what it produces, and is primary until there is something and again when what is held is not what the settings now ask for. The two shared one row before, with the emphasis moving between them by state, so the one thing to do next was whichever the markup had decided. The retrieval is a different kind of act from Configure...: it reaches the network and changes what the step holds, where Configure... only opens a dialog."
+    },
+    {
+     "kind": "fixed",
+     "description": "The Configure... dialog told the reader to retrieve \"under Settings\", which is not where the button is. It names Result now, and says to apply the settings first. The matching dialog and the refusal raised when no register has been fetched said the same wrong place and now say the right one."
     }
    ],
    "breaking": false,
@@ -406,12 +410,24 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.48.1",
+   "version": "0.49.0",
    "released": "2026-11-24",
    "changes": [
     {
      "kind": "fixed",
-     "description": "On a map carrying a polygon layer, a locator inset drew the areas zoomed to its box while the point marks, the link lines and the basemap stayed at the whole extent. An area drawn around a pin was therefore drawn about six times too wide and off to one side of the pin it belongs to. The marks, the lines and the ground now use the frame the main plot was composed in, as the boundary renderer always has."
+     "description": "A map carrying polygons drew no line layer. The polygon renderer is chosen whenever polygons are present and returns before the lines are drawn, so hand-drawn routes appeared on the interactive preview and on no static figure -- not in Results, not in Notes, not in a download. Both renderers now draw the lines from one function, over the areas and under the points, and both frames span them, so a route running past the polygons' own extent is no longer clipped away."
+    },
+    {
+     "kind": "fixed",
+     "description": "A line layer could not be managed. The lines port was absent from the table the layer list is built from, so Manage layers listed everything else and not the lines: they could not be renamed, reordered, grouped or switched off, and no receipt recorded that the map had drawn any. A line layer is now a layer of its own kind, drawn over the street network and under the points, and the switch is honoured by the figure."
+    },
+    {
+     "kind": "changed",
+     "description": "Where lines are drawn over polygons built from the study areas, the polygons lose their hue per feature and are drawn in one wash, exactly as they already did under points. A route across two study areas is what the map is about; the areas it crosses are the ground it crosses, and a colour each asserts two categories against the reading the line already gives. A layer read from a file, and a layer carrying a value, are untouched."
+    },
+    {
+     "kind": "added",
+     "description": "DIRECTION, SHOWN WHERE SOMEBODY CHOSE IT. A LineString is an ordered sequence, so the direction is already in the data and an arrowhead only shows it -- which matters because a flow drawn from a camp to a clinic is not the same as one drawn the other way. A layer DRAWN BY HAND is marked by default, because the order its positions were clicked in is a decision a person made and the Line layer editor already shows it; hiding it on the map would hide their work. A layer read from a GPX, or taken as the border two areas share, is left unmarked, because the order of positions in a published track or a computed border is an artefact of the file and an arrowhead would assert a direction nobody chose. Configure... offers the three ways -- where the lines were drawn by hand, always, never -- and the last two win over the source. The interactive map, the static figure and the Line layer editor draw one head from one definition of which way a line runs."
     }
    ],
    "breaking": false,
@@ -1029,12 +1045,16 @@
    "migrationFrom": []
   },
   "line_input": {
-   "version": "0.2.0",
+   "version": "0.3.0",
    "released": "2026-11-24",
    "changes": [
     {
-     "kind": "added",
-     "description": "Routes and flows drawn on a map, as pushpins place points: click to lay down each position, finish the line, name it. The order of clicking IS the direction, so a flow drawn from a camp to a clinic is not the same as one drawn the other way, and the editor shows both ends and offers to reverse. A drawn layer keeps its lines and names no file, because there is none. A layer set to be drawn with nothing drawn is refused in those words rather than being told to read a GPX."
+     "kind": "changed",
+     "description": "A drawn line now ends in an ARROWHEAD rather than a filled dot, pointing the way the line runs; the hollow marker at its start is unchanged. It is the same head the Map draws when its Configure dialog is set to mark direction, so the editor reads the way the figure will. Two marks for one fact was clutter, and the dot said which end was the end without saying which way the line went."
+    },
+    {
+     "kind": "fixed",
+     "description": "The drawing map showed one tile in a corner with grey around it. The dialog's panel has no size yet when the map is mounted, so Leaflet measured a container of nothing and asked for a single tile. It is now settled after layout and watched for every later change of size, full screen among them, as the pin editor and the georeference dialog are."
     }
    ],
    "breaking": false,

@@ -29,6 +29,9 @@ test('a route read as a line is drawn over the study area, under the points',asy
     {id:'map',type:'map_output',x:600,y:100,params:{label:'Map',basemap:'none'}}],
     edges:[{id:'e1',from:'ward',to:'map',port:'area'},{id:'e2',from:'route',to:'map',port:'lines'}]});
   await expect(page.locator('#map [data-line-layer="route"]')).toHaveCount(1);
+  // Read from a file, so it is drawn with no arrowhead: the order of positions in a published track is an
+  // artefact of how the file was written, not a direction anybody chose.
+  await expect(page.locator('#map [data-line-arrow]')).toHaveCount(0);
   await page.locator('#map').screenshot({path:'test-results/line-layer-1.png'});
   expect(errors).toEqual([]);
 });
@@ -40,6 +43,8 @@ test('the border two study areas share is a line, drawn on a map of lines alone'
     {id:'map',type:'map_output',x:600,y:100,params:{label:'Map',basemap:'none'}}],
     edges:[{id:'e1',from:'a',to:'border',port:'area'},{id:'e2',from:'b',to:'border',port:'area_2'},{id:'e3',from:'border',to:'map',port:'lines'}]});
   await expect(page.locator('#map [data-line-layer="border"]')).toHaveCount(1);
+  // A computed border runs no particular way either.
+  await expect(page.locator('#map [data-line-arrow]')).toHaveCount(0);
   await page.locator('#map').screenshot({path:'test-results/line-layer-2.png'});
   expect(errors).toEqual([]);
 });
@@ -166,8 +171,15 @@ test('a route is drawn on the map, named, reversed, and runs',async({page})=>{
   await expect(d).toHaveCount(0);
   await page.locator('#run-button').click();
   await expect(page.locator('#workflow-state')).toContainText('Run complete',{timeout:45000});
-  // And the drawn line reaches the map it is wired to.
+  // And the drawn line reaches the map it is wired to, AS TWO PATHS: the line, and the arrowheads that show which
+  // way it runs. They carry the same `data-line-layer` on purpose, so a layer switched off in Manage layers takes
+  // its arrowheads with it.
   await page.locator('[data-view="results"]').click();
-  await expect(page.locator('#map [data-line-layer="line"]')).toHaveCount(1);
+  await expect(page.locator('#map [data-line-layer="line"]:not([data-line-arrow])')).toHaveCount(1);
+  // A LINE DRAWN BY HAND IS MARKED WITH NO SETTING TOUCHED (the practitioner, 2026-11-24: "The arrow head does not
+  // show up in the map output. But it shows up on line layer preview."). The order its positions were clicked in is
+  // a decision somebody made, so the figure shows it. The two tests above draw a layer read from a file and a
+  // layer taken as a shared border, and neither is marked: there the order of positions is the file's doing.
+  await expect(page.locator('#map [data-line-layer="line"][data-line-arrow]')).toHaveCount(1);
   expect(errors).toEqual([]);
 });

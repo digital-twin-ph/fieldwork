@@ -122,3 +122,73 @@ test('THE SEVENTH: a study area wired beside polygons is drawn under them and in
   assert.deepEqual(framed,[-13.3,6.9,-10.3,10],'the frame takes the area in');
   assert.deepEqual(alone,[-12,8,-11.9,8.1]);
 });
+
+/** THE EIGHTH: the lines. Reported 2026-11-24 off a South Sudan / DR Congo border workflow -- *"Map output does not
+ *  show hand drawn lines"*, with the interactive preview showing them and the static figure not. The polygon
+ *  renderer is chosen whenever polygons are present and returns before the lines branch below it, so `lines` was
+ *  drawn on every other kind of map and on this one never. The same list, the same lesson. */
+const lineLayer=(coords,id='flows',source='drawn')=>({kind:'lines',source,sourceNodeId:id,label:'Border crossings',
+  features:[{type:'Feature',id:'l1',properties:{name:'Route 1'},geometry:{type:'LineString',coordinates:coords}}]});
+
+test('THE EIGHTH: a map carrying polygons draws its line layers, and frames them',async()=>{
+  const {polygonSvg,polygonFrame}=await import('../build/catchment-output.js');
+  const square={type:'Feature',id:'p1',properties:{},geometry:{type:'Polygon',coordinates:[[[29,3],[30,3],[30,4],[29,4],[29,3]]]}};
+  const p={kind:'regions',features:[square],sites:[]};
+  // The route runs OUTSIDE the polygon's own extent, which is what a frame spanning only the polygons clips away.
+  const lines=[lineLayer([[29.5,3.5],[32,6]])];
+  assert.doesNotMatch(polygonSvg(p,esc),/data-line-layer/,'no lines wired, none drawn');
+  const svg=polygonSvg(p,esc,undefined,{lines});
+  assert.match(svg,/data-line-layer="flows"/,'the line layer is drawn');
+  assert.ok(svg.indexOf('data-catchment')<svg.indexOf('data-line-layer'),'the polygons first, the lines over them');
+  assert.match(svg,/lines: Border crossings/,'and named in the key, as EveryMarkIsInTheKey asks');
+  assert.deepEqual(polygonFrame(p,null,undefined,lines).bounds,[29,3,32,6],'the frame takes the lines in');
+  assert.deepEqual(polygonFrame(p).bounds,[29,3,30,4],'and spans the polygons alone without them');
+});
+
+test('a drawn line shows which way it runs; one read from a file does not, unless asked',async()=>{
+  const {polygonSvg}=await import('../build/catchment-output.js');
+  const square={type:'Feature',id:'p1',properties:{},geometry:{type:'Polygon',coordinates:[[[29,3],[30,3],[30,4],[29,4],[29,3]]]}};
+  const p={kind:'regions',features:[square],sites:[]};
+  const drawn=[lineLayer([[29.1,3.5],[29.9,3.5]])];
+  const read=[lineLayer([[29.1,3.5],[29.9,3.5]],'flows','gpx')];
+  // Reported 2026-11-24: "The arrow head does not show up in the map output. But it shows up on line layer preview."
+  // A line somebody drew has the direction they chose by clicking, so the default marks it.
+  assert.match(polygonSvg(p,esc,undefined,{lines:drawn}),/data-line-arrow/,'drawn: marked by default');
+  assert.doesNotMatch(polygonSvg(p,esc,undefined,{lines:read}),/data-line-arrow/,
+    'read from a file: the order of positions is the file\u2019s doing, not a decision');
+  // The practitioner saying so outright wins over the source, either way.
+  assert.match(polygonSvg(p,esc,undefined,{lines:read,lineArrows:'all'}),/data-line-arrow/);
+  assert.doesNotMatch(polygonSvg(p,esc,undefined,{lines:drawn,lineArrows:'none'}),/data-line-arrow/);
+});
+
+test('an arrowhead turns with the line it belongs to',async()=>{
+  const {polygonSvg}=await import('../build/catchment-output.js');
+  const square={type:'Feature',id:'p1',properties:{},geometry:{type:'Polygon',coordinates:[[[29,3],[30,3],[30,4],[29,4],[29,3]]]}};
+  const p={kind:'regions',features:[square],sites:[]};
+  // Drawn and reversed, the two heads must sit at opposite ends: a flow drawn A to B that cannot be told from B to A
+  // is wrong half the time, which is the whole reason `line-draw.ts` carries direction.
+  const tipOf=svg=>{const d=/data-line-arrow="" d="M([-\d.]+),([-\d.]+)/.exec(svg);return [Number(d[1]),Number(d[2])];};
+  const [ex]=tipOf(polygonSvg(p,esc,undefined,{lines:[lineLayer([[29.1,3.5],[29.9,3.5]])]}));
+  const [wx]=tipOf(polygonSvg(p,esc,undefined,{lines:[lineLayer([[29.9,3.5],[29.1,3.5]])]}));
+  assert.ok(ex>wx+100,`the head follows the line's direction: ${ex} against ${wx}`);
+});
+
+test('a line with no last segment of any length gets no arrowhead',async()=>{
+  const {polygonSvg}=await import('../build/catchment-output.js');
+  const square={type:'Feature',id:'p1',properties:{},geometry:{type:'Polygon',coordinates:[[[29,3],[30,3],[30,4],[29,4],[29,3]]]}};
+  const p={kind:'regions',features:[square],sites:[]};
+  // One position repeated: there is no direction to point in, and normalising a zero vector would draw a triangle
+  // at an arbitrary angle.
+  const still=[lineLayer([[29.5,3.5],[29.5,3.5]])];
+  assert.doesNotMatch(polygonSvg(p,esc,undefined,{lines:still,lineArrows:'all'}),/data-line-arrow/);
+});
+
+test('the lines port is a layer the practitioner can manage',async()=>{
+  const {drawablePort,mapLayerList}=await import('../build/map-layer-list.js');
+  assert.equal(drawablePort('lines'),true,'reported 2026-11-24: Manage layers listed only the polygons');
+  const node={id:'map',type:'map_output',params:{label:'Map'}};
+  const edges=[{to:'map',from:'poly',port:'polygons'},{to:'map',from:'flows',port:'lines'}];
+  const list=mapLayerList(node,edges,id=>({poly:'Polygon layer',flows:'Border crossings'}[id]));
+  assert.deepEqual(list.map(l=>l.kind),['PolygonsLayer','LinesLayer'],'lines over the polygons, bottom first');
+  assert.equal(list.find(l=>l.kind==='LinesLayer').label,'Border crossings','named by its own step');
+});

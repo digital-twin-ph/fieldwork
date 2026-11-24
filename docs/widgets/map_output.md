@@ -384,6 +384,29 @@ Methods as a limitation, by itself. Natural Earth is bundled and writes no such 
 
 ## History
 
+### 2026-11-24 · Lines are a layer, and they show which way they run (0.49.0)
+
+Hand-drawn routes showed on the interactive map and on no figure — not in Results, not in Notes, not in a download.
+A map carrying polygons is drawn by a different renderer, and that one had never been given the lines. Both draw
+them now, over the areas and under the points, and both take them into the frame, so a route running past the
+polygons no longer has its end cut off.
+
+**Lines are a layer in Manage layers.** Until now the port was missing from the list the dialog is built from, so a
+line layer could not be renamed, reordered, put in a group or switched off, and no receipt recorded that the map had
+drawn one. It sits above the street network and below the points, which is where it is drawn.
+
+**A line you drew shows which way it runs.** The order you clicked its positions *is* its direction — a flow from a
+camp to a clinic is not the same as one from the clinic to the camp — so an arrowhead marks it, and the Line layer
+step reverses a line drawn the wrong way round. A layer read from a GPX, or taken as the border two study areas
+share, is left unmarked: the order of positions in a published track or a computed border is an artefact of how the
+file was written, so an arrowhead there would claim a direction nobody chose. Configure… offers the three ways —
+**where the lines were drawn by hand**, **always**, **never** — and the last two are you saying so outright.
+
+**Polygons under lines are ground, not categories.** Where lines cross study areas, those areas lose their
+colour-each and are drawn in one wash — the rule points have followed since yesterday. The route is the subject; the
+areas are what it crosses. A layer read from a file, or one carrying a value, keeps its colours.
+
+
 ### 2026-11-23 · A pane per layer, and the stride retired (0.45.0)
 
 The practitioner, reading the z-indices the fix above exposed — 10,076 and 10,000,092: *"Why do we have 10,000 layers

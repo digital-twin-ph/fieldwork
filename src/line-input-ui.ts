@@ -10,6 +10,7 @@ import {type DrawnLine,addVertex,finishLine,reverseLine,endsOf,drawnLayer,linesF
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {rasterBasemap,PIN_BASEMAPS,BASEMAP_LABELS} from './catchment-map.js';
+import {arrowIconSvg,endBearing} from './map-lines.js';
 import type {BasemapChoice} from './basemaps.js';
 
 type Params=ParamsByType['line_input'];
@@ -70,6 +71,9 @@ export function linesPreviewSvg(lines:LineLayer|undefined,outlines:Boundary[],es
 let drawing:{lines:DrawnLine[];pending:[number,number][];selected:string|null;refused:string}=
   {lines:[],pending:[],selected:null,refused:''};
 let drawnMap:L.Map|null=null;
+/** The observer that keeps the map the size of its container. Disconnected with the map it belongs to, so a dialog
+ *  reopened or a method changed does not leave one watching a host that is gone. */
+let drawnFit:ResizeObserver|null=null;
 
 /** The settings and the picture, for a layer drawn by hand. */
 function drawnSections(d:LineDraft,method:string,esc:Escape){
@@ -94,7 +98,20 @@ function drawnSections(d:LineDraft,method:string,esc:Escape){
     +'<th scope="col">Length, km</th></tr></thead><tbody data-line-rows></tbody></table></div></fieldset>'};
 }
 
-/** What the map shows: every finished line with its two ends, and the one being drawn. */
+/** AN ARROWHEAD AT A LINE'S END, in screen pixels and pointing the way the line runs. The bearing is taken in layer
+ *  points, where the line is actually drawn, so the head does not lean away from its own line far from the equator.
+ *  Nothing is drawn where the last segment has no length: there is no direction to point in. */
+function arrowAt(vertices:readonly [number,number][],colour:string,title:string):void{
+  const map=drawnMap;if(!map)return;
+  const angle=endBearing(vertices,v=>map.latLngToLayerPoint(L.latLng([v[1],v[0]])));
+  if(angle===null)return;
+  const end=vertices[vertices.length-1]!;
+  const m=L.marker(L.latLng([end[1],end[0]]),{interactive:false,keyboard:false,
+    icon:L.divIcon({className:'line-arrow',iconSize:[20,20],iconAnchor:[10,10],html:arrowIconSvg(angle,colour)})});
+  (m as {_fwDrawn?:boolean})._fwDrawn=true;m.bindTooltip(title);m.addTo(map);
+}
+
+/** What the map shows: every finished line with its start, the way it runs, and the one being drawn. */
 function paintDrawn(esc:Escape):void{
   if(!drawnMap)return;
   drawnMap.eachLayer(l=>{if((l as {_fwDrawn?:boolean})._fwDrawn)drawnMap!.removeLayer(l);});
@@ -110,9 +127,16 @@ function paintDrawn(esc:Escape):void{
     poly.on('click',()=>{drawing.selected=line.id;paintDrawn(esc);syncDrawn(esc);});
     poly.addTo(drawnMap);
     const ends=endsOf(line);
-    // THE DIRECTION, SHOWN: hollow where the line starts, filled where it ends. A flow nobody can read the
+    // THE DIRECTION, SHOWN: hollow where the line starts, an arrowhead where it ends. A flow nobody can read the
     // direction of is a flow drawn wrong half the time.
-    if(ends){mark(ends.from,'#ffffff',`${line.name}: from here`);mark(ends.to,'#1d4ed8',`${line.name}: to here`);}
+    //
+    // AN ARROWHEAD RATHER THAN A SECOND DOT (2026-11-24): the same mark the Map draws when its Configure dialog is
+    // set to mark direction. The editor is where direction is decided, so it should read the way the figure will,
+    // and two indications of one thing is clutter -- the filled end dot it replaces is gone.
+    if(ends){
+      mark(ends.from,'#ffffff',`${line.name}: from here`);
+      arrowAt(line.vertices,chosen?'#1d4ed8':'#3f6f55',`${line.name}: to here`);
+    }
   }
   if(drawing.pending.length){
     const poly=L.polyline(drawing.pending.map(v=>[v[1],v[0]] as [number,number]),
@@ -153,7 +177,7 @@ export function openLineConfig(view:LineView,esc:Escape):void{
   const draft:LineDraft={...view.initial};
   // ONE DIALOG, ONE DRAWING. Opened again, it starts from the lines the step holds rather than from whatever the
   // last dialog left in module state.
-  drawnMap=null;
+  drawnMap=null;drawnFit?.disconnect();drawnFit=null;
   drawing={lines:view.initial.inputMethod==='drawn'?linesFromLayer(view.initial.data):[],pending:[],selected:null,refused:''};
   let error='';
   openConfigDialog<LineDraft>({
@@ -198,7 +222,7 @@ export function openLineConfig(view:LineView,esc:Escape):void{
     wire:(root,d,redraw)=>{
       root.querySelector<HTMLSelectElement>('#line-method')?.addEventListener('change',e=>{
         d.inputMethod=(e.target as HTMLSelectElement).value as LineDraft['inputMethod'];error='';
-        drawnMap=null;
+        drawnMap=null;drawnFit?.disconnect();drawnFit=null;
         if(d.inputMethod==='drawn')drawing={lines:linesFromLayer(d.data),pending:[],selected:null,refused:''};
         redraw();});
       // THE MAP, MOUNTED ONCE. Everything after this writes to the DOM rather than calling redraw(), which would
@@ -213,6 +237,15 @@ export function openLineConfig(view:LineView,esc:Escape):void{
           if(tiles)map.removeLayer(tiles);
           tiles=rasterBasemap((ev.target as HTMLSelectElement).value as BasemapChoice).layer;
           if(tiles)tiles.addTo(map);});
+        // THE MAP IS LAID OUT AFTER IT IS MOUNTED (2026-11-24). Reported as *"Line layer basemap does not show in
+        // configure dialog"*: the dialog's panel has no size yet when `wire` runs, so Leaflet measured a container of
+        // nothing and asked for one tile, which is the fragment in the corner with grey around it. The pin editor and
+        // the georeference dialog each settle their maps the same way -- an observer for every later layout change,
+        // full screen among them, and two frames for the first.
+        const fit=new ResizeObserver(()=>{if(drawnMap===map)map.invalidateSize({pan:false});});
+        fit.observe(host);
+        drawnFit?.disconnect();drawnFit=fit;
+        requestAnimationFrame(()=>requestAnimationFrame(()=>{if(drawnMap===map)map.invalidateSize({pan:false});}));
         map.on('click',ev=>{
           drawing.refused='';
           drawing.pending=addVertex(drawing.pending,[ev.latlng.lng,ev.latlng.lat]);

@@ -73,6 +73,19 @@ Sierra Leone's names, 4 of 7 that could be checked against GRID3 were the wrong 
 
 ## History
 
+### 2026-11-24 · The Inspector on the standard (0.5.0)
+
+**Configure…** now sits alone in Settings, the way it does on every other step. **Retrieve facilities** — or **Fetch
+the registers**, when you are matching a list — has moved down to **Result**, beside the facilities it produces. It
+is the highlighted button until there is something, and highlighted again when what the step holds is not what the
+settings now ask for.
+
+The two used to share a row, swapping which of them looked like the thing to press. They are not the same kind of
+act: Configure… opens a dialog, and Retrieve reaches out to the source and changes what the step holds.
+
+The dialog also used to send you to retrieve "under Settings", which was not where the button was. It names Result
+now, and says to apply your settings first.
+
 ### 2026-11-23 · Moved out of the application's main file (0.4.3)
 
 Its Inspector moved into this widget's own module. **Retrieve facilities**, on a step that named no country, filled in

@@ -700,7 +700,7 @@ export interface ParamsByType {
      *  there are any."* Absent is that rule: a hue per feature where the polygons are the subject, a neutral wash where
      *  points are drawn over them. `each` and `plain` say it outright. Shading by a VALUE is not this setting's
      *  business and is never suppressed: a table joined to the study area is data whatever else the map draws. */
-    shadeFeatures?:'each'|'plain'; /** Study areas left out of this map, by name (2026-11-22): a Polygon layer of study areas keeps them all. */ leftOutAreas?:string[]; section?:import('./notes.js').FigureSection|'none';
+    shadeFeatures?:'each'|'plain'; /** MARK EACH LINE'S DIRECTION with an arrowhead at its end (2026-11-24). A LineString is ordered, so this only shows what the data already states. Absent means lines DRAWN BY HAND are marked and lines read from a file are not; 'all' and 'none' override that. See `marksDirection`. */ lineArrows?:'all'|'none'; /** Study areas left out of this map, by name (2026-11-22): a Polygon layer of study areas keeps them all. */ leftOutAreas?:string[]; section?:import('./notes.js').FigureSection|'none';
     /** An enlarged part, or a locator, on the static figure (Map's manual, History: the inset), its box picked on the interactive map. */
     inset?:import('./map-inset.js').InsetSettings; pointInputCount?:number;
     /** How many polygon layers it takes, as `polygons`, `polygons_2` … (2026-11-13: Collect polygon layers retired). */

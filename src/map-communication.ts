@@ -1,4 +1,5 @@
 import {fillWords,figureWords} from './figure-words.js';
+import {lineLayersOf} from './map-lines.js';
 import {rampFor} from './raster-image.js';
 import type {Output,Receipt} from './results.js';
 import {generationColours} from './presentation.js';
@@ -342,6 +343,11 @@ export function mapSpecificationFacts(node:WorkflowNode<'map_output'>,output:Out
   if(output.polygons?.observations?.features?.length)
     drawn.push({kind:'PointsLayer',features:output.polygons.observations.features.length,
       within:portOf('polygons')?.port,role:'observations'});
+  // THE LINES ARE A LAYER IN THE RECEIPT TOO (2026-11-24). Drawn over the areas and under the points, which is
+  // where both renderers put them, so that is where they are enumerated.
+  for(const layer of lineLayersOf(output))
+    if(layer.features.length)
+      drawn.push({kind:'LinesLayer',features:layer.features.length,port:portOf('lines')?.port});
   if(output.contextPoints?.features?.length)
     drawn.push({kind:'PointsLayer',features:output.contextPoints.features.length,port:portOf('context')?.port,role:'context'});
   else if(output.polygons?.sites?.length)

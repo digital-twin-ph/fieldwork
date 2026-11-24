@@ -1,4 +1,4 @@
-import {LINE_COLOURS} from './static-map.js';
+import {LINE_COLOURS,arrowIconSvg,endBearing,marksDirection} from './map-lines.js';
 import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM,recordAttributesHtml} from './point-layers.js';
 import {RASTER_POINT_COLOURS} from './raster-panels.js';
 import {GlMarks,type GlMark} from './gl-marks.js';
@@ -187,6 +187,9 @@ export interface MapLayers {
   network?:{nodes:{id:string;coordinates:Position}[];edges:{from:string;to:string;geometry?:Position[]}[]};
   /** LINES: routes, tracks and borders, a layer each (experiment 229). */
   lines?:(import('./types.js').LineLayer&{sourceNodeId:string;label:string})[];
+  /** Whether lines show which way they run (2026-11-24), as the Map's Configure dialog sets. The interactive map and
+   *  the static figure read the one setting, so the preview is the figure. See `marksDirection`. */
+  lineArrows?:import('./map-lines.js').ArrowChoice;
   /** THE LAYERS, as the practitioner ordered, named and grouped them. Where this is absent the
    *  map draws exactly what it drew before: the names below are the defaults, not a fallback
    *  that loses anything. */
@@ -476,10 +479,21 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
   }
   // THE LINES, one layer each, over the area and under the points; each line named on hover (experiment 229).
   (layers.lines??[]).forEach((layer,i)=>{
-    const group=L.featureGroup();
+    const group=L.featureGroup(),colour=LINE_COLOURS[i%LINE_COLOURS.length];
     for(const f of layer.features){
       const parts=(f.geometry.type==='LineString'?[f.geometry.coordinates]:f.geometry.coordinates).map(part=>part.map(([lon,lat])=>[lat,lon] as [number,number]));
-      L.polyline(parts,{color:LINE_COLOURS[i%LINE_COLOURS.length],weight:3,opacity:.95}).bindTooltip(esc(f.properties.name)).addTo(group);}
+      L.polyline(parts,{color:colour,weight:3,opacity:.95}).bindTooltip(esc(f.properties.name)).addTo(group);
+      // AN ARROWHEAD WHERE DIRECTION IS MARKED, in screen pixels, so it is the size a reader sees at every zoom
+      // rather than growing with the map. The bearing is taken in layer points, which is where the line is actually
+      // drawn: taking it from latitude and longitude would lean the head away from its own line the further the map
+      // is from the equator. Web Mercator is conformal, so the angle holds as the map is zoomed.
+      if(marksDirection(layer,layers.lineArrows))for(const part of parts){
+        // `parts` holds [lat, lon] for Leaflet; `endBearing` wants [lon, lat], as every geometry here does.
+        const angle=endBearing(part.map(([lat,lon])=>[lon,lat] as [number,number]),v=>map.latLngToLayerPoint(L.latLng([v[1],v[0]])));
+        if(angle===null)continue;
+        L.marker(L.latLng(part[part.length-1]!),{interactive:false,keyboard:false,
+          icon:L.divIcon({className:'line-arrow',iconSize:[20,20],iconAnchor:[10,10],html:arrowIconSvg(angle,colour)})}).addTo(group);
+      }}
     group.addTo(map);all.addLayer(group);overlays[esc(layer.label)]=group;});
   const observations=L.featureGroup();
   for(const f of p.observations?.features||[]){if(!f.geometry)continue;const [lon,lat]=f.geometry.coordinates,n=f.properties.DEATHS;

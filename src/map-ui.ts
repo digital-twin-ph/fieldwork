@@ -199,6 +199,7 @@ export function openMapConfig(nodeId:string){
         if(value)next[key]=value;else delete next[key];
         if(Object.keys(next).length)draft.rasterShading=next as NonNullable<Draft['rasterShading']>;else delete draft.rasterShading;};
       on('#polygon-shading',el=>{const v=el.value;if(v==='each'||v==='plain')draft.shadeFeatures=v;else delete draft.shadeFeatures;});
+      on('#line-arrows',el=>{const v=el.value;if(v==='all'||v==='none')draft.lineArrows=v;else delete draft.lineArrows;});
       on('#raster-show',el=>shade('show',el.value));on('#raster-ramp',el=>shade('ramp',el.value));on('#raster-classes',el=>shade('classes',el.value));
       on('#polygon-presentation',el=>{
         draft.presentation=el.value==='interactive'?'interactive':'plot';
@@ -324,11 +325,29 @@ function mapPolygonSection(n:WorkflowNode<'map_output'>):string{
   return '<span class="inspector-section">Polygons</span>'
     +'<div class="field"><label class="field-label" for="polygon-shading">A colour for each polygon</label>'
     +'<select id="polygon-shading">'
-    +([['','Where no points are drawn over them'],['each','Always'],['plain','Never']] as [string,string][])
+    +([['','Where no points or lines are drawn over them'],['each','Always'],['plain','Never']] as [string,string][])
       .map(([v,t])=>`<option value="${v}" ${held===v?'selected':''}>${t}</option>`).join('')
     +'</select><small>A colour each says these are different things, which is what a reader needs where the polygons '
-    +'are the subject. Where points are drawn over them the polygons are the ground the points stand on, and they are '
+    +'are the subject. Where points or lines are drawn over them the polygons are the ground those stand on or cross, '
+    +'and they are '
     +'drawn in one wash, named in the layer list and in their popups. A layer carrying a value keeps its classes either way.</small></div>';
+}
+/** WHETHER THE LINES SHOW WHICH WAY THEY RUN (2026-11-24; the practitioner: *"include an option to mark the
+ *  direction by placing an arrow head on the line"*). Offered only where a line layer is wired, as the polygon and
+ *  point controls are. Off by default: a flow is defined by its direction, a border and a river reach are not, and
+ *  the same renderer draws both. */
+function mapLinesSection(n:WorkflowNode<'map_output'>):string{
+  if(!ctx.workflow().edges.some(e=>e.to===n.id&&e.port==='lines'))return '';
+  return '<span class="inspector-section">Lines</span>'
+    +'<div class="field"><label class="field-label" for="line-arrows">An arrowhead showing which way each line runs</label>'
+    +'<select id="line-arrows">'
+    +([['','Where the lines were drawn by hand'],['all','Always'],['none','Never']] as [string,string][])
+      .map(([v,t])=>`<option value="${v}" ${(n.params.lineArrows??'')===v?'selected':''}>${t}</option>`).join('')
+    +'</select><small>A line runs in the direction it was clicked or read, so a flow from A to B is not the same '
+    +'line as one from B to A, and the Line layer step reverses one drawn the wrong way round. A line you drew has '
+    +'the direction you chose by clicking, so it is marked; the order of positions in a published track or a '
+    +'computed border is an artefact of the file, and asserting a direction there would claim something nobody '
+    +'decided.</small></div>';
 }
 function mapRasterSection(n:WorkflowNode<'map_output'>):string{
   if(!ctx.workflow().edges.some(e=>e.to===n.id&&isRasterPort(e.port)))return '';
@@ -382,7 +401,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       // potential point layer in the map gets a configurable/selectable symbol." Only the point
       // layers actually wired are offered, because a control for a layer that does not exist is
       // a setting nobody can check against the picture.
-      +mapBasemapControls(n)+mapStudyAreasSection(n)+mapArrangeSection(n)+mapPolygonSection(n)+mapRasterSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
+      +mapBasemapControls(n)+mapStudyAreasSection(n)+mapArrangeSection(n)+mapPolygonSection(n)+mapLinesSection(n)+mapRasterSection(n)+(n.params.arrangement?'':mapInsetSection(n))+`<span class="inspector-section">Layers</span>`
       +`<p class="muted">Order, name and group the layers.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{

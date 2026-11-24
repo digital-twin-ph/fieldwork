@@ -98,7 +98,8 @@ import {PORT_NAMES,PORT_GROUPS,groupFor} from './port-names.js';
 import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,portSourceName,IncompleteWorkflow,MAX_AREA_INPUTS} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
-import {staticBoundaryMap,staticMapFrame,lineLayersOf} from './static-map.js';
+import {staticBoundaryMap,staticMapFrame} from './static-map.js';
+import {lineLayersOf,lineLayersSvg} from './map-lines.js';
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
@@ -3896,6 +3897,11 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
   }
   if(result.polygons){
     const banded=result.polygons.features.some(f=>f.minutes!==undefined);
+    // LINES JOIN A POLYGON MAP TOO (2026-11-24). Reported as *"Map output does not show hand drawn lines"*, with the
+    // interactive preview showing them: this renderer is chosen whenever polygons are present and returns before the
+    // lines branch below it ever runs, so the `lines` port was drawn on every other kind of map and not this one.
+    // The fifth time a renderer picked from the wired ports dropped a layer; `map-layer-list.ts` names the other four.
+    const drawnLines=lineLayersOf(result),lineArrows=mapNode?.params.lineArrows;
     // The study area drawn under the polygons only where one is wired to this Map, so it is the area, not the polygons' own.
     const wiredArea=own.edges.some(e=>e.to===mapNode?.id&&e.port==='area')?result.boundary:undefined;
     // THE FRAME THE MAIN PLOT WAS DRAWN IN, where an inset was composed. A locator's main plot is the PART, not the
@@ -3916,23 +3922,23 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
       // polygons are present -- staticMapFrame spans the boundary, the lines, the rows and the centres and ignores
       // polygon layers -- which is the same trap the too-small-layer note fell into earlier the same day.
       const insetOn=mapNode?.params.inset;
-      const whole=polygonFrame(result.polygons,wiredArea);
+      const whole=polygonFrame(result.polygons,wiredArea,undefined,drawnLines);
       if(insetOn&&whole&&boxInside(insetOn.box,whole.bounds)){
-        const part=polygonFrame(result.polygons,wiredArea,insetOn.box)!;
+        const part=polygonFrame(result.polygons,wiredArea,insetOn.box,drawnLines)!;
         const locator=insetOn.arrange==='locator';
         const shrink=850/(locator?insetWidth(insetOn):focusDiameter(insetOn,whole.height).diameter);
         const drawing=(content:string,f:{height:number;scale:number;project:(c:Position)=>[number,number]})=>
           ({content,height:f.height,project:f.project as (c:[number,number])=>[number,number],scale:f.scale});
         const composed=composeInset(
-          drawing(polygonSvg(result.polygons,esc,wiredArea,{markScale:locator?shrink:1,withKey:!locator}),whole),
-          drawing(polygonSvg(result.polygons,esc,wiredArea,{box:insetOn.box,markScale:locator?1:shrink,withKey:locator}),part),
+          drawing(polygonSvg(result.polygons,esc,wiredArea,{markScale:locator?shrink:1,withKey:!locator,lines:drawnLines,lineArrows}),whole),
+          drawing(polygonSvg(result.polygons,esc,wiredArea,{box:insetOn.box,markScale:locator?1:shrink,withKey:locator,lines:drawnLines,lineArrows}),part),
           insetOn,
           rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]),{},
           insetFeatures(result.boundary as Boundary|undefined,rows,(locator?part:whole).project as (c:[number,number])=>[number,number]));
         svg.innerHTML=composed.content;
         composedMain=locator?part:whole;
       }
-      else svg.innerHTML=polygonSvg(result.polygons,esc,wiredArea);
+      else svg.innerHTML=polygonSvg(result.polygons,esc,wiredArea,{lines:drawnLines,lineArrows});
       applyFrame(svg,svg.innerHTML);
     }
     // A LOCATOR'S MARKS AND GROUND BELONG TO THE PART, NOT THE WHOLE (2026-11-24). This read the whole frame
@@ -3942,7 +3948,7 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
     // buffer, seen by two readers. The boundary renderer had always chosen the frame this way (`ground(locator ?
     // partFrame : wholeFrame)`); this one never did.
     const polygonGround=arranged&&!banded?null:banded?catchmentFrame(result.polygons,result.contextPoints)
-      :composedMain??polygonFrame(result.polygons,wiredArea);
+      :composedMain??polygonFrame(result.polygons,wiredArea,undefined,drawnLines);
     const drawnLinks=(result as {links?:import('./map-links.js').MapLink[]}).links;
     if(polygonGround&&drawnLinks?.length)
       svg.insertAdjacentHTML('beforeend',linkLinesSvg(drawnLinks,rows,c=>polygonGround.project(c) as [number,number],hidden));
@@ -3957,6 +3963,7 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
          labelField:mapNode?.params.labelField||{},
          ...(o.selected?{focusId:rows.find(r=>`result:${r.id}`===o.selected)?.id}:{}),
          label:row=>[row.excluded?'Excluded':row.relation,row.layerLabel].filter(Boolean).join(' \u00b7 ')}));
+    svg.querySelectorAll<SVGElement>('[data-line-layer]').forEach(el=>{el.style.display=hidden.has(el.dataset.lineLayer!)?'none':'';});
     if(polygonGround)await ground({bounds:polygonGround.bounds,project:c=>polygonGround.project(c) as [number,number]});
     return true;
   }
@@ -3996,8 +4003,8 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
       const locator=inset.arrange==='locator';
       // As wide as it is drawn: a focus circle may be held under the width chosen by the limit.
       const shrink=850/(locator?insetWidth(inset):focusDiameter(inset,wholeFrame.height).diameter);
-      const composed=composeInset(drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,undefined,locator?shrink:1),wholeFrame),
-        drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box,locator?1:shrink),partFrame),inset,
+      const composed=composeInset(drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,undefined,locator?shrink:1,mapNode?.params.lineArrows),wholeFrame),
+        drawing(staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,inset.box,locator?1:shrink,mapNode?.params.lineArrows),partFrame),inset,
         result.rows.filter(r=>r.coordinates).map(r=>r.coordinates as [number,number]),
         insetNames(own.nodes.find(x=>x.id===own.edges.find(e=>e.to===mapNode?.id&&e.port==='area')?.from)?.params as AreaParams|undefined,inset.box,
           result.boundary as Boundary|undefined),
@@ -4009,9 +4016,12 @@ async function drawStaticFigure(svg:SVGSVGElement,result:Output,mapNode:Workflow
       await ground(inset.arrange==='locator'?partFrame:wholeFrame);
       return true;
     }
-    svg.innerHTML=staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels);
+    svg.innerHTML=staticBoundaryMap(result,o.selected??null,esc,statusLabel,labels,undefined,1,mapNode?.params.lineArrows);
     applyFrame(svg,svg.innerHTML);
     svg.querySelectorAll<SVGElement>('[data-layer-link]').forEach(el=>{el.style.display=hidden.has(el.dataset.layerLink!)?'none':'';});
+    // SWITCHED OFF IN MANAGE LAYERS MEANS NOT DRAWN, for a line layer as for a point layer (2026-11-24): `lines` was
+    // absent from `KIND_BY_PORT`, so the dialog never listed one and nothing here ever had to honour the switch.
+    svg.querySelectorAll<SVGElement>('[data-line-layer]').forEach(el=>{el.style.display=hidden.has(el.dataset.lineLayer!)?'none':'';});
     svg.querySelectorAll<SVGElement>('[data-place]').forEach(el=>{el.style.display=hidden.has(el.dataset.layer!)?'none':'';});
     await ground(staticMapFrame(result));
     return true;
@@ -4074,7 +4084,7 @@ function renderMap(){
     ??runWorkflow?.nodes.find((n):n is WorkflowNode<'map_output'>=>n.id===result?.nodeId&&n.type==='map_output');
   const arranged=mapNode?.params.arrangement;
   const rasterPanels=(result as {rasterPanels?:import('./raster-panels.js').DrawnDensity[]}|undefined)?.rasterPanels;
-  const polygonFigure=(p:import('./catchments.js').Polygons)=>arranged?polygonPanelsSvg(p,arranged.panels,arranged.grid,esc):polygonSvg(p,esc,workflow.edges.some(e=>e.to===mapNode?.id&&e.port==='area')?result?.boundary:undefined);
+  const polygonFigure=(p:import('./catchments.js').Polygons)=>arranged?polygonPanelsSvg(p,arranged.panels,arranged.grid,esc):polygonSvg(p,esc,workflow.edges.some(e=>e.to===mapNode?.id&&e.port==='area')?result?.boundary:undefined,{lines:result?lineLayersOf(result):[],lineArrows:mapNode?.params.lineArrows});
   // The symbols the run resolved are the run's, so they carry the sizes that were current then.
   // Re-resolved here against the live node, in the layer order the run recorded, so the marks and
   // the key cannot disagree about what a layer looks like.
@@ -4195,7 +4205,11 @@ function renderMap(){
     // EVERY SHEET, each its own layer in the control (TODO 35).
     const plates=groundImagesFor(mapNode?.id).map(livePlate=>({data:livePlate.data,bounds:livePlate.bounds,opacity:livePlate.opacity,
       label:mapImageCredit(livePlate),...(livePlate.corners?{corners:livePlate.corners,width:livePlate.width,height:livePlate.height}:{})}));
-    const withPlate=plates.length?{...result,plate:plates[0]!,...(plates.length>1?{plates}:{})}:result;
+    // THE DIRECTION SETTING TRAVELS WITH THE LAYERS, for the reason the plate does: the Map's Configure dialog
+    // holds it, and the interactive map must read the same answer as the static figure or the preview is not the
+    // figure (the practitioner, 2026-11-24).
+    const withPlate={...result,...(plates.length?{plate:plates[0]!,...(plates.length>1?{plates}:{})}:{}),
+      ...(mapNode?.params.lineArrows?{lineArrows:mapNode.params.lineArrows}:{})};
     if(rasterPanels&&rasterPanels.length>1&&mapNode&&!arranged)disposeCatchmentMap=mountRasterOneMap(host,rasterPanels,panelScalesOf(result,rasterPanels),mapNode,rasterMapPlan(result,mapNode,workflow.edges,id=>workflow.nodes.find(n=>n.id===id)?.params.label));
     else if(rasterPanels?.length&&mapNode)disposeCatchmentMap=mountRasterPanels(host,rasterPanels,
       panelScalesOf(result,rasterPanels),mapNode,rasterMapPlan(result,mapNode,workflow.edges,id=>workflow.nodes.find(n=>n.id===id)?.params.label)
@@ -8392,7 +8406,7 @@ const layersFor=(node:WorkflowNode<'map_output'>):MapLayer[]=>{
     layerOrigins(out?.pointLayers));
 };
 const KIND_WORD:Record<string,string>={AreaLayer:'study area',PointsLayer:'points',
-  PolygonsLayer:'polygons',RasterLayer:'raster',NetworkLayer:'street network',BasemapLayer:'basemap'};
+  PolygonsLayer:'polygons',RasterLayer:'raster',NetworkLayer:'street network',LinesLayer:'lines',BasemapLayer:'basemap'};
 function renderLayerDialog(){
   if(!layerDialogNode)return;
   const node=getNode(workflow,layerDialogNode,'map_output'),list=layersFor(node);
@@ -8421,7 +8435,7 @@ function renderLayerDialog(){
   // layer is drawn, not whether it may be there.
   const drawn=list.filter(l=>l.drawn);
   $('#layer-dialog-note').textContent=!list.length
-    ?'Connect a study area, points, polygons, a raster or a street network.'
+    ?'Connect a study area, points, polygons, lines, a raster or a street network.'
     :!drawn.length?'Every layer is switched off, so this map has nothing to draw. Switch one back on.'
     :`Drawn bottom to top: ${drawn.map(l=>l.label).join(' → ')}.`
       +(drawn.length<list.length?` ${list.length-drawn.length} switched off, still connected.`:'');

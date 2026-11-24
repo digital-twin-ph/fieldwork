@@ -1,6 +1,6 @@
 # Line layer
 
-_Created 2026-11-22 · Updated 2026-11-23_
+_Created 2026-11-22 · Updated 2026-11-24_
 
 **A source.** It holds lines: a vaccination team's GPS track, a planned route, a road, or the border two study areas
 share. Map draws them over the study area and under the points.
@@ -56,6 +56,15 @@ Nothing reaches the workflow until **Apply**.
 - Measured on Rwanda's Western Province and DR Congo's Kivus: [experiment 229](../experiments/229-a-line-layer.md).
 
 ## History
+
+### 2026-11-24 · An arrowhead, and a map that shows (0.3.0)
+
+The line you are drawing now ends in an **arrowhead** pointing the way it runs, instead of a filled dot. The hollow
+marker at the start is unchanged, so one glance tells you both which end is which and which way the line goes — and
+it is the same arrowhead Map draws when you set it to mark direction, so what you draw here is what the figure shows.
+
+The drawing map also used to open as a single tile in one corner with grey around it. It was measuring a panel that
+had no size yet; it now waits for the layout, and keeps up when the panel changes size or goes full screen.
 
 ### 2026-11-24 · Routes and flows drawn on a map (0.2.0)
 

@@ -1,6 +1,7 @@
 import {RING_RED,RING_BLUE,orderedSteps,categoricalSteps,polygonShading,shadedValues,classRanges,type classifyValues,type classifyCategories,FIGURE_ROLE,markPath} from './presentation.js';
 import type {Polygons} from './catchments.js';
 import type {DisplayValue,Receipt} from './results.js';
+import {lineLayersSvg,lineVerticesOf,type LineLayerOnMap} from './map-lines.js';
 import type {Boundary,Escape,Position,PointCollection,WorkflowNode} from './types.js';
 /** POLYGONS ARE DATA, OR THEY ARE THE GROUND A POINT STANDS ON (the practitioner, 2026-11-23: *"polygons can be data
  *  bearing but the polygon can be just context for the points. If there are no points then we must be using the polygon
@@ -12,11 +13,20 @@ import type {Boundary,Escape,Position,PointCollection,WorkflowNode} from './type
  *  study areas"*, the same day). A layer read from a file is the subject whatever else the map carries: two named
  *  reaches of the Thames under an intake are two things a reader wants told apart, and the first form of this rule
  *  took their colours away. Only the hue-per-feature identity shading is ever suppressed; a layer carrying a value
- *  keeps its classes, so a table joined to the study area is drawn as the data it is. */
+ *  keeps its classes, so a table joined to the study area is drawn as the data it is.
+ *
+ *  LINES ARE SUBJECTS TOO (the practitioner, 2026-11-24: *"the polygon shading -- should follow same rule as
+ *  points, that when lines are present, no polygon shading as default"*). A route drawn across two study areas is
+ *  what the map is about; the areas it crosses are the ground it crosses. Drawn with a hue per area they assert two
+ *  categories against a reading the line already gives, and the border between South Sudan and DR Congo was read
+ *  that way. The qualifier is unchanged: only a layer built FROM the study areas, and only the hue-per-feature
+ *  identity shading, so a layer read from a file and a layer carrying a value are untouched.
+ *
+ *  `subjectDrawn` rather than `pointsDrawn`, because it is now two kinds of subject and the name was about to lie. */
 export function shadeFeaturesOf<T extends {featuresNamed?:boolean}>(
-  layer:T,pointsDrawn:boolean,choice?:'each'|'plain'):T{
+  layer:T,subjectDrawn:boolean,choice?:'each'|'plain'):T{
   if(choice==='each')return layer;
-  return choice==='plain'||pointsDrawn?{...layer,featuresNamed:false}:layer;
+  return choice==='plain'||subjectDrawn?{...layer,featuresNamed:false}:layer;
 }
 export function polygonDisplay(p:Polygons,view:'map'|'table'|'chart'):DisplayValue{
   if(p.kind==='hexbin'){
@@ -85,11 +95,17 @@ const contextRings=(area?:Boundary|null):Position[][]=>!area?[]:area.type==='Pol
 /** `box`: draw over this extent instead of the layers' own, for an inset's enlarged view (2026-11-23). The same
  *  parameter `staticMapFrame` has taken since the inset was built; a map carrying polygons is drawn here instead,
  *  which is why its inset was composed for every other kind of map and not this one. */
-export function polygonFrame(p:Polygons,area?:Boundary|null,box?:readonly [number,number,number,number]):{project:(c:Position)=>[number,number];bounds:[number,number,number,number];height:number;scale:number}|null{
+/** `lines`: the map's line layers, which are IN THE FRAME exactly as they are in `staticMapFrame` (2026-11-24). A
+ *  route drawn across a border lies partly outside the polygons' own extent, and a frame that spans only the
+ *  polygons clips it away. */
+export function polygonFrame(p:Polygons,area?:Boundary|null,box?:readonly [number,number,number,number],
+  lines?:readonly LineLayerOnMap[]):{project:(c:Position)=>[number,number];bounds:[number,number,number,number];height:number;scale:number}|null{
   const coords=p.kind==='hexbin'
-    ?p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2))
+    ?[...p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2)),
+      ...lineVerticesOf(lines??[])]
     :[...p.features.flatMap(f=>(f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat())).flat(),
-      ...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.kind==='hexbin'?[]:contextRings(area).flat())];
+      ...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.kind==='hexbin'?[]:contextRings(area).flat()),
+      ...lineVerticesOf(lines??[])];
   if(!coords.length)return null;
   let west=Infinity,east=-Infinity,south=Infinity,north=-Infinity;
   for(const c of coords as Position[]){
@@ -128,8 +144,11 @@ export function keyBand(features:Polygons['features']):number{
 /** `over`: the extent to draw across, for an inset's enlarged view; `markScale`, because a drawing shown smaller
  *  keeps its marks the size they are on the page; `withKey: false` for the enlarged part, because a key belongs to
  *  the whole map and two of them invite reading them as different scales. */
+/** `over.lines`: the map's line layers, drawn over the areas and under the points, as `staticBoundaryMap` draws
+ *  them. Absent until 2026-11-24, which is why a map carrying both polygons and hand-drawn lines drew the lines on
+ *  the interactive preview and on no static figure. */
 export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null,
-  over?:{box?:readonly [number,number,number,number];markScale?:number;withKey?:boolean}):string{
+  over?:{box?:readonly [number,number,number,number];markScale?:number;withKey?:boolean;lines?:readonly LineLayerOnMap[];lineArrows?:import('./map-lines.js').ArrowChoice}):string{
   if(p.kind==='hexbin'){
     const coords=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates.flat():f.geometry.coordinates.flat(2));
     if(!coords.length)return '<text x="30" y="40">No cells meet the minimum occupancy</text>';
@@ -139,11 +158,15 @@ export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null,
       if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];
       if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
     }
+    for(const c of lineVerticesOf(over?.lines??[])){
+      if(c[0]<west)west=c[0];if(c[0]>east)east=c[0];
+      if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
+    }
     const framed=plotFrame(over?.box?[...over.box] as [number,number,number,number]:[west,south,east,north],{width:790,margin:60});
     const project=framed.project,height=framed.height+(over?.withKey===false?0:KEY_BAND);
-    return `<rect width="850" height="${height}" fill="#f7faf8"/>`+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="14">H3 aggregate cells · sparse cells omitted</text>';
+    return `<rect width="850" height="${height}" fill="#f7faf8"/>`+lineLayersSvg(over?.lines??[],project,over?.markScale??1,over?.lineArrows)+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="14">H3 aggregate cells · sparse cells omitted</text>';
   }
-  const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...contextRings(area).flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
+  const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...contextRings(area).flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...lineVerticesOf(over?.lines??[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
   const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);
   const framed=plotFrame(over?.box?[...over.box] as [number,number,number,number]:[west,south,east,north],{width:790,margin:60});
   const project=framed.project,height=framed.height+(over?.withKey===false?0:keyBand(p.features));
@@ -198,12 +221,15 @@ export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null,
     // the same thing and keeps the lighter tint it has always had.
     // A RING, outline only, where the polygon stands for one place (a cluster at one house): what is under it shows.
     const opacity=f.ring?'0':classed||grouped?(at===null?'.18':'.78'):categorical?'.55':wash?'.16':'.22';
-    return `<path data-catchment="${esc(f.id)}"${f.ring?' data-ring=""':''}${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${f.ring?(f.ring==='secondary'?RING_BLUE:RING_RED):classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${f.ring?'3.5':classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="${(1.8*(over?.markScale??1)).toFixed(2)}" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4*(over?.markScale??1)}" y="${y-4*(over?.markScale??1)}" width="${8*(over?.markScale??1)}" height="${8*(over?.markScale??1)}" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')
+    return `<path data-catchment="${esc(f.id)}"${f.ring?' data-ring=""':''}${classed&&f.value!==undefined?` data-value="${f.value}"`:''}${grouped&&f.category?` data-category="${esc(f.category)}"`:''} d="${polys.flat().map(r=>'M'+r.map(c=>project(c).join(',')).join('L')+'Z').join('')}" fill="${fill}" fill-opacity="${opacity}" fill-rule="evenodd" stroke="${f.ring?(f.ring==='secondary'?RING_BLUE:RING_RED):classed?FIGURE_ROLE.quietInk:fill}" stroke-width="${f.ring?'3.5':classed?'.6':'1'}"><title>${esc(f.name)}${f.category?` · ${esc(f.category)}`:''}${f.value===undefined?'':` · ${f.value}`}${f.count===undefined?'':` · ${f.count} locations`}</title></path>`;}).join('')
+    // OVER THE AREAS AND UNDER THE POINTS, which is where `staticBoundaryMap` draws them: a route is read against
+    // the ground it crosses, and a mark it passes through must stay visible.
+    +lineLayersSvg(over?.lines??[],project,over?.markScale??1,over?.lineArrows)+(p.observations?.features||[]).filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<circle cx="${x}" cy="${y}" r="${(1.8*(over?.markScale??1)).toFixed(2)}" fill="#70523a"><title>${esc(f.properties.name)}</title></circle>`;}).join('')+p.sites.filter(f=>f.geometry).map(f=>{const [x,y]=project(f.geometry!.coordinates);return `<rect x="${x-4*(over?.markScale??1)}" y="${y-4*(over?.markScale??1)}" width="${8*(over?.markScale??1)}" height="${8*(over?.markScale??1)}" fill="#174d47"><title>${esc(f.properties.name)}</title></rect>`;}).join('')
     // THE KEY BELONGS TO THE WHOLE MAP. The enlarged part of an inset draws none: two keys on one figure invite a
     // reader to take them as two scales, and the classes are the same either way because both drawings are made
     // from the same features -- only the extent differs.
     +(over?.withKey===false?''
-      :`<rect data-plot-key-band x="0" y="${height-keyBand(p.features)}" width="850" height="${keyBand(p.features)}" fill="#f7faf8"/>`+plotKey(p,classed,esc,grouped,height));
+      :`<rect data-plot-key-band x="0" y="${height-keyBand(p.features)}" width="850" height="${keyBand(p.features)}" fill="#f7faf8"/>`+plotKey(p,classed,esc,grouped,height,over?.lines));
 }
 
 // THE KEY NAMES WHAT IS DRAWN, and nothing else. This line was a fixed string -- "Squares:
@@ -213,7 +239,7 @@ export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null,
 // does not carry is worse than no key: it is the one part of a figure a reader trusts without
 // checking. `EveryMarkIsInTheKey` in map-conformance asks the converse of the same question.
 function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape,
-  grouped:ReturnType<typeof classifyCategories>=null,height=295):string{
+  grouped:ReturnType<typeof classifyCategories>=null,height=295,lines?:readonly LineLayerOnMap[]):string{
   // AT THE FOOT OF THE FRAME, whatever its height (2026-11-13): placed for 295, the ramp sat across the middle of Botswana's
   // districts in a 650 frame. A 295 frame draws it where it always was.
   const foot=height-295;
@@ -232,6 +258,10 @@ function plotKey(p:Polygons,classed:ReturnType<typeof classifyValues>,esc:Escape
     :p.layerName?.trim()?`polygons: ${p.layerName.trim()}`
     :p.features.some(f=>f.minutes!==undefined)?'polygons: modeled catchments'
     :'polygons: the layer drawn');
+  // THE LINES, NAMED BY THEIR OWN STEP (2026-11-24). `EveryMarkIsInTheKey` asks exactly this of a figure, and a
+  // route drawn in purple over four provinces has no other place a reader can learn what it is. After the polygons,
+  // because the first entry is the one the sentence capitalises and the subject belongs there.
+  for(const layer of lines??[])if(layer.features.length)marks.push(`lines: ${layer.label}`);
   // The method belongs on the key line, not beside the ramp: set beside it, the sentence ran
   // across the polygons it was explaining.
   const method=classed?` · ${classed.classes} ${classed.method==='quantile'

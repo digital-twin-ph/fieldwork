@@ -3,6 +3,55 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.190.0 — In development
+
+
+- **A map carrying polygons draws its line layers** (Map 0.49.0). Hand-drawn routes showed on the interactive
+  preview and on no static figure — not in Results, not in Notes, not in a download. A map with polygons is drawn
+  by a second renderer, chosen before the lines are ever reached, and that one had never been given them. Both now
+  draw the lines from one function, over the areas and under the points, and both frames span them, so a route
+  running past the polygons' own extent is no longer clipped. Reported from a South Sudan / DR Congo border
+  workflow; it is the eighth time a renderer picked from the wired ports dropped a layer, and the test that catches
+  it joins the seven before it in the same file.
+- **A line layer is a layer the practitioner can manage.** The `lines` port was absent from the table the layer
+  list is built from, so Manage layers listed everything else: a line layer could not be renamed, reordered, put
+  in a group or switched off, and no receipt recorded that the map had drawn one. It is now a kind of its own,
+  `fw:LinesLayer`, drawn over the street network and under the points, and the switch is honoured by the figure.
+- **A line drawn by hand shows which way it runs** (Map 0.49.0, Line layer 0.3.0). A LineString is an ordered
+  sequence, so the direction is already in the data and an arrowhead only shows it — which matters because a flow
+  drawn from a camp to a clinic is not the same as one drawn the other way. A layer read from a GPX, or taken as the
+  border two areas share, is left unmarked: the order of positions in a published track or a computed border is an
+  artefact of the file, and an arrowhead would assert a direction nobody chose. Configure… offers the three ways —
+  where the lines were drawn by hand, always, never — and the last two win over the source. The static figure, the
+  interactive map and the Line layer editor draw one head from one definition of which way a line runs: the last
+  segment that has any length, measured where the line is actually drawn, so the head does not lean away from its
+  own line far from the equator, and a line of one repeated position gets none rather than one at an arbitrary
+  angle. In the editor the arrowhead replaces the filled end dot, so what you draw reads the way the figure will.
+- **Polygons under lines are ground, not categories.** Where lines are drawn over polygons built from the study
+  areas, the areas lose their hue per feature and are drawn in one wash — the rule points have followed since
+  2026-11-23. The practitioner: *"the polygon shading — should follow same rule as points, that when lines are
+  present, no polygon shading as default."* A layer read from a file, and a layer carrying a value, are untouched.
+- **The Line layer drawing map shows its basemap** (Line layer 0.3.0). It opened as one tile in a corner with grey
+  around it: the dialog's panel has no size when the map is mounted, so Leaflet measured a container of nothing and
+  asked for a single tile. It now settles after layout and keeps up with every later change of size, full screen
+  among them, as the pin editor and the georeference dialog already did.
+- The lines are attached to a map's value **before** its layer list is built, not after, so the layer list can see
+  them and the measurement of how wide each layer is drawn uses a frame that spans them — the wrong-frame trap that
+  measurement's own comment warns of.
+
+- **Find health facilities has the standard Inspector** (0.5.0). The practitioner: *"The Inspector for Find health
+  facilities seem to be non-standard, looking at the Configure button and the Retrieve facilities button."* The two
+  shared one row and the primary emphasis moved between them with the step's state, so the one thing to do next was
+  whichever the markup had decided, beside a button no other standard step shares its row with. **Configure…** is
+  now alone and primary in Settings, as it is everywhere else, and **Retrieve facilities** — or **Fetch the
+  registers** — is in Result beside what it produces, primary until there is something and primary again when what
+  is held is not what the settings now ask for. That is the shape Tabular data took on 2026-11-14 for the same
+  complaint, *"the Fetch the table is there, just not conspicuous"*. The two are not one kind of act: Configure…
+  opens a dialog, and Retrieve reaches the network and changes what the step holds.
+- The Configure… dialog told the reader to retrieve **"under Settings"**, which was not where the button was even
+  before this change. It names Result now, and says to apply the settings first. The matching dialog and the
+  refusal raised when no register has been fetched said the same wrong place.
+
 ## 0.189.0 — In development
 
 - **Routes and flows drawn on a map** (Line layer 0.2.0), as pushpins place points. Click to lay down each

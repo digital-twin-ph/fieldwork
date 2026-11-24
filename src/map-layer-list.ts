@@ -24,7 +24,7 @@ import {isPointPort} from './point-layers.js';
  *  there are rule violations."* Three of the four bullets under "What is not built" in
  *  `docs/widget-specs/map_output.md` said the same thing first. */
 
-export type LayerKind='AreaLayer'|'PointsLayer'|'PolygonsLayer'|'RasterLayer'|'NetworkLayer'|'BasemapLayer';
+export type LayerKind='AreaLayer'|'PointsLayer'|'PolygonsLayer'|'RasterLayer'|'NetworkLayer'|'LinesLayer'|'BasemapLayer';
 export type LayerOrigin='port'|'within'|'tileProvider';
 
 /** What a practitioner decided about one layer, named for the terms that already describe it:
@@ -81,7 +81,9 @@ export const MAX_MANAGED_LAYERS=24;
  *  `catchmentPlot` draws the computation's inputs at radius 3.5 and the observations at 2.7, so
  *  the subject was already being drawn smaller than its context; it does not also need to be
  *  drawn under it. */
-const KIND_DEPTH:Record<LayerKind,number>={BasemapLayer:0,RasterLayer:1,AreaLayer:2,PolygonsLayer:3,NetworkLayer:4,PointsLayer:5};
+/** Lines sit over the areas and the streets and under the points, which is where both static renderers draw them: a
+ *  route is read against the ground it crosses, and a mark it runs through must stay visible. */
+const KIND_DEPTH:Record<LayerKind,number>={BasemapLayer:0,RasterLayer:1,AreaLayer:2,PolygonsLayer:3,NetworkLayer:4,LinesLayer:5,PointsLayer:6};
 
 const KIND_BY_PORT=(port:string):LayerKind|null=>
   port==='area'?'AreaLayer'
@@ -91,6 +93,11 @@ const KIND_BY_PORT=(port:string):LayerKind|null=>
   // `polygons`, whose members list each one; counting them again listed South London's Thames twice.
   :port==='raster'||/^raster_[2-4]$/.test(port)||port==='ground'?'RasterLayer'
   :port==='network'?'NetworkLayer'
+  // THE `lines` PORT WAS MISSING HERE (2026-11-24). Reported as *"Manage layers within the dialog only shows
+  // polygon"*: `drawablePort` is built from this table, so a line layer was drawn on the map and listed nowhere,
+  // could not be renamed, reordered, grouped or switched off, and reached no receipt. The fifth instance of the
+  // failure this module's own header enumerates four of.
+  :port==='lines'?'LinesLayer'
   :isPointPort(port)||port==='context'||port==='decisions'?'PointsLayer'
   :null;
 
@@ -103,7 +110,7 @@ export const drawablePort=(port:string):boolean=>KIND_BY_PORT(port)!==null;
  *  node's own label is the best of these, because it is the words the practitioner already chose
  *  on the canvas; the port is the fallback, and the id is the last resort. */
 const PORT_LABEL:Record<string,string>={area:'Study area',polygons:'Polygons',raster:'Raster',
-  ground:'Ground',network:'Street network',context:'Context points',decisions:'Review decisions'};
+  ground:'Ground',network:'Street network',lines:'Lines',context:'Context points',decisions:'Review decisions'};
 const defaultLabel=(port:string,sourceLabel?:string):string=>{
   const given=sourceLabel?.trim();
   if(given)return given.slice(0,LAYER_LABEL_LIMIT);

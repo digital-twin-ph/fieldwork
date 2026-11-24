@@ -259,7 +259,7 @@ export function listFacilitiesValue(node:{id:string;params:{list?:FacilityListSe
   if(!table||table.kind!=='data-table')throw new Error('Connect the list: a table with a column naming each facility.');
   const columns=[...table.keys,table.valueField];
   if(!columns.includes(settings.nameColumn))throw new Error(`The list has no "${settings.nameColumn}" column. Its columns are ${columns.join(', ')}.`);
-  if(!node.params.data||!node.params.registerRetrieved)throw new Error('Find health facilities has no register yet: fetch it under Settings.');
+  if(!node.params.data||!node.params.registerRetrieved)throw new Error('Find health facilities has no register yet: press Fetch the registers under Result on that step.');
   const loaded=registersFromLayer(node.params.data,catalogue,settings.registers);
   const read=(row:import('./data-table.js').DataTable['rows'][number],c?:string)=>!c?'':c===table.valueField&&!table.keys.includes(c)
     ?String(row.value??''):String(row.key[c]??'');

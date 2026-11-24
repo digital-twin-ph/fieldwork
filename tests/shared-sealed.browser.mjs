@@ -90,7 +90,19 @@ test('a shared project is saved encrypted for its members, and made open again',
   await expect(page.locator('#shared-sealed-said')).toContainText('removes the encrypted ones');
   const opened=github.commits.length;
   await page.locator('#shared-message').fill('Open now');await page.locator('#shared-save').click();
-  await expect.poll(()=>github.commits.length>opened).toBe(true);
+  // WAIT ON THE SAVE, NOT ON THE COMMIT COUNT (2026-11-24). The fake GitHub pushes to `commits` when
+  // POST /git/commits creates the object and moves `refs.main` in a LATER request (fake-github.mjs, lines 54 and
+  // 58), so a poll on the count becomes true while `filesAt(refs.main)` still reads the PREVIOUS tree -- in which
+  // every sealed file is naturally still there. It failed on CI for exactly that reason and passed locally every
+  // time, because the gap is between two HTTP calls and a loaded runner widens it.
+  //
+  // "Saved." is written only after `saveToRepository` resolves, and that awaits the ref PATCH
+  // (repository-save.ts), so it is a complete guarantee that the tree at `refs.main` is the new one. It is also
+  // what `shared-project.browser.mjs` waits on before each of its commit-count assertions, and the poll twenty
+  // lines above this one already waits on `refs.main` for the same reason.
+  await expect(page.locator('#shared-result')).toContainText('Saved.');
+  // ONE COMMIT, which is what the docstring claims and what `>opened` never actually checked.
+  assert.equal(github.commits.length,opened+1,'made open in one commit');
   files=github.filesAt(github.refs.main);
   assert.deepEqual(Object.keys(files).filter(p=>p.endsWith('.fwsealed')),[]);
   assert.equal(JSON.parse(files['project.json']).name,'Measles in Ituri');

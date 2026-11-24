@@ -3,6 +3,19 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.191.1 — In development
+
+- **A shared-project test waited on the wrong thing**, and it had been red on CI for one run while passing locally
+  every time. `shared-sealed.browser.mjs` polled the fake GitHub's commit count and then read the tree at
+  `refs.main` — but the stub pushes to `commits` when `POST /git/commits` creates the object and moves `refs.main`
+  in a *later* request, so the poll went true while the tree was still the previous one, with every sealed file
+  naturally still in it. The gap is between two HTTP calls, which is why only a loaded runner ever saw it. It now
+  waits for the save itself to report `Saved.`, which is written only after `saveToRepository` resolves and that
+  awaits the ref PATCH — the same signal `shared-project.browser.mjs` waits on before each of its commit-count
+  assertions, and the same reason the poll twenty lines above it already waited on `refs.main`.
+- That test now also asserts the project is made open **in one commit**, which its own docstring has always claimed
+  and which the old `> opened` comparison never actually checked.
+
 ## 0.191.0 — In development
 
 - **The drawing map pans until you start a line** (Line layer 0.4.0). The practitioner: *"If I try to pan with my

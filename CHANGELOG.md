@@ -3,6 +3,16 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.185.0 — 2026-11-23
+
+- **Three workers are typechecked as workers.** `netcdf-worker`, `sha256-worker` and `space-time-scan-worker` were
+  in neither worker tsconfig, so they were checked with the DOM lib and a window-only call would have compiled and
+  failed in the browser. Checking them found none; the hole was open and nothing had fallen into it.
+- **One HTML escape**, in `inspector-kit.ts`, replacing four identical copies. The duplication turned out to be
+  three different rules rather than one copied: ten modules escape five characters, seven places escape four, and
+  two escape three. The weaker variants are recorded, not changed — altering what they escape changes their output.
+- The code and framework review of 2026-11-23 is committed to `docs/audits/`, with what was acted on recorded in it.
+
 ## 0.184.0 — 2026-11-23
 
 - **A map carrying polygons draws its inset** (Map 0.48.0). It was composed for every other kind of map and not this

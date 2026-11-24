@@ -1,4 +1,5 @@
 import {MAX_GROUND_LAYERS,groundPort,isGroundPort} from './core.js';
+import {escapeHtml as esc} from './inspector-kit.js';
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
 import {openChangelog} from './changelog-ui.js';
 import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl,ghsRecordFor} from './ghs-pop.js';
@@ -187,7 +188,7 @@ import type {BarOrder} from './results.js';
 import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
 import {designChecklist} from './study-design-checklist.js';
 import type {TwoByTwoResult} from './two-by-two.js';
-const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
 const KEY='fieldwork-workflow-v1';
 $('#app-version').textContent=`v${appPackage.version}`;
 $('#app-version').addEventListener('click',()=>void openChangelog(appPackage.version,esc));

@@ -2,6 +2,7 @@
  *  every widget touched is): its sentence, its Inspector, and Configure… with what is drawn and every setting, with the
  *  ids the panels held. What it reads of the application comes through ChartKit. */
 import type {WorkflowNode} from './types.js';
+import {escapeHtml as esc} from './inspector-kit.js';
 import type {StepKit} from './inspector-kit.js';
 import type {WorkflowRun} from './results.js';
 import type {BarOrder} from './results.js';
@@ -15,7 +16,7 @@ import {scalesOf,declaredUpstream} from './column-metadata.js';
 import {orderOf} from './select-rows.js';
 import {TYPES} from './core.js';
 
-const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
 
 export interface ChartKit extends StepKit {
   /** The last run, to read. */ result:()=>WorkflowRun|undefined;

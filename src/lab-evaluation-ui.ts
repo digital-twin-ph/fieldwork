@@ -2,13 +2,14 @@
  *  opened from the footer or a note being written. Experiment 184. Each finding opens as a GitHub issue in the repository's form.
  *  The words on it are labels and one question per heuristic, nothing that explains the design. */
 import {HEURISTICS,TEXT_KINDS,toMarkdown,fileStem,cleanPass,findingIssueUrl,type EvaluationPass,type Finding} from './lab-evaluation.js';
+import {escapeHtml as esc} from './inspector-kit.js';
 
 export interface EvaluationContext {screen:string; widget?:{type:string; version:string}}
 
 const ON='fieldwork.labEvaluation',WHO='fieldwork.labEvaluation.evaluator',DRAFT='fieldwork.labEvaluation.draft:';
 const get=(k:string)=>{try{return localStorage.getItem(k);}catch{return null;}};
 const put=(k:string,v:string|null)=>{try{if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch{/* this view only */}};
-const esc=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+
 
 export const labEvaluationOn=()=>get(ON)==='1';
 

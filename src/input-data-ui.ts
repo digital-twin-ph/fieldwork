@@ -40,7 +40,7 @@ const esc=(s:unknown)=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&l
 const bodyMarkup=`<div class="input-editor-body"><label class="field-label" for="input-mode">Input method</label><select id="input-mode"><option value="synthetic">Generate synthetic points</option><option value="csv">Import CSV</option><option value="xlsx">Import Excel</option><option value="gpkg">Import GeoPackage</option><option value="geojson">Import GeoJSON</option><option value="gpx">Import GPX from a GPS device</option><option value="kml">Import KML or KMZ</option><option value="pins">Place pushpins on map</option></select><p id="input-replace-note" class="input-replace-note" role="status" hidden></p>
 <div id="input-synthetic"><label class="field-label" for="synthetic-boundary">Study area for generation</label><select id="synthetic-boundary"></select><div class="input-inline"><label>Inside points<input id="synthetic-inside" type="number" value="20" min="1" max="250000"></label><label>Outside points for testing<input id="synthetic-outside" type="number" value="2" min="0" max="249999"></label><label>Seed<input id="synthetic-seed" type="number" value="42" min="0" max="4294967295"></label></div><button id="generate-input" class="button small">Generate points</button><p class="muted">Synthetic demonstration records.</p></div>
 <div id="input-file-panel" hidden><label class="field-label" for="input-file">Local file · 40 MB maximum</label><input id="input-file" type="file"><p id="gps-file-note" role="status" hidden></p><div id="csv-mapping" hidden><div class="input-inline"><label id="csv-x-label">Longitude<select id="csv-longitude"></select></label><label id="csv-y-label">Latitude<select id="csv-latitude"></select></label><label>Record ID<select id="csv-id"></select></label><label>Label<select id="csv-name"></select></label></div><div class="input-inline"><label>Coordinates<select id="csv-frame"><option value="degree">Longitude / latitude, degrees</option><option value="metre">UTM easting / northing, metres</option></select></label><label id="csv-zone-label" hidden>UTM zone<input id="csv-zone" type="number" min="1" max="60" step="1" value="35"></label><label id="csv-hemisphere-label" hidden>Hemisphere<select id="csv-hemisphere"><option value="south">South</option><option value="north">North</option></select></label></div><p id="csv-frame-note" class="muted" hidden></p><button id="csv-preview" class="button small">Preview mapped records</button></div><div id="gpkg-mapping" hidden><label for="gpkg-layer">Point layer</label><select id="gpkg-layer"></select><p id="gpkg-crs-note" class="muted" hidden></p><button id="gpkg-preview" class="button small">Preview layer</button></div><p class="muted">Up to 250,000 points. Scalar attributes are retained. CSV reads longitude/latitude in degrees, or UTM easting/northing in metres on the WGS84 datum, converted to CRS84 on import. GeoPackage reads 2D POINT layers in EPSG:4326 or a WGS84 UTM zone, using the CRS the file itself declares.</p></div>
-<div id="input-pins" hidden><p>Click the map to add a pin. Select or drag a pin to edit it.</p><p class="pin-field-help" id="pin-privacy">Pins on homes can identify the people who live there. Back up the project encrypted, and mask the points with Donut geomasking before sharing a map of them.</p><div class="pin-locate"><button id="pin-locate" class="button small" type="button">Add a pin at my location</button><button id="pin-locate-move" class="button small" type="button" disabled>Move this pin to my location</button><p id="pin-locate-status" role="status"></p></div><div class="pin-map-tools"><label class="pin-basemap">Basemap<select id="pins-basemap">${PIN_BASEMAPS.map(b=>`<option value="${b}">${esc(BASEMAP_LABELS[b])}</option>`).join('')}</select></label><form id="pin-place-form" class="pin-place"><label>Find a place<input id="pin-place" maxlength="200" autocomplete="off" placeholder="A town, district or landmark"></label><button id="pin-place-find" class="button small" type="submit">Find</button></form></div><p id="pin-place-status" role="status"></p><ul id="pin-place-results" class="pin-place-results"></ul><label class="field-label" for="pin-record">Select a record to edit, including missing locations</label><select id="pin-record"></select><div class="pin-record-actions"><button id="pin-undo" class="button small" type="button" disabled>Undo</button><button id="pin-delete" class="button danger" disabled>Delete pin</button><label><input id="pin-use-uuid" type="checkbox"> Generate UUIDs for new pins</label></div><p class="muted">Existing record IDs stay unchanged. Delete pin removes the chosen record from this draft; Apply keeps the change.</p><div class="pin-layout"><div><div id="pin-map"></div><button id="pins-fit" class="button small">Fit pins and study area</button><button id="pins-fullscreen" class="button small" type="button" aria-pressed="false">Full screen</button><span id="pins-map-status" class="muted"></span><p id="pin-legend" class="pin-legend"></p><div id="pin-areas" class="pin-areas" hidden></div></div><div id="pin-form"></div></div><div id="pin-table" class="pin-table"></div><details><summary>Add a form field</summary><p class="pin-field-help">The form every pin shows, in this order:</p><ol id="pin-field-order" class="pin-field-order"></ol><div class="input-inline"><label>Field key<input id="pin-field-key" maxlength="60" placeholder="household_size"></label><label>Label<input id="pin-field-label" maxlength="100" placeholder="Household size"></label><label>Type<select id="pin-field-type">${TYPE_OPTIONS}</select></label><label>Default value<input id="pin-field-default" maxlength="1000"></label><label>Allowed values (optional, one per line)<textarea id="pin-field-values" maxlength="10000" rows="3"></textarea></label><label class="pin-required"><input id="pin-field-required" type="checkbox"> Required on every pin</label></div><button id="pin-add-field" class="button small">Add field</button></details></div>
+<div id="input-pins" hidden><p>Click the map to add a pin. Select or drag a pin to edit it.</p><p class="pin-field-help" id="pin-privacy">Pins on homes can identify the people who live there. Back up the project encrypted, and mask the points with Donut geomasking before sharing a map of them.</p><div class="pin-locate"><button id="pin-locate" class="button small" type="button">Add a pin at my location</button><button id="pin-locate-move" class="button small" type="button" disabled>Move this pin to my location</button><p id="pin-locate-status" role="status"></p></div><div class="pin-map-tools"><label class="pin-basemap">Basemap<select id="pins-basemap">${PIN_BASEMAPS.map(b=>`<option value="${b}">${esc(BASEMAP_LABELS[b])}</option>`).join('')}</select></label><form id="pin-place-form" class="pin-place"><label>Find a place<input id="pin-place" maxlength="200" autocomplete="off" placeholder="A town, district or landmark"></label><button id="pin-place-find" class="button small" type="submit">Find</button></form></div><p id="pin-place-status" role="status"></p><ul id="pin-place-results" class="pin-place-results"></ul><label class="field-label" for="pin-record">Select a record to edit, including missing locations</label><select id="pin-record"></select><div class="pin-record-actions"><button id="pin-undo" class="button small" type="button" disabled>Undo</button><button id="pin-delete" class="button danger" disabled>Delete pin</button><label><input id="pin-use-uuid" type="checkbox"> Generate UUIDs for new pins</label></div><p class="muted">Existing record IDs stay unchanged. Delete pin removes the chosen record from this draft; Apply keeps the change.</p><div class="pin-layout"><div><div id="pin-map"></div><button id="pins-fit" class="button small">Fit pins and study area</button><button id="pins-fullscreen" class="button small" type="button" aria-pressed="false">Full screen</button><button id="pins-magnifier" class="button small" type="button" aria-pressed="false">Magnifier</button><div id="pin-loupe" hidden aria-hidden="true"></div><span id="pins-map-status" class="muted"></span><p id="pin-legend" class="pin-legend"></p><div id="pin-areas" class="pin-areas" hidden></div></div><div id="pin-form"></div></div><div id="pin-table" class="pin-table"></div><details><summary>Add a form field</summary><p class="pin-field-help">The form every pin shows, in this order:</p><ol id="pin-field-order" class="pin-field-order"></ol><div class="input-inline"><label>Field key<input id="pin-field-key" maxlength="60" placeholder="household_size"></label><label>Label<input id="pin-field-label" maxlength="100" placeholder="Household size"></label><label>Type<select id="pin-field-type">${TYPE_OPTIONS}</select></label><label>Default value<input id="pin-field-default" maxlength="1000"></label><label>Allowed values (optional, one per line)<textarea id="pin-field-values" maxlength="10000" rows="3"></textarea></label><label class="pin-required"><input id="pin-field-required" type="checkbox"> Required on every pin</label></div><button id="pin-add-field" class="button small">Add field</button></details></div>
 <p id="input-summary" class="notice" role="status"></p><details><summary>Preview first two records</summary><pre id="input-preview"></pre></details></div>`;
 /** POINT DATA'S EDITOR, ON THE STANDARD DIALOG (experiment 186; experiment 09's open item 11, 2026-11-22): its heading,
  *  Cancel and Apply, and what Escape and × do, are the shared dialog's. The body is built once and keeps its own map. */
@@ -422,6 +422,77 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
   // instead of a look. The map and the pin's form go full screen together, because the form is where what the pin
   // says is written and losing it would trade one trip for another. The same mechanism the results map uses,
   // including its fallbacks: Safari before 16.4 has only the webkit names, and an iPhone has neither on a div.
+  // A MAGNIFIER OVER THE GROUND, not over the marks. The practitioner, 2026-11-23: *"The basemap tiles are what's
+  // important to zoom in to because the purpose of the magnifier is to enhance context perception."* Siting a pin
+  // on a mine meant zooming in and out to read which river, which road, which workings -- a loupe answers that
+  // without moving the map, so what is under the cursor stays where it is while the ground around it is read.
+  //
+  // RASTER ONLY, which the practitioner settled: *"Perhaps we can offer the magnifier only when it's non-vector
+  // basemaps."* A vector style is drawn by MapLibre GL inside Leaflet, so magnifying one means a second WebGL
+  // context and a second style load; the pin editor offers raster basemaps alone (PIN_BASEMAPS), so the only case
+  // to refuse here is the basemap being off, and a map with no tiles has nothing to magnify.
+  //
+  // ONE SECOND MAP, made when the magnifier is switched on and moved thereafter: a map per mouse move would fetch
+  // tiles on every pixel. It takes no pointer events, so clicking still places a pin under the glass.
+  const magnifierButton=$('#pins-magnifier') as HTMLButtonElement;
+  const loupe=$('#pin-loupe') as HTMLElement;
+  const MAGNIFY_BY=3,LOUPE_PX=190;
+  let loupeMap:L.Map|undefined,loupeTiles:L.TileLayer|null=null,magnifying=false,frame=0;
+  const basemapOff=()=>($('#pins-basemap') as HTMLSelectElement).value==='none';
+  const sayMagnifier=()=>{
+    const off=basemapOff();
+    magnifierButton.disabled=off;
+    magnifierButton.title=off?'Choose a basemap: with the basemap off there are no tiles to magnify.'
+      :'Enlarge the ground under the cursor without moving the map';
+    if(off&&magnifying)stopMagnifier();
+  };
+  function stopMagnifier(){
+    magnifying=false;loupe.hidden=true;
+    magnifierButton.setAttribute('aria-pressed','false');magnifierButton.textContent='Magnifier';
+  }
+  const moveLoupe=(event:MouseEvent)=>{
+    if(!magnifying||!map)return;
+    if(frame)cancelAnimationFrame(frame);
+    frame=requestAnimationFrame(()=>{
+      frame=0;
+      const host=$('#pin-map') as HTMLElement,box=host.getBoundingClientRect();
+      const x=event.clientX-box.left,y=event.clientY-box.top;
+      if(x<0||y<0||x>box.width||y>box.height){loupe.hidden=true;return;}
+      loupe.hidden=false;
+      // Beside the cursor, and inside the map: a glass half off the edge shows half an answer.
+      loupe.style.left=`${Math.min(Math.max(0,x-LOUPE_PX/2),box.width-LOUPE_PX)}px`;
+      loupe.style.top=`${Math.min(Math.max(0,y-LOUPE_PX-18),box.height-LOUPE_PX)}px`;
+      const at=map!.containerPointToLatLng(L.point(x,y));
+      // AS DEEP AS THE PROVIDER GOES AND NO DEEPER: past a layer's maxZoom a loupe magnifies blur, which is worse
+      // than no loupe because it looks like detail.
+      const ceiling=(loupeTiles?.options.maxZoom as number|undefined)??19;
+      const want=Math.min(ceiling,map!.getZoom()+MAGNIFY_BY);
+      loupeMap!.setView(at,want,{animate:false});
+      magnifierButton.textContent=want<map!.getZoom()+MAGNIFY_BY?`Magnifier · as deep as the tiles go`:'Magnifier on';
+    });
+  };
+  magnifierButton.onclick=()=>{
+    if(basemapOff())return;
+    if(magnifying){stopMagnifier();return;}
+    magnifying=true;
+    magnifierButton.setAttribute('aria-pressed','true');magnifierButton.textContent='Magnifier on';
+    loupe.style.width=loupe.style.height=`${LOUPE_PX}px`;
+    if(!loupeMap){
+      loupeMap=L.map(loupe,{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,
+        doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false,zoomAnimation:false,fadeAnimation:false});
+    }
+    // The same basemap the map is showing, read again at the deeper zoom.
+    const drawn=rasterBasemap(($('#pins-basemap') as HTMLSelectElement).value as BasemapChoice);
+    if(loupeTiles)loupeMap.removeLayer(loupeTiles);
+    loupeTiles=drawn.layer;
+    if(loupeTiles)loupeTiles.addTo(loupeMap);
+    loupe.hidden=false;
+    requestAnimationFrame(()=>loupeMap!.invalidateSize());
+  };
+  ($('#pin-map') as HTMLElement).addEventListener('mousemove',moveLoupe);
+  ($('#pin-map') as HTMLElement).addEventListener('mouseleave',()=>{if(magnifying)loupe.hidden=true;});
+  ($('#pins-basemap') as HTMLSelectElement).addEventListener('change',()=>{sayMagnifier();if(magnifying){stopMagnifier();}});
+  sayMagnifier();
   const fullscreenButton=$('#pins-fullscreen') as HTMLButtonElement;
   type WebkitElement=HTMLElement&{webkitRequestFullscreen?:()=>Promise<void>|void};
   type WebkitDocument=Document&{webkitFullscreenElement?:Element|null;webkitExitFullscreen?:()=>Promise<void>|void};

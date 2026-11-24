@@ -81,6 +81,7 @@ In **Configure…**, choose **Place pushpins on map**.
 | Find a town or district | **Find a place** asks OpenStreetMap's Nominatim, only when you press Find; the words you type are sent there. A result moves the map; it does not place a pin |
 | See houses | **Basemap**: OpenStreetMap, OpenTopoMap, or a CARTO or Esri style on your own key, Esri's satellite imagery among them |
 | See the ground around the pin | **Full screen** gives the map the whole window, with the pin's form still beside it. Press it again, or Escape, to come back |
+| Read the ground closely | **Magnifier** puts a glass over the cursor showing the basemap enlarged, without moving the map. A click under the glass still places a pin. It needs a basemap: with the basemap off there are no tiles to magnify, and it stops at the depth the provider's tiles go to |
 | Take back a change | **Undo**, the last 30 changes, before Apply. Above 20,000 records Undo is off |
 | Put the form's questions in order | Under **Add a form field**, **Move up** and **Move down** beside each field; every pin's form follows |
 | Show some study areas, not all | **Study areas shown**: a checkbox for each study area's outline; **Fit pins and study area** fits the ones shown |

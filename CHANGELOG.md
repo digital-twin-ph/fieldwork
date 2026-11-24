@@ -3,6 +3,14 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.183.0 — 2026-11-23
+
+- **A magnifier on the pin editor's map** (Point data 0.19.0). A glass follows the cursor and shows the basemap
+  enlarged without moving the map — the ground is the point, so what is magnified is the tiles, not the marks. A
+  click under the glass still places a pin. It stops at the depth the provider's tiles reach rather than magnifying
+  blur, and with the basemap off it says there is nothing to magnify. Raster basemaps only, which is all the pin
+  editor offers.
+
 ## 0.182.0 — 2026-11-23
 
 - **Area around a point is now Geometry buffer** (0.5.0). The step took lines and polygon layers as well as points

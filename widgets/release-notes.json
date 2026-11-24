@@ -5,7 +5,6 @@
   "added",
   "changed",
   "feature",
-  "fixed",
   "initial",
   "major",
   "minor",
@@ -527,12 +526,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.18.0",
+   "version": "0.19.0",
    "released": "2026-11-23",
    "changes": [
     {
-     "kind": "fixed",
-     "description": "Points read from a table no longer carry the melt. A table read wide is held long -- the variable's name under a measure key, its value under the value field -- and copying both onto a point put them on the map: a bat record read \"measure: Year\" and \"value: 1952\" as though the file had columns called measure and value. The pair is one fact and is carried as one, Year: 1952."
+     "kind": "minor",
+     "description": "A magnifier over the pin editor's map: a glass following the cursor that shows the basemap enlarged without moving the map, so siting a pin no longer means zooming in and out to read which river, which road, which workings. It takes no pointer events, so a click under it still places a pin, and it stops at the depth the provider's tiles go to rather than magnifying blur. Raster basemaps only, which is all the pin editor offers: a vector style is drawn by MapLibre GL inside Leaflet and magnifying one would mean a second WebGL context. With the basemap off the control says there are no tiles to magnify."
     }
    ],
    "breaking": false,

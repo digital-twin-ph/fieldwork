@@ -1,0 +1,105 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:point_input",
+ "version": "0.19.0",
+ "nodeType": "point_input",
+ "title": "Point data",
+ "released": "2026-11-23",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['point_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "records",
+    "type": "table"
+   },
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ],
+  "output": "points",
+  "dynamicInputs": null,
+  "optionalInputs": [
+   {
+    "name": "records",
+    "type": "table"
+   },
+   {
+    "name": "area",
+    "type": "area"
+   }
+  ]
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "configuration",
+    "iri": "urn:fieldwork:GenericInputConfiguration",
+    "file": "ontology/processing.ttl"
+   }
+  ],
+  "note": "Design alignment to GenericInputConfiguration; not a claim that current receipts emit this type.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/app.ts",
+   "src/core.ts",
+   "src/input-data-ui.ts",
+   "src/input-data.ts",
+   "src/table-points.ts",
+   "src/column-metadata.ts",
+   "src/columns-dialog.ts",
+   "src/cell-edits.ts",
+   "src/data-quality-ui.ts",
+   "src/notes-derived.ts",
+   "src/attribute-schema.ts",
+   "study-area.css",
+   "src/pin-photos.ts",
+   "src/gps-import.ts",
+   "src/config-dialog.ts",
+   "src/catchment-map.ts",
+   "src/xlsx.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [
+   {
+    "nodeType": "places",
+    "adapterVersion": "1",
+    "implementation": "src/core.ts#validateWorkflow"
+   },
+   {
+    "nodeType": "centers",
+    "adapterVersion": "1",
+    "implementation": "src/core.ts#validateWorkflow"
+   }
+  ],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "minor",
+   "description": "A magnifier over the pin editor's map: a glass following the cursor that shows the basemap enlarged without moving the map, so siting a pin no longer means zooming in and out to read which river, which road, which workings. It takes no pointer events, so a click under it still places a pin, and it stops at the depth the provider's tiles go to rather than magnifying blur. Raster basemaps only, which is all the pin editor offers: a vector style is drawn by MapLibre GL inside Leaflet and magnifying one would mean a second WebGL context. With the basemap off the control says there are no tiles to magnify."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Shared-input unit and Chromium regressions cover migration, data preservation, editor saving and offline EYE results; repository gate remains authoritative. 0.7.0: tests/data-dictionary.browser.mjs (Hagelloch: the dictionary shown and viewed, class proposed nominal, declared ordinal, counted 0, 1, 2 with no median); tests/hagelloch-dictionary.test.mjs (the file's digest; proposals not accepted; name not in the source's dictionary); Chromium. 0.7.1: tests/column-profile.test.mjs; Chromium pending. 0.8.0: tests/cell-edits.test.mjs; tests/table-edit.browser.mjs (a misspelled district corrected and an empty count filled, applied, stated in the run, removed); Chromium. 0.9.0: Experiment 202: the publication cited Kulldorff and not Hagelloch's own source. tests/publication.test.mjs. 0.11.0: tests/measure-point-count.browser.mjs (Chromium, development Mac, 2026-11-19), 250,000 points read from a workflow file; tests/reproject.test.mjs. 0.13.0: tests/pushpin-field.browser.mjs (nine cases: a fix at 12 m, typed again; location refused; a required date-and-time field; markers and legend; degrees, minutes and seconds and a place found; Undo, the replace note, Esri without a key, Cancel asking; a tap on a phone-sized screen; a photo with a GPS position, its position offered, kept at 2,048 px with no EXIF; GPX and KMZ waypoints with a track counted), tests/pin-photos.test.mjs, with pushpin-save, input-coverage, shared-inputs, utm-ingest and the from-scratch rebuilds; Chromium and WebKit, development Mac, 2026-11-22. Not on a phone, nor with a real GPS fix, phone photo or handheld GPX. 0.14.0: tests/pushpin-field.browser.mjs (a field moved to the top, the pin's form and the saved order following, Undo); Chromium and WebKit, development Mac, 2026-11-22. 0.14.1: the African Bat Database's 18,409 records placed, no name garbled, Chromium, 2026-11-23. 0.15.0: tests/table-to-points.browser.mjs, the picker proposing Longitude and Latitude from a table read in Tabular data; Chromium, 2026-11-23. 0.16.0: tests/points-from-excel.browser.mjs, a workbook of three sites read and placed; Chromium, 2026-11-23. 0.17.0: tests/pin-map-room.browser.mjs (the map over 460 px tall and 700 px wide in the dialog at 1440x900; Full screen enters on .pin-layout, the button says Exit full screen and reports aria-pressed, the map passes 600 px with the form still shown, and Leaflet is told its size changed; exit returns it). tests/pushpin-save.browser.mjs unchanged, 9 of 9. Chromium, 2026-11-23. 0.18.0: tests/table-points-melt.test.mjs (the variable named as the file names it, the measure key and value field absent, a table with no wide declaration untouched, a blank variable name leaving the columns alone). Confirmed on the practitioner's project: a bat pin ending Year: 1952. 2026-11-23. 0.19.0: tests/pin-magnifier.browser.mjs (refused with the basemap off and saying why; a second Leaflet map of its own once on; pointer-events none so a click reaches the map under it; hidden when the cursor leaves the map; put away when the basemap is switched off). Chromium with every outside request blocked, 2026-11-23."
+ }
+}

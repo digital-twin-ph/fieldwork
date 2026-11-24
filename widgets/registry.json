@@ -1793,7 +1793,7 @@
     {
       "id": "urn:fieldwork:widget:point_input",
       "nodeType": "point_input",
-      "currentVersion": "0.18.0",
+      "currentVersion": "0.19.0",
       "releases": [
         {
           "version": "0.1.0",
@@ -1894,6 +1894,11 @@
           "version": "0.18.0",
           "path": "widgets/releases/point_input/0.18.0.json",
           "sha256": "43da6f9ff01eeba2149a26b8a11db042ee94263ff55666a959d83179699287a2"
+        },
+        {
+          "version": "0.19.0",
+          "path": "widgets/releases/point_input/0.19.0.json",
+          "sha256": "497e86d604aa9bb14ae299696f4c2475132dbc1338bdb1388aa458782bd12ef6"
         }
       ],
       "previousNodeTypes": [

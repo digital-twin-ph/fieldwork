@@ -1,6 +1,6 @@
 # Line layer
 
-_Created 2026-11-22 · Updated 2026-11-22_
+_Created 2026-11-22 · Updated 2026-11-23_
 
 **A source.** It holds lines: a vaccination team's GPS track, a planned route, a road, or the border two study areas
 share. Map draws them over the study area and under the points.

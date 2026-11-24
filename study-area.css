@@ -119,3 +119,12 @@ body.focus-results #map-panel:not([hidden]) #map-communication{flex:none}
 
 .area-draft .check{display:flex;align-items:center;gap:8px;margin:10px 0;text-align:left;font-size:14px}
 .area-draft .check input{flex:none;width:auto;margin:0}
+
+/* A SHORT TABLE TYPED OR PASTED (2026-11-23). Monospace, because what is typed is the format and a column that does
+   not line up is the fault to see; 14px at least, as every surface here is. The preview is the table as read. */
+#table-typed{width:100%;min-height:180px;font:14px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;padding:8px;
+  border:1px solid var(--line);border-radius:5px;background:var(--surface-raised-1);resize:vertical}
+#table-typed-preview{max-height:320px;overflow:auto;margin-top:8px}
+table.typed-preview{border-collapse:collapse;font-size:14px;width:100%}
+table.typed-preview th,table.typed-preview td{border:1px solid var(--line);padding:4px 8px;text-align:left}
+table.typed-preview th{background:var(--surface-raised-2);position:sticky;top:0}

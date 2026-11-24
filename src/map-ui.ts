@@ -386,8 +386,26 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
       +`<p class="muted">Order, name and group the layers.</p>`
       +`<button class="button" data-manage-layers="${esc(n.id)}">Manage layers</button>`
       +(()=>{
-        const sources=ctx.workflow().edges.filter(edge=>edge.to===n.id&&isPointPort(edge.port))
-          .map(edge=>ctx.workflow().nodes.find(node=>node.id===edge.from)).filter(Boolean) as WorkflowNode[];
+        // THE LAYERS THE MAP DREW, not the nodes plugged into it. Reported 2026-11-23, three symptoms with one
+        // cause: the mark radius sliders were crossed, the slider for a clipped layer changed nothing, and the Pin
+        // class picker offered nothing for it. Every control here was keyed by `edge.from` -- the node WIRED to the
+        // map -- while the drawing keys its symbols by the identity the data carries, which a clip passes through
+        // from the input behind it. The two disagree exactly when a step sits in between, so a slider wrote
+        // `layerSymbols[clip-id]` that nothing read, and the defaults each list resolved BY POSITION landed on
+        // different layers. The records a pin class is chosen from are the origin's too, which is why a clipped
+        // layer offered none: a clip stores no records, and the input behind it holds them all.
+        //
+        // This is the third surface to keep its own notion of what a layer is (the stack and the classes were the
+        // first two, the same morning). Layers come from the run; the edges are the fallback for a map that has
+        // not run, where there is nothing drawn to read.
+        const drawnLayers=ctx.result()?.outputs.find(o=>o.nodeId===n.id)?.pointLayers;
+        const sources=(drawnLayers?.length
+          ?drawnLayers.map(layer=>({id:layer.sourceNodeId,label:layer.label,
+            node:ctx.workflow().nodes.find(x=>x.id===layer.sourceNodeId)}))
+          :ctx.workflow().edges.filter(edge=>edge.to===n.id&&isPointPort(edge.port))
+            .map(edge=>ctx.workflow().nodes.find(node=>node.id===edge.from))
+            .filter(Boolean).map(node=>({id:node!.id,label:node!.params.label||TYPES[node!.type].title,node:node!}))
+        ) as {id:string;label:string;node?:WorkflowNode}[];
         if(!sources.length)return '';
         // THE PIN CLASS, per layer. The practitioner, 2026-10-29: *"I should be able to name pins
         // to classes ... So the pins get classified when they get onto the map."* The attribute is
@@ -396,20 +414,21 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
         const classPicker=sources.map(source=>{
           // A RULES STEP stores no points: it hands on the points it read, with what its rules concluded. Both are offered,
           // so a map can be coloured by a rule's category (2026-11-08, the rules worked example's clinics).
-          const read=source.type==='apply_ruleset'
-            ?ctx.workflow().nodes.find(m=>m.id===ctx.workflow().edges.find(e=>e.to===source.id)?.from):source;
+          const held=source.node;
+          const read=held?.type==='apply_ruleset'
+            ?ctx.workflow().nodes.find(m=>m.id===ctx.workflow().edges.find(e=>e.to===held.id)?.from):held;
           const records=(read?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)
             ?.data?.features??[];
           // WHAT THE STEP GAVE OUT AT THE LAST RUN, where it computes its points (experiment 192): Find health facilities
           // from a list keeps a register in its params, and the facilities it matched carry other columns.
           const ran=ctx.result()?.pointColumns?.[source.id]?.map(c=>c.attribute)??[];
-          const kept=ran.length&&!['point_input','places','centers'].includes(source.type)?[]:records.flatMap(f=>Object.keys(f.properties??{}));
-          const keys=[...new Set([...kept,...ran,...ctx.ruleCategories(source)])]
+          const kept=ran.length&&!['point_input','places','centers'].includes(held?.type??'')?[]:records.flatMap(f=>Object.keys(f.properties??{}));
+          const keys=[...new Set([...kept,...ran,...(held?ctx.ruleCategories(held):[])])]
             .filter(key=>!['name','capturedAt'].includes(key)).sort();
           if(!keys.length)return '';
           const chosen=n.params.pinClassField?.[source.id]||'';
           return `<div class="field"><label class="field-label" for="pin-class-${esc(source.id)}">`
-            +`Pin class for ${esc(source.params.label||TYPES[source.type].title)}</label>`
+            +`Pin class for ${esc(source.label)}</label>`
             +`<select id="pin-class-${esc(source.id)}" data-pin-class="${esc(source.id)}">`
             +`<option value="">Not classed \u00b7 one mark for the layer</option>`
             +keys.map(key=>`<option value="${esc(key)}" ${chosen===key?'selected':''}>`
@@ -421,13 +440,13 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
         // from being called `name`. A layer with more drawn marks than the ceiling says so here
         // rather than being silently left unnamed on the figure.
         const labelPicker=sources.map(source=>{
-          const records=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features||[];
+          const records=(source.node?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features||[];
           const keys=[...new Set(records.flatMap(f=>Object.keys(f.properties??{})))].sort();
           if(!keys.length)return '';
           const chosen=n.params.labelField?.[source.id]||'';
           const over=records.length>LABEL_CEILING;
           return `<div class="field"><label class="field-label" for="mark-label-${esc(source.id)}">`
-            +`Name each mark of ${esc((source.params as {label?:string}).label||TYPES[source.type].title)}</label>`
+            +`Name each mark of ${esc(source.label)}</label>`
             +`<select id="mark-label-${esc(source.id)}" data-mark-label="${esc(source.id)}">`
             +`<option value="">Not named \u00b7 the key says which layer</option>`
             +keys.map(key=>`<option value="${esc(key)}" ${chosen===key?'selected':''}>`
@@ -454,11 +473,11 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
         // A LINE TO THE RECORD EACH ONE NAMES (experiment 200, step 4): two columns per layer, both nominated. The
         // first holds the named record's id; the second is the column that id is found in. Neither is guessed.
         const linkPicker=sources.map(source=>{
-          const records=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features||[];
+          const records=(source.node?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features||[];
           const ran=ctx.result()?.pointColumns?.[source.id]?.map(c=>c.attribute)??[];
           const keys=[...new Set([...records.flatMap(f=>Object.keys(f.properties??{})),...ran])].sort();
           if(!keys.length)return '';
-          const held=n.params.linkField?.[source.id],name=esc(source.params.label||TYPES[source.type].title);
+          const held=n.params.linkField?.[source.id],name=esc(source.label);
           const select=(id:string,data:string,value:string,none:string)=>`<select id="${id}-${esc(source.id)}" ${data}="${esc(source.id)}">`
             +`<option value="">${none}</option>`+keys.map(key=>`<option value="${esc(key)}" ${value===key?'selected':''}>${esc(key)}</option>`).join('')+`</select>`;
           return `<div class="field"><label class="field-label" for="link-column-${esc(source.id)}">Line to the record named in, for ${name}</label>`
@@ -481,7 +500,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
             // A colour held that is not one of the six, set by an example, stays offered as it is rather than lost.
             const held_colour=held?.colour,named=FIGURE_PALETTE.findIndex(c=>c.toLowerCase()===held_colour?.toLowerCase());
             const colourName=(c:string)=>{const i=FIGURE_PALETTE.findIndex(x=>x.toLowerCase()===c.toLowerCase());return i<0?c:LAYER_COLOUR_NAMES[i]!;};
-            return `<div class="field"><span class="field-label">${esc(source.params.label||TYPES[source.type].title)}</span>`
+            return `<div class="field"><span class="field-label">${esc(source.label)}</span>`
               +`<label class="field-label" for="layer-colour-${esc(source.id)}">Colour</label>`
               +`<select id="layer-colour-${esc(source.id)}" data-layer-colour="${esc(source.id)}">`
               +`<option value="">Default \u00b7 ${esc(colourName(layerDefaultColour(index)))}</option>`
@@ -506,7 +525,7 @@ function mapSettingsFlat(n:WorkflowNode<'map_output'>):string{
               +(()=>{
                 // A LAYER MADE AT RUN TIME, as Point data from a table is, has its records in the map's last run, not in its
                 // step (2026-11-12, MERS's hospitals sized by their cases).
-                const held_features=(source.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}).data?.features??[];
+                const held_features=(source.node?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features??[];
                 const features=held_features.length?held_features
                   :((ctx.result()?.outputs.find(o=>o.nodeId===n.id) as {rows?:{sourceNodeId?:string|null;attributes?:Record<string,unknown>}[]}|undefined)?.rows??[])
                     .filter(r=>r.sourceNodeId===source.id).map(r=>({properties:r.attributes}));

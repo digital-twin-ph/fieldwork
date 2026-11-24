@@ -3,6 +3,22 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.179.0 — 2026-11-23
+
+- **Tabular data takes a table you type** (0.20.0). A sixth tab, **Type or paste**: a short table written or pasted
+  as free text, counted and drawn as a table while you type, a ragged line named with its number, and **Save as CSV**
+  to keep it on the device. Every other tab fetches from somewhere, so a list you compose yourself had to be made
+  outside Fieldwork and imported.
+- **A record's popup says what the record is** (Map 0.46.0), not only where it is: its columns, skipping empty
+  values and `NA`. Without them a join could change every row and the map would look identical.
+- **The map's layer controls are keyed by the layers it drew** (Map 0.46.0). Keyed by the edge, a slider for a layer
+  that arrived through a clip wrote a setting nothing read, the mark sliders were crossed, and the Pin class picker
+  offered nothing for it.
+- **Points read from a table no longer carry the melt** (Point data 0.18.0): a record read `measure: Year` and
+  `value: 1952` as though the file had columns called measure and value.
+- **Keep points inside the area counts what it will keep** (0.3.0), before it runs, and the outline setting moves
+  records between kept and set aside as it is ticked.
+
 ## 0.178.0 — 2026-11-23
 
 - **Area around a point buffers points, lines or polygons** (0.4.0), and offers to combine the areas into one study

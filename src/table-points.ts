@@ -18,7 +18,9 @@ export interface TablePointsResult {
   /** How many values were read as degrees, minutes and seconds, and how many of those stated no hemisphere. */
   coordinates:{x:CoordinateReport;y:CoordinateReport};
 }
-type TableRows={keys:string[]; valueField:string; rows:{key:Record<string,unknown>; value:unknown}[]};
+type TableRows={keys:string[]; valueField:string; rows:{key:Record<string,unknown>; value:unknown}[];
+  /** Set where the table was read wide: which key column holds the variable's NAME. See the melt below. */
+  wide?:{measureKey?:string}};
 export function tablePoints(table:TableRows,mapping:TableMapping):TablePointsResult{
   const columns=[...table.keys,...(table.valueField?[table.valueField]:[])];
   for(const [role,column] of [['x (longitude)',mapping.x],['y (latitude)',mapping.y]] as const)
@@ -46,7 +48,17 @@ export function tablePoints(table:TableRows,mapping:TableMapping):TablePointsRes
     else{const at=`${x},${y}`;if(seen.has(at))sharedPosition++;else seen.add(at);}
     const id=mapping.id?read(row,mapping.id):'';
     const f=feature(id||`row-${i+1}`,mapping.name?read(row,mapping.name):`Record ${i+1}`,reason?null:[x,y]);
-    f.properties={...Object.fromEntries(columns.map(c=>{const v=read(row,c);return [c,v];})),name:f.properties.name};
+    // THE MELT IS INTERNAL, AND STAYS SO. A table read wide is held long -- one row per subject per variable, the
+    // variable's name under a measure key and its value under the value field -- and copying those two columns onto
+    // a point put them on the map: a bat record's popup read "measure: Year" and "value: 1952" as though the file
+    // had columns called measure and value (reported 2026-11-23, the same misrepresentation docs/audits/
+    // melted-counts-audit.md was opened for). The pair is one fact and is carried as one: Year: 1952.
+    const measureKey=table.wide?.measureKey;
+    const variable=measureKey?String(row.key[measureKey]??'').trim():'';
+    const melted=new Set(measureKey&&variable?[measureKey,table.valueField]:[]);
+    f.properties={...Object.fromEntries(columns.filter(c=>!melted.has(c)).map(c=>{const v=read(row,c);return [c,v];})),
+      ...(variable?{[variable]:read(row,table.valueField)}:{}),
+      name:f.properties.name};
     return f;
   });
   return {points:{type:'FeatureCollection',features},unplaced,positions:seen.size,sharedPosition,

@@ -19,6 +19,8 @@ import {guessMapping,readDictionary,proposeFrom,checkDictionary,sameNames,fileRo
 const FILE_BYTES=MAX_TABLE_FILE_BYTES;
 export interface WideChoice {keys:string[]; valueFields:string[]; measureKey:string}
 export interface TableImport {data:DataTable; source:DataTableSource; keys:string[]; valueField:string;
+  /** The text a short table was typed from, kept so reopening shows it rather than an empty box. */
+  typedText?:string;
   /** Where a table read from a service came from, as the step keeps it: DHIS2's server, request and time. */
   provenance?:import('./input-provenance.js').InputProvenance;
   /** In a long read whose value is named otherwise, the file's column it is read from. */
@@ -43,6 +45,8 @@ export interface TableFrame {step?:string; convertOnRun?:boolean; hasSource?:boo
   dhis2?:{tokens:()=>{ref:string;label:string;origin:string}[];resolve:(ref:string,origin:string)=>string}}
 /** What the editor reopens with. `wide` present means the file was read as wide. */
 export interface TableReopen extends TableSelection {wide?:WideChoice; distinctValuesFor?:string[]; valueColumn?:string;
+  /** What was typed in the Type or paste tab, where the table was made there. */
+  typedText?:string;
   /** Where the table is published, shown in the URL box and the box opened, so a reopened step says where it reads from. */
   remote?:RemoteTableSource}
 
@@ -167,6 +171,10 @@ interface CensusCountry {iso3:string;country:string;census:string;referenceDate:
 type CensusTable=Pick<CensusCountry,'rows'|'counts'|'columns'|'derived'>;
 const CENSUS=censusCatalogue as {repository:string;commit:string;raw:string;countries:CensusCountry[]};
 const CENSUS_RAW='https://raw.githubusercontent.com/digital-twin-ph/census-tables/';
+/** HOW MANY ROWS A TYPED TABLE HOLDS. A textarea is for a species list or a lookup, not a census: the practitioner,
+ *  2026-11-23, *"The free text CSV is for creating short tables anyway so it need not be complicated."* Said in the
+ *  label rather than discovered by pasting something long. */
+export const TYPED_ROWS=500;
 const TAB_KEY='fieldwork:table-source-tab';
 /** DHIS2 ANALYTICS' COLUMNS, as the DHIS2 tab writes them (dhis2-source.ts). */
 const DHIS2_DICTIONARY=['variable,label,unit,description',
@@ -210,7 +218,14 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     +'<button type="button" role="tab" id="table-tab-remote" data-table-tab="remote" aria-controls="table-remote">From an address</button>'
     +'<button type="button" role="tab" id="table-tab-census" data-table-tab="census" aria-controls="table-census-part">Census tables</button>'
     +'<button type="button" role="tab" id="table-tab-gauges" data-table-tab="gauges" aria-controls="table-gauges-part">Tide gauges</button>'
-    +'<button type="button" role="tab" id="table-tab-dhis2" data-table-tab="dhis2" aria-controls="table-dhis2-part">DHIS2</button></div>'
+    +'<button type="button" role="tab" id="table-tab-dhis2" data-table-tab="dhis2" aria-controls="table-dhis2-part">DHIS2</button>'
+    // A SHORT TABLE NOBODY PUBLISHED (2026-11-23). The practitioner, composing a species list to join against a larger
+    // table: *"What if we make the CSV editor a free text so I can type columns and rows?"* and *"The free text CSV is
+    // for creating short tables anyway so it need not be complicated."* Every other tab fetches from somewhere, so a
+    // list you compose yourself had to be made outside Fieldwork and imported -- the one step of such a workflow that
+    // leaves the browser. Free text, because what you type IS the format: nothing is hidden behind a widget, and a
+    // paste from a spreadsheet works the same way as typing.
+    +'<button type="button" role="tab" id="table-tab-typed" data-table-tab="typed" aria-controls="table-typed-part">Type or paste</button></div>'
     +'<section id="table-file-part" role="tabpanel" aria-labelledby="table-tab-file">'
     +'<label class="field-label" for="table-file">CSV, Excel or Stata file (up to '+FILE_BYTES/1e6+' MB, '+MAX_TABLE_ROWS.toLocaleString()+' rows)</label><input id="table-file" type="file" accept=".csv,text/csv,.xlsx,.dta">'
     // ONLY FOR A FILE OF YOUR OWN (2026-11-20): a census table brings its dictionary, and a table from an address can be
@@ -222,6 +237,13 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     // AN EXCEL WORKBOOK'S SHEET (the practitioner, 2026-11-08: "Yes add Excel"). Shown only for a workbook of several.
     +'<div id="table-sheet-row" hidden><label class="field-label" for="table-sheet">Sheet</label><select id="table-sheet"></select></div>'
     +'<p id="table-workbook" class="muted" hidden></p></section>'
+    +'<section id="table-typed-part" role="tabpanel" aria-labelledby="table-tab-typed" hidden>'
+    +`<label class="field-label" for="table-typed">Columns and rows: a header row first, then one row per record (at most ${TYPED_ROWS.toLocaleString('en')})</label>`
+    +'<textarea id="table-typed" rows="9" spellcheck="false" placeholder="species,family,note\nEidolon helvum,Pteropodidae,\nMops condylurus,Molossidae,"></textarea>'
+    +'<p id="table-typed-says" class="muted" role="status"></p>'
+    +'<p><button type="button" id="table-typed-save" class="button small" disabled>Save as CSV</button>'
+    +' <span class="muted">Saves the table as Fieldwork read it, so the file reads back the same way.</span></p>'
+    +'<div id="table-typed-preview"></div></section>'
     // OR FROM WHERE IT IS PUBLISHED. The project then keeps the URL and the file's digest, and an export carries no
     // rows: another device fetches the same file when it opens. Experiment 170.
     +'<section id="table-remote" role="tabpanel" aria-labelledby="table-tab-remote" hidden>'
@@ -516,7 +538,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
           shapeAlert.hidden=false;
         }
         table=wideDataTable(parsed,{keys,valueFields,measureKey,valueField,...roles,...(unit?{unit}:{})});
-        imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
+        imported={data:table,...(file.name==='typed.csv'?{typedText:typed.value}:{}),
+          source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
           keys:table.keys,valueField,...(unit?{unit}:{}),wide:{keys,valueFields,measureKey},
           source_table:{headers:parsed.headers.map(h=>h.trim()),rows:parsed.rows}};
         const untaken=renderBefore(keys,valueFields);
@@ -545,7 +568,8 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         if(!valueField){status.textContent='Choose the value column: the one holding the numbers.';save.disabled=true;return;}
         const valueAs=q<HTMLInputElement>('#table-long-value-name').value.trim();
         table=dataTable(parsed,{keys,valueField,...(valueAs&&valueAs!==valueField?{valueAs}:{}),...roles,...(unit?{unit}:{})});
-        imported={data:table,source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
+        imported={data:table,...(file.name==='typed.csv'?{typedText:typed.value}:{}),
+          source:{filename:file.name,bytes:file.size,sha256:'',rows:table.rowCount},
           keys,valueField:table.valueField,...(table.valueField!==valueField?{valueColumn:valueField}:{}),...(unit?{unit}:{})};
         const untaken=renderBefore(keys,[valueField]);
         showAfter(table);
@@ -764,6 +788,80 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   const remembered=(()=>{try{return localStorage.getItem(TAB_KEY);}catch{return null;}})();
   showTab(existing?.remote?.url?(existing.remote.url.startsWith(CENSUS_RAW)?'census':existing.remote.url.startsWith(GAUGES_RAW)?'gauges':'remote'):existing?'file'
     :tabs.some(t=>t.dataset.tableTab===remembered)?remembered!:'file',false);
+  // WHAT IS TYPED, READ THE WAY A FILE IS. The text is handed to the same `load` a chosen file goes through, so the
+  // header naming, the key and value columns, the shape and the preview below are one path, not two that can drift.
+  // Validation is `parseCSV`'s own: it refuses a ragged row, a malformed quote and a missing header already, and a
+  // second rule here would be a second answer to the same question.
+  const typed=q<HTMLTextAreaElement>('#table-typed'),typedSays=q<HTMLElement>('#table-typed-says');
+  if(existing?.typedText)typed.value=existing.typedText;
+  const typedSave=q<HTMLButtonElement>('#table-typed-save'),typedPreview=q<HTMLElement>('#table-typed-preview');
+  let typedTimer=0,typedRead:{headers:string[];rows:string[][]}|undefined;
+  // A PASTE FROM A SPREADSHEET IS TABS. Copying six rows out of Excel or Sheets puts TSV on the clipboard, and a
+  // comma-only reader would make that one column per line. The header line decides, and the status line says which.
+  const delimiterOf=(text:string):','|'\t'|';'=>{
+    const first=text.split(/\r?\n/,1)[0]??'';
+    const count=(d:string)=>first.split(d).length-1;
+    return count('\t')>count(',')?'\t':count(';')>count(',')?';':',';
+  };
+  const asCsv=(text:string,delimiter:string):string=>delimiter===','?text
+    :text.split(/\r?\n/).map(line=>line.split(delimiter)
+      .map(cell=>/[",\n]/.test(cell)?`"${cell.replace(/"/g,'""')}"`:cell).join(',')).join('\n');
+  /** The line a ragged row is on, which `parseCSV` knows but does not say. Worth the scan: on a short table the
+   *  line number is the whole of the remedy. */
+  const raggedLine=(csv:string):number|undefined=>{
+    const lines=csv.split(/\r?\n/).filter(l=>l.trim());
+    const fields=(line:string)=>{let n=1,quoted=false;
+      for(let i=0;i<line.length;i++){const c=line[i];
+        if(quoted){if(c==='"'){if(line[i+1]==='"')i++;else quoted=false;}}
+        else if(c==='"')quoted=true;else if(c===',')n++;}
+      return n;};
+    const want=fields(lines[0]??'');
+    for(let i=1;i<lines.length;i++)if(fields(lines[i]!)!==want)return i+1;
+    return undefined;
+  };
+  const readTyped=()=>{
+    const text=typed.value;
+    typedPreview.innerHTML='';typedSave.disabled=true;typedRead=undefined;
+    if(!text.trim()){typedSays.textContent='';return;}
+    const delimiter=delimiterOf(text),csv=asCsv(text,delimiter);
+    const named=delimiter==='\t'?'tab separated':delimiter===';'?'semicolon separated':'comma separated';
+    try{
+      const parsed=parseCSV(csv,TYPED_ROWS,FILE_BYTES);
+      typedRead=parsed;
+      typedSave.disabled=false;
+      typedSays.textContent=`${named}: ${parsed.headers.length} column${parsed.headers.length===1?'':'s'}, `
+        +`${parsed.rows.length.toLocaleString('en')} row${parsed.rows.length===1?'':'s'}.`
+        +(parsed.named?.length?` ${parsed.named.map(n=>`Column ${n.column} had no usable name and is read as ${n.as}.`).join(' ')}`:'');
+      // THE TABLE AS TYPED, WIDE: one row per record, the columns in the order they were written. Drawn directly
+      // rather than through `dataTableMarkup`, because that renderer wants the key and value columns chosen, and
+      // those are decided below the tabs after the text is read -- the preview is for seeing what you just typed.
+      typedPreview.innerHTML=`<table class="typed-preview"><thead><tr>`
+        +parsed.headers.map(h=>`<th scope="col">${esc(h)}</th>`).join('')+'</tr></thead><tbody>'
+        +parsed.rows.map(row=>`<tr>${row.map(cell=>`<td>${esc(cell)}</td>`).join('')}</tr>`).join('')
+        +'</tbody></table>';
+    }catch(error){
+      const line=/same number of fields/.test(String((error as Error).message))?raggedLine(csv):undefined;
+      typedSays.textContent=`${named}. ${(error as Error).message}`
+        +(line?` Line ${line} does not match the header.`:'');
+    }
+  };
+  typed.oninput=()=>{readTyped();
+    // The workflow's own copy is built from the same text, a moment after typing stops.
+    clearTimeout(typedTimer);
+    typedTimer=window.setTimeout(()=>{if(!typedRead)return;
+      const delimiter=delimiterOf(typed.value);
+      void load(new File([asCsv(typed.value,delimiter)],'typed.csv',{type:'text/csv'}),false);},350);};
+  typedSave.onclick=()=>{
+    if(!typedRead)return;
+    // SAVED AS FIELDWORK READ IT, so the file reads back the same way: the header names it settled on, and one
+    // quoting rule rather than whatever the typing happened to use.
+    const cell=(v:string)=>/[",\n]/.test(v)?`"${v.replace(/"/g,'""')}"`:v;
+    const csv=[typedRead.headers.map(cell).join(','),...typedRead.rows.map(row=>row.map(cell).join(','))].join('\n')+'\n';
+    const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    const a=document.createElement('a');a.href=url;
+    a.download='table.csv';
+    a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+
   // A TABLE FROM AN ADDRESS REOPENS READ (2026-11-20): it opened empty until fetched again, so its columns, value name and
   // keys could not be changed, and what showed was stale. Its copy on this device is read, checked by digest, and the
   // settings it was saved with are put back.
@@ -1328,6 +1426,8 @@ export function openTableStep(nodeId:string,kit:TableKit):void{
         // one that disagrees with the keys.
         if(result.wide)params.wide=result.wide;else delete params.wide;
         if(result.remote)params.remote=result.remote;else delete params.remote;
+        // WHAT WAS TYPED, kept beside the rows: reopening a short table should show it, not an empty box.
+        if(result.typedText)params.typedText=result.typedText;else delete params.typedText;
         if(result.distinctValuesFor?.length)params.distinctValuesFor=result.distinctValuesFor;else delete params.distinctValuesFor;
         // The file's own labels as proposals; what the practitioner has accepted is never replaced by them.
         if(result.proposed){const held=params.columns??{};
@@ -1344,7 +1444,8 @@ export function openTableStep(nodeId:string,kit:TableKit):void{
       return kept;
     },current.keys.length?{keys:current.keys,valueField:current.valueField,...(current.valueColumn?{valueColumn:current.valueColumn}:{}),unit:current.unit,primaryKey:current.data.primaryKey,secondaryKeys:current.data.secondaryKeys,
       ...(current.wide?{wide:current.wide}:{}),...(current.distinctValuesFor?.length?{distinctValuesFor:current.distinctValuesFor}:{}),
-        ...(current.remote?{remote:current.remote}:{})}:undefined,
+        ...(current.remote?{remote:current.remote}:{}),
+        ...(current.typedText?{typedText:current.typedText}:{})}:undefined,
     // THE STANDARD FRAME: the step's own name, and the one setting that can be applied without reading the file again.
     {dhis2:kit.dhis2,
       step:current.label||'Tabular data',convertOnRun:!!current.convertOnRun,hasSource:!!current.sourceTable,

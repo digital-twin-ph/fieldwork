@@ -8,6 +8,7 @@ import type {InspectorKit,OwnInspector} from './inspector-kit.js';
 import {openConfigDialog} from './config-dialog.js';
 import {openWalkthrough} from './table-walkthrough.js';
 import {MAX_BUFFER_M} from './area-buffer.js';
+import {clipPointsToArea} from './clip-points.js';
 import {previewBuffers} from './buffer-point.js';
 import {bufferPointWalkthrough,measureAreaWalkthrough,clipPolygonsWalkthrough,clipPointsWalkthrough,summarizePointsWalkthrough} from './spatial-walkthroughs.js';
 import {areaUnitOptions} from './area-measurement.js';
@@ -225,6 +226,39 @@ export const clipPolygonsInspector:OwnInspector<'clip_polygons'>={
  *  catchment-ui.ts when Show me how was added to each (TODO 6, the practitioner's rule for any widget touched). */
 const ran=(kit:InspectorKit,n:WorkflowNode)=>{const k=kit as AreaStepKit,said=k.current()?k.method(n.id):undefined;
   return said?`<p class="standard-result">${kit.esc(said)}</p>`:'<p class="notice">Not run yet, or changed since the last run.</p>';};
+/** WHAT THE CLIP WILL KEEP, counted before it runs. The practitioner, 2026-11-23, of a Preview section holding only
+ *  a generic walkthrough: *"This one still does not have a preview."* The counts ARE this step's result, and the
+ *  checkbox above them moves records between kept and set aside, so the preview is the one place the setting can be
+ *  judged. Computed with `clipPointsToArea` itself, so what is previewed is what the step does.
+ *
+ *  Only where both sides are already on the device: the area a study area holds, or one a run produced, and the
+ *  points a source holds. Where either is missing the section says so rather than implying nothing falls inside. */
+function clipPreview(kit:AreaStepKit,n:WorkflowNode,keepBoundary:boolean):string{
+  const edges=kit.workflow().edges.filter(e=>e.to===n.id);
+  const areaFrom=edges.find(e=>e.port==='area')?.from,pointsFrom=edges.find(e=>e.port==='points')?.from;
+  if(!areaFrom||!pointsFrom)
+    return '<p class="muted">Connect a study area and the points, and what the clip keeps is counted here.</p>';
+  const node=kit.workflow().nodes.find(x=>x.id===areaFrom);
+  const boundary=(kit.current()?kit.output(areaFrom)?.boundary:undefined)
+    ??(node?.params as {geometry?:import('./types.js').Boundary}|undefined)?.geometry;
+  const {features}=kit.pointChoices(n.id,'points');
+  if(!boundary||!features.length)
+    return `<p class="muted">${!boundary?'The area is drawn when the workflow runs, and':'The points arrive when the workflow runs, and'} the counts appear here then.</p>`;
+  const points={type:'FeatureCollection' as const,
+    features:features.map((f,i)=>({type:'Feature' as const,id:String(i),properties:{name:f.name},
+      geometry:f.geometry as {type:'Point';coordinates:[number,number]}}))};
+  let counted;
+  try{counted=clipPointsToArea(points as never,boundary,keepBoundary);}catch{return '';}
+  const total=counted.inside+counted.boundary+counted.outside+counted.missing;
+  const n0=(v:number)=>v.toLocaleString('en');
+  return `<p class="standard-result"><strong>${n0(counted.collection.features.length)} of ${n0(total)} kept.</strong> `
+    +`${n0(counted.inside)} inside` 
+    +(counted.boundary?`, ${n0(counted.boundary)} exactly on the outline (${keepBoundary?'kept':'set aside'})`:'')
+    +`, ${n0(counted.outside)} outside`
+    +(counted.missing?`, ${n0(counted.missing)} with no usable location`:'')
+    +'.</p>';
+}
+
 export const clipPointsInspector:OwnInspector<'clip_points_to_area'>={
   markup:(n,kit)=>{const p=n.params,keep=p.keepBoundary!==false;
     return kit.section('Name',kit.name('clip-points-label',p.label||'Points inside the area'))
@@ -237,8 +271,9 @@ export const clipPointsInspector:OwnInspector<'clip_points_to_area'>={
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog({id:'clip-points-dialog',widget:'Keep points inside the area',step:node.params.label||'',
         draft:{keepBoundary:node.params.keepBoundary!==false,showExcluded:node.params.showExcluded!==false},
-        sections:d=>({settings:`<label class="field-option"><input type="checkbox" id="clip-points-boundary"${d.keepBoundary?' checked':''}> Keep points that sit exactly on the outline</label>`
-          +`<label class="field-option"><input type="checkbox" id="clip-points-excluded"${d.showExcluded?' checked':''}> Show the points set aside, faint, on a connected map</label>`,preview:showMe}),
+        sections:d=>({preview:clipPreview(kit as AreaStepKit,n,d.keepBoundary)+showMe,
+          settings:`<label class="field-option"><input type="checkbox" id="clip-points-boundary"${d.keepBoundary?' checked':''}> Keep points that sit exactly on the outline</label>`
+          +`<label class="field-option"><input type="checkbox" id="clip-points-excluded"${d.showExcluded?' checked':''}> Show the points set aside, faint, on a connected map</label>`}),
         wire:(root2,d,redraw)=>{
           root2.querySelector<HTMLInputElement>('#clip-points-boundary')!.onchange=e=>{d.keepBoundary=(e.target as HTMLInputElement).checked;redraw();};
           root2.querySelector<HTMLInputElement>('#clip-points-excluded')!.onchange=e=>{d.showExcluded=(e.target as HTMLInputElement).checked;redraw();};

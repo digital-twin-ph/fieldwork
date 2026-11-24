@@ -1,5 +1,5 @@
 import {LINE_COLOURS} from './static-map.js';
-import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM} from './point-layers.js';
+import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM,recordAttributesHtml} from './point-layers.js';
 import {RASTER_POINT_COLOURS} from './raster-panels.js';
 import {GlMarks,type GlMark} from './gl-marks.js';
 /** THE STACK IS PANES, NOT ARITHMETIC (2026-11-23). Leaflet stacks markers within a pane by latitude -- each marker's
@@ -575,7 +575,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
           held.push({lon,lat,shape:symbol.shape,radius:Math.round(r*2)/2,fill:paint==='solid'?ink:null,fillOpacity:largest>0?0.55:1,
             stroke:ramp?'#1d2f3a':ink,group:'',
             date:timeline?String((row as {attributes?:Record<string,unknown>}).attributes?.[timeline.dateField]??'').slice(0,10):'',
-            popup:`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`});
+            popup:`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`
+              +recordAttributesHtml((row as {attributes?:Record<string,unknown>}).attributes,esc)});
         }
         for(const [className,marks] of byClass){
           if(!marks.length)continue;
@@ -642,7 +643,8 @@ export function mountCatchmentMap(host:HTMLElement,source:Polygons|MapLayers,con
             +`<path d="${markPath(symbol.shape,centre,centre,r)}" fill="${inside?ink:'none'}"${largest>0?' fill-opacity="0.55"':''} `
             +`stroke="${ramp?'#1d2f3a':ink}" stroke-width="1.5" stroke-linejoin="round"/></svg>`})})
           .bindPopup(`<b>${esc(row.name)}</b>${state?`<br>${esc(state)}`:''}`
-            +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`)
+            +`<br>${esc(named[source]||source)}<br>Location: ${lat.toFixed(6)}, ${lon.toFixed(6)}`
+            +recordAttributesHtml((row as {attributes?:Record<string,unknown>}).attributes,esc))
           ;
         groupFor(row).addLayer(marker);
         if(timeline){

@@ -233,3 +233,27 @@ export function markedPoints(rows:readonly MarkRow[],
   flush();
   return svg;
 }
+
+/** WHAT A RECORD SAYS, in its popup. The practitioner, 2026-11-23, having joined a species list onto 55,227 bat
+ *  records and drawn the result: *"Without the species in the tool tip I have no way of directly verifying whether
+ *  the relate two tables worked."* The popup named the record, its relation to the area, its layer and its position
+ *  -- everything about where it is and nothing about what it is -- so a join could change every row and the map
+ *  would look identical.
+ *
+ *  Columns in the order the source holds them, which for a table-derived layer is the file's own order; a value that
+ *  is empty, or the "NA" a file writes for missing, is left out rather than shown as a fact. Capped, because a wide
+ *  line list would otherwise fill the screen, and the count says what was left. */
+const POPUP_ATTRIBUTES=14;
+export function recordAttributesHtml(attributes:Record<string,unknown>|undefined,esc:(v:string)=>string):string{
+  if(!attributes)return '';
+  const said=Object.entries(attributes).filter(([key,value])=>{
+    if(key==='name')return false;
+    const text=String(value??'').trim();
+    return text!==''&&text.toUpperCase()!=='NA';
+  });
+  if(!said.length)return '';
+  const shown=said.slice(0,POPUP_ATTRIBUTES);
+  return shown.map(([key,value])=>`<br>${esc(key)}: ${esc(String(value))}`).join('')
+    +(said.length>shown.length?`<br><span class="muted">and ${said.length-shown.length} more column${said.length-shown.length===1?'':'s'}</span>`:'');
+}
+

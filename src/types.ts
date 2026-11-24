@@ -210,7 +210,12 @@ export interface ParamsByType {
   donut_geomask:{label:string;innerM:number;outerM:number;seed:number};
   aggregate_points_to_h3_cell:{label:string;resolution:number;minOccupancy:number};
   buffer_area:{label:string;distanceM:number};
-  table_input:{provenance?:import('./input-provenance.js').InputProvenance;/** A long read's value named otherwise: the file's column it is read from (2026-11-20). */ valueColumn?:string;label:string;
+  table_input:{
+    /** THE TEXT A SHORT TABLE WAS TYPED FROM (2026-11-23), kept beside the rows so reopening Configure... shows what
+     *  was written rather than making the practitioner type it again to change one cell. Present only for a table
+     *  made in the Type or paste tab. */
+    typedText?:string;
+    provenance?:import('./input-provenance.js').InputProvenance;/** A long read's value named otherwise: the file's column it is read from (2026-11-20). */ valueColumn?:string;label:string;
     /** Values edited by hand in Data quality (experiment 214), applied to a copy when the rows are handed on. */
     edits?:import('./cell-edits.js').EditEntry[];
     /** Where the table is fetched from, kept in place of its rows when the project leaves the device. Experiment 170. */

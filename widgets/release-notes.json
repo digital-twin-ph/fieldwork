@@ -176,12 +176,12 @@
    ]
   },
   "clip_points_to_area": {
-   "version": "0.2.0",
-   "released": "2026-11-22",
+   "version": "0.3.0",
+   "released": "2026-11-23",
    "changes": [
     {
-     "kind": "changed",
-     "description": "On the standard Inspector: the two settings in Configure…, with Show me how it works on four made-up points (inside, on the outline, outside, no location); its Inspector code out of app.ts."
+     "kind": "minor",
+     "description": "Preview counts what the clip will keep before it runs -- inside, exactly on the outline, outside, and records with no usable location -- and the outline setting moves records between kept and set aside as it is ticked. Computed with the step's own function, so what is previewed is what it does. Where the area or the points only exist after a run, it says so rather than implying nothing falls inside."
     }
    ],
    "breaking": false,
@@ -422,20 +422,16 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.45.0",
+   "version": "0.46.0",
    "released": "2026-11-23",
    "changes": [
     {
-     "kind": "fixed",
-     "description": "A point layer that reaches the map through another step -- a clip, say -- is found in the layer list again, so Manage layers can move it. The list keyed each layer by the edge it arrived on while the marks are keyed by the identity the data carries, and for a clipped layer those two names disagree; a layer the list cannot find is lifted above every layer it can, which is why one mine pin stayed buried under 1,171 bat records however the stack was reordered."
-    },
-    {
      "kind": "minor",
-     "description": "Among point layers nobody has positioned, the one with fewer marks is now drawn on top. Arrival order decided this before, which drew one pin under a swarm; it is the reading the stack already applies between kinds, and a position set in Manage layers still wins. Each port layer's count is shown in the dialog."
+     "description": "A record's popup says what the record IS, not only where it is: its columns, in the order the source holds them, skipping empty values and the NA a file writes, capped at 14 with the count of what was left. Reported 2026-11-23, of a species list joined onto 55,227 bat records: \"Without the species in the tool tip I have no way of directly verifying whether the relate two tables worked.\""
     },
     {
-     "kind": "changed",
-     "description": "The interactive map's stack is a pane per point layer, not arithmetic. Leaflet orders markers within a pane by latitude, so ordering layers by an offset meant reserving a band wider than any layer's pixel spread -- a stride of 10,000, and 100,000,000 to hold the sites above it -- and a layer the list could not name took the fallback rank times that stride and sat over everything. A layer with no position can no longer outrank anything, because the pane IS its position; Leaflet's latitude ordering is left to do what it is for, within a layer. The static figure and the GPU renderer already ordered by drawing in order. The sites have a pane of their own, which is what 100,000,000 was for."
+     "kind": "fixed",
+     "description": "Configure...'s layer controls are keyed and named by the layers the map drew, not by the nodes wired to it. Keyed by the edge, a slider for a layer that arrived through a clip wrote a setting nothing read, the defaults each list resolved by position landed on different layers -- so the mark sliders were crossed -- and the Pin class picker offered nothing, because a clip stores no records while the input behind it holds them all. The third surface to keep its own notion of what a layer is."
     }
    ],
    "breaking": false,
@@ -551,12 +547,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.17.0",
+   "version": "0.18.0",
    "released": "2026-11-23",
    "changes": [
     {
-     "kind": "minor",
-     "description": "The pin editor's map takes the room the dialog has instead of a fixed 400 px, and Full screen gives it the whole window with the pin's form still beside it. Siting a pin is reading the ground around it -- which river, which road, which workings -- and the small window made that a sequence of zooms rather than a look."
+     "kind": "fixed",
+     "description": "Points read from a table no longer carry the melt. A table read wide is held long -- the variable's name under a measure key, its value under the value field -- and copying both onto a point put them on the map: a bat record read \"measure: Year\" and \"value: 1952\" as though the file had columns called measure and value. The pair is one fact and is carried as one, Year: 1952."
     }
    ],
    "breaking": false,
@@ -862,12 +858,16 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.19.0",
+   "version": "0.20.0",
    "released": "2026-11-23",
    "changes": [
     {
      "kind": "minor",
-     "description": "A column named as a latitude or a longitude is read as a key, beside the rule that an identifier in digits is one: proposed as a variable it was melted into measure and value, so the table carried no coordinates for Point data to read. The Result says what it counts: 18,409 records, where it said 92,045 rows for the same file. The receipt asserts fw:tableRecordCount beside the row count, never in place of it."
+     "description": "A sixth tab, Type or paste: a short table written or pasted as free text, read by the same reader a chosen file goes through. The delimiter is taken from the header line, so a paste from a spreadsheet reads the same as typing; the columns and rows are counted and drawn as a table while you type; a ragged line is named with its number rather than padded; and Save as CSV writes the table to the device as Fieldwork read it. The text is kept, so reopening shows what was written."
+    },
+    {
+     "kind": "minor",
+     "description": "Capped at 500 rows, said in the label: a textarea is for a species list or a lookup, not a census."
     }
    ],
    "breaking": false,

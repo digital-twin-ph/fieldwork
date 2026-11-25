@@ -292,7 +292,7 @@
   {
    "id": "urn:fieldwork:widget:case_series",
    "nodeType": "case_series",
-   "currentVersion": "0.8.0",
+   "currentVersion": "0.9.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -343,6 +343,11 @@
      "version": "0.8.0",
      "path": "widgets/releases/case_series/0.8.0.json",
      "sha256": "46de618c55440027eb1c1988ab958c62b3d2a288a459240590bbf1253447d0d5"
+    },
+    {
+     "version": "0.9.0",
+     "path": "widgets/releases/case_series/0.9.0.json",
+     "sha256": "acb2276c81c2d15ee41334811b4d1ac19581d5ef95d1eab87e77f7311aee9b41"
     }
    ]
   },
@@ -919,7 +924,7 @@
   {
    "id": "urn:fieldwork:widget:space_time_scan",
    "nodeType": "space_time_scan",
-   "currentVersion": "0.6.2",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -970,6 +975,11 @@
      "version": "0.6.2",
      "path": "widgets/releases/space_time_scan/0.6.2.json",
      "sha256": "feafafbbaedeba3daffd88924973708866288ac8ba91c1caf292641a9d4534f8"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/space_time_scan/0.7.0.json",
+     "sha256": "8e796b2fb99ad7817f8748248eb45ee9affe8353eb67776bd16f950f67282051"
     }
    ]
   },
@@ -1640,7 +1650,7 @@
   {
    "id": "urn:fieldwork:widget:measure_distance",
    "nodeType": "measure_distance",
-   "currentVersion": "0.6.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -1666,6 +1676,11 @@
      "version": "0.6.0",
      "path": "widgets/releases/measure_distance/0.6.0.json",
      "sha256": "e1cae4bcb627bae4354a5b834f0ee2fd6e734380ceb7eeacafc5d0f9cd52f6ac"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/measure_distance/0.7.0.json",
+     "sha256": "55c702e07f485aad87e255aa65009bd298afe7870815846a638eb2f466f41b7a"
     }
    ],
    "previousNodeTypes": [
@@ -2270,7 +2285,7 @@
   {
    "id": "urn:fieldwork:widget:reachable_nodes",
    "nodeType": "reachable_nodes",
-   "currentVersion": "0.6.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -2301,6 +2316,11 @@
      "version": "0.6.0",
      "path": "widgets/releases/reachable_nodes/0.6.0.json",
      "sha256": "b906b629ca8768dcd202b567b13d200b8e58e3830f5841400e4ba4f6ad33c260"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/reachable_nodes/0.7.0.json",
+     "sha256": "24ac9a343d7fd27d4a861a33703818e96d0480d6e5943c7f1bae159bce22afee"
     }
    ]
   },
@@ -3407,7 +3427,7 @@
   {
    "id": "urn:fieldwork:widget:regression",
    "nodeType": "regression",
-   "currentVersion": "0.6.1",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3453,6 +3473,11 @@
      "version": "0.6.1",
      "path": "widgets/releases/regression/0.6.1.json",
      "sha256": "ef7757d7e106066e0469f0a31a881efac282c02898379eaba1831839a35afd43"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/regression/0.7.0.json",
+     "sha256": "68b96d69bfe6bf40790518034fda56f3e883f8672e2f00e5641df854e41ed897"
     }
    ]
   },

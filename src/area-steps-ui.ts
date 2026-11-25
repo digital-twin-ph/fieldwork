@@ -42,6 +42,16 @@ export interface AreaStepKit extends InspectorKit {
    *  a clip could not reach its polygons at all, and said it was waiting for a run that had already happened. The
    *  run keeps such layers in `result.computed`; `pointChoices` reads it and nothing else did. */
   computedLayer:(nodeId:string)=>{features:{name:string;geometry:{type:string;coordinates:unknown}}[]}|undefined;
+  /** THE RECORDS ON A PORT, PROPERTIES AND ALL (2026-11-25), where a layer holds them. `pointChoices` keeps a name
+   *  and a geometry, which is all a picker needs and not all a step reads: Cases by period counts by a date in the
+   *  properties, and Reachable junctions reads `networkNodeId` to tell a site already on the network from one it
+   *  must attach itself. A preview built on the trimmed features would describe a different run.
+   *
+   *  Undefined where the records exist only as the output of a step -- `result.computed` trims to name and geometry
+   *  by design -- so a preview below such a step says it is waiting rather than showing something else. */
+  recordsOn:(nodeId:string,port:string)=>import('./types.js').PointCollection|undefined;
+  /** The street network on a port, from the layer holding it. */
+  networkOn:(nodeId:string,port?:string)=>import('./catchments.js').Network|undefined;
   /** The UTM zone this workflow's coordinates suggest, against the one chosen, and how far the chosen one stretches
    *  distances over them, as a percentage; undefined where nothing on the canvas has a coordinate yet. */
   zoneAdvice:(zone:number,hemisphere:'north'|'south')=>{zone:number;hemisphere:'north'|'south';matches:boolean;positions:number;straddles:number[];stretch:number}|undefined;

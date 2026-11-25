@@ -23,6 +23,8 @@ export interface OutbreakKit extends StepKit {
   shape:(nodeId:string)=>Record<string,string[]>;
   /** What the workflow has declared, item by item, for the study design's checklist. */
   checklist:(nodeId:string,draft?:WorkflowNode<'study_design'>['params'])=>ChecklistItem[];
+  /** The cases on the points port, with their properties, where a layer holds them. */
+  caseRecords:(nodeId:string)=>import('./types.js').PointCollection|undefined;
 }
 
 /** THE SPACE-TIME SCAN'S SETTINGS IN ONE SENTENCE (experiment 186). */
@@ -33,6 +35,54 @@ export function scanSettingsSentence(p:import('./types.js').ParamsByType['space_
     +`${p.start||p.end?`, ${p.start??'the first date'} to ${p.end??'the last'}`:''}; tested by shuffling the dates ${p.replications.toLocaleString('en-US')} times, seed ${p.seed}.`;
 }
 
+
+/** WHAT THE SCAN'S LIMITS COME TO, over the cases connected (2026-11-25).
+ *
+ *  Every setting in this dialog but two is a SHARE -- the largest circle as a share of all cases, the longest run as
+ *  a share of the study period -- and a share says nothing on its own. "Circles up to 5% of the cases" is the same
+ *  sentence over 60 cases and over 6,000, where it means three cases and three hundred. The Preview restated those
+ *  shares back, so the reader had the arithmetic to do themselves, from numbers the dialog had and did not show.
+ *
+ *  The scan itself is not run here: it shuffles the dates hundreds or thousands of times, which belongs in the run.
+ *  What is counted is the material the scan would be given -- how many cases carry a date it can read, what period
+ *  they span, and what each share works out to over them. */
+function scanPreview(kit:OutbreakKit,nodeId:string,d:import('./types.js').ParamsByType['space_time_scan'],
+  esc:(v:string)=>string):string{
+  const said=`<p class="standard-sentence">${esc(scanSettingsSentence(d))}</p>`;
+  if(!d.dateField)return said;
+  const cases=kit.caseRecords(nodeId);
+  if(!cases)return said+'<p class="muted">Connect the cases, and what these limits come to over them is counted here.</p>';
+  const DAY=86400000;
+  const read=(v:unknown):number|null=>{
+    const text=String(v??'').trim();
+    if(!/^\d{4}-\d{2}-\d{2}/.test(text))return null;
+    const at=Date.parse(text.slice(0,10));
+    return Number.isFinite(at)?at:null;};
+  const placed=cases.features.filter(f=>f.geometry);
+  const dated=placed.map(f=>read(f.properties?.[d.dateField])).filter((v):v is number=>v!==null).sort((a,b)=>a-b);
+  if(!dated.length)return said+`<p class="profile-flag">None of the ${placed.length.toLocaleString('en-US')} cases `
+    +`carry a date this step can read in ${esc(d.dateField)}. It reads dates written year-month-day.</p>`;
+  const from=d.start?Date.parse(d.start):dated[0]!,to=d.end?Date.parse(d.end):dated[dated.length-1]!;
+  const inPeriod=dated.filter(v=>v>=from&&v<=to);
+  const days=Math.max(1,Math.round((to-from)/DAY)+1);
+  const units=d.unit==='week'?Math.max(1,Math.ceil(days/7)):days;
+  const n=(v:number)=>v.toLocaleString('en-US');
+  const iso=(at:number)=>new Date(at).toISOString().slice(0,10);
+  return said
+    +`<p class="standard-result"><strong>${n(inPeriod.length)}</strong> cases over `
+    +`<strong>${n(units)}</strong> ${esc(d.unit)}${units===1?'':'s'}, ${esc(iso(from))} to ${esc(iso(to))}.</p>`
+    // THE SHARES IN THE UNITS OF THE THING THEY LIMIT, which is the whole point: a circle is a number of cases and a
+    // run is a number of days, and those are what a reader can judge against an outbreak they know.
+    +`<p class="description">The largest circle holds up to <strong>${n(Math.floor(inPeriod.length*d.maxCaseShare))}</strong> `
+    +`of those cases; the longest run is up to <strong>${n(Math.floor(units*d.maxTimeShare))}</strong> `
+    +`${esc(d.unit)}${Math.floor(units*d.maxTimeShare)===1?'':'s'}.</p>`
+    +(dated.length<placed.length
+      ?`<p class="profile-flag">${n(placed.length-dated.length)} of ${n(placed.length)} cases carry no date this step `
+        +`can read in ${esc(d.dateField)}, so they are not scanned.</p>`:'')
+    +(inPeriod.length<dated.length
+      ?`<p class="profile-flag">${n(dated.length-inPeriod.length)} dated case`
+        +`${dated.length-inPeriod.length===1?' falls':'s fall'} outside the study period set above.</p>`:'');
+}
 
 /** THE SPACE-TIME SCAN'S CONFIGURATION DIALOG (experiments 186 and 200). The date column is nominated, never guessed;
  *  the limits are SaTScan's defaults until changed; the seed is shown, so a run can be repeated exactly. */
@@ -65,7 +115,7 @@ function openScanConfig(kit:OutbreakKit,nodeId:string){
       +`<div class="field"><label class="field-label" for="scan-seed">Seed of the shuffles</label>`
         +`<input id="scan-seed" type="number" min="0" max="4294967295" step="1" value="${draft.seed}"></div>`
       +``,
-      preview:`<p class="standard-sentence">${esc(scanSettingsSentence(draft))}</p>`}),
+      preview:scanPreview(kit,nodeId,draft,esc)}),
     wire:(root,draft,redraw)=>{
       const on=(id:string,fn:(el:HTMLInputElement&HTMLSelectElement)=>void)=>root.querySelector<HTMLInputElement&HTMLSelectElement>(id)?.addEventListener('change',e=>{fn(e.target as never);redraw();});
       on('#scan-date',el=>{draft.dateField=el.value;});

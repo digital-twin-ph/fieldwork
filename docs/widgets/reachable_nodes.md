@@ -1,6 +1,6 @@
 # Reachable junctions
 
-_Created 2026-11-23 · Updated 2026-11-23_
+_Created 2026-11-23 · Updated 2026-11-25_
 
 **A spatial operation.** It takes sites and a street network and gives back the street junctions each site can reach
 within a travel time, each junction carrying the time and distance it took and the budget left on arrival.
@@ -52,6 +52,16 @@ to the junction first, so it reaches less than one on the road.
 The lab's [reachability notebook](https://digital-twin-ph.github.io/validation-lab/lab/index.html?path=07-reachability-vs-networkx.ipynb) recomputes the junctions with networkx.
 
 ## History
+
+### 2026-11-25 · The Preview says what it is waiting for, exactly (0.7.0)
+
+Its Preview multiplied the minutes by the speed, which is the two numbers just typed: the same sentence whether the
+network reaches a thousand junctions or none.
+
+The budget sentence stays, because it is what the two settings mean, and what that budget buys is counted where the
+sites and the network can both be read. Where they cannot, what is missing is said exactly: a port with nothing on it is
+waiting to be connected, while a downloaded street network is held outside the page and read when the workflow runs.
+Asking for a street network over a connected one sends you to fix something that is not broken.
 
 ### 2026-11-23 · On the standard (0.6.0)
 

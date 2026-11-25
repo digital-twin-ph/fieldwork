@@ -3,6 +3,37 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.197.0 — In development
+
+- **A Preview that restates its settings looks like a preview**, which is how eleven of them went unnoticed while
+  they were met one dialog at a time. They were found by reading all forty-three rather than searching for empty ones
+  ([preview audit](docs/audits/preview-audit.md)). Four now count from the records connected, and a fifth stops asking
+  for what is already there.
+- **Cases by period counts what it would count** (0.9.0). It ran the settings sentence, showing nothing of the records.
+  It now runs the step's own counting on them, before any run: the total, the periods, the span and the busiest one.
+  Records whose date it cannot read are counted and named — a count by date drops them in silence, and the curve is
+  then drawn as though they had never been there.
+- **Measure distance counts the candidates a condition keeps** (0.7.0). The conditions are the setting on the screen,
+  and how many candidates survive them could be seen only by running the workflow and reading the receipt. The count
+  now moves as a condition is typed, beside the nearest, median and furthest distance. A condition that keeps nothing
+  leaves every point without a distance, which is said rather than left as a column of gaps.
+- **Regression counts the rows a model would be fitted on** (0.7.0): how many carry every column the plan names, how
+  the outcome divides, and the exposure's smallest level. Counted without the model's kernel, which that dialog is
+  deliberately kept clear of — a fit is iterative and belongs in the run, while completeness is one pass over the rows.
+- **The space-time scan says what its shares come to** (0.7.0). Every setting there but two is a share, and a share
+  says nothing alone: *circles up to 20% of the cases* means two over ten cases and two thousand over ten thousand.
+  Now the cases with a readable date, the period they span, and each share in the units of the thing it limits.
+- **Reachable junctions says what it is waiting for, exactly** (0.7.0). Its Preview multiplied the minutes by the
+  speed — the two numbers just typed. Worse, the first draft of the replacement asked to *connect a street network*
+  over a connected one: a downloaded network is held outside the page by reference and read when the workflow runs, so
+  a dialog cannot walk it while it is drawing. That is now said in place of sending anyone to fix what is not broken.
+  **The branch that counts junctions is unexercised**: every example here holds its network by reference, so driving
+  it needs a fixture whose network is inline, and there is none yet.
+- **One reader for records, properties and all.** `pointChoices` trims every feature to a name and a geometry, which is
+  what a picker needs and less than a step reads — Cases by period counts by a date in the properties, Measure distance
+  decides eligibility by the candidates' own attributes. A preview built on the trimmed features would have described a
+  different run, in numbers, silently.
+
 ## 0.196.0 — In development
 
 - **Quick Look says when the shape is not the table's own** (Tabular data 0.24.0). It has widened long tables on

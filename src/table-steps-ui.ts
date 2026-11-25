@@ -24,6 +24,8 @@ export interface TableStepKit extends StepKit {
   valueField:(nodeId:string)=>string|undefined;
   /** The exposure columns a two-by-two could compare, given what is chosen. */
   exposuresOffered:(nodeId:string,shape:Record<string,string[]>,d:{outcomeColumn?:string;exposed?:string;unexposed?:string})=>ReturnType<typeof import('./two-by-two-mapping.js').exposureColumnsOffered>;
+  /** The table on the records port, where one can be read before a run. */
+  recordsTable:(nodeId:string)=>import('./data-table.js').DataTable|undefined;
 }
 /** Regression's strata as a list, as `strataOf` in regression.ts reads them; kept here so the Inspector does not load the model's kernel. */
 const strataOf=(strata:string|string[]|undefined):string[]=>(Array.isArray(strata)?strata:strata?[strata]:[]).map(c=>c.trim()).filter(Boolean);
@@ -39,6 +41,64 @@ export function regressionPlan(p:import('./types.js').ParamsByType['regression']
     +(strata.length?`, within strata of ${strata.join(', ')}`:'')+(p.offset?`, offset by ${p.offset}`:'')
     +`, with ${intervals} intervals.`;
 }
+/** THE ROWS THE MODEL WOULD BE FITTED ON (2026-11-25).
+ *
+ *  Regression's Preview restated `regressionPlan(draft)` -- the model, the outcome, the exposure, the adjustments --
+ *  which is the settings read back. It never said whether a model could be fitted at all: that turns on how many
+ *  rows carry every column the plan names, how the outcome divides, and whether any level of the exposure is left
+ *  with too few rows to estimate. Those are the first things an epidemiologist checks and the last things the
+ *  dialog showed.
+ *
+ *  COUNTED WITHOUT THE MODEL'S KERNEL. `regression.ts` is deliberately not imported here -- see `strataOf` above,
+ *  copied for exactly that reason -- so this counts the table's own rows rather than fitting anything. A fit is
+ *  iterative and belongs in the run; completeness is a pass over the rows, and it is the part a reader can act on
+ *  while the settings are in front of them. */
+function regressionPreview(kit:TableStepKit,nodeId:string,d:import('./types.js').ParamsByType['regression'],
+  esc:(v:string)=>string):string{
+  const plan=`<p class="description">${esc(regressionPlan(d))}</p>`;
+  const table=kit.recordsTable(nodeId);
+  if(!table)return plan+'<p class="muted">Connect the table, and the rows this model would be fitted on are counted here.</p>';
+  if(!d.outcome||!d.exposure.column)return plan;
+  const valueOf=(r:{key:Record<string,string>;value:number|null},column:string):string=>
+    column===table.valueField?(r.value===null||r.value===undefined?'':String(r.value)):String(r.key[column]??'');
+  const needed=[d.outcome,d.exposure.column,...d.adjust.map(t=>t.column),...strataOf(d.strata),
+    ...(d.offset?[d.offset]:[])].filter(Boolean);
+  const complete=table.rows.filter(r=>needed.every(c=>valueOf(r,c)!==''));
+  const n=(v:number)=>v.toLocaleString('en-US');
+  // THE OUTCOME'S TWO SIDES. `cases` names the values that count as a case; where nothing is named, the column's own
+  // values are listed instead of guessing which side is which.
+  const outcomes=new Map<string,number>();
+  for(const r of complete){const v=valueOf(r,d.outcome);outcomes.set(v,(outcomes.get(v)??0)+1);}
+  const cases=(d.cases??[]).filter(Boolean);
+  const caseRows=cases.length?complete.filter(r=>cases.includes(valueOf(r,d.outcome))).length:null;
+  // THE SMALLEST LEVEL OF THE EXPOSURE, where it is entered as categories: a level with a handful of rows is where
+  // an estimate runs out of information, and nothing else on this screen says how many rows each level has.
+  const levels=new Map<string,number>();
+  if(d.exposure.as==='categorical')
+    for(const r of complete){const v=valueOf(r,d.exposure.column);levels.set(v,(levels.get(v)??0)+1);}
+  const smallest=[...levels.entries()].sort((a,b)=>a[1]-b[1])[0];
+  return plan
+    +`<p class="standard-result"><strong>${n(complete.length)}</strong> of ${n(table.rows.length)} rows carry `
+    +`every column this model names${needed.length>1?` (${needed.map(esc).join(', ')})`:''}.</p>`
+    +(caseRows===null
+      ?(outcomes.size&&outcomes.size<=6
+        ?`<p class="description">${esc(d.outcome)}: `
+          +[...outcomes.entries()].map(([v,c])=>`${esc(v||'empty')} ${n(c)}`).join(', ')
+          +'. Which of these count as cases is set above.</p>':'')
+      :`<p class="standard-result"><strong>${n(caseRows)}</strong> case${caseRows===1?'':'s'} and `
+        +`${n(complete.length-caseRows)} not, among the rows counted.</p>`)
+    +(smallest&&levels.size>1
+      ?`<p class="${smallest[1]<10?'profile-flag':'description'}">${esc(d.exposure.column)} has ${n(levels.size)} `
+        +`levels here; the smallest, ${esc(smallest[0]||'empty')}, has ${n(smallest[1])} row${smallest[1]===1?'':'s'}.</p>`
+      :'')
+    // ROWS LEFT OUT ARE A FINDING, not a detail of the fit: a model quietly fitted on two thirds of the table is
+    // the kind of thing a reader should see before Apply, not after a run.
+    +(complete.length<table.rows.length
+      ?`<p class="profile-flag">${n(table.rows.length-complete.length)} row`
+        +`${table.rows.length-complete.length===1?' is':'s are'} left out: a column the model names is empty there.</p>`
+      :'');
+}
+
 /** REGRESSION'S CONFIGURATION DIALOG (experiments 167 and 186, 2026-11-12): the model, the outcome and its cases, the
  *  exposure and the columns fitted one model each, what it is adjusted for, strata and offset, and the intervals, on a
  *  draft that changes the step only on Apply. */
@@ -114,7 +174,7 @@ function openRegressionConfig(kit:TableStepKit,nodeId:string){
           ?`<div class="field"><label class="field-label" for="reg-hac-lag">Lags</label><input id="reg-hac-lag" type="number" min="0" max="60" value="${esc(String(p.hacLag??0))}"></div>`
             +columnSelect('reg-order','Rows in the order of',p.order,'The table\'s order'):'')
         +'';
-      return {settings,preview:`<p class="description">${esc(regressionPlan(d))}</p>`,
+      return {settings,preview:regressionPreview(kit,nodeId,d,esc),
         ...(columns.length?{}:{message:{tone:'warning' as const,text:'Connect a table first: its columns are the choices here.'}})};
     },
     wire:(root,d,redraw)=>{

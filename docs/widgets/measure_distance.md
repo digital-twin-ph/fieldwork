@@ -1,6 +1,6 @@
 # Measure distance
 
-_Created 2026-11-09 · Updated 2026-11-11_
+_Created 2026-11-09 · Updated 2026-11-25_
 
 **For each point, the nearest of a set of candidates, and how far it is.** Each facility's nearest tide gauge; each
 sampled location's nearest clinic.
@@ -47,3 +47,14 @@ The step's panel holds its **Name**, its two inputs, one sentence saying what it
 ## Where it is used
 
 The sea-level example (each facility's nearest tide gauge).
+
+## History
+
+### 2026-11-25 · The Preview counts the candidates a condition keeps (0.7.0)
+
+The conditions are the setting on the screen, and the one number they exist to change — how many candidates survive
+them — could be seen only by running the workflow and reading the receipt. The Preview named the conditions back.
+
+It now runs this step's own search, so the eligible count moves as a condition is typed, beside the nearest, median and
+furthest distance. Points left with no distance are counted: a condition that keeps nothing leaves every point without
+one, which a table of distances shows only as a column of gaps.

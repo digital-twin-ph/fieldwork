@@ -60,3 +60,36 @@ test('the reachability step is configured in its dialog, and its optional frame 
 
   expect(errors).toEqual([]);
 });
+
+/** WHAT IT WOULD REACH, over the network connected (2026-11-25). The Preview was `minutes x speed` -- "That goes up
+ *  to 800 m along the streets from each site" -- arithmetic on the two numbers just typed, identical whether the
+ *  network reaches a thousand junctions or none. It reads like a preview, which is why a search for EMPTY previews
+ *  walked past it and eleven others (docs/audits/preview-audit.md).
+ *
+ *  Both branches are asserted: a step just dragged out has nothing connected, which is its ordinary first state, and
+ *  a step wired to the pumps and the street network counts what it would reach. */
+test('Reachable junctions says what it is waiting for, and never asks for what is connected',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.goto('/?example=snow-isochrone');
+  await expect(page.locator('body')).toContainText('Complete in',{timeout:60000});
+
+  await page.locator('#node-library [data-add="reachable_nodes"]').click();
+  await page.locator('[data-view="workflow"]').click();
+  const node=page.locator('.react-flow__node').filter({hasText:'Reachable junctions'}).first();
+  await expect(node).toBeVisible({timeout:20000});
+  await node.click();
+  await page.locator('#configure-step').click();
+  const preview=page.locator('#reach-dialog [data-config-section="preview"]');
+  // THE BUDGET SENTENCE STAYS -- it is what the two settings mean -- and now says what it is waiting for.
+  await expect(preview).toContainText('budget of');
+  await expect(preview).toContainText('Connect the sites and a street network');
+  await page.locator('#reach-dialog #config-cancel').click();
+
+  // NOT ASSERTED HERE: the branch that counts junctions. The Snow example holds its street network by reference
+  // (`dataRef`, in IndexedDB), so nothing in a dialog can walk it while it is drawing -- see the note on
+  // `reachPreview`. Wiring a network INTO this example through an import did not carry the new edges, so driving
+  // that branch needs a fixture whose network is inline; it is unexercised until there is one, and says so.
+  expect(errors).toEqual([]);
+});

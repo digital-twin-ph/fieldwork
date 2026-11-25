@@ -95,7 +95,7 @@ function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
 import {PORT_NAMES,PORT_GROUPS,groupFor} from './port-names.js';
-import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,portSourceName,IncompleteWorkflow,MAX_AREA_INPUTS} from './core.js';
+import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,portSourceName,nearestPlaces,IncompleteWorkflow,MAX_AREA_INPUTS} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {staticBoundaryMap,staticMapFrame} from './static-map.js';
@@ -2119,6 +2119,45 @@ function distanceSentence(n:WorkflowNode<'measure_distance'>):string{
     +`${from('candidates')||'the candidates connected'}${narrowed?`, among those ${narrowed}`:''}, in ${n.params.unit}.`;
 }
 
+/** WHAT MEASURE DISTANCE WOULD MEASURE, over the points and candidates connected (2026-11-25).
+ *
+ *  Its Preview restated `distanceSentence(draft)`, which is built from the node's params: it named the conditions
+ *  being edited and never said what they kept. The whole point of a condition is how many candidates survive it, and
+ *  that number was available only by running the workflow and reading the receipt.
+ *
+ *  This runs `nearestPlaces`, the function the run calls, so the eligible count moves as a condition is typed. The
+ *  sentence stays above it, because it says what the step is FOR, which a column of numbers does not. */
+function distancePreview(node:WorkflowNode<'measure_distance'>,draft:WorkflowNode<'measure_distance'>['params']):string{
+  const said=`<p class="muted">${esc(distanceSentence({...node,params:draft}))}</p>`;
+  const points=layerOnPort(node.id,'points'),candidates=layerOnPort(node.id,'candidates');
+  if(!points||!candidates)return said+`<p class="muted">Connect `
+    +`${!points&&!candidates?'the points and the candidates':!points?'the points':'the candidates'}`
+    +', and what this step would measure is counted here.</p>';
+  const {rows,candidateCount,eligibleCount}=nearestPlaces(points,candidates,draft.unit,draft.candidateFilter);
+  const measured=(rows as {distance:number|null}[]).filter(r=>typeof r.distance==='number')
+    .map(r=>r.distance as number).sort((a:number,b:number)=>a-b);
+  const n=(v:number)=>v.toLocaleString('en-US');
+  const d=(v:number)=>`${v.toLocaleString('en-US',{maximumFractionDigits:v<10?2:0})} ${draft.unit==='metres'?'m':'km'}`;
+  // THE CONDITIONS' OWN NUMBER FIRST, because it is the setting on the screen. Stated even where nothing is
+  // narrowed, so adding the first condition changes a number already in view rather than making one appear.
+  return said
+    +`<p class="standard-result"><strong>${n(eligibleCount)}</strong> of ${n(candidateCount)} `
+    +`candidate${candidateCount===1?'':'s'} eligible`
+    +(eligibleCount===candidateCount?' (no condition narrows them)':'')+'.</p>'
+    +(measured.length
+      ?`<p class="standard-result">Nearest <strong>${esc(d(measured[0]!))}</strong>, `
+        +`median ${esc(d(measured[Math.floor(measured.length/2)]!))}, `
+        +`furthest ${esc(d(measured[measured.length-1]!))}, over ${n(measured.length)} point`
+        +`${measured.length===1?'':'s'}.</p>`
+      :'')
+    // A POINT WITH NO DISTANCE IS THE FINDING: no coordinates of its own, or no eligible candidate left to measure
+    // to -- which a condition can cause, and which a table of distances shows only as a gap.
+    +(rows.length>measured.length
+      ?`<p class="profile-flag">${n(rows.length-measured.length)} of ${n(rows.length)} points get no distance: `
+        +`${esc(eligibleCount?'no coordinates of their own':'no candidate is eligible')}.</p>`
+      :'');
+}
+
 /** MEASURE DISTANCE'S CONFIGURATION DIALOG (experiment 186): the unit, and the conditions a candidate must meet, on a
  *  draft written by Apply. A condition names the candidate's own attribute and the values to match. */
 function openDistanceConfig(nodeId:string){
@@ -2140,7 +2179,7 @@ function openDistanceConfig(nodeId:string){
           +`<label class="field-label" for="filter-values-${i}">Values, separated by commas</label><input id="filter-values-${i}" data-filter-values="${i}" value="${esc(c.values.map(String).join(', '))}">`
           +`<button type="button" class="button small" data-filter-remove="${i}">Remove condition</button></div>`).join('')
         +'<button type="button" id="filter-add" class="button small">Add a condition</button>';
-      return {settings,preview:`<p class="muted">${esc(distanceSentence({...node,params:draft}))}</p>`};
+      return {settings,preview:distancePreview(node,draft)};
     },
     wire:(root,draft,redraw)=>{
       const list=()=>draft.candidateFilter??(draft.candidateFilter=[]);
@@ -2576,6 +2615,24 @@ function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties
  *  the way the run would so the dialog sees what the run will see. Anything further upstream needs
  *  a run that got that far, and null says so rather than drawing an empty frame.
  */
+/** THE RECORDS ON A PORT, PROPERTIES AND ALL (2026-11-25). `pointChoices` trims every feature to a name and a
+ *  geometry, which is what a picker needs and less than a step reads: Cases by period counts by a date in the
+ *  properties, Measure distance decides eligibility by the candidates' own attributes, and Reachable junctions reads
+ *  `networkNodeId`. A preview built on the trimmed features would describe a different run, and say so in numbers.
+ *
+ *  Undefined where the records exist only as a step's output: `result.computed` trims by design, so a dialog below
+ *  such a step is told it is waiting rather than shown something else. */
+function layerOnPort(nodeId:string,port:string):import('./types.js').PointCollection|undefined{
+  const e=workflow.edges.find(x=>x.to===nodeId&&x.port===port);
+  const from=e&&workflow.nodes.find(n=>n.id===e.from);
+  if(!from)return undefined;
+  const held=(from.params as {data?:import('./types.js').PointCollection}).data;
+  if(held?.features?.length)return held;
+  // AN OUTPUT NODE'S FEATURES, while the run that made them still matches the workflow.
+  const ran=!dirty?result?.outputs.find(o=>o.nodeId===from.id) as
+    {features?:import('./types.js').PointFeature[]}|undefined:undefined;
+  return ran?.features?.length?{type:'FeatureCollection',features:ran.features}:undefined;
+}
 function tableOnPort(w:Workflow,nodeId:string,port:string):import('./data-table.js').DataTable|null{
   const edge=w.edges.find(e=>e.to===nodeId&&e.port===port);
   const from=edge&&w.nodes.find(x=>x.id===edge.from);
@@ -4690,6 +4747,12 @@ const zoneAdvice:AreaStepKit['zoneAdvice']=(zone,hemisphere)=>{const advice=sugg
         straddles:advice.straddles,stretch:(worst-1)*100};};
 function areaStepKit():AreaStepKit{
   return {...inspectorKit(),output:id=>result?.outputs.find(o=>o.nodeId===id) as ReturnType<AreaStepKit['output']>,current:()=>!dirty,
+    recordsOn:layerOnPort,
+    networkOn:(id,port='network')=>{
+      const e=workflow.edges.find(x=>x.to===id&&x.port===port);
+      const from=e&&workflow.nodes.find(n=>n.id===e.from);
+      const held=(from?.params as {data?:import('./catchments.js').Network}|undefined)?.data;
+      return held?.nodes?.length?held:undefined;},
     method:id=>result?.receipts.find(r=>r.nodeId===id)?.method,
     // THE NUMBERS ARRIVING, read from the source's own records where it holds them (Point data, a pinned layer).
     numericFields:(id,port)=>{const e=workflow.edges.find(x=>x.to===id&&x.port===port),source=e&&workflow.nodes.find(n=>n.id===e.from);
@@ -4775,6 +4838,7 @@ function dedupKit():DedupKit{
 function outbreakKit():OutbreakKit{
   const nodeOf=(id:string)=>workflow.nodes.find(x=>x.id===id)!;
   return {...stepKit(),receipt:id=>result?.receipts.find(r=>r.nodeId===id),
+    caseRecords:id=>layerOnPort(id,'points'),
     caseColumns:id=>{const source=workflow.nodes.find(x=>x.id===workflow.edges.find(e=>e.to===id&&e.port==='points')?.from);
       const records=(source?.params as {data?:{features?:{properties?:Record<string,unknown>}[]}}|undefined)?.data?.features??[];
       const ran=source?result?.pointColumns?.[source.id]?.map(c=>c.attribute)??[]:[];
@@ -4788,7 +4852,8 @@ function tableStepKit():TableStepKit{
   return {...stepKit(),receipt:id=>result?.receipts.find(r=>r.nodeId===id),
     sourceName:(id,port,fallback)=>portSourceName(workflow,id,port,fallback),
     shape:id=>upstreamKeyValues(nodeOf(id))??{},valueField:id=>upstreamValueField(nodeOf(id)),
-    exposuresOffered:(id,shape,d)=>exposureColumnsOffered(withoutDeclaredKeys(nodeOf(id),shape),d,upstreamRows(nodeOf(id)))};
+    exposuresOffered:(id,shape,d)=>exposureColumnsOffered(withoutDeclaredKeys(nodeOf(id),shape),d,upstreamRows(nodeOf(id))),
+    recordsTable:id=>tableOnPort(workflow,id,'records')??undefined};
 }
 /** CASES BY PERIOD'S AND RATE'S KIT (series-rate-ui.ts): the step kit, with the columns arriving, the table on the records
  *  port, and the one thing the Inspector adds to the canvas, an epidemic curve. */
@@ -4799,6 +4864,14 @@ function seriesRateKit():SeriesRateKit{
       return {table:table??undefined,columns:table?[...table.keys,table.valueField]
         :node.params.source==='table'&&up?[...Object.keys(upstreamKeyValues(node)??{}),...(upstreamValueField(up)?[upstreamValueField(up)!]:[])]:[]};},
     feedsAnything:id=>workflow.edges.some(e=>e.from===id),
+    // THE RECORDS CASES BY PERIOD WOULD COUNT (2026-11-25), so its Preview can run the step's own function instead of
+    // restating the settings. A table comes through `tableOnPort`, which already reads a stored table, a point layer
+    // as a table, and the last run's. Points are taken from the layer that holds them, because `pointChoices` keeps
+    // only a name and a geometry -- and the date this step counts by is in the properties it drops.
+    casesOn:id=>{
+      const node=getNode(workflow,id,'case_series');
+      if(node.params.source==='table')return {table:tableOnPort(workflow,id,'cases')??undefined};
+      return {points:layerOnPort(id,'points')};},
     addCurve:n=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve'}});
       w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'records'});selected=id;})};
 }

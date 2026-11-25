@@ -160,3 +160,35 @@ test('Snow\'s curve marks the day the pump handle came off, and the mark is set 
   const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes.find(n=>n.id==='epidemic').params.markedDates);
   expect(saved).toEqual([{date:'1854-09-08',label:'Pump handle removed'},{date:'1854-08-31',label:'Outbreak begins'}]);
 });
+
+/** WHAT CASES BY PERIOD WOULD COUNT, BEFORE ANY RUN (2026-11-25). Its Preview restated the settings until this
+ *  release -- a sentence built from the node's params, showing nothing of the records connected -- which the
+ *  practitioner met as "Same problem no preview". The numbers below are the same ones the curve draws further up
+ *  this file, which is the point: the Preview runs the step's own function, so it cannot show something the run
+ *  would not do.
+ *
+ *  Asserted WITHOUT running the workflow, because that is when a preview is worth having. An outside review noted
+ *  that the new previews were nowhere asserted in the browser; this is that assertion for the first of them. */
+test('Cases by period previews what it would count, from the records connected, before any run',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/?example=blank');
+  await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
+  await upload(page,fixture);
+  await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
+  await page.locator('#configure-step').click();
+  const preview=page.locator('#series-config [data-config-section="preview"]');
+  await expect(preview).toBeVisible();
+
+  // 616 deaths over 43 days, 19 August to 30 September 1854, the most in one day being 127 on 2 September.
+  await expect(preview).toContainText('616');
+  await expect(preview).toContainText('43 days');
+  await expect(preview).toContainText('1854-08-19');
+  await expect(preview).toContainText('1854-09-30');
+  await expect(preview).toContainText('127');
+
+  // AND IT IS NOT THE SETTINGS SENTENCE. That sentence is the Inspector's, which is where a settings summary
+  // belongs; a Preview repeating it is the disguise that kept eleven of these invisible to a search for empty ones.
+  await expect(preview).not.toContainText('Counts cases by day of');
+  await page.locator('#series-config #config-cancel').click();
+  assert.deepEqual(errors,[]);
+});

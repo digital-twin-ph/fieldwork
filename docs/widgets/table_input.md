@@ -234,6 +234,15 @@ It does not choose between rows that disagree. The table stays as read until a l
 
 ## History
 
+### 2026-11-24 · A census brings its date with it (0.22.0)
+
+Take a table from Census tables and it now carries the census's reference date — 2022 for Botswana, 2022-08 for
+Rwanda, 1984-07-01 for DR Congo — read from the catalogue rather than typed, and marked as **enumerated**: people
+were counted, not modelled.
+
+Nothing is guessed. A table from a file states no period unless you say so, and the date is dropped if you choose a
+different file afterwards, so one source's date can never end up on another's rows.
+
 ### 2026-11-23 · A coordinate is a key, and the count says what it counts (0.19.0)
 
 A column named as a **latitude** or a **longitude** is read as a key, beside the rule that an identifier written in

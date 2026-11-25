@@ -245,6 +245,16 @@ differing by punctuation or case — the case you will actually meet — is neve
 
 ## History
 
+### 2026-11-24 · Show me how keeps the rows it has matched (0.15.0)
+
+When a key is found twice and you have chosen to stop, the walkthrough said *"the step will stop once every row is
+checked"* — and emptied the result beside it at the same moment. Both could not be true, and the earlier steps, which
+had added Alpha and St. Ann one at a time, were made to look as though they had been lying.
+
+The rows now stay while the walk goes on, because the step really does go on matching them, with a line underneath:
+**None of this will be passed on.** That is the thing worth learning here — the matching is fine and the outcome is
+still nothing. The last step is unchanged: no table, nothing passed on.
+
 ### 2026-11-22 · Keys proposed from their values, and an empty cell is one of a key's values (0.14.0)
 
 It matched a column only by its name.

@@ -375,6 +375,11 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
   let dictionaryFile:{name:string;bytes:Uint8Array;sheets:Sheet[]}|undefined;
   const dictionaryInput=q<HTMLInputElement>('#table-dictionary-file'),dictionarySays=q<HTMLElement>('#table-dictionary-says');
   let dictionaryFromCensus=false;
+  /** THE PERIOD A CHOSEN CENSUS REFERS TO (experiment 230), carried onto the table so the steps after it can compare
+   *  years with something the statistics office published rather than with a label somebody typed. Held beside
+   *  `dictionaryFromCensus` because it is census state and is dropped wherever that is: a file chosen afterwards is
+   *  not the census, and must not inherit its date. */
+  let censusPeriod:import('./reference-period.js').ReferencePeriod|undefined;
   dictionaryInput.onchange=async()=>{
     const chosen=dictionaryInput.files?.[0];dictionaryFile=undefined;dictionaryFromCensus=false;dictionarySays.textContent='';
     if(!chosen)return;
@@ -754,7 +759,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     }catch(e){status.textContent='Nothing was fetched.';fail(e);}
   };
   const censusSays=q<HTMLElement>('#table-census-says');
-  const dropCensusDictionary=()=>{if(dictionaryFromCensus){dictionaryFile=undefined;dictionaryFromCensus=false;censusSays.textContent='';}};
+  const dropCensusDictionary=()=>{censusPeriod=undefined;if(dictionaryFromCensus){dictionaryFile=undefined;dictionaryFromCensus=false;censusSays.textContent='';}};
   // A TABLE FROM AN ADDRESS CARRIES NO DICTIONARY FROM ANOTHER TAB: one chosen under Your file is for that file.
   q<HTMLButtonElement>('#table-fetch').onclick=()=>{dropCensusDictionary();dictionaryFile=undefined;dictionaryInput.value='';dictionarySays.textContent='';void fetchURL(false);};
   // A PINNED TABLE, from Census tables or Tide gauges: the table by address, and its data dictionary beside it, each checked
@@ -780,6 +785,10 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     const c=CENSUS.countries.find(x=>x.iso3===button.dataset.census);if(!c)return;
     const t:CensusTable=[c,...(c.more??[])][Number(button.dataset.censusTable??0)]??c;
     await readPinned(CENSUS.raw,t.counts,t.columns,c.country,censusSays);
+    // THE CENSUS DATE, AS THE CATALOGUE STATES IT (experiment 230). Set after `readPinned`, which drops census state
+    // at its start. A census is ENUMERATED: people were counted, not modelled, which is what makes it a denominator
+    // worth having and what tells it apart from a projection of the same year.
+    if(c.referenceDate?.trim())censusPeriod={stated:c.referenceDate.trim(),kind:'enumerated'};
   };
   // A COUNTRY'S TIDE GAUGES: its stations table, and the dictionary every country's shares.
   wireGauges(dialog,esc,c=>{void readPinned(GAUGES.raw,c.table,GAUGES.columns,`${c.country}'s tide gauges`,gaugesSays);});
@@ -996,7 +1005,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         described={...proposed,...proposeFrom(entries,dictionaryFile.name,kept,{},sameNames(kept,entries))};
         dictionaryCheck=checkDictionary(dictionaryFile.name,entries,{headers:kept,rows:fileRows(result.data,result.wide)});
       }
-      const saved:TableImport={...result,data:{...result.data,source},source,
+      const saved:TableImport={...result,data:{...result.data,source,...(censusPeriod?{period:censusPeriod}:{})},source,
         ...(remote?{remote}:{}),...(Object.keys(described).length?{proposed:described}:{}),
         ...(dictionary?{dictionary}:{}),...(dictionaryCheck?{dictionaryCheck}:{}),
         ...(result.source_table&&convert.checked?{convertOnRun:true}:{})};

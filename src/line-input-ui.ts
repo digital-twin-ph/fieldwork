@@ -277,19 +277,35 @@ export function openLineConfig(view:LineView,esc:Escape):void{
         // nothing and asked for one tile, which is the fragment in the corner with grey around it. The pin editor and
         // the georeference dialog each settle their maps the same way -- an observer for every later layout change,
         // full screen among them, and two frames for the first.
-        const fit=new ResizeObserver(()=>{if(drawnMap===map)map.invalidateSize({pan:false});});
+        //
+        // AND THE FIT WAITS FOR THE SAME MOMENT (2026-11-24, reported: reopening a layer of six drawn lines showed
+        // the whole world). `fitBounds` was called synchronously at mount, so it fitted the lines into a viewport of
+        // 0 x 0 and chose a zoom for it; `invalidateSize` then corrected the SIZE and left that zoom alone, because
+        // nothing re-fitted. The first fix of this pair settled the tiles and not the view, which is why the
+        // basemap came back and the lines stayed a world away.
+        //
+        // FITTED ONCE, and never again: afterwards the view is the practitioner's. Re-fitting on every resize would
+        // throw away the place they had panned to the moment the panel changed size or went full screen, which is
+        // the mistake `catchment-map.ts` records under `rememberedView`.
+        let fitted=false;
+        const settle=()=>{
+          if(drawnMap!==map)return;
+          map.invalidateSize({pan:false});
+          if(fitted||!host.clientWidth||!host.clientHeight)return;
+          fitted=true;
+          const all=drawing.lines.flatMap(l=>l.vertices);
+          if(all.length)map.fitBounds(L.latLngBounds(all.map(v=>[v[1],v[0]] as [number,number])).pad(0.2));
+        };
+        const fit=new ResizeObserver(settle);
         fit.observe(host);
         drawnFit?.disconnect();drawnFit=fit;
-        requestAnimationFrame(()=>requestAnimationFrame(()=>{if(drawnMap===map)map.invalidateSize({pan:false});}));
+        requestAnimationFrame(()=>requestAnimationFrame(settle));
         map.on('click',ev=>{
           // IN PAN MODE A CLICK DOES NOTHING, which is the whole point: the map is there to be looked around.
           if(drawTool!=='draw')return;
           drawing.refused='';
           drawing.pending=addVertex(drawing.pending,[ev.latlng.lng,ev.latlng.lat]);
           paintDrawn(esc);syncDrawn(esc,d);});
-        // Where lines are already drawn, the map opens on them rather than on a default somewhere else.
-        const all=drawing.lines.flatMap(l=>l.vertices);
-        if(all.length)map.fitBounds(L.latLngBounds(all.map(v=>[v[1],v[0]] as [number,number])).pad(0.2));
       }
       const act=(sel:string,f:()=>void)=>root.querySelector<HTMLButtonElement>(sel)
         ?.addEventListener('click',()=>{f();paintDrawn(esc);syncDrawn(esc,d);});

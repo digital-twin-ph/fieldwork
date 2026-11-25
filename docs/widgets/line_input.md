@@ -57,6 +57,15 @@ Nothing reaches the workflow until **Apply**.
 
 ## History
 
+### 2026-11-24 · Reopening shows your lines, not the whole world (0.5.0)
+
+Open a layer you had already drawn on and the map opened zoomed right out. It was fitting your lines into a panel
+that had no size yet, then being told its real size afterwards and keeping the zoom it had already chosen. The fit
+now waits until the panel is really there.
+
+It fits **once**. After that the view is yours: resizing the dialog or going full screen will not drag you back to
+where it decided to start.
+
 ### 2026-11-24 · The map pans until you start a line (0.4.0)
 
 Press **Start a line**, then click to lay down each position. Until you press it, dragging pans the map and a click

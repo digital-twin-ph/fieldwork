@@ -80,3 +80,68 @@ test('a period nobody stated is said to be unstated, naming which side',()=>{
   assert.match(periodDifference(silent,{label:'another',period:period('','not-stated')}),
     /a hand-given raster and another state no period/);
 });
+
+/** THE YEARS BEING STACKED (experiment 230). Append rows is where the practitioner met this: the population example
+ *  stacks a 2025 model under a 2022 census, and nothing said they were three years apart. */
+const table=(rows,extra={})=>({kind:'data-table',keys:['name'],valueField:'population',
+  rows:rows.map(name=>({key:{name},value:1})),rowCount:rows.length,missingValueCount:0,...extra});
+const withPeriod=(rows,stated,kind='enumerated')=>table(rows,{period:{stated,kind}});
+
+test('a stack whose tables all state no period says nothing about years',async()=>{
+  const {periodsAcross}=await import('../build/append-rows.js');
+  // SILENCE IS THE NORM HERE, not a gap: the sentence would appear on every run of every stack and would mean only
+  // that nobody has told Fieldwork anything.
+  const {periods,said}=periodsAcross([table(['a']),table(['b'])]);
+  assert.deepEqual(periods,[]);
+  assert.equal(said,null);
+});
+
+test('one year counted one way has nothing to say either',async()=>{
+  const {periodsAcross}=await import('../build/append-rows.js');
+  const {said}=periodsAcross([withPeriod(['a'],'2022'),withPeriod(['b'],'2022-08')],['census','another census']);
+  assert.equal(said,null,'2022 and 2022-08 are one year');
+});
+
+test('THE POPULATION EXAMPLE: a 2025 model stacked under a 2022 census is said to be three years apart',async()=>{
+  const {periodsAcross}=await import('../build/append-rows.js');
+  const {said,periods}=periodsAcross(
+    [withPeriod(['a'],'2022'),withPeriod(['b'],'2025','estimated')],['2022 census','WorldPop 2025']);
+  assert.match(said,/3 years apart/);
+  assert.match(said,/2022 \(2022 census\)/);
+  assert.match(said,/2025, estimated \(WorldPop 2025\)/);
+  // AND CARRIED, one per source, labelled as the source column labels each row.
+  assert.deepEqual(periods.map(p=>p.source),['2022 census','WorldPop 2025']);
+});
+
+test('the widest gap is the one reported, not a gap between some pair',async()=>{
+  const {periodsAcross}=await import('../build/append-rows.js');
+  // Three tables of 1984, 2022 and 2025: saying "3 years apart" would be true of a pair and false of the stack.
+  const {said}=periodsAcross([withPeriod(['a'],'1984-07-01'),withPeriod(['b'],'2022'),
+    withPeriod(['c'],'2025','projected')],['DR Congo 1984','a census','GHS-POP']);
+  assert.match(said,/41 years apart/);
+  assert.match(said,/3 periods/);
+});
+
+test('tables of the same year counted differently are two periods, not one',async()=>{
+  const {periodsAcross}=await import('../build/append-rows.js');
+  const {said}=periodsAcross([withPeriod(['a'],'2022'),withPeriod(['b'],'2022','projected')],['census','GHS-POP']);
+  assert.match(said,/2 periods/);
+  assert.match(said,/the same year/);
+  assert.match(said,/2022, projected/);
+});
+
+test('where some tables state a period, the ones that do not are named',async()=>{
+  const {periodsAcross}=await import('../build/append-rows.js');
+  const {said}=periodsAcross([withPeriod(['a'],'2022'),table(['b'])],['census','a typed table']);
+  assert.match(said,/a typed table states no period/,'now the silence is a gap, not the norm');
+});
+
+test('the stacked table carries one period per source, and the step says so',async()=>{
+  const {appendTables,appendSentence}=await import('../build/append-rows.js');
+  const params={nameSource:true,sourceColumn:'source',labels:['2022 census','WorldPop 2025']};
+  const result=appendTables([withPeriod(['Kano'],'2022'),withPeriod(['Kano'],'2025','estimated')],
+    params,['2022 census','WorldPop 2025']);
+  assert.equal(result.table.periods.length,2);
+  assert.deepEqual(result.table.periods.map(p=>p.period.stated),['2022','2025']);
+  assert.match(appendSentence(result,params),/3 years apart/,'and it reaches the step’s own sentence');
+});

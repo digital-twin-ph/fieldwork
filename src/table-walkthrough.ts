@@ -48,16 +48,29 @@ export function walkthroughMarkup(walk:Walkthrough,at:number,esc:Escape):string{
   const final=walk.steps.slice(0,at+1).reverse().find(s=>s.final&&s.result);
   const so:{row:string[];fresh:boolean}[]=final?final.result!.map(row=>({row,fresh:at===walk.steps.indexOf(final)}))
     :walk.steps.slice(0,at+1).flatMap((s,si)=>(s.result??[]).map(row=>({row,fresh:si===at})));
-  if(step.stopped||step.willStop)return `<p class="walk-made-up">Made-up example</p><div class="walk-tables">${walk.tables.map(tableHtml).join('')}`
+  // STOPPED IS NOT THE SAME AS WILL STOP (2026-11-24). The practitioner, on Relate's walkthrough at the step where a
+  // key is found twice: *"There is something wrong with this walkthrough. The result is empty after the last
+  // match."* Both flags emptied the result pane, and the two mean different things. `willStop` is set on a step in
+  // the MIDDLE of the walk -- its own sentence says the step "will stop once every row is checked", so it is still
+  // checking -- while `stopped` is set only on the last step, where it has stopped and nothing is passed on.
+  //
+  // Emptying the pane mid-walk contradicted the sentence beside it and made the four steps that had built up Alpha
+  // and St. Ann look like they had been lying. The rows stay, because the step really does go on matching them; what
+  // changes is that the pane says none of them will survive. That is both truths at once, which is the thing the
+  // walkthrough exists to teach: the matching is fine and the outcome is still nothing.
+  if(step.stopped)return `<p class="walk-made-up">Made-up example</p><div class="walk-tables">${walk.tables.map(tableHtml).join('')}`
     +`<figure class="walk-table walk-result"><figcaption>The result</figcaption><p class="walk-none"><span aria-hidden="true">■</span> `
-    +(step.stopped?'No table: the step stops here, so nothing is passed on to the next step.'
-      :'No table will come out: the step will stop once every row is checked.')+`</p></figure></div>`
+    +'No table: the step stops here, so nothing is passed on to the next step.'+`</p></figure></div>`
     +`<p class="walk-say" aria-live="polite"><span class="walk-count">Step ${at+1} of ${walk.steps.length}.</span> ${esc(step.text)}</p>`;
-  const result=`<figure class="walk-table walk-result"><figcaption>The result${final?'':' so far'}</figcaption><table><thead><tr>`
+  const result=`<figure class="walk-table walk-result${step.willStop?' walk-result-doomed':''}"><figcaption>The result${final?'':' so far'}</figcaption><table><thead><tr>`
     +walk.resultColumns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')+'</tr></thead><tbody>'
     +(so.length?so.map(({row,fresh})=>`<tr${fresh?' class="walk-fresh"':''}>${row.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')
       :`<tr><td colspan="${walk.resultColumns.length}" class="muted">No rows yet.</td></tr>`)
-    +'</tbody></table></figure>';
+    +'</tbody></table>'
+    // SAID, NOT ONLY SHADED. A dimmed table is a cue the practitioner reads poorly; the sentence is what carries it.
+    +(step.willStop?`<p class="walk-none"><span aria-hidden="true">■</span> None of this will be passed on: the step `
+      +`will stop once every row is checked.</p>`:'')
+    +'</figure>';
   return `<p class="walk-made-up">Made-up example</p><div class="walk-tables">${walk.tables.map(tableHtml).join('')}${result}</div>`
     +`<p class="walk-say" aria-live="polite"><span class="walk-count">Step ${at+1} of ${walk.steps.length}.</span> ${esc(step.text)}</p>`;
 }

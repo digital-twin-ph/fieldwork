@@ -667,16 +667,12 @@
    "migrationFrom": []
   },
   "relate_table": {
-   "version": "0.14.0",
-   "released": "2026-11-22",
+   "version": "0.15.0",
+   "released": "2026-11-24",
    "changes": [
     {
-     "kind": "added",
-     "description": "Keys proposed from their values: with no column chosen to match on, Configure… proposes the pair of key columns, one from each table, whose values link most after Relate's folding, though their names differ, and says how many keys it links; where nothing links and one column holds codes and the other names, it says so. Every pair of columns sharing values is listed in the dialog, with the counts, each with Match on these."
-    },
-    {
-     "kind": "changed",
-     "description": "An empty cell is one of a key's values: a key holding a value and an empty cell stops the step as any key with two values does, saying an empty cell. Found by the table stress tests."
+     "kind": "fixed",
+     "description": "In Show me how, the result pane emptied as soon as a key was found twice, while the sentence beside it said the step \"will stop once every row is checked\". The practitioner: \"There is something wrong with this walkthrough. The result is empty after the last match.\" Both halves could not be true at once, and the steps that had built Alpha and St. Ann up row by row were made to look as though they had been lying. The renderer was treating two different flags alike: `willStop` is set MID-WALK, where the step is still matching rows, and `stopped` only on the last step, where it has stopped. Mid-walk the rows now stay, because the step really does go on matching them, under the words \"None of this will be passed on: the step will stop once every row is checked.\" Both truths at once, which is what the walkthrough exists to teach: the matching is fine and the outcome is still nothing."
     }
    ],
    "breaking": false,
@@ -708,12 +704,12 @@
    "migrationFrom": []
   },
   "append_rows": {
-   "version": "0.5.1",
-   "released": "2026-11-23",
+   "version": "0.6.0",
+   "released": "2026-11-24",
    "changes": [
     {
-     "kind": "patch",
-     "description": "A table's one column of names lines up under two of the others' columns where they hold the same names, as Botswana's population models do in id and name: it was renamed under one and lost from the other, so the census had no id and the step refused."
+     "kind": "added",
+     "description": "THE YEARS BEING STACKED, said in the step's own sentence, and one period per source carried on the stacked table (experiment 230). The population example stacks a 2025 model under a 2022 census and nothing said they were three years apart. Deliberately UNLIKE the unit difference beside it: stacking counts of people under counts of houses is refused, because it is wrong; stacking 2022 under 2025 is said, and the rows are stacked. Silent where no table states a period -- the sentence would otherwise appear on every run and mean only that nobody has said anything -- and where some do, the ones that do not are named, because then the silence is a gap. The WIDEST gap is reported: three tables of 1984, 2022 and 2025 are 41 years apart at their extremes, and \"3 years apart\" would be true of a pair and false of the stack."
     }
    ],
    "breaking": false,
@@ -858,12 +854,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.21.0",
-   "released": "2026-11-23",
+   "version": "0.22.0",
+   "released": "2026-11-24",
    "changes": [
     {
-     "kind": "fixed",
-     "description": "A table typed in the Type or paste tab no longer claims a file. It was stored as `typed.csv`, which a machined note stated as \"Read from `typed.csv`\" and the receipt as fw:sourceFile -- a filename that does not exist, asserted in the evidence. The note now says the rows were typed into the step, and the receipt records fw:enteredByHand with the digest of the rows as read and no source file. Where the values came from, and under what licence, is the practitioner's to state in Describe columns, and the tab says so rather than filling it in on their behalf."
+     "kind": "added",
+     "description": "A table taken from Census tables carries the census's REFERENCE DATE as the period its values refer to (experiment 230), read from the catalogue rather than typed, and marked enumerated: people were counted, not modelled, which is what tells a census apart from a projection of the same year. Held beside the census data dictionary and dropped wherever that is, so a file chosen afterwards cannot inherit the census's date."
     }
    ],
    "breaking": false,
@@ -1049,16 +1045,12 @@
    "migrationFrom": []
   },
   "line_input": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-24",
    "changes": [
     {
-     "kind": "changed",
-     "description": "PANNING AND DRAWING ARE TWO MODES, and the map opens in the one that does nothing. The practitioner: \"If I try to pan with my mouse, it draws a point instead of panning. Perhaps we should have a 'Start Line' button together with the 'Finish Line' button. So unless 'Start button' is pressed the mouse should be able to pan the map.\" The editor bound click unconditionally, and Leaflet treats a press and release that barely moves as a click, so every attempt to look around the map left a position behind. START A LINE arms the drawing; until it is pressed a click does nothing and the map pans. Finishing returns to panning, so the next click starts nothing. Dragging stays enabled while drawing -- a route can be longer than one screen -- and Leaflet does not fire click when the map moved, so a drag pans and a click lays down a position. The mode is shown three ways: the pressed state of the button, a crosshair cursor, and an outline round the map."
-    },
-    {
      "kind": "fixed",
-     "description": "The status sentence under the map was BLANK when the dialog opened, so the one line telling the reader what to do was missing exactly when it was needed. It was written by a function that found the dialog by its id, which is not resolvable while the dialog is being wired. It is now written from the element the caller already holds, and rewritten after every redraw, so what it says always describes the state the editor is in. Found while fixing the panning, and it compounded it: there was neither a mode to see nor a sentence saying what the mouse would do."
+     "description": "A layer of lines already drawn reopened showing the whole world. `fitBounds` ran synchronously at mount, when the dialog's panel still had no size, so it fitted the lines into a viewport of 0 x 0 and chose a zoom for that; the `invalidateSize` added the same day corrected the SIZE afterwards and nothing re-fitted. That first fix settled the tiles and not the view, which is why the basemap came back and the lines stayed a world away. The fit now waits for the first moment the container has width and height, and happens ONCE: re-fitting on every resize would throw away wherever the practitioner had panned the moment the panel changed size or went full screen."
     }
    ],
    "breaking": false,

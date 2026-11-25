@@ -38,6 +38,13 @@ export interface TableFinding {
 }
 export interface DataTable {
   kind:'data-table'; keys:string[]; valueField:string; unit?:string;
+  /** THE PERIOD THESE VALUES REFER TO, carried the way `unit` is carried (experiment 230): read from what the source
+   *  states, never guessed, and compared where values of different periods meet. Absent where the source stated
+   *  none, which is said rather than filled in. */
+  period?:import('./reference-period.js').ReferencePeriod;
+  /** ONE PERIOD PER SOURCE, where a step stacked tables that referred to different ones (Append rows). The stacked
+   *  table has no single period, and giving it one of them would be a claim about rows it does not cover. */
+  periods?:{source:string;period:import('./reference-period.js').ReferencePeriod}[];
   /** The columns a person declared identify a row. Checked for uniqueness. Absent: all of `keys`. */
   primaryKey?:string[];
   /** Columns that group or link rows and may repeat. */

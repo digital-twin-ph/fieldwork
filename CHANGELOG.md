@@ -3,6 +3,30 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.194.0 — In development
+
+- **Show me how keeps the rows it has matched** (Relate 0.15.0). The practitioner: *"There is something wrong with
+  this walkthrough. The result is empty after the last match."* At the step where a key is found twice, the sentence
+  said the step *"will stop once every row is checked"* while the pane beside it had already emptied — so the four
+  steps that had built Alpha and St. Ann up row by row were made to look as though they had been lying. The renderer
+  treated two flags alike: `willStop` is set mid-walk, where the step is still matching, and `stopped` only on the
+  last step. The rows now stay while the walk goes on, under the words "None of this will be passed on". The test
+  that pinned the old behaviour — *"the rows before the stop are not shown as a result"* — is replaced; that was a
+  decision, not an oversight.
+- **A drawn line layer reopens fitted to its lines** (Line layer 0.5.0), not zoomed out to the world. `fitBounds` ran
+  at mount against a panel with no size, so it fitted the lines into a viewport of 0 × 0; the `invalidateSize` added
+  earlier the same day corrected the size and never re-fitted. That earlier fix settled the tiles and not the view,
+  which is why the basemap came back and the lines stayed a world away. It fits once, and the view is then the
+  practitioner's.
+- **A census brings its date with it** (Tabular data 0.22.0, experiment 230): the catalogue's reference date, read
+  rather than typed, marked *enumerated* because people were counted and not modelled. Dropped if another file is
+  chosen, so one source's date cannot land on another's rows.
+- **Append rows says the years it is stacking** (Append rows 0.6.0): a 2025 model under a 2022 census is *three years
+  apart*, with one period per source carried on the result. Said, not refused — unlike a unit difference, because
+  stacking people under houses is wrong and stacking 2022 under 2025 is ordinary field epidemiology. The widest gap
+  is reported, since three tables of 1984, 2022 and 2025 are forty-one years apart and "three" would be true of a
+  pair and false of the stack. Silent where nothing states a period; where some do, the silent ones are named.
+
 ## 0.193.1 — In development
 
 - **Corrected in the CI audit**: removing the Chromium leg of `verify` halves the runner *minutes*, not the

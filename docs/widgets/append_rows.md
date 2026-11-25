@@ -95,6 +95,20 @@ An estimate's interval, declared by Regression, survives the stacking when every
 
 ## History
 
+### 2026-11-24 · The years you are stacking are said (0.6.0)
+
+Stack a 2025 model under a 2022 census and the step now says so: *three years apart*. Each table's period is carried
+on the result, one per source, named the way the source column names each row.
+
+This is said, not refused — unlike a unit difference, which is. Counts of people under counts of houses is wrong;
+2022 under 2025 is ordinary field epidemiology, and what you need is to be able to see it.
+
+The **widest** gap is the one reported. Three tables of 1984, 2022 and 2025 are forty-one years apart at their
+extremes, and calling that "three years apart" would be true of a pair and false of the stack.
+
+Where no table says anything about its period, the step says nothing — otherwise the line would appear every time and
+mean only that nobody had told Fieldwork anything. Where some do and others do not, the silent ones are named.
+
 ### 2026-11-23 · One column under two names (0.5.1)
 
 Where the other tables hold the same names in two columns, as Botswana's population models do in **id** and **name**, a

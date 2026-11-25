@@ -63,7 +63,20 @@ test('every step is headed as made up, says where it is, and marks its rows in w
   const marked=walk.steps.findIndex(s=>s.marks.some(m=>m.state==='stopped'));
   const html=walkthroughMarkup(walk,marked,esc);
   assert.match(html,/<tr class="walk-stopped" data-walk-state="stopped">[\s\S]*?<td class="walk-word"><span aria-hidden="true">■<\/span> will stop the step<\/td>/);
-  assert.match(html,/No table will come out: the step will stop once every row is checked\./);
-  assert.match(walkthroughMarkup(walk,walk.steps.length-1,esc),/No table: the step stops here, so nothing is passed on to the next step\./);
-  assert.doesNotMatch(html.slice(html.indexOf('walk-result')),/<td>Alpha<\/td>/,'the rows before the stop are not shown as a result');
+  // WILL STOP IS NOT STOPPED (2026-11-24). The practitioner, on this walkthrough: *"There is something wrong with
+  // this walkthrough. The result is empty after the last match."* Mid-walk the step is STILL CHECKING -- its own
+  // sentence says it "will stop once every row is checked" -- so the rows it has matched stay on show, and the pane
+  // says they are going nowhere. Emptying it contradicted the sentence beside it and made the earlier steps, which
+  // had built Alpha and St. Ann up row by row, look like they had been lying.
+  //
+  // This replaces the opposite assertion, which read "the rows before the stop are not shown as a result". That was
+  // a decision, not an oversight, and it is the practitioner's to reverse.
+  const pane=html.slice(html.indexOf('walk-result'));
+  assert.match(pane,/<td>Alpha<\/td>/,'the matching really did happen, and goes on happening');
+  assert.match(pane,/None of this will be passed on: the step will stop once every row is checked\./);
+  assert.match(html,/walk-result walk-result-doomed/,'and the pane is marked, not only worded');
+  // THE LAST STEP HAS STOPPED, and there the result truly is nothing.
+  const end=walkthroughMarkup(walk,walk.steps.length-1,esc);
+  assert.match(end,/No table: the step stops here, so nothing is passed on to the next step\./);
+  assert.doesNotMatch(end.slice(end.indexOf('walk-result')),/<td>Alpha<\/td>/,'nothing is passed on, and nothing is shown');
 });

@@ -2277,7 +2277,7 @@
   {
    "id": "urn:fieldwork:widget:relate_table",
    "nodeType": "relate_table",
-   "currentVersion": "0.14.0",
+   "currentVersion": "0.15.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -2393,6 +2393,11 @@
      "version": "0.14.0",
      "path": "widgets/releases/relate_table/0.14.0.json",
      "sha256": "97ff4df0c4248de8c80d0d1b4830ef86a114b6e6e380e7b032066dac3521a1eb"
+    },
+    {
+     "version": "0.15.0",
+     "path": "widgets/releases/relate_table/0.15.0.json",
+     "sha256": "d672e6d9073afd420658c935565deea94ffab2208de2b5f4b44304c25b77c8cd"
     }
    ]
   },
@@ -2503,7 +2508,7 @@
   {
    "id": "urn:fieldwork:widget:append_rows",
    "nodeType": "append_rows",
-   "currentVersion": "0.5.1",
+   "currentVersion": "0.6.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -2549,6 +2554,11 @@
      "version": "0.5.1",
      "path": "widgets/releases/append_rows/0.5.1.json",
      "sha256": "96dc7e47fdcfe2043e9706d253fb053287a9633ce17e71cb842ba4675375ac7e"
+    },
+    {
+     "version": "0.6.0",
+     "path": "widgets/releases/append_rows/0.6.0.json",
+     "sha256": "ae6ec54aeb9cef3e156a8ffd5c624cd45462e15e13665412bed64ac2959e3d9f"
     }
    ]
   },
@@ -2876,7 +2886,7 @@
   {
    "id": "urn:fieldwork:widget:table_input",
    "nodeType": "table_input",
-   "currentVersion": "0.21.0",
+   "currentVersion": "0.22.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3017,6 +3027,11 @@
      "version": "0.21.0",
      "path": "widgets/releases/table_input/0.21.0.json",
      "sha256": "443d236a533c2de4c863c08304286af215a3a5c00ea97fc46c94ec17988b9ddc"
+    },
+    {
+     "version": "0.22.0",
+     "path": "widgets/releases/table_input/0.22.0.json",
+     "sha256": "0a6d488bb94772720af728f211dfefe2a1f48aba94a8437a11b4296269a45879"
     }
    ]
   },
@@ -3544,7 +3559,7 @@
   {
    "id": "urn:fieldwork:widget:line_input",
    "nodeType": "line_input",
-   "currentVersion": "0.4.0",
+   "currentVersion": "0.5.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3565,6 +3580,11 @@
      "version": "0.4.0",
      "path": "widgets/releases/line_input/0.4.0.json",
      "sha256": "632a0b3a8cb50c7119e4f7bd18547f972795f1e4d50c687c863769e2adfae51f"
+    },
+    {
+     "version": "0.5.0",
+     "path": "widgets/releases/line_input/0.5.0.json",
+     "sha256": "5dd5d74d8c2ddc4c34851e4c4fb7783b18f549f0590a8d5f6ba97ab1241e9bad"
     }
    ]
   },

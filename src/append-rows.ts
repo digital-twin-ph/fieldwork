@@ -1,5 +1,6 @@
 import {fillWords,figureWords} from './figure-words.js';
 import {repeatedKeys,type DataTable} from './data-table.js';
+import {yearsOf,yearGap,periodWords,type ReferencePeriod} from './reference-period.js';
 
 /** ROWS OF ONE TABLE AFTER ROWS OF ANOTHER, as pandas `concat` stacks them. Experiment 166.
  *
@@ -82,6 +83,10 @@ export interface AppendResult {
   fromSecond:number;
   /** Key columns some tables lack, and how many rows are empty in each because of it. `table` counts from 1. */
   missing:{column:string; rows:number; table:number}[];
+  /** WHAT THE STACKED PERIODS COME TO, where there is anything to say (experiment 230): which years are stacked
+   *  together and how far apart they are. Null where every table refers to one year counted one way, and null where
+   *  no table states a period at all -- a step that knows nothing about its years should not say so in every run. */
+  periodSaid?:string;
 }
 
 /** The label of table `index` (from 0): the practitioner's, else the saved two-table names, else its position. */
@@ -124,6 +129,47 @@ export function valueMismatch(tables:readonly {valueField:string}[],names?:reado
     +`where ${list(even)} ${even.length===1?'has':'have'} "${usual}". Rows can be stacked only where the value column is the same quantity `
     +`under the same name: open ${called(odd[0]!)}'s Configure… and choose the column holding the same quantity as its value, named "${usual}".`;
 }
+/** THE YEARS BEING STACKED, as one sentence, and the periods to carry on the stacked table (experiment 230).
+ *
+ *  Modelled on `unitDifference` above and deliberately UNLIKE it in one way: a unit difference is a refusal, because
+ *  stacking counts of people under counts of houses is wrong. A period difference is not wrong -- a 2022 denominator
+ *  under 2024 cases is ordinary field epidemiology -- so this is said and the rows are stacked
+ *  (`diagnose-never-refuse-data`).
+ *
+ *  SILENT WHERE NOTHING IS KNOWN. A step whose tables all state no period says nothing: the sentence would appear on
+ *  every run of every stack and would mean only that nobody has told Fieldwork anything. Where SOME state one, the
+ *  ones that do not are named, because then the silence is a gap rather than the norm. */
+export function periodsAcross(tables:readonly DataTable[],names?:readonly string[]):
+  {periods:{source:string;period:ReferencePeriod}[];said:string|null}{
+  const called=(i:number)=>names?.[i]?.trim()||(tables.length===2?(i===0?'the first table':'the second table'):`table ${i+1}`);
+  const stated=tables.flatMap((t,i)=>t.period?.stated.trim()?[{source:called(i),period:t.period}]:[]);
+  const silent=tables.flatMap((t,i)=>t.period?.stated.trim()?[]:[called(i)]);
+  if(!stated.length)return {periods:[],said:null};
+  // GROUPED BY THE YEARS THEY COVER AND THE KIND, which is what makes two tables the same period here: 2022 and
+  // 2022-08 are one group, an enumeration of 2022 and a projection of 2022 are two.
+  const groups=new Map<string,{period:ReferencePeriod;sources:string[]}>();
+  for(const s of stated){
+    const years=yearsOf(s.period.stated);
+    const at=`${years?`${years.from}-${years.to}`:s.period.stated}|${s.period.kind}`;
+    const held=groups.get(at);
+    if(held)held.sources.push(s.source);else groups.set(at,{period:s.period,sources:[s.source]});
+  }
+  const listed=[...groups.values()];
+  if(listed.length===1&&!silent.length)return {periods:stated,said:null};
+  const named=listed.map(g=>`${periodWords(g.period)} (${g.sources.length===1?g.sources[0]:`${g.sources.length} tables`})`);
+  // THE WIDEST GAP, because that is the one a reader has to judge: three tables of 2022, 2025 and 1984 are 41 years
+  // apart at their extremes, and saying "3 years apart" of them would be true of a pair and false of the stack.
+  let widest=0;
+  for(const a of listed)for(const b of listed){const gap=yearGap(a.period.stated,b.period.stated);if(gap!==null&&gap>widest)widest=gap;}
+  const said=listed.length>1
+    ?`Stacked from ${listed.length} periods: ${list2(named)}`+(widest?`, ${widest} year${widest===1?'':'s'} apart` : ', the same year')+'.'
+    :`Stacked from ${named[0]}.`;
+  return {periods:stated,
+    said:said+(silent.length?` ${list2(silent)} state${silent.length===1?'s':''} no period.`:'')};
+}
+const list2=(items:readonly string[]):string=>items.length<2?items.join('')
+  :`${items.slice(0,-1).join(', ')} and ${items[items.length-1]}`;
+
 /** WHICH STEP COUNTS IN ANOTHER UNIT, by name (2026-11-20), as for the value column: the odd one, its unit or none, the
  *  rest's, and where to say it. "Table 2 counts in an unstated unit" left DR Congo's workflow to be searched by hand. */
 function unitDifference(tables:readonly DataTable[],names?:readonly string[]):string{
@@ -261,11 +307,16 @@ export function appendTables(given:DataTable[],params:AppendParams={},names?:rea
   const numericKeys={...Object.assign({},...tables.map(t=>t.numericKeys??{})),
     ...(numeric?{[source!]:numeric.unit}:{})};
   const from=tables.map(t=>t.rows.length);
+  // THE PERIODS, ONE PER SOURCE, and what they come to. Labelled as the source column labels each row, so a reader
+  // who sees "2022 census" in that column can find its period in the receipt by the same name.
+  const years=periodsAcross(tables,labels);
   return {table:{kind:'data-table',keys,valueField:first.valueField,...(first.unit?{unit:first.unit}:{}),
+      ...(years.periods.length?{periods:years.periods}:{}),
       ...(primaryKey?{primaryKey}:{}),...(alternateKeys?{alternateKeys}:{}),...(findings.length?{findings}:{}),
       ...interval,...(Object.keys(numericKeys).length?{numericKeys}:{}),
       rows,rowCount:rows.length,missingValueCount:rows.filter(row=>row.value===null).length},
-    from,fromFirst:from[0]!,fromSecond:from[1]!,missing,...(automatic.length?{automatic}:{})};
+    from,fromFirst:from[0]!,fromSecond:from[1]!,missing,...(automatic.length?{automatic}:{}),
+    ...(years.said?{periodSaid:years.said}:{})};
 }
 
 /** What the step did, in one sentence for the receipt and the run summary. */
@@ -287,7 +338,9 @@ export function appendSentence(result:AppendResult,params:AppendParams):string{
     +(source&&params.labelsAreNumbers?`, as a number${params.labelsAreNumbers.unit.trim()?` in ${params.labelsAreNumbers.unit.trim()}`:''}`:'')
     +(params.newKey?.trim()?`; "${params.newKey.trim()}" numbers them 1 to ${total} as the new key`:'')+'.'
     +(said.length?` ${said.join('; ')}.`:'')
-    +(result.automatic?.length?` Lined up without asking, every name matching: ${result.automatic.map(m=>`${which(m.table+1)}'s "${m.column}" under "${m.as}"`).join('; ')}.`:'');
+    +(result.automatic?.length?` Lined up without asking, every name matching: ${result.automatic.map(m=>`${which(m.table+1)}'s "${m.column}" under "${m.as}"`).join('; ')}.`:'')
+    // THE YEARS, LAST, because they are what a reader judges rather than what the step did (experiment 230).
+    +(result.periodSaid?` ${result.periodSaid}`:'');
 }
 
 /** THE COLUMNS AS A GRID (2026-11-20). The practitioner: *"what matters more is column sync and alignment than

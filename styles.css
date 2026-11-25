@@ -1459,6 +1459,12 @@ th .column-label{display:block;font-weight:400;color:var(--muted);font-size:14px
 #table-walkthrough tr.walk-unused{opacity:.75;outline-style:dotted}
 #table-walkthrough .walk-word{font-weight:700;white-space:nowrap}
 #table-walkthrough .walk-result{border-left:3px solid var(--line);padding-left:12px}
+/* THE RESULT THAT WILL NOT SURVIVE (2026-11-24): the rows stay, because the step goes on matching them, and the
+   edge says they are going nowhere. NOT dimmed: lowering opacity lowers contrast, and the practitioner reads fine
+   print poorly. The sentence under the table is what carries the meaning; this is the second signal, not the only
+   one. */
+#table-walkthrough .walk-result-doomed{border-left-color:var(--warning)}
+#table-walkthrough .walk-result-doomed .walk-none{margin-top:8px}
 /* THE SPATIAL WALKTHROUGHS' DRAWINGS (2026-11-21). Drawn with these classes since 0.154.0 and never styled, so every shape
    filled black: the practitioner found Join's black throughout. Each kind as its key says, in the theme's colours. */
 #table-walkthrough .walk-drawing{display:block;width:100%;max-width:40rem;height:auto;margin:8px auto;background:var(--surface-raised,#fff)}

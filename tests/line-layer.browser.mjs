@@ -202,3 +202,49 @@ test('a route is drawn on the map, named, reversed, and runs',async({page})=>{
   await expect(page.locator('#map [data-line-layer="line"][data-line-arrow]')).toHaveCount(1);
   expect(errors).toEqual([]);
 });
+
+/** REOPENED ON THE LINES, NOT ON THE WHOLE WORLD (reported 2026-11-24: a layer of six drawn lines, reopened, showed
+ *  the map zoomed out to the world). `fitBounds` ran synchronously at mount, when the dialog's panel still had no
+ *  size, so it fitted the lines into a viewport of 0 x 0 and chose a zoom for that; `invalidateSize` corrected the
+ *  size afterwards and nothing re-fitted.
+ *
+ *  ASSERTED BY MEASURING WHAT IS DRAWN, because Leaflet puts neither zoom nor centre in the DOM. At the world zoom
+ *  six lines a few hundred kilometres long are a smudge of a handful of pixels; fitted, they span most of the panel. */
+test('a drawn layer reopens fitted to its lines, not zoomed out to the world',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.route(/tile\.openstreetmap\.org|basemaps|tiles/,r=>r.abort('failed'));
+  const line=(id,from,to)=>({type:'Feature',id,properties:{name:id},
+    geometry:{type:'LineString',coordinates:[from,to]}});
+  await page.goto('/');
+  await page.evaluate(()=>localStorage.clear());
+  await page.evaluate(w=>localStorage.setItem('fieldwork-workflow-v1',JSON.stringify(w)),
+    {schema:'fieldwork/workflow/1',id:'dr',exampleId:'blank',label:'Drawn routes',nodes:[
+      {id:'line',type:'line_input',x:40,y:40,params:{label:'Team routes',inputMethod:'drawn',
+        data:{kind:'lines',source:'drawn',features:[
+          line('Route 1',[29.6,4.2],[30.1,4.6]),
+          line('Route 2',[29.9,4.0],[30.4,4.4]),
+          line('Route 3',[30.2,4.3],[30.7,4.7])]}}}],
+      edges:[]});
+  await page.goto('/');
+  await page.waitForSelector('html[data-ready]');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="line"]').click();
+  await page.locator('#inspector-content #configure-step').click();
+  const d=page.locator('#line-config');
+  await expect(d.locator('#line-map')).toBeVisible();
+  await expect(d.locator('#line-draw-status')).toContainText('3 lines drawn');
+
+  // THE LINES AS DRAWN, measured against the panel they are drawn in.
+  const spread=await d.locator('#line-map').evaluate(host=>{
+    const paths=[...host.querySelectorAll('path')].filter(p=>p.getTotalLength&&p.getTotalLength()>0);
+    if(!paths.length)return null;
+    const boxes=paths.map(p=>p.getBoundingClientRect());
+    const left=Math.min(...boxes.map(b=>b.left)),right=Math.max(...boxes.map(b=>b.right));
+    return {drawn:right-left,panel:host.getBoundingClientRect().width};
+  });
+  expect(spread,'the drawn lines should be on the page at all').not.toBeNull();
+  // Fitted with a 20% pad, three lines spanning about a degree fill well over a third of the panel. At the world
+  // zoom the same three measured 2 px of an 1100 px panel.
+  expect(spread.drawn).toBeGreaterThan(spread.panel*0.3);
+  expect(errors).toEqual([]);
+});

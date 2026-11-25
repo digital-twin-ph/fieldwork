@@ -1078,6 +1078,10 @@ export const CROSSTAB_MIN_DENSITY=0.5;
  *  shows the rows, which is honest about a table nobody can pivot. */
 export interface WideFrame {
   subject:string; attributes:string[]; columns:string[];
+  /** THE KEY WHOSE VALUES BECAME THE COLUMNS, and the keys that identify a row (2026-11-25). The frame could always
+   *  widen a table; it could not say HOW, so nothing could record the reading as a declaration. A practitioner who
+   *  asks to keep a long table wide is declaring exactly this pair. */
+  measureKey:string; subjectKeys:string[];
   rows:{label:string; attributes:string[]; cells:(number|null|undefined)[];
     /** WHICH STORED ROWS EACH DISPLAYED ROW CAME FROM (2026-11-24), so a surface can show the file's shape and still
      *  record an edit against the rows the step holds. `cells[i]` is the stored row behind the value in column `i`,
@@ -1099,9 +1103,14 @@ export interface WideFrame {
  *  Here rather than at each surface, because three dialogs widening a table three ways would be the same dissonance
  *  one level down. Returns text, so a caller keeps its own markup -- the alignment grid in Append rows, the scroller
  *  in Join, the plain table in Detect -- and only the shape is shared. */
+// WIDENS ONLY WHAT THE TABLE SAYS IS WIDE. `wideFrame` will read any long table as wide, by guessing which key
+// holds the measures; that guess belongs in Quick Look, where the reader sees a hint and can settle it, and the
+// settled reading then rides on `table.wide` to here. Where nothing is declared this lists the stored rows, which
+// is the same rule the data quality dialog follows (2026-11-25) -- a natively long file keeps its own columns, and
+// a column of class names is not pivoted into headings.
 export function wideCells(table:DataTable):{columns:string[];rows:string[][]}{
   const text=(v:unknown)=>v===null||v===undefined?'':String(v);
-  const frame=wideFrame(table);
+  const frame=table.wide?wideFrame(table):null;
   if(!frame)return {columns:[...table.keys,table.valueField].filter(Boolean),
     rows:table.rows.map(r=>[...table.keys.map(k=>text(r.key[k])),text(r.value)])};
   return {columns:[frame.subject,...frame.attributes,...frame.columns],
@@ -1116,7 +1125,19 @@ export function wideFrame(table:DataTable):WideFrame|null{
   if(!table.valueField)return null;
   // A DECLARED READING ORDER decides (experiment 191): totals and their shares by two columns have two keys that vary
   // within a subject, and the person who kept them put them in order.
-  if(table.wide?.asDeclared&&keys.includes(table.wide.measureKey))return declaredFrame(table,table.wide.measureKey,table.wide.subjectKeys);
+  // THE MELT ALREADY SAID WHICH KEY IS THE MEASURE, so nothing below has to guess (2026-11-25).
+  //
+  // This asked for `asDeclared` as well, and `declaredWide` -- the melt itself -- does not set it. So every table
+  // Fieldwork melted fell through to the heuristic below, which takes the key with the MOST DISTINCT VALUES as the
+  // subject. Two districts by eligible, vaccinated and missed has three measures against two districts, so the
+  // measures won and the table came back transposed: the districts became columns and a correction to a district's
+  // name reached one of its three counts instead of all three.
+  //
+  // Reported against 0.195.0 by a reviewer outside this project, in those words -- "Data quality shows six rows
+  // instead of two" -- and reproduced here before it was touched. `asDeclared` carries a stronger claim about the
+  // ORDER of several keys (experiment 191); which key holds the measure is recorded whenever a table was melted,
+  // and it is the better answer either way.
+  if(table.wide&&keys.includes(table.wide.measureKey))return declaredFrame(table,table.wide.measureKey,table.wide.subjectKeys);
   const distinct=(k:string)=>new Set(table.rows.map(r=>String(r.key[k]))).size;
   // The subject identifies a row most finely.
   const subject=[...keys].sort((a,b)=>distinct(b)-distinct(a))[0];
@@ -1163,33 +1184,69 @@ export function wideFrame(table:DataTable):WideFrame|null{
    * With something describing the subject it is a table rather than a list: South London's
    * contingency Table XII melts one column and reads sub-district, water supply, deaths 1854. */
   if(columns.length<2&&!attributes.some(k=>!numeric(k)))return null;
-  const order:string[]=[],byRow=new Map<string,WideFrame['rows'][number]>();
+  // A FILLED CELL IS ANOTHER RECORD, the same rule `declaredFrame` follows below and for the same reason: grouping
+  // on the subject alone overwrote one record's value with another's and said nothing. The subject is the finest key
+  // here, so this is rarer than it is there -- but `attributes` admits NUMERIC keys without asking whether they
+  // describe the subject, and a numeric key that varies within one is exactly how two records arrive under one
+  // heading. Found while fixing the declared path (2026-11-25); nothing is overwritten now, and a duplicate shows
+  // as the two rows it is.
+  const order:WideFrame['rows'][number][]=[],byRow=new Map<string,WideFrame['rows'][number][]>();
   table.rows.forEach((r,i)=>{
-    const id=String(r.key[subject]);
-    if(!byRow.has(id)){
-      byRow.set(id,{label:id,attributes:attributes.map(k=>String(r.key[k])),
-        cells:columns.map(()=>undefined),from:{cells:columns.map(()=>undefined),rows:[]}});
-      order.push(id);
-    }
-    const held=byRow.get(id)!,at=columns.indexOf(String(r.key[columnAxis]));
+    const id=String(r.key[subject]),at=columns.indexOf(String(r.key[columnAxis]));
+    const groups=byRow.get(id)??(byRow.set(id,[]),byRow.get(id)!);
+    let held=groups.find(g=>g.from.cells[at]===undefined);
+    if(!held){held={label:id,attributes:attributes.map(k=>String(r.key[k])),
+      cells:columns.map(()=>undefined),from:{cells:columns.map(()=>undefined),rows:[]}};groups.push(held);order.push(held);}
     held.cells[at]=r.value;held.from.cells[at]=i;held.from.rows.push(i);
   });
-  return {subject,attributes,columns,rows:order.map(id=>byRow.get(id)!)};
+  return {subject,attributes,columns,measureKey:columnAxis,subjectKeys:[subject,...attributes],rows:order};
 }
 
 /** One row per subject, its keys all shown, one column per value of the declared measure key. */
 function declaredFrame(table:DataTable,measureKey:string,subjectKeys:string[]):WideFrame|null{
   const columns=[...new Set(table.rows.map(r=>String(r.key[measureKey])))];
   if(!columns.length||columns.length>CROSSTAB_MAX_COLUMNS)return null;
-  const order:string[]=[],byRow=new Map<string,WideFrame['rows'][number]>();
+  // A KEY THE RECORD DOES NOT NAME IS STILL A COLUMN OF THE TABLE (gate, 2026-11-25). The melt records which key
+  // holds the measure and which keys name the record; a table can acquire more after it. Relate brings
+  // `water_supply` onto Snow's South London table, which arrives keyed by sub_district and measure, so the joined
+  // table has a key the melt never heard of -- and this dropped it, leaving the preview without the one variable a
+  // reader checks before grouping by it. The same drop would have cost the dengue Before view its date column.
+  //
+  // So each leftover key is placed, never dropped: one with A SINGLE VALUE PER SUBJECT describes the subject and
+  // becomes an attribute column, which is what the heuristic below does with it; one that VARIES WITHIN a subject
+  // is part of what identifies a record, and joins the identity -- grouping without it would quietly overwrite one
+  // record's cells with another's.
+  const extra=table.keys.filter(k=>k!==measureKey&&!subjectKeys.includes(k));
+  const subjectOf=(r:DataTable['rows'][number])=>subjectKeys.map(k=>String(r.key[k])).join('\u0000');
+  const describesSubject=(k:string)=>{
+    const seen=new Map<string,string>();
+    return table.rows.every(r=>{const id=subjectOf(r),v=String(r.key[k]);
+      if(!seen.has(id)){seen.set(id,v);return true;}
+      return seen.get(id)===v;});
+  };
+  const attributeKeys=extra.filter(describesSubject);
+  const identity=[...subjectKeys,...extra.filter(k=>!attributeKeys.includes(k))];
+  const attributes=[...subjectKeys.slice(1),...attributeKeys];
+  // TWO ROWS WITH THE SAME KEYS ARE TWO RECORDS, and a wide view that merges them hides a duplicate. Rio de
+  // Janeiro's 2024 dengue file repeats the week of 2024-12-29 for all 92 municipalities, byte for byte -- the
+  // doubled week the worked example exists to show. Grouping on the keys alone drew 4,784 rows where the file has
+  // 4,876, and the duplication, which is the finding, disappeared into the pivot (gate, 2026-11-25).
+  //
+  // So a row whose measure cell is ALREADY FILLED for its identity opens a new record rather than overwriting the
+  // one before it. Nothing is counted twice and nothing is lost: the reader sees both rows, side by side, which is
+  // how a duplicate is spotted at all.
+  const order:WideFrame['rows'][number][]=[],byRow=new Map<string,WideFrame['rows'][number][]>();
   table.rows.forEach((r,i)=>{
-    const id=subjectKeys.map(k=>String(r.key[k])).join('\u0000');
-    if(!byRow.has(id)){byRow.set(id,{label:String(r.key[subjectKeys[0]!]),attributes:subjectKeys.slice(1).map(k=>String(r.key[k])),
-      cells:columns.map(()=>undefined),from:{cells:columns.map(()=>undefined),rows:[]}});order.push(id);}
-    const held=byRow.get(id)!,at=columns.indexOf(String(r.key[measureKey]));
+    const id=identity.map(k=>String(r.key[k])).join('\u0000'),at=columns.indexOf(String(r.key[measureKey]));
+    const groups=byRow.get(id)??(byRow.set(id,[]),byRow.get(id)!);
+    // THE PROVENANCE DECIDES, not the value: a stored row whose value is empty still fills its cell, and testing
+    // the value would read it as room for the next record.
+    let held=groups.find(g=>g.from.cells[at]===undefined);
+    if(!held){held={label:String(r.key[subjectKeys[0]!]),attributes:attributes.map(k=>String(r.key[k])),
+      cells:columns.map(()=>undefined),from:{cells:columns.map(()=>undefined),rows:[]}};groups.push(held);order.push(held);}
     held.cells[at]=r.value;held.from.cells[at]=i;held.from.rows.push(i);
   });
-  return {subject:subjectKeys[0]!,attributes:subjectKeys.slice(1),columns,rows:order.map(id=>byRow.get(id)!)};
+  return {subject:subjectKeys[0]!,attributes,columns,measureKey,subjectKeys:identity,rows:order};
 }
 
 export function crossTab(table:DataTable,{assertCommensurable=false}={}):{rowKey:string;colKey:string;columns:string[];

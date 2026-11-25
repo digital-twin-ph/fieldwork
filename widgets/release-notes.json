@@ -374,12 +374,12 @@
    "migrationFrom": []
   },
   "isochrone": {
-   "version": "0.6.0",
-   "released": "2026-11-23",
+   "version": "0.7.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: A made-up street grid spaced to the time set: the walk onto the nearest junction, the streets walked until the time is spent with the ground either side, and the region the step makes."
+     "kind": "changed",
+     "description": "Show me how draws the streets the walk actually covers. The practitioner: \"The show me how it works is incomplete as use of a street network is usually point to point.\" The step said \"along the streets in every direction\" and drew only the finished region, so the one thing that tells a network isochrone from a circle -- that every metre is counted ALONG a street, from the origin to somewhere -- was asserted and never shown. The walked streets come from `costsWithin`, the same reachability the isochrone runs: a street is drawn as walked where both its junctions were reached within the budget."
     }
    ],
    "breaking": false,
@@ -854,16 +854,24 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.23.0",
+   "version": "0.24.0",
    "released": "2026-11-25",
    "changes": [
     {
+     "kind": "added",
+     "description": "QUICK LOOK SAYS WHEN THE SHAPE IS NOT THE TABLE'S OWN, and offers to keep the one it is showing. It has widened a long table on sight since 2026-10-27 (\"pandas does not show you a long table\"), while every other surface showed it as stored -- one table, two shapes, a click apart, with nothing saying which was which. It now says the table is stored long, how it is being shown, and that elsewhere it is shown as stored. ALWAYS SHOW THIS TABLE WIDE writes the reading onto the table as `DataTable.wide`, the same field the melt writes for a file that arrived wide -- so it rides the value and the steps below inherit it rather than each guessing."
+    },
+    {
      "kind": "changed",
-     "description": "THE DATA QUALITY DIALOG SHOWS THE FILE'S SHAPE. The practitioner: \"I noticed that the Data Quality display of this table reverted to the long format, which my cause confusion when both wide (the user preference) and long (internal) formats are used in different places.\" Its Columns, Shapes and gaps, and Records tabs showed `species`, `measure` and `value` -- names Fieldwork gave the table when it melted it -- while the table view a click away showed the file's own columns."
+     "description": "The hint and the offer are separate: the hint is about what is on the screen and shows wherever this view widened an undeclared table, including a table a step COMPUTED, which has no stored value to declare on and was being widened with no explanation at all."
     },
     {
      "kind": "fixed",
-     "description": "An edit to a subject's name in the Records tab renamed ONE melted row and silently split the subject in two. In the file's shape a subject is one record, so the correction necessarily reaches every row it has. Edits are translated back to the stored rows they belong to, which is what keeps them applying at all."
+     "description": "A MELTED TABLE IS READ BACK ON THE KEY THE MELT RECORDED, not on whichever key varies most. `wideFrame` asked for `asDeclared` as well as a recorded measure key, and `declaredWide` -- the melt itself -- does not set it, so every melted table fell through to a heuristic that takes the key with the MOST DISTINCT VALUES as the subject. Two districts by eligible, vaccinated and missed has three measures against two districts, so the measures won: the table came back transposed, and a correction to a district's name reached one of its three counts instead of all three. Reported against 0.195.0 by a reviewer outside this project -- \"Data quality shows six rows instead of two\" -- and reproduced here before it was touched."
+    },
+    {
+     "kind": "added",
+     "description": "A TABLE A STEP COMPUTES can keep a wide reading too. A file's table keeps it on the table; a computed table has no stored value, so the decision is kept against the step that makes it, in the workflow, and the run writes `DataTable.wide` onto what that step produces. Offered on the step's own output only: the Before views belong to the steps above. It takes effect from the next run, and says so."
     }
    ],
    "breaking": false,
@@ -948,12 +956,12 @@
    "migrationFrom": []
   },
   "voronoi": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-25",
    "changes": [
     {
-     "kind": "added",
-     "description": "A PREVIEW, where the section held only Show me how it works. It runs `voronoi` on the sites and study area connected and says how many catchments, from the smallest to the largest -- what a reader judges about catchments is how uneven they are."
+     "kind": "changed",
+     "description": "Show me how builds the division up instead of showing it finished. The practitioner: \"the show me how it works does not really make sense from a step by step perspective.\" It did not: one step followed a single house to its nearest pump, and the next showed every dividing line and every cell at once, so the construction happened between two steps and was described rather than drawn. Now two pumps and the one line between them, then the third added and the lines meeting. Both drawn by `voronoi` itself, on two pumps and then three."
     }
    ],
    "breaking": false,

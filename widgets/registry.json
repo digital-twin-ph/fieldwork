@@ -1043,7 +1043,7 @@
   {
    "id": "urn:fieldwork:widget:isochrone",
    "nodeType": "isochrone",
-   "currentVersion": "0.6.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -1074,6 +1074,11 @@
      "version": "0.6.0",
      "path": "widgets/releases/isochrone/0.6.0.json",
      "sha256": "c785c49f96fb33062eab99011a799ac3d1268c92f7fe95b4ddbca03c7033d142"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/isochrone/0.7.0.json",
+     "sha256": "77e55cde363dee87babf5c86e398b8ca09d1c9d8ebb2eb2f1b26a4e2b36d24e2"
     }
    ]
   },
@@ -2921,7 +2926,7 @@
   {
    "id": "urn:fieldwork:widget:table_input",
    "nodeType": "table_input",
-   "currentVersion": "0.23.0",
+   "currentVersion": "0.24.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3072,6 +3077,11 @@
      "version": "0.23.0",
      "path": "widgets/releases/table_input/0.23.0.json",
      "sha256": "3bc670325576ef93ad415c4c0465d45d42d22a498e3e3b28d6d9c45b0b8f4707"
+    },
+    {
+     "version": "0.24.0",
+     "path": "widgets/releases/table_input/0.24.0.json",
+     "sha256": "fd78813f12394feed9a03edfa97f72d7fce09ed4d139e9c3392fdbbc65265833"
     }
    ]
   },
@@ -3338,7 +3348,7 @@
   {
    "id": "urn:fieldwork:widget:voronoi",
    "nodeType": "voronoi",
-   "currentVersion": "0.4.0",
+   "currentVersion": "0.5.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3359,6 +3369,11 @@
      "version": "0.4.0",
      "path": "widgets/releases/voronoi/0.4.0.json",
      "sha256": "3c4fb634f65e0796a44d4acf6d563d09f2ae3dc767ee4f57deda309877dc8480"
+    },
+    {
+     "version": "0.5.0",
+     "path": "widgets/releases/voronoi/0.5.0.json",
+     "sha256": "c4a297560c6d2acfb0da1fcd4b1e56ab5c3c604956ede0c454d3ec21eeff647b"
     }
    ]
   },

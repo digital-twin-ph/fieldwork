@@ -255,8 +255,10 @@ const polygonsOn=(kit:AreaStepKit,nodeId:string,port='polygons'):import('./catch
   // catchments makes its polygons and keeps none, so every dialog below it -- Clip polygons, Summarize points to
   // polygons -- showed "the polygon layer arrives when the workflow runs" after the workflow had run. Last of the
   // three, so a stored layer and a current run still win: those carry the whole layer, this carries its shapes.
+  // GATED ON `current()` like `ran`, and for the same reason: it comes from the same run. An outside review
+  // (2026-11-25) read the ungated first draft and was right -- edit a step above and this described the old input.
   const made=(():import('./catchments.js').Polygons|undefined=>{
-    const layer=kit.computedLayer(from);
+    const layer=kit.current()?kit.computedLayer(from):undefined;
     if(!layer?.features.length)return undefined;
     const polygons=layer.features.filter(f=>f.geometry.type==='Polygon'||f.geometry.type==='MultiPolygon');
     if(!polygons.length)return undefined;

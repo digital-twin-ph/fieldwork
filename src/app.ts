@@ -3081,7 +3081,16 @@ function renderInspector(){
       for(const before of befores)mark(before);
       mark(view,p.bring);
     }
-    openStepViewer([...befores,view],
+    // KEPT AGAINST THE STEP THAT MAKES THE TABLE (2026-11-25). A computed table has no stored value to carry the
+    // reading, so the decision is kept on the step and the run writes it onto what that step produces. Offered on
+    // the step's OWN output only: the Before views belong to the steps above, and a decision about one of those is
+    // theirs to keep.
+    openStepViewer([...befores,{...view,
+      onDeclareWide:(reading:import('./types.js').WideReading)=>{
+        change(w=>{w.readWide={...w.readWide,[n.id]:reading};});
+        toast('Kept. This table is shown wide wherever it is read, from the next run.');
+        renderInspector();
+      }}],
       stepLabels(inputs.map(({port})=>portSourceName(workflow,n.id,port,port))),esc);
   });
   if(n.type==='find_health_facilities')facilitiesInspector.wire(n,facilitiesKit(),document);
@@ -3189,7 +3198,19 @@ function renderInspector(){
   optionalElement('#quick-look')?.addEventListener('click',()=>{
     const table=getNode(workflow,n.id,'table_input').params;
     // AS HANDED ON, edits applied and marked (experiment 214).
-    openTableViewer({...tableViewOf(applyTableEdits(table.data,editsAt(table.edits??[])).table,n.params.label||'Tabular data'),scales:scalesOf(table.columns)},esc);
+    openTableViewer({...tableViewOf(applyTableEdits(table.data,editsAt(table.edits??[])).table,n.params.label||'Tabular data'),
+      scales:scalesOf(table.columns),
+      // KEPT ON THE TABLE, NOT ON THE VIEW (2026-11-25). The practitioner: *"Let's always give the user the option
+      // to view them wide and this user decision should cascade downstream for user facing views of that table."*
+      // `DataTable.wide` is what the melt writes for a file that arrived wide, and every surface already reads it;
+      // written here it says the same thing of a table that arrived long, and it rides the value, so the steps
+      // below inherit the reading rather than each guessing at one.
+      onDeclareWide:reading=>{
+        change(w=>{const t=w.nodes.find(x=>x.id===n.id);
+          if(t?.type==='table_input')t.params.data={...t.params.data,wide:reading};});
+        toast('Kept. This table is shown wide wherever it is read.');
+        renderInspector();
+      }},esc);
   });
   // A table's columns are its keys plus its one value field, which is the contract the widget
   // already declares. A ruleset reads them by those names, so the profile speaks of them too.

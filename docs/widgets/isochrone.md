@@ -1,6 +1,6 @@
 # Network isochrone
 
-_Created 2026-10-14 · Updated 2026-11-23_
+_Created 2026-10-14 · Updated 2026-11-25_
 
 **A process widget.** It draws the area you can reach on foot within a stated time, walking
 along real streets, from one or more sites.
@@ -106,6 +106,15 @@ measures the displacement on the example data, and the corridor check rebuilds t
 the stated rule with Shapely.
 
 ## History
+
+### 2026-11-25 · Show me how draws the streets the walk covers (0.7.0)
+
+The walk said it went "along the streets in every direction" and then showed only the finished region — so the thing
+that makes this different from drawing a circle was stated and never shown.
+
+You now see the streets the walk actually covers, darker than the rest, growing out from the junction the clinic
+snaps to. Every metre is counted along a street, never across the ground, and the region is what those streets grow
+into.
 
 ### 2026-11-23 · Show me how (0.6.0)
 

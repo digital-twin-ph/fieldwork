@@ -3029,6 +3029,12 @@ export async function executeWorkflow(workflow:Workflow,reasoner:Reasoner,onProg
         withNote(receipts,runId,node.id,[note]);
       }
     }
+    // A WIDE READING THE PRACTITIONER KEPT FOR THIS STEP (2026-11-25), applied to what it just made. The table is
+    // the step's own product and has nowhere else to carry the decision; `DataTable.wide` is what every surface
+    // already reads, so writing it here is what makes the reading travel downstream.
+    {const reading=workflow.readWide?.[node.id],made=value as {kind?:string;keys?:string[]}|undefined;
+      if(reading&&made?.kind==='data-table'&&made.keys?.includes(reading.measureKey))
+        value={...made,wide:{measureKey:reading.measureKey,subjectKeys:reading.subjectKeys}} as typeof value;}
     values.set(node.id,value);{remember(node,value);const summary=summarizeStep(node,value);if(summary)stepSummaries[node.id]=summary;}trace.push({nodeId:node.id,type:node.type,milliseconds:performance.now()-begin});
     // A RASTER IS LET GO once every step that reads it has run (2026-11-13): three national windows at 100 m held to the
     // end of Botswana's run stalled the tab, and nothing after the steps reading a raster reads it again. A step showing it,

@@ -831,7 +831,17 @@ export interface WorkflowEdge {id:string; from:string; to:string; port:string}
  *  `exampleId`, so it carries the project it belongs to and the key it is stored under -- because
  *  the workspace map was keyed by a closed vocabulary of example ids, and a practitioner cannot
  *  mint one of those. `outputId` stays SINGULAR and per-workflow: one question, one answer. */
-export interface Workflow {schema:'fieldwork/workflow/1'; name:string; exampleId?:'blank'|'coverage'|'snow-deaths'|'snow-curve'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; projectId?:string; workflowKey?:string; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
+/** A WIDE READING A PERSON KEPT, for a table a step COMPUTES (2026-11-25).
+ *
+ *  A table read from a file keeps its reading on the table itself, because there is a stored table to keep it on. A
+ *  table a step makes exists only as the product of a run, so the decision is kept against the step that makes it
+ *  and applied to what it produces. Keyed by node id, and nothing else reads it: the run writes `DataTable.wide`
+ *  from it, and every surface downstream reads that, which is the field they already read.
+ *
+ *  Here rather than in each step's params, because the decision is the same decision whichever step makes the
+ *  table, and twenty widget types do not each need a copy of it. */
+export interface WideReading {measureKey:string; subjectKeys:string[]}
+export interface Workflow {schema:'fieldwork/workflow/1'; name:string; readWide?:Record<string,WideReading>; exampleId?:'blank'|'coverage'|'snow-deaths'|'snow-curve'|'snow-voronoi'|'snow-isochrone'|'snow-geoprivacy'|'snow-extent'|'rulesets'; nodes:WorkflowNode[]; edges:WorkflowEdge[]; projectId?:string; workflowKey?:string; outputId?:string; manifest?:import('./project-manifest.js').ProjectManifest}
 // 'samples' was removed on 2026-10-12: it sat in this union and nowhere else, produced by
 // nothing and consumed by nothing. Found by surveying the inventory sideways
 // (docs/experiments/105-five-directions.md), and removed rather than counted, because a closed

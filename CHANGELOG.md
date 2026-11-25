@@ -3,6 +3,62 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.196.0 — In development
+
+- **Quick Look says when the shape is not the table's own** (Tabular data 0.24.0). It has widened long tables on
+  sight since 2026-10-27 — *"pandas does not show you a long table"* — while every other surface showed them as
+  stored: one table, two shapes a click apart, with nothing saying which was which. It now says the table is stored
+  long, how it is being shown, and that elsewhere it is shown as stored.
+- **A wide reading can be kept, and it travels.** *Always show this table wide* writes it as `DataTable.wide`, the
+  same field the melt writes for a file that arrived wide, so it rides the value and the steps below inherit it
+  rather than each guessing. The practitioner: *"this user decision should cascade downstream for user facing views
+  of that table."* The hint and the offer are separate, so a table a step **computed** gets the explanation even
+  though there is nothing yet to keep the choice on.
+- **A melted table is read back on the key the melt recorded** (Tabular data 0.24.0), not on whichever key varies
+  most. `wideFrame` required `asDeclared` as well, and the melt does not set it — so every melted table fell through
+  to a heuristic that takes the key with the most distinct values as the subject. Two districts by eligible,
+  vaccinated and missed has three measures against two districts: the measures won, the table came back transposed,
+  and correcting a district's name reached one of its three counts. **Reported by a reviewer outside this project**
+  against 0.195.0, in those terms, and reproduced here before it was touched — a case the 0.195.0 fix walked past.
+- **A long → wide → long round trip** guards it, over three shapes. Checked against the defect: reverted, it fails
+  on two-by-three and passes on the other two, because there the heuristic happens to pick the right subject. A
+  single example would not have caught it.
+- **A table a step computes can keep a wide reading too.** The decision is kept against the step that makes the
+  table and applied to what it produces, so it travels as a file-table's declaration does. From the next run.
+- **A key the melt never heard of stays a column of the table.** Reading a melted table on its recorded key, new
+  above, dropped every other key: Relate brings `water_supply` onto Snow's South London table, whose record names
+  `sub_district` and `measure` only, and the joined preview lost the one variable a reader checks before grouping by
+  it. Each leftover key is now placed rather than dropped — one value per subject makes it an attribute column, and
+  one that varies within a subject is part of what identifies a record. **Caught by the gate**, in the worked
+  example, before any of this was published.
+- **A record that arrives twice is drawn twice.** The pivot grouped on the keys alone, so two rows with the same keys
+  became one. Rio de Janeiro's 2024 dengue file repeats the week of 2024-12-29 for all 92 municipalities, byte for
+  byte — the doubled week the worked example exists to teach — and it was absorbed: 4,784 rows where the file has
+  4,876, the duplication gone into the shape. A row whose cell is already filled now opens a new record, so nothing
+  is overwritten and a duplicate reads as the two rows it is. The *Before* note counts the file's own rows again:
+  **184 of 4,876**. Found by following the gate's figure instead of adopting it.
+- **One rule for widening, everywhere** ([wide-format audit](docs/audits/wide-format-audit.md)). A user-facing view
+  now widens a table only where the table says it is wide — a melt's record, or a reading the reader kept. The data
+  quality dialog was gated on that in 0.195.0, after the gate caught it pivoting a data dictionary's class names
+  into headings; the Join and Detect previews were left guessing, by the same heuristic, on the same kind of file.
+  **Found by GitHub Copilot reviewing the incoming commit**, which also noted no focused test covered it. There is
+  one now, in the shape of the defect: a dictionary of `column` and `class` keeps its own columns, and declaring a
+  reading cascades into those previews without being told again.
+- **A preview cannot describe an input from a run that no longer applies.** The computed-layer lookup added for the
+  polygon previews read the last run's output without asking whether that run still matches the workflow, which the
+  two lookups beside it do ask. Edit a step above and the preview below described the old input. **Found by GitHub
+  Copilot in the same review**; verified against the code before it was changed.
+- **Voronoi's Show me how builds the division up** (0.5.0), instead of following one house and then revealing every
+  line at once: two pumps and the line between them, then the third and where the lines meet. Both drawn by
+  `voronoi` itself.
+- **Network isochrone's Show me how draws the streets the walk covers** (0.7.0). It said "along the streets in every
+  direction" and drew only the region, so the one thing that tells it from a circle — that every metre is counted
+  along a street — was asserted and never shown. The walked streets come from `costsWithin`, the same reachability
+  the step runs.
+- **Two CI comments corrected.** `pages.yml` said the gate still ran on every push "in `verify` below" and
+  `verify.yml` said both engines run; verification moved to its own file, nightly, WebKit only. Both were carried
+  over unchanged when that happened. **Found by GitHub Copilot**, reading the comments against the workflows.
+
 ## 0.195.0 — In development
 
 - **Every user-facing table shows the file's shape** ([wide-format audit](docs/audits/wide-format-audit.md)). The

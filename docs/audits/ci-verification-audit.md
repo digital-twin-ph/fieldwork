@@ -1,6 +1,6 @@
 # Audit — verification on CI
 
-_Created 2026-11-24 · Updated 2026-11-24_
+_Created 2026-11-24 · Updated 2026-11-25_
 
 Written after four releases went out in one afternoon and the run for each was reported to the practitioner. The
 third report noted that `verify` had been cancelled rather than failed, which prompted counting how often it reaches
@@ -119,9 +119,26 @@ rather than two. All three failures are WebKit and all three are UI timing -- `b
 `toHaveValue`.
 
 **A fourth failure from the run before it did not recur.** `large-study-area-map` failed on WebKit in the run for
-`a3458e79` with *"Fetch API cannot load ... /build/asset-manifest.json due to access control checks"*, and reproduced
-on this machine under WebKit; `568ab175` changed no `src` file, and it passed here. So that one is intermittent, not
-deterministic, and the earlier report of it as reproducible was true of two attempts rather than of the test.
+`a3458e79` with *"Fetch API cannot load ... /build/asset-manifest.json due to access control checks"*; `568ab175`
+changed no `src` file, and it passed here.
+
+> **Corrected 2026-11-24.** This first said the failure "reproduced on this machine under WebKit". It did not, and
+> could not have: **WebKit was not installed on this machine**. `~/Library/Caches/ms-playwright/` held
+> `chromium-1248`, `chromium_headless_shell-1248` and `ffmpeg-1013` and nothing else, so every local
+> `--project=webkit` run ended at `browserType.launch: Executable doesn't exist`, and no test was evaluated. A
+> launch failure was read as a test failure. The note elsewhere that the local gate is Chromium only says exactly
+> this, and it was read as "not gated here" rather than "cannot run here".
+>
+> WebKit 27.2 (playwright webkit v2370) was then installed, with the practitioner's agreement, and all four tests --
+> the three above and `large-study-area-map` -- **pass on macOS WebKit**, ten tests in 48 seconds.
+>
+> So the CI failures are not WebKit's behaviour as such: they are specific to the LINUX WebKit build, the runner, or
+> both. Against a run that takes 55 minutes for 617 tests where the same work takes seconds here, a shared runner's
+> timing is the more ordinary explanation, and all three are `element(s) not found` on a dialog.
+>
+> One consequence is worth retracting plainly: the suggestion that Safari users would find the write-up unstamped
+> rested on that false local reproduction. macOS WebKit is the engine closest to Safari, and it does not raise the
+> error at all. That does not prove Safari is unaffected; it removes the only evidence that it is.
 
 What this says about the engine, stated carefully: WebKit has several real disagreements with Chromium in this suite,
 and they were not visible while verification was being cancelled. It does not say they are new, or that they are

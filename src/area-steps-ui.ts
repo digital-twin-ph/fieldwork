@@ -37,6 +37,11 @@ export interface AreaStepKit extends InspectorKit {
     features:{name:string;geometry:{type:string;coordinates:unknown}}[]};
   /** What a process step made in the last run, in a few numbers, while that run is current. */
   summary:(nodeId:string)=>Record<string,number|string|undefined>|undefined;
+  /** THE NAMED LAYER A STEP COMPUTED, by the step's own id (2026-11-25). A layer a step MAKES is stored on no node
+   *  and, unless it is an output, is in no `outputs` entry either -- so a dialog downstream of Voronoi catchments or
+   *  a clip could not reach its polygons at all, and said it was waiting for a run that had already happened. The
+   *  run keeps such layers in `result.computed`; `pointChoices` reads it and nothing else did. */
+  computedLayer:(nodeId:string)=>{features:{name:string;geometry:{type:string;coordinates:unknown}}[]}|undefined;
   /** The UTM zone this workflow's coordinates suggest, against the one chosen, and how far the chosen one stretches
    *  distances over them, as a percentage; undefined where nothing on the canvas has a coordinate yet. */
   zoneAdvice:(zone:number,hemisphere:'north'|'south')=>{zone:number;hemisphere:'north'|'south';matches:boolean;positions:number;straddles:number[];stretch:number}|undefined;
@@ -246,7 +251,20 @@ const polygonsOn=(kit:AreaStepKit,nodeId:string,port='polygons'):import('./catch
   const ran=kit.current()?(kit.output(from) as {polygons?:import('./catchments.js').Polygons}|undefined)?.polygons:undefined;
   const held=(kit.workflow().nodes.find(x=>x.id===from)?.params as
     {data?:import('./catchments.js').Polygons}|undefined)?.data;
-  const found=ran??held;
+  // A LAYER THE STEP ABOVE COMPUTED, which is neither stored on its node nor in `outputs` (2026-11-25). Voronoi
+  // catchments makes its polygons and keeps none, so every dialog below it -- Clip polygons, Summarize points to
+  // polygons -- showed "the polygon layer arrives when the workflow runs" after the workflow had run. Last of the
+  // three, so a stored layer and a current run still win: those carry the whole layer, this carries its shapes.
+  const made=(():import('./catchments.js').Polygons|undefined=>{
+    const layer=kit.computedLayer(from);
+    if(!layer?.features.length)return undefined;
+    const polygons=layer.features.filter(f=>f.geometry.type==='Polygon'||f.geometry.type==='MultiPolygon');
+    if(!polygons.length)return undefined;
+    return {features:polygons.map((f,i)=>({id:`${from}-${i+1}`,name:f.name||`${i+1}`,
+      geometry:f.geometry as unknown as import('./types.js').Boundary})) as unknown as import('./catchments.js').Catchment[],
+      sites:[],method:'',crs:'CRS84',notes:[]};
+  })();
+  const found=ran??held??made;
   if(!found?.features?.length)return undefined;
   // THE FIELDS THE STEP FUNCTIONS READ. A layer kept by Polygon layer holds its features and little else, while
   // `clipPolygons` and `summarizePolygons` spread `input.notes` and carry `sites` through -- so a preview built

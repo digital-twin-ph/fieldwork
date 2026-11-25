@@ -2,6 +2,7 @@
  *  run found. Every setting is in the dialog, with the counts Before and each period's threshold and signal After, drawn
  *  as well as listed, and Show me how on a made-up series. Nothing reaches the workflow until Apply. */
 import type {DataTable} from './data-table.js';
+import {wideCells} from './data-table-ui.js';
 import type {Escape,ParamsByType} from './types.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import {openConfigDialog} from './config-dialog.js';
@@ -177,9 +178,11 @@ export function openDetectConfig(view:DetectView,esc:Escape):void{
       const t=view.table;
       if(!t)return {settings,message:{tone:'warning' as const,text:'Run the workflow once: the table of counts is known after a run.'},blocked:!d.timeField};
       const before=`<fieldset class="detect-before"><legend>Before</legend><p>${esc(view.source)} · ${n(t.rows.length)} rows</p>`
-        +'<div class="table-scroll"><table><thead><tr>'+[...t.keys,t.valueField].map(c=>`<th scope="col">${esc(c)}</th>`).join('')+'</tr></thead><tbody>'
-        +t.rows.slice(0,1000).map(r=>'<tr>'+t.keys.map(k=>`<td>${esc(String(r.key[k]??''))}</td>`).join('')+`<td>${num(r.value)}</td></tr>`).join('')
-        +'</tbody></table></div></fieldset>';
+        // WIDE, as every user-facing table is (2026-11-24).
+        +((cells=>'<div class="table-scroll"><table><thead><tr>'
+          +cells.columns.map(c=>`<th scope="col">${esc(c)}</th>`).join('')+'</tr></thead><tbody>'
+          +cells.rows.slice(0,1000).map(r=>'<tr>'+r.map(v=>`<td>${esc(v)}</td>`).join('')+'</tr>').join('')
+          +'</tbody></table></div>')(wideCells(t)))+'</fieldset>';
       if(!d.timeField)return {settings,preview:before,message:{tone:'warning' as const,text:'Choose the column holding each period.'},blocked:true};
       let found:DetectTableResult;
       try{found=detectTable(t,{...d});}catch(error){return {settings,preview:before,message:{tone:'refusal' as const,text:error instanceof Error?error.message:String(error)},blocked:true};}

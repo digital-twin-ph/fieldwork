@@ -3,6 +3,40 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.195.0 — In development
+
+- **Every user-facing table shows the file's shape** ([wide-format audit](docs/audits/wide-format-audit.md)). The
+  practitioner, on the data quality dialog: *"all user-facing tables should be presented wide (line list format)"*,
+  and then *"We can be efficient using long formats but will result in cognitive dissonance in the user."* The data
+  quality dialog, Join to the study area and Detect unusual counts showed Fieldwork's melted form — `measure` and
+  `value`, names it gave the table — while the table view a click away showed the file's own columns. All three now
+  go through `wideFrame`, the reconstruction Quick look already used, so none of them can disagree about one table.
+  Append rows is left as it was, deliberately: its headers carry "stacked as …" and the stored columns are its
+  subject.
+- **An edit in the quality dialog no longer splits a subject in two.** Editing a subject's name there renamed one
+  melted row and left its siblings behind. In the file's shape a subject is one record, so a correction reaches
+  every row it has — and edits are translated back to the stored rows, which is what keeps them applying at all.
+- **The five empty Preview sections are gone** ([preview audit](docs/audits/preview-audit.md)). Convex hull,
+  Voronoi catchments, Mean center, Move points in a donut and Aggregate points to H3 cells offered "Show me how it
+  works" and nothing else. Each now runs the step's **own** function on the points actually connected, so a preview
+  cannot show something the step would not do: the area inside a hull and how few points its corners are; how many
+  catchments and how uneven; where the centre falls; how far the points really moved; and how many points the H3
+  minimum leaves out — the disclosure control's cost, before applying it rather than after.
+- **A preview can see a layer an upstream step computed.** Clip polygons and Summarize points to polygons said *"the
+  polygon layer arrives when the workflow runs"* after the workflow had run, because a layer a step MAKES is stored
+  on no node and, unless it is an output, is in no `outputs` entry. `result.computed` has held them all along and
+  only `pointChoices` read it.
+- **The quality dialog widens only what Fieldwork melted.** The first version called `wideFrame` on every table, and
+  the gate refused it: a table long *in the file* had a real column, `class`, pivoted into headings and lost from
+  the very tab where a column is checked against its dictionary. It now gates on `DataTable.wide`, which the melt
+  writes. This leaves Quick Look widening a natively long table while the quality dialog does not — recorded in the
+  audit, and the reason the next release declares the reading instead of letting each surface guess.
+- The CI audit is corrected: the WebKit failure reported as reproducing locally did not, and could not have —
+  **WebKit was not installed on this machine**, so every local run ended at `browserType.launch` and a launch failure
+  was read as a test failure. With WebKit 27.2 installed, the full suite is **25 failed / 620 passed in 57 minutes**
+  on macOS against **3 failed / 617 passed** on CI's Linux, with no overlap between the two sets. A two-engine local
+  gate is therefore not viable, and the suggestion that Safari users would find the write-up unstamped is retracted.
+
 ## 0.194.0 — In development
 
 - **Show me how keeps the rows it has matched** (Relate 0.15.0). The practitioner: *"There is something wrong with
@@ -38,9 +72,13 @@ shown in a local build is not a claim that it has been published.
 - That run reached a verdict: **3 failed, 617 passed**, one `verify` job rather than two, inside the 75-minute bound.
   All three are WebKit UI timing — `buffer-point-inspector`, `relate-proposed-keys`,
   `sample-satellite-areas-offline` — and are recorded in the audit for manual testing rather than fixed here.
-- Also recorded: `large-study-area-map`'s WebKit fetch error is **intermittent**, not deterministic. It failed on
-  `a3458e79` and on this machine, and passed on `568ab175`, which changed no `src` file. Reporting it as
-  reproducible was true of two attempts rather than of the test.
+- Also recorded: `large-study-area-map`'s WebKit fetch error failed on `a3458e79` and passed on `568ab175`, which
+  changed no `src` file. **Corrected the same day**: it was reported as also reproducing on this machine, and it did
+  not — WebKit was not installed here, so every local `--project=webkit` run ended at `browserType.launch:
+  Executable doesn't exist` and a launch failure was read as a test failure. With WebKit 27.2 installed, that test
+  and the three CI failures all **pass on macOS WebKit**, ten tests in 48 seconds. The CI failures are therefore
+  specific to the Linux build or the runner, not to WebKit as such, and the suggestion that Safari users would find
+  the write-up unstamped is retracted: it rested on the false reproduction.
 
 ## 0.193.0 — In development
 

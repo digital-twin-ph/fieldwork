@@ -6,9 +6,10 @@ import type {WorkflowNode} from './types.js';
 import type {InspectorKit,OwnInspector} from './inspector-kit.js';
 import type {AreaStepKit} from './area-steps-ui.js';
 import {openConfigDialog} from './config-dialog.js';
-import {validateCatchmentNode} from './catchments.js';
-import {validateHullNode} from './convex-hull.js';
-import {validateMeanCenterNode} from './mean-center.js';
+import {validateCatchmentNode,voronoi} from './catchments.js';
+import {validateHullNode,convexHull} from './convex-hull.js';
+import {validateMeanCenterNode,computeMeanCenter} from './mean-center.js';
+import {calculateArea} from './area-computation.js';
 import {validateReachNode,MODE_SPEED_BANDS} from './reachable-nodes.js';
 import {errorMessage} from './guards.js';
 import {SHOW_ME,showMeIn} from './table-walkthrough.js';
@@ -64,6 +65,75 @@ function refusal(check:()=>void):{blocked?:boolean;message?:{tone:'refusal';text
 }
 const zoneOf=(d:Zoned)=>({zone:Number(d.zone),hemisphere:d.hemisphere});
 
+/** WHAT THESE STEPS WOULD MAKE OF THE POINTS THEY HAVE, computed with each step's OWN function (2026-11-25).
+ *
+ *  Three dialogs offered "Show me how it works" and nothing else under Preview. The practitioner met them one after
+ *  another -- *"for this voronoi catchment dialog there is no preview"*, then Convex hull, then Mean center -- and
+ *  then said what they all are: *"Practically all widgets used in Snow built in have similar problems."*
+ *
+ *  A made-up example explains the method and says nothing about this workflow's points. These run `convexHull`,
+ *  `voronoi` and `computeMeanCenter` on the points actually connected, so the Preview cannot show something the step
+ *  would not do. Said where there is nothing to compute, never left blank: an empty Preview reads as a dialog that
+ *  does not work, which is the objection `area-steps-ui.ts` records under "SAID, NOT SWALLOWED". */
+const pointsOn=(kit:InspectorKit,nodeId:string,port='points'):import('./types.js').PointCollection|null=>{
+  const {features}=(kit as AreaStepKit).pointChoices(nodeId,port);
+  const placed=features.filter(f=>f.geometry&&Array.isArray(f.geometry.coordinates));
+  if(!placed.length)return null;
+  return {type:'FeatureCollection',features:placed.map((f,i)=>({type:'Feature',id:`p${i+1}`,
+    properties:{name:f.name},geometry:f.geometry}))} as unknown as import('./types.js').PointCollection;
+};
+const waitingFor=(what:string)=>`<p class="muted">Connect ${what}, and what this step would make of them is counted here.</p>`;
+const cannotYet=(kit:InspectorKit,error:unknown)=>
+  `<p class="muted">This cannot be previewed yet: ${kit.esc(error instanceof Error?error.message:String(error))}</p>`;
+const km2=(m2:number)=>`${new Intl.NumberFormat('en',{maximumSignificantDigits:3}).format(m2/1e6)} km²`;
+
+function hullPreview(kit:InspectorKit,n:WorkflowNode,params:WorkflowNode<'summarize_hull'>['params']):string{
+  const input=pointsOn(kit,n.id);
+  if(!input)return waitingFor('the points')+SHOW_ME;
+  try{
+    const {value}=convexHull(input,{...n,type:'summarize_hull',params} as WorkflowNode<'summarize_hull'>,'preview',n.id);
+    const ring=value.features[0];
+    const area=ring?calculateArea(ring.geometry,'km2').squareMetres:0;
+    // THE POINTS ON THE OUTLINE ARE THE FINDING: a hull is decided by its corners, and how few there are says how
+    // much of the layer is doing the work.
+    const corners=ring&&ring.geometry.type==='Polygon'?Math.max(0,(ring.geometry.coordinates[0]?.length??1)-1):0;
+    return `<p class="standard-result"><strong>${kit.esc(km2(area))}</strong> inside the outline, `
+      +`drawn through ${corners.toLocaleString('en')} of the ${input.features.length.toLocaleString('en')} points. `
+      +`The rest fall inside it.</p>`+SHOW_ME;
+  }catch(error){return cannotYet(kit,error)+SHOW_ME;}
+}
+
+function voronoiPreview(kit:InspectorKit,n:WorkflowNode,params:{zone:number;hemisphere:'north'|'south'}):string{
+  const input=pointsOn(kit,n.id,'sites');
+  const area=(kit as AreaStepKit).output(
+    (kit.workflow().edges.find(e=>e.to===n.id&&e.port==='area')?.from)??'')as {boundary?:import('./types.js').Boundary}|undefined;
+  const boundary=area?.boundary
+    ??(kit.workflow().nodes.find(x=>x.id===kit.workflow().edges.find(e=>e.to===n.id&&e.port==='area')?.from)?.params as {geometry?:import('./types.js').Boundary}|undefined)?.geometry;
+  if(!input)return waitingFor('the sites')+SHOW_ME;
+  if(!boundary)return waitingFor('a study area')+SHOW_ME;
+  try{
+    const made=voronoi(input,boundary,params.zone,params.hemisphere);
+    const areas=made.features.map(f=>calculateArea(f.geometry,'km2').squareMetres).sort((a,b)=>a-b);
+    if(!areas.length)return cannotYet(kit,new Error('no catchment was drawn'))+SHOW_ME;
+    // SMALLEST AND LARGEST, because what a reader judges about catchments is how uneven they are.
+    return `<p class="standard-result"><strong>${made.features.length.toLocaleString('en')} catchments</strong>, `
+      +`one per site, from ${kit.esc(km2(areas[0]!))} to ${kit.esc(km2(areas[areas.length-1]!))}.</p>`+SHOW_ME;
+  }catch(error){return cannotYet(kit,error)+SHOW_ME;}
+}
+
+function meanCenterPreview(kit:InspectorKit,n:WorkflowNode,params:WorkflowNode<'mean_center'>['params']):string{
+  const input=pointsOn(kit,n.id);
+  if(!input)return waitingFor('the points')+SHOW_ME;
+  try{
+    const centre=computeMeanCenter(input,params);
+    const [lon,lat]=centre.coordinates;
+    return `<p class="standard-result"><strong>${lat.toFixed(5)}, ${lon.toFixed(5)}</strong> from `
+      +`${centre.count.toLocaleString('en')} points`
+      +(centre.weight?`, weighted by ${kit.esc(centre.weight.field)} totalling ${centre.weight.total.toLocaleString('en')}`:', each counted once')
+      +'.</p>'+SHOW_ME;
+  }catch(error){return cannotYet(kit,error)+SHOW_ME;}
+}
+
 export const hullInspector:OwnInspector<'summarize_hull'>={
   markup:(n,kit)=>{const p=n.params,f=summaryOf(kit,n) as {areaSquareMetres?:number;spanMetres?:number}|undefined;
     return kit.section('Name',kit.name('hull-label',p.label||'Convex hull'))
@@ -77,7 +147,7 @@ export const hullInspector:OwnInspector<'summarize_hull'>={
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog<Zoned>({id:'hull-dialog',widget:'Convex hull',step:node.params.label||'',
         draft:{zone:String(node.params.zone),hemisphere:node.params.hemisphere},
-        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'hull'),preview:SHOW_ME,
+        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'hull'),preview:hullPreview(kit,n,{...node.params,...zoneOf(d)}),
           ...refusal(()=>validateHullNode({...node,params:{...node.params,...zoneOf(d)}}))}),
         wire:(r,d,redraw)=>{wireZone(r,d,redraw,'hull');showMeIn(r,kit.esc,hullWalkthrough);},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='summarize_hull')Object.assign(t.params,zoneOf(d));}),
@@ -98,7 +168,7 @@ export const voronoiInspector:OwnInspector<'voronoi'>={
       const node=nodeIn(kit,n);if(!node)return;
       openConfigDialog<Zoned>({id:'voronoi-dialog',widget:'Voronoi catchments',step:node.params.label||'',
         draft:{zone:String(node.params.zone),hemisphere:node.params.hemisphere},
-        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'voronoi'),preview:SHOW_ME,
+        sections:d=>({settings:zoneFields(kit as AreaStepKit,d,'voronoi'),preview:voronoiPreview(kit,n,zoneOf(d)),
           ...refusal(()=>validateCatchmentNode({...node,params:{...node.params,...zoneOf(d)}}))}),
         wire:(r,d,redraw)=>{wireZone(r,d,redraw,'voronoi');showMeIn(r,kit.esc,voronoiWalkthrough);},
         apply:d=>kit.change(w=>{const t=w.nodes.find(x=>x.id===n.id);if(t?.type==='voronoi')Object.assign(t.params,zoneOf(d));}),
@@ -189,7 +259,7 @@ export const meanCenterInspector:OwnInspector<'mean_center'>={
             +[...new Set([...fields,...(d.weightField&&!fields.includes(d.weightField)?[d.weightField]:[])])].map(f=>`<option value="${kit.esc(f)}"${f===d.weightField?' selected':''}>${kit.esc(f)}</option>`).join('')+'</select>'
             :`<input id="mean-center-weight" maxlength="60" value="${kit.esc(d.weightField)}" placeholder="for example deaths">`)
           +'<small>250 addresses carrying 489 deaths have two different centres.</small></div>'
-          +zoneFields(kit as AreaStepKit,d,'mean-center'),preview:SHOW_ME,
+          +zoneFields(kit as AreaStepKit,d,'mean-center'),preview:meanCenterPreview(kit,n,{...(nodeIn(kit,n)?.params as WorkflowNode<'mean_center'>['params']),...zoneOf(d)}),
           ...refusal(()=>validateMeanCenterNode({...node,params:{...node.params,...zoneOf(d),weightField:d.weightField}}))}),
         wire:(r,d,redraw)=>{
           r.querySelector<HTMLInputElement|HTMLSelectElement>('#mean-center-weight')!.onchange=e=>{d.weightField=(e.target as HTMLInputElement).value.trim();redraw();};

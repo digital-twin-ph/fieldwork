@@ -170,7 +170,7 @@ import {basemapOf,extentSpanKm,useBasemapKeys,KEY_ORIGINS,staticGround} from './
 import {naturalEarthMarkup,NATURAL_EARTH_CREDIT} from './natural-earth.js';
 import {mapImage,mapImageMarkup,mapImageCredit,type MapImage} from './map-image.js';
 
-import {dataTableMarkup,tableFromFetched} from './data-table-ui.js';
+import {dataTableMarkup,tableFromFetched,wideFrame} from './data-table-ui.js';
 import {openCatalogDialog,identityMarkup,widgetIdentity} from './catalog-ui.js';
 import {initTheme,applyTheme,saveThemePreference,isThemePreference} from './theme.js';
 import {previewArea,prepareRasterPreview,rasterOfNode} from './raster-preview.js';
@@ -1955,6 +1955,11 @@ function qualityViewFor(n:WorkflowNode):import('./data-quality-ui.js').QualityVi
 /** AN EDIT MADE IN DATA QUALITY, added to the step's log as its next version (experiment 214); nothing is deleted. */
 const appendEdit=(nodeId:string,entry:(v:number)=>EditEntry)=>change(w=>{const p=w.nodes.find(x=>x.id===nodeId)!.params as {edits?:EditEntry[]};
   const log=p.edits??[];p.edits=[...log,entry(log.length+1)];});
+/** SEVERAL ENTRIES, ONE CHANGE (2026-11-24). Correcting a subject's name in the wide view corrects every melted row
+ *  that subject has, and those must land together: appended one at a time they would be several undo steps for one
+ *  correction, and a run between them would read a table half renamed. */
+const appendEdits=(nodeId:string,entries:(first:number)=>EditEntry[])=>change(w=>{const p=w.nodes.find(x=>x.id===nodeId)!.params as {edits?:EditEntry[]};
+  const log=p.edits??[];p.edits=[...log,...entries(log.length+1)];});
 function editCell(nodeId:string,edit:CellEdit):import('./data-quality-ui.js').QualityView|undefined{
   if(!appendEdit(nodeId,version=>({...edit,version})))return undefined;
   toast(`${edit.column} of ${edit.record} edited by hand. Rerun to use it.`);
@@ -1975,17 +1980,72 @@ const qualityViewOf=(nodeId:string)=>{const n=workflow.nodes.find(x=>x.id===node
 function tableQualityView(n:WorkflowNode<'table_input'>):import('./data-quality-ui.js').QualityView{
   const table=n.params,edits=table.edits??[];
   const edited=applyTableEdits(table.data,editsAt(edits)),data=edited.table;
+  // WIDE, BECAUSE EVERY USER-FACING TABLE IS (the practitioner, 2026-11-24, on finding this dialog showing a wide
+  // table melted: *"We should decrease the friction for the user, which means consistency in user-facing views of
+  // the tables. We can be efficient using long formats but will result in cognitive dissonance in the user."*).
+  //
+  // The melting is Fieldwork's, for the steps downstream; `species`, `measure` and `value` are names it gave the
+  // table and not columns anyone read off a file. This dialog was showing those, while the table view and Describe
+  // columns beside it showed the file's own -- the same table in two shapes, a click apart.
+  // ONLY WHERE FIELDWORK DID THE MELTING (2026-11-25). `wideFrame` widens ANY table whose keys will carry an axis,
+  // not only one that arrived wide -- which is right for the table VIEW, where widening a long table is a reading
+  // aid, and wrong here.
+  //
+  // This dialog's Columns tab is where a column is checked against what a dictionary says it means, so it must list
+  // the columns the FILE has. Widening a table that was long in the file turns one of its real columns into
+  // headings and the column disappears from the tab: `data-dictionary.browser.mjs` caught exactly that, losing
+  // `class`, a column somebody wrote and described. The gate found it; the wide-format audit had warned that
+  // `wideFrame` widens more than it is asked to, and I applied it here anyway.
+  //
+  // `DataTable.wide` is written by the melt itself (`data-table.ts`), so it is present exactly when the shape a
+  // reader expects is the wide one and absent when the file really is long.
+  const frame=data.wide?wideFrame(data):null;
+  const columns=frame?[frame.subject,...frame.attributes,...frame.columns]:[...data.keys,data.valueField];
+  const rows=frame
+    ?frame.rows.map(r=>({[frame.subject]:r.label,
+      ...Object.fromEntries(frame.attributes.map((name,i)=>[name,r.attributes[i]])),
+      ...Object.fromEntries(frame.columns.map((name,i)=>[name,r.cells[i]??null]))}))
+    :data.rows.map(row=>({...row.key,[data.valueField]:row.value}));
   return {title:`${n.params.label||'Tabular data'} · data quality`,
     findings:[...(table.data.findings??[]),...metadataFindings(table.data,table.columns,table.dictionaryCheck,table.wide)],
-    columns:[...data.keys,data.valueField],
-    rows:data.rows.map(row=>({...row.key,[data.valueField]:row.value})),
+    columns,
+    rows,
     declared:declaredKinds(workflow,n.id),scales:scalesOf(table.columns),repairs:[],
     // A tabular import casts its value column at import, and a cell it cannot read is a finding
     // kept as unknown. No repair is offered here yet. 117, 164.
     onRepair:()=>{},onRemoveRepair:()=>{},
-    recordIds:data.rows.map((_,i)=>`row ${i+1}`),edits,staleEdits:edited.stale.length,
-    onEdit:(edit:CellEdit)=>editCell(n.id,edit),onRemoveEdit:(version:number)=>removeEdit(n.id,version),
+    recordIds:rows.map((_,i)=>`row ${i+1}`),edits,staleEdits:edited.stale.length,
+    onEdit:(edit:CellEdit)=>editWideCell(n.id,edit,frame,data.valueField),
+    onRemoveEdit:(version:number)=>removeEdit(n.id,version),
     onRestore:(version:number)=>restoreEdits(n.id,version)};
+}
+
+/** AN EDIT MADE ON THE FILE'S SHAPE, RECORDED AGAINST THE ROWS THE STEP HOLDS (2026-11-24).
+ *
+ *  The dialog shows the file's columns; `applyTableEdits` applies edits to the stored rows, keyed by `row N` in
+ *  stored order and by the stored column. Showing one shape and recording against the other without translating
+ *  would write edits that could never match a row -- the dialog would look right and editing would quietly stop
+ *  working, which is worse than the inconsistency it set out to fix.
+ *
+ *  A VALUE CELL IS ONE STORED ROW; A SUBJECT OR ATTRIBUTE CELL IS ALL OF THEM. Correcting a species name in the
+ *  wide view corrects every stored row of that species, together. Correcting it in the melted view, one row at a
+ *  time, silently split the subject in two -- so this is not only a translation, it closes that. */
+function editWideCell(nodeId:string,edit:CellEdit,frame:ReturnType<typeof wideFrame>,
+  valueField:string):import('./data-quality-ui.js').QualityView|undefined{
+  if(!frame)return editCell(nodeId,edit);
+  const at=frame.rows.findIndex((_,i)=>`row ${i+1}`===edit.record);
+  if(at<0)return undefined;
+  const row=frame.rows[at]!,column=frame.columns.indexOf(edit.column);
+  // A value column edits the one stored row behind that cell, on the value column it was melted into.
+  const made:CellEdit[]=column>=0
+    ?(row.from.cells[column]===undefined?[]
+      :[{record:`row ${row.from.cells[column]!+1}`,column:valueField,from:edit.from,to:edit.to,at:edit.at}])
+    // The subject, or one of the columns describing it, is the same on every stored row of the subject.
+    :row.from.rows.map(r=>({record:`row ${r+1}`,column:edit.column,from:edit.from,to:edit.to,at:edit.at}));
+  if(!made.length)return undefined;
+  if(!appendEdits(nodeId,first=>made.map((m,i)=>({...m,version:first+i}))))return undefined;
+  toast(`${edit.column} of ${edit.record} edited by hand${made.length>1?`, on ${made.length} records`:''}. Rerun to use it.`);
+  return qualityViewOf(nodeId);
 }
 
 /** A published ruleset's source, shaped for the editor to display.
@@ -4618,6 +4678,9 @@ function areaStepKit():AreaStepKit{
       return [...keys];},
     summary:id=>dirty?undefined:result?.stepSummaries?.[id],
     // THE POINTS ARRIVING, named: the source's own records where it holds them, the last run's where it does not.
+    // THE NAMED LAYER A STEP COMPUTED (2026-11-25), for the dialogs downstream of one. `result.computed` is keyed
+    // by every step that made a small enough named layer, which is where a Voronoi's catchments live between runs.
+    computedLayer:(id:string)=>result?.computed?.[id],
     pointChoices:(id,port)=>{
       // THE PORTS THIS STEP SHOWS AS ONE, and only those. Geometry buffer buffers points, lines or a polygon
       // layer through a single group, so a feature from any of them can be the one named. Expanding that to every

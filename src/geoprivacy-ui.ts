@@ -5,13 +5,79 @@ import type {WorkflowNode} from './types.js';
 import type {InspectorKit,OwnInspector} from './inspector-kit.js';
 import type {AreaStepKit} from './area-steps-ui.js';
 import {openConfigDialog} from './config-dialog.js';
-import {validatePrivacyNode} from './geoprivacy.js';
+import {validatePrivacyNode,moveDonut,aggregateHex} from './geoprivacy.js';
 import {errorMessage} from './guards.js';
 import {SHOW_ME,showMeIn} from './table-walkthrough.js';
 import {donutWalkthrough,h3Walkthrough} from './spatial-walkthroughs.js';
 
 const sentence=(kit:InspectorKit,text:string)=>`<p class="standard-sentence">${kit.esc(text)}</p>`;
 const configure='<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>';
+
+/** WHAT THE STEP WOULD MAKE OF THE POINTS IT HAS, computed with the step's OWN functions (2026-11-24).
+ *
+ *  Five Configure dialogs offered "Show me how it works" and nothing else under Preview, so the section was a
+ *  heading and a button. The practitioner met four of them in turn -- Voronoi catchments, Convex hull, Move points
+ *  in a donut, Aggregate points to H3 cells -- each time: *"This one also has no Preview."*
+ *
+ *  A made-up example explains the method; it says nothing about THIS workflow's points. These run `moveDonut` and
+ *  `aggregateHex` on the points actually connected, so the Preview cannot show something the step would not do --
+ *  the rule `relate-walkthrough.ts` already states for its last step.
+ *
+ *  SAID WHERE THERE IS NOTHING TO COMPUTE, rather than left blank: an empty Preview reads as a broken dialog, which
+ *  is the objection `area-steps-ui.ts` records under "SAID, NOT SWALLOWED". */
+const waitingForPoints='<p class="muted">Connect the points, and what this step would make of them is counted here.</p>';
+/** The points arriving on a port, as a collection the step's own functions take. `pointChoices` is the one reader of
+ *  a port that sees a layer an upstream step COMPUTED as well as one stored on a node. */
+const pointsOn=(kit:InspectorKit,nodeId:string):import('./types.js').PointCollection|null=>{
+  const {features}=(kit as AreaStepKit).pointChoices(nodeId,'points');
+  const placed=features.filter(f=>f.geometry&&Array.isArray(f.geometry.coordinates));
+  if(!placed.length)return null;
+  return {type:'FeatureCollection',features:placed.map((f,i)=>({type:'Feature',id:`p${i+1}`,
+    properties:{name:f.name},geometry:f.geometry}))} as unknown as import('./types.js').PointCollection;
+};
+const previewFailed=(kit:InspectorKit,error:unknown)=>
+  `<p class="muted">This cannot be previewed yet: ${kit.esc(error instanceof Error?error.message:String(error))}</p>`;
+
+function donutPreview(kit:InspectorKit,n:WorkflowNode,params:WorkflowNode<'donut_geomask'>['params']):string{
+  const input=pointsOn(kit,n.id);
+  if(!input)return waitingForPoints+SHOW_ME;
+  try{
+    const before=input.features;
+    const moved=moveDonut(input,params);
+    // MEASURED, NOT PROMISED: the ring is what the settings ask for, and this is how far the points actually went.
+    const metres=moved.features.map((f,i)=>{
+      const a=before[i]?.geometry?.coordinates as [number,number]|undefined,b=f.geometry?.coordinates as [number,number]|undefined;
+      if(!a||!b)return 0;
+      const lat=(a[1]+b[1])/2*Math.PI/180;
+      return Math.hypot((b[0]-a[0])*111320*Math.cos(lat),(b[1]-a[1])*110540);
+    }).filter(d=>d>0).sort((x,y)=>x-y);
+    if(!metres.length)return waitingForPoints+SHOW_ME;
+    const at=(q:number)=>metres[Math.min(metres.length-1,Math.floor(q*metres.length))]!;
+    const m=(v:number)=>`${Math.round(v).toLocaleString('en')} m`;
+    return `<p class="standard-result"><strong>${moved.features.length.toLocaleString('en')} points would move.</strong> `
+      +`Nearest ${kit.esc(m(at(0)))}, middle ${kit.esc(m(at(0.5)))}, furthest ${kit.esc(m(metres[metres.length-1]!))}, `
+      +`with this seed. Each keeps a new name and id, and nothing else of the record.</p>`+SHOW_ME;
+  }catch(error){return previewFailed(kit,error)+SHOW_ME;}
+}
+
+function hexPreview(kit:InspectorKit,n:WorkflowNode,params:WorkflowNode<'aggregate_points_to_h3_cell'>['params']):string{
+  const input=pointsOn(kit,n.id);
+  if(!input)return waitingForPoints+SHOW_ME;
+  try{
+    const features=input.features;
+    const cells=aggregateHex(input,params);
+    const kept=cells.features.length;
+    const held=cells.features.reduce((t,f)=>t+(f.count??0),0);
+    const left=features.length-held;
+    // THE POINTS LEFT OUT ARE THE FINDING. A minimum occupancy is a disclosure control, and how much it withholds is
+    // the thing to judge before applying it -- not after a run.
+    return `<p class="standard-result"><strong>${kept.toLocaleString('en')} cells would be shown</strong>, `
+      +`holding ${held.toLocaleString('en')} of ${features.length.toLocaleString('en')} points. `
+      +(left>0?`${left.toLocaleString('en')} ${left===1?'point falls':'points fall'} in cells with fewer than `
+        +`${params.minOccupancy.toLocaleString('en')}, and ${left===1?'is':'are'} left out.`
+        :'Every point is in a cell that meets the minimum.')+'</p>'+SHOW_ME;
+  }catch(error){return previewFailed(kit,error)+SHOW_ME;}
+}
 const notRun='<p class="notice">Not run yet, or changed since the last run.</p>';
 const row=(kit:InspectorKit,label:string,value:string)=>`<div class="detail-row"><span>${kit.esc(label)}</span><strong>${kit.esc(value)}</strong></div>`;
 const nodeIn=<T extends WorkflowNode['type']>(kit:InspectorKit,n:WorkflowNode<T>)=>kit.workflow().nodes.find(x=>x.id===n.id) as WorkflowNode<T>|undefined;
@@ -40,7 +106,7 @@ export const donutInspector:OwnInspector<'donut_geomask'>={
         sections:d=>({settings:field(kit,'donut-inner','Least distance moved (metres)',d.innerM,0,5000)
           +field(kit,'donut-outer','Most distance moved (metres)',d.outerM,1,5000)
           +field(kit,'donut-seed','Seed',d.seed,0,4294967295,'The same seed moves the same points the same way, so a run can be repeated. Predictable, so not for real protection.')
-          +NOTEBOOKS,preview:SHOW_ME,
+          +NOTEBOOKS,preview:donutPreview(kit,n,params(d)),
           ...refusal(()=>validatePrivacyNode({...node,params:params(d)}))}),
         wire:(r,d,redraw)=>{
           for(const [id,key] of [['donut-inner','innerM'],['donut-outer','outerM'],['donut-seed','seed']] as const)
@@ -68,7 +134,7 @@ export const h3Inspector:OwnInspector<'aggregate_points_to_h3_cell'>={
         draft:{resolution:String(p.resolution),minOccupancy:String(p.minOccupancy)},
         sections:d=>({settings:field(kit,'h3-resolution','H3 resolution (0 coarsest, 15 finest)',d.resolution,0,15,'Resolution 9 cells are about 0.1 km², resolution 7 about 5 km².')
           +field(kit,'h3-min','Fewest points a cell must hold to be shown',d.minOccupancy,2,100,'A cell with fewer is left out. Holding many points does not by itself make a cell safe to share.')
-          +NOTEBOOKS,preview:SHOW_ME,
+          +NOTEBOOKS,preview:hexPreview(kit,n,params(d)),
           ...refusal(()=>validatePrivacyNode({...node,params:params(d)}))}),
         wire:(r,d,redraw)=>{
           for(const [id,key] of [['h3-resolution','resolution'],['h3-min','minOccupancy']] as const)

@@ -38,12 +38,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "aggregate_points_to_h3_cell": {
-   "version": "0.4.0",
-   "released": "2026-11-23",
+   "version": "0.5.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: Six made-up homes in three H3 cells at the resolution set: the cells left out for holding too few, and the cells the step makes with their counts."
+     "kind": "added",
+     "description": "A PREVIEW, where the section held only Show me how it works. It runs `aggregateHex` on the points connected and says how many cells would be shown, how many points they hold, and HOW MANY ARE LEFT OUT by the minimum occupancy. That last number is the disclosure control's cost, and it belongs before applying it, not after."
     }
    ],
    "breaking": false,
@@ -172,12 +172,12 @@
    "migrationFrom": []
   },
   "clip_polygons": {
-   "version": "0.4.0",
-   "released": "2026-11-23",
+   "version": "0.5.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Preview says how many polygons survive the cut and how much ground they cover before and after it. A polygon wholly outside is gone and one straddling the edge is kept smaller, neither of which is visible from the settings."
+     "kind": "fixed",
+     "description": "The preview said \"the polygon layer arrives when the workflow runs\" after the workflow had run. A layer a step COMPUTES is stored on no node, and unless it is an output it is in no `outputs` entry either, so a clip below Voronoi catchments could reach its polygons nowhere. `result.computed` has held such layers all along; the preview now reads it, after a stored layer and a current run, which carry more of the layer than it does."
     }
    ],
    "breaking": false,
@@ -265,12 +265,12 @@
    ]
   },
   "donut_geomask": {
-   "version": "0.3.0",
-   "released": "2026-11-23",
+   "version": "0.4.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: A made-up home: the distance it will not stay within, the distance it will not pass, and where the seed set moves it."
+     "kind": "added",
+     "description": "A PREVIEW, where the section held only Show me how it works. It runs `moveDonut` on the points connected and says how many would move and how far they ACTUALLY went -- nearest, middle, furthest -- with this seed, rather than restating the ring that was asked for."
     }
    ],
    "breaking": false,
@@ -386,12 +386,12 @@
    "migrationFrom": []
   },
   "join_table_to_area": {
-   "version": "0.6.0",
-   "released": "2026-11-21",
+   "version": "0.7.0",
+   "released": "2026-11-25",
    "changes": [
     {
      "kind": "changed",
-     "description": "A census table at another level than the study area is said to be before a run; a column of the parts' IDs is joined on the IDs; a run with no column chosen joins on the proposed one where it names each part once, and stops where the table is finer than the study area."
+     "description": "The Before shows the table in the file's shape, one row per record, where it showed Fieldwork's melted form. Through `wideCells`, which is `wideFrame` -- the same reconstruction Quick look and the Tabular data preview use, so the two cannot disagree about one table."
     }
    ],
    "breaking": false,
@@ -440,12 +440,12 @@
    ]
   },
   "mean_center": {
-   "version": "0.4.0",
-   "released": "2026-11-23",
+   "version": "0.5.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: Four made-up houses: the centre with each counted once, the centre counted by the weight, and the point the step makes as set."
+     "kind": "added",
+     "description": "A PREVIEW, where the section held only Show me how it works. It runs `computeMeanCenter` on the points connected and says where the centre falls, from how many points, and whether they were weighted."
     }
    ],
    "breaking": false,
@@ -830,36 +830,40 @@
    "migrationFrom": []
   },
   "summarize_hull": {
-   "version": "0.3.0",
-   "released": "2026-11-23",
+   "version": "0.4.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: Six made-up cases: the band caught on the outermost, the one inside that does not shape it, and the outline the step makes with its area and widest span."
+     "kind": "added",
+     "description": "A PREVIEW, where the section held only Show me how it works. It runs `convexHull` on the points actually connected and says the area inside the outline and how many of them the outline is drawn through -- a hull is decided by its corners, and how few there are says how much of the layer is doing the work."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "summarize_points_to_polygon": {
-   "version": "0.4.0",
-   "released": "2026-11-23",
+   "version": "0.5.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Preview says how the points fall: how many land in a polygon, how many in none, how many with no usable location, and how many fall in more than one -- the last being the number a reader must not add up. The boundary setting above it changes the count."
+     "kind": "fixed",
+     "description": "The same as Clip polygons: its preview could not see a polygon layer an upstream step computed, so it waited for a run that had already happened. Both read `result.computed` now."
     }
    ],
    "breaking": false,
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.22.0",
-   "released": "2026-11-24",
+   "version": "0.23.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "added",
-     "description": "A table taken from Census tables carries the census's REFERENCE DATE as the period its values refer to (experiment 230), read from the catalogue rather than typed, and marked enumerated: people were counted, not modelled, which is what tells a census apart from a projection of the same year. Held beside the census data dictionary and dropped wherever that is, so a file chosen afterwards cannot inherit the census's date."
+     "kind": "changed",
+     "description": "THE DATA QUALITY DIALOG SHOWS THE FILE'S SHAPE. The practitioner: \"I noticed that the Data Quality display of this table reverted to the long format, which my cause confusion when both wide (the user preference) and long (internal) formats are used in different places.\" Its Columns, Shapes and gaps, and Records tabs showed `species`, `measure` and `value` -- names Fieldwork gave the table when it melted it -- while the table view a click away showed the file's own columns."
+    },
+    {
+     "kind": "fixed",
+     "description": "An edit to a subject's name in the Records tab renamed ONE melted row and silently split the subject in two. In the file's shape a subject is one record, so the correction necessarily reaches every row it has. Edits are translated back to the stored rows they belong to, which is what keeps them applying at all."
     }
    ],
    "breaking": false,
@@ -944,12 +948,12 @@
    "migrationFrom": []
   },
   "voronoi": {
-   "version": "0.3.0",
-   "released": "2026-11-23",
+   "version": "0.4.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: Three made-up pumps in a study area: a house going to the nearest, the lines where two are equally near, and the cells the step makes, which fill the box around the area."
+     "kind": "added",
+     "description": "A PREVIEW, where the section held only Show me how it works. It runs `voronoi` on the sites and study area connected and says how many catchments, from the smallest to the largest -- what a reader judges about catchments is how uneven they are."
     }
    ],
    "breaking": false,
@@ -1033,12 +1037,12 @@
    "migrationFrom": []
   },
   "detect_unusual_counts": {
-   "version": "0.2.0",
-   "released": "2026-11-21",
+   "version": "0.3.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "added",
-     "description": "A limit measure, the decision limit on the statistic's own scale; the method's computation drawn in Configure…; Show me how for each method."
+     "kind": "changed",
+     "description": "The Before shows the table in the file's shape, through the same `wideCells` as Join."
     }
    ],
    "breaking": false,

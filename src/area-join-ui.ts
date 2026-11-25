@@ -4,6 +4,7 @@
  *  So: the Inspector says what the step will do and what it lacks; every setting is in the configuration dialog, with the
  *  table and the parts Before, and each part with its value After; the column is proposed from the names themselves. */
 import type {Escape,WorkflowNode} from './types.js';
+import {wideCells} from './data-table-ui.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import type {DataTable} from './data-table.js';
 import {joinTableToAreas,proposeKeyColumn,type AreaJoinResult} from './area-join.js';
@@ -91,7 +92,8 @@ export function openJoinConfig(view:JoinConfigView,esc:Escape):void{
       const t=view.table,parts=view.parts;
       const before='<fieldset class="join-before"><legend>Before</legend>'
         +(t?`<details open><summary>${esc(view.tableName)} · ${n(t.rows.length)} rows</summary>`
-          +scroll([...t.keys,t.valueField||'value'],t.rows.slice(0,ROWS_SHOWN).map(r=>[...t.keys.map(k=>String(r.key[k]??'')),r.value===null||r.value===undefined?'':String(r.value)]),esc)
+          // WIDE, as every user-facing table is (2026-11-24): the file's shape where one can be rebuilt.
+          +((cells=>scroll(cells.columns,cells.rows.slice(0,ROWS_SHOWN),esc))(wideCells(t)))
           +(t.rows.length>ROWS_SHOWN?`<p class="muted">The first ${n(ROWS_SHOWN)} of ${n(t.rows.length)} rows.</p>`:'')+'</details>'
           :'<p class="muted">The table is known once it is read or the workflow has run.</p>')
         +(parts?`<details open><summary>${esc(view.areaName)} · ${n(parts.length)} parts</summary>`

@@ -1078,8 +1078,36 @@ export const CROSSTAB_MIN_DENSITY=0.5;
  *  shows the rows, which is honest about a table nobody can pivot. */
 export interface WideFrame {
   subject:string; attributes:string[]; columns:string[];
-  rows:{label:string; attributes:string[]; cells:(number|null|undefined)[]}[];
+  rows:{label:string; attributes:string[]; cells:(number|null|undefined)[];
+    /** WHICH STORED ROWS EACH DISPLAYED ROW CAME FROM (2026-11-24), so a surface can show the file's shape and still
+     *  record an edit against the rows the step holds. `cells[i]` is the stored row behind the value in column `i`,
+     *  absent where that subject has no value there; `rows` is every stored row of the subject, which is what a
+     *  correction to its name or to one of its attributes has to reach.
+     *
+     *  Carried here rather than recomputed beside it, because a second regrouping could disagree with this one about
+     *  which rows belong to which subject, and then an edit would land on the wrong record. */
+    from:{cells:(number|undefined)[]; rows:number[]}}[];
 }
+/** A TABLE AS A SURFACE MUST SHOW IT: the file's shape where one can be reconstructed, the stored columns where it
+ *  cannot (2026-11-24).
+ *
+ *  The practitioner, after finding the data quality dialog showing a wide table melted: *"We should decrease the
+ *  friction for the user, which means consistency in user-facing views of the tables. We can be efficient using long
+ *  formats but will result in cognitive dissonance in the user."* The melting is Fieldwork's, for the steps
+ *  downstream; a column called `value` is a name it gave the table, not one anybody read off a file.
+ *
+ *  Here rather than at each surface, because three dialogs widening a table three ways would be the same dissonance
+ *  one level down. Returns text, so a caller keeps its own markup -- the alignment grid in Append rows, the scroller
+ *  in Join, the plain table in Detect -- and only the shape is shared. */
+export function wideCells(table:DataTable):{columns:string[];rows:string[][]}{
+  const text=(v:unknown)=>v===null||v===undefined?'':String(v);
+  const frame=wideFrame(table);
+  if(!frame)return {columns:[...table.keys,table.valueField].filter(Boolean),
+    rows:table.rows.map(r=>[...table.keys.map(k=>text(r.key[k])),text(r.value)])};
+  return {columns:[frame.subject,...frame.attributes,...frame.columns],
+    rows:frame.rows.map(r=>[r.label,...r.attributes,...r.cells.map(text)])};
+}
+
 export function wideFrame(table:DataTable):WideFrame|null{
   const keys=table.keys;
   if(keys.length<2)return null;
@@ -1136,15 +1164,16 @@ export function wideFrame(table:DataTable):WideFrame|null{
    * contingency Table XII melts one column and reads sub-district, water supply, deaths 1854. */
   if(columns.length<2&&!attributes.some(k=>!numeric(k)))return null;
   const order:string[]=[],byRow=new Map<string,WideFrame['rows'][number]>();
-  for(const r of table.rows){
+  table.rows.forEach((r,i)=>{
     const id=String(r.key[subject]);
     if(!byRow.has(id)){
       byRow.set(id,{label:id,attributes:attributes.map(k=>String(r.key[k])),
-        cells:columns.map(()=>undefined)});
+        cells:columns.map(()=>undefined),from:{cells:columns.map(()=>undefined),rows:[]}});
       order.push(id);
     }
-    byRow.get(id)!.cells[columns.indexOf(String(r.key[columnAxis]))]=r.value;
-  }
+    const held=byRow.get(id)!,at=columns.indexOf(String(r.key[columnAxis]));
+    held.cells[at]=r.value;held.from.cells[at]=i;held.from.rows.push(i);
+  });
   return {subject,attributes,columns,rows:order.map(id=>byRow.get(id)!)};
 }
 
@@ -1153,12 +1182,13 @@ function declaredFrame(table:DataTable,measureKey:string,subjectKeys:string[]):W
   const columns=[...new Set(table.rows.map(r=>String(r.key[measureKey])))];
   if(!columns.length||columns.length>CROSSTAB_MAX_COLUMNS)return null;
   const order:string[]=[],byRow=new Map<string,WideFrame['rows'][number]>();
-  for(const r of table.rows){
+  table.rows.forEach((r,i)=>{
     const id=subjectKeys.map(k=>String(r.key[k])).join('\u0000');
     if(!byRow.has(id)){byRow.set(id,{label:String(r.key[subjectKeys[0]!]),attributes:subjectKeys.slice(1).map(k=>String(r.key[k])),
-      cells:columns.map(()=>undefined)});order.push(id);}
-    byRow.get(id)!.cells[columns.indexOf(String(r.key[measureKey]))]=r.value;
-  }
+      cells:columns.map(()=>undefined),from:{cells:columns.map(()=>undefined),rows:[]}});order.push(id);}
+    const held=byRow.get(id)!,at=columns.indexOf(String(r.key[measureKey]));
+    held.cells[at]=r.value;held.from.cells[at]=i;held.from.rows.push(i);
+  });
   return {subject:subjectKeys[0]!,attributes:subjectKeys.slice(1),columns,rows:order.map(id=>byRow.get(id)!)};
 }
 

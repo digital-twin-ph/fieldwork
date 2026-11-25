@@ -924,7 +924,7 @@
   {
    "id": "urn:fieldwork:widget:space_time_scan",
    "nodeType": "space_time_scan",
-   "currentVersion": "0.7.0",
+   "currentVersion": "0.8.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -980,6 +980,11 @@
      "version": "0.7.0",
      "path": "widgets/releases/space_time_scan/0.7.0.json",
      "sha256": "8e796b2fb99ad7817f8748248eb45ee9affe8353eb67776bd16f950f67282051"
+    },
+    {
+     "version": "0.8.0",
+     "path": "widgets/releases/space_time_scan/0.8.0.json",
+     "sha256": "d078b57100cfb91821db25770faba143c6bbda57be25e737b9cd2742fe52fc4a"
     }
    ]
   },
@@ -2946,7 +2951,7 @@
   {
    "id": "urn:fieldwork:widget:table_input",
    "nodeType": "table_input",
-   "currentVersion": "0.24.0",
+   "currentVersion": "0.25.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3102,6 +3107,11 @@
      "version": "0.24.0",
      "path": "widgets/releases/table_input/0.24.0.json",
      "sha256": "fd78813f12394feed9a03edfa97f72d7fce09ed4d139e9c3392fdbbc65265833"
+    },
+    {
+     "version": "0.25.0",
+     "path": "widgets/releases/table_input/0.25.0.json",
+     "sha256": "44ce34d3f06506233bc9bf77d00c23dc4cbba6b17a0faab5d4039ff6d9aa2a4f"
     }
    ]
   },
@@ -3427,7 +3437,7 @@
   {
    "id": "urn:fieldwork:widget:regression",
    "nodeType": "regression",
-   "currentVersion": "0.7.0",
+   "currentVersion": "0.8.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3478,6 +3488,11 @@
      "version": "0.7.0",
      "path": "widgets/releases/regression/0.7.0.json",
      "sha256": "68b96d69bfe6bf40790518034fda56f3e883f8672e2f00e5641df854e41ed897"
+    },
+    {
+     "version": "0.8.0",
+     "path": "widgets/releases/regression/0.8.0.json",
+     "sha256": "ce7eb3c0c355c12f39c33a2140168d7bb71d1c9035c44f0d8759e80ad38363eb"
     }
    ]
   },

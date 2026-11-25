@@ -3,6 +3,31 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.198.0 — In development
+
+- **Five defects, all found in review of the two releases below**, four of them introduced by those releases. The
+  review is on the pull request, comment by comment, against the lines it is about.
+- **A display choice was changing what was computed** (Tabular data 0.25.0). *Always show this table wide* wrote
+  `DataTable.wide` — the field the melt writes to say a file ARRIVED wide, and the field `isWide` gates, which lets
+  Apply ruleset evaluate rules over rebuilt subjects rather than over rows. Keeping the preference therefore turned
+  six rule inputs into three and replaced the measure and value fields with measure-named ones. The preference is
+  `DataTable.shownWide` now; views read either, and nothing that computes reads the second.
+  ([audit](docs/audits/wide-format-audit.md))
+- **A key that distinguishes two records is drawn, not only grouped by** (Tabular data 0.25.0). Yesterday's fix for
+  merged duplicates put a key that varies within a subject into the row's identity and left it out of the columns
+  shown: two years of counts for one district drew two rows, neither saying its year — right in number, unreadable,
+  and indistinguishable from the duplicate the fix existed to expose.
+- **The offer to keep a wide reading survives filtering** (Tabular data 0.25.0). Its click handler was attached once
+  after the first render, while filtering rebuilds the dialog on every keystroke, so the button stayed on the screen
+  and did nothing. Filtering a long table before deciding how to read it is the path a reader actually takes.
+- **Regression's preview counts the rows the fit will use** (0.8.0), not the rows with something in every column.
+  The fit also drops an outcome that is neither case nor control, a categorical written `NA`, a numeric that is not
+  a number, and a missing stratum or offset — so the preview promised a larger sample than the run would use. The
+  rule now lives in `src/regression-sample.ts` and is called by both the fit and the preview: one rule, rather than
+  two that agree today. The preview names why rows are left out, in the run's own words.
+- **The scan preview never reports a limit shorter than the scan runs** (0.8.0). It floored the share where the scan
+  takes `Math.max(1, …)`, so five days at a tenth read *"up to 0 days"* of a scan that runs one-day windows.
+
 ## 0.197.0 — In development
 
 - **A Preview that restates its settings looks like a preview**, which is how eleven of them went unnoticed while
@@ -40,11 +65,12 @@ shown in a local build is not a claim that it has been published.
   sight since 2026-10-27 — *"pandas does not show you a long table"* — while every other surface showed them as
   stored: one table, two shapes a click apart, with nothing saying which was which. It now says the table is stored
   long, how it is being shown, and that elsewhere it is shown as stored.
-- **A wide reading can be kept, and it travels.** *Always show this table wide* writes it as `DataTable.wide`, the
-  same field the melt writes for a file that arrived wide, so it rides the value and the steps below inherit it
-  rather than each guessing. The practitioner: *"this user decision should cascade downstream for user facing views
-  of that table."* The hint and the offer are separate, so a table a step **computed** gets the explanation even
-  though there is nothing yet to keep the choice on.
+- **A wide reading can be kept, and it travels.** *Always show this table wide* writes it as `DataTable.shownWide`,
+  which rides the value so the steps below inherit it rather than each guessing. The practitioner: *"this user
+  decision should cascade downstream for user facing views of that table."* The hint and the offer are separate, so
+  a table a step **computed** gets the explanation even though there is nothing yet to keep the choice on. (It wrote
+  `DataTable.wide` until 0.198.0, which is provenance rather than a preference, and that changed what Apply ruleset
+  computed; see below.)
 - **A melted table is read back on the key the melt recorded** (Tabular data 0.24.0), not on whichever key varies
   most. `wideFrame` required `asDeclared` as well, and the melt does not set it — so every melted table fell through
   to a heuristic that takes the key with the most distinct values as the subject. Two districts by eligible,
@@ -115,8 +141,8 @@ shown in a local build is not a claim that it has been published.
   only `pointChoices` read it.
 - **The quality dialog widens only what Fieldwork melted.** The first version called `wideFrame` on every table, and
   the gate refused it: a table long *in the file* had a real column, `class`, pivoted into headings and lost from
-  the very tab where a column is checked against its dictionary. It now gates on `DataTable.wide`, which the melt
-  writes. This leaves Quick Look widening a natively long table while the quality dialog does not — recorded in the
+  the very tab where a column is checked against its dictionary. It now gates on a reading the table carries — the
+  melt's `wide`, or a reader's kept `shownWide`. This leaves Quick Look widening a natively long table while the quality dialog does not — recorded in the
   audit, and the reason the next release declares the reading instead of letting each surface guess.
 - The CI audit is corrected: the WebKit failure reported as reproducing locally did not, and could not have —
   **WebKit was not installed on this machine**, so every local run ended at `browserType.launch` and a launch failure

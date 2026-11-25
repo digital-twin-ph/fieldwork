@@ -1110,7 +1110,7 @@ export interface WideFrame {
 // a column of class names is not pivoted into headings.
 export function wideCells(table:DataTable):{columns:string[];rows:string[][]}{
   const text=(v:unknown)=>v===null||v===undefined?'':String(v);
-  const frame=table.wide?wideFrame(table):null;
+  const frame=table.wide||table.shownWide?wideFrame(table):null;
   if(!frame)return {columns:[...table.keys,table.valueField].filter(Boolean),
     rows:table.rows.map(r=>[...table.keys.map(k=>text(r.key[k])),text(r.value)])};
   return {columns:[frame.subject,...frame.attributes,...frame.columns],
@@ -1137,7 +1137,11 @@ export function wideFrame(table:DataTable):WideFrame|null{
   // instead of two" -- and reproduced here before it was touched. `asDeclared` carries a stronger claim about the
   // ORDER of several keys (experiment 191); which key holds the measure is recorded whenever a table was melted,
   // and it is the better answer either way.
-  if(table.wide&&keys.includes(table.wide.measureKey))return declaredFrame(table,table.wide.measureKey,table.wide.subjectKeys);
+  // THE FILE'S OWN SHAPE FIRST, THEN THE READER'S. `wide` is what the melt recorded; `shownWide` is what a reader
+  // asked for in Quick Look. Both are readings; only the first is also relied on by computation, which is why they
+  // are separate fields (see `shownWide` in data-table.ts).
+  const reading=table.wide??table.shownWide;
+  if(reading&&keys.includes(reading.measureKey))return declaredFrame(table,reading.measureKey,reading.subjectKeys);
   const distinct=(k:string)=>new Set(table.rows.map(r=>String(r.key[k]))).size;
   // The subject identifies a row most finely.
   const subject=[...keys].sort((a,b)=>distinct(b)-distinct(a))[0];
@@ -1226,7 +1230,11 @@ function declaredFrame(table:DataTable,measureKey:string,subjectKeys:string[]):W
   };
   const attributeKeys=extra.filter(describesSubject);
   const identity=[...subjectKeys,...extra.filter(k=>!attributeKeys.includes(k))];
-  const attributes=[...subjectKeys.slice(1),...attributeKeys];
+  // EVERY KEY IS SHOWN, including the ones that only identify the record. Grouping by a key without displaying it
+  // draws two rows that are different and look identical: two years of counts for one district appeared as two rows,
+  // neither saying its year (review of 0.197.0). A key that varies within a subject holds one value per displayed
+  // row by construction, so there is always something to show.
+  const attributes=[...subjectKeys.slice(1),...extra];
   // TWO ROWS WITH THE SAME KEYS ARE TWO RECORDS, and a wide view that merges them hides a duplicate. Rio de
   // Janeiro's 2024 dengue file repeats the week of 2024-12-29 for all 92 municipalities, byte for byte -- the
   // doubled week the worked example exists to show. Grouping on the keys alone drew 4,784 rows where the file has

@@ -1791,6 +1791,40 @@ contrast after Sierra Leone"*. The first pass is a review, not a build:
   OpenStreetMap, healthsites), alone and together, and where two sources place one facility far apart.
 - Report findings to the practitioner, with what is not established, before building workflows.
 
+### 36. A Validation Lab check for every widget that computes
+
+36. **The eleven widgets that owe the Validation Lab an independent check** (the practitioner, 2026-11-25: *"Lets
+   make sure all analytical widgets get a validation lab notebook"*). The ledger already exists and is hand
+   written, not derived: `widgets/check-coverage.json` sorts all 53 live widgets into **parity** (computes a value
+   an independent implementation could recompute, so it owes a check), **none** (an input, a presentation, or a
+   rule node whose conclusions are the reasoner's) and **blocked**. As of 2026-11-25: **31 covered, 11 awaiting, 10
+   owe nothing, 1 blocked** (Find health facilities — it computes, but its input is a live external source that
+   cannot be pinned to a fixture). `validate:check-coverage` already holds the line: every widget appears exactly
+   once, a claimed check must exist in `parity.json`, and the awaiting count may only fall.
+
+   The eleven, each with the implementation it would be read against: **Measure distance** (pyproj geodesic),
+   **Rate with a denominator** (statsmodels, the same estimator Fieldwork declares), **Clip points to area**
+   (shapely, boundary cases), **Network isochrone** and **Transmission chains** (networkx), **Point grid** (shapely
+   and numpy), **Move points in a donut** (pyproj, displacement inside the annulus), **Point comparison**
+   (geopandas), **Polygon layer** and **Line layer** (geopandas reading the same file — *read as published* is a
+   checkable claim, which is why these owe a check although they compute no value), and **Travel time over ground**
+   (`skimage.graph.MCP_Geometric`).
+
+   **Not a file in a folder.** A check runs under `nbclient`, records a measured result with its sha256, names the
+   external library *and* its version, and states a criterion it either meets or does not — `parity.json` keeps
+   outcomes in the form *"maximum separation 6.70e-5 m over 9 points"*. Each is hand sculpted, as the worked-example
+   notebooks are, and some will disagree with their reference, which is itself the finding.
+
+   **Two things to settle before the last one.** Travel time over ground needs a new pin: scikit-image is not in
+   `requirements-checks.txt`, and that widget's own reason names `MCP_Geometric` as the established reference, so
+   adding it is the practitioner's call. And **seven of the eleven carry no reason** — only Clip points to area,
+   Polygon layer, Line layer and Travel time over ground record what their check would establish. The file says
+   that judgement "is the part a person has to make and defend in the reason", so it is written as each is taken,
+   not left blank.
+
+   Suggested order: Measure distance and Rate first — both have unambiguous references, and a rate ratio recomputed
+   with the wrong estimator would agree about nothing.
+
 ## Deferred — decided to do later, which is not a decision to do it
 
 _Carried over whole from the root `TODO.md` of 2026-10-10 in the merge above, headings

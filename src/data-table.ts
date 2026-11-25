@@ -82,6 +82,16 @@ export interface DataTable {
     /** THE KEYS IN THE ORDER TO READ THEM (experiment 191): set by a step whose kept columns were put in order by a
      *  person, so the view shows them so rather than by which has most values. */
     asDeclared?:true};
+  /** HOW A READER ASKED TO SEE A TABLE THAT ARRIVED LONG (2026-11-25). A DISPLAY CHOICE, AND NOTHING ELSE.
+   *
+   *  `wide` above is provenance: this table was wide in the file, and these are the subjects it had. Computation
+   *  relies on it -- `isWide` rebuilds one record per subject, and Apply ruleset then evaluates rules over those
+   *  subjects rather than over rows. Writing a reader's preference into it changed what was computed: six rule
+   *  inputs became three, and the measure and value fields were replaced by measure-named ones. Found in review of
+   *  0.196.0, where "Always show this table wide" wrote `wide`.
+   *
+   *  So the preference lives here instead. Views read `wide ?? shownWide`; nothing that computes reads this. */
+  shownWide?:{measureKey:string; subjectKeys:string[]};
   rows:{key:Record<string,string>; value:number|null}[];
   rowCount:number; missingValueCount:number; source?:DataTableSource;
 }

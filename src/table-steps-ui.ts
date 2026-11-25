@@ -6,6 +6,7 @@ import type {NodeType,WorkflowNode} from './types.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import type {Receipt} from './results.js';
 import {openConfigDialog} from './config-dialog.js';
+import {exclusionReason} from './regression-sample.js';
 import {orderOf} from './select-rows.js';
 import {control} from './dom.js';
 import {required} from './guards.js';
@@ -61,9 +62,23 @@ function regressionPreview(kit:TableStepKit,nodeId:string,d:import('./types.js')
   if(!d.outcome||!d.exposure.column)return plan;
   const valueOf=(r:{key:Record<string,string>;value:number|null},column:string):string=>
     column===table.valueField?(r.value===null||r.value===undefined?'':String(r.value)):String(r.key[column]??'');
-  const needed=[d.outcome,d.exposure.column,...d.adjust.map(t=>t.column),...strataOf(d.strata),
-    ...(d.offset?[d.offset]:[])].filter(Boolean);
-  const complete=table.rows.filter(r=>needed.every(c=>valueOf(r,c)!==''));
+  // LOGISTIC NEEDS BOTH SIDES NAMED before any row can be judged; the run refuses without them, and counting here
+  // as though every row were excluded would report nonsense instead of the reason.
+  if(d.family==='logistic'&&!(d.cases?.length&&d.controls?.length))
+    return plan+'<p class="muted">Say which outcome values are cases and which are controls, and the rows this model '
+      +'would be fitted on are counted here.</p>';
+  // THE RUN'S OWN RULE, from regression-sample.ts. Counting non-empty values instead promised a larger sample than
+  // the fit uses: it also drops an outcome that is neither case nor control, a categorical written `NA`, a numeric
+  // that is not a number, and a missing stratum or offset (review of 0.197.0).
+  const rule={family:d.family,outcome:d.outcome,cases:d.cases,controls:d.controls,
+    terms:[d.exposure,...d.adjust],strata:d.strata,offset:d.offset};
+  const asRow=(r:{key:Record<string,string>;value:number|null}):Record<string,string|number|null>=>
+    ({...r.key,...(table.valueField?{[table.valueField]:r.value}:{})});
+  const left=new Map<string,number>();
+  const complete=table.rows.filter(r=>{
+    const why=exclusionReason(asRow(r),rule);
+    if(why)left.set(why,(left.get(why)??0)+1);
+    return !why;});
   const n=(v:number)=>v.toLocaleString('en-US');
   // THE OUTCOME'S TWO SIDES. `cases` names the values that count as a case; where nothing is named, the column's own
   // values are listed instead of guessing which side is which.
@@ -78,8 +93,10 @@ function regressionPreview(kit:TableStepKit,nodeId:string,d:import('./types.js')
     for(const r of complete){const v=valueOf(r,d.exposure.column);levels.set(v,(levels.get(v)??0)+1);}
   const smallest=[...levels.entries()].sort((a,b)=>a[1]-b[1])[0];
   return plan
-    +`<p class="standard-result"><strong>${n(complete.length)}</strong> of ${n(table.rows.length)} rows carry `
-    +`every column this model names${needed.length>1?` (${needed.map(esc).join(', ')})`:''}.</p>`
+    +`<p class="standard-result"><strong>${n(complete.length)}</strong> of ${n(table.rows.length)} rows `
+    +`${complete.length===1?'is':'are'} usable by this model `
+    +`(${[d.outcome,d.exposure.column,...d.adjust.map(t=>t.column),...strataOf(d.strata),
+        ...(d.offset?[d.offset]:[])].filter(Boolean).map(esc).join(', ')}).</p>`
     +(caseRows===null
       ?(outcomes.size&&outcomes.size<=6
         ?`<p class="description">${esc(d.outcome)}: `
@@ -93,9 +110,11 @@ function regressionPreview(kit:TableStepKit,nodeId:string,d:import('./types.js')
       :'')
     // ROWS LEFT OUT ARE A FINDING, not a detail of the fit: a model quietly fitted on two thirds of the table is
     // the kind of thing a reader should see before Apply, not after a run.
+    // WHY THEY ARE LEFT OUT, in the run's own words, so the Preview and the receipt describe the same exclusion.
     +(complete.length<table.rows.length
       ?`<p class="profile-flag">${n(table.rows.length-complete.length)} row`
-        +`${table.rows.length-complete.length===1?' is':'s are'} left out: a column the model names is empty there.</p>`
+        +`${table.rows.length-complete.length===1?' is':'s are'} left out: `
+        +[...left.entries()].sort((a,b)=>b[1]-a[1]).map(([why,count])=>`${esc(why)} (${n(count)})`).join(', ')+'.</p>'
       :'');
 }
 

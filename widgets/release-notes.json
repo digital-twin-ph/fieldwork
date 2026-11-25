@@ -350,12 +350,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.7.0",
+   "version": "0.8.0",
    "released": "2026-11-25",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The Preview says what the limits come to over the cases connected. Every setting here but two is a SHARE, and a share says nothing on its own: \"circles up to 20% of the cases\" is the same sentence over ten cases and over ten thousand, where it means two and two thousand. The dialog had the numbers and showed the arithmetic to the reader instead. Now the cases carrying a readable date, the period they span, and each share worked out in the units of the thing it limits. The scan itself is not run here: it shuffles the dates hundreds of times, which belongs in the run."
+     "kind": "fixed",
+     "description": "The Preview never reports a limit shorter than the scan would run. It floored the time share where the scan takes `Math.max(1, floor(bins * maxTimeShare))`, so five days at a tenth read \"up to 0 days\" of a scan that runs one-day windows."
     }
    ],
    "breaking": false,
@@ -854,24 +854,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.24.0",
+   "version": "0.25.0",
    "released": "2026-11-25",
    "changes": [
     {
-     "kind": "added",
-     "description": "QUICK LOOK SAYS WHEN THE SHAPE IS NOT THE TABLE'S OWN, and offers to keep the one it is showing. It has widened a long table on sight since 2026-10-27 (\"pandas does not show you a long table\"), while every other surface showed it as stored -- one table, two shapes, a click apart, with nothing saying which was which. It now says the table is stored long, how it is being shown, and that elsewhere it is shown as stored. ALWAYS SHOW THIS TABLE WIDE writes the reading onto the table as `DataTable.wide`, the same field the melt writes for a file that arrived wide -- so it rides the value and the steps below inherit it rather than each guessing."
-    },
-    {
-     "kind": "changed",
-     "description": "The hint and the offer are separate: the hint is about what is on the screen and shows wherever this view widened an undeclared table, including a table a step COMPUTED, which has no stored value to declare on and was being widened with no explanation at all."
-    },
-    {
      "kind": "fixed",
-     "description": "A MELTED TABLE IS READ BACK ON THE KEY THE MELT RECORDED, not on whichever key varies most. `wideFrame` asked for `asDeclared` as well as a recorded measure key, and `declaredWide` -- the melt itself -- does not set it, so every melted table fell through to a heuristic that takes the key with the MOST DISTINCT VALUES as the subject. Two districts by eligible, vaccinated and missed has three measures against two districts, so the measures won: the table came back transposed, and a correction to a district's name reached one of its three counts instead of all three. Reported against 0.195.0 by a reviewer outside this project -- \"Data quality shows six rows instead of two\" -- and reproduced here before it was touched."
-    },
-    {
-     "kind": "added",
-     "description": "A TABLE A STEP COMPUTES can keep a wide reading too. A file's table keeps it on the table; a computed table has no stored value, so the decision is kept against the step that makes it, in the workflow, and the run writes `DataTable.wide` onto what that step produces. Offered on the step's own output only: the Before views belong to the steps above. It takes effect from the next run, and says so."
+     "description": "A display choice no longer changes what is computed. \"Always show this table wide\" wrote `DataTable.wide`, which is PROVENANCE -- it says the file arrived wide, and `isWide` gates on it so Apply ruleset evaluates rules over rebuilt subjects rather than over rows. Keeping the preference turned six rule inputs into three and replaced the measure and value fields with measure-named ones. The preference is `DataTable.shownWide` now; views read either, nothing that computes reads the second. Two more from the same review: a key that varies within a subject is drawn as a column and not only grouped by, so two years of counts for one district no longer appear as two rows neither of which says its year; and the offer to keep a reading is bound on every render, having been bound once while filtering rebuilds the dialog on each keystroke, so the button stayed visible and did nothing."
     }
    ],
    "breaking": false,
@@ -981,12 +969,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.7.0",
+   "version": "0.8.0",
    "released": "2026-11-25",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The Preview counts the rows the model would be fitted on. It restated `regressionPlan(draft)` -- the model, the outcome, the exposure, the adjustments -- and never said whether a model could be fitted at all, which turns on how many rows carry every column the plan names, how the outcome divides, and whether a level of the exposure is left with too few rows. Counted WITHOUT the model's kernel, which this module is deliberately kept clear of: a fit is iterative and belongs in the run, while completeness is a pass over the rows."
+     "kind": "fixed",
+     "description": "The Preview counts the rows the FIT will use. It counted rows with something in every column the plan names, while the fit also drops an outcome that is neither case nor control, a categorical written `NA`, a numeric that is not a number, and a missing stratum or offset -- so it promised a larger sample than the run would use. The rule moved to src/regression-sample.ts and is called by both the fit and the Preview: one rule, rather than two that agree today. The Preview also names why rows are left out, in the run's own words, so it and the receipt describe the same exclusion."
     }
    ],
    "breaking": false,

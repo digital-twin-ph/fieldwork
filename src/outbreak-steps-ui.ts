@@ -73,9 +73,14 @@ function scanPreview(kit:OutbreakKit,nodeId:string,d:import('./types.js').Params
     +`<strong>${n(units)}</strong> ${esc(d.unit)}${units===1?'':'s'}, ${esc(iso(from))} to ${esc(iso(to))}.</p>`
     // THE SHARES IN THE UNITS OF THE THING THEY LIMIT, which is the whole point: a circle is a number of cases and a
     // run is a number of days, and those are what a reader can judge against an outbreak they know.
-    +`<p class="description">The largest circle holds up to <strong>${n(Math.floor(inPeriod.length*d.maxCaseShare))}</strong> `
-    +`of those cases; the longest run is up to <strong>${n(Math.floor(units*d.maxTimeShare))}</strong> `
-    +`${esc(d.unit)}${Math.floor(units*d.maxTimeShare)===1?'':'s'}.</p>`
+    +(()=>{
+      // THE SCAN'S OWN ARITHMETIC, floor and all: `Math.max(1, floor(bins * maxTimeShare))` in space-time-scan.ts.
+      // Without the minimum this said "up to 0 days" of a scan that runs one-day windows -- five days at a tenth
+      // floors to zero, and a limit of nothing is not a limit the scan ever applies (review of 0.197.0).
+      const longest=Math.max(1,Math.floor(units*d.maxTimeShare));
+      return `<p class="description">The largest circle holds up to `
+        +`<strong>${n(Math.floor(inPeriod.length*d.maxCaseShare))}</strong> of those cases; the longest run is up to `
+        +`<strong>${n(longest)}</strong> ${esc(d.unit)}${longest===1?'':'s'}.</p>`;})()
     +(dated.length<placed.length
       ?`<p class="profile-flag">${n(placed.length-dated.length)} of ${n(placed.length)} cases carry no date this step `
         +`can read in ${esc(d.dateField)}, so they are not scanned.</p>`:'')

@@ -1999,7 +1999,7 @@ function tableQualityView(n:WorkflowNode<'table_input'>):import('./data-quality-
   //
   // `DataTable.wide` is written by the melt itself (`data-table.ts`), so it is present exactly when the shape a
   // reader expects is the wide one and absent when the file really is long.
-  const frame=data.wide?wideFrame(data):null;
+  const frame=data.wide||data.shownWide?wideFrame(data):null;
   const columns=frame?[frame.subject,...frame.attributes,...frame.columns]:[...data.keys,data.valueField];
   const rows=frame
     ?frame.rows.map(r=>({[frame.subject]:r.label,
@@ -3259,12 +3259,12 @@ function renderInspector(){
       scales:scalesOf(table.columns),
       // KEPT ON THE TABLE, NOT ON THE VIEW (2026-11-25). The practitioner: *"Let's always give the user the option
       // to view them wide and this user decision should cascade downstream for user facing views of that table."*
-      // `DataTable.wide` is what the melt writes for a file that arrived wide, and every surface already reads it;
-      // written here it says the same thing of a table that arrived long, and it rides the value, so the steps
-      // below inherit the reading rather than each guessing at one.
+      // It rides the value as `shownWide`, so the views below inherit the reading rather than each guessing at one.
       onDeclareWide:reading=>{
+        // WRITTEN AS A DISPLAY CHOICE, never as the file's own shape: `wide` is provenance that Apply ruleset
+        // computes from, and writing a preference there changed what was evaluated (review of 0.196.0).
         change(w=>{const t=w.nodes.find(x=>x.id===n.id);
-          if(t?.type==='table_input')t.params.data={...t.params.data,wide:reading};});
+          if(t?.type==='table_input')t.params.data={...t.params.data,shownWide:reading};});
         toast('Kept. This table is shown wide wherever it is read.');
         renderInspector();
       }},esc);

@@ -110,6 +110,15 @@ can tell.
 
 ## History
 
+### 2026-11-25 · The Preview counts the rows the fit will use (0.8.0)
+
+It counted rows that had something in every column the model names. The fit asks for more than that: an outcome has
+to be a case or a control, a category written NA is not a category, and a number has to be a number. The Preview was
+promising a larger sample than the run would use.
+
+Both now ask the same question of a row, and the Preview says why the others are left out, in the same words the run
+uses.
+
 ### 2026-11-25 · The Preview counts the rows the model would be fitted on (0.7.0)
 
 The Preview read the plan back and never said whether a model could be fitted at all. That turns on how many rows

@@ -234,6 +234,16 @@ It does not choose between rows that disagree. The table stays as read until a l
 
 ## History
 
+### 2026-11-25 · A display choice stays a display choice (0.25.0)
+
+*Always show this table wide* was writing the field that says a file arrived wide. That field is not a preference:
+steps read it to rebuild one record per subject, and Apply ruleset then judges rules against those subjects instead of
+against rows. Keeping the preference quietly changed what was computed.
+
+It is kept separately now, and only views read it. Two more from the same reading: a key that varies within a record —
+a year, say — is shown as its own column rather than only used to keep two records apart, and the offer to keep a
+reading still works after filtering the table, which it did not.
+
 ### 2026-11-25 · Quick Look says when the shape is not the table's own (0.24.0)
 
 Quick Look has shown long tables wide since October, because a long table is hard to read. But every other view

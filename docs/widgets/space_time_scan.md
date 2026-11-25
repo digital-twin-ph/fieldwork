@@ -105,6 +105,11 @@ Experiment 200.
 
 ## History
 
+### 2026-11-25 · No limit shorter than the scan can run (0.8.0)
+
+The shortest run the scan ever applies is one period. The Preview worked the share out on its own and could reach
+zero — five days at a tenth read *up to 0 days* of a scan that runs one-day windows.
+
 ### 2026-11-25 · The Preview says what the shares come to (0.7.0)
 
 Every setting here but two is a share, and a share says nothing on its own: circles up to 20% of the cases means two

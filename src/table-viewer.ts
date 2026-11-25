@@ -214,6 +214,13 @@ export function openTableViewer(view:TableView,esc:Escape):void{
         view.onRepair(column,declared);
       };
     });
+    // BOUND ON EVERY RENDER, with the rest. It was bound once, after the first render, while filtering rebuilds the
+    // dialog's markup on each keystroke: the button stayed on the screen and did nothing (review of 0.196.0).
+    dialog.querySelector<HTMLButtonElement>('[data-declare-wide]')?.addEventListener('click',()=>{
+      if(!view.proposedWide||!view.onDeclareWide)return;
+      view.onDeclareWide(view.proposedWide);
+      close();
+    });
     const search=dialog.querySelector<HTMLInputElement>('#table-viewer-filter')!;
     search.oninput=()=>{
       filter=search.value;
@@ -228,11 +235,6 @@ export function openTableViewer(view:TableView,esc:Escape):void{
 
   render();
   document.body.append(dialog);
-  dialog.querySelector<HTMLButtonElement>('[data-declare-wide]')?.addEventListener('click',()=>{
-    if(!view.proposedWide||!view.onDeclareWide)return;
-    view.onDeclareWide(view.proposedWide);
-    close();
-  });
   dialog.addEventListener('cancel',event=>{event.preventDefault();close();});
   dialog.showModal();
 }
@@ -262,7 +264,8 @@ export function tableViewOf(
     return {title,...(data.headings?{headings:data.headings}:{}),
       // PROPOSED ONLY WHERE NOBODY HAS SAID. A table Fieldwork melted already carries its reading, and re-offering
       // it would ask the practitioner to declare what the file already said.
-      ...((data as {wide?:unknown}).wide?{}:{proposedWide:{measureKey:frame.measureKey,subjectKeys:frame.subjectKeys}}),
+      ...((data as {wide?:unknown;shownWide?:unknown}).wide||(data as {shownWide?:unknown}).shownWide
+        ?{}:{proposedWide:{measureKey:frame.measureKey,subjectKeys:frame.subjectKeys}}),
       columns:[frame.subject,...frame.attributes,...frame.columns],
       rows:frame.rows.map(row=>({[frame.subject]:row.label,
         ...Object.fromEntries(frame.attributes.map((name,i)=>[name,row.attributes[i]])),

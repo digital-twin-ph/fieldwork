@@ -80,7 +80,7 @@ The gate refused it: `data-dictionary.browser.mjs` lost the column `class`, beca
 and widening pivoted a real column — one somebody wrote and described — into headings, in the very tab where a
 column is checked against what a dictionary says it means.
 
-So the dialog widens only where `DataTable.wide` is set, which the melt itself writes. It is present exactly when
+So the dialog widens only where the table carries a reading — the melt's `wide`, or a reader's `shownWide`. It is present exactly when
 the shape a reader expects is the wide one, and absent when the file really is long.
 
 **This audit had already warned of it** — the closing section says `wideFrame` widens more than it is asked to — and
@@ -104,8 +104,9 @@ already says out loud and the others do not.
 
 The inventory above left a boundary unsettled, and it cost something. Two things can make a table wide:
 
-1. **A record on the table.** The melt writes `DataTable.wide` for a file that arrived wide, and *Always show this
-   table wide* writes the same field for a table that arrived long. Either way the table itself says which key holds
+1. **A record on the table.** The melt writes `DataTable.wide` for a file that arrived wide; *Always show this table
+   wide* writes `DataTable.shownWide` for a table that arrived long. Two fields, because only the first is
+   provenance — see the dated note at the end of this audit. Either way the table itself says which key holds
    the measure and which keys name the record.
 2. **A guess.** `wideFrame` will read any long table as wide by taking the key with the most distinct values as the
    subject.
@@ -148,3 +149,28 @@ legitimately changed, so adopting the new number was defensible and wrong. The f
 
 The same overwrite was then found in the heuristic path, which groups on the subject alone and admits numeric
 attributes without asking whether they describe the subject. Fixed with the same rule, in the same pass.
+
+## A display choice was writing provenance (2026-11-25)
+
+The rule settled above — a user-facing view widens on the record, never on the guess — was right, and the way it was
+built was not. *Always show this table wide* wrote `DataTable.wide`, the same field the melt writes. That field is
+**provenance**: it says the table arrived wide and names the subjects it had, and computation relies on it.
+`isWide` gates `wideSubjects`, which rebuilds one record per subject, and **Apply ruleset then evaluates rules over
+those subjects rather than over rows**.
+
+So a reader asking to *see* a long table wide changed what was computed. Reproduced in review: saving the preference
+turned six rule inputs into three and replaced the measure and value fields with measure-named ones. Nothing warned
+anyone, because every surface reading `wide` was reading a field that now meant two different things.
+
+The preference is `DataTable.shownWide` now. Views read `wide ?? shownWide`; nothing that computes reads the second.
+`tests/display-reading-is-not-provenance.test.mjs` asserts the gate directly: a kept display reading leaves `isWide`
+false, while a table that really arrived wide still passes it.
+
+**What this cost, and what it says about the rule.** The one-rule-for-widening finding was a display finding, and it
+was implemented by reaching for the nearest field that already travelled with the value. That field had a meaning.
+A preference and a fact about a file can look identical in a type — `{measureKey, subjectKeys}` either way — and
+differ completely in what may read them. Four surfaces were checked when this was built; the three that compute from
+`wide` were not, because the change was framed as being about display.
+
+**What this does not establish.** That no other display preference rides a computational field. Nothing was surveyed
+for the general pattern; only this one was found, by someone reading the diff rather than the code it touched.

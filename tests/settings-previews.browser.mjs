@@ -27,7 +27,7 @@ test('Regression previews the rows a model would be fitted on',async({page})=>{
     {id:'cases',type:'table_input',x:20,y:20,params:{label:'Line list',keys:['person','ill','vanilla'],
       valueField:'age',data:lineList}},
     {id:'model',type:'regression',x:360,y:20,params:{label:'Illness on vanilla',family:'logistic',outcome:'ill',
-      cases:['yes'],exposure:{column:'vanilla',as:'categorical'},adjust:[],errors:'profile'}}],
+      cases:['yes'],controls:['no'],exposure:{column:'vanilla',as:'categorical'},adjust:[],errors:'profile'}}],
     edges:[{id:'e0',from:'cases',to:'model',port:'records'}]});
   await page.locator('.react-flow__node[data-id="model"]').click();
   await page.locator('#configure-step').click();
@@ -36,8 +36,14 @@ test('Regression previews the rows a model would be fitted on',async({page})=>{
 
   // EIGHT OF TEN, because two rows are empty in the column the model names. That sentence was available before only
   // by running the workflow and reading the receipt.
-  await expect(preview).toContainText('8 of 10 rows carry every column this model names');
+  //
+  // COUNTED BY THE RUN'S OWN RULE (`regression-sample.ts`), not by "is this cell non-empty": the fit also drops an
+  // outcome that is neither case nor control, a categorical written NA, and a numeric that is not a number, so
+  // counting non-empty cells promised a larger sample than the run would use.
+  await expect(preview).toContainText('8 of 10 rows are usable by this model');
   await expect(preview).toContainText('4 cases and 4 not');
+  // AND WHY THE REST ARE OUT, in the run's own words.
+  await expect(preview).toContainText('2 rows are left out: vanilla missing (2)');
   // The exposure's smallest level is what an estimate runs out of information on.
   await expect(preview).toContainText('vanilla has 2 levels here');
   await expect(preview).toContainText('2 rows are left out');
@@ -67,6 +73,27 @@ test('the space-time scan previews what its shares come to over the cases',async
   // AND THE SHARES IN THE UNITS OF THE THING THEY LIMIT: half of ten cases is five, half of ten days is five.
   await expect(preview).toContainText('up to 5 of those cases');
   await expect(preview).toContainText('up to 5 days');
+  await page.locator('#scan-config #config-cancel').click();
+  expect(errors).toEqual([]);
+});
+
+/** NEVER A LIMIT SHORTER THAN THE SCAN CAN RUN (review of 0.197.0). `space-time-scan.ts` takes
+ *  `Math.max(1, floor(bins * maxTimeShare))`, so the shortest run it ever applies is one period. The Preview used a
+ *  bare floor and said "up to 0 days" of a scan that runs one-day windows: five days at a tenth floors to zero. */
+test('the scan preview never reports a limit shorter than the scan would run',async({page})=>{
+  const errors=collectPageErrors(page);
+  await seed(page,{schema:'fieldwork/workflow/1',exampleId:'blank',name:'Short',nodes:[
+    {id:'cases',type:'point_input',x:20,y:20,params:{label:'Cases',data:{type:'FeatureCollection',features:[
+      caseAt('c1',1,0),caseAt('c2',2,0.01),caseAt('c3',3,0.02),caseAt('c4',4,0.03),caseAt('c5',5,0.04)]}}},
+    {id:'scan',type:'space_time_scan',x:360,y:20,params:{label:'Clusters',dateField:'onset',unit:'day',
+      maxCaseShare:0.5,maxTimeShare:0.1,replications:999,seed:42}}],
+    edges:[{id:'e0',from:'cases',to:'scan',port:'points'}]});
+  await page.locator('.react-flow__node[data-id="scan"]').click();
+  await page.locator('#configure-step').click();
+  const preview=page.locator('#scan-config [data-config-section="preview"]');
+  await expect(preview).toContainText('5 cases over 5 days');
+  await expect(preview).toContainText('up to 1 day');
+  await expect(preview).not.toContainText('up to 0 days');
   await page.locator('#scan-config #config-cancel').click();
   expect(errors).toEqual([]);
 });

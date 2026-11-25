@@ -166,3 +166,26 @@ test('a record that arrives twice is drawn twice, so a duplicate is not absorbed
   // AND NO VALUE WAS OVERWRITTEN: every stored row is accounted for exactly once.
   assert.deepEqual(frame.rows.flatMap(r=>r.from.rows).sort((a,b)=>a-b),[0,1,2,3,4,5]);
 });
+
+/** A KEY THAT IS GROUPED BY IS ALSO SHOWN (2026-11-25, review of 0.197.0). `declaredFrame` put a key that varies
+ *  within a subject into the row's identity — correctly, so two records are not merged — and left it out of the
+ *  columns drawn. Two years of counts for one district then appeared as two rows, neither saying its year: right in
+ *  number, useless to read, and indistinguishable from a duplicate. */
+const twoYears=()=>({kind:'data-table',keys:['district','year','measure'],valueField:'value',
+  wide:{measureKey:'measure',subjectKeys:['district']},
+  rows:[
+    {key:{district:'Kumbotso',year:'2024',measure:'eligible'},value:120},
+    {key:{district:'Kumbotso',year:'2024',measure:'vaccinated'},value:90},
+    {key:{district:'Kumbotso',year:'2025',measure:'eligible'},value:131},
+    {key:{district:'Kumbotso',year:'2025',measure:'vaccinated'},value:102},
+  ],rowCount:4,missingValueCount:0});
+
+test('a key that distinguishes two records is drawn, not only grouped by',()=>{
+  const frame=wideFrame(twoYears());
+  assert.equal(frame.rows.length,2,'two years, two rows');
+  assert.deepEqual(frame.subjectKeys,['district','year'],'the year identifies the record');
+  assert.deepEqual(frame.attributes,['year'],'and the year is shown');
+  assert.deepEqual(frame.rows.map(r=>r.attributes[0]),['2024','2025']);
+  assert.deepEqual(wideCells(twoYears()).columns,['district','year','eligible','vaccinated']);
+  assert.deepEqual(wideCells(twoYears()).rows[1],['Kumbotso','2025','131','102']);
+});

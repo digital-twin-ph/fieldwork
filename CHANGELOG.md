@@ -3,6 +3,25 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.201.0 — In development
+
+- **The syndromic example on NSSP's definitions** ([228](docs/experiments/228-detect-unusual-counts.md)). Four
+  definitions of the US National Syndromic Surveillance Program, ILI CCDD v1, CDC Broad Acute Respiratory DD v1,
+  Norovirus v1 and CDC Measles CCDD v1, copied from the queries NSSP publishes into Apply ruleset's rules, and applied to
+  the example's made-up visits, which now carry a discharge diagnosis in ICD-10, ICD-11 and SNOMED CT. ICD-11 is
+  Fieldwork's translation of NSSP's ICD-10-CM codes, checked against WHO's 2026-01 release. The example is pinned at
+  3e99e67, with two new workflows: which definitions each visit matches, and whether Norovirus v1 finds the outbreak
+  (CUSUM, 9 days from 13 April).
+- **Apply ruleset 0.18.0 reads a code in a list.** "Has an item starting with any of", and its opposite, read each item
+  of a text separated by semicolons, slashes, ampersands or spaces, as a list of diagnosis codes is written: "J10"
+  starts "J10.1;R50.9". A word in double quotes keeps its spaces, so `" flu "` is not found in "influenza".
+- **Opening a published ruleset of words in the rule editor** showed its text columns as numbers: any comparison but
+  "is" was taken for a number. Contains and starts-with now mean text, and a test fails without the fix.
+- **Apply ruleset's code is out of `app.ts`**, in `src/ruleset-ui.ts`, as the other moved widgets' are: 8,834 lines to
+  8,406.
+- **Lab check 54** runs NSSP's own queries directly, as ESSENCE would, and finds the same visits as Fieldwork for every
+  definition, with ICD-10 and with ICD-11. Pinned at validation-lab 64fcee7.
+
 ## 0.200.0 — In development
 
 - **The remaining items of the code review** ([audit](docs/audits/code-review-2026-11-23.md)), and three findings made
@@ -57,7 +76,7 @@ shown in a local build is not a claim that it has been published.
 - **`validate:parity` runs in the gate**, against the lab checked out beside this repository, and lists every entry
   checked at an older release than the widget's current one. It reports that age and never fails on it.
 - **The ledger of lab checks corrected** (`widgets/check-coverage.json`). Study area is covered, by check 41's
-  boundary repair. Table input owes a check: it converts wide files, applies hand edits and profiles columns. Apply
+  boundary repair. Tabular data owes a check: it converts wide files, applies hand edits and profiles columns. Apply
   ruleset rests on check 49, since checks 23 and 25 cover rulesets that are retired. 32 of 44 computing widgets are
   checked, 12 await one, 1 is blocked.
 - **Dive Deeper offers lessons only, and the UTM zone has a manual page.** Dive Deeper is pedagogy, in its own

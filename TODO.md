@@ -1,6 +1,6 @@
 # TODO
 
-_Created 2026-10-10 · Updated 2026-11-25_
+_Created 2026-10-10 · Updated 2026-11-26_
 
 The project's one list of open work. **Merged 2026-10-26 from two**: a root `TODO.md` of
 deferred work created 2026-10-10 and a `docs/todo.md` of committed work created 2026-10-11, one
@@ -56,7 +56,7 @@ not a practitioner in the field.
 
 Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
-## Next, in order (2026-11-20)
+## Next, in order (2026-11-20; each item's status checked against the releases 2026-11-26)
 
 1. **Done in 0.153.0 to 0.155.0.** Tabular data's sources as tabs: Your file, From an address, Census tables, Tide gauges with its map of every gauge, and DHIS2; the census and tide-gauge manual sections; the study area picker reading the boundaries repository.
 1a. **Done in 0.167.0 and 0.168.0** (`tests/table-stress.test.mjs`, 13 tests): six made-up tables, each around one trap, through every step that takes a table, and the steps that read one through other ports (Cases by period, Rate, Space-time scan through Point data, Deduplicate records), a wide read, and 250,000 rows through Select, Total and Relate (each under 2 s in Node). Fixed: a refused run names its step; Total within groups says blank keys and near-identical names; Relate counts an empty cell; Cases by period refuses a blank count and counts what it leaves out; Rate gives no rate on a zero denominator; Deduplicate records does not merge two blanks. **Not stressed here:** Apply ruleset (its rules have their own tests, `rule-evaluation` and the rulesets example) and the three sea-level steps, whose tables have a fixed contract.
@@ -64,20 +64,37 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 2. **Done in 0.154.0.** Raster streaming for GHS-POP over DR Congo: [GHS-POP over DR Congo is refused](#ghs-pop-over-dr-congo-is-refused-8-byte-cells-found-2026-11-19-streaming-decided-the-same-day).
 3. **Spike run 2026-11-22** ([225](docs/experiments/225-webgpu-as-an-accelerator.md), tried): WebGPU on every browser tried, the gate's Chromium by one flag (a software adapter); a kernel density surface on the Mac's GPU about 40 times faster than the Rust kernel at 1,000,000 points, agreeing to 3 in a million at 100,000 and missing the 1 × 10⁻⁵ line by 1.5% at 1,000,000 (Metal reorders the compensated sum away). **Next, when a widget needs it:** summation the compiler cannot reorder, or the line decided; a receipt that says which path ran; Windows and a field laptop.
 4. **Compared 2026-11-21:** the agent-based model beside Hagelloch's recorded curve (experiment 199, option 4): size and the bulk's timing agree; the recorded peak is twice as sharp (68 rashes on 5 to 7 December 1861). **Periods read from the record 2026-11-21** (`measles-hagelloch-from-the-record`: latent 6 to 11 days, prodrome 2 to 6): the timing agrees, half by day 30 against 29, the record inside the band on 72 of 83 days; the peak is still half the record's (13 against 26). **Fitted 2026-11-21** (`measles-hagelloch-fitted`, `scripts/abm-hagelloch-fit.mjs`): deviance 203 to 154, the record inside the band on 76 of 83 days, the peak 17 against 26; no setting of the three makes it, with these periods or narrower. The peak is class 1's burst (25 of 30 in four days). **A probability for each class tried 2026-11-21** (`measles-prodrome-rash-household-classes-village`, `--by-class`): no better (deviance 152, peak 16), and even class 1 at 0.6 a day leaves the peak at 14 to 17. **Infectiousness across the illness tried 2026-11-21** (kernel weights per state; `measles-hagelloch-fitted-split`): the best fit yet (deviance 143), the early prodrome 0.15 of its last days and the rash 0, as Pfeilsticker says the prodrome transmits; the peak still 16. **The record's dates checked 2026-11-21:** no weekday heaping, but the rashes are far more bunched than independent prodrome lengths allow (68 in three days; never above 58 in 10,000 shuffles): later prodromes are shorter. Either the dates were made so, or the rule of 1863 (infection to rash a constant 14 days) holds. **Both tried 2026-11-21:** the time to the rash fixed (12 to 13 days) makes the sharpest peak yet (three days' 95th 58 against 68) but fits worse (157); one gathering explains nothing (152). **The two joined 2026-11-22** (`measles-hagelloch-fitted-rash-fixed-split`, `--join`): deviance 126, the best yet; the peak day 23 (17 to 30) against 26 and the busiest three days' 95th 77 against 68, the record inside both for the first time. **Left:** the tail (the runs end by day 42, the record on 82); which reading of the dates holds ([item 29](#29-an-agent-based-model-in-the-browser-checked-against-starsim)).
-5. The gate: recorded copies of live services, from-scratch tests on several workers, and a live-service check on GitHub ([gating audit](docs/audits/gating-audit.md), Decided 2026-11-19).
+5. **In place by 0.170.1** (the conditional-gating replay below says so; verification nightly on WebKit since 0.192.0). The gate: recorded copies of live services, from-scratch tests on several workers, and a live-service check on GitHub ([gating audit](docs/audits/gating-audit.md), Decided 2026-11-19).
 6. **Done in 0.163.0:** Sample a raster, Keep points inside the area and Summarize points to polygons have theirs, and a test steps through all seven. ~~Show-me-how walkthroughs for spatial steps~~ (0.154.0 gave Area around a point, Buffer study area, Calculate area and Clip polygons theirs): batch 1, Join a table to the study area and Sample a raster; then batch 2, Keep points inside the area and Summarize points to polygons ([Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07)).
 7. Census tables, experiment 224: 8 of 15 countries in by 0.155.0 (Brazil, Botswana, DR Congo, Kenya, Malawi, Nigeria, Rwanda, Sierra Leone). **Left:** the USA (an API key, or a file from www2.census.gov, the practitioner's decision); Zambia, Tanzania, Ghana; then the Philippines, Korea, Uganda; the five new countries paired with geoBoundaries' names; the licences of Brazil (none found), Malawi and Kenya (HDX's label against the office's "All Rights Reserved") ([224](docs/experiments/224-census-counts-as-a-table-source.md)).
 8. **Done in 0.155.0:** DHIS2 as a fifth tab of Tabular data, a token from Credentials, tried against the Docker server (DHIS2 2.41.11, Sierra Leone's demonstration database). **Left:** synthetic vaccine-preventable-disease data on the test server ([DHIS2 as a table source](#dhis2-as-a-table-source-with-a-test-server-in-docker-asked-2026-11-19-widened-2026-11-20)).
 
 
+### Threads from 2026-11-25 and 2026-11-26
+
+- **The code review** ([audit](docs/audits/code-review-2026-11-23.md)): acted on in 0.200.0. **Left:** four live
+  widgets still drawn inline in `app.ts` (Chart, Point data, Apply ruleset, Measure distance), which is widget work
+  for the practitioner to order; the nightly WebKit run's time limit (the run of 2026-11-25 was cancelled at 1 h 15
+  min, [CI audit](docs/audits/ci-verification-audit.md)); widget release records still list `src/core.ts` where the
+  step now lives in a `run-*.ts` module.
+- **The Validation Lab** ([audit](docs/audits/validation-lab-audit.md)): items 1 to 5 acted on in 0.200.0, the lab's
+  CI green again on 2026-11-26. **Left:**
+  - item 6: every notebook in plain language, drafted and under review (validation-lab PR 1);
+  - item 7: 12 widgets owe a check (Keep points inside the area, Compare point sets, Move points in a donut, Network isochrone, Measure
+    distance, Point grid, Polygon layer, Rate with a denominator, Tabular data, Transmission chains, Line layer, Travel time over ground),
+    and Find health facilities is blocked on a frozen response;
+  - the ruleset extract-contract has no check; checks 23 and 25 record rulesets that are retired; check 50 needs its
+    rasters laid out as the exporter expects.
+- **0.200.0** is pull request 4, open.
+
 ### Threads from 2026-11-22
 
-- **Order set by the practitioner, 2026-11-22, later the same day:** the Inspector move's batch D (done in 0.169.0), then
+- **Done, except Hagelloch's peak (4)** (checked 2026-11-26: batch D 0.169.0; travel time to care in the kernel 0.170.0 and as a widget 0.187.0; the gating replay 2026-11-22; Find health facilities on the standard Inspector 0.172.0). **Order set by the practitioner, 2026-11-22, later the same day:** the Inspector move's batch D (done in 0.169.0), then
   WebGPU (travel time to care, measured in the kernel first), then the conditional-gating replay; Hagelloch's peak (4)
   and Find health facilities after. Done before it: pins (09 closed), 1a (the table stress tests), 3 (the WebGPU spike).
 - **Pins, experiment 09: closed 2026-11-22** (0.166.0 and 0.167.0; field order built, groups judged not needed). **Left,
   for the field:** a real phone, a real GPS fix, a real phone photo (HEIC) and a real handheld's GPX.
-- **A line layer** (the practitioner, 2026-11-22: *"That's an important gap no line layer"*, *"Line layer can be
+- **Built in 0.171.0 to 0.194.0** (Line layer 0.1.0 to 0.5.0: read from GPX, KML, KMZ or GeoJSON, or the border two study areas share, and drawn by hand with its direction; Area around a point took lines and areas in 0.178.0 and became Geometry buffer in 0.182.0). **Worked case resolved 2026-11-26:** the practitioner built it in a project of their own (the South Sudan and DR Congo border to a one-sided buffer to Find health facilities). **Left:** experiment 229, which still says the buffer is not built. **A line layer** (the practitioner, 2026-11-22: *"That's an important gap no line layer"*, *"Line layer can be
   transportation routes"*, *"Perhaps we can also use line layers in microplanning? Team routes?"*). Fieldwork holds
   points, areas, rasters and street networks, and no lines of their own: a GPS export's tracks are counted and left out
   of Point data. Uses named: transportation routes; vaccination teams' routes in microplanning, which ties it to the
@@ -111,7 +128,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   → Find health facilities. **To measure first:** buffering long lines and outlines of 163,000 vertices in the browser;
   which registers Find health facilities can query for South Sudan and DR Congo. **To decide in the design:** how the
   step says which side it kept; Map drawing lines; whether Keep points inside the area takes lines.
-- **Travel time to care for Nigeria microplanning, the first use of WebGPU** (the practitioner, 2026-11-22: yes). For
+- **Built in 0.170.0 to 0.187.0:** the least time over a friction surface in the Rust kernel, checked against the Malaria Atlas Project's method on Kano to 0.022% (0.170.0); Kano at 30 m against 90 m on GRID3's walking surface (0.172.0); the widget **Travel time over ground** (0.187.0). **Left:** a WebGPU path, only where the kernel proves too slow; and its use in the Nigeria microplanning case study. **Travel time to care for Nigeria microplanning, the first use of WebGPU** (the practitioner, 2026-11-22: yes). For
   every 100 m cell of a state, the time to the nearest health facility over roads, paths and terrain: the accessibility
   modelling of the WHO-UNICEF geo-enabled microplanning handbook, beside the line layer above. **Measure first:** the
   same computation in the Rust kernel for one Nigerian state, timed; a WebGPU path only where the kernel is too slow,
@@ -130,7 +147,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   "Replayed 2026-11-22"). Over 24 releases a rule by changed file saves about 25 s of a 14-minute gate and would have
   missed nothing; not worth adopting. Item 5 is in place. **Open:** two workers in CI's verify, which would need an edit
   to `pages.yml` (asked); Brazil's from-scratch test, 8.8 minutes, the gate's floor.
-- **WebKit's service worker refuses the reasoning worker** ("due to access control checks"): blocked per test in three
+- **Still open, worked around** (checked 2026-11-26): more test files block the service worker (0.199.0), and verification runs nightly on WebKit alone (0.192.0); why it refuses a same-origin script is still not known. **WebKit's service worker refuses the reasoning worker** ("due to access control checks"): blocked per test in three
   tests so far; at two workers in CI it failed 9 of 17 WebKit tests (0.170.1, 2026-11-23). Not yet known whether Safari
   users meet it outside tests, nor why the service worker refuses a same-origin script. Until understood, WebKit's verify
   runs one file at a time (docs/audits/gating-audit.md).
@@ -147,14 +164,14 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **Detect unusual counts:** checked in the lab in Python (check 53, 0.162.0). Owed: the name review of "Detect unusual
   counts". Proposed 2026-11-21, not yet decided: Farrington flexible (Noufaily 2013) as a method, the seasonal baseline
   check 53 showed missing, then an ESSENCE-style regression on day of week; each checked against R's `surveillance`.
-- **The syndromic example on NSSP's definitions** (the practitioner, 2026-11-21: re-scoped to NSSP's, *"Both ICD-10,
+- **Done 2026-11-26** (Fieldwork 0.201.0, the example at 3e99e67, lab check 54; [228](docs/experiments/228-detect-unusual-counts.md)): the four definitions transcribed from NSSP's published queries, with ICD-10, ICD-11 (Fieldwork's translation, checked against WHO's 2026-01 release) and SNOMED CT (the GPS), the visits given discharge diagnoses, Apply ruleset's "has an item starting with" and quoted words, and a lab check agreeing visit for visit. ~~**The syndromic example on NSSP's definitions** (the practitioner, 2026-11-21: re-scoped to NSSP's, *"Both ICD-10,
   ICD-11, with free text"*, and SNOMED CT from the Global Patient Set). Syndromes ILI (ILI CCDD v1), broad acute
   respiratory (CDC Broad Acute Respiratory DD v1), norovirus (Norovirus v1, the seeded outbreak) and measles (CDC Measles
   CCDD v1); injury dropped, since NSSP has no general one. Each visit gains a discharge diagnosis in ICD-10, ICD-11 and
   SNOMED CT (GPS, CC BY-ND 4.0: terms quoted unaltered, exact codes only, SNOMED's attribution and the release in
   provenance); some missing or late. Apply ruleset gains *starts with*. Credited to CDC/NSSP with CDC's non-endorsement
   disclaimer. Before building: each NSSP query transcribed from its page, and every ICD-11 code checked in the current
-  release.
+  release.~~
 - **206** closed into 228 on 2026-11-22; its questions are 228's open items.
 
 - **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);
@@ -190,10 +207,10 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   carried in the example, so the gate exercises it without the downloads.
 - **Done in 0.173.0. GHS-POP read again from a local copy** (Raster input 0.15.0), measured on both countries'
   windows; experiment 209 records it.
-- **Years carried and compared:** experiment 230, written 2026-11-23 and proposed, nothing built. Each source's year is
+- **First step done in 0.193.0 and 0.194.0:** the three questions answered 2026-11-24; Rate compares a numerator's period with a denominator's vintage on the year and says the gap (`fw:vintageGapYears`); Append rows says the years it stacks; `src/reference-period.ts` holds the period apart from any widget. **Left:** the steps after those two that experiment 230 names. ~~**Years carried and compared:** experiment 230, written 2026-11-23 and proposed, nothing built. Each source's year is
   recorded but only Rate compares two, as exact text. Three questions wait on the practitioner: year or month; whether a
-  boundary's year counts beside the data's; and whether Append rows and Rate come first or every step at once.
-- **The long table on the surface** (docs/audits/melted-counts-audit.md, 2026-11-23). Two findings from the
+  boundary's year counts beside the data's; and whether Append rows and Rate come first or every step at once.~~
+- **Largely done in 0.195.0 to 0.199.0** ([wide-format audit](docs/audits/wide-format-audit.md), 2026-11-25: *"all user-facing tables should be presented wide"*): Data quality, Join a table to the study area and Detect unusual counts show the file's shape, a melted table is read back on its recorded key, and Append rows is left melted, deliberately. **Left:** the open list below, read against that audit, item by item; whether a reading should survive Append rows. **The long table on the surface** (docs/audits/melted-counts-audit.md, 2026-11-23). Two findings from the
   practitioner: a melted row count reported where a record count is read — 92,045 for 18,409 bat records, reaching the
   write-up's prose and the receipt's `fw:artifactRowCount` — and the shift of perspective every table dialog forces,
   *"high frequency confusion"*, because eight dialogs offer the long table's columns where the practitioner chose in
@@ -203,7 +220,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   dialogs that offer the long table's columns, and whether a line list should melt at all.
 - **Done in 0.175.0.** Polygons from study areas drawn as context where points are over them, with the choice in
   Configure…; a study area's country outline for context; Point data reads Excel.
-- **The bat roosts and the Kibali mine** (the practitioner, 2026-11-23): a small table of species joined to the African
+- **Done as a worked example**, `example-2026-drc-ebola` ("Ebola in DR Congo: mining sites and fruit bats"): the African Bat Database's occurrence records and the mining sites, the Kibali mine hand-pinned because the database does not hold it. **The bat roosts and the Kibali mine** (the practitioner, 2026-11-23): a small table of species joined to the African
   Bat Database through Relate, inner join, to filter it. After the population rasters. The database is CC BY 4.0,
   18,409 records of 312 species; its `Roost` column is "Yes" on 90 records, so it says where bats were recorded, not
   where they roost.

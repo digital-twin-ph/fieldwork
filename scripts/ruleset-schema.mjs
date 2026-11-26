@@ -13,8 +13,10 @@ const name={type:'string',pattern:'^[a-zA-Z][a-zA-Z0-9_-]*:[a-zA-Z][a-zA-Z0-9_]*
 const words={
   equals:'is: the value is this one',notEquals:'is not: a recorded value other than this one',
   greaterThan:'is more than',notGreaterThan:'is at most',lessThan:'is less than',notLessThan:'is at least',
-  contains:'contains any of: the text holds one of these words, separated by commas, ignoring capitals',
-  notContains:'contains none of: the text holds none of these words'};
+  contains:'contains any of: the text holds one of these words, separated by commas, ignoring capitals; a word in double quotes keeps its spaces',
+  notContains:'contains none of: the text holds none of these words',
+  startsWith:'has an item starting with any of: some item of the text, between semicolons, slashes, ampersands or spaces, begins with one of these words, as a code in a list of diagnoses; ignoring capitals',
+  notStartsWith:'has no item starting with any of: no item of the text begins with one of these words'};
 const schema={
   $schema:'https://json-schema.org/draft/2020-12/schema',$id:RULESET_SCHEMA_URL,
   title:'A Fieldwork ruleset, as Apply ruleset stores it',

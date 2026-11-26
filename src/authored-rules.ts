@@ -32,15 +32,26 @@
 /** `contains` and `notContains` (2026-11-21, syndromic surveillance): a text column holds ANY of the words written, or
  *  NONE of them, ignoring capitals; the words separated by commas ("vomit, diarrh, n/v"). Evaluated directly, never
  *  compiled to N3: "none of these words" is a negation the monotonic subset cannot state. */
-export type Comparator='equals'|'notEquals'|'greaterThan'|'notGreaterThan'|'lessThan'|'notLessThan'|'contains'|'notContains';
-/** The words a contains condition looks for: split at commas, trimmed, lower case, empty ones dropped. */
-export const containedWords=(value:unknown):string[]=>typeof value==='string'
-  ?value.split(',').map(w=>w.trim().toLowerCase()).filter(Boolean):[];
-export const isWordComparator=(c:string)=>c==='contains'||c==='notContains';
+/** `startsWith` and `notStartsWith` (2026-11-26, syndromic surveillance on NSSP's definitions): some ITEM of the text
+ *  begins with any of the words, or none does. An item is what lies between `;`, `/`, `&` or a space, so a discharge
+ *  diagnosis written "J10.1;R50.9" is the two codes J10.1 and R50.9, and "J10" starts the first. That is ESSENCE's
+ *  `^[;/ ]J10^`, a code preceded by a semicolon, a slash or a space, with `&` added because an ICD-11 cluster joins an
+ *  extension code with it (1E30&XN297). Evaluated directly, like contains. */
+export type Comparator='equals'|'notEquals'|'greaterThan'|'notGreaterThan'|'lessThan'|'notLessThan'|'contains'|'notContains'
+  |'startsWith'|'notStartsWith';
+/** The words a word condition looks for: split at commas, trimmed, lower case, empty ones dropped. A word written in
+ *  double quotes keeps its spaces (2026-11-26): " flu " is flu with a space each side, which "influenza" does not
+ *  contain, as ESSENCE's ^ flu ^ is. Without quotes it would be trimmed to flu, which influenza does contain. */
+export const containedWords=(value:unknown):string[]=>typeof value!=='string'?[]
+  :value.split(',').map(w=>{const t=w.trim();return /^".*"$/.test(t)&&t.length>=2?t.slice(1,-1).toLowerCase():t.toLowerCase();})
+    .filter(w=>w.trim().length>0);
+/** The items a starts-with condition reads: the text split at `;`, `/`, `&` and spaces, lower case. */
+export const textItems=(text:string):string[]=>text.toLowerCase().split(/[;/&\s]+/).filter(Boolean);
+export const isWordComparator=(c:string)=>c==='contains'||c==='notContains'||c==='startsWith'||c==='notStartsWith';
 
 /** The N3 builtin each comparator compiles to. `equals` has none: it is a term match in the
  *  subject clause, which is why it is the only comparator that works on a non-numeric value. */
-const BUILTIN:Record<Exclude<Comparator,'equals'|'notEquals'|'contains'|'notContains'>,string>={
+const BUILTIN:Record<Exclude<Comparator,'equals'|'notEquals'|'contains'|'notContains'|'startsWith'|'notStartsWith'>,string>={
   greaterThan:'math:greaterThan',
   notGreaterThan:'math:notGreaterThan',
   lessThan:'math:lessThan',
@@ -281,7 +292,7 @@ export function compileAuthoredRuleset(ruleset:AuthoredRuleset):string{
         }
         if(isWordComparator(condition.comparator))throw new AuthoredRulesetError('Rules that look for words are evaluated directly, '
           +'not compiled to N3: run them with evaluateAuthored instead.');
-        const builtin=BUILTIN[condition.comparator as Exclude<Comparator,'equals'|'notEquals'|'contains'|'notContains'>];
+        const builtin=BUILTIN[condition.comparator as Exclude<Comparator,'equals'|'notEquals'|'contains'|'notContains'|'startsWith'|'notStartsWith'>];
         if(!builtin)throw new AuthoredRulesetError(`Unknown comparator ${JSON.stringify(condition.comparator)}.`);
         if(typeof condition.value!=='number'&&!isPlaceholder(condition.value)&&!isSettingReference(condition.value))
           throw new AuthoredRulesetError(`${condition.comparator} compares numbers, so its value must be a number `
@@ -424,7 +435,7 @@ export function authoredUnitProblems(authored:{
       if(field&&field.kind!=='term')problems.push({field:condition.field,says:`Rule ${r+1}: ${field.attribute||condition.field} is a ${field.kind}, `
         +'so it holds no words to look for. Words are looked for in a text column.'});
       if(!containedWords(condition.value).length)problems.push({field:condition.field,says:`Rule ${r+1}: write the words to look for, `
-        +'separated by commas, such as vomit, diarrh, n/v.'});
+        +'separated by commas, such as vomit, diarrh, n/v. Put a word in double quotes to keep its spaces: " flu ".'});
     }
   for(const [r,rule] of authored.rules.entries())
     for(const group of rule.any??[])for(const condition of group.all??[])

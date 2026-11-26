@@ -35,7 +35,7 @@ count holds, but four of its judgements are out of date, and most checks cover a
 | Kind | Widgets |
 | --- | --- |
 | Checked | 31 |
-| Owe a check, none written | 11: Clip points to area, Compare point sets, Geomask, Isochrone, Measure distance, Point grid, Polygon input, Rate, Transmission chains, Line input, Travel over ground |
+| Owe a check, none written | 11: Keep points inside the area, Compare point sets, Move points in a donut, Network isochrone, Measure distance, Point grid, Polygon layer, Rate with a denominator, Transmission chains, Line layer, Travel time over ground |
 | Blocked | 1: Find health facilities, whose input is a live service with no frozen response yet |
 | Nothing to recompute | 10 |
 
@@ -44,7 +44,7 @@ count holds, but four of its judgements are out of date, and most checks cover a
 - **Study area** is listed as computing nothing. It repairs published boundaries as it reads them (experiment 194),
   and check 41 verifies that repair against shapely. The check exists, so the widget is covered, but the ledger
   doesn't count it.
-- **Table input** is listed as "a supplied long-format CSV, retained as given". It now converts wide files to long,
+- **Tabular data** is listed as "a supplied long-format CSV, retained as given". It now converts wide files to long,
   applies edits made by hand, and profiles every column for the data quality tab. All three could be recomputed
   independently, and none is checked.
 - **Transmission chains** is listed as owing a check. Its core is `transmissionTree`, which check 44 recomputes with
@@ -177,14 +177,14 @@ scaled", "Besag and Clifford"). They also cite repository vocabulary a newcomer 
    - make the canonical digest independent of key type;
    - remove the `old-naledi` import from the ruleset exporter;
    - restore exporters for two-by-two-snow-001 and extent-soho-001.
-4. **Correct `check-coverage.json`**: Study area covered by check 41, Table input owing a check, Transmission chains
+4. **Correct `check-coverage.json`**: Study area covered by check 41, Tabular data owing a check, Transmission chains
    partly covered by 43 and 44. Add `parity.json` entries for checks 36, 37, 38, 40, 41, 47 and 52.
 5. **Make staleness visible.** Run `validate:parity` somewhere, report each entry whose `coversRelease` is behind
    the current release, and make the notebook runner fail on `agrees: False`. Report age, not fail on it.
 6. **Agree a notebook outline** with the practitioner: goal, the widget and release, the reference, the criteria
    before the run, the result in words, limits. Then the practitioner writes, or guides the writing of, the plain
    language version of each notebook. This audit doesn't write that prose.
-7. **The 11 widgets awaiting a check**, plus Table input, in whatever order the practitioner sets.
+7. **The 11 widgets awaiting a check**, plus Tabular data, in whatever order the practitioner sets.
 
 ## Acted on, 2026-11-26
 
@@ -196,7 +196,7 @@ item 7 is not started. Fieldwork's changes are in 0.200.0; the lab's are on its 
 | 1 · Lab CI | 45 of 51 notebooks run in the browser kernel. Packages load one at a time. 49 and 51 read from GitHub when no checkout is beside them. 26, 33, 40, 47, 50 and 52 say they run in CPython only, and why, and skip their later cells. |
 | 2 · Checks behind the rules | 07 recomputes the walk onto the network; 31 counts units; 47 reads with both OpenCV detectors. All three agree at 0.200.0. |
 | 3 · Fixtures | Clip raster is exported as lists, with NaN read as outside. The canonical digest refuses a typed array or an integer-like key. The ruleset exporter is removed. Check 30's fixture is made again from the South London people workflow. |
-| 4 · Ledger | Study area is covered by check 41. Table input owes a check. Apply ruleset rests on check 49. `parity.json` has entries for 36, 37, 38, 40 and 41. |
+| 4 · Ledger | Study area is covered by check 41. Tabular data owes a check. Apply ruleset rests on check 49. `parity.json` has entries for 36, 37, 38, 40 and 41. |
 | 5 · Staleness | `validate:parity` is in `check` and `check:fast` and lists entries behind the current release. Both lab runners fail a notebook that prints `agrees: False` where its record agrees. A mutation, check 07's tolerance set to 1e-12, turned the CPython runner red. |
 | 6 · Notebooks | Drafted in plain language to one outline, for the practitioner's review. Not yet on the lab's `main`. |
 

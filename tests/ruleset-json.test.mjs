@@ -68,7 +68,7 @@ test('every example in the guide passes the checks and runs',()=>{
   const manual=readManual(new URL('../docs/widgets/apply_ruleset.md',import.meta.url),'utf8');
   const guide=manual.slice(manual.indexOf('## Writing rules as JSON'));
   const examples=[...guide.matchAll(/```json\n([\s\S]*?)```/g)].map(m=>m[1]);
-  assert.equal(examples.length,5);
+  assert.equal(examples.length,6);  // six from 2026-11-26: codes in a list, with startsWith and a quoted word
   for(const text of examples){
     const {ruleset,problems}=checkRulesetJson(text);
     assert.deepEqual(problems,[],text.slice(0,60));

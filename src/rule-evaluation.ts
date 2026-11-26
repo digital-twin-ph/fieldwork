@@ -15,7 +15,7 @@
  *  it none, and the conflict is reported, never settled by whichever rule came first.
  */
 import {dayNumber,minuteNumber,assembleDateTime,knownPredicate,readValue,termFor,type FieldBinding,type SubjectRecord} from './authored-application.js';
-import {isComputed,isWrittenDateTime,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,columnReads,otherwiseProblems,containedWords,
+import {isComputed,isWrittenDateTime,isSettingReference,settingNamed,readsPrevious,readsPreviousRows,columnReads,otherwiseProblems,containedWords,textItems,
   type AuthoredRule,type ComputeOperator,type Operand,type AuthoredOrder,type AuthoredOtherwise} from './authored-rules.js';
 import {orderOf} from './select-rows.js';
 import type {Scalar} from './types.js';
@@ -163,6 +163,11 @@ function holds(condition:AuthoredRule['any'][number]['all'][number],facts:Map<st
   if(condition.comparator==='contains'||condition.comparator==='notContains'){
     const text=(fact.raw??fact.text).toLowerCase(),found=containedWords(condition.value).some(w=>text.includes(w));
     return condition.comparator==='contains'?found:!found;
+  }
+  // AN ITEM THAT STARTS WITH (2026-11-26): a code in a list, as ESSENCE's ^[;/ ]J10^ reads one.
+  if(condition.comparator==='startsWith'||condition.comparator==='notStartsWith'){
+    const items=textItems(fact.raw??fact.text),found=containedWords(condition.value).some(w=>items.some(item=>item.startsWith(w)));
+    return condition.comparator==='startsWith'?found:!found;
   }
   if(condition.comparator==='equals')return fact.text===against.text;
   // IS NOT (experiment 192): a recorded value that differs. A value not recorded has no fact here, and returned above.

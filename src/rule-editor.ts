@@ -40,7 +40,7 @@ const COMPARATORS:Record<Field['kind'],{value:string;label:string}[]>={
   number:[{value:'equals',label:'is (=)'},{value:'notEquals',label:'is not (≠)'},{value:'greaterThan',label:'is more than (>)'},
     {value:'notLessThan',label:'is at least (≥)'},{value:'lessThan',label:'is less than (<)'},
     {value:'notGreaterThan',label:'is at most (≤)'}],
-  term:[{value:'equals',label:'is (=)'},{value:'notEquals',label:'is not (≠)'},{value:'contains',label:'contains any of'},{value:'notContains',label:'contains none of'}],
+  term:[{value:'equals',label:'is (=)'},{value:'notEquals',label:'is not (≠)'},{value:'contains',label:'contains any of'},{value:'notContains',label:'contains none of'},{value:'startsWith',label:'has an item starting with any of'},{value:'notStartsWith',label:'has no item starting with any of'}],
   boolean:[{value:'equals',label:'is'}],
   // A DATE is a day, matched or not; it is compared through the days between two dates (experiment 200).
   date:[{value:'equals',label:'is'},{value:'notEquals',label:'is not'}],

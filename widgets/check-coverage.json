@@ -25,7 +25,7 @@
       "expectation": "parity",
       "check": "49-mers",
       "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter with its unit, evaluates N3, and extracts a classification against the ruleset's declared vocabulary.",
-      "reason": "Corrected 2026-11-26 (docs/audits/validation-lab-audit.md). Check 23 checked, exhaustively, the three rulesets bundled until Old Naledi was retired on 2026-11-11, and check 25 the extent rule: both record rulesets Fieldwork no longer carries. Of the rulesets bundled now, 7-1-7 timeliness is recomputed end to end by check 49 (the MERS example's verdicts), and compare-level-to-elevation by check 42, through Sample a raster. extract-contract has no check."
+      "reason": "Corrected 2026-11-26 (docs/audits/validation-lab-audit.md). Check 23 checked, exhaustively, the three rulesets bundled until Old Naledi was retired on 2026-11-11, and check 25 the extent rule: both record rulesets Fieldwork no longer carries. Of the rulesets bundled now, 7-1-7 timeliness is recomputed end to end by check 49 (the MERS example's verdicts), and compare-level-to-elevation by check 42, through Sample a raster. extract-contract has no check. From 0.18.0 its word comparisons, contains and has an item starting with, are checked by check 54 on NSSP's four syndrome definitions, against the published queries run directly (2026-11-26)."
     },
     {
       "nodeType": "buffer_point",

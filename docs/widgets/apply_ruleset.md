@@ -124,12 +124,15 @@ matched. The first 50 records are drawn; the counts are of all of them.
 | **is at most (≤)** | less than or equal to | *days_to_detect* is at most *7* | 7 and under: 7-1-7's target met |
 | **contains any of** | the text holds one of the words, ignoring capitals | *chief_complaint* contains any of *vomit, n/v, diarrh* | "N/V/D", "Vomitting x2" |
 | **contains none of** | the text holds none of the words | *chief_complaint* contains none of *pregnan* | every complaint not naming pregnancy |
+| **has an item starting with any of** | some code or word in the text, between `;`, `/`, `&` or spaces, begins with one of the words | *discharge_diagnosis* has an item starting with any of *J10, J11* | "R50.9;J10.1"; not "XJ10" |
+| **has no item starting with any of** | no code or word in the text begins with one of the words | *discharge_diagnosis* has no item starting with any of *J10, J11* | "A08.1"; not "A08.1;J11.1" |
 | **is recorded** | the column has a readable value | *dt_diag* is recorded | records with a diagnosis date |
 | **is not recorded** | the column is blank or unreadable | *dt_diag* is not recorded | records with no diagnosis date |
 
 The four comparisons of size, >, ≥, < and ≤, are offered for numbers, and for the days between two dates; *is* and
-*is not* for categories and for true or false too; *contains any of* and *contains none of* for text, the words
-separated by commas. A word matches inside a longer one: *diarrh* finds *diarrhea* and *diarrhoea*. A record whose column is not recorded matches none of the first
+*is not* for categories and for true or false too; *contains any of*, *contains none of* and the two *item* comparisons
+for text, the words separated by commas. A word matches inside a longer one: *diarrh* finds *diarrhea* and *diarrhoea*.
+Put a word in double quotes to keep its spaces: *" flu "* finds *stomach flu* and not *influenza*. A record whose column is not recorded matches none of the first
 six: it is neither more nor less than 7. Ask *is not recorded* for it.
 
 ## The rules as JSON
@@ -203,6 +206,30 @@ Visits whose complaint holds *vomit*, *diarrh* or *n/v* are gastrointestinal; ev
 | `lessThan`, `notLessThan` | is less than; is at least | numbers |
 | `contains` | holds any of the words, separated by commas, ignoring capitals | text |
 | `notContains` | holds none of the words | text |
+| `startsWith` | has an item starting with any of the words: each part of the text between `;`, `/`, `&` or spaces is an item, such as each code in a list of diagnoses | text |
+| `notStartsWith` | has no item starting with any of the words | text |
+
+A word in double quotes keeps its spaces. `" flu "` finds *stomach flu* and not *influenza*, which holds *flu* with no
+space either side.
+
+### Codes in a list
+
+A column of discharge diagnoses holds several codes, such as `J10.1;R50.9`. `startsWith` reads each code on its own, so
+`J10, J11` finds a visit with any influenza code and not one with a code that only contains those letters.
+
+```json
+{
+  "title": "Influenza by diagnosis",
+  "mustNotBeReadAs": "a diagnosis made here: the codes are the ones the visit was given",
+  "fields": [{"attribute": "chief_complaint", "predicate": "fwa:chief_complaint", "kind": "term"},
+             {"attribute": "discharge_diagnosis", "predicate": "fwa:discharge_diagnosis", "kind": "term"}],
+  "rules": [
+    {"any": [{"all": [{"field": "fwa:discharge_diagnosis", "comparator": "startsWith", "value": "J10, J11"}]},
+             {"all": [{"field": "fwa:chief_complaint", "comparator": "contains", "value": "influenza, \" flu \""}]}],
+     "then": [{"predicate": "fwa:influenza", "value": "yes"}]}
+  ]
+}
+```
 
 ### Two conditions, and an alternative
 

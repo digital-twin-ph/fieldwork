@@ -94,7 +94,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   and Find health facilities after. Done before it: pins (09 closed), 1a (the table stress tests), 3 (the WebGPU spike).
 - **Pins, experiment 09: closed 2026-11-22** (0.166.0 and 0.167.0; field order built, groups judged not needed). **Left,
   for the field:** a real phone, a real GPS fix, a real phone photo (HEIC) and a real handheld's GPX.
-- **Built in 0.171.0 to 0.194.0** (Line layer 0.1.0 to 0.5.0: read from GPX, KML, KMZ or GeoJSON, or the border two study areas share, and drawn by hand with its direction; Area around a point took lines and areas in 0.178.0 and became Geometry buffer in 0.182.0). **Left:** the first worked case below, South Sudan and DR Congo's border to a one-sided buffer to Find health facilities, which has not been run; and experiment 229, which still says the buffer is not built. **A line layer** (the practitioner, 2026-11-22: *"That's an important gap no line layer"*, *"Line layer can be
+- **Built in 0.171.0 to 0.194.0** (Line layer 0.1.0 to 0.5.0: read from GPX, KML, KMZ or GeoJSON, or the border two study areas share, and drawn by hand with its direction; Area around a point took lines and areas in 0.178.0 and became Geometry buffer in 0.182.0). **Worked case resolved 2026-11-26:** the practitioner built it in a project of their own (the South Sudan and DR Congo border to a one-sided buffer to Find health facilities). **Left:** experiment 229, which still says the buffer is not built. **A line layer** (the practitioner, 2026-11-22: *"That's an important gap no line layer"*, *"Line layer can be
   transportation routes"*, *"Perhaps we can also use line layers in microplanning? Team routes?"*). Fieldwork holds
   points, areas, rasters and street networks, and no lines of their own: a GPS export's tracks are counted and left out
   of Point data. Uses named: transportation routes; vaccination teams' routes in microplanning, which ties it to the
@@ -164,14 +164,14 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **Detect unusual counts:** checked in the lab in Python (check 53, 0.162.0). Owed: the name review of "Detect unusual
   counts". Proposed 2026-11-21, not yet decided: Farrington flexible (Noufaily 2013) as a method, the seasonal baseline
   check 53 showed missing, then an ESSENCE-style regression on day of week; each checked against R's `surveillance`.
-- **Still open** (checked 2026-11-26): the syndromic example exists (`example-2026-syndromic-surveillance`, 2026-11-21) on its own keyword definitions, with CUSUM, EWMA and EARS; the re-scope to NSSP's below is not built. **The syndromic example on NSSP's definitions** (the practitioner, 2026-11-21: re-scoped to NSSP's, *"Both ICD-10,
+- **Done 2026-11-26** (Fieldwork 0.201.0, the example at 3e99e67, lab check 54; [228](docs/experiments/228-detect-unusual-counts.md)): the four definitions transcribed from NSSP's published queries, with ICD-10, ICD-11 (Fieldwork's translation, checked against WHO's 2026-01 release) and SNOMED CT (the GPS), the visits given discharge diagnoses, Apply ruleset's "has an item starting with" and quoted words, and a lab check agreeing visit for visit. ~~**The syndromic example on NSSP's definitions** (the practitioner, 2026-11-21: re-scoped to NSSP's, *"Both ICD-10,
   ICD-11, with free text"*, and SNOMED CT from the Global Patient Set). Syndromes ILI (ILI CCDD v1), broad acute
   respiratory (CDC Broad Acute Respiratory DD v1), norovirus (Norovirus v1, the seeded outbreak) and measles (CDC Measles
   CCDD v1); injury dropped, since NSSP has no general one. Each visit gains a discharge diagnosis in ICD-10, ICD-11 and
   SNOMED CT (GPS, CC BY-ND 4.0: terms quoted unaltered, exact codes only, SNOMED's attribution and the release in
   provenance); some missing or late. Apply ruleset gains *starts with*. Credited to CDC/NSSP with CDC's non-endorsement
   disclaimer. Before building: each NSSP query transcribed from its page, and every ICD-11 code checked in the current
-  release.
+  release.~~
 - **206** closed into 228 on 2026-11-22; its questions are 228's open items.
 
 - **Sentinel-2 from ESA's Zarr stores, for a worked example** ([227](docs/experiments/227-a-zarr-reader-for-sentinel.md);

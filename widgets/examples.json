@@ -999,14 +999,14 @@
       "id": "urn:fieldwork:example:syndromic-surveillance-2026",
       "title": "Syndromic surveillance, 2026: a made-up district's emergency departments",
       "repository": "https://github.com/digital-twin-ph/example-2026-syndromic-surveillance",
-      "commit": "806d6d9495483610143863c758969683e3af2c60",
+      "commit": "3e99e673f320f5b5d840fbc7db0efa623e04e25f",
       "rawBase": "https://raw.githubusercontent.com/digital-twin-ph/example-2026-syndromic-surveillance",
       "licence": {
         "data": "CC-BY-4.0",
         "source": "Made up for this example by scripts/make_visits.py",
-        "note": "No record describes a person; the district, its facilities and the outbreak are invented."
+        "note": "No record describes a person; the district, its facilities and the outbreaks are invented. NSSP's definitions (credited, no licence stated), SNOMED CT identifiers (GPS, CC BY-ND 4.0) and ICD-11 codes (WHO, CC BY-ND 3.0 IGO) keep their owners' terms."
       },
-      "description": "24,328 made-up emergency department visits over 25 weeks, with a seeded gastrointestinal outbreak among school-age children at one facility: chief complaints sorted into syndromes by declared words, counted by day and syndrome, and each day held to a threshold from its own past by CUSUM.",
+      "description": "24,328 made-up emergency department visits over 25 weeks, each with its chief complaint and, for most, a discharge diagnosis in ICD-10, ICD-11 and SNOMED CT; a seeded norovirus outbreak among school-age children at one facility and a measles cluster. Visits sorted into syndromes by declared words and by four NSSP syndrome definitions, counted by day, and each day held to a threshold from its own past by CUSUM.",
       "carries": {
         "workflow": true,
         "data": true,
@@ -1025,36 +1025,51 @@
       "files": [
         {
           "path": "fieldwork-project.json.gz",
-          "sha256": "ecdfb51fe5e3e45dfcb56e40c92df287f4ad32fd23184a0ea79604014b84c926",
-          "bytes": 766403
+          "sha256": "52401861279d72f2bd5e8e2b1b02c9e4d64741ce0c3545bb0ce72e7de31375d2",
+          "bytes": 2314356
         },
         {
           "path": "data/visits.csv",
-          "sha256": "389b665aaa05283551fa835027ec2b73cf2842957d37733bad1801132e1a3b14",
-          "bytes": 1425855
+          "sha256": "d29e5da14c6c933cebf479e7cae80b2bc230e61db655d82a9171e43cce0297b2",
+          "bytes": 2171564
         },
         {
           "path": "data/truth.csv",
-          "sha256": "fd5a8196e6c62e8b9dc279a69bfe2d507eb86b96c5988c3674605b0a256f54a4",
-          "bytes": 476438
+          "sha256": "88a01cf3403b8f30f8de4bc662468fff969f1b6eef69c8e613a8c5a9ff031a7b",
+          "bytes": 525109
         },
         {
           "path": "data/visits-columns.csv",
-          "sha256": "da80b04e9be415c29193d0d3a537808da165997bbf40f54eb30ec25e49533448",
-          "bytes": 481
+          "sha256": "84f28c41178f0cdb87ce6135acfa39195d787120e84e1ecd875dda0aba380ec0",
+          "bytes": 1029
         },
         {
           "path": "data/syndromes.ruleset.json",
-          "sha256": "279b7a00f970fae47053385aa2d5be48550043498da02ff9f6b037b3556eba83",
-          "bytes": 3211
+          "sha256": "93ee93d8d140580e111c90c9da2e395a4895a25dd257a1e34d3d9f1e64b314b3",
+          "bytes": 3340
         },
         {
           "path": "data/syndromes-first-attempt.ruleset.json",
           "sha256": "68128b4f94c30f8997c689e63e6918f1c0b6ac66eb89ecf7adad5704d42183a9",
           "bytes": 2264
+        },
+        {
+          "path": "data/nssp-syndromes.ruleset.json",
+          "sha256": "4cfac13db09587dedc7813170941852190bc468b4b91ab503c4d68ed51830aa2",
+          "bytes": 12887
+        },
+        {
+          "path": "data/nssp-syndromes-icd11.ruleset.json",
+          "sha256": "4707efd8023c4926a9c5c6d7dd3617306229a5d7eb3757ffdf7a637a65f75147",
+          "bytes": 12769
+        },
+        {
+          "path": "data/nssp/icd11-translation.csv",
+          "sha256": "6905680f47a89c9bb24bd25fec5d9da27d3854434ac98ea349292b4c86c484a4",
+          "bytes": 8199
         }
       ],
-      "workflowCount": 3
+      "workflowCount": 5
     }
   ]
 }

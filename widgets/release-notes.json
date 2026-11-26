@@ -65,12 +65,24 @@
    ]
   },
   "apply_ruleset": {
-   "version": "0.17.0",
-   "released": "2026-11-21",
+   "version": "0.18.0",
+   "released": "2026-11-26",
    "changes": [
     {
      "kind": "added",
-     "description": "The JSON view lists the columns arriving from the connected step, with their kinds and a few values, marked where the ruleset declares them; Add to fields writes an entry spelled as the column is; a declared column that does not arrive is listed, and the check names the nearest arriving column."
+     "description": "Two comparisons for text: has an item starting with any of (`startsWith`), and has no item starting with any of (`notStartsWith`). An item is each part of the text between semicolons, slashes, ampersands or spaces, so a discharge diagnosis written J10.1;R50.9 is two codes, and J10 starts the first. That is how ESSENCE reads a code written ^[;/ ]J10^ in NSSP's syndrome definitions, with the ampersand added for ICD-11's clusters. Evaluated directly, like contains."
+    },
+    {
+     "kind": "added",
+     "description": "A word in double quotes keeps its spaces. \" flu \" finds stomach flu and not influenza, as NSSP's ^ flu ^ does; without the quotes it was trimmed to flu, which influenza contains."
+    },
+    {
+     "kind": "fixed",
+     "description": "Reading a published ruleset in the rule editor took any column compared by anything other than equals for a number, so a ruleset of words showed its text column as a number. A word comparison now means text."
+    },
+    {
+     "kind": "changed",
+     "description": "Its Inspector, its dialogs and the rule list moved out of app.ts into src/ruleset-ui.ts, unchanged in what they do."
     }
    ],
    "breaking": false,

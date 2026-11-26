@@ -65,7 +65,7 @@ export function parseJson(text:string):{value?:unknown;positions:Positions;error
     return {positions,error:{line:where.line,column:where.column,says:(error as Error).message}};}
 }
 
-export const COMPARATORS:Comparator[]=['equals','notEquals','greaterThan','notGreaterThan','lessThan','notLessThan','contains','notContains'];
+export const COMPARATORS:Comparator[]=['equals','notEquals','greaterThan','notGreaterThan','lessThan','notLessThan','contains','notContains','startsWith','notStartsWith'];
 export const KINDS=['number','boolean','term','date','datetime'];
 /** The parts every ruleset has; the rest are optional. */
 export const REQUIRED_PARTS=['title','mustNotBeReadAs','fields','rules'] as const;

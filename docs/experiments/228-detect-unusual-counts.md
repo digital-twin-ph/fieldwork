@@ -1,6 +1,6 @@
 # 228 · Detect unusual counts: CUSUM, EWMA and the EARS methods
 
-_Created 2026-11-21 · Updated 2026-11-22_
+_Created 2026-11-21 · Updated 2026-11-26_
 
 **Status:** validated. Built 2026-11-21, its methods checked against R's `surveillance` package the same day, and by the
 Validation Lab's check 53 (Python, numpy) on four series, a seasonal one among them; the syndromic worked example uses
@@ -113,6 +113,31 @@ Not proposed: machine-learning detectors, which would stand in for the reasoning
 
 **What would close these:** each built and checked against an independent implementation, or recorded as not built
 with the reason. Which NSSP definition documents recommend which method was not checked.
+
+## The worked example on NSSP's definitions (2026-11-26)
+
+The practitioner, 2026-11-21, re-scoped the syndromic example to the definitions of the US National Syndromic
+Surveillance Program (NSSP): *"Both ICD-10, ICD-11, with free text"*, and SNOMED CT from the Global Patient Set.
+
+- **Four definitions**, ILI CCDD v1, CDC Broad Acute Respiratory DD v1, Norovirus v1 and CDC Measles CCDD v1, copied
+  from the query each NSSP Knowledge Repository page publishes. The example's `scripts/nssp_rules.py` turns each into
+  Apply ruleset's rules by the operator rules CDC's *Free-text Coding in NSSP-ESSENCE* states, each part a column named
+  as NSSP's fact sheet names it. Apply ruleset 0.18.0 gained what that needed: "has an item starting with any of", for
+  a code in a list as ESSENCE's `[;/ ]J10` reads one, and a word in quotes that keeps its spaces (`" flu "`).
+- **ICD-11** is Fieldwork's translation of NSSP's ICD-10-CM codes, every code checked against WHO's ICD-11 release of
+  2026-01, with WHO's own ICD-10 mapping beside it and a reason where they differ. Two codes have no equivalent.
+- **Each visit** carries a discharge diagnosis in WHO's ICD-10, ICD-11 and SNOMED CT (identifiers from the GPS release of
+  2026-01-01), missing for about one visit in eight and late for the rest by up to five days; a seeded measles cluster
+  and six MMR vaccination visits join the seeded norovirus outbreak.
+- **Measured**: ILI 2,177 visits, Broad Acute Respiratory 2,987, Norovirus 223 (85 of the outbreak's 113), Measles 10
+  (all 10 seeded, none of the MMR visits). CUSUM on the Norovirus visits signals 9 days from 13 April, a day before the
+  example's own keywords. The ICD-11 version selects the same visits: the only place the two code systems part, a
+  dyspnoea with a fever, is in no visit.
+- **Validated** by the lab's check 54: the same visits for every definition, both versions, when NSSP's own query is run
+  directly as ESSENCE would; shown able to fail.
+
+What it does not establish: that the definitions suit any real district; how far an exclusion reaches, which these
+visits cannot tell apart; that the ICD-11 translation is the only reasonable one.
 
 ## What this does not establish
 

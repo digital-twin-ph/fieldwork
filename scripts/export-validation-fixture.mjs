@@ -7,7 +7,7 @@
 //                   | deduplicate-facilities-001
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
-//                   | relate-snow-001 | two-by-two-snow-002 | relate-spelling-sl-001 | boundary-repair-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
+//                   | relate-snow-001 | two-by-two-snow-002 | nssp-syndromes-001 | relate-spelling-sl-001 | boundary-repair-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
@@ -1884,6 +1884,48 @@ const builders={
     },files:{}};
   },
 
+  async 'nssp-syndromes-001'(){
+    // NSSP'S FOUR SYNDROME DEFINITIONS, as the syndromic example runs them (2026-11-26): its workflow "Which NSSP
+    // syndromes does each visit match?" at the commit Fieldwork pins, run here through Apply ruleset. The visits are made
+    // up and CC BY 4.0, so the fixture carries them: each visit's complaint and diagnosis codes, and Fieldwork's yes or
+    // no for each definition under each ruleset. The definitions travel as NSSP's pages publish them, so the lab reads the
+    // ESSENCE query itself and not Fieldwork's transcription of it.
+    const pin=JSON.parse(await readFile(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples
+      .find(e=>e.repository.endsWith('example-2026-syndromic-surveillance'));
+    const repo=new URL('../../example-2026-syndromic-surveillance/',import.meta.url).pathname;
+    const {existsSync}=await import('node:fs');
+    if(!existsSync(repo))throw new Error('example-2026-syndromic-surveillance is not on this machine beside this repository.');
+    const {execFileSync}=await import('node:child_process');
+    const at=path=>execFileSync('git',['-C',repo,'show',`${pin.commit}:${path}`],{maxBuffer:1<<30,env:OWN_REPO_ENV});
+    const doc=JSON.parse(gunzipSync(at('fieldwork-project.json.gz')));
+    const w=doc.workflows.map(x=>x.document).find(d=>d.name==='Which NSSP syndromes does each visit match?');
+    if(!w)throw new Error('The syndromic example at its pin has no workflow "Which NSSP syndromes does each visit match?".');
+    const {validateWorkflow}=await import('../build/core.js');
+    const run=await executeWorkflow(validateWorkflow(structuredClone(w)),async()=>[]);
+    const steps=w.nodes.filter(n=>n.type==='apply_ruleset');
+    const reads=(n,p)=>n.params.authored.fields.some(f=>f.predicate===p);
+    const published=steps.find(n=>reads(n,'fwa:discharge_diagnosis_icd10')),translated=steps.find(n=>reads(n,'fwa:discharge_diagnosis_icd11'));
+    const NAMES=['ili','broad_respiratory','norovirus','measles'];
+    const byVisit=node=>{const m=new Map();for(const r of run.tables[node.id].rows)if(!m.has(r.key.visit_id))m.set(r.key.visit_id,r.key);return m;};
+    const a=byVisit(published),b=byVisit(translated);
+    const visits=[...a.values()].map(k=>({id:k.visit_id,cc:k.chief_complaint,icd10:k.discharge_diagnosis_icd10??'',
+      icd11:k.discharge_diagnosis_icd11??'',snomed:k.discharge_diagnosis_snomed??'',
+      fieldworkIcd10:Object.fromEntries(NAMES.map(n=>[n,k[n]])),fieldworkIcd11:Object.fromEntries(NAMES.map(n=>[n,b.get(k.visit_id)[n]]))}));
+    const syntax=Object.fromEntries([['ili','ili-ccdd-v1'],['broad_respiratory','cdc-broad-acute-respiratory-dd-v1'],
+      ['norovirus','norovirus-v1'],['measles','cdc-measles-ccdd-v1']].map(([n,f])=>[n,at(`data/nssp/${f}.syntax.txt`).toString('utf8')]));
+    const t=parseCSV(at('data/nssp/icd11-translation.csv').toString('utf8'),1000,1_000_000);
+    const icd11Translation=t.rows.map(r=>Object.fromEntries(t.headers.map((h,i)=>[h,r[i]])));
+    return {fixture:{
+      ...base('nssp-syndromes-001','apply_ruleset','NSSP’s four syndrome definitions, as the syndromic example applies them','example-2026-syndromic-surveillance at its pinned commit'),
+      source:`example-2026-syndromic-surveillance at ${pin.commit}: made-up visits (CC BY 4.0); NSSP's definitions as the NSSP Knowledge Repository publishes them, credited; SNOMED CT identifiers from the Global Patient Set (CC BY-ND 4.0); ICD-11 codes (WHO, CC BY-ND 3.0 IGO).`,
+      declaredParameters:{syntax,icd11Translation,
+        readAs:'ESSENCE: a term anywhere, ignoring capitals; ANDNOT binds to the term before it; AND before OR; [..] one character from a set',
+        fields:{ili:'chief complaint and diagnosis codes as one field',measles:'the same',broad_respiratory:'diagnosis codes',
+          norovirus:'its three sections: chief complaint; complaint and codes; codes'}},
+      input:{visits},
+      output:{counts:Object.fromEntries(['fieldworkIcd10','fieldworkIcd11'].map(v=>[v,Object.fromEntries(NAMES.map(n=>[n,visits.filter(x=>x[v][n]==='yes').length]))]))}
+    },files:{}};
+  },
   async 'two-by-two-snow-002'(){
     // THE TWO-BY-TWO ON PEOPLE, from the workflow that runs it (2026-11-26, Validation Lab audit). Check 30's first
     // fixture, two-by-two-snow-001, was made at 0.12.0 by a chain that is gone (Derive value is retired), with no

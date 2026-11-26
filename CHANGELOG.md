@@ -3,6 +3,41 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.200.0 — In development
+
+- **The remaining items of the code review** ([audit](docs/audits/code-review-2026-11-23.md)), and three findings made
+  while doing them. No widget computes anything differently; no widget release changes.
+- **Steps run from a table, not a switch.** `executeWorkflow` held one `switch` of 1,400 lines, a case for each step
+  type. Each case is now a function in a module for its family (`src/run-inputs.ts`, `run-spatial.ts`,
+  `run-raster.ts`, `run-tables.ts`, `run-ruleset.ts`, `run-epidemiology.ts`, `run-outputs.ts`), given a
+  `StepContext` that names what a step can reach, and `src/step-runners.ts` maps each type to its function. The text
+  of each step was moved by a script reading the parse tree, unchanged except that leaving the switch is now
+  returning the value. `core.ts` is 1,826 lines, from 3,280. `tests/step-runners.test.mjs` fails if a step that
+  can be added has no function, or a retired one keeps its own.
+- **Retired steps had kept their code.** Places, centres, the heat alert, the generic output and the three sea-level
+  steps kept their arms in the executor; places, centres, the heat alert, the distance policy and the sea-level steps
+  kept their Inspectors, subtitles and palette defaults in `app.ts`. `validateWorkflow` refuses or migrates every
+  retired node before a run, so none of it could run. It is removed.
+- **The kernel's own tests run in the gate.** Its 60 Rust tests ran nowhere: not in `check`, `check:fast` or CI. Run
+  in parallel, two failed every time, because each module keeps its arrays in statics and two tests wrote over each
+  other's; on one thread all pass. `npm run test:kernel` runs them on one thread, in `check` and `check:fast`, and
+  finds cargo in `~/.cargo/bin` where the shell's PATH lacks it. Six new tests cover the space-time scan in Rust: the
+  random stream against the script's, the observed score against a search of every window, the shuffle and the early
+  stop. Loosening the window bound by one turns the window test red.
+- **One HTML escape**, `src/html-escape.ts`, for every module: eight more copies of the five-character rule, three
+  that escaped only `&`, `<` and `>`, and seven that left out the apostrophe. None was a defect where it stood,
+  because no template puts a value in a single-quoted attribute. `tests/escape-html.test.mjs` fails if a module
+  defines its own. The JSON editor's coloured layer now carries `&quot;` where it carried `"`; drawn, it is the
+  same glyph.
+- **The wide reader looks a column up by its name, not its escaped name.** It searched for `district &amp; ward`
+  where the browser holds `district & ward`, found nothing, and preselected a key as a value. It was never seen,
+  because the pass after it compares the decoded names and clears the box. A browser test written for it passed on
+  the old code as well, so it is not kept.
+- **A database on this device opens within five seconds or says why** (`src/local-database.ts`). Only the payload
+  store bounded the wait for an open that neither succeeds nor fails, which some engines do in private mode; saving
+  a PDF, a remembered file, a satellite reading and unlocked credentials could each wait for ever. Each store keeps
+  its own way of failing.
+
 ## 0.199.0 — In development
 
 - **Three more from the review of 0.198.0**, all three mine, and the third would have broken the nightly run.

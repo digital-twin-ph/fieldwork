@@ -22,7 +22,9 @@ test('every colour meets 4.5:1 on the ground and on a problem line, in both them
 });
 test('names, text, numbers, true and false and null, and punctuation are each marked; a problem line is tinted',()=>{
   const html=highlightJson('{\n  "a": "b",\n  "n": -1.5e3,\n  "t": true\n}',new Set([3]));
-  assert.match(html,/<span class="json-key">"a"<\/span><span class="json-punct">:<\/span> <span class="json-string">"b"<\/span>/);
+  // Quotes arrive as &quot; since 2026-11-25, when the highlighter took the one HTML escape: drawn, it is the same
+  // glyph, so the coloured layer still lines up with the text typed over it character for character.
+  assert.match(html,/<span class="json-key">&quot;a&quot;<\/span><span class="json-punct">:<\/span> <span class="json-string">&quot;b&quot;<\/span>/);
   assert.match(html,/<span class="json-number">-1.5e3<\/span>/);
   assert.match(html,/<span class="json-literal">true<\/span>/);
   assert.equal((html.match(/json-line-bad/g)||[]).length,1);

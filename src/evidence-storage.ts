@@ -1,3 +1,4 @@
+import {openLocalDatabase,LocalDatabaseUnavailable} from './local-database.js';
 import {withoutRemoteRows} from './remote-table.js';
 import type {Workflow} from './types.js';
 import type {EvidenceBundle,EvidenceFile,EvidenceReference} from './evidence.js';
@@ -9,12 +10,10 @@ import {assertProjectManifest,syncProjectManifest} from './project-manifest.js';
 
 const DATABASE='fieldwork-evidence-v1',STORE='pdfs';
 function openDatabase():Promise<IDBDatabase> {
-  return new Promise((resolve,reject)=>{
-    const request=indexedDB.open(DATABASE,1);
-    request.onupgradeneeded=()=>request.result.createObjectStore(STORE);
-    request.onsuccess=()=>resolve(request.result);
-    request.onerror=()=>reject(new Error('Local PDF storage is unavailable. Your reference has not been saved.'));
-    request.onblocked=()=>reject(new Error('Close other Fieldwork tabs and retry local PDF storage.'));
+  return openLocalDatabase(DATABASE,STORE).catch(error=>{
+    throw new Error(error instanceof LocalDatabaseUnavailable&&error.why==='blocked'
+      ?'Close other Fieldwork tabs and retry local PDF storage.'
+      :'Local PDF storage is unavailable. Your reference has not been saved.');
   });
 }
 // Stored as bytes, not as a Blob. Measured 2026-10-09: WebKit aborts any transaction that puts a

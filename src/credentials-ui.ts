@@ -1,3 +1,4 @@
+import {escapeHtml} from './html-escape.js';
 import {CredentialSession,decryptCredentials,encryptCredentials} from './credentials.js';
 import {credentialsFileName,openIdentity} from './identity-ui.js';
 import {keep,restore,extend,drop} from './session-keep.js';
@@ -123,7 +124,7 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
    if(again&&again===first)error.hidden=true;};
   input('password').addEventListener('input',checkMatch);input('confirm').addEventListener('input',checkMatch);
   // THE MANUAL OPENS OVER THE FORM and can be detached beside it, so the steps are read while the fields are filled.
-  d.querySelector<HTMLButtonElement>('#credential-manual')!.onclick=()=>openManual('surface:credentials','Credentials',v=>v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]!));
+  d.querySelector<HTMLButtonElement>('#credential-manual')!.onclick=()=>openManual('surface:credentials','Credentials',escapeHtml);
   d.querySelector<HTMLButtonElement>('#credential-unlock')!.onclick=()=>void perform('unlock');d.querySelector<HTMLButtonElement>('#credential-download')!.onclick=()=>void perform('download');refresh();d.showModal();
  };
  return {

@@ -1,3 +1,4 @@
+import {escapeHtml} from './html-escape.js';
 import {LINE_COLOURS,arrowIconSvg,endBearing,marksDirection} from './map-lines.js';
 import {proportionalRadius,layerRanks,colouredClasses,MERGED_MARKS_FROM,recordAttributesHtml} from './point-layers.js';
 import {RASTER_POINT_COLOURS} from './raster-panels.js';
@@ -113,7 +114,7 @@ export async function tileFailure(src:string,provider:string):Promise<string>{
 async function esriCredit(url:string):Promise<string|null>{
   try{const r=await fetch(url,{referrerPolicy:'origin'});if(!r.ok)return null;const j=await r.json() as {copyrightText?:unknown};
     const text=typeof j.copyrightText==='string'?j.copyrightText.trim():'';
-    return text?`${ESRI_POWERED} | ${text.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]!)}`:null;}
+    return text?`${ESRI_POWERED} | ${escapeHtml(text)}`:null;}
   catch{return null;}
 }
 

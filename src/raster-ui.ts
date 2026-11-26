@@ -2,7 +2,8 @@ import {fileDigest} from './sha256-stream.js';
 import {RASTER_SOURCE_FIELDS,validateRasterProvenance,WORLDPOP_BOTSWANA,WORLDPOP_BOTSWANA_FILENAME} from './raster-provenance.js';
 import type {RasterProvenance} from './raster-provenance.js';
 import type {Boundary,Position,Workflow,WorkflowNode} from './types.js';
-import type {OwnInspector,StepKit} from './inspector-kit.js';
+import {escapeHtml} from './html-escape.js';
+import {type OwnInspector,type StepKit} from './inspector-kit.js';
 import {geometryBounds} from './study-area.js';
 import type {RasterAsset,RasterGrid,RasterMetadata} from './raster.js';
 import {rasterImage,rasterImageFactor,scaleKeySvg,scaleWords} from './raster-image.js';
@@ -16,7 +17,7 @@ import {isNetcdf,inspectNetcdf,readNetcdfWindow,type NetcdfGrid} from './netcdf-
 import {storePDFs} from './evidence-storage.js';
 import {openConfigDialog} from './config-dialog.js';
 
-const esc=(value:unknown):string=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]!);
+const esc=escapeHtml;
 
 /** RASTER INPUT, CONFIGURED (experiment 186, 2026-11-11): where to get a file, the file or its address, the variable of a
  *  NetCDF grid, the margin, and the source's citation, in the standard dialog. Apply reads the window and keeps it.

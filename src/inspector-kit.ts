@@ -5,17 +5,7 @@
  *  data attributes, as they are for every step. */
 import type {Escape,Workflow,WorkflowNode,NodeType} from './types.js';
 
-/** THE ONE HTML ESCAPE. Four modules each defined this, character for character, and the code review of
- *  2026-11-23 counted five; two more escape only `&`, `<` and `>`, and seven places escape four characters
- *  rather than five. A value escaped by a weaker rule and placed in an attribute lets a quote out of it, so
- *  which rule ran was a property of which file you happened to be in. This is the rule: the five characters
- *  that can change the meaning of markup, including the apostrophe, because a single-quoted attribute is as
- *  much an attribute as a double-quoted one.
- *
- *  `unknown` in, because every caller was already stringifying: a number, a null and a missing value are all
- *  things a surface puts in front of a reader. */
-export const escapeHtml:Escape=(s:unknown)=>String(s??'').replace(/[&<>"']/g,
-  c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+export {escapeHtml} from './html-escape.js';
 
 
 export interface InspectorKit {

@@ -3,6 +3,7 @@
  *  validates in real time."*). The JSON is what a step stores, so this reads it back: a parser that says where JSON
  *  breaks, by line and column, in words (a browser's own message names no line in Safari), and the checks a ruleset
  *  must pass before it runs, each placed on the line it is about. */
+import {escapeHtml} from './html-escape.js';
 import {authoredUnitProblems,otherwiseProblems,computesValues,evaluatedDirectly,compileAuthoredRuleset,isWordComparator,
   containedWords,bandRules,targetRules,type Comparator} from './authored-rules.js';
 
@@ -204,21 +205,20 @@ export function autoBracket(text:string,start:number,end:number,key:string):{tex
  *  behind the transparent text being typed. Names bold as well as coloured, so the structure does not rest on colour; a
  *  line with a problem tinted, besides its sign in the margin. Pure, so it is tested without a page. */
 export function highlightJson(text:string,badLines:ReadonlySet<number>=new Set()):string{
-  const esc=(s:string)=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const token=/("(?:\\.|[^"\\\n])*"?)(\s*:)?|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|\b(true|false|null)\b|([{}[\],:])/g;
   return text.split('\n').map((line,k)=>{
     let out='',last=0;
     for(const m of line.matchAll(token)){
-      out+=esc(line.slice(last,m.index));
+      out+=escapeHtml(line.slice(last,m.index));
       const [whole,str,colon,num,lit,punct]=m;
       out+=str!==undefined
-        ?(colon!==undefined?`<span class="json-key">${esc(str)}</span><span class="json-punct">${esc(colon)}</span>`:`<span class="json-string">${esc(str)}</span>`)
+        ?(colon!==undefined?`<span class="json-key">${escapeHtml(str)}</span><span class="json-punct">${escapeHtml(colon)}</span>`:`<span class="json-string">${escapeHtml(str)}</span>`)
         :num!==undefined?`<span class="json-number">${num}</span>`
         :lit!==undefined?`<span class="json-literal">${lit}</span>`
-        :`<span class="json-punct">${esc(punct!)}</span>`;
+        :`<span class="json-punct">${escapeHtml(punct!)}</span>`;
       last=m.index!+whole.length;
     }
-    out+=esc(line.slice(last));
+    out+=escapeHtml(line.slice(last));
     return `<div class="json-line${badLines.has(k+1)?' json-line-bad':''}">${out||'​'}</div>`;
   }).join('');
 }

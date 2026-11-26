@@ -1,5 +1,5 @@
 import type {WorkflowNode,Boundary,ObservationParams,PointCollection,PointFeature,FormField,SourceInfo,AttributeType,PinPhoto} from './types.js';
-import {escapeHtml as esc} from './inspector-kit.js';
+import {escapeHtml as esc} from './html-escape.js';
 import type {CSVTable} from './input-data.js';
 import type {Database} from 'sql.js';
 import {element,optionalElement} from './dom.js';

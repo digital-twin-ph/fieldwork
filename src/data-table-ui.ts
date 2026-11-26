@@ -1,7 +1,8 @@
 import {editedTitle,type EditedCells} from './cell-edits.js';
 import type {Escape,Workflow,WorkflowNode} from './types.js';
 import {PREVIEW_ROWS,scrollLongTables} from './long-tables.js';
-import type {OwnInspector,StepKit} from './inspector-kit.js';
+import {escapeHtml} from './html-escape.js';
+import {type OwnInspector,type StepKit} from './inspector-kit.js';
 import {describableColumns,isDescribed,dictionaryKeyOf} from './column-metadata.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
 import {dataTable,wideDataTable,keyDomains,findingsSummary,recordsSaid,declaredWide,MAX_TABLE_ROWS,MAX_TABLE_FILE_BYTES,type TableRows} from './data-table.js';
@@ -71,8 +72,7 @@ export interface TableReopen extends TableSelection {wide?:WideChoice; distinctV
  *  not a second representation. */
 /** The same escape `app.ts` passes into `dataTableMarkup`, kept here so the dialog can render its
  *  own panes without the caller having to hand one in. */
-const esc:Escape=(value:unknown)=>String(value??'')
-  .replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+const esc:Escape=escapeHtml;
 
 /** More columns than this and a column list gets tools to find, clear and paste, and a long read starts unticked. */
 export const MANY_COLUMNS=12;
@@ -112,7 +112,7 @@ function columnTools(box:HTMLFieldSetElement,prefix:string,title:string,changed:
   // The summary stands in for the list, so it is hidden whenever the list is: value columns belong to a wide read only.
   const summarise=()=>{const chosen=ticked();row.hidden=box.hidden;
     row.innerHTML=`<span class="field-label">${title}</span><p id="${prefix}-summary">${chosen.length} of ${boxes().length}`
-      +(chosen.length?`: ${chosen.map(n=>n.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!)).join(', ')}`:' ticked')+`</p>`
+      +(chosen.length?`: ${chosen.map(escapeHtml).join(', ')}`:' ticked')+`</p>`
       +`<button type="button" class="button small" id="${prefix}-choose">Choose ${title.toLowerCase()}…</button>`;
     row.querySelector<HTMLButtonElement>(`#${prefix}-choose`)!.onclick=()=>{dialog!.showModal();};};
   let dialog=document.getElementById(`${prefix}-dialog`) as HTMLDialogElement|null;
@@ -205,7 +205,7 @@ function censusChoices():string{
 }
 export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boolean>,existing?:TableReopen,frame:TableFrame={}):void{
   const dialog=document.createElement('dialog');dialog.id='table-dialog';dialog.className='config-dialog';dialog.setAttribute('aria-labelledby','table-title');
-  const named=(text:string)=>text.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]!));
+  const named=escapeHtml;
   dialog.innerHTML='<header class="config-head"><h2 id="table-title">Tabular data'
     // The step's own name after the widget's, unless it is still the widget's name, as the standard dialog does.
     +(frame.step?.trim()&&frame.step.trim().toLowerCase()!=='tabular data'?`<span class="config-step"> \u00b7 ${named(frame.step)}</span>`:'')+'</h2>'
@@ -943,12 +943,12 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
         +(stata.notes.length?` ${stata.notes.join(' ')}`:''):'';
       const guessValue=guessValueColumn(parsed.headers,parsed.rows);
       keysBox.innerHTML+=parsed.headers.map((header,i)=>{
-        const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
+        const escaped=escapeHtml(header);
         const preselect=own?own.keys.includes(header.trim()):guessValue>=0&&i!==guessValue;
         return `<label><input type="checkbox" value="${escaped}" ${preselect?'checked':''}> ${escaped}</label>`;}).join('');
       keysBox.hidden=false;
       valueSelect.innerHTML='<option value="">Choose the value column</option>'+parsed.headers.map((header,i)=>{
-        const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
+        const escaped=escapeHtml(header);
         const chosen=own?header.trim()===(own.valueColumn??own.valueField):i===guessValue;
         return `<option value="${escaped}" ${chosen?'selected':''}>${escaped}</option>`;}).join('');
       valueSelect.disabled=false;
@@ -956,9 +956,9 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
       // subject key, because that is the common case and the practitioner can take fewer -- but
       // named in the markup either way, so the selection is a decision and not a leftover.
       valuesBox.innerHTML+=parsed.headers.map(header=>{
-        const escaped=header.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]!);
+        const escaped=escapeHtml(header);
         const held=own?.wide?.valueFields;
-        const preselect=held?held.includes(header.trim()):!keysBox.querySelector<HTMLInputElement>(`input[value="${CSS.escape(escaped)}"]`)?.checked;
+        const preselect=held?held.includes(header.trim()):!keysBox.querySelector<HTMLInputElement>(`input[value="${CSS.escape(header)}"]`)?.checked;
         return `<label><input type="checkbox" value="${escaped}" ${preselect?'checked':''}> ${escaped}</label>`;}).join('');
       // A column cannot be both the subject and a variable of it, so taking one as a key drops it
       // from the values offered -- and the other way round. Enforced in `wideDataTable` as a

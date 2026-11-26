@@ -2,7 +2,7 @@
  *  opened from the footer or a note being written. Experiment 184. Each finding opens as a GitHub issue in the repository's form.
  *  The words on it are labels and one question per heuristic, nothing that explains the design. */
 import {HEURISTICS,TEXT_KINDS,toMarkdown,fileStem,cleanPass,findingIssueUrl,type EvaluationPass,type Finding} from './lab-evaluation.js';
-import {escapeHtml as esc} from './inspector-kit.js';
+import {escapeHtml as esc} from './html-escape.js';
 
 export interface EvaluationContext {screen:string; widget?:{type:string; version:string}}
 

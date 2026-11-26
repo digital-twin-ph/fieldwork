@@ -22,6 +22,7 @@
  *  quota refusal: each falls back to the old localStorage store and SAYS which store is in use,
  *  because a practitioner whose payloads are capped at 5 MB again needs to know that rather than
  *  discover it on a download. */
+import {openLocalDatabase} from './local-database.js';
 const DB='fieldwork',STORE='payloads',LEGACY='fieldwork-datasets-v1';
 export type PayloadStoreKind='indexeddb'|'local'|'memory';
 
@@ -61,23 +62,9 @@ const committed=(tx:IDBTransaction):Promise<void>=>new Promise((resolve,reject)=
   tx.onerror=()=>reject(tx.error);
   tx.onabort=()=>reject(tx.error??new Error('The write was rolled back.'));});
 
-function openDatabase():Promise<IDBDatabase|null>{
-  if(typeof indexedDB==='undefined')return Promise.resolve(null);
-  return new Promise(resolve=>{
-    let settled=false;
-    const done=(value:IDBDatabase|null)=>{if(!settled){settled=true;resolve(value);}};
-    // A database that neither opens nor fails is the private-mode case in some engines. Boot must
-    // not wait on it: five seconds, then carry on with localStorage and say so.
-    const timer=setTimeout(()=>done(null),5000);
-    try{
-      const open=indexedDB.open(DB,1);
-      open.onupgradeneeded=()=>{if(!open.result.objectStoreNames.contains(STORE))open.result.createObjectStore(STORE);};
-      open.onsuccess=()=>{clearTimeout(timer);done(open.result);};
-      open.onerror=()=>{clearTimeout(timer);done(null);};
-      open.onblocked=()=>{clearTimeout(timer);done(null);};
-    }catch{clearTimeout(timer);done(null);}
-  });
-}
+// A database that neither opens nor fails is the private-mode case in some engines. Boot does not wait on it: the open
+// settles within five seconds, and then the session carries on with localStorage and says so.
+const openDatabase=():Promise<IDBDatabase|null>=>openLocalDatabase(DB,STORE).catch(()=>null);
 
 function readLegacy():Record<string,unknown>{
   try{const raw=JSON.parse(localStorage.getItem(LEGACY)||'{}');

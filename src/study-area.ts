@@ -1,3 +1,4 @@
+import {escapeHtml} from './html-escape.js';
 import {sha256OfText} from './sha256-stream.js';
 import {REPAIR_RULE} from './boundary-repair.js';
 import type {AreaParams,Boundary,Bounds,NodeSpec,Polygon,Position,Workflow,WorkflowNode} from './types.js';
@@ -480,6 +481,6 @@ export function areaSvg(geometry:Boundary,label='Study area'){
   const project=(p:Position)=>[425+(p[0]-(w+e)/2)*cos*scale,145-(p[1]-(s+n)/2)*scale];
   const polygons=geometry.type==='Polygon'?[geometry.coordinates]:geometry.coordinates;
   const paths=polygons.map(poly=>poly.map(r=>'M'+r.map(p=>project(p).join(',')).join('L')+'Z').join(' '));
-  const safeLabel=String(label).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]!));
+  const safeLabel=escapeHtml(label);
   return '<rect width="850" height="295" fill="#f0f3e9"/>'+paths.map(d=>`<path d="${d}" fill="#dbe8d6" stroke="#176b59" stroke-width="2" fill-rule="evenodd"/>`).join('')+`<text x="425" y="150" text-anchor="middle" font-size="14" font-weight="600"${label.length>80?' textLength="700" lengthAdjust="spacingAndGlyphs"':''}>${safeLabel}</text>`+'<text x="18" y="23">SELECTED STUDY AREA · CRS84</text><text x="820" y="23">N ↑</text><text x="18" y="279">Stored geometry · online basemap is used only in the editor</text>';
 }

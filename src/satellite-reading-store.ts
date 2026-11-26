@@ -15,6 +15,7 @@
  *
  *  Tolerant, as the payload store is: no IndexedDB (Node, a blocked database, private mode) means nothing is kept and
  *  every file is read, which is slower and never wrong. */
+import {openLocalDatabase} from './local-database.js';
 const DB='fieldwork-satellite',STORE='readings';
 /** Raised when the way a file is read changes. A saved reading made under another version is not used. */
 export const READER_VERSION=1;
@@ -27,16 +28,7 @@ export interface ReadingStore {
 let opening:Promise<IDBDatabase|null>|null=null;
 function open():Promise<IDBDatabase|null>{
   if(opening)return opening;
-  opening=new Promise(resolve=>{
-    try{
-      if(typeof indexedDB==='undefined'){resolve(null);return;}
-      const request=indexedDB.open(DB,1);
-      request.onupgradeneeded=()=>{if(!request.result.objectStoreNames.contains(STORE))request.result.createObjectStore(STORE);};
-      request.onsuccess=()=>resolve(request.result);
-      request.onerror=()=>resolve(null);
-      request.onblocked=()=>resolve(null);
-    }catch{resolve(null);}
-  });
+  opening=openLocalDatabase(DB,STORE).catch(()=>null);
   return opening;
 }
 

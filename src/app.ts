@@ -1,5 +1,5 @@
 import {MAX_GROUND_LAYERS,groundPort,isGroundPort} from './core.js';
-import {escapeHtml as esc} from './inspector-kit.js';
+import {escapeHtml as esc} from './html-escape.js';
 import {noteImageDigest,noteImageFigure,noteImageKey,readNoteImagePayload,type NoteImage} from './note-image.js';
 import {openChangelog} from './changelog-ui.js';
 import {GHS_CITATION,GHS_EPOCHS,GHS_LICENCE,GHS_NOTE,GHS_PROJECTED,ghsUrl,ghsRecordFor} from './ghs-pop.js';
@@ -10,7 +10,7 @@ import {mapImageStep,type MapImageKit} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
 import {SCAN_DEFAULTS,newScanSeed} from './space-time-scan.js';
 import {linkLinesSvg} from './map-links.js';
-import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
+import {diveDeeperPanel,learnBlock,ZONE_PAGE} from './dive-deeper.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
 import {openManual,hasManual,renderManualPage} from './manual.js';
 import {projectWidgets,projectWidgetsMarkup} from './project-widgets.js';
@@ -34,7 +34,6 @@ import {mapPresentation,standaloneMapSvg} from './map-communication.js';
 import {metresPerPixel} from './presentation.js';
 import {RATE_TABLE_KEYS} from './rate.js';
 import {SERIES_TABLE_KEYS} from './case-series.js';
-import {SITE_ASSIGNMENT_TABLE_KEYS} from './sea-level.js';
 import {installCredentials} from './credentials-ui.js';
 import {saveToRepository} from './repository-save.js';
 import {PROJECT_ROLES,PROJECT_ROLE_LABEL,REPOSITORY_ROLES,proposedProjectRole,roleShortfall,readMembers,memberStatement,type ProjectRole,type RepositoryRole} from './project-roles.js';
@@ -99,7 +98,7 @@ import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nod
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
 import {staticBoundaryMap,staticMapFrame} from './static-map.js';
-import {lineLayersOf,lineLayersSvg} from './map-lines.js';
+import {lineLayersOf} from './map-lines.js';
 import {mapLayerList,membersOfPolygons,LAYER_LABEL_LIMIT,type MapLayer} from './map-layer-list.js';
 import {applyFeatureEdits,applyTableEdits,editsAt,type CellEdit,type EditEntry} from './cell-edits.js';
 import {MAX_POLYGON_LAYERS,polygonPort} from './polygon-layers.js';
@@ -908,13 +907,7 @@ function tableKeyColumns(node:WorkflowNode|undefined,seen=new Set<string>()):rea
     case 'table_input':return node.params.data.keys;
     case 'rate':return RATE_TABLE_KEYS;
     case 'case_series':return SERIES_TABLE_KEYS;
-    case 'slr_site_assignment':return SITE_ASSIGNMENT_TABLE_KEYS;
     case 'measure_distance':return Object.keys(distancesColumns(node));
-    // A pass-through: the extract hands on the table it was given, keys and all, so the columns
-    // are the ones further up and not something this node names.
-    case 'slr_extract_import':{
-      const up=workflow.edges.find(e=>e.to===node.id&&e.port==='projections');
-      return tableKeyColumns(up?workflow.nodes.find(m=>m.id===up.from):undefined,seen);}
     // PASS-THROUGHS, which keep the columns of the table they read. Found 2026-11-02 joining Nigeria's
     // change in coverage: the same "Connect a table first", past a select, over a connected table.
     case 'select_rows':{
@@ -1202,9 +1195,6 @@ function upstreamKeyValues(node:WorkflowNode,seen=new Set<string>(),
     const span=search?.type==='search_satellite_catalog'&&search.params.from?sampleDays(search.params.from,search.params.until||search.params.from):[];
     return Object.fromEntries(SAMPLE_KEYS.map(k=>k==='point_id'?[idColumn,ids]:[k,k==='date'?span:[]]));
   }
-  // AN ASSIGNMENT'S COLUMNS ARE KNOWN BEFORE IT RUNS: the point and the site it was given. Relate after it, bringing a
-  // projection onto each point, offered no column at all (found 2026-11-09 building the sea-level example's manual).
-  if(up.type==='slr_site_assignment')return Object.fromEntries(SITE_ASSIGNMENT_TABLE_KEYS.map(k=>[k,[]]));
   if(up.type==='measure_distance')return distancesColumns(up);
   // Totalling DROPS the columns not kept, so offering them downstream would offer a column that
   // is no longer there.
@@ -1473,7 +1463,7 @@ function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
  *  example is worse than no count, because a practitioner reads it as a study area that failed
  *  to load.
  */
-function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if((n.type==='places'||n.type==='centers')){subtitle=`${n.params.data.features.length} local locations`;detail='GeoJSON · CRS84';}if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='policy'){subtitle=`Heat alert + distance > ${n.params.thresholdKm} km`;detail='Evidence → decision';}if(n.type==='alert'){subtitle=n.params.active===null?'Alert status unknown':n.params.active?'Heat alert is active':'No active heat alert';detail=n.params.date;}if(n.type==='measure_distance'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='study_area'){const p=n.params;subtitle=p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet';detail=!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}const alert=badgeFor(n.id);return {flagged:!!nodeAlert(n.id),definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},
+function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='measure_distance'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='study_area'){const p=n.params;subtitle=p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet';detail=!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}const alert=badgeFor(n.id);return {flagged:!!nodeAlert(n.id),definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},
     connectedPorts:workflow.edges.filter(e=>e.to===n.id).map(e=>e.port),
     availablePorts:nodeInputs(n).filter(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&portAccepts(type,outputOf(x)))).map(([port])=>port),
     type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id),alert:alert?alertHeadline(alert):undefined};}
@@ -1761,7 +1751,7 @@ function candidateFields(workflow:Workflow,nodeId:string){
   // WHAT THE STEP GAVE OUT AT THE LAST RUN, where it computes its points (experiment 192): Find health facilities from
   // a list keeps a register in its params, not the facilities it matched, so its params are not its output.
   const ran=source&&result?.pointColumns?.[source.id];
-  if(ran&&!['point_input','places','centers'].includes(source.type))return ran.map(({attribute,kind})=>({attribute,kind,label:attribute,
+  if(ran&&source.type!=='point_input')return ran.map(({attribute,kind})=>({attribute,kind,label:attribute,
     predicate:`fwa:${attribute.replace(/[^A-Za-z0-9]+(.)/g,(_,c:string)=>c.toUpperCase()).replace(/[^A-Za-z0-9]/g,'')}`}));
   const carried=recordColumns(source);
   if(carried)return carried.map(attribute=>({attribute,kind:'number' as const,label:attribute,
@@ -2510,12 +2500,11 @@ function renderLibrary(search=''){
     // OPEN example's template, so a widget absent from it could not be constructed. They were
     // addable only where a template already contained one, which is why nobody had noticed --
     // the same shape as the defect that hid them from the palette in the first place.
-    const type=b.dataset.add as NodeType,sample=structuredClone(type==='alert'?{type:'alert' as const,params:{active:null,date:new Date().toISOString().slice(0,10)}}
-      :type==='measure_distance'?{type:'measure_distance' as const,params:{unit:'kilometres' as const}}
+    const type=b.dataset.add as NodeType,sample=structuredClone(type==='measure_distance'?{type:'measure_distance' as const,params:{unit:'kilometres' as const}}
       :type==='facility_audit'?{type:'facility_audit' as const,params:{} as Record<string,never>}
       :type==='apply_ruleset'?{type:'apply_ruleset' as const,params:{label:'Apply ruleset',parameters:{}}}
       :type==='point_grid'?{type:'point_grid' as const,params:{spacingM:250}}:type==='mean_center'?{type:'mean_center' as const,params:{label:'Mean center',zone:30,hemisphere:'north' as const}}:type==='compare_point_sets'?{type:'compare_point_sets' as const,params:{label:'Compare point sets',zone:30,hemisphere:'north' as const}}:type==='comparison_map'?{type:'comparison_map' as const,params:{label:'Point comparison map'}}:type==='donut_geomask'?{type:'donut_geomask' as const,params:{label:'Donut geomasking',innerM:50,outerM:125,seed:42}}:type==='aggregate_points_to_h3_cell'?{type:'aggregate_points_to_h3_cell' as const,params:{label:'H3 cell aggregation',resolution:9,minOccupancy:2}}:type==='network_input'?{type:'network_input' as const,params:{label:'Street network',data:{nodes:[],edges:[],source:'Not prepared'},inputMethod:'file' as const,marginM:250}}:Object.hasOwn(CATCHMENT_TYPES,type)?[...johnSnowExample('snow-voronoi').nodes,...johnSnowExample('snow-isochrone').nodes].find(n=>n.type===type):type==='join_table_to_area'?{type:'join_table_to_area' as const,params:{label:'Values on the study area',keyField:'',normalisation:'fuzzy' as const}}:type==='regression'?{type:'regression' as const,params:{label:'Regression',family:'logistic' as const,outcome:'',exposure:{column:'',as:'categorical' as const},adjust:[],errors:'profile' as const}}:type==='append_rows'?{type:'append_rows' as const,params:{label:'Append rows'}}:type==='select_rows'?{type:'select_rows' as const,params:{label:'Select rows by value',keyColumn:'measure',values:[]}}:type==='relate_table'?{type:'relate_table' as const,params:{label:'Relate a column from another table',on:'',bring:''}}:type==='transmission_chains'?{type:'transmission_chains' as const,params:{label:'Transmission chains'}}:type==='detect_unusual_counts'?{type:'detect_unusual_counts' as const,params:{label:'Detect unusual counts',timeField:'',method:'ears-c1' as const}}
-      :type==='line_input'?{type:'line_input' as const,params:{label:'Line layer',inputMethod:'file' as const}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='space_time_scan'?{type:'space_time_scan' as const,params:{label:'Space-time scan',dateField:'',...SCAN_DEFAULTS,seed:newScanSeed()}}:type==='find_satellite_products'?{type:'find_satellite_products' as const,params:{label:'Find satellite products'}}:type==='search_satellite_catalog'?{type:'search_satellite_catalog' as const,params:{label:'Search a satellite catalog',from:'',until:''}}:type==='study_design'?{type:'study_design' as const,params:{label:'Study design',design:'cohort' as const,period:'',unitOfAnalysis:'',note:''}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='slr_extract_import'?{type:'slr_extract_import' as const,params:{label:'Sea-level projection extract',datasetIRI:'',datasetVersion:'',baselinePeriod:'',citations:['','',''],basisKind:'' as const,familyValues:{withVerticalLandMotion:'',withoutVerticalLandMotion:''}}}:type==='slr_site_assignment'?{type:'slr_site_assignment' as const,params:{label:'Assign projection site'}}:type==='slr_threshold_comparison'?{type:'slr_threshold_comparison' as const,params:{label:'Compare level to elevation',scenario:'',basis:'',family:'',year:'',quantile:'',elevationField:'',verticalDatum:'',elevationReference:'' as const}}:type==='polygon_input'?{type:'polygon_input' as const,params:{label:'Polygon layer',data:{features:[]}}}:type==='map_image_input'?{type:'map_image_input' as const,params:{label:'Georeferenced map image',image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0] as [number,number,number,number],opacity:0.85}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Geometry buffer',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample a raster',attribute:'',valueUnit:''}}:type==='travel_over_ground'?{type:'travel_over_ground' as const,params:{label:'Travel time over ground',attribute:'minutes'}}:type==='map_terms_to_vocabulary'?{type:'map_terms_to_vocabulary' as const,params:{label:'Map to a vocabulary',column:'',decisions:{}}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
+      :type==='line_input'?{type:'line_input' as const,params:{label:'Line layer',inputMethod:'file' as const}}:type==='group_table'?{type:'group_table' as const,params:{label:'Total within groups',by:[]}}:type==='space_time_scan'?{type:'space_time_scan' as const,params:{label:'Space-time scan',dateField:'',...SCAN_DEFAULTS,seed:newScanSeed()}}:type==='find_satellite_products'?{type:'find_satellite_products' as const,params:{label:'Find satellite products'}}:type==='search_satellite_catalog'?{type:'search_satellite_catalog' as const,params:{label:'Search a satellite catalog',from:'',until:''}}:type==='study_design'?{type:'study_design' as const,params:{label:'Study design',design:'cohort' as const,period:'',unitOfAnalysis:'',note:''}}:type==='two_by_two'?{type:'two_by_two' as const,params:{label:'Two-by-two table',exposureColumn:'',exposed:'',unexposed:'',outcomeColumn:'',caseValue:'',nonCaseValue:'',level:95 as const}}:type==='rate'?{type:'rate' as const,params:{label:'Rate with a denominator',numeratorField:'',denominatorField:'',denominatorUnit:'people' as const,rateKind:'proportion' as const,multiplier:100,minimumDenominator:20,numeratorPeriod:'',denominatorVintage:''}}:type==='case_series'?{type:'case_series' as const,params:{label:'Cases by period',dateField:'',dateKind:'onset' as const,period:'week' as const}}:type==='polygon_input'?{type:'polygon_input' as const,params:{label:'Polygon layer',data:{features:[]}}}:type==='map_image_input'?{type:'map_image_input' as const,params:{label:'Georeferenced map image',image:{width:0,height:0,bytes:0,sha256:''},bounds:[0,0,0,0] as [number,number,number,number],opacity:0.85}}:type==='table_input'?{type:'table_input' as const,params:{label:'Tabular data',keys:[],valueField:'',data:{kind:'data-table' as const,keys:[],valueField:'',rows:[],rowCount:0,missingValueCount:0}}}:type==='deduplicate_points'?{type:'deduplicate_points' as const,params:{label:'Deduplicated records',pointInputCount:2,nameField:'name',nameMatch:'fuzzy' as const,fuzzyThreshold:0.88,blockDistanceM:500,nearDistanceM:50,matchThreshold:2,reviewThreshold:1,decisions:[]}}:type==='clip_points_to_area'?{type:'clip_points_to_area' as const,params:{label:'Points inside the area',keepBoundary:true,showExcluded:true}}:type==='raster_input'?{type:'raster_input' as const,params:{label:'Raster input'}}:type==='fill_interior_gaps'?{type:'fill_interior_gaps' as const,params:{label:'Filled gaps'}}:type==='stack_polygons'?{type:'stack_polygons' as const,params:{label:'Collected polygon layers'}}:type==='travel_time_band'?{type:'travel_time_band' as const,params:{label:'Travel time band',minutes:5}}:type==='reachable_corridor'?{type:'reachable_corridor' as const,params:{label:'Reachable corridor',bufferM:25,zone:30,hemisphere:'north' as const}}:type==='reachable_nodes'?{type:'reachable_nodes' as const,params:{label:'Reachable junctions',minutes:10,speedMPerMin:80,direction:'outbound' as const,travelMode:'walking' as const}}:type==='snap_to_network'?{type:'snap_to_network' as const,params:{label:'Snap sites to the network',zone:30,hemisphere:'north' as const,maxSnapM:150}}:type==='summarize_combined_area'?{type:'summarize_combined_area' as const,params:{label:'Combined area',zone:30,hemisphere:'north' as const}}:type==='summarize_hull'?{type:'summarize_hull' as const,params:{label:'Convex hull',zone:30,hemisphere:'north' as const}}:type==='find_health_facilities'?{type:'find_health_facilities' as const,params:{label:'Find health facilities',source:'openstreetmap-live' as const,kinds:['hospital','clinic'],requireName:true,country:'',minConfidence:0.7,data:null,retrieved:null}}:type==='buffer_point'?{type:'buffer_point' as const,params:{label:'Geometry buffer',pointId:'',distanceM:5000}}:type==='sample_raster'?{type:'sample_raster' as const,params:{label:'Sample a raster',attribute:'',valueUnit:''}}:type==='travel_over_ground'?{type:'travel_over_ground' as const,params:{label:'Travel time over ground',attribute:'minutes'}}:type==='map_terms_to_vocabulary'?{type:'map_terms_to_vocabulary' as const,params:{label:'Map to a vocabulary',column:'',decisions:{}}}:type==='clip_raster'?{type:'clip_raster' as const,params:{label:'Clipped raster',method:'all-touched' as const,marginPixels:0}}:type==='chart_output'?{type:'chart_output' as const,params:{label:'Chart'}}:type==='table_output'?newTableOutput():type==='map_output'?newMapOutput():type==='point_input'?newObservations():type==='measure_area'?newAreaMeasurement():['blank','coverage'].includes(exampleKey(workflow))&&type==='study_area'?newStudyArea():template(exampleKey(workflow)).nodes.find(n=>n.type===type));
     // Every zone-taking widget was defaulted to Soho's 30/north in the branches above, which is
     // wrong anywhere else and said nothing about it. Suggest the zone the workflow's own data is
     // in, from the mean longitude of every coordinate already configured. The parameter stays: a
@@ -2774,40 +2763,6 @@ function renderInspector(){
   }else if(n.type==='rate'||n.type==='case_series'){
     // MOVED OUT OF APP.TS (series-rate-ui.ts, 2026-11-22).
     content+=(n.type==='rate'?rateInspector.markup(n,seriesRateKit()):caseSeriesInspector.markup(n as WorkflowNode<'case_series'>,seriesRateKit()));
-  }else if(n.type==='slr_extract_import'){
-    const p=n.params;
-    content+=''
-      +`<div class="field"><label class="field-label" for="slr-dataset">Published dataset (IRI or DOI)</label><input id="slr-dataset" data-slr="datasetIRI" maxlength="300" value="${esc(p.datasetIRI)}" placeholder="https://doi.org/..."></div>`
-      +`<div class="field"><label class="field-label" for="slr-version">Dataset version</label><input id="slr-version" data-slr="datasetVersion" maxlength="60" value="${esc(p.datasetVersion)}" placeholder="20210809"></div>`
-      // Where the file came from, in the practitioner's own words. The IRI field above offers
-      // nothing to somebody who was emailed a CSV, and the alert now asks rather than refuses, so
-      // there has to be somewhere to answer. A note is not a citation and the alert says so.
-      +`<div class="field"><label class="field-label" for="slr-source-note">Where did this file come from?</label><input id="slr-source-note" data-slr="sourceNote" maxlength="300" value="${esc(p.sourceNote??'')}" placeholder="Downloaded from the NASA sea level portal, 2026-10-02"><small>Free text, for a source with no IRI. It does not satisfy the licence, and it is better than nothing.</small></div>`
-      +`<div class="field"><label class="field-label" for="slr-baseline">Baseline period the change is measured against</label><input id="slr-baseline" data-slr="baselinePeriod" maxlength="60" value="${esc(p.baselinePeriod)}" placeholder="1995-2014"></div>`
-      +`<div class="field"><label class="field-label" for="slr-basis-kind">What the basis column names</label><select id="slr-basis-kind" data-slr="basisKind">`
-      +`<option value=""${p.basisKind?'':' selected'}>Not stated</option>`
-      +`<option value="workflow"${p.basisKind==='workflow'?' selected':''}>A single published workflow, such as wf_1e</option>`
-      +`<option value="confidence-pbox"${p.basisKind==='confidence-pbox'?' selected':''}>A confidence level, whose file is a p-box over several workflows</option>`
-      +'</select></div>'
-      +`<div class="field"><label class="field-label" for="slr-family-with">Family value that <strong>includes</strong> vertical land motion</label><input id="slr-family-with" data-slr-family="withVerticalLandMotion" maxlength="80" value="${esc(p.familyValues.withVerticalLandMotion)}"></div>`
-      +`<div class="field"><label class="field-label" for="slr-family-without">Family value that <strong>excludes</strong> it</label><input id="slr-family-without" data-slr-family="withoutVerticalLandMotion" maxlength="80" value="${esc(p.familyValues.withoutVerticalLandMotion)}"></div>`
-      +[0,1,2].map(i=>`<div class="field"><label class="field-label" for="slr-citation-${i}">Required citation ${i+1}</label><textarea spellcheck="true" id="slr-citation-${i}" data-slr-citation="${i}" rows="2" maxlength="400">${esc(p.citations[i]||'')}</textarea></div>`).join('')
-      +'';
-  }else if(n.type==='slr_site_assignment'){
-    content+=''
-      +'';
-  }else if(n.type==='slr_threshold_comparison'){
-    const p=n.params;
-    content+=''
-      +(['scenario','basis','family','year','quantile'] as const).map(key=>`<div class="field"><label class="field-label" for="slr-${key}">${key[0].toUpperCase()+key.slice(1)}</label><input id="slr-${key}" data-slr="${key}" maxlength="60" value="${esc(p[key])}"></div>`).join('')
-      +`<div class="field"><label class="field-label" for="slr-elevation">Point attribute holding the supplied elevation (m)</label><input id="slr-elevation" data-slr="elevationField" maxlength="60" value="${esc(p.elevationField)}"></div>`
-      +`<div class="field"><label class="field-label" for="slr-datum">Vertical datum of those elevations</label><input id="slr-datum" data-slr="verticalDatum" maxlength="80" value="${esc(p.verticalDatum)}" placeholder="MSL 1995-2014, or a named datum"></div>`
-      +`<div class="field"><label class="field-label" for="slr-reference">Those elevations are measured from</label><select id="slr-reference" data-slr="elevationReference">`
-      +`<option value=""${p.elevationReference?'':' selected'}>Not stated</option>`
-      +`<option value="baseline-sea-surface"${p.elevationReference==='baseline-sea-surface'?' selected':''}>The dataset's baseline sea surface</option>`
-      +`<option value="other-datum"${p.elevationReference==='other-datum'?' selected':''}>Another datum (geodetic, or a local benchmark)</option>`
-      +'</select></div>'
-      +'';
   }else if(n.type==='deduplicate_points'){
     content+=dedupInspector.markup(n,dedupKit());
   }else if(n.type==='find_health_facilities'){
@@ -2872,12 +2827,6 @@ function renderInspector(){
     content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">`
       +`${esc(why?`The last run could not compute this step: ${why}`:receipt?.method?rulesResultLine(receipt.method):'Not run yet.')}</p>`
       +'<div data-standard-result></div>');
-  }else if(n.type==='policy'){
-    content+=`<span class="inspector-section">Rule settings</span><div class="field"><label class="field-label" for="threshold">Distance threshold</label><div class="input-unit"><input id="threshold" type="number" min="0" max="1000" step="0.5" value="${n.params.thresholdKm}"><span>km</span></div><small>Flag distances strictly greater than this value.</small></div><div class="rule-preview">When the heat alert is <b>active</b><br>and the nearest center is <b>more than ${n.params.thresholdKm} km away</b>,<br>flag the neighborhood for review.</div><span class="inspector-section">Missing evidence</span><div class="inspector-divider"></div><span class="inspector-section">Execution engine</span><div class="engine-card"><span class="engine-mark">⋈</span><div><strong>EYE-JS · Notation3</strong><small>WebAssembly · runs on this device</small></div></div>`;
-  }else if(n.type==='alert'){
-    content+=`<div class="field"><label class="field-label" for="alert-state">Heat alert status</label><select id="alert-state"><option value="true" ${n.params.active===true?'selected':''}>Active</option><option value="false" ${n.params.active===false?'selected':''}>Inactive</option><option value="null" ${n.params.active===null?'selected':''}>Unknown</option></select><label class="field-label" for="assessment-date">Assessment date</label><input id="assessment-date" type="date" value="${n.params.date}"><small>This example supplies a single alert status for all locations on the assessment date. No external alert feed is queried.</small></div>`;
-  }else if((n.type==='places'||n.type==='centers')){
-    content+=labelForm('source-label','Source label',n.params.label)+`<div class="detail-row"><span>Records</span><strong>${n.params.data.features.length}</strong></div><div class="detail-row"><span>Coordinates</span><strong>Longitude, latitude · CRS84</strong></div><button id="replace-data" class="button small">↑ Replace with local GeoJSON</button>${recordsPanel(n.id,n.params.data)}<small class="muted">Point FeatureCollections only, up to 2,000 records. Files stay in this browser.</small>`;
   }else if(n.type==='measure_distance'){
     // THE STANDARD INSPECTOR (experiment 186). Touched when it replaced Assign projection site (experiment 197): its
     // result is now read as a table by Relate, Select rows and Table. Touched widgets move to the standard, always.
@@ -2891,7 +2840,7 @@ function renderInspector(){
       :measured?`${measured.rowCount.toLocaleString()} point${measured.rowCount===1?'':'s'} measured; ${measured.missingValueCount.toLocaleString()} with no nearest candidate. A table step after it reads point_id, nearest_id and each candidate's attributes as nearest_<attribute>.`:'Not run yet.')}</p>`);
 
   }
-  if(['study_area','point_input','places','centers','measure_area','coverage_check','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Table output can show points in metres, in a UTM zone.</p></div>';
+  if(['study_area','point_input','measure_area','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Table output can show points in metres, in a UTM zone.</p></div>';
   // A map can always take another point layer: there is no mode in which it cannot draw points.
   if(standard){
     // MANUAL · EVIDENCE · VERSION, the same three on every standard step, then the actions.
@@ -3238,13 +3187,6 @@ function renderInspector(){
   document.querySelectorAll<HTMLInputElement>('#output-totals').forEach(el=>
     el.addEventListener('change',()=>change(w=>{
       getNode(w,n.id,'table_output').params.totalsAsserted=el.checked||undefined;})));
-  // A number, and `data-slr` writes strings, which would reach the module as a key not in its table.
-  document.querySelectorAll<HTMLInputElement|HTMLTextAreaElement|HTMLSelectElement>('[data-slr]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=required(w.nodes.find(x=>x.id===n.id));(node.params as unknown as Record<string,string>)[required(el.dataset.slr)]=el.value.trim();})));
-  document.querySelectorAll<HTMLInputElement>('[data-slr-family]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=getNode(w,n.id,'slr_extract_import');node.params.familyValues={...node.params.familyValues,[required(el.dataset.slrFamily)]:el.value.trim()};})));
-  document.querySelectorAll<HTMLTextAreaElement>('[data-slr-citation]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const node=getNode(w,n.id,'slr_extract_import');const citations=[...node.params.citations];citations[Number(el.dataset.slrCitation)]=el.value.trim();node.params.citations=citations;})));
   document.querySelectorAll<HTMLInputElement>('#chart-label').forEach(el=>el.addEventListener('change',()=>change(w=>{required(w.nodes.find(x=>x.id===n.id)).params.label=el.value.trim()||'Chart';})));
   // Reading, not editing: it opens a dialog and touches nothing that is saved.
   optionalElement('#table-convert-on-run')?.addEventListener('change',e=>{
@@ -3353,6 +3295,7 @@ function renderInspector(){
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   if(n.type==='table_input')tableInspector.wire(n,tableKit(),document);
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
+  optionalElement('#open-zone-manual')?.addEventListener('click',()=>openManual(ZONE_PAGE,'The UTM zone',esc));
   if(n.type==='join_table_to_area')joinInspector.wire(n,joinKit(),document);
   // Clip raster's own download, of the masked grid; Raster input's is in its dialog (186, 2026-11-17).
   // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).
@@ -3411,9 +3354,6 @@ function renderInspector(){
     optionalElement('#distance-label')?.addEventListener('change',e=>change(w=>{const v=control(e).value.trim();
       const p=getNode(w,n.id,'measure_distance').params;if(v&&v!==TYPES.measure_distance.title)p.label=v;else delete p.label;}));
   }
-  optionalElement('#threshold')?.addEventListener('change',e=>{const value=control(e).value===''?NaN:Number(control(e).value);change(w=>getNode(w,n.id,'policy').params.thresholdKm=value);});
-  optionalElement('#alert-state')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'alert').params.active=JSON.parse(control(e).value)));
-  optionalElement('#assessment-date')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'alert').params.date=control(e).value));
   optionalElement('#source-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title));
   optionalElement('#replace-data')?.addEventListener('click',()=>{importNode=n.id;$('#geojson-file').click();});
   // Every label form, one handler. Saving on change stays -- nothing typed is lost by not

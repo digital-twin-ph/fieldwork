@@ -651,7 +651,7 @@ export function isochrone(input:PointCollection,network:Network,params:WorkflowN
     // routinely longer. Charging it makes the isochrone smaller and still optimistic.
     //
     // D3 remains unmodelled; `bufferM` below is a cartographic halo standing in for it.
-    // Experiment 114 and the Dive Deeper section of the lab's 19-snap notebook.
+    // Experiment 114.
     const distances=new Map<string,number>([[snap.id,snapDistance]]),settled=new Set<string>();
     for(;;){let current:string|undefined,best=Infinity;for(const [id,d] of distances)if(!settled.has(id)&&d<best){current=id;best=d;}if(!current||best>budget)break;settled.add(current);for(const e of adjacency.get(current)||[]){const cost=best+e.lengthM;if(cost<(distances.get(e.to)??Infinity))distances.set(e.to,cost);}}
     // The whole route, chunked with the budget left at every point along it: the straight walk

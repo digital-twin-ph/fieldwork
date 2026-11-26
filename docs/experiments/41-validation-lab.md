@@ -1,10 +1,12 @@
 # Experiment 41: an accompanying Validation Lab
 
-_Created 2026-10-08 · Updated 2026-10-14_
+_Created 2026-10-08 · Updated 2026-11-26_
 
 **Status:** validated — the lab exists, every notebook executes in CI and fails
 the build on an error cell, and six widgets' results agree with an independent
-implementation. The original status line, kept here because it dates the
+implementation. **Corrected 2026-11-26:** the first half of that stopped being true on
+2026-10-15. From then the lab's CI failed on every push, at the browser kernel, so the
+published lab stopped at check 25; see [the lab audit](../audits/validation-lab-audit.md). The original status line, kept here because it dates the
 distance travelled, read: *design specification and measured feasibility check.
 No lab exists, no notebook has run, and nothing in this prototype has been
 validated against a reference implementation yet.*

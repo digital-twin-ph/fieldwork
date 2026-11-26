@@ -7,6 +7,7 @@
  *  scale of the whole stand apart in the enlarged view: an inset enlarges the distances, never the marks.
  *
  *  Pure: the drawings arrive as SVG content in their own 850-wide coordinates, with the projections that made them. */
+import {escapeHtml} from './html-escape.js';
 
 export type Box=[west:number,south:number,east:number,north:number];
 export type Corner='ne'|'nw'|'se'|'sw';
@@ -68,7 +69,7 @@ function scaleBar(drawing:Drawing,frame:Rect):string{
     +`<text x="${x}" y="${y-8}" font-size="13" fill="#1f2a24">${metresLabel(metres)}</text></g>`;
 }
 
-const escapeText=(t:string)=>t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const escapeText=escapeHtml;
 /** THE WHOLE'S NAME in the frame's top-left corner, on the page's scale: 15 units of the 850-wide figure, a white
  *  backing so it reads over a boundary line. Its width is estimated, at 0.58 of the size a character. */
 function nameIn(frame:Rect,name:string):string{

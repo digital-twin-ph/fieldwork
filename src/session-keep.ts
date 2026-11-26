@@ -9,14 +9,12 @@
  *  folder, or to another origin. That is all it protects against: a script on this page can ask the key to decrypt. A
  *  signing key is kept as the non-exportable CryptoKey it already is. Each record carries its expiry and is deleted, not
  *  returned, once that has passed. */
+import {openLocalDatabase} from './local-database.js';
 
 const DB='fieldwork-unlocked-v1',STORE='kept',WRAP='wrap-key';
 export const UNLOCKED_FOR_MS=15*60*1000;
 
-function database():Promise<IDBDatabase>{
-  return new Promise((resolve,reject)=>{const r=indexedDB.open(DB,1);
-    r.onupgradeneeded=()=>r.result.createObjectStore(STORE);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
-}
+const database=():Promise<IDBDatabase>=>openLocalDatabase(DB,STORE);
 async function run<T>(mode:IDBTransactionMode,act:(store:IDBObjectStore)=>IDBRequest<T>):Promise<T>{
   const db=await database();
   try{return await new Promise<T>((resolve,reject)=>{const r=act(db.transaction(STORE,mode).objectStore(STORE));

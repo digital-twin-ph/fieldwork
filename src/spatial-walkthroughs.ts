@@ -3,6 +3,7 @@
  *  standardization."* The table walkthroughs' player (table-walkthrough.ts) draws each step; here the shapes are fixed in
  *  the code, near the equator so a degree is close to a degree each way, and never read from a port. Each walkthrough's
  *  last step is the result the step's own function makes from these shapes, so it cannot show what the step does not do. */
+import {escapeHtml} from './html-escape.js';
 import type {Boundary,Position,WorkflowNode,PointCollection} from './types.js';
 import {costsWithin} from './reachable-nodes.js';
 import type {Walkthrough,WalkStep} from './table-walkthrough.js';
@@ -43,7 +44,7 @@ function draw(shapes:Shape[],label:string):{svg:string;key:string[]}{
     ?`<path class="walk-shape walk-shape-${s.kind}" d="${path(s.rings)}" fill-rule="evenodd"${s.shade!==undefined?` style="fill-opacity:${(0.2+0.75*s.shade).toFixed(2)}"`:''}/>`
     :s.point?`<circle class="walk-shape walk-shape-${s.kind} walk-point" cx="${x(s.point[0]).toFixed(1)}" cy="${y(s.point[1]).toFixed(1)}" r="5"/>`:'').join('')
     +shapes.filter(s=>s.label).map(s=>{const at=s.at??s.point??s.rings![0]![0]![0]!;
-      return `<text class="walk-shape-label" x="${(x(at[0])+8).toFixed(1)}" y="${(y(at[1])-8).toFixed(1)}">${s.label!.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]!))}</text>`;}).join('');
+      return `<text class="walk-shape-label" x="${(x(at[0])+8).toFixed(1)}" y="${(y(at[1])-8).toFixed(1)}">${escapeHtml(s.label)}</text>`;}).join('');
   const kinds=[...new Set(shapes.map(s=>s.kind))];
   return {svg:`<svg class="walk-drawing" viewBox="0 0 360 240" role="img" aria-label="${label}">${body}</svg>`,key:kinds.map(k=>KEY[k])};
 }

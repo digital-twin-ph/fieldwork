@@ -22,7 +22,8 @@ Then the mechanics, in order. Nothing here is generated for you except the last 
 | Step | File | What it needs |
 | --- | --- | --- |
 | 1 | `src/types.ts` | The `NodeType` member and its params interface. A new `PortType` member only if D4 says a wrong-producer condition needs a hard stop — the union is closed and compiled in, so adding to it is a base-contract change |
-| 2 | `src/core.ts` | The `TYPES` entry: `title`, `group`, `icon`, `color`, `description`, `inputs` as `[port, type]` pairs, `output`. Then the execution `case`, and any validation rule in `validateWorkflow` rather than inside the operation |
+| 2 | `src/core.ts` | The `TYPES` entry: `title`, `group`, `icon`, `color`, `description`, `inputs` as `[port, type]` pairs, `output`. Any validation rule goes in `validateWorkflow` rather than inside the operation |
+| 2a | `src/run-<family>.ts`, `src/step-runners.ts` | The function that runs the step, taking a `StepContext` and returning its value, in the module for its family (inputs, spatial, raster, tables, ruleset, epidemiology, sea level, outputs), and its entry in `STEP_RUNNERS`. `tests/step-runners.test.mjs` fails if a step that can be added has none |
 | 3 | `src/<operation>.ts` | The operation and its receipt builder. Keep the receipt's `method` sentence truthful about what was not represented |
 | 4 | `src/app.ts` | The add-node default params in the palette chain, the Inspector panel, and a `describe()` case if the subtitle or detail should say more than the description |
 | 4a | `src/palette.ts` | **Add the node type to `ALWAYS_ADDABLE`, or it is unreachable.** The palette filters by this set, so a widget can build, validate, register and pass its own tests while nobody can add it. If a new group heading was introduced, add it to `PALETTE_GROUPS` too — a group missing there sorts to the front. `tests/palette.test.mjs` fails on both |

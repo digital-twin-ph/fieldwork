@@ -1,6 +1,6 @@
 # Kinds of validation
 
-_Created 2026-10-10 · Updated 2026-10-10_
+_Created 2026-10-10 · Updated 2026-11-26_
 
 "Is this widget validated?" has no single answer, because there are seven different checks
 here and each one establishes something different. A widget can pass one and fail another,
@@ -25,8 +25,9 @@ leaves open.
 | 6 | **Pack validation** | `npm run validate:packs` | A pack's files match the digests the catalog pins, at a full commit, and that pack and host agree about capabilities and stages | That the pack is any good, or that its reviews have run |
 | 7 | **Parity** | `npm run validate:parity` | An independent external implementation computes the same numbers under a stated criterion | Scientific certification, or that the method is appropriate. It is agreement, not correctness |
 
-Checks 1–5 run in `npm run check`. Check 6 needs the pack repository and check 7 needs a
-[Validation Lab](../../../validation-lab) checkout, so neither is in the gate.
+Checks 1–5 run in `npm run check`, and since 2026-11-26 check 7 too, against the Validation Lab
+checked out beside this repository (in CI, at the commit `widgets/parity.json` pins). Check 6 needs
+the pack repository and is not in the gate.
 
 Two human checks sit alongside these and are not automated. The **semantic admission
 review** happens before a primitive is built; the **design audit** (D1–D10) checks whether
@@ -39,7 +40,7 @@ a widget aligns with the design spec, and was last run in
 | Check | Coverage |
 | --- | --- |
 | Unit, browser, ontology, registry | All 39 widgets, as part of the gate |
-| **Parity** | **4 of 39.** `reproject`, `measure_area` and `mean_center` agree; `clip_raster` is **partial** |
+| **Parity** | **32 of 44** computing widgets on 2026-11-26. The count lives in `widgets/check-coverage.json`, which `validate:check-coverage` keeps true; how old each check is, `validate:parity` reports. See [the lab audit](validation-lab-audit.md) |
 | Competency questions | Reviewed by hand. Turning each into a query that runs against a receipt is not implemented |
 
 `clip_raster`'s partial result is worth reading rather than summarising: cell-centre
@@ -48,10 +49,10 @@ alignment, and all-touched with a one-pixel margin differs on 61 cells because t
 reference models the margin as a 3×3 dilation, which is not this widget's rule. A
 *disagreement that is explained* is a result, not a failure.
 
-The Validation Lab holds notebooks for reproject, raster clipping, area and mean centre.
-Its numbering skips two, which is where planned comparisons were never written. So the gap
-is not the mechanism — that works, and its evidence is digest-pinned to a lab commit — but
-its reach.
+The Validation Lab held notebooks for four widgets when this page was written. On 2026-11-26 it
+holds 51, and every check was rerun against fixtures exported from Fieldwork 0.200.0. The gap is
+still not the mechanism, whose evidence is digest-pinned to a lab commit, but its reach: 12
+computing widgets owe a check, and one is blocked.
 
 ## They are independent, and `reproject` proves it
 

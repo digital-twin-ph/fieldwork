@@ -1,3 +1,4 @@
+import {escapeHtml} from './html-escape.js';
 import {fillWords,figureWords} from './figure-words.js';
 import {lineLayersOf} from './map-lines.js';
 import {rampFor} from './raster-image.js';
@@ -282,7 +283,7 @@ export function standaloneMapSvg(content:string,viewBox:string,spec:MapPresentat
   const ramped=content.includes('data-plot-key-band')&&!content.includes('data-plot-key="class"');
   if(spec?.legend)content=content.replace(ramped?/<(rect|text) data-plot-key="class"[^>]*?(\/>|>[^<]*<\/(rect|text)>)/g
     :/<(rect|text) data-plot-key="(class|line)"[^>]*?(\/>|>[^<]*<\/(rect|text)>)/g,'');
-  const escape=(s:string)=>s.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+  const escape=escapeHtml;
   const lines=(value:string,max:number)=>value.match(new RegExp(`.{1,${max}}(?:\\s|$)|.{1,${max}}`,'g'))?.map(line=>line.trim())||[];
   const t=FIGURE_TYPE;
   const titleLines=lines(spec.title,60),subtitleLines=lines(spec.subtitle,90);

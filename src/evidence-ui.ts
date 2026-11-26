@@ -1,10 +1,11 @@
+import {escapeHtml} from './html-escape.js';
 import type {WorkflowNode,Escape} from './types.js';
 import type {EvidenceReference,ReferenceRole} from './evidence.js';
 import {REFERENCE_ROLES,referenceURL,validateReferences} from './evidence.js';
 import {attachPDF,readPDF,verifiedPDF} from './evidence-storage.js';
 import {errorMessage,required} from './guards.js';
 
-const esc:Escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!));
+const esc:Escape=escapeHtml;
 export function evidenceInspector(node:WorkflowNode):string {
   const refs=node.references||[];
   return `<section class="node-evidence"><div class="inspector-divider"></div><h3>Evidence references (${refs.length})</h3><p class="description">Record where the data came from, or the evidence supporting this step.</p>${refs.length?`<ul>${refs.map(r=>`<li>${esc(r.title)} <small>${esc(REFERENCE_ROLES[r.role])} · ${r.kind==='pdf'?'PDF':'URL'}</small></li>`).join('')}</ul>`:'<p class="muted">No references attached yet.</p>'}<button id="manage-references" class="button small">Manage references</button></section>`;

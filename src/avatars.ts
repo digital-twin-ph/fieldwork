@@ -10,6 +10,7 @@
  *
  *  Pure: each returns SVG markup. Every colour carries white at WCAG AA or better (6.3:1 at the least); each avatar has
  *  a light ring so its shape holds on a dark page. */
+import {escapeHtml} from './html-escape.js';
 
 /** The colours an avatar can take, each with white at 6.3:1 or more. */
 export const AVATAR_COLOURS:readonly {id:string;label:string;hex:string}[]=[
@@ -38,7 +39,7 @@ export interface AvatarChoice {icon:string; colour:string}
 export const isAvatarChoice=(v:unknown):v is AvatarChoice=>!!v&&typeof v==='object'
   &&AVATAR_ICONS.some(i=>i.id===(v as AvatarChoice).icon)&&AVATAR_COLOURS.some(c=>c.id===(v as AvatarChoice).colour);
 
-const escape=(s:string)=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]!));
+const escape=escapeHtml;
 /** Up to two initials: the first letters of the first and last words of a name. */
 export function initials(name:string):string{
   const words=name.trim().split(/\s+/).filter(Boolean);

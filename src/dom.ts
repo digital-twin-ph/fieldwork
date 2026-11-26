@@ -89,7 +89,6 @@ export interface SelectorElements {
   '#assign-project':HTMLSelectElement;
   '#measure-area-source':HTMLSelectElement;
   '#area-unit':HTMLSelectElement;
-  '#alert-state':HTMLSelectElement;
   '#output-view':HTMLSelectElement;
   '#input-mode':HTMLSelectElement;
   '#synthetic-boundary':HTMLSelectElement;
@@ -118,8 +117,6 @@ export interface SelectorElements {
   '#area-north':HTMLInputElement;
   '#study-area-label':HTMLInputElement;
   '#source-label':HTMLInputElement;
-  '#threshold':HTMLInputElement;
-  '#assessment-date':HTMLInputElement;
   '#output-label':HTMLInputElement;
   '#exclusion-reason':HTMLInputElement;
   '#synthetic-inside':HTMLInputElement;

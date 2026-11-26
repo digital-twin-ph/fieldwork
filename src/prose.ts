@@ -29,6 +29,7 @@
  *  is converted to MathML, which browsers typeset natively -- so there is nothing to fetch at
  *  render time and nothing to download at use time, which is what an offline-first application
  *  needs. See `typeset`. */
+import {escapeHtml} from './html-escape.js';
 
 /** What a renderer may produce, so a note cannot grow a heading by being written in one. */
 export interface ProseOptions {
@@ -38,8 +39,7 @@ export interface ProseOptions {
   links?:boolean;
 }
 
-const ESCAPES:Record<string,string>={'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'};
-export const escapeProse=(value:string):string=>value.replace(/[&<>"]/g,c=>ESCAPES[c]);
+export const escapeProse=(value:string):string=>escapeHtml(value);
 
 /** THE MATHEMATICS, LIFTED OUT BEFORE ANYTHING IS ESCAPED.
  *

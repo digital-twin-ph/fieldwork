@@ -32,3 +32,19 @@ test('escaping twice is visible, not silent',()=>{
   // so a caller escaping an already-escaped value sees it in the output.
   assert.equal(escapeHtml(escapeHtml('<')),'&amp;lt;');
 });
+
+// ONE RULE, MECHANISED. On 2026-11-25 eight more copies of the rule and ten weaker ones were found after 0.185.0 had
+// brought four together, because nothing stopped a module writing its own. This reads the source for the shape every
+// copy took: a replace over &, <, > (and perhaps quotes) mapping each to its entity. Decoding, as xlsx.ts does to
+// read a spreadsheet's XML, maps the other way and is not matched.
+test('no module defines an HTML escape of its own',async()=>{
+  const {readdir,readFile}=await import('node:fs/promises');
+  const dir=new URL('../src/',import.meta.url);
+  const shape=/\.replace\(\/(\[&<>[^\]]*\]|&)\/g,[^\n]{0,40}&amp;/;
+  const found=[];
+  for(const name of (await readdir(dir)).filter(n=>/\.tsx?$/.test(n)&&n!=='html-escape.ts')){
+    const lines=(await readFile(new URL(name,dir),'utf8')).split('\n');
+    lines.forEach((line,i)=>{if(shape.test(line))found.push(`src/${name}:${i+1}`);});
+  }
+  assert.deepEqual(found,[],'import escapeHtml from src/html-escape.ts instead');
+});

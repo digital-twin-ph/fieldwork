@@ -5,6 +5,7 @@
  *  scripts/widget-manual.mjs, so nothing is parsed or fetched at run time, and the ontology entry
  *  for each widget carries `fw:userManual` pointing at the same page: "where is the documentation
  *  for this?" is a question the graph answers rather than a convention a reader has to know. */
+import {escapeHtml} from './html-escape.js';
 import pages from '../widgets/manual-pages.json';
 
 export const MANUAL_PAGES=pages as Record<string,string>;
@@ -50,7 +51,7 @@ const heldPage=():DetachedPage|undefined=>{try{const raw=localStorage.getItem(PA
 const keepPage=(state:DetachedPage|undefined)=>{
   try{if(state)localStorage.setItem(PAGE_DETACHED,JSON.stringify(state));else localStorage.removeItem(PAGE_DETACHED);}
   catch{/* the panel still opens; it is not remembered */}};
-const escText=(v:string)=>v.replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]!);
+const escText=escapeHtml;
 export function renderManualPage(scroll=0):void{
   const state=heldPage(),page=state?MANUAL_PAGES[state.nodeType]:undefined;
   let panel=document.getElementById('widget-manual-float');

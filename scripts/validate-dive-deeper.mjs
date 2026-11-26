@@ -23,7 +23,6 @@ const entries=parity.entries.filter(e=>e.notebook);
 for(const entry of parity.entries){
   const widget=entry.widget.split(':').pop();
   if(!entry.notebook)problems.push(`${widget}: parity entry "${entry.check}" names no notebook, so the check it reports cannot be opened.`);
-  if(entry.diveDeeper&&!entry.notebook)problems.push(`${widget}: declares a Dive Deeper section with no notebook to find it in.`);
 }
 
 if(!existsSync(lab)){
@@ -81,29 +80,25 @@ if(pinned){
     }catch{console.log('  unchecked — the lab clone has no upstream branch, so nothing says where it publishes.');}
   }
 }
-let verified=0,withSection=0;
+// THE LAB VALIDATES AND DOES NOT TEACH, from 2026-11-26. The practitioner: Dive Deeper is pedagogy, in its own
+// repository, deferred until the widgets are mature enough to teach from. The twenty sections that still lived at the
+// end of lab notebooks were taken out (their text is in the lab's history at the commit widgets/dive-deeper.json
+// names), and a parity entry no longer links one. So a lab notebook carrying a Dive deeper section, or a parity entry
+// declaring one, is a lesson in the wrong place.
+let verified=0;
 for(const entry of entries){
   const widget=entry.widget.split(':').pop();
+  if(entry.diveDeeper)problems.push(`${widget}: parity entry "${entry.check}" declares a Dive Deeper section. Lessons live in dive-deeper, and are deferred; the lab only validates.`);
   if(!present.has(entry.notebook)){
     problems.push(`${widget}: names ${entry.notebook}, which the lab does not have. The link would 404 in a practitioner's browser and nowhere else.`);
     continue;
   }
   verified++;
-  if(!entry.diveDeeper)continue;
-  const cells=JSON.parse(readFileSync(join(lab,entry.notebook),'utf8')).cells.map(c=>c.source.join(''));
-  const headings=cells.flatMap(c=>c.split('\n')).filter(line=>line.startsWith('## Dive deeper')).map(line=>line.slice(3).trim());
-  if(!headings.includes(entry.diveDeeper))
-    problems.push(`${widget}: declares the section "${entry.diveDeeper}", which ${entry.notebook} does not carry. It has ${headings.length?headings.map(h=>JSON.stringify(h)).join(', '):'no Dive deeper section at all'}.`);
-  else withSection++;
 }
-
-// A notebook that teaches something and is reachable from no widget is the defect this started as.
-const linked=new Set(entries.filter(e=>e.diveDeeper).map(e=>e.notebook));
 for(const notebook of [...present].sort()){
-  if(linked.has(notebook))continue;
   const cells=JSON.parse(readFileSync(join(lab,notebook),'utf8')).cells.map(c=>c.source.join(''));
-  if(cells.some(c=>c.includes('## Dive deeper')))
-    problems.push(`${notebook} carries a Dive Deeper section and no widget links it. Record it on the widget's parity entry, or the explanation is written and unreachable.`);
+  if(cells.some(c=>/^## Dive deeper/m.test(c)))
+    problems.push(`${notebook} carries a Dive Deeper section. Lessons live in dive-deeper, and are deferred; the lab only validates.`);
 }
 
 // The lessons in their own repository: each entry names a notebook that has to exist, and each
@@ -129,10 +124,5 @@ if(!existsSync(deeper)){
       problems.push(`${notebook} is in dive-deeper and no widget links it. Record it in widgets/dive-deeper.json, or the lesson is written and unreachable.`);
 }
 
-// The ratchet on what is still in the wrong repository. It may fall and never rise.
-const legacy=parity.entries.filter(entry=>entry.diveDeeper).length;
-if(legacy>ledger.legacyCeiling)
-  problems.push(`${legacy} Dive Deeper sections still live inside lab notebooks, against a ceiling of ${ledger.legacyCeiling}. Rewriting one against the pedagogical requirements moves it to dive-deeper and lowers this; nothing may raise it.`);
-
-console.log(`Dive Deeper: ${lessons} lesson(s) verified in dive-deeper; ${verified} lab notebooks verified, ${withSection} carrying the declared section (legacy ${legacy} of ceiling ${ledger.legacyCeiling}).`);
+console.log(`Dive Deeper: ${lessons} lesson(s) verified in dive-deeper; ${verified} parity entries' notebooks found in the lab, none teaching.`);
 if(problems.length){console.error('');for(const p of problems)console.error('  • '+p);process.exit(1);}

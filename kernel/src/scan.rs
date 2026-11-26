@@ -310,3 +310,169 @@ pub extern "C" fn scan_run(count: u32, top: f64, stop_after: u32, longest: u32, 
     unsafe { DONE = done as u32 };
     done as u32
 }
+
+#[cfg(test)]
+mod tests {
+    extern crate std;
+    use super::*;
+    use std::vec::Vec;
+    /// The module keeps its arrays in statics, so its tests take turns.
+    static TURN: std::sync::Mutex<()> = std::sync::Mutex::new(());
+
+    /// Three places over four bins, nine cases, two centres and three circles: small enough to score by hand. Chosen so
+    /// that the best score rises with each window length from one bin to three, retrospective and prospective alike, so a
+    /// window bound off by one changes the answer.
+    const CASES: [(i32, i32); 9] = [(0, 1), (0, 2), (0, 2), (0, 2), (0, 3), (0, 3), (1, 2), (1, 3), (2, 0)];
+    const CENTER_STARTS: [i32; 3] = [0, 2, 3];
+    const CENTER_ORDERS: [i32; 3] = [0, 3, 5];
+    const ORDERS: [i32; 5] = [0, 1, 2, 1, 2];
+    const SIZES: [i32; 3] = [1, 2, 1];
+    /// Each circle's places, as the order and sizes above make them.
+    const CIRCLES: [&[i32]; 3] = [&[0], &[0, 1], &[1]];
+
+    fn prepare(replications: u32) {
+        let n = CASES.len();
+        assert_eq!(scan_prepare(n as u32, 3, 4, 2, 3, 5, replications), 1);
+        for (i, &(p, b)) in CASES.iter().enumerate() {
+            set_i(CASE_PLACE, i, p);
+            set_i(CASE_BIN, i, b);
+        }
+        for (i, v) in CENTER_STARTS.iter().enumerate() {
+            set_i(CENTER_START, i, *v);
+        }
+        for (i, v) in CENTER_ORDERS.iter().enumerate() {
+            set_i(CENTER_ORDER, i, *v);
+        }
+        for (i, v) in ORDERS.iter().enumerate() {
+            set_i(ORDER, i, *v);
+        }
+        for (i, places) in CIRCLES.iter().enumerate() {
+            set_i(CIRCLE_SIZE, i, SIZES[i]);
+            let inside = CASES.iter().filter(|(p, _)| places.contains(p)).count();
+            set_f(CIRCLE_SHARE, i, inside as f64 / n as f64);
+        }
+    }
+
+    /// The highest score the slow way: every circle against every window of at most `longest` bins, the
+    /// prospective ones ending on the last bin. The kernel only tries windows that start and end on a bin the circle
+    /// has a case in; a window widened past those holds the same cases and expects more, so it cannot score higher.
+    fn brute(bins: &[i32], longest: usize, prospective: bool) -> f64 {
+        let n = CASES.len() as f64;
+        let last = 3usize;
+        let mut best = 0.0f64;
+        for places in CIRCLES {
+            let share = CASES.iter().filter(|(p, _)| places.contains(p)).count() as f64 / n;
+            for a in 0..=last {
+                for b in a..=last {
+                    if b - a + 1 > longest || (prospective && b != last) {
+                        continue;
+                    }
+                    let within = |t: i32| (a as i32..=b as i32).contains(&t);
+                    let c = CASES.iter().zip(bins).filter(|((p, _), t)| places.contains(p) && within(**t)).count();
+                    let total = bins.iter().filter(|t| within(**t)).count();
+                    best = best.max(llr(c as f64, share * total as f64, n));
+                }
+            }
+        }
+        best
+    }
+
+    #[test]
+    fn the_stream_is_mulberry32_as_the_script_draws_it() {
+        let _turn = TURN.lock().unwrap_or_else(|e| e.into_inner());
+        // From `mulberry32` in src/space-time-scan.ts, each draw times 2^32.
+        let expected: [(u32, [u32; 5]); 3] = [
+            (0, [1144304738, 1416247, 958946056, 627933444, 2007157716]),
+            (12345, [4207900869, 1317490944, 2079646450, 3513001552, 2187978186]),
+            (4294967295, [3850105811, 813802916, 3073704848, 4054706436, 3630262831]),
+        ];
+        for (seed, draws) in expected {
+            unsafe { RNG = seed };
+            for d in draws {
+                assert_eq!(next() * 4_294_967_296.0, d as f64, "seed {seed}");
+            }
+        }
+    }
+
+    #[test]
+    fn the_ratio_is_zero_unless_more_are_observed_than_expected() {
+        assert_eq!(llr(2.0, 2.0, 9.0), 0.0);
+        assert_eq!(llr(1.0, 2.0, 9.0), 0.0);
+        assert_eq!(llr(3.0, 0.0, 9.0), 0.0);
+        assert_eq!(llr(9.0, 9.0, 9.0), 0.0);
+        let (c, e, n) = (4.0f64, 1.5f64, 9.0f64);
+        let by_hand = c * (c / e).ln() + (n - c) * ((n - c) / (n - e)).ln();
+        assert!((llr(c, e, n) - by_hand).abs() < 1e-12);
+    }
+
+    #[test]
+    fn the_observed_score_is_the_best_window_anywhere() {
+        let _turn = TURN.lock().unwrap_or_else(|e| e.into_inner());
+        prepare(5);
+        scan_begin(1);
+        let observed: Vec<i32> = CASES.iter().map(|(_, b)| *b).collect();
+        for longest in 1..=4 {
+            for prospective in [false, true] {
+                let got = score(longest, prospective);
+                let want = brute(&observed, longest, prospective);
+                assert!((got - want).abs() < 1e-12, "longest {longest}, prospective {prospective}: {got} against {want}");
+            }
+        }
+        for prospective in [false, true] {
+            assert!(score(1, prospective) < score(2, prospective) && score(2, prospective) < score(3, prospective),
+                "the fixture's best window is three bins long, so each bound below it scores less");
+        }
+    }
+
+    #[test]
+    fn a_shuffle_moves_dates_between_cases_and_keeps_every_date() {
+        let _turn = TURN.lock().unwrap_or_else(|e| e.into_inner());
+        prepare(20);
+        scan_begin(12345);
+        assert_eq!(scan_run(20, f64::MAX, 0, 2, 0), 20);
+        let mut shuffled: Vec<i32> = (0..CASES.len()).map(|i| get_i(SHUFFLED, i)).collect();
+        let mut observed: Vec<i32> = CASES.iter().map(|(_, b)| *b).collect();
+        let moved = shuffled != observed;
+        shuffled.sort();
+        observed.sort();
+        assert_eq!(shuffled, observed, "the same dates, reassigned");
+        assert!(moved, "twenty shuffles moved something");
+        // Each maximum is the score of its own shuffle, so none exceeds the best a window can give any assignment.
+        for i in 0..20 {
+            let m = get_f(MAXIMA, i);
+            assert!(m >= 0.0 && m.is_finite());
+        }
+    }
+
+    #[test]
+    fn the_same_seed_gives_the_same_maxima() {
+        let _turn = TURN.lock().unwrap_or_else(|e| e.into_inner());
+        prepare(30);
+        let run = |seed: u32| {
+            scan_begin(seed);
+            // In two batches, as the caller runs it, so the stream carries across calls.
+            scan_run(12, f64::MAX, 0, 3, 0);
+            scan_run(18, f64::MAX, 0, 3, 0);
+            (0..30).map(|i| get_f(MAXIMA, i)).collect::<Vec<f64>>()
+        };
+        let a = run(99);
+        assert_eq!(a, run(99));
+        assert_ne!(a, run(100), "another seed shuffles otherwise");
+    }
+
+    #[test]
+    fn it_stops_early_and_says_so() {
+        let _turn = TURN.lock().unwrap_or_else(|e| e.into_inner());
+        prepare(10);
+        // Every shuffle scores at least 0, so a top of 0 is met at once.
+        scan_begin(7);
+        assert_eq!(scan_run(10, 0.0, 1, 2, 0), 1 | 0x8000_0000);
+        scan_begin(7);
+        assert_eq!(scan_run(10, 0.0, 3, 2, 0), 3 | 0x8000_0000);
+        // A top no shuffle reaches runs them all, unflagged; so does a stop of 0.
+        scan_begin(7);
+        assert_eq!(scan_run(10, f64::MAX, 1, 2, 0), 10);
+        scan_begin(7);
+        assert_eq!(scan_run(10, 0.0, 0, 2, 0), 10);
+    }
+}

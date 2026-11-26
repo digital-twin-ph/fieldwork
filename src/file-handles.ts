@@ -3,17 +3,14 @@
  *  remembered. Chrome and Edge give a handle to a file chosen through their picker, which can be kept in IndexedDB and,
  *  in a later session, read again once the person allows it. Safari and Firefox do not; there the file is chosen again.
  *  A handle is kept by the digest of the file it was checked to be, on this device only. */
+import {openLocalDatabase} from './local-database.js';
 type ReadPermission='granted'|'denied'|'prompt';
 export interface KeptHandle {getFile():Promise<File>;
   queryPermission?(o:{mode:'read'}):Promise<ReadPermission>;requestPermission?(o:{mode:'read'}):Promise<ReadPermission>}
 type Picker=(o:{types?:{description:string;accept:Record<string,string[]>}[];multiple?:boolean})=>Promise<KeptHandle[]>;
 
 const DB='fieldwork-file-handles',STORE='handles';
-const open=()=>new Promise<IDBDatabase>((resolve,reject)=>{
-  const request=indexedDB.open(DB,1);
-  request.onupgradeneeded=()=>{request.result.createObjectStore(STORE);};
-  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
-});
+const open=()=>openLocalDatabase(DB,STORE);
 async function inStore<T>(mode:IDBTransactionMode,work:(store:IDBObjectStore)=>IDBRequest):Promise<T|undefined>{
   try{
     const db=await open();

@@ -6,8 +6,7 @@
   "commit": "ea5a5ff0df129125038ce16ac93464defd87058f",
   "site": "https://digital-twin-ph.github.io/dive-deeper/lab/index.html?path="
  },
- "legacyNote": "The twenty sections still living as trailing cells in validation-lab notebooks are recorded on widgets/parity.json's `diveDeeper` field and counted below. They predate the pedagogical requirements and meet the older, narrower definition -- vary the assumption -- so rewriting one against the requirements is new work and not a file move. The ceiling may fall and never rise.",
- "legacyCeiling": 20,
+ "legacyNote": "Taken out of the lab on 2026-11-26. The twenty sections that lived as trailing cells in Validation Lab notebooks, linked from widgets/parity.json's `diveDeeper` field, were removed when the practitioner deferred Dive Deeper: it is pedagogy, in its own repository, and waits until the widgets are mature enough to teach from. Their text is in the lab's history at commit 202cc775bafbfc1e05dac6d3d28f72a36dfa8a4c, for a lesson to start from when the time comes. The zone explanation the metric widgets owe a reader moved to the manual (docs/surfaces/utm-zone.md).",
  "entries": [
   {
    "widget": "urn:fieldwork:widget:mean_center",

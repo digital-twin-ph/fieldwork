@@ -108,34 +108,6 @@ export function metricCRSAssertion(crs:string):string{
   return `fw:metricCRS ${JSON.stringify(crs)}; dcterms:conformsTo <${iri}>; `;
 }
 
-/** The Dive Deeper notebook that explains projections, linked from every widget that projects.
- *  The practitioner's rule of 2026-10-13: a widget may embed a CRS choice only if the person
- *  making that choice can reach an explanation of what they are choosing. Nine widgets take a
- *  zone and hemisphere; before this, none of them said anywhere what a zone is or what picking
- *  the wrong-but-plausible one costs. */
-export const PROJECTION_NOTEBOOK={
-  check:'01-reproject',
-  notebook:'01-reproject-vs-pyproj.ipynb',
-  section:'Dive deeper · what a projection is, and what the zone choice costs',
-  url:'https://digital-twin-ph.github.io/validation-lab/lab/index.html?path=01-reproject-vs-pyproj.ipynb',
-} as const;
-
-/** The explanation link for a widget that projects, or '' for one that does not. Derived from
- *  METRIC_NODE_TYPES rather than written out per widget, so a tenth metric widget gets the link
- *  by being added to that list and cannot ship without it. */
-export function projectionExplainer(nodeType:string):string{
-  if(!(METRIC_NODE_TYPES as readonly string[]).includes(nodeType))return '';
-  return '<details class="explainer"><summary>What does the UTM zone do?</summary>'
-    +'<p>This widget measures in metres, so it projects the coordinates first, and the zone you '
-    +'pick is part of how the answer is computed. Near a zone boundary two different zones can '
-    +'both be defensible and give areas that differ by about half a percent &mdash; small, but '
-    +'systematic across every length in the workflow. Every metric widget in one workflow must '
-    +'declare the same zone.</p>'
-    +`<p>The <a href="${PROJECTION_NOTEBOOK.url}" target="_blank" rel="noopener noreferrer">`
-    +'projection notebook</a> explains what a projection is and recomputes that difference with '
-    +'PROJ, outside this browser.</p></details>';
-}
-
 /** The UTM zone an EPSG code names, or null when the code is not a WGS84 UTM zone. Used where a
  *  file declares its own CRS as a code -- a GeoPackage's `gpkg_spatial_ref_sys` does -- and the
  *  reader has to decide whether it can be honoured rather than refused. */

@@ -26,7 +26,7 @@ output; **Not built**; **Policy** is a rule the project keeps rather than a feat
 | --- | --- | --- | --- | --- |
 | A project as a repository | git, one file per workflow | **Built** | `fieldwork-project-template`; Save to the repository as one commit; Get the latest; Load the project | [150](../experiments/150-can-several-authors-collaborate-in-a-project-repository.md) |
 | Every step's provenance | W3C PROV-O | **Built** | Run receipts and evidence for each workflow step | `docs/audits/ontology-audit.md` |
-| Independent recomputation | Validation Lab | **Partial** | 31 of 42 computing widgets checked (count of 2026-11-24) | [validation](validation.md) |
+| Independent recomputation | Validation Lab | **Partial** | 31 of 42 computing widgets checked; 3 checks disagree at 0.200.0 and the published lab stops at check 25 (audit of 2026-11-26) | [validation](validation.md), [lab audit](validation-lab-audit.md) |
 | The vocabulary, published | OWL, SHACL | **Built** | Read-only view at digital-twin-ph.github.io/fieldwork-ontology | `ontology/` |
 | What each column means | Data dictionaries, column metadata | **Built** | Described by the practitioner; source metadata pre-fills | [211](../experiments/211-the-measurement-scale-of-a-column.md) |
 | Worked examples as their own repositories | Pinned by digest | **Built** | Eleven example repositories, each with its terms | `widgets/examples.json` |

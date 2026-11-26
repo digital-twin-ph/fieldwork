@@ -40,10 +40,10 @@
  "note": "Derived by scripts/widget-evidence.mjs from the shipped example workflows, the node types declared for each pinned worked example in widgets/examples.json, and widgets/check-coverage.json. Never hand-edited. Use counts through a composition, because a micro_workflow node is its members. A pinned example in its own repository counts as one example use like any other, and is read from the catalogue declaration rather than from a clone, so this file does not depend on what any machine happens to have checked out. Field use is declared and empty: an empty top rung is a measurement, a missing one is a flattering omission.",
  "counts": {
   "declared only": 4,
-  "example only": 8,
+  "example only": 9,
   "parity only": 10,
-  "example, lab not applicable": 9,
-  "example+parity": 21,
+  "example, lab not applicable": 7,
+  "example+parity": 22,
   "neither applies": 1
  },
  "compositionsUsedByNoExample": [
@@ -613,10 +613,10 @@
     "workflows-rulesets"
    ],
    "exampleUseCount": 17,
-   "lab": "none",
+   "lab": "parity",
    "labOwed": false,
    "fieldUse": [],
-   "rung": "example, lab not applicable"
+   "rung": "example+parity"
   },
   {
    "nodeType": "study_design",
@@ -680,10 +680,10 @@
     "workflows-rulesets"
    ],
    "exampleUseCount": 13,
-   "lab": "none",
-   "labOwed": false,
+   "lab": "awaiting",
+   "labOwed": true,
    "fieldUse": [],
-   "rung": "example, lab not applicable"
+   "rung": "example only"
   },
   {
    "nodeType": "table_output",

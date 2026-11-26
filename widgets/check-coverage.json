@@ -6,12 +6,12 @@
     "none": "Nothing to recompute: an input, a presentation, or a rule node whose conclusions are the reasoner's. `reason` says which.",
     "blocked": "Would owe a check, and cannot have a meaningful one yet. `reason` names the obstacle."
   },
-  "measuredAt": "2026-11-24",
+  "measuredAt": "2026-11-26",
   "counts": {
     "widgets": 53,
-    "covered": 31,
-    "awaiting": 11,
-    "none": 10,
+    "covered": 32,
+    "awaiting": 12,
+    "none": 8,
     "blocked": 1
   },
   "widgets": [
@@ -23,9 +23,9 @@
     {
       "nodeType": "apply_ruleset",
       "expectation": "parity",
-      "check": "23-rulesets",
+      "check": "49-mers",
       "computes": "Applies a declared ruleset: projects facts from a typed carrier, binds a parameter with its unit, evaluates N3, and extracts a classification against the ruleset's declared vocabulary.",
-      "reason": "Checked by the Lab exhaustively rather than by sample: all three rulesets have finite input spaces, 46 cells in total, and check 23 reproduces every conclusion with a Python decision table and verifies the emitted receipt."
+      "reason": "Corrected 2026-11-26 (docs/audits/validation-lab-audit.md). Check 23 checked, exhaustively, the three rulesets bundled until Old Naledi was retired on 2026-11-11, and check 25 the extent rule: both record rulesets Fieldwork no longer carries. Of the rulesets bundled now, 7-1-7 timeliness is recomputed end to end by check 49 (the MERS example's verdicts), and compare-level-to-elevation by check 42, through Sample a raster. extract-contract has no check."
     },
     {
       "nodeType": "buffer_point",
@@ -212,8 +212,10 @@
     },
     {
       "nodeType": "study_area",
-      "expectation": "none",
-      "reason": "A study-area input: the boundary is supplied or drawn, not computed."
+      "expectation": "parity",
+      "check": "41-boundary-repair",
+      "computes": "Repairs a published boundary as it is read: removes a vertex equal to the one before it and the tip of a zero-width spike, and lists every removal by kind and position.",
+      "reason": "Corrected 2026-11-26 (docs/audits/validation-lab-audit.md). It was declared to compute nothing, but it has repaired boundaries since experiment 194, and lab check 41 recomputes the repair with shapely."
     },
     {
       "nodeType": "study_design",
@@ -237,8 +239,9 @@
     },
     {
       "nodeType": "table_input",
-      "expectation": "none",
-      "reason": "A supplied long-format CSV, retained as given."
+      "expectation": "parity",
+      "computes": "Converts a wide file to one value per row on each run, applies the values edited by hand to a copy, and profiles every column for the data quality tab: counts, missing values and the findings it reports. pandas (melt, and describe or value_counts) can recompute all three from the file and the declarations.",
+      "reason": "Corrected 2026-11-26 (docs/audits/validation-lab-audit.md). It was declared to keep a long-format CSV as given; it has done more than that since the wide reading (188), hand edits (214) and the data quality profile (207)."
     },
     {
       "nodeType": "table_output",
@@ -286,7 +289,7 @@
     {
       "nodeType": "transmission_chains",
       "expectation": "parity",
-      "computes": "Each case's chain, generation, offspring and chain size, by following the recorded source to the first case. An independent implementation (networkx, or a recursive walk in R) can recompute MERS's 67 chains, SK_1's 94 cases over 4 generations, and every case's generation; worth checking because a case in a loop, or naming a source not held, must start a chain rather than be dropped."
+      "computes": "Each case's chain, generation, offspring and chain size, by following the recorded source to the first case. An independent implementation (networkx, or a recursive walk in R) can recompute MERS's 67 chains, SK_1's 94 cases over 4 generations, and every case's generation; worth checking because a case in a loop, or naming a source not held, must start a chain rather than be dropped. Its core, the chains and generations of transmissionTree, is already recomputed by lab check 44 (credited to Chart, which drew the tree first) and the offspring counts by check 43 (credited to Relate). What no check reads is this step's own output and receipt, which is what a check of this widget would add (2026-11-26)."
     },
     {
       "nodeType": "detect_unusual_counts",

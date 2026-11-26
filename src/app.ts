@@ -10,7 +10,7 @@ import {mapImageStep,type MapImageKit} from './map-image-ui.js';
 import {catalogLinks,builtInLinks,exampleLinksBlock,exampleSlug,type ExampleLinks} from './example-links.js';
 import {SCAN_DEFAULTS,newScanSeed} from './space-time-scan.js';
 import {linkLinesSvg} from './map-links.js';
-import {diveDeeperPanel,learnBlock} from './dive-deeper.js';
+import {diveDeeperPanel,learnBlock,ZONE_PAGE} from './dive-deeper.js';
 import {buildOrder,revealedTypes,revealReason} from './reveal-playback.js';
 import {openManual,hasManual,renderManualPage} from './manual.js';
 import {projectWidgets,projectWidgetsMarkup} from './project-widgets.js';
@@ -3295,6 +3295,7 @@ function renderInspector(){
   optionalElement('#add-table-view')?.addEventListener('click',()=>change(w=>{const id=`table-view-${Date.now()}`;w.nodes.push({id,type:'table_output',x:n.x+270,y:n.y,params:{label:'Imported table'}});w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'table'});selected=id;}));
   if(n.type==='table_input')tableInspector.wire(n,tableKit(),document);
   optionalElement('#open-manual')?.addEventListener('click',()=>openManual(n.type,TYPES[n.type].title,esc));
+  optionalElement('#open-zone-manual')?.addEventListener('click',()=>openManual(ZONE_PAGE,'The UTM zone',esc));
   if(n.type==='join_table_to_area')joinInspector.wire(n,joinKit(),document);
   // Clip raster's own download, of the masked grid; Raster input's is in its dialog (186, 2026-11-17).
   // A WINDOW THAT TRAVELLED WITHOUT ITS BYTES (experiment 209): said on the Result line; read again in Configure… (186).

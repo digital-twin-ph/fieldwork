@@ -1,9 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Parser} from 'n3';
-import {CRS84_IRI,crsIRIFromName,epsgName,crsIRI,metricChoices,workflowMetricCRS,METRIC_NODE_TYPES,PROJECTION_NOTEBOOK,projectionExplainer} from '../build/metric-crs.js';
+import {CRS84_IRI,crsIRIFromName,epsgName,crsIRI,metricChoices,workflowMetricCRS,METRIC_NODE_TYPES} from '../build/metric-crs.js';
+import {learnBlock,ZONE_PAGE} from '../build/dive-deeper.js';
+import {MANUAL_PAGES} from '../build/manual.js';
+import {TYPES} from '../build/core.js';
 import {executeWorkflow,validateWorkflow} from '../build/core.js';
-import {readFileSync,existsSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {johnSnowExample} from '../build/john-snow.js';
 import {geoprivacyExample} from '../build/geoprivacy-example.js';
 import {syncProjectManifest} from '../build/project-manifest.js';
@@ -114,31 +117,21 @@ test('every widget with a zone knob is a metric widget, and every metric widget 
   assert.ok(zoned.length>0,'found no widget with a zone knob; the check proved nothing');
   assert.deepEqual([...zoned].sort(),[...METRIC_NODE_TYPES].sort(),
     'src/types.ts and METRIC_NODE_TYPES disagree about which widgets take a projection');
-  // And the explanation reaches every one of them, with the notebook link in it.
-  for(const type of METRIC_NODE_TYPES){
-    const html=projectionExplainer(type);
-    assert.match(html,/<details/,`${type} projects but offers no explanation of the zone`);
-    assert.ok(html.includes(PROJECTION_NOTEBOOK.url),`${type} does not link the projection notebook`);
-  }
-  assert.equal(projectionExplainer('table_input'),'','a widget that projects nothing must not claim to');
+  // And the explanation reaches every one of them: the manual's page on the zone, from the learn block (the practitioner's
+  // rule of 2026-10-13; a manual page from 2026-11-26, when Dive Deeper was deferred and the lab's section taken out).
+  const esc=v=>String(v);
+  for(const type of METRIC_NODE_TYPES)
+    assert.match(learnBlock(type,esc,''),/id="open-zone-manual"/,`${type} projects but offers no explanation of the zone`);
+  assert.doesNotMatch(learnBlock('table_input',esc,''),/open-zone-manual/,'a widget that projects nothing must not claim to');
 });
 
-test('the projection notebook exists and carries the section the link promises',()=>{
-  // The link is to another repository, so when the lab is not checked out beside this one the
-  // check says so rather than passing quietly: a link validated by nothing is the defect.
-  const notebook=new URL(`../../validation-lab/content/${PROJECTION_NOTEBOOK.notebook}`,import.meta.url);
-  if(!existsSync(notebook)){
-    assert.ok(process.env.FIELDWORK_LAB_OPTIONAL==='1',
-      `${PROJECTION_NOTEBOOK.notebook} is not beside this repository, so the link in every metric widget's Inspector is unverified. Check out validation-lab, or set FIELDWORK_LAB_OPTIONAL=1 to accept an unverified link.`);
-    return;
-  }
-  const cells=JSON.parse(readFileSync(notebook,'utf8')).cells.map(c=>c.source.join(''));
-  assert.ok(cells.some(c=>c.includes(PROJECTION_NOTEBOOK.section)),
-    `${PROJECTION_NOTEBOOK.notebook} has no section titled "${PROJECTION_NOTEBOOK.section}"`);
-  // The section has to actually explain the thing, not just be titled for it.
-  const body=cells.join('\n');
-  for(const required of ['central meridian','scale factor','32734','32735','Transformer'])
-    assert.ok(body.includes(required),`the projection notebook never mentions ${required}`);
+test('the UTM zone page exists, names every widget that projects, and says what the choice costs',()=>{
+  const page=MANUAL_PAGES[ZONE_PAGE];
+  assert.ok(page,`${ZONE_PAGE} is not compiled into the manual`);
+  for(const type of METRIC_NODE_TYPES)
+    assert.ok(page.includes(TYPES[type].title),`the zone page does not name ${TYPES[type].title}`);
+  for(const required of ['60 zones','0.6%','same zone in every step','cannot be mixed'])
+    assert.ok(page.includes(required),`the zone page never says "${required}"`);
 });
 
 test('a run is refused when the widgets that will execute disagree, and a stray draft is not a run',async()=>{

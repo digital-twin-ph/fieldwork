@@ -37,6 +37,34 @@ shown in a local build is not a claim that it has been published.
   store bounded the wait for an open that neither succeeds nor fails, which some engines do in private mode; saving
   a PDF, a remembered file, a satellite reading and unlocked credentials could each wait for ever. Each store keeps
   its own way of failing.
+- **The Validation Lab, audited and brought up to this release** ([audit](docs/audits/validation-lab-audit.md)).
+  Every fixture the exporter can make was made again from this build, and every lab check run on it: all agree,
+  except clip raster and deduplicate, which partly agree as recorded. `widgets/parity.json` is pinned to the lab
+  commit that holds those results, and every entry rerun on a new fixture covers its widget's current release.
+- **Three lab checks had fallen behind rules this project declares**, and disagreed until they were brought up to
+  them. Reachable junctions has charged the walk onto the network since 0.4.0: the reachability fixture now declares
+  it, and check 07 measures the walk itself. Join a table to the study area has counted units, not parts, since
+  0.3.1: the fixture declares it, and check 31 counts Streatham's two polygons as one unit. And a QR control code the
+  classic decoder could not read was counted against Fieldwork; check 47 now reads with both OpenCV detectors.
+- **The exporter wrote two fixtures the lab could not use.** Clip raster's typed array became an object keyed by
+  index, every cell marked inside: the exporter now reads NaN as outside and writes lists, and the canonical digest
+  refuses a typed array or an integer-like key, which JavaScript orders as Python does not. The ruleset exporter
+  imported Old Naledi's removed module; the three rulesets it exported are retired, and it is removed. Check 30's
+  fixture, made at 0.12.0 by a chain that is gone, is made again from the South London people workflow
+  (`two-by-two-snow-002`).
+- **`validate:parity` runs in the gate**, against the lab checked out beside this repository, and lists every entry
+  checked at an older release than the widget's current one. It reports that age and never fails on it.
+- **The ledger of lab checks corrected** (`widgets/check-coverage.json`). Study area is covered, by check 41's
+  boundary repair. Table input owes a check: it converts wide files, applies hand edits and profiles columns. Apply
+  ruleset rests on check 49, since checks 23 and 25 cover rulesets that are retired. 32 of 44 computing widgets are
+  checked, 12 await one, 1 is blocked.
+- **Dive Deeper offers lessons only, and the UTM zone has a manual page.** Dive Deeper is pedagogy, in its own
+  repository, deferred until the widgets are mature enough to teach from. So the twenty teaching sections still at
+  the end of lab notebooks were taken out of the lab, the `diveDeeper` links in `widgets/parity.json` with them, and
+  `validate:dive-deeper` now fails if a lab notebook or a parity entry teaches. The eight widgets that take a UTM zone
+  had linked to one of those sections, for the rule that a CRS choice comes with a reachable explanation of it. They
+  now open **The UTM zone** (`docs/surfaces/utm-zone.md`) from their learn block: what a zone is, the 0.6% two
+  reasonable zones can differ by, and why every step in a workflow uses one.
 
 ## 0.199.0 — In development
 

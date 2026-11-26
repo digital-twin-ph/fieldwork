@@ -7,7 +7,7 @@
 //                   | deduplicate-facilities-001
 //                   | measure-area-001 | mean-center-001
 //                   | reachability-soho-001 | corridor-soho-001
-//                   | relate-snow-001 | relate-spelling-sl-001 | boundary-repair-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
+//                   | relate-snow-001 | two-by-two-snow-002 | relate-spelling-sl-001 | boundary-repair-001 | group-snow-001 | group-shares-snow-001 | area-join-snow-001
 //                   | select-range-london-001
 //                   | regression-salmonella-001 | regression-nyc-001 (needs NYC_PKG)
 //                   | sample-satellite-s5p-001 | lag-response-brazil-001 | regression-strata-brazil-001
@@ -43,7 +43,7 @@ import {relateAtShifts} from '../build/relate-table.js';
 import {computeRateTwoByTwo} from '../build/two-by-two-rates.js';
 import {tablePoints} from '../build/table-points.js';
 import {groupTable as totalWithin} from '../build/group-table.js';
-import {rateTwoByTwoSentence} from '../build/two-by-two.js';
+import {rateTwoByTwoSentence,computeTwoByTwo} from '../build/two-by-two.js';
 import {executeWorkflow} from '../build/core.js';
 import {inspectRaster,readRasterWindow,rasterWindow} from '../build/raster.js';
 import {sampleRaster} from '../build/sample-raster.js';
@@ -82,7 +82,8 @@ const OWN_REPO_ENV=Object.fromEntries(Object.entries(process.env).filter(([k])=>
 
 // The reasoner in node, the same engine and version the browser worker runs. `vendor/eye-21.1.24.js`
 // is a webpack bundle assigning to `var eyereasoner`, so `runInThisContext` puts it in scope --
-// the technique scripts/export-ruleset-fixture.mjs established on 2026-10-12. A fixture that
+// the technique the ruleset exporter established on 2026-10-12 (removed 2026-11-26: the three rulesets it exported
+// went with Old Naledi, and check 23 keeps their record). A fixture that
 // recorded a classification without running the reasoner would be recording an assumption.
 globalThis.self=globalThis;
 runInThisContext(readFileSync(new URL('../vendor/eye-21.1.24.js',import.meta.url),'utf8'),{filename:'eye-21.1.24.js'});
@@ -107,10 +108,17 @@ const MAX_ROWS_SALMONELLA=20000,MAX_ROWS_NYC=20000;
  *  Python's `json.dumps(obj, sort_keys=True, separators=(',', ':'), ensure_ascii=False)`
  *  produces the same string, which is what the lab recomputes. Arrays keep their order:
  *  only object keys are sorted. */
-const canonical=value=>JSON.stringify(value,(_key,inner)=>
-  inner&&typeof inner==='object'&&!Array.isArray(inner)
-    ?Object.fromEntries(Object.keys(inner).sort().map(key=>[key,inner[key]]))
-    :inner);
+// TWO THINGS JSON.stringify DOES THAT PYTHON DOES NOT, refused rather than written: a typed array becomes an object
+// keyed by index, and an object's integer-like keys ("0", "10", "2") are always enumerated in numeric order, whatever
+// order they are inserted in, so they cannot be sorted as Python sorts them. Either would give a fixture whose
+// integrity the lab cannot reproduce (found 2026-11-26, check 02). A fixture states such values as a list.
+const canonical=value=>JSON.stringify(value,(key,inner)=>{
+  if(ArrayBuffer.isView(inner))throw new Error(`A typed array at "${key}": write it as a list (Array.from) so the lab reads what Fieldwork wrote.`);
+  if(!inner||typeof inner!=='object'||Array.isArray(inner))return inner;
+  const keys=Object.keys(inner),numeric=keys.find(k=>/^(0|[1-9]\d*)$/.test(k));
+  if(numeric!==undefined)throw new Error(`An integer-like key "${numeric}" under "${key}": JavaScript orders such keys numerically and Python sorts them as text, so the integrity could not be reproduced. Write the values as a list.`);
+  return Object.fromEntries(keys.sort().map(k=>[k,inner[k]]));
+});
 const canonicalDigest=value=>sha256(Buffer.from(canonical(value),'utf8'));
 const base=(id,nodeType,label,implementation)=>({
   schema:'fieldwork/validation-fixture/1',fixtureId:id,exportedAt:new Date().toISOString(),
@@ -811,10 +819,15 @@ const builders={
       declaredParameters:{
         originNodeId,minutes,speedMPerMin,travelMode,direction,
         budgetMetres:minutes*speedMPerMin,
+        // THE WALK ONTO THE NETWORK IS CHARGED (reachable_nodes 0.4.0, 2026-10-14), declared here so the lab can
+        // recompute it rather than read it: the straight-line distance in metricCRS from the site to its junction,
+        // rounded to the centimetre, spent before any street is walked. Until 2026-11-26 the fixture declared only
+        // minutes x speed, and check 07 recomputed the traversal as if the walk were free.
+        metricCRS:'EPSG:32630',accessWalk:'charged',accessWalkRounding:0.01,
         costAttribute:'lengthM',
         edgeLengthSource:network.source,
         method:reached.receipt.method,
-        semantics:'Cheapest-path traversal from the origin node over the stated edge lengths, keeping every node whose cost is at most the budget. The budget is the minutes multiplied by the speed. No geometry is measured and no projection is used: the lengths are taken as supplied. Edges are directed, and an inbound traversal would reverse them.'
+        semantics:'Cheapest-path traversal from the origin node over the stated edge lengths. The walk from the site to the origin node, the straight-line distance in metricCRS rounded to the centimetre, is spent first: a node is kept where the walk plus its path cost is at most the budget, and each node carries that total as travelMetres and the budget less it as remainingM. The budget is the minutes multiplied by the speed. Street lengths are taken as supplied, and no other geometry is measured. Edges are directed, and an inbound traversal would reverse them.'
       },
       input:{
         network:{source:network.source,
@@ -1871,6 +1884,36 @@ const builders={
     },files:{}};
   },
 
+  async 'two-by-two-snow-002'(){
+    // THE TWO-BY-TWO ON PEOPLE, from the workflow that runs it (2026-11-26, Validation Lab audit). Check 30's first
+    // fixture, two-by-two-snow-001, was made at 0.12.0 by a chain that is gone (Derive value is retired), with no
+    // integrity and under label fields Fieldwork has since renamed, so nothing could make it again. This one runs the
+    // South London people workflow and hands the table its `estimates` step reads to the same function with that
+    // step's own settings: a change to the workflow changes the fixture. The houses comparison is the rate layout
+    // now, and check 27 has it.
+    const path=new URL('../../example-1855-cholera-south-london/fieldwork-project.json.gz',import.meta.url);
+    const bundle=JSON.parse(gunzipSync(readFileSync(path)));
+    const name='Were deaths more common with one water supply than the other?';
+    const found=bundle.workflows.filter(w=>w.document?.name===name);
+    if(found.length!==1)throw new Error(`The South London checkout carries ${found.length} workflows named "${name}".`);
+    const workflow=found[0].document,step=workflow.nodes.find(n=>n.id==='estimates');
+    const from=workflow.edges.find(e=>e.to==='estimates'&&e.port==='records')?.from;
+    if(!step||step.type!=='two_by_two'||!from)throw new Error('The people workflow no longer has its two-by-two step `estimates` fed by a table.');
+    const table=(await executeWorkflow(structuredClone(workflow),{reason:async()=>({conclusions:[]})})).tables[from];
+    const {label:_label,...request}=step.params;
+    const r=computeTwoByTwo(table,request);
+    return {fixture:{
+      ...base('two-by-two-snow-002','two_by_two','Two-by-two table','src/two-by-two.ts#computeTwoByTwo'),
+      declaredParameters:{...request,
+        semantics:'Cells from the table: exposed and unexposed are the two values of the exposure column compared, cases and non-cases the two values of the outcome column named. The risk ratio has a Katz log interval, the odds ratio a Wald interval on the log scale, and the risk difference an unpooled Wald interval, each at the declared level. Each estimate carries a conventional label and where the label was read: `results-panel` is a deduction from another program\'s published results, `original-program` a reading of that program itself.'},
+      source:'John Snow, On the Mode of Communication of Cholera, 2nd ed., 1855: Tables VIII and XII, for people, as the South London example\'s people workflow derives them.',
+      input:{table:{columns:table.columns??null,keys:table.keys??null,rows:table.rows}},
+      output:{cells:r.cells,exposedTotal:r.exposedTotal,unexposedTotal:r.unexposedTotal,
+        riskExposed:r.riskExposed,riskUnexposed:r.riskUnexposed,strataLeftOut:r.strataLeftOut,
+        estimates:r.estimates.map(({name,value,lower,upper,level,method,conventionalLabel,conventionalLabelSource,unavailable})=>
+          ({name,value,lower,upper,level,method,conventionalLabel,conventionalLabelSource,unavailable}))}
+    },files:{}};
+  },
   async 'two-by-two-rates-snow-001'(){
     // THE RATE RATIO, NOW THE TWO-BY-TWO'S (experiment 161, step 6). Lab check 27's four comparisons, made by the
     // two-by-two's rate layout from tables the South London workflows themselves produce: Table IX as the bundle
@@ -2027,7 +2070,7 @@ const builders={
           groupBy:rateParams.groupBy,multiplier:rateParams.multiplier,
           minimumDenominator:rateParams.minimumDenominator,rateKind:rateParams.rateKind,
           measureKey:rateParams.measureKey,denominatorUnit:rateParams.denominatorUnit},
-        semantics:'Each part of the study area takes the value of the one table row whose key matches its name, compared for EQUALITY after a declared folding. `fuzzy` folds every run of non-alphanumeric characters to one space and lowercases; `exact` only trims and lowercases. There is no similarity, no threshold and no review band: a name differing by more than the folding is reported unmatched rather than resolved. A part no row names keeps its place with a null value, because a boundary with no data is a fact about the data and not a reason to leave a hole in the map. Two parts sharing one name both take that value and are flagged `shared`.',
+        semantics:'Each part of the study area takes the value of the one table row whose key matches its name, compared for EQUALITY after a declared folding. `fuzzy` folds every run of non-alphanumeric characters to one space and lowercases; `exact` only trims and lowercases. There is no similarity, no threshold and no review band: a name differing by more than the folding is reported unmatched rather than resolved. A part no row names keeps its place with a null value, because a boundary with no data is a fact about the data and not a reason to leave a hole in the map. Two parts sharing one name both take that value. They are flagged `shared` only where they belong to different units, told apart by their id (a part with no id is a unit of its own): the parts of one unit, such as a district\'s islands, share its value and are not flagged (area join 0.3.1; declared here from 2026-11-26).',
         equivalentTo:'A pandas merge of the rate table onto the parts on a folded key, left on the parts so every part survives. The folding itself is NOT independently reimplemented here -- see notEstablished.'},
       input:{
         units:units.map((u,index)=>({index,id:u.id,name:u.name})),
@@ -2144,11 +2187,14 @@ const builders={
     const cutline={type:'Polygon',coordinates:[[[25.03,-24.03],[25.17,-24.03],[25.17,-24.09],[25.11,-24.09],[25.11,-24.14],[25.195,-24.155],[25.06,-24.16],[25.045,-24.105],[25.03,-24.03]]]};
     const cases=[{method:'all-touched',marginPixels:0},{method:'all-touched',marginPixels:1},{method:'cell-center',marginPixels:0}].map(options=>{
       const clipped=clipRaster({...source,asset:undefined},cutline,options);
-      const m=clipped.metadata,rows=[];
-      for(let row=0;row<m.height;row++)rows.push(clipped.values.slice(row*m.width,(row+1)*m.width).map(v=>v===null?'0':'1').join(''));
+      // Clip raster marks a cell outside the cutline NaN in a typed array (it was null in a plain array until 0.111.0).
+      // Every source cell here is finite, so NaN is outside. Read as a plain array: a typed array serialises as an
+      // object keyed by index, which is neither the list the lab reads nor canonical across JSON implementations.
+      const m=clipped.metadata,rows=[],cells=Array.from(clipped.values,v=>Number.isNaN(v)?null:v);
+      for(let row=0;row<m.height;row++)rows.push(cells.slice(row*m.width,(row+1)*m.width).map(v=>v===null?'0':'1').join(''));
       return {options,window:{origin:m.origin,width:m.width,height:m.height,bounds:m.bounds},
         counts:{included:clipped.mask.inside,valid:clipped.mask.valid,excluded:clipped.mask.outside},
-        includedRows:rows,includedValues:clipped.values.filter(v=>v!==null)};
+        includedRows:rows,includedValues:cells.filter(v=>v!==null)};
     });
     return {fixture:{
       ...base('clip-all-touched-001','clip_raster','Clip raster','src/raster-mask.ts#rasterCellPredicate'),

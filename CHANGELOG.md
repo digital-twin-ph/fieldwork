@@ -57,7 +57,7 @@ shown in a local build is not a claim that it has been published.
 - **`validate:parity` runs in the gate**, against the lab checked out beside this repository, and lists every entry
   checked at an older release than the widget's current one. It reports that age and never fails on it.
 - **The ledger of lab checks corrected** (`widgets/check-coverage.json`). Study area is covered, by check 41's
-  boundary repair. Table input owes a check: it converts wide files, applies hand edits and profiles columns. Apply
+  boundary repair. Tabular data owes a check: it converts wide files, applies hand edits and profiles columns. Apply
   ruleset rests on check 49, since checks 23 and 25 cover rulesets that are retired. 32 of 44 computing widgets are
   checked, 12 await one, 1 is blocked.
 - **Dive Deeper offers lessons only, and the UTM zone has a manual page.** Dive Deeper is pedagogy, in its own

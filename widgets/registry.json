@@ -292,7 +292,7 @@
   {
    "id": "urn:fieldwork:widget:case_series",
    "nodeType": "case_series",
-   "currentVersion": "0.9.0",
+   "currentVersion": "0.10.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -348,6 +348,11 @@
      "version": "0.9.0",
      "path": "widgets/releases/case_series/0.9.0.json",
      "sha256": "acb2276c81c2d15ee41334811b4d1ac19581d5ef95d1eab87e77f7311aee9b41"
+    },
+    {
+     "version": "0.10.0",
+     "path": "widgets/releases/case_series/0.10.0.json",
+     "sha256": "9671048ede53de0e59bb10de287803213eacec354fc7bfd20b0d442bb9c7e172"
     }
    ]
   },
@@ -3437,7 +3442,7 @@
   {
    "id": "urn:fieldwork:widget:regression",
    "nodeType": "regression",
-   "currentVersion": "0.8.0",
+   "currentVersion": "0.9.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3493,6 +3498,11 @@
      "version": "0.8.0",
      "path": "widgets/releases/regression/0.8.0.json",
      "sha256": "ce7eb3c0c355c12f39c33a2140168d7bb71d1c9035c44f0d8759e80ad38363eb"
+    },
+    {
+     "version": "0.9.0",
+     "path": "widgets/releases/regression/0.9.0.json",
+     "sha256": "d08b9e67474115baaad3f964e8731d5e2dbe353d2449b8a356aba69d06a440b1"
     }
    ]
   },

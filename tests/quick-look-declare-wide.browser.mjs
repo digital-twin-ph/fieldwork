@@ -1,6 +1,11 @@
 import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
+// NOT A TEST OF THE SERVICE WORKER. On WebKit the reasoning worker is refused "due to access control checks" at
+// startup, which fails every test in a file before any of its own assertions run (review of 0.198.0; the same
+// isolation as tests/relate-proposed-keys.browser.mjs).
+test.use({serviceWorkers:'block'});
+
 /** KEEPING A WIDE READING, AFTER FILTERING (2026-11-25, review of 0.196.0).
  *
  *  Quick Look offers "Always show this table wide" for a table stored long. Its click handler was attached once,

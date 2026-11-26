@@ -3,6 +3,27 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.199.0 — In development
+
+- **Three more from the review of 0.198.0**, all three mine, and the third would have broken the nightly run.
+- **Cases by period previews the input type being chosen** (0.10.0), not the one connected. Switching it from points
+  to a table left the Preview counting the points still wired up — *"2 cases in 2 days"* of records that Apply would
+  then discard along with the connection. The draft is what the reader is looking at, so the draft decides; where the
+  type it asks for has nothing on it, the Preview names what to connect.
+- **Regression previews each model's own sample** (0.9.0). With several exposure columns the run fits one model each,
+  every model leaving out only the rows its own variables are missing on; the Preview reported the first exposure's
+  as though it were all of them — 4 of 4 usable where the second exposure had 2. `exposureColumnsOf` and
+  `modelParams` moved beside the row rule in `regression-sample.ts`, so the Preview enumerates the models the run
+  will fit rather than guessing at them.
+- **And it reads a cell as the fit reads it** (0.9.0). The exclusion rule trims, the case summary did not, so a
+  whitespace-padded `yes` was admitted as a case and then counted as a non-case: two normalizations inside one
+  Preview, disagreeing about the same cell.
+- **Two dialog test files are isolated from WebKit's service-worker startup** (`test.use({serviceWorkers:'block'})`).
+  On WebKit the reasoning worker is refused *"due to access control checks"* before a test's own assertions run, so
+  all four focused tests failed there while passing on Chromium — and the local gate is Chromium only, so this would
+  have reached the nightly WebKit run. Checked both ways: without the block the file fails on WebKit with that
+  message, with it the four pass.
+
 ## 0.198.0 — In development
 
 - **Five defects, all found in review of the two releases below**, four of them introduced by those releases. The

@@ -117,12 +117,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.9.0",
-   "released": "2026-11-25",
+   "version": "0.10.0",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The Preview counts what this step would count, from the records connected, instead of restating the settings. It ran `seriesSentence(draft)`, built from the node's params and nothing else, so it read like a preview while showing nothing of the workflow's data; the practitioner met it as \"Same problem no preview\". Now `caseSeries` on points and `caseSeriesFromTable` on a table -- the functions the run itself calls -- reporting the total, the periods, the span and the peak. Records whose date cannot be read are named rather than dropped in silence."
+     "kind": "fixed",
+     "description": "The Preview resolves on the INPUT TYPE BEING CHOSEN, not the one saved. Switching the step from points to a table left it counting the points still connected -- \"2 cases in 2 days\" of records that Apply would then discard along with the connection -- because the reader was looking at a draft and the Preview was reading the node. Where the chosen type has nothing on it, the Preview names what to connect."
     }
    ],
    "breaking": false,
@@ -969,12 +969,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.8.0",
-   "released": "2026-11-25",
+   "version": "0.9.0",
+   "released": "2026-11-26",
    "changes": [
     {
      "kind": "fixed",
-     "description": "The Preview counts the rows the FIT will use. It counted rows with something in every column the plan names, while the fit also drops an outcome that is neither case nor control, a categorical written `NA`, a numeric that is not a number, and a missing stratum or offset -- so it promised a larger sample than the run would use. The rule moved to src/regression-sample.ts and is called by both the fit and the Preview: one rule, rather than two that agree today. The Preview also names why rows are left out, in the run's own words, so it and the receipt describe the same exclusion."
+     "description": "The Preview reports EACH MODEL'S own sample, and reads a cell as the fit reads it. With several exposure columns the run fits one model each, every model leaving out only the rows its own variables are missing on; this reported the first exposure's as though it were all of them (4 of 4 usable where the second had 2). `exposureColumnsOf` and `modelParams` moved to regression-sample.ts beside the row rule, so the Preview enumerates the models the run will fit. And the case summary now trims as the exclusion rule does: a whitespace-padded `yes` was admitted as a case by one and counted as a non-case by the other, two normalizations inside one Preview disagreeing about the same cell."
     }
    ],
    "breaking": false,

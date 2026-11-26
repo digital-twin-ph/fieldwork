@@ -110,6 +110,14 @@ can tell.
 
 ## History
 
+### 2026-11-26 · Each model’s own sample, and one reading of a cell (0.9.0)
+
+With several exposure columns this step fits one model for each, and every model leaves out only the rows its own
+variables are missing on. The Preview reported the first column's sample as though it were all of them.
+
+It now reports each. And the case count reads a cell the way the fit does: a value padded with spaces was being
+admitted as a case by one part of the Preview and counted as a non-case by another.
+
 ### 2026-11-25 · The Preview counts the rows the fit will use (0.8.0)
 
 It counted rows that had something in every column the model names. The fit asks for more than that: an outcome has

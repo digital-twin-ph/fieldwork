@@ -1,6 +1,11 @@
 import {test,expect} from './fixtures.mjs';
 import {collectPageErrors} from './page-errors.mjs';
 
+// NOT A TEST OF THE SERVICE WORKER. On WebKit the reasoning worker is refused "due to access control checks" at
+// startup, which fails every test in a file before any of its own assertions run (review of 0.198.0; the same
+// isolation as tests/relate-proposed-keys.browser.mjs).
+test.use({serviceWorkers:'block'});
+
 /** TWO MORE PREVIEWS THAT RESTATED THEIR SETTINGS (2026-11-25, docs/audits/preview-audit.md).
  *
  *  Regression read its plan back -- the model, the outcome, the exposure -- and never said whether a model could be
@@ -95,5 +100,72 @@ test('the scan preview never reports a limit shorter than the scan would run',as
   await expect(preview).toContainText('up to 1 day');
   await expect(preview).not.toContainText('up to 0 days');
   await page.locator('#scan-config #config-cancel').click();
+  expect(errors).toEqual([]);
+});
+
+/** THE DRAFT'S INPUT TYPE, NOT THE SAVED CONNECTION (review of 0.198.0). Switching Cases by period from points to a
+ *  table left the Preview counting the points still connected — a reading of records that Apply would discard along
+ *  with the connection. What the reader is looking at is the draft. */
+const dated=(id,day,x)=>({type:'Feature',id,properties:{name:id,onset:`2024-07-0${day}`},
+  geometry:{type:'Point',coordinates:[x,0]}});
+
+test('Cases by period previews the input type being chosen, not the one connected',async({page})=>{
+  const errors=collectPageErrors(page);
+  await seed(page,{schema:'fieldwork/workflow/1',exampleId:'blank',name:'Switch',nodes:[
+    {id:'cases',type:'point_input',x:20,y:20,params:{label:'Cases',data:{type:'FeatureCollection',
+      features:[dated('c1',1,0),dated('c2',2,0.01)]}}},
+    {id:'series',type:'case_series',x:360,y:20,params:{label:'By day',dateField:'onset',dateKind:'onset',
+      period:'day'}}],
+    edges:[{id:'e0',from:'cases',to:'series',port:'points'}]});
+  await page.locator('.react-flow__node[data-id="series"]').click();
+  await page.locator('#configure-step').click();
+  const preview=page.locator('#series-config [data-config-section="preview"]');
+  await expect(preview).toContainText('2 cases in 2 days');
+
+  // SWITCHED TO A TABLE, with no table connected: the count must go, and what is needed must be named. It kept
+  // counting the points until this was fixed.
+  await page.locator('#series-config #series-input').selectOption('table');
+  await expect(preview).toContainText('Connect the table of cases');
+  await expect(preview).not.toContainText('2 cases in 2 days');
+
+  // AND BACK: the points are still there, so the count returns.
+  await page.locator('#series-config #series-input').selectOption('points');
+  await expect(preview).toContainText('2 cases in 2 days');
+  await page.locator('#series-config #config-cancel').click();
+  expect(errors).toEqual([]);
+});
+
+/** ONE SAMPLE PER MODEL, AND THE FIT'S OWN READING OF A CELL (review of 0.198.0). With several exposure columns the
+ *  run fits one model each, every model leaving out only the rows ITS variables are missing on; the Preview reported
+ *  the first exposure's sample as though it were all of them. And a whitespace-padded `yes` passed the exclusion
+ *  rule as a case — which trims — and was then counted as a non-case by the summary, which did not. */
+const padded=(id,ill,vanilla,chocolate,age)=>({key:{person:id,ill,vanilla,chocolate},value:age});
+const twoExposures={kind:'data-table',keys:['person','ill','vanilla','chocolate'],valueField:'age',
+  rowCount:4,missingValueCount:0,
+  rows:[padded('p1','yes','yes','yes',31),padded('p2',' yes ','no','no',44),
+    padded('p3','no','yes','',29),padded('p4','no','no','NA',52)]};
+
+test('Regression previews each model’s own sample, and reads a cell as the fit reads it',async({page})=>{
+  const errors=collectPageErrors(page);
+  await seed(page,{schema:'fieldwork/workflow/1',exampleId:'blank',name:'Models',nodes:[
+    {id:'cases',type:'table_input',x:20,y:20,params:{label:'Line list',
+      keys:['person','ill','vanilla','chocolate'],valueField:'age',data:twoExposures}},
+    {id:'model',type:'regression',x:360,y:20,params:{label:'Two exposures',family:'logistic',outcome:'ill',
+      cases:['yes'],controls:['no'],exposure:{column:'vanilla',as:'categorical'},
+      exposureColumns:['vanilla','chocolate'],adjust:[],errors:'profile'}}],
+    edges:[{id:'e0',from:'cases',to:'model',port:'records'}]});
+  await page.locator('.react-flow__node[data-id="model"]').click();
+  await page.locator('#configure-step').click();
+  const preview=page.locator('#regression-config [data-config-section="preview"]');
+  await expect(preview).toBeVisible();
+
+  // Chocolate loses two rows — one empty, one written NA — where vanilla loses none.
+  await expect(preview).toContainText('One model per exposure column, each on its own rows');
+  await expect(preview).toContainText('vanilla 4');
+  await expect(preview).toContainText('chocolate 2');
+
+  // AND " yes " IS A CASE, as the fit reads it: two cases, not one.
+  await expect(preview).toContainText('2 cases and 2 not');
+  await page.locator('#regression-config #config-cancel').click();
   expect(errors).toEqual([]);
 });

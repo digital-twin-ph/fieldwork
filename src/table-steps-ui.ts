@@ -6,7 +6,7 @@ import type {NodeType,WorkflowNode} from './types.js';
 import type {OwnInspector,StepKit} from './inspector-kit.js';
 import type {Receipt} from './results.js';
 import {openConfigDialog} from './config-dialog.js';
-import {exclusionReason} from './regression-sample.js';
+import {exclusionReason,exposureColumnsOf,modelParams,asText} from './regression-sample.js';
 import {orderOf} from './select-rows.js';
 import {control} from './dom.js';
 import {required} from './guards.js';
@@ -70,27 +70,41 @@ function regressionPreview(kit:TableStepKit,nodeId:string,d:import('./types.js')
   // THE RUN'S OWN RULE, from regression-sample.ts. Counting non-empty values instead promised a larger sample than
   // the fit uses: it also drops an outcome that is neither case nor control, a categorical written `NA`, a numeric
   // that is not a number, and a missing stratum or offset (review of 0.197.0).
-  const rule={family:d.family,outcome:d.outcome,cases:d.cases,controls:d.controls,
-    terms:[d.exposure,...d.adjust],strata:d.strata,offset:d.offset};
+  //
+  // ONE SAMPLE PER MODEL. With several exposure columns the run fits one model each, every model leaving out only
+  // the rows ITS own variables are missing on. This reported the first exposure's sample as though it were all of
+  // them: 4 of 4 usable where the second exposure had 2 (review of 0.198.0). `modelParams` is the run's own
+  // enumeration, moved beside the rule so the two cannot drift.
   const asRow=(r:{key:Record<string,string>;value:number|null}):Record<string,string|number|null>=>
     ({...r.key,...(table.valueField?{[table.valueField]:r.value}:{})});
-  const left=new Map<string,number>();
-  const complete=table.rows.filter(r=>{
-    const why=exclusionReason(asRow(r),rule);
-    if(why)left.set(why,(left.get(why)??0)+1);
-    return !why;});
+  const sampleFor=(p:typeof d)=>{
+    const rule={family:p.family,outcome:p.outcome,cases:p.cases,controls:p.controls,
+      terms:[p.exposure,...p.adjust],strata:p.strata,offset:p.offset};
+    const out=new Map<string,number>();
+    const kept=table.rows.filter(r=>{
+      const why=exclusionReason(asRow(r),rule);
+      if(why)out.set(why,(out.get(why)??0)+1);
+      return !why;});
+    return {kept,out};
+  };
+  const columns=exposureColumnsOf(d);
+  const models=columns.map((column,k)=>({column,...sampleFor(columns.length>1?modelParams(d,k):d)}));
+  const {kept:complete,out:left}=models[0]!;
   const n=(v:number)=>v.toLocaleString('en-US');
   // THE OUTCOME'S TWO SIDES. `cases` names the values that count as a case; where nothing is named, the column's own
   // values are listed instead of guessing which side is which.
+  // READ AS THE FIT READS IT. `asText` trims; `valueOf` does not, so a whitespace-padded "yes" passed the exclusion
+  // rule as a case and was then counted as a non-case here -- two normalizations inside one Preview, disagreeing
+  // about the same cell (review of 0.198.0).
   const outcomes=new Map<string,number>();
-  for(const r of complete){const v=valueOf(r,d.outcome);outcomes.set(v,(outcomes.get(v)??0)+1);}
-  const cases=(d.cases??[]).filter(Boolean);
-  const caseRows=cases.length?complete.filter(r=>cases.includes(valueOf(r,d.outcome))).length:null;
+  for(const r of complete){const v=asText(valueOf(r,d.outcome));outcomes.set(v,(outcomes.get(v)??0)+1);}
+  const cases=(d.cases??[]).map(v=>asText(v)).filter(Boolean);
+  const caseRows=cases.length?complete.filter(r=>cases.includes(asText(valueOf(r,d.outcome)))).length:null;
   // THE SMALLEST LEVEL OF THE EXPOSURE, where it is entered as categories: a level with a handful of rows is where
   // an estimate runs out of information, and nothing else on this screen says how many rows each level has.
   const levels=new Map<string,number>();
   if(d.exposure.as==='categorical')
-    for(const r of complete){const v=valueOf(r,d.exposure.column);levels.set(v,(levels.get(v)??0)+1);}
+    for(const r of complete){const v=asText(valueOf(r,d.exposure.column));levels.set(v,(levels.get(v)??0)+1);}
   const smallest=[...levels.entries()].sort((a,b)=>a[1]-b[1])[0];
   return plan
     +`<p class="standard-result"><strong>${n(complete.length)}</strong> of ${n(table.rows.length)} rows `
@@ -111,6 +125,11 @@ function regressionPreview(kit:TableStepKit,nodeId:string,d:import('./types.js')
     // ROWS LEFT OUT ARE A FINDING, not a detail of the fit: a model quietly fitted on two thirds of the table is
     // the kind of thing a reader should see before Apply, not after a run.
     // WHY THEY ARE LEFT OUT, in the run's own words, so the Preview and the receipt describe the same exclusion.
+    // EACH MODEL'S OWN SAMPLE, where the run will fit more than one.
+    +(models.length>1
+      ?`<p class="description">One model per exposure column, each on its own rows: `
+        +models.map(m=>`${esc(m.column)} ${n(m.kept.length)}`).join(', ')+` of ${n(table.rows.length)}.</p>`
+      :'')
     +(complete.length<table.rows.length
       ?`<p class="profile-flag">${n(table.rows.length-complete.length)} row`
         +`${table.rows.length-complete.length===1?' is':'s are'} left out: `

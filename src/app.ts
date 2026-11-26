@@ -4868,9 +4868,12 @@ function seriesRateKit():SeriesRateKit{
     // restating the settings. A table comes through `tableOnPort`, which already reads a stored table, a point layer
     // as a table, and the last run's. Points are taken from the layer that holds them, because `pointChoices` keeps
     // only a name and a geometry -- and the date this step counts by is in the properties it drops.
-    casesOn:id=>{
-      const node=getNode(workflow,id,'case_series');
-      if(node.params.source==='table')return {table:tableOnPort(workflow,id,'cases')??undefined};
+    // THE DRAFT'S INPUT TYPE DECIDES, not the saved node's (review of 0.198.0). Switching Cases by period from
+    // points to a table left the Preview counting the points still connected -- "2 cases in 2 days" of a reading
+    // that Apply would then discard along with the connection. The draft is what the reader is looking at.
+    casesOn:(id,source)=>{
+      const asked=source??getNode(workflow,id,'case_series').params.source;
+      if(asked==='table')return {table:tableOnPort(workflow,id,'cases')??undefined};
       return {points:layerOnPort(id,'points')};},
     addCurve:n=>change(w=>{const id=`curve-${Date.now()}`;w.nodes.push({id,type:'chart_output',x:n.x+270,y:n.y,params:{label:'Epidemic curve'}});
       w.edges.push({id:`e-${Date.now()}`,from:n.id,to:id,port:'records'});selected=id;})};

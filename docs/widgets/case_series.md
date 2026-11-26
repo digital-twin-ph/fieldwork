@@ -96,6 +96,14 @@ the date and time put together from the line list's two columns by Apply ruleset
 
 ## History
 
+### 2026-11-26 · The Preview follows the input type you are choosing (0.10.0)
+
+Switching this step from points to a table left the Preview counting the points still connected — a reading of
+records that applying the change would discard along with the connection.
+
+It follows the choice in front of you now. Where the type you have chosen has nothing on it yet, it says what to
+connect instead of counting something else.
+
 ### 2026-11-25 · The Preview counts, instead of repeating the settings (0.9.0)
 
 Its Preview read the settings back, so it looked like a preview while showing nothing of the records connected.

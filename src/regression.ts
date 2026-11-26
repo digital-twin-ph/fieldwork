@@ -10,7 +10,8 @@
  *  not converge reports no estimate. A row missing any variable the model uses is left out and counted, as R's
  *  complete-case default does, and the count is part of the result. */
 import {kernel} from './kernel.js';
-import {exclusionReason} from './regression-sample.js';
+import {exclusionReason,exposureColumnsOf,modelParams} from './regression-sample.js';
+export {exposureColumnsOf,modelParams};
 
 export type Family='logistic'|'poisson';
 export type TermKind='numeric'|'categorical'|'spline';
@@ -339,8 +340,6 @@ export function regressionReceipt(node:{id:string},result:RegressionResult,param
 
 /** THE EXPOSURE COLUMNS, ONE MODEL EACH (experiment 185). Two or more listed fit one model per column; one, or none
  *  listed, is the single model this widget has always fitted. */
-export const exposureColumnsOf=(params:{exposure:Term;exposureColumns?:string[]}):string[]=>
-  (params.exposureColumns?.length??0)>1?params.exposureColumns!.map(c=>c.trim()):[params.exposure.column];
 
 export interface ModelRow {
   column:string;
@@ -397,11 +396,7 @@ function fittedModels(models:ModelRow[]):ModelRow[]{
 
 /** MODEL k's OWN SETTINGS: the k-th exposure column, and the k-th column of every adjustment that follows the shift.
  *  Everything else is the same in every model. */
-export function modelParams(params:RegressionParams,k:number):RegressionParams{
-  const column=exposureColumnsOf(params)[k]!;
-  return {...params,exposure:{...params.exposure,column},exposureColumns:[column],
-    adjust:(params.adjust??[]).map(({perModel,...t})=>perModel?{...t,column:perModel[k]!}:t)};
-}
+
 /** A shift column's name without its shift: `precip_total_semana_-14d` is `precip_total_semana`. */
 const unshifted=(column:string)=>column.replace(/_[+-]?\d+d$/,'');
 

@@ -9,7 +9,10 @@
  *  Two readers of one rule, rather than two rules that agree today: this file holds the rule, `fitRegression` calls
  *  it, and so does the Preview. The kernel stays where it was. */
 export type Row=Record<string,string|number|null|undefined>;
-export type Term={column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number};
+export type Term={column:string;as:'numeric'|'categorical'|'spline';reference?:string;df?:number;
+  /** ONE MODEL PER EXPOSURE COLUMN (experiment 185): this variable follows the shift, and model k is adjusted for
+   *  `perModel[k]` in its place. */
+  perModel?:string[]};
 
 export const asNumber=(v:Row[string]):number=>
   v===null||v===undefined||v===''?NaN:typeof v==='number'?v:Number(String(v).trim());
@@ -48,4 +51,19 @@ export function exclusionReason(row:Row,rule:SampleRule):string|null{
   if(noStratum)return `${noStratum} missing`;
   if(rule.offset&&!Number.isFinite(asNumber(row[rule.offset])))return `${rule.offset} missing`;
   return null;
+}
+
+/** THE EXPOSURE COLUMNS, one model each (experiment 185), and the parameters of model k.
+ *
+ *  Moved here from `regression.ts` on 2026-11-26 for the same reason as the rule above: the Preview must enumerate
+ *  the models the run will fit, and it had reported the first exposure's sample as though it were every model's.
+ *  With two exposures it said 4 of 4 usable where only 2 were usable for the second. Pure parameter work, no kernel.
+ */
+export const exposureColumnsOf=(params:{exposure:Term;exposureColumns?:string[]}):string[]=>
+  (params.exposureColumns?.length??0)>1?params.exposureColumns!.map(c=>c.trim()):[params.exposure.column];
+
+export function modelParams<T extends {exposure:Term;exposureColumns?:string[];adjust?:Term[]}>(params:T,k:number):T{
+  const column=exposureColumnsOf(params)[k]!;
+  return {...params,exposure:{...params.exposure,column},exposureColumns:[column],
+    adjust:(params.adjust??[]).map(({perModel,...t})=>perModel?{...t,column:perModel[k]!}:t)};
 }

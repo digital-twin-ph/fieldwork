@@ -20,7 +20,7 @@ export interface SeriesRateKit extends StepKit {
   /** THE CASES ARRIVING ON THIS STEP'S INPUT (2026-11-25), as its own function takes them: the table where records
    *  arrive as a table, the points otherwise. Empty where nothing is connected, or where the records exist only as
    *  the output of a run that has not happened -- the Preview says which, rather than going blank. */
-  casesOn:(nodeId:string)=>{table?:DataTable;points?:import('./types.js').PointCollection};
+  casesOn:(nodeId:string,source?:'points'|'table')=>{table?:DataTable;points?:import('./types.js').PointCollection};
 }
 
 /** RATE'S ONE SENTENCE (experiment 186). */
@@ -55,7 +55,7 @@ export function seriesSentence(p:import('./types.js').ParamsByType['case_series'
 function seriesPreview(kit:SeriesRateKit,nodeId:string,d:import('./types.js').ParamsByType['case_series'],
   esc:(v:string)=>string):string{
   if(!d.dateField)return '<p class="muted">Name the date column, and what this step would count is shown here.</p>';
-  const {table,points}=kit.casesOn(nodeId);
+  const {table,points}=kit.casesOn(nodeId,d.source);
   if(!table&&!points)return `<p class="muted">Connect the ${d.source==='table'?'table of cases':'cases'}, and `
     +'what this step would count is shown here.</p>';
   let series:CaseSeries;

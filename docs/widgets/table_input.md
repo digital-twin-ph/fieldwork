@@ -1,6 +1,6 @@
 # Tabular data
 
-_Created 2026-11-02 · Updated 2026-11-24_
+_Created 2026-11-02 · Updated 2026-11-25_
 
 **A source.** It reads a CSV, Excel or Stata file into a table.
 
@@ -233,6 +233,28 @@ after (`fw:CellEdit`). Experiment 214.
 It does not choose between rows that disagree. The table stays as read until a later step changes it.
 
 ## History
+
+### 2026-11-25 · A display choice stays a display choice (0.25.0)
+
+*Always show this table wide* was writing the field that says a file arrived wide. That field is not a preference:
+steps read it to rebuild one record per subject, and Apply ruleset then judges rules against those subjects instead of
+against rows. Keeping the preference quietly changed what was computed.
+
+It is kept separately now, and only views read it. Two more from the same reading: a key that varies within a record —
+a year, say — is shown as its own column rather than only used to keep two records apart, and the offer to keep a
+reading still works after filtering the table, which it did not.
+
+### 2026-11-25 · Quick Look says when the shape is not the table's own (0.24.0)
+
+Quick Look has shown long tables wide since October, because a long table is hard to read. But every other view
+showed the same table as it is stored — so one table had two shapes a click apart, and nothing said which was which.
+
+It now says so: **this table is stored long**, here is how it is being shown, and elsewhere it is shown as stored.
+If the wide reading is the one you want everywhere, **Always show this table wide** keeps it — and the choice travels
+with the table, so the steps below it read it the same way.
+
+The note appears for a table a step computed too, where there is nothing to keep the choice on yet. Those were being
+widened with no explanation at all.
 
 ### 2026-11-24 · A census brings its date with it (0.22.0)
 

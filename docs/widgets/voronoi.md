@@ -1,6 +1,6 @@
 # Voronoi catchments
 
-_Created 2026-11-22 · Updated 2026-11-23_
+_Created 2026-11-22 · Updated 2026-11-25_
 
 **A spatial operation.** It takes a study area and a set of sites, and gives back one polygon per site: the part of
 the area closer to that site than to any other, in a straight line.
@@ -51,6 +51,15 @@ The lab's [Voronoi notebook](https://digital-twin-ph.github.io/validation-lab/la
 to this widget's.
 
 ## History
+
+### 2026-11-25 · Show me how builds the division up (0.5.0)
+
+It used to follow one house to its nearest pump, and then show every dividing line and every finished cell at once —
+so the part worth watching happened between two steps.
+
+Now you see two pumps and the single line between them: everywhere on one side is nearer one pump, everywhere on the
+other side the other, and the line is where they are equally near. Then the third pump joins, each pair gets its
+line, and the lines meet at the corner where three catchments touch.
 
 ### 2026-11-23 · Show me how (0.3.0)
 

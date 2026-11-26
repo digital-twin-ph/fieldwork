@@ -3,6 +3,140 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.199.0 — In development
+
+- **Three more from the review of 0.198.0**, all three mine, and the third would have broken the nightly run.
+- **Cases by period previews the input type being chosen** (0.10.0), not the one connected. Switching it from points
+  to a table left the Preview counting the points still wired up — *"2 cases in 2 days"* of records that Apply would
+  then discard along with the connection. The draft is what the reader is looking at, so the draft decides; where the
+  type it asks for has nothing on it, the Preview names what to connect.
+- **Regression previews each model's own sample** (0.9.0). With several exposure columns the run fits one model each,
+  every model leaving out only the rows its own variables are missing on; the Preview reported the first exposure's
+  as though it were all of them — 4 of 4 usable where the second exposure had 2. `exposureColumnsOf` and
+  `modelParams` moved beside the row rule in `regression-sample.ts`, so the Preview enumerates the models the run
+  will fit rather than guessing at them.
+- **And it reads a cell as the fit reads it** (0.9.0). The exclusion rule trims, the case summary did not, so a
+  whitespace-padded `yes` was admitted as a case and then counted as a non-case: two normalizations inside one
+  Preview, disagreeing about the same cell.
+- **Two dialog test files are isolated from WebKit's service-worker startup** (`test.use({serviceWorkers:'block'})`).
+  On WebKit the reasoning worker is refused *"due to access control checks"* before a test's own assertions run, so
+  all four focused tests failed there while passing on Chromium — and the local gate is Chromium only, so this would
+  have reached the nightly WebKit run. Checked both ways: without the block the file fails on WebKit with that
+  message, with it the four pass.
+
+## 0.198.0 — In development
+
+- **Five defects, all found in review of the two releases below**, four of them introduced by those releases. The
+  review is on the pull request, comment by comment, against the lines it is about.
+- **A display choice was changing what was computed** (Tabular data 0.25.0). *Always show this table wide* wrote
+  `DataTable.wide` — the field the melt writes to say a file ARRIVED wide, and the field `isWide` gates, which lets
+  Apply ruleset evaluate rules over rebuilt subjects rather than over rows. Keeping the preference therefore turned
+  six rule inputs into three and replaced the measure and value fields with measure-named ones. The preference is
+  `DataTable.shownWide` now; views read either, and nothing that computes reads the second.
+  ([audit](docs/audits/wide-format-audit.md))
+- **A key that distinguishes two records is drawn, not only grouped by** (Tabular data 0.25.0). Yesterday's fix for
+  merged duplicates put a key that varies within a subject into the row's identity and left it out of the columns
+  shown: two years of counts for one district drew two rows, neither saying its year — right in number, unreadable,
+  and indistinguishable from the duplicate the fix existed to expose.
+- **The offer to keep a wide reading survives filtering** (Tabular data 0.25.0). Its click handler was attached once
+  after the first render, while filtering rebuilds the dialog on every keystroke, so the button stayed on the screen
+  and did nothing. Filtering a long table before deciding how to read it is the path a reader actually takes.
+- **Regression's preview counts the rows the fit will use** (0.8.0), not the rows with something in every column.
+  The fit also drops an outcome that is neither case nor control, a categorical written `NA`, a numeric that is not
+  a number, and a missing stratum or offset — so the preview promised a larger sample than the run would use. The
+  rule now lives in `src/regression-sample.ts` and is called by both the fit and the preview: one rule, rather than
+  two that agree today. The preview names why rows are left out, in the run's own words.
+- **The scan preview never reports a limit shorter than the scan runs** (0.8.0). It floored the share where the scan
+  takes `Math.max(1, …)`, so five days at a tenth read *"up to 0 days"* of a scan that runs one-day windows.
+
+## 0.197.0 — In development
+
+- **A Preview that restates its settings looks like a preview**, which is how eleven of them went unnoticed while
+  they were met one dialog at a time. They were found by reading all forty-three rather than searching for empty ones
+  ([preview audit](docs/audits/preview-audit.md)). Four now count from the records connected, and a fifth stops asking
+  for what is already there.
+- **Cases by period counts what it would count** (0.9.0). It ran the settings sentence, showing nothing of the records.
+  It now runs the step's own counting on them, before any run: the total, the periods, the span and the busiest one.
+  Records whose date it cannot read are counted and named — a count by date drops them in silence, and the curve is
+  then drawn as though they had never been there.
+- **Measure distance counts the candidates a condition keeps** (0.7.0). The conditions are the setting on the screen,
+  and how many candidates survive them could be seen only by running the workflow and reading the receipt. The count
+  now moves as a condition is typed, beside the nearest, median and furthest distance. A condition that keeps nothing
+  leaves every point without a distance, which is said rather than left as a column of gaps.
+- **Regression counts the rows a model would be fitted on** (0.7.0): how many carry every column the plan names, how
+  the outcome divides, and the exposure's smallest level. Counted without the model's kernel, which that dialog is
+  deliberately kept clear of — a fit is iterative and belongs in the run, while completeness is one pass over the rows.
+- **The space-time scan says what its shares come to** (0.7.0). Every setting there but two is a share, and a share
+  says nothing alone: *circles up to 20% of the cases* means two over ten cases and two thousand over ten thousand.
+  Now the cases with a readable date, the period they span, and each share in the units of the thing it limits.
+- **Reachable junctions says what it is waiting for, exactly** (0.7.0). Its Preview multiplied the minutes by the
+  speed — the two numbers just typed. Worse, the first draft of the replacement asked to *connect a street network*
+  over a connected one: a downloaded network is held outside the page by reference and read when the workflow runs, so
+  a dialog cannot walk it while it is drawing. That is now said in place of sending anyone to fix what is not broken.
+  **The branch that counts junctions is unexercised**: every example here holds its network by reference, so driving
+  it needs a fixture whose network is inline, and there is none yet.
+- **One reader for records, properties and all.** `pointChoices` trims every feature to a name and a geometry, which is
+  what a picker needs and less than a step reads — Cases by period counts by a date in the properties, Measure distance
+  decides eligibility by the candidates' own attributes. A preview built on the trimmed features would have described a
+  different run, in numbers, silently.
+
+## 0.196.0 — In development
+
+- **Quick Look says when the shape is not the table's own** (Tabular data 0.24.0). It has widened long tables on
+  sight since 2026-10-27 — *"pandas does not show you a long table"* — while every other surface showed them as
+  stored: one table, two shapes a click apart, with nothing saying which was which. It now says the table is stored
+  long, how it is being shown, and that elsewhere it is shown as stored.
+- **A wide reading can be kept, and it travels.** *Always show this table wide* writes it as `DataTable.shownWide`,
+  which rides the value so the steps below inherit it rather than each guessing. The practitioner: *"this user
+  decision should cascade downstream for user facing views of that table."* The hint and the offer are separate, so
+  a table a step **computed** gets the explanation even though there is nothing yet to keep the choice on. (It wrote
+  `DataTable.wide` until 0.198.0, which is provenance rather than a preference, and that changed what Apply ruleset
+  computed; see below.)
+- **A melted table is read back on the key the melt recorded** (Tabular data 0.24.0), not on whichever key varies
+  most. `wideFrame` required `asDeclared` as well, and the melt does not set it — so every melted table fell through
+  to a heuristic that takes the key with the most distinct values as the subject. Two districts by eligible,
+  vaccinated and missed has three measures against two districts: the measures won, the table came back transposed,
+  and correcting a district's name reached one of its three counts. **Reported by a reviewer outside this project**
+  against 0.195.0, in those terms, and reproduced here before it was touched — a case the 0.195.0 fix walked past.
+- **A long → wide → long round trip** guards it, over three shapes. Checked against the defect: reverted, it fails
+  on two-by-three and passes on the other two, because there the heuristic happens to pick the right subject. A
+  single example would not have caught it.
+- **A table a step computes can keep a wide reading too.** The decision is kept against the step that makes the
+  table and applied to what it produces, so it travels as a file-table's declaration does. From the next run.
+- **A key the melt never heard of stays a column of the table.** Reading a melted table on its recorded key, new
+  above, dropped every other key: Relate brings `water_supply` onto Snow's South London table, whose record names
+  `sub_district` and `measure` only, and the joined preview lost the one variable a reader checks before grouping by
+  it. Each leftover key is now placed rather than dropped — one value per subject makes it an attribute column, and
+  one that varies within a subject is part of what identifies a record. **Caught by the gate**, in the worked
+  example, before any of this was published.
+- **A record that arrives twice is drawn twice.** The pivot grouped on the keys alone, so two rows with the same keys
+  became one. Rio de Janeiro's 2024 dengue file repeats the week of 2024-12-29 for all 92 municipalities, byte for
+  byte — the doubled week the worked example exists to teach — and it was absorbed: 4,784 rows where the file has
+  4,876, the duplication gone into the shape. A row whose cell is already filled now opens a new record, so nothing
+  is overwritten and a duplicate reads as the two rows it is. The *Before* note counts the file's own rows again:
+  **184 of 4,876**. Found by following the gate's figure instead of adopting it.
+- **One rule for widening, everywhere** ([wide-format audit](docs/audits/wide-format-audit.md)). A user-facing view
+  now widens a table only where the table says it is wide — a melt's record, or a reading the reader kept. The data
+  quality dialog was gated on that in 0.195.0, after the gate caught it pivoting a data dictionary's class names
+  into headings; the Join and Detect previews were left guessing, by the same heuristic, on the same kind of file.
+  **Found by GitHub Copilot reviewing the incoming commit**, which also noted no focused test covered it. There is
+  one now, in the shape of the defect: a dictionary of `column` and `class` keeps its own columns, and declaring a
+  reading cascades into those previews without being told again.
+- **A preview cannot describe an input from a run that no longer applies.** The computed-layer lookup added for the
+  polygon previews read the last run's output without asking whether that run still matches the workflow, which the
+  two lookups beside it do ask. Edit a step above and the preview below described the old input. **Found by GitHub
+  Copilot in the same review**; verified against the code before it was changed.
+- **Voronoi's Show me how builds the division up** (0.5.0), instead of following one house and then revealing every
+  line at once: two pumps and the line between them, then the third and where the lines meet. Both drawn by
+  `voronoi` itself.
+- **Network isochrone's Show me how draws the streets the walk covers** (0.7.0). It said "along the streets in every
+  direction" and drew only the region, so the one thing that tells it from a circle — that every metre is counted
+  along a street — was asserted and never shown. The walked streets come from `costsWithin`, the same reachability
+  the step runs.
+- **Two CI comments corrected.** `pages.yml` said the gate still ran on every push "in `verify` below" and
+  `verify.yml` said both engines run; verification moved to its own file, nightly, WebKit only. Both were carried
+  over unchanged when that happened. **Found by GitHub Copilot**, reading the comments against the workflows.
+
 ## 0.195.0 — In development
 
 - **Every user-facing table shows the file's shape** ([wide-format audit](docs/audits/wide-format-audit.md)). The
@@ -28,8 +162,8 @@ shown in a local build is not a claim that it has been published.
   only `pointChoices` read it.
 - **The quality dialog widens only what Fieldwork melted.** The first version called `wideFrame` on every table, and
   the gate refused it: a table long *in the file* had a real column, `class`, pivoted into headings and lost from
-  the very tab where a column is checked against its dictionary. It now gates on `DataTable.wide`, which the melt
-  writes. This leaves Quick Look widening a natively long table while the quality dialog does not — recorded in the
+  the very tab where a column is checked against its dictionary. It now gates on a reading the table carries — the
+  melt's `wide`, or a reader's kept `shownWide`. This leaves Quick Look widening a natively long table while the quality dialog does not — recorded in the
   audit, and the reason the next release declares the reading instead of letting each surface guess.
 - The CI audit is corrected: the WebKit failure reported as reproducing locally did not, and could not have —
   **WebKit was not installed on this machine**, so every local run ended at `browserType.launch` and a launch failure

@@ -80,7 +80,7 @@ The gate refused it: `data-dictionary.browser.mjs` lost the column `class`, beca
 and widening pivoted a real column — one somebody wrote and described — into headings, in the very tab where a
 column is checked against what a dictionary says it means.
 
-So the dialog widens only where `DataTable.wide` is set, which the melt itself writes. It is present exactly when
+So the dialog widens only where the table carries a reading — the melt's `wide`, or a reader's `shownWide`. It is present exactly when
 the shape a reader expects is the wide one, and absent when the file really is long.
 
 **This audit had already warned of it** — the closing section says `wideFrame` widens more than it is asked to — and
@@ -99,3 +99,78 @@ surface that receives rows already shaped by a caller — the write-up's figures
 and is only as wide as its caller. Nor does it establish that `wideFrame` widens every table a practitioner would
 want widened: it returns null for tables it cannot read confidently, and those still show as stored, which Relate
 already says out loud and the others do not.
+
+## The rule, settled (2026-11-25)
+
+The inventory above left a boundary unsettled, and it cost something. Two things can make a table wide:
+
+1. **A record on the table.** The melt writes `DataTable.wide` for a file that arrived wide; *Always show this table
+   wide* writes `DataTable.shownWide` for a table that arrived long. Two fields, because only the first is
+   provenance — see the dated note at the end of this audit. Either way the table itself says which key holds
+   the measure and which keys name the record.
+2. **A guess.** `wideFrame` will read any long table as wide by taking the key with the most distinct values as the
+   subject.
+
+The rule is now: **a user-facing view widens on the record, never on the guess.** The guess survives in exactly one
+place, Quick Look, where the reader is told the shape is not the table's own and can settle it — and that settlement
+becomes a record, which the views below then follow.
+
+This was not uniform before. The data quality dialog was gated on the record in 0.195.0, but only because the gate
+caught it pivoting a data dictionary's `class` column into headings — a file whose long shape is its real shape.
+`wideCells`, which draws the *Before* panel in Join and the preview in Detect, was left widening unconditionally, so
+the same file was pivoted there. **GitHub Copilot, reviewing the incoming commit, found that gap and noted that no
+focused test covered it.** Both are now closed: `wideCells` honours the record, and
+`tests/wide-two-subjects.test.mjs` asserts the dictionary case in the shape of the defect.
+
+## What this does not establish, continued
+
+That the record is always right. A reader can declare a wide reading that reads badly, and nothing here argues with
+them; the point of the rule is that the table carries one answer rather than each surface inventing its own. Nor
+does it settle *Total within groups*, which strips `wide` from its output deliberately — a total over a group is not
+the melted file, and whether the reading should survive that step is still open.
+
+## Two defects the one rule introduced, and what found them (2026-11-25)
+
+Reading a melted table on its recorded key is right, and it broke two things the heuristic had got right by
+accident. Both were caught by the **release gate on the worked examples**, not by a unit test and not by this audit:
+
+- **The record names some keys, not all of them.** `declaredFrame` used the recorded subject keys and the measure key
+  and ignored the rest, so a key acquired after the melt — `water_supply`, brought onto Snow's South London table by
+  Relate — left the frame entirely. A leftover key is now placed by what it does: one value per subject is an
+  attribute column, and one that varies within a subject belongs to the record's identity.
+- **Two rows with the same keys were one row.** The dengue example's *Before* note read 92 greyed of 4,784 where the
+  file holds 4,876 rows and 184 fall outside the selected range. The file repeats the week of 2024-12-29 for every
+  one of Rio de Janeiro's 92 municipalities, byte for byte, and the pivot absorbed each pair. That duplication is a
+  finding — it is what the example teaches at that step — and a view that merges it reports a cleaner file than the
+  one the practitioner has. A row whose cell is already filled now opens a new record.
+
+The second is the one worth remembering: the gate reported a *number*, 92 where 368 was expected, and the shape had
+legitimately changed, so adopting the new number was defensible and wrong. The file's own row count settled it.
+
+The same overwrite was then found in the heuristic path, which groups on the subject alone and admits numeric
+attributes without asking whether they describe the subject. Fixed with the same rule, in the same pass.
+
+## A display choice was writing provenance (2026-11-25)
+
+The rule settled above — a user-facing view widens on the record, never on the guess — was right, and the way it was
+built was not. *Always show this table wide* wrote `DataTable.wide`, the same field the melt writes. That field is
+**provenance**: it says the table arrived wide and names the subjects it had, and computation relies on it.
+`isWide` gates `wideSubjects`, which rebuilds one record per subject, and **Apply ruleset then evaluates rules over
+those subjects rather than over rows**.
+
+So a reader asking to *see* a long table wide changed what was computed. Reproduced in review: saving the preference
+turned six rule inputs into three and replaced the measure and value fields with measure-named ones. Nothing warned
+anyone, because every surface reading `wide` was reading a field that now meant two different things.
+
+The preference is `DataTable.shownWide` now. Views read `wide ?? shownWide`; nothing that computes reads the second.
+`tests/display-reading-is-not-provenance.test.mjs` asserts the gate directly: a kept display reading leaves `isWide`
+false, while a table that really arrived wide still passes it.
+
+**What this cost, and what it says about the rule.** The one-rule-for-widening finding was a display finding, and it
+was implemented by reaching for the nearest field that already travelled with the value. That field had a meaning.
+A preference and a fact about a file can look identical in a type — `{measureKey, subjectKeys}` either way — and
+differ completely in what may read them. Four surfaces were checked when this was built; the three that compute from
+`wide` were not, because the change was framed as being about display.
+
+**What this does not establish.** That no other display preference rides a computational field. Nothing was surveyed
+for the general pattern; only this one was found, by someone reading the diff rather than the code it touched.

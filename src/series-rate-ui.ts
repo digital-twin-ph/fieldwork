@@ -6,7 +6,7 @@ import type {OwnInspector,StepKit} from './inspector-kit.js';
 import type {DataTable} from './data-table.js';
 import {openConfigDialog} from './config-dialog.js';
 import {computeRate,fromTable,fromWideTable} from './rate.js';
-import {PERIOD_WORDS,DATE_KINDS} from './case-series.js';
+import {PERIOD_WORDS,DATE_KINDS,caseSeries,caseSeriesFromTable,type CaseSeries} from './case-series.js';
 
 export interface SeriesRateKit extends StepKit {
   /** The columns of the records arriving, by their attribute names. */
@@ -17,6 +17,10 @@ export interface SeriesRateKit extends StepKit {
   feedsAnything:(nodeId:string)=>boolean;
   /** Adds an epidemic curve after Cases by period, connected, and selects it. */
   addCurve:(n:WorkflowNode<'case_series'>)=>void;
+  /** THE CASES ARRIVING ON THIS STEP'S INPUT (2026-11-25), as its own function takes them: the table where records
+   *  arrive as a table, the points otherwise. Empty where nothing is connected, or where the records exist only as
+   *  the output of a run that has not happened -- the Preview says which, rather than going blank. */
+  casesOn:(nodeId:string,source?:'points'|'table')=>{table?:DataTable;points?:import('./types.js').PointCollection};
 }
 
 /** RATE'S ONE SENTENCE (experiment 186). */
@@ -34,6 +38,57 @@ export function seriesSentence(p:import('./types.js').ParamsByType['case_series'
     +(p.splitBy?`, for each value of ${p.splitBy}`:'')
     +(p.source==='table'?(p.rowAsCase?(p.caseId?`, each ${p.caseId} once.`:', one case per row.'):', each row as many cases as its value.'):p.weightField?`, each record as many cases as its ${p.weightField}.`:', one case per record.');
 }
+/** WHAT CASES BY PERIOD WOULD COUNT, from the records actually connected (2026-11-25).
+ *
+ *  Its Preview restated the settings -- `seriesSentence(draft)`, built from the node's params and nothing else -- so
+ *  it read like a preview while showing nothing of this workflow's data. The practitioner met it as *"Same problem no
+ *  preview"*, one of a run of dialogs, and the audit that followed found eleven more of the same kind
+ *  (docs/audits/preview-audit.md). The sentence is not lost: the Inspector shows it, which is where a settings
+ *  summary belongs.
+ *
+ *  This runs the step's OWN function -- `caseSeries` on points, `caseSeriesFromTable` on a table -- so the Preview
+ *  cannot show something the run would not do.
+ *
+ *  THE UNDATED RECORDS ARE THE FINDING, and they are stated whenever there are any. A count by date silently drops a
+ *  record whose date cannot be read, and Oswego arrives with two such onset times: the number here is the reader's
+ *  one chance to see them before the curve is drawn as though they never existed. */
+function seriesPreview(kit:SeriesRateKit,nodeId:string,d:import('./types.js').ParamsByType['case_series'],
+  esc:(v:string)=>string):string{
+  if(!d.dateField)return '<p class="muted">Name the date column, and what this step would count is shown here.</p>';
+  const {table,points}=kit.casesOn(nodeId,d.source);
+  if(!table&&!points)return `<p class="muted">Connect the ${d.source==='table'?'table of cases':'cases'}, and `
+    +'what this step would count is shown here.</p>';
+  let series:CaseSeries;
+  try{
+    series=table
+      ?caseSeriesFromTable(table,{dateField:d.dateField,dateKind:d.dateKind,period:d.period,
+        splitBy:d.splitBy??null,rowAsCase:!!d.rowAsCase,caseId:d.caseId??null})
+      :caseSeries(points!,{dateField:d.dateField,dateKind:d.dateKind,period:d.period,
+        weightField:d.weightField,splitBy:d.splitBy});
+  }catch(error){
+    return `<p class="muted">This cannot be counted yet: ${esc(error instanceof Error?error.message:String(error))}</p>`;
+  }
+  const periods=new Set(series.bins.map(b=>b.key)).size;
+  const peak=series.bins.reduce<typeof series.bins[number]|null>((best,b)=>!best||b.count>best.count?b:best,null);
+  const word=PERIOD_WORDS[series.period];
+  const n=(v:number)=>v.toLocaleString('en-US');
+  return `<p class="standard-result"><strong>${n(series.total)}</strong> `
+    +`${esc(series.unit??'cases')} in <strong>${n(periods)}</strong> ${esc(word)}${periods===1?'':'s'}`
+    +(series.firstPeriod&&series.lastPeriod
+      ?`, ${esc(series.firstPeriod)} to ${esc(series.lastPeriod)}`:'')
+    +'.'+(peak?` The most in one ${esc(word)} is <strong>${n(peak.count)}</strong>, ${esc(peak.label)}.`:'')
+    +(series.groups?.length?` Counted for each of ${n(series.groups.length)} values of ${esc(series.splitBy??'')}.`:'')
+    +'</p>'
+    // SAID WHENEVER THERE ARE ANY, and not as a warning: an unreadable date is a fact about the records, for the
+    // reader to decide about, not a refusal. Named where few enough to name.
+    +(series.undatedRecords
+      ?`<p class="profile-flag">${n(series.undatedRecords)} of `
+        +`${n(series.datedRecords+series.undatedRecords)} records have no date this step can read, `
+        +`so they are not counted${series.undated.length&&series.undated.length<=3
+          ?`: ${series.undated.map(u=>esc(`${u.name||u.id} (${u.value||'empty'})`)).join(', ')}`:''}.</p>`
+      :'');
+}
+
 /** CASES BY PERIOD'S CONFIGURATION DIALOG (experiments 186 and 206, 2026-11-12): how the records arrive, the date column
  *  and its kind, the period (day of the week among them), and the weight. Changing how records arrive disconnects
  *  what was wired, as Rate does. */
@@ -64,7 +119,7 @@ function openSeriesConfig(kit:SeriesRateKit,nodeId:string){
         // A CASE IN SEVERAL ROWS, one per recorded source, counted once (MERS, 2026-11-15).
         +(d.rowAsCase?pick('series-case','Each case is named in (optional)','caseId','',true):'')
         +(d.source==='table'&&!d.rowAsCase?'':pick('series-split','Count each value of (optional)','splitBy','',true));
-      return {settings,preview:`<p class="description">${esc(seriesSentence(d))}</p>`,
+      return {settings,preview:seriesPreview(kit,nodeId,d,esc),
         // SAID, NOT BLOCKED: the input is chosen before it is connected, and the columns come with the connection; the
         // run refuses a missing date, as it did before (the Sierra Leone manual, 2026-11-12).
         ...(d.dateField?{}:{message:{tone:'warning' as const,text:'Choose the date column, once the records are connected.'}})};

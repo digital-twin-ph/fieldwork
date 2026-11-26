@@ -10,6 +10,8 @@
  *  not converge reports no estimate. A row missing any variable the model uses is left out and counted, as R's
  *  complete-case default does, and the count is part of the result. */
 import {kernel} from './kernel.js';
+import {exclusionReason,exposureColumnsOf,modelParams} from './regression-sample.js';
+export {exposureColumnsOf,modelParams};
 
 export type Family='logistic'|'poisson';
 export type TermKind='numeric'|'categorical'|'spline';
@@ -115,21 +117,13 @@ export function fitRegression(input:Row[],spec:RegressionSpec):RegressionResult{
   const reasons:Record<string,number>={};
   const leave=(why:string)=>{reasons[why]=(reasons[why]??0)+1;};
   const used:Row[]=[];const outcome:number[]=[];
+  // THE RULE IS IN regression-sample.ts, so the dialog can apply it without this kernel. Same rule, same words.
+  const rule={family:spec.family,outcome:spec.outcome,cases:spec.cases,controls:spec.controls,
+    terms,strata:spec.strata,offset:spec.offset};
   for(const row of input){
-    let y:number;
-    if(spec.family==='logistic'){
-      const v=asText(row[spec.outcome]);
-      if(spec.cases!.includes(v))y=1;else if(spec.controls!.includes(v))y=0;else{leave(`${spec.outcome} neither case nor control`);continue;}
-    }else{
-      y=asNumber(row[spec.outcome]);
-      if(!Number.isFinite(y)||y<0){leave(`${spec.outcome} missing or not a count`);continue;}
-    }
-    const missing=terms.find(term=>term.as==='categorical'?asText(row[term.column])===''||asText(row[term.column]).toUpperCase()==='NA'
-      :!Number.isFinite(asNumber(row[term.column])));
-    if(missing){leave(`${missing.column} missing`);continue;}
-    const noStratum=strataColumns.find(c=>asText(row[c])==='');
-    if(noStratum){leave(`${noStratum} missing`);continue;}
-    if(spec.offset&&!Number.isFinite(asNumber(row[spec.offset]))){leave(`${spec.offset} missing`);continue;}
+    const why=exclusionReason(row,rule);
+    if(why){leave(why);continue;}
+    const y=spec.family==='logistic'?(spec.cases!.includes(asText(row[spec.outcome]))?1:0):asNumber(row[spec.outcome]);
     used.push(row);outcome.push(y);
   }
   if(!used.length)throw new Error('No row has every variable the model uses.');
@@ -346,8 +340,6 @@ export function regressionReceipt(node:{id:string},result:RegressionResult,param
 
 /** THE EXPOSURE COLUMNS, ONE MODEL EACH (experiment 185). Two or more listed fit one model per column; one, or none
  *  listed, is the single model this widget has always fitted. */
-export const exposureColumnsOf=(params:{exposure:Term;exposureColumns?:string[]}):string[]=>
-  (params.exposureColumns?.length??0)>1?params.exposureColumns!.map(c=>c.trim()):[params.exposure.column];
 
 export interface ModelRow {
   column:string;
@@ -404,11 +396,7 @@ function fittedModels(models:ModelRow[]):ModelRow[]{
 
 /** MODEL k's OWN SETTINGS: the k-th exposure column, and the k-th column of every adjustment that follows the shift.
  *  Everything else is the same in every model. */
-export function modelParams(params:RegressionParams,k:number):RegressionParams{
-  const column=exposureColumnsOf(params)[k]!;
-  return {...params,exposure:{...params.exposure,column},exposureColumns:[column],
-    adjust:(params.adjust??[]).map(({perModel,...t})=>perModel?{...t,column:perModel[k]!}:t)};
-}
+
 /** A shift column's name without its shift: `precip_total_semana_-14d` is `precip_total_semana`. */
 const unshifted=(column:string)=>column.replace(/_[+-]?\d+d$/,'');
 

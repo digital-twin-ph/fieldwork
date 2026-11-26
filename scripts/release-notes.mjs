@@ -60,6 +60,40 @@ export function releaseNotes(){
     kindVocabulary:[...kinds].sort(),widgets};
 }
 
+/** THE CHANGELOG'S SHAPE, for the sections still being written (2026-11-25).
+ *
+ *  The application renders release notes with `.manual-body`, and `tests/changelog-dialog.browser.mjs` asserts the
+ *  dialog holds no `<p>` at all: "a bullet's wrapped lines are one item, not a bullet and a paragraph". A section
+ *  opened with a prose summary therefore turns the gate red — which it did for 0.197.0, and again for 0.198.0, one
+ *  release after the first was fixed. Fifteen minutes of browser tests to catch a paragraph is the wrong instrument.
+ *
+ *  THE TWO NEWEST SECTIONS, because those are the two the dialog draws: it opens on the version running and steps
+ *  back one. Nineteen sections still say "In development", 0.10.0 among them, so that phrase scopes nothing; and the
+ *  older sections hold prose from before this was understood, which the dialog tolerates because it never shows
+ *  them beside the current one. Rewriting them to satisfy a rule written afterwards would be tidying the record.
+ *  The window moves forward with each release, so what is enforced is always what is still being written. */
+function changelogShape(){
+  const text=readFileSync(join(root,'CHANGELOG.md'),'utf8').split('\n');
+  const wrong=[];
+  let seen=0,open=false;
+  text.forEach((line,i)=>{
+    if(line.startsWith('## ')){open=/^## [\d.]/.test(line)&&++seen<=2;return;}
+    if(!open||!line.trim()||line.startsWith('#'))return;
+    // A list item, or a wrapped line of one. Anything else at column 0 is a paragraph.
+    if(line.startsWith('- ')||line.startsWith('  ')||line.startsWith('\t'))return;
+    wrong.push(`CHANGELOG.md:${i+1}: ${line.slice(0,70)}`);
+  });
+  return wrong;
+}
+
+const prose=changelogShape();
+if(prose.length){
+  console.error('One of the two newest release sections holds a paragraph. The changelog dialog draws both as a '
+    +'list and the browser test asserts it has no <p>, so this would turn the gate red. Make it a bullet:');
+  for(const line of prose)console.error(`  ${line}`);
+  process.exit(1);
+}
+
 const notes=releaseNotes();
 const path='widgets/release-notes.json';
 const text=JSON.stringify(notes,null,1)+'\n';

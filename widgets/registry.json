@@ -292,7 +292,7 @@
   {
    "id": "urn:fieldwork:widget:case_series",
    "nodeType": "case_series",
-   "currentVersion": "0.8.0",
+   "currentVersion": "0.10.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -343,6 +343,16 @@
      "version": "0.8.0",
      "path": "widgets/releases/case_series/0.8.0.json",
      "sha256": "46de618c55440027eb1c1988ab958c62b3d2a288a459240590bbf1253447d0d5"
+    },
+    {
+     "version": "0.9.0",
+     "path": "widgets/releases/case_series/0.9.0.json",
+     "sha256": "acb2276c81c2d15ee41334811b4d1ac19581d5ef95d1eab87e77f7311aee9b41"
+    },
+    {
+     "version": "0.10.0",
+     "path": "widgets/releases/case_series/0.10.0.json",
+     "sha256": "9671048ede53de0e59bb10de287803213eacec354fc7bfd20b0d442bb9c7e172"
     }
    ]
   },
@@ -919,7 +929,7 @@
   {
    "id": "urn:fieldwork:widget:space_time_scan",
    "nodeType": "space_time_scan",
-   "currentVersion": "0.6.2",
+   "currentVersion": "0.8.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -970,6 +980,16 @@
      "version": "0.6.2",
      "path": "widgets/releases/space_time_scan/0.6.2.json",
      "sha256": "feafafbbaedeba3daffd88924973708866288ac8ba91c1caf292641a9d4534f8"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/space_time_scan/0.7.0.json",
+     "sha256": "8e796b2fb99ad7817f8748248eb45ee9affe8353eb67776bd16f950f67282051"
+    },
+    {
+     "version": "0.8.0",
+     "path": "widgets/releases/space_time_scan/0.8.0.json",
+     "sha256": "d078b57100cfb91821db25770faba143c6bbda57be25e737b9cd2742fe52fc4a"
     }
    ]
   },
@@ -1043,7 +1063,7 @@
   {
    "id": "urn:fieldwork:widget:isochrone",
    "nodeType": "isochrone",
-   "currentVersion": "0.6.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -1074,6 +1094,11 @@
      "version": "0.6.0",
      "path": "widgets/releases/isochrone/0.6.0.json",
      "sha256": "c785c49f96fb33062eab99011a799ac3d1268c92f7fe95b4ddbca03c7033d142"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/isochrone/0.7.0.json",
+     "sha256": "77e55cde363dee87babf5c86e398b8ca09d1c9d8ebb2eb2f1b26a4e2b36d24e2"
     }
    ]
   },
@@ -1635,7 +1660,7 @@
   {
    "id": "urn:fieldwork:widget:measure_distance",
    "nodeType": "measure_distance",
-   "currentVersion": "0.6.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -1661,6 +1686,11 @@
      "version": "0.6.0",
      "path": "widgets/releases/measure_distance/0.6.0.json",
      "sha256": "e1cae4bcb627bae4354a5b834f0ee2fd6e734380ceb7eeacafc5d0f9cd52f6ac"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/measure_distance/0.7.0.json",
+     "sha256": "55c702e07f485aad87e255aa65009bd298afe7870815846a638eb2f466f41b7a"
     }
    ],
    "previousNodeTypes": [
@@ -2265,7 +2295,7 @@
   {
    "id": "urn:fieldwork:widget:reachable_nodes",
    "nodeType": "reachable_nodes",
-   "currentVersion": "0.6.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -2296,6 +2326,11 @@
      "version": "0.6.0",
      "path": "widgets/releases/reachable_nodes/0.6.0.json",
      "sha256": "b906b629ca8768dcd202b567b13d200b8e58e3830f5841400e4ba4f6ad33c260"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/reachable_nodes/0.7.0.json",
+     "sha256": "24ac9a343d7fd27d4a861a33703818e96d0480d6e5943c7f1bae159bce22afee"
     }
    ]
   },
@@ -2921,7 +2956,7 @@
   {
    "id": "urn:fieldwork:widget:table_input",
    "nodeType": "table_input",
-   "currentVersion": "0.23.0",
+   "currentVersion": "0.25.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3072,6 +3107,16 @@
      "version": "0.23.0",
      "path": "widgets/releases/table_input/0.23.0.json",
      "sha256": "3bc670325576ef93ad415c4c0465d45d42d22a498e3e3b28d6d9c45b0b8f4707"
+    },
+    {
+     "version": "0.24.0",
+     "path": "widgets/releases/table_input/0.24.0.json",
+     "sha256": "fd78813f12394feed9a03edfa97f72d7fce09ed4d139e9c3392fdbbc65265833"
+    },
+    {
+     "version": "0.25.0",
+     "path": "widgets/releases/table_input/0.25.0.json",
+     "sha256": "44ce34d3f06506233bc9bf77d00c23dc4cbba6b17a0faab5d4039ff6d9aa2a4f"
     }
    ]
   },
@@ -3338,7 +3383,7 @@
   {
    "id": "urn:fieldwork:widget:voronoi",
    "nodeType": "voronoi",
-   "currentVersion": "0.4.0",
+   "currentVersion": "0.5.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3359,6 +3404,11 @@
      "version": "0.4.0",
      "path": "widgets/releases/voronoi/0.4.0.json",
      "sha256": "3c4fb634f65e0796a44d4acf6d563d09f2ae3dc767ee4f57deda309877dc8480"
+    },
+    {
+     "version": "0.5.0",
+     "path": "widgets/releases/voronoi/0.5.0.json",
+     "sha256": "c4a297560c6d2acfb0da1fcd4b1e56ab5c3c604956ede0c454d3ec21eeff647b"
     }
    ]
   },
@@ -3392,7 +3442,7 @@
   {
    "id": "urn:fieldwork:widget:regression",
    "nodeType": "regression",
-   "currentVersion": "0.6.1",
+   "currentVersion": "0.9.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3438,6 +3488,21 @@
      "version": "0.6.1",
      "path": "widgets/releases/regression/0.6.1.json",
      "sha256": "ef7757d7e106066e0469f0a31a881efac282c02898379eaba1831839a35afd43"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/regression/0.7.0.json",
+     "sha256": "68b96d69bfe6bf40790518034fda56f3e883f8672e2f00e5641df854e41ed897"
+    },
+    {
+     "version": "0.8.0",
+     "path": "widgets/releases/regression/0.8.0.json",
+     "sha256": "ce7eb3c0c355c12f39c33a2140168d7bb71d1c9035c44f0d8759e80ad38363eb"
+    },
+    {
+     "version": "0.9.0",
+     "path": "widgets/releases/regression/0.9.0.json",
+     "sha256": "d08b9e67474115baaad3f964e8731d5e2dbe353d2449b8a356aba69d06a440b1"
     }
    ]
   },

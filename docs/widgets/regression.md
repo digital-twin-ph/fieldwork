@@ -1,6 +1,6 @@
 # Regression
 
-_Created 2026-11-04 · Updated 2026-11-12_
+_Created 2026-11-04 · Updated 2026-11-25_
 
 **A model.** Logistic regression for a case-control or cross-sectional study, reporting odds ratios; Poisson
 regression for counts over time or area, reporting rate ratios. Each estimate is adjusted for the variables you add.
@@ -107,3 +107,31 @@ Experiment 167.
 
 That a model is well specified. A ratio adjusted for the wrong variables is precise and wrong, and nothing in the fit
 can tell.
+
+## History
+
+### 2026-11-26 · Each model’s own sample, and one reading of a cell (0.9.0)
+
+With several exposure columns this step fits one model for each, and every model leaves out only the rows its own
+variables are missing on. The Preview reported the first column's sample as though it were all of them.
+
+It now reports each. And the case count reads a cell the way the fit does: a value padded with spaces was being
+admitted as a case by one part of the Preview and counted as a non-case by another.
+
+### 2026-11-25 · The Preview counts the rows the fit will use (0.8.0)
+
+It counted rows that had something in every column the model names. The fit asks for more than that: an outcome has
+to be a case or a control, a category written NA is not a category, and a number has to be a number. The Preview was
+promising a larger sample than the run would use.
+
+Both now ask the same question of a row, and the Preview says why the others are left out, in the same words the run
+uses.
+
+### 2026-11-25 · The Preview counts the rows the model would be fitted on (0.7.0)
+
+The Preview read the plan back and never said whether a model could be fitted at all. That turns on how many rows
+carry every column the plan names, how the outcome divides, and whether a level of the exposure is left with too few
+rows to estimate on.
+
+Those are counted now, from the table connected, without fitting anything: a fit is iterative and belongs in the run,
+while completeness is a single pass over the rows and is the part to act on while the settings are still in view.

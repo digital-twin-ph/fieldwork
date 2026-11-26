@@ -27,6 +27,15 @@ export interface TableView {
   edited?:Map<Record<string,unknown>,import('./cell-edits.js').EditedCells>;
   /** One line under the title: what this table is keyed by, what it measures, in what unit. */
   note?:string;
+  /** A WIDE READING THIS VIEW MADE AND NOBODY HAS DECLARED (2026-11-25). Quick Look widens a long table on sight --
+   *  the practitioner, 2026-10-27: *"pandas does not show you a long table"* -- and every other surface shows it as
+   *  stored, so one table had two shapes a click apart. Offered here so the reading can be DECLARED, which is what
+   *  makes it travel: a declaration lives on the table and every surface downstream reads it.
+   *
+   *  Absent where the table already declares its shape, and where no wide reading could be made. */
+  proposedWide?:{measureKey:string;subjectKeys:string[]};
+  /** Keeps the reading above, on the table this view was opened from. */
+  onDeclareWide?:(reading:{measureKey:string;subjectKeys:string[]})=>void;
   /** What a ruleset has declared each column to be, where anything has. A column nobody has
    *  bound is not wrong; it is undeclared, and the profile says so by saying nothing. */
   declared?:Record<string,ColumnKind>;
@@ -143,6 +152,24 @@ export function openTableViewer(view:TableView,esc:Escape):void{
           +`data-table-step="${i}" aria-pressed="${i===view.steps!.at}">${esc(label)}</button>`).join('')
         +`</div>`:'')
       +(view.note?`<p class="description">${esc(view.note)}</p>`:'')
+      // SAID WHERE THE SHAPE IS NOT THE TABLE'S OWN (2026-11-25). The practitioner: *"For Quick Look if the table
+      // came in natively long can we give the user a hint while displaying it wide?"*
+      //
+      // Quick Look widens a long table on sight, and every other surface shows it as stored -- so one table has two
+      // shapes a click apart, and nothing said which was which. A reader who takes this for the table's own shape
+      // will be surprised by the next dialog they open.
+      //
+      // THE HINT AND THE OFFER ARE SEPARATE. The hint is about what is on the screen, so it shows wherever this view
+      // widened an undeclared table; the button is an action on the table, so it shows only where there is a table
+      // to write it to. A step's computed output has no stored table yet and still gets the hint.
+      +(view.proposedWide
+        ?`<p class="description table-wide-offer"><strong>This table is stored long</strong>, one row per value. `
+          +`It is shown here wide: one row per ${esc(view.proposedWide.subjectKeys.join(' and '))}, `
+          +`columns from ${esc(view.proposedWide.measureKey)}. Elsewhere it is shown as it is stored.`
+          +(view.onDeclareWide
+            ?` <button type="button" class="button small" data-declare-wide>Always show this table wide</button>`:'')
+          +'</p>'
+        :'')
       +(view.excluded?.rows.size?`<p class="description table-excluded-note"><span class="table-excluded-swatch"></span>`
         +`${view.excluded.rows.size.toLocaleString('en-US')} of ${view.rows.length.toLocaleString('en-US')} rows greyed: not kept by this step, ${esc(view.excluded.why)}.</p>`:'')
       +`<div class="record-controls">`
@@ -187,6 +214,13 @@ export function openTableViewer(view:TableView,esc:Escape):void{
         view.onRepair(column,declared);
       };
     });
+    // BOUND ON EVERY RENDER, with the rest. It was bound once, after the first render, while filtering rebuilds the
+    // dialog's markup on each keystroke: the button stayed on the screen and did nothing (review of 0.196.0).
+    dialog.querySelector<HTMLButtonElement>('[data-declare-wide]')?.addEventListener('click',()=>{
+      if(!view.proposedWide||!view.onDeclareWide)return;
+      view.onDeclareWide(view.proposedWide);
+      close();
+    });
     const search=dialog.querySelector<HTMLInputElement>('#table-viewer-filter')!;
     search.oninput=()=>{
       filter=search.value;
@@ -228,6 +262,10 @@ export function tableViewOf(
   const frame=wideFrame({kind:'data-table',...data} as DataTable);
   if(frame)
     return {title,...(data.headings?{headings:data.headings}:{}),
+      // PROPOSED ONLY WHERE NOBODY HAS SAID. A table Fieldwork melted already carries its reading, and re-offering
+      // it would ask the practitioner to declare what the file already said.
+      ...((data as {wide?:unknown;shownWide?:unknown}).wide||(data as {shownWide?:unknown}).shownWide
+        ?{}:{proposedWide:{measureKey:frame.measureKey,subjectKeys:frame.subjectKeys}}),
       columns:[frame.subject,...frame.attributes,...frame.columns],
       rows:frame.rows.map(row=>({[frame.subject]:row.label,
         ...Object.fromEntries(frame.attributes.map((name,i)=>[name,row.attributes[i]])),

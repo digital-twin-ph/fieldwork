@@ -117,12 +117,12 @@
    "migrationFrom": []
   },
   "case_series": {
-   "version": "0.8.0",
-   "released": "2026-11-22",
+   "version": "0.10.0",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "changed",
-     "description": "A blank weight is refused, not counted as zero, saying how many rows have none; the sentence gives how many records without an ISO 8601 date were left out, of how many, and what they held; a range too long to draw names its first and last date."
+     "kind": "fixed",
+     "description": "The Preview resolves on the INPUT TYPE BEING CHOSEN, not the one saved. Switching the step from points to a table left it counting the points still connected -- \"2 cases in 2 days\" of records that Apply would then discard along with the connection -- because the reader was looking at a draft and the Preview was reading the node. Where the chosen type has nothing on it, the Preview names what to connect."
     }
    ],
    "breaking": false,
@@ -350,12 +350,12 @@
    ]
   },
   "space_time_scan": {
-   "version": "0.6.2",
-   "released": "2026-11-22",
+   "version": "0.8.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "changed",
-     "description": "Its Inspector and its Configure… dialog moved out of app.ts into outbreak-steps-ui.ts, reached through the kit; nothing it does changed."
+     "kind": "fixed",
+     "description": "The Preview never reports a limit shorter than the scan would run. It floored the time share where the scan takes `Math.max(1, floor(bins * maxTimeShare))`, so five days at a tenth read \"up to 0 days\" of a scan that runs one-day windows."
     }
    ],
    "breaking": false,
@@ -374,12 +374,12 @@
    "migrationFrom": []
   },
   "isochrone": {
-   "version": "0.6.0",
-   "released": "2026-11-23",
+   "version": "0.7.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "Show me how it works, in Configure…: A made-up street grid spaced to the time set: the walk onto the nearest junction, the streets walked until the time is spent with the ground either side, and the region the step makes."
+     "kind": "changed",
+     "description": "Show me how draws the streets the walk actually covers. The practitioner: \"The show me how it works is incomplete as use of a street network is usually point to point.\" The step said \"along the streets in every direction\" and drew only the finished region, so the one thing that tells a network isochrone from a circle -- that every metre is counted ALONG a street, from the origin to somewhere -- was asserted and never shown. The walked streets come from `costsWithin`, the same reachability the isochrone runs: a street is drawn as walked where both its junctions were reached within the budget."
     }
    ],
    "breaking": false,
@@ -464,12 +464,12 @@
    "migrationFrom": []
   },
   "measure_distance": {
-   "version": "0.6.0",
-   "released": "2026-11-09",
+   "version": "0.7.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "On the standard Inspector and dialog (experiment 186): its name, its two inputs, one sentence and Configure…, which holds the unit and the conditions a candidate must meet, and what the last run measured. And its result is a table where a table is wanted (experiment 197): Relate, Select rows and Table read it keyed by point_id, nearest_id and the nearest candidate's own attributes as nearest_<attribute>, the distance as the value. It replaces Assign projection site in the sea-level example."
+     "kind": "changed",
+     "description": "The Preview counts the candidates a condition keeps, and the distances they give. It restated `distanceSentence(draft)`, which NAMES the conditions being edited and never said what they kept -- so the one number a condition exists to change was available only by running the workflow and reading the receipt. Now `nearestPlaces`, the function the run calls: the eligible count moves as a condition is typed, with the nearest, median and furthest distance, and the points left with no distance at all."
     }
    ],
    "breaking": false,
@@ -655,12 +655,12 @@
    "migrationFrom": []
   },
   "reachable_nodes": {
-   "version": "0.6.0",
-   "released": "2026-11-23",
+   "version": "0.7.0",
+   "released": "2026-11-25",
    "changes": [
     {
-     "kind": "minor",
-     "description": "On the standard Inspector: one sentence of what it finds, every setting in Configure…, which holds Apply while the speed is outside the mode's range, and the run's counts in the Result. Moved off the old catchment panel to metric-steps-ui.ts. A manual page."
+     "kind": "changed",
+     "description": "The Preview says exactly what it is waiting for, and never asks for something already connected. It was `minutes x speed` -- \"That goes up to 800 m along the streets from each site\" -- arithmetic on the two numbers just typed, identical whether the network reaches a thousand junctions or none. The budget sentence stays, and what it buys is now counted by `reachableNodes` where the sites and the network can both be read. A downloaded network is held outside the page by reference and read when the workflow runs, so that is said in place rather than asking the reader to connect a network that is already there."
     }
    ],
    "breaking": false,
@@ -854,16 +854,12 @@
    "migrationFrom": []
   },
   "table_input": {
-   "version": "0.23.0",
+   "version": "0.25.0",
    "released": "2026-11-25",
    "changes": [
     {
-     "kind": "changed",
-     "description": "THE DATA QUALITY DIALOG SHOWS THE FILE'S SHAPE. The practitioner: \"I noticed that the Data Quality display of this table reverted to the long format, which my cause confusion when both wide (the user preference) and long (internal) formats are used in different places.\" Its Columns, Shapes and gaps, and Records tabs showed `species`, `measure` and `value` -- names Fieldwork gave the table when it melted it -- while the table view a click away showed the file's own columns."
-    },
-    {
      "kind": "fixed",
-     "description": "An edit to a subject's name in the Records tab renamed ONE melted row and silently split the subject in two. In the file's shape a subject is one record, so the correction necessarily reaches every row it has. Edits are translated back to the stored rows they belong to, which is what keeps them applying at all."
+     "description": "A display choice no longer changes what is computed. \"Always show this table wide\" wrote `DataTable.wide`, which is PROVENANCE -- it says the file arrived wide, and `isWide` gates on it so Apply ruleset evaluates rules over rebuilt subjects rather than over rows. Keeping the preference turned six rule inputs into three and replaced the measure and value fields with measure-named ones. The preference is `DataTable.shownWide` now; views read either, nothing that computes reads the second. Two more from the same review: a key that varies within a subject is drawn as a column and not only grouped by, so two years of counts for one district no longer appear as two rows neither of which says its year; and the offer to keep a reading is bound on every render, having been bound once while filtering rebuilds the dialog on each keystroke, so the button stayed visible and did nothing."
     }
    ],
    "breaking": false,
@@ -948,12 +944,12 @@
    "migrationFrom": []
   },
   "voronoi": {
-   "version": "0.4.0",
+   "version": "0.5.0",
    "released": "2026-11-25",
    "changes": [
     {
-     "kind": "added",
-     "description": "A PREVIEW, where the section held only Show me how it works. It runs `voronoi` on the sites and study area connected and says how many catchments, from the smallest to the largest -- what a reader judges about catchments is how uneven they are."
+     "kind": "changed",
+     "description": "Show me how builds the division up instead of showing it finished. The practitioner: \"the show me how it works does not really make sense from a step by step perspective.\" It did not: one step followed a single house to its nearest pump, and the next showed every dividing line and every cell at once, so the construction happened between two steps and was described rather than drawn. Now two pumps and the one line between them, then the third added and the lines meeting. Both drawn by `voronoi` itself, on two pumps and then three."
     }
    ],
    "breaking": false,
@@ -973,12 +969,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "regression": {
-   "version": "0.6.1",
-   "released": "2026-11-22",
+   "version": "0.9.0",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "changed",
-     "description": "Its Inspector and what opens its Configure… moved out of app.ts into its own module, reached through the kit; nothing it does changed."
+     "kind": "fixed",
+     "description": "The Preview reports EACH MODEL'S own sample, and reads a cell as the fit reads it. With several exposure columns the run fits one model each, every model leaving out only the rows its own variables are missing on; this reported the first exposure's as though it were all of them (4 of 4 usable where the second had 2). `exposureColumnsOf` and `modelParams` moved to regression-sample.ts beside the row rule, so the Preview enumerates the models the run will fit. And the case summary now trims as the exclusion rule does: a whitespace-padded `yes` was admitted as a case by one and counted as a non-case by the other, two normalizations inside one Preview disagreeing about the same cell."
     }
    ],
    "breaking": false,

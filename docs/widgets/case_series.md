@@ -1,6 +1,6 @@
 # Cases by period
 
-_Created 2026-11-07 · Updated 2026-11-22_
+_Created 2026-11-07 · Updated 2026-11-25_
 
 **An epidemic curve's counts.** Cases per day, week or month, or by day of the week or month of the year, by a date whose kind you state: onset, report, death,
 specimen collection, or a date of unstated kind.
@@ -95,6 +95,22 @@ never put at midnight. Oswego's *When did they fall ill?* counts 44 cases from 3
 the date and time put together from the line list's two columns by Apply ruleset.
 
 ## History
+
+### 2026-11-26 · The Preview follows the input type you are choosing (0.10.0)
+
+Switching this step from points to a table left the Preview counting the points still connected — a reading of
+records that applying the change would discard along with the connection.
+
+It follows the choice in front of you now. Where the type you have chosen has nothing on it yet, it says what to
+connect instead of counting something else.
+
+### 2026-11-25 · The Preview counts, instead of repeating the settings (0.9.0)
+
+Its Preview read the settings back, so it looked like a preview while showing nothing of the records connected.
+
+It now runs this step's own counting on those records, before any run: the total, how many periods, the span, and the
+busiest one. Records whose date it cannot read are counted and named, because a count by date drops them in silence and
+the curve is then drawn as though they had never been there.
 
 ### 2026-11-22 · A blank count is not zero, and what is left out is counted (0.8.0)
 

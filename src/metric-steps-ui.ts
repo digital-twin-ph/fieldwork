@@ -9,6 +9,7 @@ import {openConfigDialog} from './config-dialog.js';
 import {validateCatchmentNode,voronoi} from './catchments.js';
 import {validateHullNode,convexHull} from './convex-hull.js';
 import {validateMeanCenterNode,computeMeanCenter} from './mean-center.js';
+import {reachableNodes} from './reachable-nodes.js';
 import {calculateArea} from './area-computation.js';
 import {validateReachNode,MODE_SPEED_BANDS} from './reachable-nodes.js';
 import {errorMessage} from './guards.js';
@@ -86,6 +87,63 @@ const waitingFor=(what:string)=>`<p class="muted">Connect ${what}, and what this
 const cannotYet=(kit:InspectorKit,error:unknown)=>
   `<p class="muted">This cannot be previewed yet: ${kit.esc(error instanceof Error?error.message:String(error))}</p>`;
 const km2=(m2:number)=>`${new Intl.NumberFormat('en',{maximumSignificantDigits:3}).format(m2/1e6)} km²`;
+
+/** WHAT REACHABLE JUNCTIONS WOULD REACH, over the network connected (2026-11-25).
+ *
+ *  Its Preview was `minutes x speed` -- *"That goes up to 850 m along the streets from each site"* -- which is
+ *  arithmetic on the two numbers just typed. It reads like a preview, which is why it survived a search for empty
+ *  ones, and it says nothing about these streets: the same sentence appears whether the network reaches a thousand
+ *  junctions or none. The practitioner's objection to the walkthrough beside it was the same thing in another
+ *  place, that a street network is used point to point.
+ *
+ *  This runs `reachableNodes`, the function the run itself calls. The budget sentence stays, because it is what the
+ *  two settings mean, and is now followed by what that budget actually buys.
+ *
+ *  THE SITES ARE READ WITH THEIR PROPERTIES. `reachableNodes` reads `networkNodeId` to tell a site already on the
+ *  network from one it must attach itself, so previewing from the trimmed features a picker uses would describe a
+ *  different run -- and silently, since both produce a number. */
+function reachPreview(kit:InspectorKit,n:WorkflowNode,params:WorkflowNode<'reachable_nodes'>['params']):string{
+  const budget=params.minutes*params.speedMPerMin;
+  const said=budget>0
+    ?`<p>${kit.esc(`That is a budget of ${metres(budget)} along the streets from each site.`)}</p>`:'';
+  const sites=(kit as AreaStepKit).recordsOn(n.id,'sites');
+  const network=(kit as AreaStepKit).networkOn(n.id);
+  // WHAT IS MISSING IS SAID EXACTLY, because two different things look alike here. A port with nothing on it is
+  // waiting to be connected. A port with a street network on it may still have nothing to count from: a downloaded
+  // network is held outside the page by reference (`dataRef`, in IndexedDB) and read when the workflow runs, so it
+  // is not there to be walked while a dialog is drawing. Saying "connect a street network" over a connected one
+  // would send the reader to fix something that is not broken (measured on the Snow isochrone example, 2026-11-25).
+  if(!sites||!network){
+    const connected=(port:string)=>kit.workflow().edges.some(e=>e.to===n.id&&e.port===port);
+    const missing=[!sites&&!connected('sites')?'the sites':'',!network&&!connected('network')?'a street network':'']
+      .filter(Boolean);
+    return said+(missing.length
+      ?`<p class="muted">Connect ${missing.join(' and ')}, and what this step would reach is counted here.</p>`
+      :'<p class="muted">The street network is kept outside the page and read when the workflow runs, so what this '
+        +'step reached is in the Inspector after a run rather than here.</p>');
+  }
+  try{
+    const {value}=reachableNodes(sites,network,{...n,type:'reachable_nodes',params} as WorkflowNode<'reachable_nodes'>,
+      'preview',n.id);
+    const reached=value.features.length;
+    const unconnected=(value as unknown as {unconnected?:unknown[]}).unconnected??[];
+    const offNetwork=(value as unknown as {offNetwork?:{name:string;distanceM:number}[]}).offNetwork??[];
+    const sited=sites.features.filter(f=>f.geometry).length;
+    const n0=(v:number)=>v.toLocaleString('en-US');
+    return said
+      +`<p class="standard-result"><strong>${n0(reached)}</strong> junction${reached===1?'':'s'} `
+      +`${params.direction==='inbound'?'can reach':'reachable from'} `
+      +`<strong>${n0(sited-unconnected.length)}</strong> of ${n0(sited)} site${sited===1?'':'s'}, `
+      +`over ${kit.esc(network.source)}.</p>`
+      // THE SITES THAT REACH NOTHING ARE THE FINDING, and a count of junctions hides them: a site whose nearest
+      // street is further than the whole budget simply does not appear in the result.
+      +(unconnected.length?`<p class="profile-flag">${n0(unconnected.length)} site${unconnected.length===1?'':'s'} `
+        +`${unconnected.length===1?'reaches':'reach'} nothing: the leg to the nearest street spends the whole budget.</p>`:'')
+      +(offNetwork.length?`<p class="profile-flag">${n0(offNetwork.length)} site${offNetwork.length===1?'':'s'} `
+        +`${offNetwork.length===1?'joins':'join'} the network across ground no street covers, charged as a straight `
+        +'line, so they reach further here than on the ground.</p>':'');
+  }catch(error){return said+cannotYet(kit,error);}
+}
 
 function hullPreview(kit:InspectorKit,n:WorkflowNode,params:WorkflowNode<'summarize_hull'>['params']):string{
   const input=pointsOn(kit,n.id);
@@ -326,8 +384,7 @@ export const reachInspector:OwnInspector<'reachable_nodes'>={
             +`<div class="field"><label class="field-label" for="reach-maxSnapM">Snap limit: a site further from a street is marked (metres)</label>`
             +`<input id="reach-maxSnapM" data-reach="maxSnapM" type="number" min="0" max="1000" value="${kit.esc(d.maxSnapM)}" placeholder="Not set">`
             +'<small>Unset means no limit. A site past the limit is attached and marked, not dropped.</small></div>',
-            preview:(()=>{const far=q.minutes*q.speedMPerMin;
-              return far>0?`<p>${kit.esc(`That goes up to ${metres(far)} along the streets from each site.`)}</p>`:'';})(),
+            preview:reachPreview(kit,n,{...p,...reachParams(d)}),
             ...refusal(()=>validateReachNode({...node,params:{...p,...reachParams(d)}}))};},
         wire:(r,d,redraw)=>{
           r.querySelectorAll<HTMLInputElement>('[data-reach]').forEach(el=>el.onchange=()=>{(d as unknown as Record<string,string>)[el.dataset.reach!]=el.value;redraw();});

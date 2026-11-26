@@ -189,8 +189,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      # Both engines the gate runs. WebKit is here because Tauri on macOS is WKWebView and
-      # experiment 70 requires a WebKit gate before any desktop packaging decision.
+      # WEBKIT ONLY -- see the header: Chromium is covered by the local gate. WebKit is here because
+      # Tauri on macOS is WKWebView and experiment 70 requires a WebKit gate before any desktop
+      # packaging decision. This said "both engines the gate runs" until 2026-11-25, carried over
+      # unchanged when Chromium left; an outside review caught it against `FIELDWORK_BROWSERS` above.
       # The browser download is 40 seconds of every run and changes only when Playwright does, so
       # it is cached on the resolved version from the lockfile rather than on a hand-written one.
       # The system libraries --with-deps installs are NOT cached -- they go outside this path, and

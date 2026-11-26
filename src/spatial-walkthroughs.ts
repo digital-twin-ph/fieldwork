@@ -4,6 +4,7 @@
  *  the code, near the equator so a degree is close to a degree each way, and never read from a port. Each walkthrough's
  *  last step is the result the step's own function makes from these shapes, so it cannot show what the step does not do. */
 import type {Boundary,Position,WorkflowNode,PointCollection} from './types.js';
+import {costsWithin} from './reachable-nodes.js';
 import type {Walkthrough,WalkStep} from './table-walkthrough.js';
 import {bufferPoint,BUFFER_POINT_STEPS} from './buffer-point.js';
 import {calculateArea,formatArea,AREA_METHOD,AREA_UNITS} from './area-computation.js';
@@ -324,7 +325,22 @@ export function voronoiWalkthrough():Walkthrough{
     step('A study area and three made-up pumps.',[{kind:'area',rings:ring(AREA)},...pumps('input')]),
     step(`A house in the area goes to the pump nearest it in a straight line: ${nearest.name}, ${metres(Math.round(apart(house,nearest.at)))} away.`,
       [{kind:'area',rings:ring(AREA)},...pumps('input'),{kind:'look',point:house,label:'A house'},{kind:'look',rings:lineTo(house,nearest.at)}]),
-    step('Where two pumps are equally near, a line divides them: on each side, one of them is nearer. The lines meet where all three are equally near.',
+    // TWO PUMPS BEFORE THREE (2026-11-25). The practitioner: *"the show me how it works does not really make sense
+    // from a step by step perspective."* It did not: step 2 followed ONE house to its nearest pump, and step 3 then
+    // showed every dividing line and every finished cell at once. The construction -- which is the thing being
+    // taught -- happened between two steps and was described in a sentence rather than drawn.
+    //
+    // So the division is built up: two pumps and the one line between them, then the third pump and where the lines
+    // meet. Both are drawn by `voronoi` itself, on two of the pumps and then on three, so the walkthrough still
+    // cannot show something the step would not do.
+    step(`Take two of them. Everywhere on one side of a line is nearer ${PUMPS[0]!.name}; everywhere on the other side is nearer ${PUMPS[1]!.name}. `
+      +'The line is where they are equally near.',
+      [{kind:'area',rings:ring(AREA)},
+        ...voronoi(pointsOf(PUMPS.slice(0,2)),area,ZONE36S.zone,ZONE36S.hemisphere).features
+          .map(f=>({kind:'look' as const,rings:partsOf(f.geometry)})),
+        ...PUMPS.slice(0,2).map(p=>({kind:'input' as const,point:p.at,label:p.name}))]),
+    step(`Add the third. Each pair has its own line, and the lines meet where all three are equally near: that is the corner `
+      +'where three catchments touch.',
       [{kind:'area',rings:ring(AREA)},...made.features.map(f=>({kind:'look' as const,rings:partsOf(f.geometry)})),...pumps('input')]),
     step(`What the step passes on: ${made.features.length} cells, each the ground nearer its pump than any other, measured in UTM zone 36S. `
       +'They fill the box around the area; Clip polygons cuts them to its outline. Nearest in a straight line is not the way anyone walks.',
@@ -355,9 +371,27 @@ export function isochroneWalkthrough(minutes:number,speedMPerMin:number,bufferM:
     step(`${t} minutes at ${v} metres a minute is ${metres(Math.round(t*v))} of walking${fits?'':' (shown with 5 minutes at 80 metres a minute, as the time or speed set is not one the step accepts)'}. `
       +`The walk to the nearest junction comes first: ${metres(Math.round(snap?.distanceM??0))}.`,
       [...streets('input'),{kind:'input',point:clinic,label:'Clinic'},{kind:'look',rings:lineTo(clinic,junction)},{kind:'look',point:junction}]),
+    // THE STREETS ACTUALLY WALKED, DRAWN (2026-11-25). The practitioner: *"The show me how it works is incomplete as
+    // use of a street network is usually point to point."* This step said "along the streets in every direction"
+    // and drew only the finished region, so the one thing that makes a network isochrone different from a circle --
+    // that every metre is counted along a street, from the origin to somewhere -- was asserted and never shown.
+    //
+    // `costsWithin` is the step's own reachability, the same function the isochrone runs. A street is drawn as
+    // walked where BOTH its junctions were reached within the budget, which is what it means for the walk to have
+    // covered it. The region stays beside them, so a reader sees the corridor as what the walked streets grew into.
     step(`From that junction, along the streets in every direction until the ${metres(Math.round(t*v))} are spent, a street left part-way where the time runs out. `
-      +`The ground ${b} m either side of every street walked is in reach too.`,
-      [...streets('input'),...(region?[{kind:'look' as const,rings:partsOf(region.geometry)}]:[]),{kind:'input',point:clinic,label:'Clinic'}]),
+      +`Every metre is counted along a street, never across the ground: the dark streets are the ones the walk covers. `
+      +`The ground ${b} m either side of each of them is in reach too.`,
+      [...streets('input'),
+        ...(():Shape[]=>{
+          const adjacency=new Map<string,{to:string;lengthM:number}[]>();
+          for(const e of network.edges){const list=adjacency.get(e.from)||[];list.push({to:e.to,lengthM:e.lengthM});adjacency.set(e.from,list);}
+          const reached=snap?costsWithin(adjacency,snap.nodeId,t*v,snap.distanceM??0):new Map<string,number>();
+          return network.edges.filter((_,i)=>i%2===0)
+            .filter(e=>reached.has(e.from)&&reached.has(e.to))
+            .map(e=>({kind:'look' as const,rings:lineTo(at.get(e.from)!,at.get(e.to)!)}));
+        })(),
+        ...(region?[{kind:'look' as const,rings:partsOf(region.geometry)}]:[]),{kind:'input',point:clinic,label:'Clinic'}]),
     step(region?`What the step passes on: where the clinic can reach in ${t} minutes, ${km2(calculateArea(region.geometry,'m2').squareMetres)}, measured in UTM zone 36S. `
       +'Ground between streets is in it only near a street: a field nobody can cross stays out.'
       :'What the step passes on: nothing. The walk to the streets spends the whole time.',

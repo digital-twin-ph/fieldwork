@@ -1,6 +1,6 @@
 # Space-time scan
 
-_Created 2026-11-10 · Updated 2026-11-22_
+_Created 2026-11-10 · Updated 2026-11-25_
 
 Looks for places where cases came closer together in time than the rest of the line list would lead you to expect.
 It is the space-time permutation scan that SaTScan runs, for a line list of cases with a date and a place, and no
@@ -104,6 +104,20 @@ log likelihood ratio and the p-value. The case ids inside it are listed.
 Experiment 200.
 
 ## History
+
+### 2026-11-25 · No limit shorter than the scan can run (0.8.0)
+
+The shortest run the scan ever applies is one period. The Preview worked the share out on its own and could reach
+zero — five days at a tenth read *up to 0 days* of a scan that runs one-day windows.
+
+### 2026-11-25 · The Preview says what the shares come to (0.7.0)
+
+Every setting here but two is a share, and a share says nothing on its own: circles up to 20% of the cases means two
+over ten cases and two thousand over ten thousand. The dialog held the numbers and left the arithmetic to be done.
+
+It now counts the cases carrying a date it can read, the period they span, and what each share works out to in the units
+of the thing it limits — cases for a circle, days or weeks for a run. The scan itself is not run here: it shuffles the
+dates hundreds or thousands of times, which belongs in the run.
 
 ### 2026-11-22 · Out of the application's main file (0.6.2)
 

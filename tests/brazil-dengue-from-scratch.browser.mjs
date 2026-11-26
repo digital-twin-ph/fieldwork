@@ -92,10 +92,16 @@ test('dengue in Rio de Janeiro state, 2024, built by following the manual',async
     await expect(page.locator('#table-viewer')).toBeVisible({timeout:60000});
     await expect(page.locator('#table-viewer')).toContainText('Before');
     await expect(page.locator('#table-viewer')).toContainText('After');
-    // BEFORE GREYS WHAT THE SELECTION DROPPED: the doubled week, 2 rows for each of 92 municipalities, outside the range,
-    // each holding cases and population: 368 of 9,752.
+    // BEFORE GREYS WHAT THE SELECTION DROPPED: the doubled week, 2 rows for each of 92 municipalities, outside the
+    // range: 184 of 4,876.
+    //
+    // COUNTED IN THE FILE'S OWN ROWS. This read "368 of 9,752" while the view showed the melted table, one row per
+    // value -- 4,876 municipality-weeks times cases and population. From 0.196.0 the view shows the shape the file
+    // has, so the note counts what is on the screen: 4,876 rows, and 184 of them greyed, being the week of
+    // 2024-12-29 twice over for each of the 92 municipalities. The file really does repeat that week, byte for
+    // byte, and both rows are drawn -- a wide view that merged them would hide the doubling this example teaches.
     await page.locator('#table-viewer').getByRole('button',{name:'Before'}).click();
-    await expect(page.locator('#table-viewer .table-excluded-note')).toContainText('368 of 9,752 rows greyed: not kept by this step, data_iniSE outside 2023-12-31 to 2024-12-28');
+    await expect(page.locator('#table-viewer .table-excluded-note')).toContainText('184 of 4,876 rows greyed: not kept by this step, data_iniSE outside 2023-12-31 to 2024-12-28');
     expect(await page.locator('#table-viewer tr[data-row-excluded]').count()).toBeGreaterThan(0);
     await page.locator('#table-viewer').screenshot({path:'test-results/select-before-greyed.png'});
     await page.locator('#table-viewer').getByRole('button',{name:'Close'}).click();

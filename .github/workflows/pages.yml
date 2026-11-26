@@ -17,12 +17,15 @@ jobs:
   # see so if we make them, they are useless without human review" -- and a 31-minute lag between
   # a fix and the chance to review it is the review loop, not a detail of it.
   #
-  # The gate still runs on every push, in `verify` below, and still goes red. It no longer stands
-  # between a change and the person who has to judge it. What this costs: a failure that only
-  # reproduces on a clean Linux runner now reaches the site for the ~30 minutes until verify
-  # finishes. The gate is run locally before every push, and a typecheck and build still run here
-  # before anything is published, so what is uncovered is narrower than it looks -- but it is not
-  # nothing, and that is the trade.
+  # The gate no longer stands between a change and the person who has to judge it. Nor does it run
+  # here at all any more: verification moved to verify.yml, which runs WebKit nightly against
+  # whatever main holds and on request, not on every push (why: docs/audits/ci-verification-audit.md,
+  # 2026-11-24). What this costs: a failure that only reproduces on a clean runner can sit on the
+  # site until that night's run. The gate is run locally -- Chromium -- before every push, and a
+  # typecheck and build still run here before anything is published, so what is uncovered is
+  # narrower than it looks -- but it is not nothing, and that is the trade.
+  # This paragraph said "still runs on every push, in `verify` below" until 2026-11-25, when an
+  # outside review read it against the workflow and found neither half true any more.
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10

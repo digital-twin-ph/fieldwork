@@ -1,0 +1,83 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:table_input",
+ "nodeType": "table_input",
+ "version": "0.24.0",
+ "title": "Tabular data",
+ "released": "2026-11-25",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['table_input']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [],
+  "output": "table",
+  "optionalInputs": [],
+  "note": "A source. The output is a keyed table with no geometry and no CRS, which is why it is not the points port: flattening a table to points would mint one point per row and lose the key."
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "GAP, meaning no alignment to an external tabular vocabulary -- not meaning the terms are undeclared. fw:DataTable and fw:TabularInput are declared in ontology/runtime.ttl with their properties, so the coupling gate passes on every term the receipt asserts.\n\nWHY `emits` IS EMPTY WHILE THIS WIDGET'S RECEIPT ASSERTS NINETEEN TERMS. The field is measured against the release's `definition`, which for an input widget is src/core.ts#TYPES and asserts nothing of its own; the receipt is built in src/data-table.ts, which is listed under implementation.files and is not the definition. So the drift signal `emits` exists to give -- a change to the terms forcing a release -- does not cover this widget, and the terms are named here instead: DataTable and TabularInput, with boundAttribute, distinctValue, distinctValueCount, distinctValuesOf, keyField, measureKeyField, meltedValueField, meltedValueFieldCount, readAs, sourceDigest, sourceFile, subjectKeyField, tableMissingValueCount, tableRowCount, valueField, valueUnit and valueUnitStatus. Recorded as a limitation rather than worked around by moving the definition, which would be a claim about where this widget is implemented in order to satisfy a checker.\n\nWHAT 0.2.0 ADDS is the shape of the READING rather than of the table: fw:readAs is asserted on the activity for both shapes, because a file that was already long is as much a fact about the reading as a melt is, and for a melt the subject keys, the measure key and each column taken are named. They hang off the activity and not off the table on purpose -- the table is long either way and only the reading differs. The melted columns are NAMED rather than inferred from what is left over, so a column absent from a receipt was not asked for rather than not present, and that distinction is the one a reader of a published figure needs.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "assets/natural-earth-110m-countries.json",
+   "examples/census-tables/catalogue.json",
+   "examples/coastal-sea-level/catalogue.json",
+   "src/cell-edits.ts",
+   "src/column-metadata.ts",
+   "src/column-profile.ts",
+   "src/columns-dialog.ts",
+   "src/core.ts",
+   "src/credentials-ui.ts",
+   "src/data-quality-ui.ts",
+   "src/data-table-ui.ts",
+   "src/data-table.ts",
+   "src/dhis2-source.ts",
+   "src/dhis2-tab.ts",
+   "src/input-data.ts",
+   "src/inspector-kit.ts",
+   "src/reference-period.ts",
+   "src/tide-gauges-ui.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "added",
+   "description": "QUICK LOOK SAYS WHEN THE SHAPE IS NOT THE TABLE'S OWN, and offers to keep the one it is showing. It has widened a long table on sight since 2026-10-27 (\"pandas does not show you a long table\"), while every other surface showed it as stored -- one table, two shapes, a click apart, with nothing saying which was which. It now says the table is stored long, how it is being shown, and that elsewhere it is shown as stored. ALWAYS SHOW THIS TABLE WIDE writes the reading onto the table as `DataTable.wide`, the same field the melt writes for a file that arrived wide -- so it rides the value and the steps below inherit it rather than each guessing."
+  },
+  {
+   "kind": "changed",
+   "description": "The hint and the offer are separate: the hint is about what is on the screen and shows wherever this view widened an undeclared table, including a table a step COMPUTED, which has no stored value to declare on and was being widened with no explanation at all."
+  },
+  {
+   "kind": "fixed",
+   "description": "A MELTED TABLE IS READ BACK ON THE KEY THE MELT RECORDED, not on whichever key varies most. `wideFrame` asked for `asDeclared` as well as a recorded measure key, and `declaredWide` -- the melt itself -- does not set it, so every melted table fell through to a heuristic that takes the key with the MOST DISTINCT VALUES as the subject. Two districts by eligible, vaccinated and missed has three measures against two districts, so the measures won: the table came back transposed, and a correction to a district's name reached one of its three counts instead of all three. Reported against 0.195.0 by a reviewer outside this project -- \"Data quality shows six rows instead of two\" -- and reproduced here before it was touched."
+  },
+  {
+   "kind": "added",
+   "description": "A TABLE A STEP COMPUTES can keep a wide reading too. A file's table keeps it on the table; a computed table has no stored value, so the decision is kept against the step that makes it, in the workflow, and the run writes `DataTable.wide` onto what that step produces. Offered on the step's own output only: the Before views belong to the steps above. It takes effect from the next run, and says so."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Unit checks cover the long-format contract, duplicate key rejection, missing values retained and counted, stated and unstated units, absent columns and the row cap. The importer checks shape and identity, not whether a table's units or values are correct. 0.9.0: tests/sea-level-from-scratch.browser.mjs ticks site_id on the AR6 projections and runs both workflows of example-2026-sea-level-rise-philippines from an empty canvas (Chromium). 0.9.1: tests/data-issues.test.mjs; the MERS line list's receipt read by hand (dt_onset: 27 of 162 empty). 0.9.2: tests/data-table.test.mjs (a value with spaces around it grouped with the same value without, and counted as Spaces trimmed); Validation Lab check 49 recounts it from the MERS contacts file. 0.9.3: tests/remote-table.browser.mjs (Fetch the table under Result; Configure… last and primary in Settings); Chromium. 0.10.0: tests/data-dictionary.browser.mjs (Hagelloch's cases with four variables of the outbreaks package's dictionary: kept across a reload, viewed, class proposed as categories in no order with its three codes, declared in an order, counted 0, 1, 2 with no median); tests/column-metadata.test.mjs and tests/column-profile.test.mjs; Chromium. 0.10.1: tests/column-profile.test.mjs (counted, named, kept, and a receipt issue); Chromium pending. 0.11.0: tests/cell-edits.test.mjs; tests/table-edit.browser.mjs (a misspelled district corrected and an empty count filled, applied, stated in the run, removed); Chromium. 0.11.1: tests/measure-point-count.browser.mjs (MEASURE_ONLY=import), a tick at 250,000 rows 0.4 to 0.6 s; the browser tests that count table rows (53 passed, Chromium); the unit suite. 0.12.0: tests/census-tables-tab.browser.mjs (DR Congo's counts and dictionary read at the pinned commit and checked by digest; a file differing from the pin refused with nothing kept; the tabs answer the arrow keys and the tab last used is remembered); tests/remote-table.browser.mjs and tests/slow-fetch.browser.mjs through the tab From an address; Chromium. 0.18.0: tests/csv-headers-and-encoding.test.mjs; the African Bat Database's 18,409 records read whole, Chromium, 2026-11-23. 0.19.0: tests/table-to-points.browser.mjs and tests/data-table.test.mjs; the African Bat Database's 18,409 records reported as 18,409, Chromium, 2026-11-23. 0.31.0: tests/typed-table.browser.mjs (typed and counted, drawn as a table, a ragged line named with its number and Save disabled, a tab-separated paste read the same way, the CSV downloaded as commas; three records reaching the workflow by digest as a file's do; the text restored on reopening). Chromium, 2026-11-23. 0.21.0: tests/typed-table-source.test.mjs (a typed table said to be typed and not read from a file, the digest kept; the receipt asserting fw:enteredByHand and no fw:sourceFile; a table read from a file still naming it). 2026-11-23.\n\nTHE PERIOD (experiment 230, 2026-11-24). NOT established in a browser: that choosing a country writes the period onto the step. The carrying is unit tested from `DataTable` onward, and the catalogue holds a `referenceDate` for all eight countries.\n\nWIDE, AND THE EDITS (2026-11-25). Browser tested on Chromium: the quality dialog's four tabs over a melted table, and the Records tab's editing. NOT established: that an edit to a subject column reaches every stored row in a browser -- the translation is covered by reading, not by a test.\n\nTHE WIDE READING (2026-11-25). Browser tested on Chromium: Quick Look over a melted table and over a stored one. NOT established: that a declaration kept here survives every downstream step -- Relate and Select carry it because they spread the source table, and Total within groups strips it deliberately, since grouping can remove the column the reading names.\n\nLONG TO WIDE TO LONG (2026-11-25, the practitioner: \"we need a regression test that does back translation\"). Unit tested over three shapes -- two subjects by three measures, three by two, and a ragged table missing one cell -- that widening and unwidening gives back exactly the stored rows, none lost and none invented; and that every cell names the stored row it came from, since that provenance is what an edit is recorded against. The round trip was checked against the defect: reverted, it fails on two-by-three and PASSES on the other two, because there the heuristic happens to pick the right subject. A single example would not have caught this."
+ }
+}

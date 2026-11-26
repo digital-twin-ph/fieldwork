@@ -42,6 +42,16 @@ export interface AreaStepKit extends InspectorKit {
    *  a clip could not reach its polygons at all, and said it was waiting for a run that had already happened. The
    *  run keeps such layers in `result.computed`; `pointChoices` reads it and nothing else did. */
   computedLayer:(nodeId:string)=>{features:{name:string;geometry:{type:string;coordinates:unknown}}[]}|undefined;
+  /** THE RECORDS ON A PORT, PROPERTIES AND ALL (2026-11-25), where a layer holds them. `pointChoices` keeps a name
+   *  and a geometry, which is all a picker needs and not all a step reads: Cases by period counts by a date in the
+   *  properties, and Reachable junctions reads `networkNodeId` to tell a site already on the network from one it
+   *  must attach itself. A preview built on the trimmed features would describe a different run.
+   *
+   *  Undefined where the records exist only as the output of a step -- `result.computed` trims to name and geometry
+   *  by design -- so a preview below such a step says it is waiting rather than showing something else. */
+  recordsOn:(nodeId:string,port:string)=>import('./types.js').PointCollection|undefined;
+  /** The street network on a port, from the layer holding it. */
+  networkOn:(nodeId:string,port?:string)=>import('./catchments.js').Network|undefined;
   /** The UTM zone this workflow's coordinates suggest, against the one chosen, and how far the chosen one stretches
    *  distances over them, as a percentage; undefined where nothing on the canvas has a coordinate yet. */
   zoneAdvice:(zone:number,hemisphere:'north'|'south')=>{zone:number;hemisphere:'north'|'south';matches:boolean;positions:number;straddles:number[];stretch:number}|undefined;
@@ -255,8 +265,10 @@ const polygonsOn=(kit:AreaStepKit,nodeId:string,port='polygons'):import('./catch
   // catchments makes its polygons and keeps none, so every dialog below it -- Clip polygons, Summarize points to
   // polygons -- showed "the polygon layer arrives when the workflow runs" after the workflow had run. Last of the
   // three, so a stored layer and a current run still win: those carry the whole layer, this carries its shapes.
+  // GATED ON `current()` like `ran`, and for the same reason: it comes from the same run. An outside review
+  // (2026-11-25) read the ungated first draft and was right -- edit a step above and this described the old input.
   const made=(():import('./catchments.js').Polygons|undefined=>{
-    const layer=kit.computedLayer(from);
+    const layer=kit.current()?kit.computedLayer(from):undefined;
     if(!layer?.features.length)return undefined;
     const polygons=layer.features.filter(f=>f.geometry.type==='Polygon'||f.geometry.type==='MultiPolygon');
     if(!polygons.length)return undefined;

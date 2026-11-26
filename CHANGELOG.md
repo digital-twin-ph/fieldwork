@@ -38,8 +38,10 @@ shown in a local build is not a claim that it has been published.
   a PDF, a remembered file, a satellite reading and unlocked credentials could each wait for ever. Each store keeps
   its own way of failing.
 - **The Validation Lab, audited and brought up to this release** ([audit](docs/audits/validation-lab-audit.md)).
-  Every fixture the exporter can make was made again from this build, and every lab check run on it: all agree,
-  except clip raster and deduplicate, which partly agree as recorded. `widgets/parity.json` is pinned to the lab
+  Every fixture the exporter can make was made again from this build, and 46 of the lab's 51 results rest on one:
+  all agree, except clip raster and deduplicate, which partly agree as recorded. Three more were rerun on older
+  fixtures that nothing can make again (18, 25 and 27's rate ratio, each a retired widget or rule), and two were not
+  rerun (23, retired rulesets; 50, rasters not in the exporter's layout). `widgets/parity.json` is pinned to the lab
   commit that holds those results, and every entry rerun on a new fixture covers its widget's current release.
 - **Three lab checks had fallen behind rules this project declares**, and disagreed until they were brought up to
   them. Reachable junctions has charged the walk onto the network since 0.4.0: the reachability fixture now declares

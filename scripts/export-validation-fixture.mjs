@@ -2223,6 +2223,28 @@ const builders={
 // SKIPS RATHER THAN FAILS where the worked example is not checked out beside this repository: the
 // builders read their tables from it, that is a clone that has not happened rather than a defect,
 // and `validate:examples` already treats a missing sibling the same way.
+/** A FIXTURE AS IT IS WRITTEN: its assets' digests declared, its integrity over the canonical form, and the JSON laid
+ *  out. One function for the export and for --dry-run (2026-11-26, review of PR 4): the dry run used to call the builders
+ *  and stop there, so a builder returning a typed array or an integer-keyed object -- which the canonical form refuses --
+ *  passed the gate and failed only when someone exported the fixture. */
+function seal(fixture,files){
+  // Binary assets travel with their digest declared inside the fixture. A sidecar cannot be
+  // read from the lab's browser kernel at all, which is the other half of the 2026-10-11
+  // finding, so nothing beside the file is written any more.
+  fixture.assets=Object.fromEntries(Object.entries(files).map(([name,bytes])=>
+    [name,{sha256:sha256(bytes),bytes:bytes.length}]));
+  // The integrity covers the fixture with this field absent, so it can state its own digest
+  // without containing it.
+  fixture.integrity={algorithm:'sha256-canonical-json',
+    note:'SHA-256 of this fixture with the integrity field removed, serialised with object keys sorted, no whitespace and UTF-8. Not the file\'s bytes: the lab reads fixtures through a transport that re-serialises JSON.',
+    value:canonicalDigest(fixture)};
+  // A POSITION ON ONE LINE. Indented, every coordinate of a boundary took four lines, and two published levels came to
+  // 5.4 MB; a ring of them on one line, 1.1 MB. The integrity is over the canonical form, so the layout is free to change.
+  return JSON.stringify(fixture,null,2).replace(/\[\s+(-?[\d.eE+-]+),\s+(-?[\d.eE+-]+)\s+\]/g,'[$1,$2]')
+    // and a ring of them on one line too
+    .replace(/\[\s+(\[-?[\d.eE+-]+,-?[\d.eE+-]+\](?:,\s+\[-?[\d.eE+-]+,-?[\d.eE+-]+\])*)\s+\]/g,(_m,ring)=>`[${ring.replace(/,\s+/g,',')}]`)+'\n';
+}
+
 if(process.argv.includes('--dry-run')){
   const missing=/is not checked out beside this repository/;
   // DATA NOBODY MAY REDISTRIBUTE: a builder that needs a local copy of a package whose terms keep it out of every
@@ -2233,7 +2255,8 @@ if(process.argv.includes('--dry-run')){
   const broken=[],notHere=[];
   let skipped=null;
   for(const [fixtureId,build] of Object.entries(builders)){
-    try{await build();}
+    // Sealed as an export seals it, and nothing written: a value the canonical form refuses fails here, in the gate.
+    try{const {fixture,files}=await build();seal(fixture,files);}
     catch(error){
       const message=error instanceof Error?error.message:String(error);
       if(missing.test(message)){skipped=message;break;}
@@ -2254,29 +2277,15 @@ if(process.argv.includes('--dry-run')){
     console.error('  parity check is pinned to a release the application no longer behaves like.');
     process.exit(1);
   }
-  console.log(`Validation fixtures: ${total-notHere.length} of ${total} builders build, nothing written.`);
+  console.log(`Validation fixtures: ${total-notHere.length} of ${total} builders build and seal, nothing written.`);
   process.exit(0);
 }
 
 const [id,outputDir]=process.argv.slice(2);
 if(!builders[id]||!outputDir)throw new Error(`Usage: node scripts/export-validation-fixture.mjs <${Object.keys(builders).join('|')}> <outputDir>\n       node scripts/export-validation-fixture.mjs --dry-run`);
 const {fixture,files}=await builders[id]();
-// Binary assets travel with their digest declared inside the fixture. A sidecar cannot be
-// read from the lab's browser kernel at all, which is the other half of the 2026-10-11
-// finding, so nothing beside the file is written any more.
-fixture.assets=Object.fromEntries(Object.entries(files).map(([name,bytes])=>
-  [name,{sha256:sha256(bytes),bytes:bytes.length}]));
+const json=seal(fixture,files);
 for(const [name,bytes] of Object.entries(files))await writeFile(`${outputDir}/${name}`,bytes);
-// The integrity covers the fixture with this field absent, so it can state its own digest
-// without containing it.
-fixture.integrity={algorithm:'sha256-canonical-json',
-  note:'SHA-256 of this fixture with the integrity field removed, serialised with object keys sorted, no whitespace and UTF-8. Not the file\'s bytes: the lab reads fixtures through a transport that re-serialises JSON.',
-  value:canonicalDigest(fixture)};
-// A POSITION ON ONE LINE. Indented, every coordinate of a boundary took four lines, and two published levels came to
-// 5.4 MB; a ring of them on one line, 1.1 MB. The integrity is over the canonical form, so the layout is free to change.
-const json=JSON.stringify(fixture,null,2).replace(/\[\s+(-?[\d.eE+-]+),\s+(-?[\d.eE+-]+)\s+\]/g,'[$1,$2]')
-  // and a ring of them on one line too
-  .replace(/\[\s+(\[-?[\d.eE+-]+,-?[\d.eE+-]+\](?:,\s+\[-?[\d.eE+-]+,-?[\d.eE+-]+\])*)\s+\]/g,(_m,ring)=>`[${ring.replace(/,\s+/g,',')}]`)+'\n';
 await writeFile(`${outputDir}/${id}.json`,json);
 console.log(`Wrote ${id}.json${Object.keys(files).length?' and '+Object.keys(files).join(', '):''} to ${outputDir}`);
 console.log(`  integrity ${fixture.integrity.value.slice(0,16)} over canonical JSON; no sidecar`);

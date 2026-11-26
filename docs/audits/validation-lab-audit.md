@@ -57,8 +57,9 @@ count holds, but four of its judgements are out of date, and most checks cover a
 ### Most checks cover an older release
 
 46 of 48 parity entries name a release older than the current one. Together, 425 recorded changes came after them.
-Reading the changes doesn't settle which ones matter, so this audit exported every fixture again from 0.200.0 and
-reran each check.
+Reading the changes doesn't settle which ones matter. So this audit exported every fixture it could again from
+0.200.0, which was 44 of the 47 the exporter names, and reran each check that could run. The exceptions are listed
+below.
 
 | Result at 0.200.0 | Checks |
 | --- | --- |
@@ -198,6 +199,14 @@ item 7 is not started. Fieldwork's changes are in 0.200.0; the lab's are on its 
 | 4 · Ledger | Study area is covered by check 41. Table input owes a check. Apply ruleset rests on check 49. `parity.json` has entries for 36, 37, 38, 40 and 41. |
 | 5 · Staleness | `validate:parity` is in `check` and `check:fast` and lists entries behind the current release. Both lab runners fail a notebook that prints `agrees: False` where its record agrees. A mutation, check 07's tolerance set to 1e-12, turned the CPython runner red. |
 | 6 · Notebooks | Drafted in plain language to one outline, for the practitioner's review. Not yet on the lab's `main`. |
+
+What the 51 recorded results now rest on, at lab commit 4eb4cb0:
+
+| Fixture | Results |
+| --- | --- |
+| Fresh, exported from 0.200.0 | 46: every check except the five below |
+| Older, rerun on 26 November 2026 | 3: 18 (Buffer study area), 25 (the extent rule) and 27's rate ratio (Rate ratio). Each covers a retired widget or rule, so nothing can export its fixture again |
+| Not rerun | 2: 23, whose rulesets are retired and whose check has no command-line entry, and 50, whose rasters are not in the layout the exporter needs. 50's result is from 13 November 2026 |
 
 | Measure | Before | After |
 | --- | --- | --- |

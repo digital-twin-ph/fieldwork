@@ -141,8 +141,11 @@ pilot shows players' decisions need to.
 
 Recorded so the review starts from them. None is settled here.
 
-- **Dive Deeper is separate and deferred.** Teaching material lives in its own repository and waits until the widgets
-  mature. A training mission is teaching. Whether it belongs with Dive Deeper, and when, is the practitioner's call.
+- **One of many kinds of teaching material.** The practitioner, 2026-11-26: Dive Deeper is teaching material, *"by no
+  means the only teaching material in fieldwork"*. The others are the worked examples, their manual walkthroughs,
+  Show me how, the manual, and the proposed [table operations as challenges](226-table-operations-as-challenges.md).
+  A training mission would sit beside these. It is only loosely coupled to Dive Deeper, which is deferred until the
+  widgets mature.
 - **A new outside service.** Supabase would hold learners' identities and team data. That is a new outside service,
   with its own terms and its own place where people's data lives. The proposal's fallback, GitHub issues and commits,
   avoids it.

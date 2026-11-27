@@ -31,7 +31,7 @@ test('words looked for in a number, or no words at all, are said while the rule 
 });
 
 /** QUOTED WORDS AND CODES IN A LIST (2026-11-26, NSSP's definitions). ESSENCE's ^ flu ^ keeps its spaces, so it finds
- *  "stomach flu" and not "influenza"; ^[;/ ]J10^ finds J10 at the start of any code in a discharge diagnosis. */
+ *  "stomach flu today" and not "influenza" (nor "stomach flu" alone); ^[;/ ]J10^ finds J10 at the start of any code in a discharge diagnosis. */
 import {textItems} from '../build/authored-rules.js';
 const coded=[{attribute:'chief_complaint',predicate:'fwa:chief_complaint',kind:'term'},
   {attribute:'discharge_diagnosis',predicate:'fwa:discharge_diagnosis',kind:'term'}];
@@ -39,8 +39,21 @@ const visit=(i,chief_complaint,discharge_diagnosis)=>({id:`v${i}`,label:`v${i}`,
 test('a word in double quotes keeps its spaces, so " flu " is not found in influenza',()=>{
   assert.deepEqual(containedWords('" flu ", stomach, "noro v"'),[' flu ','stomach','noro v']);
   const rules=[{any:[{all:[{field:'fwa:chief_complaint',comparator:'contains',value:'" flu "'}]}],then:[{predicate:'fwa:flagged',value:'yes'}]}];
-  const e=evaluateAuthored([visit(0,'stomach flu today',''),visit(1,'influenza',''),visit(2,'flu',''),visit(3,'the flu ',''),],coded,rules,{});
-  assert.deepEqual(e.records.map(r=>r.values.flagged??null),['yes',null,null,'yes']);
+  const e=evaluateAuthored([visit(0,'stomach flu today',''),visit(1,'influenza',''),visit(2,'flu',''),visit(3,'the flu ',''),visit(4,'stomach flu','')],coded,rules,{});
+  assert.deepEqual(e.records.map(r=>r.values.flagged??null),['yes',null,null,'yes',null]);
+});
+test('a starting word holding a separator is refused: it could start no item (PR #5 review)',()=>{
+  for(const comparator of ['startsWith','notStartsWith']){
+    const rules=[{any:[{all:[{field:'fwa:discharge_diagnosis',comparator,value:'J10, " J11", "A08;B", R50/9'}]}],then:[{predicate:'fwa:x',value:'yes'}]}];
+    const said=authoredUnitProblems({fields:coded,rules,parameters:[]}).map(p=>p.says).join(' | ');
+    assert.match(said,/" j11", "a08;b", "r50\/9" cannot start an item/);
+    assert.match(said,/use contains any of/);
+  }
+  for(const comparator of ['startsWith','contains']){
+    const value=comparator==='contains'?'" flu "':'J10, B05';
+    const rules=[{any:[{all:[{field:'fwa:chief_complaint',comparator,value}]}],then:[{predicate:'fwa:x',value:'yes'}]}];
+    assert.deepEqual(authoredUnitProblems({fields:coded,rules,parameters:[]}),[],`${comparator} ${value}`);
+  }
 });
 test('has an item starting with: any code in a list separated by ; / & or spaces, as ESSENCE reads [;/ ]J10',()=>{
   assert.deepEqual(textItems('J10.1;R50.9 / 1E30&XN297'),['j10.1','r50.9','1e30','xn297']);

@@ -41,7 +41,7 @@ export type Comparator='equals'|'notEquals'|'greaterThan'|'notGreaterThan'|'less
   |'startsWith'|'notStartsWith';
 /** The words a word condition looks for: split at commas, trimmed, lower case, empty ones dropped. A word written in
  *  double quotes keeps its spaces (2026-11-26): " flu " is flu with a space each side, which "influenza" does not
- *  contain, as ESSENCE's ^ flu ^ is. Without quotes it would be trimmed to flu, which influenza does contain. */
+ *  contain (nor "stomach flu" alone: the text's end is not a space), as ESSENCE's ^ flu ^ is. Without quotes it would be trimmed to flu, which influenza does contain. */
 export const containedWords=(value:unknown):string[]=>typeof value!=='string'?[]
   :value.split(',').map(w=>{const t=w.trim();return /^".*"$/.test(t)&&t.length>=2?t.slice(1,-1).toLowerCase():t.toLowerCase();})
     .filter(w=>w.trim().length>0);
@@ -436,6 +436,13 @@ export function authoredUnitProblems(authored:{
         +'so it holds no words to look for. Words are looked for in a text column.'});
       if(!containedWords(condition.value).length)problems.push({field:condition.field,says:`Rule ${r+1}: write the words to look for, `
         +'separated by commas, such as vomit, diarrh, n/v. Put a word in double quotes to keep its spaces: " flu ".'});
+      // AN ITEM HOLDS NO SEPARATOR (2026-11-26): the text is split at ; / & and spaces before an item is compared, so a
+      // prefix holding one can start no item. It would match nothing, and its negation everything.
+      const split=condition.comparator==='startsWith'||condition.comparator==='notStartsWith'
+        ?containedWords(condition.value).filter(w=>/[;/&\s]/.test(w)):[];
+      if(split.length)problems.push({field:condition.field,says:`Rule ${r+1}: ${split.map(w=>`"${w}"`).join(', ')} cannot start an item. `
+        +'Items are the parts of the text between ; / & and spaces, so a starting word holds none of these. Write one code or word per '
+        +'starting word, such as J10, B05. To find words with their spaces, use contains any of.'});
     }
   for(const [r,rule] of authored.rules.entries())
     for(const group of rule.any??[])for(const condition of group.all??[])

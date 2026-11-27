@@ -21,6 +21,10 @@ shown in a local build is not a claim that it has been published.
   8,406.
 - **Lab check 54** runs NSSP's own queries directly, as ESSENCE would, and finds the same visits as Fieldwork for every
   definition, with ICD-10 and with ICD-11. Pinned at validation-lab 64fcee7.
+- **From the pull request's review.** A starting word holding a space, `;`, `/` or `&` is now refused with its own
+  message: it could start no item, so it matched nothing, and its opposite everything. The manual's `" flu "` example is
+  "stomach flu today": the end of the text is not a space. The hosted verify now checks out the syndromic example at its
+  pin, so fixtures nssp-syndromes-001 and detect-unusual-counts-001 are built there and not skipped.
 
 ## 0.200.0 — In development
 

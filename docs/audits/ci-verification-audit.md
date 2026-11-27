@@ -91,7 +91,9 @@ exercises.
 
 **Verification moves off the push and onto a nightly schedule**, against whatever `main` holds at the time, with
 `workflow_dispatch` for when someone wants it sooner. Per-commit verification was never achieved in practice; one
-complete WebKit verdict a day is more than the four-in-fourteen it replaces.
+complete WebKit verdict a day is more than the four-in-fourteen it replaces. **Moved to 01:00 EST (06:00 UTC) on 2026-11-26**, on the
+practitioner's word; it had run at 07:00 UTC. A run was also dispatched by hand that day on `72f1ed62`, the merge of
+0.202.0.
 
 Taken together these make the cancellation rule almost inert — nightly runs do not overlap — so it stays as a guard
 rather than as the mechanism it had become.

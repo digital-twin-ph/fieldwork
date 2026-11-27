@@ -21,8 +21,8 @@ name: Verify on WebKit
 
 on:
   schedule:
-    # 07:00 UTC, which is 02:00 America/New_York: the verdict is waiting in the morning.
-    - cron: '0 7 * * *'
+    # 06:00 UTC, which is 01:00 EST, on the practitioner's word (2026-11-26). Cron is UTC: in summer it is 02:00 EDT.
+    - cron: '0 6 * * *'
   workflow_dispatch:
 
 permissions:

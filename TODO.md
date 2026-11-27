@@ -74,7 +74,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 - **A cooperative, turn-based training mission** ([233](docs/experiments/233-a-cooperative-turn-based-training-mission.md)):
   a research proposal written in a ChatGPT session, given 2026-11-26 to be written up and reviewed later. Nothing
-  built. For review: it meets Dive Deeper's deferral and would add Supabase as an outside service.
+  built. It is one more kind of teaching material, loosely coupled to Dive Deeper. For review: it would add
+  Supabase as an outside service.
 - **The code review** ([audit](docs/audits/code-review-2026-11-23.md)): acted on in 0.200.0, and the four live widgets
   it found drawn inline in `app.ts` moved out since (Apply ruleset in 0.201.0, the other three in 0.202.0). **Left:** the
   nightly WebKit run's time limit (the run of 2026-11-25 was cancelled at 1 h 15 min, [CI audit](docs/audits/ci-verification-audit.md)); widget release records still list `src/core.ts` where the

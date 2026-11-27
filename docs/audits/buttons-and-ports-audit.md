@@ -66,41 +66,44 @@ becomes a link or a button.
 ## Input ports
 
 **How it was counted.** Each worked example's workflow as it ships (`EXAMPLE_TEMPLATES`, the eleven keys other than
-`blank`), each node's input ports as `nodeInputs` gives them, and the edges arriving at each. These are the ports
-the step declares; the canvas draws the same list, except that grouped ports (`PORT_GROUPS`) are drawn as one choice.
+`blank`), three ways, because they differ (corrected 2026-11-27 from pull request 9's review, which counted the
+drawn handles in Chromium; the first count here took the declared ports for the drawn ones):
+- **declared:** the ports the step's contract lists, as `nodeInputs` gives them;
+- **drawn:** the input handles the canvas renders, counted in Chromium on each example's canvas (`.react-flow__handle.target`);
+- **connected:** the ports an edge arrives at.
 
-| | Ports drawn | Connected |
-| --- | --- | --- |
-| All eleven workflows | 260 | 95 (37%) |
-| Map, 14 nodes | 117 | 35 |
-| Table, 14 nodes | 56 | 14 |
-| Point data, 16 nodes | 32 | 0 |
-| Chart, 9 nodes | 18 | 9 |
-| Every other widget together | 37 | 37 |
+| | Declared | Drawn | Connected | Drawn, not connected |
+| --- | --- | --- | --- | --- |
+| All eleven workflows, 89 nodes | 260 | 164 | 95 | 69 |
+| Map, 14 nodes | 117 | 49 | 35 | 14 |
+| Point data, 16 nodes | 32 | 32 | 0 | 32 |
+| Table, 14 nodes | 56 | 28 | 14 | 14 |
+| Chart, 9 nodes | 18 | 18 | 9 | 9 |
+| Every other widget together, 36 nodes | 37 | 37 | 37 | 0 |
 
 **Findings.**
 
-1. **Ports a step does not use are most of what is drawn.** Map draws about eight per node and uses two or three;
-   Table four, using one; Point data two optional ports, connected in none of the sixteen.
-2. **Four port models** (fixed, inferred from the wiring, switched by a setting, counted), as TODO records. Map's
+1. **Map and Table already draw close to what is connected.** Each draws its connected layers and one free port to
+   add the next (14 free on 14 Maps, 14 on 14 Tables). Of the 117 ports Map's contract declares, 49 are drawn.
+2. **Point data and Chart draw ports that are not used.** Point data's two optional ports, a table and an area, are
+   drawn on all 16 nodes and connected on none: 32 of the 69 drawn and unused. Chart draws both its ports and uses one.
+3. **Four port models** (fixed, inferred from the wiring, switched by a setting, counted), as TODO records. Map's
    point layers are counted (`pointInputCount`), its others fixed.
-3. **A port is unnamed until hovered on most widgets.** Nine of the 53 live widgets draw a named row per input
+4. **A port is unnamed until hovered on most widgets.** Nine of the 53 live widgets draw a named row per input
    (`spatialPorts` in `src/canvas.tsx`, with `PORT_NAMES` and `PORT_GROUPS` in `src/port-names.ts`: Map, Table, Chart,
    Raster input, Clip raster, Sample a raster, Join a table to the study area, Geometry buffer, Travel time over
    ground). On the other 44 a port is
    an 11 px dot whose name (`.handle-name`) is at opacity 0 until hovered, and is the port's id (`records`,
    `candidates`), not its name in words. The Inspector's Inputs section names every port in words, and is the way in
    for anyone who cannot hit an 11 px dot.
-4. **Every widget outside the four output and source widgets uses every port it draws** in these examples: 37 of 37.
-   The clutter is in Map, Table, Point data and Chart.
-
-**Measure, today:** 260 ports drawn, 95 connected, in the eleven worked examples.
+**Measure, today:** 164 input handles drawn and 95 connected in the eleven worked examples, so 69 drawn and unused;
+260 declared.
 
 **The two models put to the practitioner; A was chosen, 2026-11-27:**
 
-- **A. Draw what is connected, and one free port of each kind.** Map shows its two or three layers and one open
-  point, polygon and raster port; a new connection opens the next. One model for every widget with optional or
-  counted ports; the others are unchanged, since they use every port.
+- **A. Draw what is connected, and one free port of each kind.** Map and Table nearly do this already; Point data and
+  Chart would draw their optional ports only as one free port, or behind the Inspector's Inputs list. One model for
+  every widget with optional or counted ports; the others are unchanged, since they use every port they draw.
 - **B. Keep every port, and name each one on the node in words**, as the nine widgets with named rows do, so nothing is
   learned by hovering. More honest about what a step can take, and taller nodes.
 
@@ -110,4 +113,4 @@ Either way the port's name on the canvas becomes its name in words, the one the 
 
 That any of these get in a practitioner's way: they are read from the code and counted, not observed. Labels built
 at run time may differ from the label written. The port counts are the shipped worked examples, not workflows people
-have built.
+have built; the drawn count is Chromium's, at the size the canvas opens.

@@ -11,10 +11,11 @@ shown in a local build is not a claim that it has been published.
   rows…". The map legend's default said "Cooling center", from the retired heat example; it now says "Location". The
   new-project dialog's notice pointed to experiment 122, and the Ontology link's tooltip named SHACL shapes and
   OntoInk; both now say only what a reader needs.
-- **The sweep measured.** `npm run measure:prose` counts the strings each surface shows and the words in sentences
-  using design or project vocabulary. It reports and never fails the gate. Before the sweep (0.201.0): 5 strings,
-  84 words. After the first pass (0.202.0): 3 strings, 38 words. Now: 2 strings, 24 words, both held on purpose (the
-  Ontology link's own name, and the note kinds the naming review holds).
+- **The sweep measured.** `npm run measure:prose` scans the source for the strings each surface shows, and counts the
+  words in sentences using design or project vocabulary. It reports and never fails the gate. A string the code
+  assembles from pieces is set aside as a code fragment, never counted as words, so the Notes tab's note kinds, built
+  that way, are not counted (pull request 9's review). Before the sweep (0.201.0): 3 strings, 42 words. After the first
+  pass (0.202.0): 2 strings, 21 words. Now: 1 string, 10 words, the Ontology link's own name.
 - **The code review's re-read at 0.199.0**, written 2026-11-25 and left unsaved in a worktree, is in its audit, before
   the acted-on section that corrects four of its readings.
 

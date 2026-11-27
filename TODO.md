@@ -1744,8 +1744,10 @@ after, in the browser, so a cut is seen rather than claimed.
    2026-11-11, `src/app.ts`), so nothing was left to read there. **Second pass, 0.203.0 (2026-11-27):** the empty
    canvas says the other widgets appear once a source is on it; the table filter, the map legend's default, the
    new-project notice and the Ontology link's tooltip rewritten. **Measured** by `npm run measure:prose`, a report, not a
-   gate: design-vocabulary strings 5 (84 words) at 0.201.0, 3 (38) at 0.202.0, 2 (24) now, both held on purpose. The
-   measure reads index.html, the Notes tab and app.ts; the Inspector stays with `validate-inspector-prose`.
+   gate: design-vocabulary strings 3 (42 words) at 0.201.0, 2 (21) at 0.202.0, 1 (10) now, the Ontology link's name.
+   A source scan of index.html, the Notes tab and app.ts, code fragments set aside (so the Notes tab's assembled note
+   kinds go uncounted); the Inspector stays with `validate-inspector-prose`. Measuring rendered text, per state, in a
+   browser is the stronger form, not built.
 2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
    (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
    the first instance. Measure: buttons whose style does not match their role.

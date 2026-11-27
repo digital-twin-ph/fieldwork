@@ -88,7 +88,7 @@ export const tableOutputInspector:OwnInspector<'table_output'>={
     const mode=shownMode(n,workflow.edges);
     content+=kit.section('Name',`<div class="field"><label class="field-label" for="table-label">Results tab name</label><input id="table-label" maxlength="60" value="${esc(n.params.label)}"></div>`
       +kit.writeUpSelect(n));
-    const portName=(port:string)=>({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:'Or: Raster',network:'Street network',polygons:'Polygons'} as Record<string,string>)[port]
+    const portName=(port:string)=>({area:'Study area',decisions:'Reasoning result',table:'Tabular data',raster:'Or: Raster',network:'Street network',polygons:'Polygons'} as Record<string,string>)[port]
       ||'Point data '+(port==='points'?1:port.split('_')[1]);
     // WHAT IS CONNECTED, and one picker to connect more (2026-11-09, the practitioner: *"streamline its input ports like
     // map output"*). A select for each of five ports, most never used, was the Inspector's half of the clutter.

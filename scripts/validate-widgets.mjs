@@ -210,7 +210,7 @@ export async function validateRegistry({catalog,read=path=>readFile(localPath(pa
         check(!current.ports[stale],`table_output still declares ${stale}: a table has ports, not modes`);
       if(nodeInputs)for(const inputMode of ['table','polygons','decisions','spatial',undefined]){
         const types=nodeInputs({type:'table_output',params:{inputMode,pointInputCount:1}}).map(([,t])=>t);
-        for(const needed of ['points','coverage-check','table','polygons'])
+        for(const needed of ['points','table','polygons'])
           check(types.includes(needed),`table_output must offer a ${needed} port whatever inputMode says`);
       }
     }

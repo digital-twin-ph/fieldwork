@@ -56,9 +56,10 @@ const prepare=async page=>{
 test('each port says which end of the walk it is, and the step says what it will write before it runs',async({page})=>{
   const errors=collectPageErrors(page);
   await prepare(page);
-  // Two of the three ports take points, so neither may be an unnamed dot (port-names.ts, 2026-11-24).
+  // Two of the three ports take points, so each says which end of the walk it is (port-names.ts, 2026-11-24), before the
+  // name of what came in (0.204.0).
   await expect(page.locator('.react-flow__node[data-id="walk"] .node-port-row'))
-    .toHaveText(['Friction surface','Start from','Places','Points →']);
+    .toHaveText(['Walking friction','From Vaccination posts','To Settlements','Points →']);
   await page.locator('.react-flow__node[data-id="walk"]').click();
   await expect(page.locator('.standard-sentence')).toContainText('Writes minutes onto each place');
   await expect(page.locator('.standard-sentence')).toContainText('with no ceiling');

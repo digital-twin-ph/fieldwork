@@ -9,7 +9,8 @@
   "initial",
   "major",
   "minor",
-  "patch"
+  "patch",
+  "removed"
  ],
  "widgets": {
   "access": {
@@ -866,12 +867,16 @@
    "migrationFrom": []
   },
   "table_output": {
-   "version": "0.14.0",
-   "released": "2026-11-22",
+   "version": "0.15.0",
+   "released": "2026-11-27",
    "changes": [
     {
+     "kind": "removed",
+     "description": "The coverage port, \"Or: Coverage result\". Nothing live makes a coverage check: Check spatial coverage retired on 2026-10-21, and a workflow saved with one opens with Keep points inside the area feeding the points port instead."
+    },
+    {
      "kind": "changed",
-     "description": "Coordinates in metres: Configure… offers the points' longitude and latitude as recorded, or easting and northing in a UTM zone, with the zone the workflow's coordinates suggest and what the chosen one stretches. What Reproject points did as a step until it retired into this choice (docs/audits/reproject-retired.md)."
+     "description": "On the canvas, Table draws what is connected, each with its kind's symbol and the source's name, and one blank port to add another (the buttons-and-ports audit, 2026-11-27)."
     }
    ],
    "breaking": false,

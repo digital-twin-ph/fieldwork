@@ -70,11 +70,14 @@ When a table will later be joined to administrative boundaries, key it on an off
 
 To begin from nothing, open `http://127.0.0.1:4173/?example=blank` or choose **New empty canvas**. Add **Study area**, open **Select area on map**, draw a bounding box or polygon, and apply it. Inspect **N3 & evidence**, then run to see the geometry preview and inferred readiness. The [study-area experiment record](experiments/01-study-area.md) documents each task, architectural decision, standards mapping, and evidence to collect. Readiness means the geometry meets the widget's input contract, not that the selected area is scientifically appropriate.
 
-Select nodes to edit their settings. Add nodes from the library and connect compatible ports. All visual output branches execute together, and shared upstream nodes execute once.
+Select nodes to edit their settings. Add nodes from the library and connect them: drag from a step's output to the
+next step's blank port, **+ Add an input**. The step takes it as the input its kind fits, and asks which when more than
+one does (Measure distance's From and To). Each connected input then shows its kind's symbol and the name of the step
+it came from, and another blank port appears while the step can take more. All visual output branches execute together, and shared upstream nodes execute once.
 
 Add **Map** under Outputs to display a study polygon and point layers. Connect the Study area (or Calculate area) and Input data. Map and Table offer **Add point input** for multiple datasets with one boundary. Map highlights outside points, lists records without coordinates and lets you toggle layers. See the [map/layer exercise](experiments/04-map-layers-and-attribute-contracts.md).
 
-Add **Table** under Outputs to display point coordinates and attributes in a named Results tab. Connect Input data to **Points 1**. Direct point input needs no study area. Tables support multiple layers, search, row/attribute paging, record inspection, saved workflows and offline use. See the [point-table exercise](experiments/08-point-table-output.md).
+Add **Table** under Outputs to display point coordinates and attributes in a named Results tab. Connect Point data to its blank port. Direct point input needs no study area. Tables support multiple layers, search, row/attribute paging, record inspection, saved workflows and offline use. See the [point-table exercise](experiments/08-point-table-output.md).
 
 Selecting an output node on the canvas opens its result. The Results panel switches to that node's
 tab and marks it, so the two panels agree about what you are looking at; a node that produced two

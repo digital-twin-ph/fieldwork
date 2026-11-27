@@ -25,7 +25,6 @@ You connect what you want drawn. There is no setting that says what kind of map 
 | a study area | the boundary your work is inside; without one, the study areas a polygon layer was read from |
 | a point layer | records with locations — up to eight separate layers |
 | a polygon layer | areas: districts, catchments, cells or bands — up to six separate layers |
-| a coverage check | points marked inside, outside or missing a location |
 | a raster | prepared or clipped cells |
 | a street network | the streets themselves |
 | a line layer | routes, tracks and borders, over the area and under the points |

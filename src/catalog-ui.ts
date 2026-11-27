@@ -1,3 +1,4 @@
+import {iconMarkup} from './port-symbols.js';
 import {PALETTE_GROUPS} from './palette.js';
 import registry from '../widgets/registry.json';
 import parityRecord from '../widgets/parity.json';
@@ -92,7 +93,7 @@ export function openCatalogDialog(esc:Escape):void{
   // The palette's ordering, not a second copy of it: two lists that must agree will not.
   const rows=(group:string)=>active.filter(type=>TYPES[type].group===group).map(type=>{
     const examples=usedBy(type);
-    return `<tr data-widget="${esc(type)}"><th scope="row">${TYPES[type].icon} ${esc(TYPES[type].title)}</th>`
+    return `<tr data-widget="${esc(type)}"><th scope="row">${iconMarkup(type,TYPES[type].icon)} ${esc(TYPES[type].title)}</th>`
       +`<td data-examples="${examples.length}">${examples.length
         ?examples.map(example=>example.builtIn
           ?`<a href="${esc(example.repository)}">${esc(example.title)}</a> <span class="muted">· built in</span>`

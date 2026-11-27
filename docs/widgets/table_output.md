@@ -23,7 +23,7 @@ the map. Where coordinates for a polygon are wanted, a step that says what it co
 
 The node shows what is connected to it and one port, **+ Add an input**, as Map does. Drop any result a table can
 show on it, or choose one under **Inputs › Add an input**, and it is connected to the port its kind belongs to. There
-is nothing to choose first.
+is nothing to choose first. Each connected input then shows its kind's symbol and the name of the step it came from.
 
 Connect a step's output and the table shows it. If you wire more than one,
 the more specific wins: a keyed table before polygons, and the point path is the general one.
@@ -100,6 +100,13 @@ inherited and is recorded as open in
 [experiment 21](../experiments/21-shared-result-outputs.md).
 
 ## History
+
+### 2026-11-27 · One blank port; the coverage port removed (0.15.0)
+
+The node shows each connected input as its kind's symbol and the name of the step it came from, and one blank port,
+**+ Add an input**, while something on the canvas could add another. The **Or: Coverage result** port is gone: nothing
+makes a coverage check since Check spatial coverage retired on 2026-10-21, and a workflow saved with one opens with
+Keep points inside the area feeding the points port instead.
 
 ### 2026-11-22 · Coordinates in metres (0.14.0)
 

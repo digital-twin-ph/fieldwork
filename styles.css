@@ -278,8 +278,6 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 /* A map declares every layer port it can draw; the ones it is not drawing are still drop targets
    and do not get a labelled row, so the node stays the size of its layers rather than the size of
    its contract. 2026-10-15. */
-.node-spare-port{opacity:.35;width:8px;height:8px}
-.node-spare-port:hover{opacity:1}
 /* Rules written in the workflow, read as a list rather than as N3. The reader is a practitioner
    deciding whether the rules say what they meant, not someone debugging a reasoner. 2026-10-15. */
 .authored-rules{margin:0 0 14px;padding-left:18px;font-size:14px;line-height:1.8;color:var(--ink)}
@@ -1874,3 +1872,4 @@ tr.detect-signal-row td{font-weight:700}
 :root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) :focus-visible{outline:3px solid #000 !important;outline-offset:2px !important;box-shadow:0 0 0 5px #fff !important}
 :root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) :is(.blue,.teal,.purple,.amber,.green){--tint:#ffffff}
 :root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .blue{--tone:#0a3a57}:root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .teal{--tone:#00473a}:root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .purple{--tone:#4b2770}:root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .amber{--tone:#5c3a00}:root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .green{--tone:#1f4a12}}
+.port-symbol{flex-shrink:0;margin-right:7px}.port-symbol .f{fill:currentColor}.port-symbol .s{fill:none;stroke:currentColor}.node-icon .port-symbol,.palette-icon .port-symbol{margin:0}

@@ -1,17 +1,17 @@
 import type {Node,NodeProps,Edge,Connection} from '@xyflow/react';
 import type {Workflow,WorkflowNode,NodeDefinition,NodeType} from './types.js';
-import {PORT_NAMES,PORT_GROUPS,shownPort} from './port-names.js';
+import {PORT_ROLES,portBase,shownPort} from './port-names.js';
+import {symbolOf,symbolShapes,sourceSymbol,SYMBOL_WORDS,type PortSymbol} from './port-symbols.js';
 export interface NodeDescription extends Record<string,unknown> {definition:NodeDefinition;
-  /** Ports with something wired to them. A map declares every layer port it can draw, so listing
-   *  them all on the canvas made a node three times taller than the layout it shipped in -- and
-   *  most of the rows named a layer the map does not have. Unconnected ports stay droppable. */
   /** The node found something at the run. Separate from `alert`, which is the text on the badge:
    *  closing the badge takes the text away and must not take away the signal that there is
    *  something to look at. */
   flagged?:boolean;
-  connectedPorts?:string[];
-  /** Ports some node on this canvas could supply. */
-  availablePorts?:string[];type:NodeType;label:string;subtitle:string;detail:string;status?:string;glow?:boolean;alert?:string}
+  /** What arrives at each connected port: the port, the kind the source sends, and the source's name. */
+  inputsIn?:InputIn[];
+  /** Whether the step can take another input, so the blank port is drawn; and what it takes, in words. */
+  canAdd?:boolean;takes?:string;type:NodeType;label:string;subtitle:string;detail:string;status?:string;glow?:boolean;alert?:string}
+export interface InputIn {port:string;kind:string;from:string}
 type OperationFlowNode=Node<NodeDescription,'operation'>;
 export interface CanvasAPI {update:(graph:Workflow,selection:string|null|undefined,statuses?:Record<string,string>)=>void;fit:()=>void;zoomIn:()=>void;zoomOut:()=>void;setBusy:(busy:boolean)=>void}
 export interface CanvasCallbacks {selectEdge:(id:string)=>void;ready:(api:CanvasAPI)=>void;describe:(node:WorkflowNode,status?:string)=>NodeDescription;select:(id:string)=>void;clear:()=>void;move:(id:string,position:{x:number;y:number})=>void;connect:(connection:Connection)=>void;valid:(connection:Connection|Edge)=>boolean;remove:(ids:string[])=>void;removeEdges:(ids:string[])=>void;zoom:(zoom:number)=>void}
@@ -20,96 +20,49 @@ import {createRoot} from 'react-dom/client';
 import {ReactFlow, ReactFlowProvider, Background, Handle, Position, useNodesState, useEdgesState, useReactFlow, useUpdateNodeInternals, useNodesInitialized} from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import '../flow.css';
+/** A KIND'S SYMBOL (port-symbols.ts), drawn in the text colour; the name beside it carries the meaning. */
+const Symbol=({symbol}:{symbol:PortSymbol})=><svg className="port-symbol" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16" dangerouslySetInnerHTML={{__html:symbolShapes(symbol)}}/>;
 function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   const t=data.definition;
   const role=t.group==='Sources'?'input':t.group==='Outputs'?'output':'processing';
-  // NAMED PORT ROWS: each input a row with its name, and the output named. Sample a raster joined 2026-11-12 (the practitioner:
-  // "Sample a raster has not standardized its ports yet"): five unnamed dots, of which one or two are used at a time.
-  // WHICH NODES DRAW NAMED PORT ROWS rather than one bare handle per declared input. A node with a PORT_GROUPS entry
-  // belongs here by construction: the grouped row is the only thing that draws it as one port, and without it the
-  // node shows a dot per underlying port, unlabelled, where a drop on the wrong one is refused. Reported 2026-11-23,
-  // the moment Area around a point grew lines and polygons: *"Area around a point won't accept a point (mines
-  // pushpin)"* -- three dots had appeared and only the first took points.
-  // A WIDGET THAT NAMES ITS PORTS SHOWS THEM AS NAMED ROWS. Added 2026-11-24, when Travel time over ground named its
-  // three ports in `PORT_NAMES`, was in neither the list above nor `PORT_GROUPS`, and drew three bare dots -- the same
-  // defect as the one reported the day before, reached by the other route. Naming ports and showing them named were
-  // two facts that had to agree and were kept in two places; this is the one place. No widget's rendering changes:
-  // every type in `PORT_NAMES` today is either in the list or in `PORT_GROUPS`.
-  const spatialPorts=['map_output','table_output','coverage_check','raster_input','clip_raster'].includes(data.type)
-    ||!!PORT_NAMES[data.type as NodeType]||!!PORT_GROUPS[data.type as NodeType];
-  const portLabel=(port:string)=>PORT_NAMES[data.type as NodeType]?.[port]??(port==='context'?'Context points':port==='polygons'?(t.inputs.some(([p])=>p==='polygons_2')?'Areas 1':'Areas'):/^polygons_\d$/.test(port)?`Areas ${port.split('_')[1]}`:port==='network'?'Street network':port==='sites'?'Sites':port==='raster'?(data.type==='map_output'&&t.inputs.length>1?'Or: Raster':'Raster'):port==='decisions'?'Reasoning result':port==='area'?'Study area':port==='coverage'?'Or: Coverage result':port==='table'?'Tabular data':port==='ground'?'Map image (ground)'
-    // NAMED, NEVER "Points undefined" (2026-11-10, a georeferenced map image on the ground port): a port this list does not
-    // know is shown by its own name, and only a numbered point port is called Points.
-    :port==='files'?'Satellite files'
-    // Numbered only where the node has several point ports, as the map has.
-    :/^points(_\d+)?$/.test(port)?(t.inputs.some(([p])=>p==='points_2')?`Points ${port==='points'?'1':port.split('_')[1]}`:'Points'):port.charAt(0).toUpperCase()+port.slice(1).replace(/[-_]/g,' '));
-  // A map shows the layers it draws. Everything else keeps showing every port, because for those
-  // widgets the ports ARE the thing: a coverage check with a hidden area port tells a practitioner
-  // nothing about what it needs.
-  const connected=new Set((data.connectedPorts as string[]|undefined)??[]);
-  // Shown: what the map draws, plus what it COULD draw from something already on this canvas. A
-  // port with no possible source is a row about a layer the practitioner has no way to supply,
-  // and eight of those made the node three times taller than the layout it shipped in. Still a
-  // drop target, just without a row -- and a port you could use keeps a full-width one, because
-  // aiming at an 8px dot is not a connection gesture.
-  const available=new Set((data.availablePorts as string[]|undefined)??[]);
-  // A map shows the layers it draws and ONE port to add another, rather than a row for every
-  // layer type it could ever take. The practitioner's direction, 2026-10-15: "Instead of
-  // cluttering the side of the map widget with input ports, the Inspector UI should offer 1
-  // configurable port but also enable addition of more input ports."
-  //
-  // The spare port is type-free on purpose: drop anything drawable on it and the connection is
-  // bound to the real port by what the source emits. Eight declared ports remain underneath --
-  // they are what the receipt and the contract are written in terms of -- and the canvas stops
-  // being where a practitioner meets them.
-  // Table too (2026-11-09): what it shows, and one port to connect more.
+  // ONE MODEL FOR EVERY WIDGET (0.204.0; settled 2026-10-15 for the Map, experiment 116 for the rest, restated by the
+  // practitioner 2026-11-27): the connected inputs, each a row with its kind's symbol and the source's name, and one blank
+  // port while the step can take more. A drop on the blank port is bound by what arrives, and asks only when more than
+  // one input fits. The declared ports stay underneath: saved workflows, receipts and port contracts are written in them.
+  const inputsIn=(data.inputsIn as InputIn[]|undefined)??[];
+  const type=data.type as NodeType;
+  const roleOf=(port:string)=>PORT_ROLES[type]?.[port]??PORT_ROLES[type]?.[portBase(port)];
+  const addLabel=type==='map_output'?'+ Add a layer':'+ Add an input';
+  const outputSymbol=t.output?symbolOf(t.output):undefined;
   // THE OUTPUT NAMED BY WHAT IT CARRIES: Sample a raster gives points at points and areas over areas.
-  const outputLabel=({raster:'Raster',points:'Points',polygons:'Areas','coverage-check':'Coverage result',table:'Table',area:'Study area'} as Record<string,string>)[String(t.output)]
-    ??String(t.output).charAt(0).toUpperCase()+String(t.output).slice(1).replace(/[-_]/g,' ');
-  const layerNode=data.type==='map_output'||data.type==='table_output';
-  // GROUPED PORTS, one row each, named for what is connected (see PORT_GROUPS).
-  const groups=PORT_GROUPS[data.type as NodeType];
-  const grouped:[string,string][]=groups?Object.entries(groups).map(([group,ports])=>{const on=ports.find(p=>connected.has(p));
-    return [group,on?portLabel(on):portLabel(group)];}):[];
-  const shownPorts=groups?[]:layerNode?t.inputs.filter(([port])=>connected.has(port)):t.inputs;
-  const canAddLayer=layerNode&&[...available].some(port=>!connected.has(port));
-  const hiddenPorts:[string,string][]=[];
+  const outputLabel=outputSymbol?SYMBOL_WORDS[outputSymbol]:'';
   const updateInternals=useUpdateNodeInternals();
-  useEffect(()=>{updateInternals(id);// Handle positions are cached by React Flow, so every input that can change WHICH handles are
-  // rendered has to invalidate them -- availability as much as connection, or a freshly shown
-  // port is a drop target the library does not know the position of and a drag onto it does
-  // nothing. Found exactly that way: the aria-label was right and the connection never formed.
-  },[id,JSON.stringify(t.inputs),JSON.stringify([...connected]),JSON.stringify([...available]),updateInternals]);
+  // Handle positions are cached by React Flow, so whatever changes which handles are drawn invalidates them, or a freshly
+  // drawn port is a drop target the library does not know the position of.
+  useEffect(()=>{updateInternals(id);},[id,JSON.stringify(inputsIn),data.canAdd,updateInternals]);
   // REACT FLOW'S CORNER LINK IS HIDDEN (`hideAttribution` on the canvas below): one Tab from a node reached it with a faint focus ring,
   // and Enter left Fieldwork for reactflow.dev (the practitioner, 2026-11-16). It is credited in Help instead; MIT asks
   // for no attribution on screen.
   // A PORT IS A POINTER'S DROP TARGET, hidden from assistive technology (aria-hidden on each Handle): connecting by
   // keyboard or screen reader is the Inspector's list for each input (the Section 508 audit, 2026-11-16).
-  return <div data-node-role={role} style={{minHeight:!spatialPorts&&t.inputs.length>3?48+(t.inputs.length-1)*26+24:undefined}} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.status==='failed'?'failed':''} ${data.glow?'just-finished':''} ${data.flagged??data.alert?'alerting':''}`}>
-    <div className="node-heading"><span className="node-icon">{t.icon}</span><div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
+  return <div data-node-role={role} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.status==='failed'?'failed':''} ${data.glow?'just-finished':''} ${data.flagged??data.alert?'alerting':''}`}>
+    <div className="node-heading">{sourceSymbol(type)?<span className="node-icon"><Symbol symbol={sourceSymbol(type)!}/></span>:<span className="node-icon">{t.icon}</span>}<div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
     <div className="node-subtitle">{data.subtitle}</div>
-    {spatialPorts&&<div className="node-ports">
-      {grouped.map(([group,label])=><div className="node-port-row" key={group}>
-        <Handle aria-hidden="true" type="target" position={Position.Left} id={group} style={{top:'50%'}} title={label}/>
-        <span>{label}</span>
-      </div>)}
-      {shownPorts.map(([port,type])=><div className={`node-port-row ${port==='coverage'?'alternative-input':''}`} key={port}>
-        <Handle aria-hidden="true" type="target" position={Position.Left} id={port} style={{top:'50%'}} title={`${portLabel(port)} (${type})`}/>
-        <span>{portLabel(port)}</span>
-      </div>)}
-      {/* Every other port is still a drop target, stacked down the left edge without a row of
-          its own. A practitioner drags onto the one they want; the node stays the size of what
-          it draws. The title carries the name a row would have shown. */}
-      {hiddenPorts.map(([port,type],i)=><Handle aria-hidden="true" key={port} type="target" position={Position.Left} id={port}
-        className="node-spare-port" style={{top:`${56+i*14}px`}} title={`${portLabel(port)} (${type})`}
-       />)}
-      {canAddLayer&&<div className="node-port-row node-add-layer" key="layer">
-        <Handle aria-hidden="true" type="target" position={Position.Left} id="layer" style={{top:'50%'}}
-          title={data.type==='table_output'?'Add an input: drop any result to show here':'Add a layer: drop any drawable result here'}
-         />
-        <span>{data.type==='table_output'?'+ Add an input':'+ Add a layer'}</span>
+    {(t.inputs.length>0||t.output)&&<div className="node-ports">
+      {inputsIn.map(({port,kind,from})=>{const symbol=symbolOf(kind),role=roleOf(port);
+        return <div className="node-port-row" key={port} title={`${role?`${role}: `:''}${SYMBOL_WORDS[symbol]} from ${from}`}>
+          <Handle aria-hidden="true" type="target" position={Position.Left} id={shownPort(type,port)} style={{top:'50%'}}/>
+          <Symbol symbol={symbol}/>
+          <span className="port-name">{role&&<span className="port-role">{role} </span>}{from}</span>
+        </div>;})}
+      {!!data.canAdd&&<div className="node-port-row node-add-layer" key="layer" title={`${addLabel.slice(2)}: ${String(data.takes??'')}`}>
+        <Handle aria-hidden="true" type="target" position={Position.Left} id="layer" style={{top:'50%'}}/>
+        <span>{addLabel}</span>
       </div>}
-      {t.output&&<div className="node-port-row node-output-row"><span>{outputLabel} →</span><Handle aria-hidden="true" type="source" position={Position.Right} id="out" style={{top:'50%'}} title={t.output==='coverage-check'?'Coverage result: study area, points and review decisions':`${outputLabel} output`}/></div>}
+      {t.output&&outputSymbol&&<div className="node-port-row node-output-row" title={`${outputLabel} output`}>
+        <Symbol symbol={outputSymbol}/><span>{outputLabel} →</span>
+        <Handle aria-hidden="true" type="source" position={Position.Right} id="out" style={{top:'50%'}}/>
+      </div>}
     </div>}
     {data.alert&&<div className="node-alert" role="alert">
       <span title={data.alert}>⚠ {data.alert}</span>
@@ -123,8 +76,6 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
         onClick={event=>{event.stopPropagation();}}>×</button>
     </div>}
     <div className="node-bottom"><span>{data.detail}</span><span className="count">{data.status==='done'?'✓ Done':data.status==='running'?'Running…':data.type==='policy'?'N3 · WASM':'●'}</span></div>
-    {!spatialPorts&&t.inputs.map(([port,type],i)=><Handle key={port} type="target" position={Position.Left} id={port} style={{top:48+i*26}} title={`${port} (${type})`} aria-label={`${data.label}: ${port} input`}><span className="handle-name">{port}</span></Handle>)}
-    {!spatialPorts&&t.output&&<Handle aria-hidden="true" type="source" position={Position.Right} id="out" style={{top:54}} title={`${t.output} output`}/>}
   </div>;
 }
 const nodeTypes={operation:OperationNode};

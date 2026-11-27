@@ -15,11 +15,11 @@ test('Table executes point data without a study area or invented review decision
   assert.deepEqual(w,before);assert.equal(table.rows[0].attributes.count,0);assert.equal(table.rows[0].attributes.confirmed,false);
   assert.equal(table.spatialReference.geometryCRS,'OGC:CRS84');
   assert.match(result.receipts[0].facts,/fw:TableView/);assert.match(result.receipts[0].facts,/geo:wktLiteral/);
-  // EVERY PORT A TABLE CAN SHOW, ON EVERY TABLE. They used to appear and disappear with an
+  // EVERY PORT A TABLE CAN SHOW, ON EVERY TABLE. The coverage port went in 0.204.0: nothing live made a coverage
+  // check, and a saved one opens as a clip feeding the points port (below). They used to appear and disappear with an
   // `inputMode` parameter, so the port a connection needed might not exist on the node.
   assert.deepEqual(nodeInputs(w.nodes[1]),
-    [['points','points'],['coverage','coverage-check'],['table','table'],
-     ['polygons','polygons']]);
+    [['points','points'],['table','table'],['polygons','polygons']]);
   // And it insists on none of them: a view with nothing wired is unfinished, not failed, which
   // is what `incomplete-workflow` reports. It used to throw "needs its points input connected",
   // which with every port declared would have demanded four unrelated inputs at once.
@@ -113,7 +113,7 @@ test('the renderer is read from what is wired, and the stored mode only as a fal
 test('a table port and a points port coexist, so neither excludes the other',()=>{
   const node={...newTableOutput(),id:'t',x:0,y:0};
   const ports=nodeInputs(node).map(([port])=>port);
-  for(const port of ['points','coverage','table','polygons'])
+  for(const port of ['points','table','polygons'])
     assert.ok(ports.includes(port),`${port} is always offered`);
   // Specificity decides which renderer runs when more than one is wired.
   assert.equal(shownMode(node,[{to:'t',port:'points'},{to:'t',port:'table'}]),'table');

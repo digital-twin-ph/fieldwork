@@ -1,6 +1,6 @@
 # Credentials
 
-_Created 2026-11-17 · Updated 2026-11-20_
+_Created 2026-11-17 · Updated 2026-11-27_
 
 ## What it does
 

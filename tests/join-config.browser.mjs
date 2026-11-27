@@ -90,20 +90,21 @@ test('the column naming each part is proposed, the table and parts shown Before,
   expect(errors).toEqual([]);
 });
 
-test('a table dropped on the area input is bound to the table input, and an area to the area input',async({page})=>{
+test('a table dropped on the blank port is bound to the table input, and an area dropped on the table to the area input',async({page})=>{
   const w=structuredClone(workflow);w.edges=[{id:'e3',from:'join',to:'map',port:'polygons'}];
   await page.goto('/?example=blank');
   await page.locator('#workflow-file').setInputFiles({name:'join.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(w))});
   await page.locator('[data-view="workflow"]').click();
-  await expect(page.locator('.react-flow__node[data-id="join"] [data-handleid="parts"]')).toBeAttached({timeout:45000});
-  await expect(page.locator('.react-flow__node[data-id="join"] [data-handleid="polygons"]')).toHaveCount(0);
+  // ONE BLANK PORT before anything is connected (0.204.0); none of the inputs underneath is drawn.
+  await expect(page.locator('.react-flow__node[data-id="join"] [data-handleid="layer"]')).toBeAttached({timeout:45000});
+  await expect(page.locator('.react-flow__node[data-id="join"] [data-handleid="parts"]')).toHaveCount(0);
   const saved=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).edges);
   const drag=(from,port)=>dragConnection(page,page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`),
     page.locator(`.react-flow__node[data-id="join"] [data-handleid="${port}"]`),async()=>(await saved()).some(e=>e.from===from&&e.to==='join'));
-  // The census dropped on "Study area or polygon layer": it is a table, so it goes to Table.
-  await drag('census','parts');
+  // The census dropped on the blank port: it is a table, so it goes to Table.
+  await drag('census','layer');
   await expect.poll(async()=>(await saved()).some(e=>e.from==='census'&&e.to==='join'&&e.port==='records')).toBe(true);
-  // The study area dropped on "Table": it is an area, so it goes to the area input.
+  // The study area dropped on the Table row, now connected: it is an area, so it goes to the area input.
   await drag('area','records');
   await expect.poll(async()=>(await saved()).some(e=>e.from==='area'&&e.to==='join'&&e.port==='area')).toBe(true);
   expect((await saved()).filter(e=>e.to==='join').length).toBe(2);

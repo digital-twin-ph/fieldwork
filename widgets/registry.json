@@ -3168,7 +3168,7 @@
   {
    "id": "urn:fieldwork:widget:table_output",
    "nodeType": "table_output",
-   "currentVersion": "0.14.0",
+   "currentVersion": "0.15.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3264,6 +3264,11 @@
      "version": "0.14.0",
      "path": "widgets/releases/table_output/0.14.0.json",
      "sha256": "167d0ad19a7274dc24c34dbbd30418be83dee1e0d4850a6eddd8349d06f455d4"
+    },
+    {
+     "version": "0.15.0",
+     "path": "widgets/releases/table_output/0.15.0.json",
+     "sha256": "4d59fc9bc9acbec72b5014f2e35fb4e53eb83583c6cdd3d09d4ca8e51357056f"
     }
    ]
   },

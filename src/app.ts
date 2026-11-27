@@ -90,7 +90,8 @@ import {orderOf,inRange} from './select-rows.js';
 function getNode<K extends NodeType>(w:Workflow,id:string,type:K):WorkflowNode<K>{const node=required(w.nodes.find(n=>n.id===id));if(node.type!==type)throw new Error('Node type changed while editing');return node as WorkflowNode<K>;}
 function updateParam(w:Workflow,id:string,key:string,value:unknown){Object.assign(required(w.nodes.find(n=>n.id===id)).params,{[key]:value});}
 function replaceWorkflow(w:Workflow,next:Workflow){for(const key of Object.keys(w))Reflect.deleteProperty(w,key);Object.assign(w,next);}
-import {PORT_NAMES,PORT_GROUPS,groupFor} from './port-names.js';
+import {PORT_NAMES,PORT_GROUPS,PORT_ROLES,groupFor,shownPort,portBase} from './port-names.js';
+import {symbolOf,SYMBOL_WORDS,iconMarkup} from './port-symbols.js';
 import {TYPES,validateWorkflow,validateGeoJSON,executionPlan,executeWorkflow,nodeInputs,outputOf,portAccepts,pointsAsTable,portSourceName,nearestPlaces,IncompleteWorkflow,MAX_AREA_INPUTS} from './core.js';
 import {suggestUTM,utmScaleFactor,workflowPositions} from './utm.js';
 import {mountCanvas} from './canvas.js';
@@ -1272,6 +1273,42 @@ function layerPortFor(w:Workflow,source:WorkflowNode,target:WorkflowNode<'map_ou
   return declared[0];
 }
 
+/** WHICH INPUT A DROP ON THE BLANK PORT GOES TO, for every widget but Map and Table (whose `layerPortFor` grows their
+ *  layers). Experiment 116's rule, 2026-10-15: bind when one input fits what arrives, ask when more than one does. Inputs
+ *  of one kind with one job (points and points_2, area and area2) are one choice, filled in order. */
+function inputFor(w:Workflow,source:WorkflowNode,target:WorkflowNode):{port?:string;choices?:string[]}{
+  const kind=outputOf(source);
+  const fits=[...new Set(nodeInputs(target).filter(([,type])=>portAccepts(type,kind)).map(([port])=>shownPort(target.type,port)))];
+  if(!fits.length)return {};
+  const taken=new Set(w.edges.filter(e=>e.to===target.id).map(e=>shownPort(target.type,e.port)));
+  const free=fits.filter(port=>!taken.has(port)),pool=free.length?free:fits;
+  const oneEach=pool.filter((port,i)=>pool.findIndex(other=>portBase(other)===portBase(port))===i);
+  return oneEach.length>1?{choices:oneEach}:{port:pool[0]};
+}
+/** ASKED, WHEN THE KIND ALONE CANNOT SAY: Cases dropped on Measure distance is the From or the To. */
+function chooseInput(source:WorkflowNode,target:WorkflowNode,choices:string[],chosen:(port:string)=>void){
+  const dialog=document.createElement('dialog');dialog.className='choose-input';dialog.setAttribute('aria-labelledby','choose-input-title');
+  const name=(node:WorkflowNode)=>node.params.label||TYPES[node.type].title;
+  const said=(port:string)=>PORT_ROLES[target.type]?.[port]??PORT_NAMES[target.type]?.[port]??portLabel(port);
+  dialog.innerHTML=`<h2 id="choose-input-title">${esc(name(source))} goes into ${esc(name(target))} as:</h2>`
+    +`<div class="inspector-actions">${choices.map(port=>`<button type="button" class="button" data-port="${esc(port)}">${esc(said(port))}</button>`).join('')}`
+    +`<button type="button" class="button" data-port="">Cancel</button></div>`;
+  document.body.append(dialog);
+  const close=()=>{dialog.close();dialog.remove();};
+  dialog.addEventListener('cancel',close);
+  for(const button of dialog.querySelectorAll<HTMLButtonElement>('button'))button.onclick=()=>{close();if(button.dataset.port)chosen(button.dataset.port);};
+  dialog.showModal();
+}
+/** A CONNECTION MADE ON THE CANVAS: a drop on a blank port is bound, or asked about, before it is made. */
+function connectOnCanvas(c:Connection){
+  const source=workflow.nodes.find(n=>n.id===c.source),target=workflow.nodes.find(n=>n.id===c.target);
+  if(!source||!target)return;
+  const port=required(c.targetHandle);
+  if(port!=='layer'||target.type==='map_output'||target.type==='table_output'){change(w=>setConnection(w,c.source,c.target,port));return;}
+  const bound=inputFor(workflow,source,target);
+  if(bound.choices)chooseInput(source,target,bound.choices,chosen=>change(w=>setConnection(w,c.source,c.target,chosen)));
+  else if(bound.port){const chosen=bound.port;change(w=>setConnection(w,c.source,c.target,chosen));}
+}
 function setConnection(w:Workflow,from:string|null,to:string,port:string){
   const target=w.nodes.find(n=>n.id===to),map=['map_output','table_output'].includes(target?.type||'');
   // A GROUPED PORT (PORT_GROUPS) binds to the one of its ports the source fits, and replaces whatever else in the group was
@@ -1319,7 +1356,7 @@ function setConnection(w:Workflow,from:string|null,to:string,port:string){
   // renderer still draws one picture at a time -- see drawnMode -- so a raster wins the drawing
   // while the other layers remain wired and recorded. That limit is the drawing code's, and it is
   // no longer paid for by silently discarding a practitioner's connections.
-  w.edges=w.edges.filter(e=>e.to!==to||(e.port!==port&&(!from||!map||(port!=='coverage'&&e.port!=='coverage'))));
+  w.edges=w.edges.filter(e=>e.to!==to||e.port!==port);
   // WHAT THE UNION YIELDS follows what it is given, and the node records it so every reader of a
   // port type -- the connection offers, the canvas, the layer binding -- agrees without consulting
   // the edges. Set when an area is wired in, cleared when the last one goes.
@@ -1460,9 +1497,32 @@ function alertHeadline(alert:NonNullable<ReturnType<typeof nodeAlert>>){
  *  example is worse than no count, because a practitioner reads it as a study area that failed
  *  to load.
  */
+/** A POLYGON LAYER MADE OF STUDY AREAS TAKES ANOTHER, up to its limit, as `setConnection` grows it: so it keeps a blank
+ *  port while it can. One read from a file or an extract keeps its one area, where the area says where to read. */
+function polygonLayerGrows(n:WorkflowNode):boolean{
+  if(n.type!=='polygon_input')return false;
+  const node=n as WorkflowNode<'polygon_input'>;
+  const reads=node.params.inputMethod==='extract'||(node.params.inputMethod!=='areas'&&!!node.params.data?.features?.length);
+  return !reads&&Math.max(1,node.params.areaInputCount??1)<MAX_AREA_INPUTS;
+}
+/** WHAT A NODE'S PORTS SHOW (0.204.0): what arrived at each connected input, and whether one blank port is drawn for
+ *  another. Map and Table draw it while something on the canvas could add a layer; every other widget while a declared
+ *  input is free, so a step that needs two inputs shows its second once the first is connected. */
+function portsDrawn(n:WorkflowNode):Pick<NodeDescription,'inputsIn'|'canAdd'|'takes'>{
+  const incoming=workflow.edges.filter(e=>e.to===n.id),inputs=nodeInputs(n);
+  const inputsIn=incoming.map(e=>{const source=workflow.nodes.find(x=>x.id===e.from);
+    return {port:e.port,kind:source?outputOf(source)??'':'',from:source?(source.params.label||TYPES[source.type].title):e.from};});
+  const taken=new Set(incoming.map(e=>shownPort(n.type,e.port)));
+  const free=inputs.filter(([port])=>!taken.has(shownPort(n.type,port)));
+  const layerNode=n.type==='map_output'||n.type==='table_output';
+  const canAdd=layerNode
+    ?free.some(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&portAccepts(type,outputOf(x))))
+    :free.length>0||polygonLayerGrows(n);
+  const takes=[...new Set(free.map(([,type])=>SYMBOL_WORDS[symbolOf(type)]))].join(', ');
+  return {inputsIn,canAdd,takes};
+}
 function describe(n:WorkflowNode,status?:string):NodeDescription{let subtitle=TYPES[n.type].description,detail='Ready';if(n.type==='raster_input'){detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Prepare a local GeoTIFF';}if(n.type==='clip_raster'){subtitle='Raster + polygon -> masked raster';detail=n.params.method+' / margin '+(n.params.marginPixels||0)+' px';}if(n.type==='measure_distance'){detail='Kilometers · straight-line';}if(n.type==='output'){subtitle={table:'Table with supporting evidence',bars:'Grouped result counts',map:'Map of results and locations'}[n.params.view];detail='Creates a Results tab';}if(n.type==='study_area'){const p=n.params;subtitle=p.geometry?`Drawn ${p.selectionMode==='bbox'?'box':'polygon'}`:'No boundary selected yet';detail=!p.geometry?'Select it on the map':'CRS84';}if(n.type==='point_grid'){subtitle=`Regular grid · ${n.params.spacingM} m`;detail='Demonstration points';}if(n.type==='facilities'){subtitle=`Search within ${n.params.radiusKm} km`;detail='Historical registry · 214 points';}if(n.type==='xpert'){subtitle='Named evidence → facility type';detail='NB06 hierarchy · N3';}if(n.type==='access'){subtitle=`${n.params.minimumEvidence} evidence · ${n.params.service==='onsite'?'onsite':'incl. referral'}`;detail=`Straight-line proxy · ${n.params.speedMPerMin} m/min`;}if(n.type==='access_policy'){subtitle=`Review proxy time > ${n.params.thresholdMin} min`;detail='N3 · missing stays unknown';}if(n.type==='facility_audit'){subtitle='Service, evidence, and references';detail='All candidate facilities';}const alert=badgeFor(n.id);return {flagged:!!nodeAlert(n.id),definition:{...TYPES[n.type],inputs:nodeInputs(n),output:outputOf(n)},
-    connectedPorts:workflow.edges.filter(e=>e.to===n.id).map(e=>e.port),
-    availablePorts:nodeInputs(n).filter(([,type])=>workflow.nodes.some(x=>x.id!==n.id&&portAccepts(type,outputOf(x)))).map(([port])=>port),
+    ...portsDrawn(n),
     type:n.type,label:n.params.label||TYPES[n.type].title,subtitle,detail,status,glow:justFinished.has(n.id),alert:alert?alertHeadline(alert):undefined};}
 function render(){
   setFigureWords(figureWordsOf(workflow));
@@ -1910,7 +1970,7 @@ function renderLibrary(search=''){
   // What progressive reveal would offer at this step. Dimmed rather than removed: a hidden
   // widget can make a practitioner conclude the application cannot do something it can.
   const revealed=playbackStep===null?null:revealedTypes(playbackPlaced());
-  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=revealed?`${entries.filter(([k])=>revealed.has(k as NodeType)).length} of ${allowed.size}`:String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''} ${revealed&&!revealed.has(k as NodeType)?'unrevealed':''}" ${revealed&&!revealed.has(k as NodeType)?'title="Nothing on the canvas emits what this takes, at this step"':''} aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"${busy?' disabled':''}><span class="palette-icon">${t.icon}</span><strong>${t.title}</strong>${revealed&&!revealed.has(k as NodeType)?'<span class="sr-only">, nothing on the canvas feeds it yet</span>':''}<span>+</span></button>`;}).join('');
+  let group='';const entries=Object.entries(TYPES).filter(([k,t])=>allowed.has(k)&&!ADDABLE_VIA_RULESET.includes(k as typeof ADDABLE_VIA_RULESET[number])&&(t.title+' '+t.description).toLowerCase().includes(search.toLowerCase())).sort((a,b)=>PALETTE_GROUPS.indexOf(a[1].group as typeof PALETTE_GROUPS[number])-PALETTE_GROUPS.indexOf(b[1].group as typeof PALETTE_GROUPS[number]));$('#library-count').textContent=revealed?`${entries.filter(([k])=>revealed.has(k as NodeType)).length} of ${allowed.size}`:String(allowed.size);$('#node-library').innerHTML=entries.map(([k,t])=>{const heading=t.group!==group?`<div class="library-group">${t.group}</div>`:'';group=t.group;return `${heading}<button class="palette-node ${t.color} ${workflow.nodes.find(n=>n.id===selected)?.type===k?'primitive-selected':''} ${revealed&&!revealed.has(k as NodeType)?'unrevealed':''}" ${revealed&&!revealed.has(k as NodeType)?'title="Nothing on the canvas emits what this takes, at this step"':''} aria-current="${workflow.nodes.find(n=>n.id===selected)?.type===k?'true':'false'}" data-add="${k}"${busy?' disabled':''}><span class="palette-icon">${iconMarkup(k,t.icon)}</span><strong>${t.title}</strong>${revealed&&!revealed.has(k as NodeType)?'<span class="sr-only">, nothing on the canvas feeds it yet</span>':''}<span>+</span></button>`;}).join('');
   // One entry per bundled ruleset, each adding a node with that ruleset already pinned. The
   // generic "Apply ruleset" entry that stood here until 2026-10-14 added a node with no ruleset,
   // which has no ports and cannot run -- exactly what src/palette.ts said must not happen, while
@@ -2000,7 +2060,7 @@ function renderLibrary(search=''){
     const didAdd=change(w=>{const source=['measure_area','raster_input'].includes(type)?w.nodes.find(n=>n.type==='study_area'):type==='clip_raster'?w.nodes.find(n=>n.type==='raster_input'):null;const added={...required(sample),id,x:source?source.x+310:180+(w.nodes.length%4)*80,y:source?source.y:90+(w.nodes.length%3)*80};if(added.type==='output')added.params={view:'bars',label:`Bar chart ${w.nodes.filter(n=>n.type==='output').length+1}`};w.nodes.push(added);if(added.type==='raster_input'||added.type==='clip_raster'){const area=w.nodes.find(n=>n.type==='study_area');if(area)setConnection(w,area.id,id,'area');}selected=id;});if(didAdd===false)return;flow?.fit();toast(type==='study_area'?'Study area added. Select its boundary in the Inspector.':`${TYPES[type].title} added. Connect its ports to the workflow.`);
   });
 }
-function title(n:WorkflowNode){const t=TYPES[n.type];return `<div class="inspector-title ${t.color}"><span class="node-icon">${t.icon}</span><div><h2>${esc(n.params.label||t.title)}</h2><p>${esc(t.group)}</p></div></div>`;}
+function title(n:WorkflowNode){const t=TYPES[n.type];return `<div class="inspector-title ${t.color}"><span class="node-icon">${iconMarkup(n.type,t.icon,22)}</span><div><h2>${esc(n.params.label||t.title)}</h2><p>${esc(t.group)}</p></div></div>`;}
 /** How a practitioner is looking at one input's records, per node and per session.
  *
  *  Deliberately NOT part of the workflow. Which view somebody prefers and how many rows they
@@ -2500,7 +2560,7 @@ function renderInspector(){
   // tables themselves, so the preview is the join this draft would make. Only Apply writes.
   if(n.type==='relate_table')relateInspector.wire(n,relateKit(),document);
   optionalElement('#manage-references')?.addEventListener('click',()=>{let baseline=JSON.stringify(n.references||[]);openEvidenceEditor(n,refs=>{const current=workflow.nodes.find(x=>x.id===n.id);if(!current||JSON.stringify(current.references||[])!==baseline)throw new Error('The node changed while editing. Close and reopen its references.');const saved=change(w=>{required(w.nodes.find(x=>x.id===n.id)).references=structuredClone(refs);},{requirePersistence:true});if(saved)baseline=JSON.stringify(refs);return saved;});});
-  optionalElement('#add-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>;node.params.pointInputCount=(node.params.pointInputCount??1)+1;w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port==='coverage'));}));
+  optionalElement('#add-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>;node.params.pointInputCount=(node.params.pointInputCount??1)+1;}));
   optionalElement('#remove-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>,count=node.params.pointInputCount??1;if(count>1){w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===pointPort(count-1)));node.params.pointInputCount=count-1;}}));
   document.querySelectorAll<HTMLInputElement>('#map-label,#table-label').forEach(el=>el.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title)));
   if(n.type==='compare_point_sets')compareInspector.wire(n,compareKit(),document);
@@ -4517,6 +4577,8 @@ function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id=
     return !!groupFor(b.type,c.targetHandle??'',p=>portAccepts(nodeInputs(b).find(([q])=>q===p)?.[1],outputOf(a)));
   if(c.targetHandle==='layer'&&(b.type==='map_output'||b.type==='table_output'))
     return nodeInputs(b).some(([,type])=>type===outputOf(a))||(b.type==='table_output'&&portAccepts('table',outputOf(a)));
+  // EVERY OTHER WIDGET'S BLANK PORT takes whatever one of its inputs takes (0.204.0).
+  if(c.targetHandle==='layer')return nodeInputs(b).some(([,type])=>portAccepts(type,outputOf(a)));
   return portAccepts(nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1],outputOf(a));}
 // DELETE REMOVES THE SELECTED CONNECTION, by the application (0.155.0 CI, Chromium; one run in five by hand at four
 // workers): the connection was selected and said so in the Inspector, and the canvas library, whose own selection did not
@@ -4527,7 +4589,7 @@ document.addEventListener('keydown',e=>{
   const id=selected.slice(5);
   setTimeout(()=>{if(!workflow.edges.some(x=>x.id===id))return;change(w=>{w.edges=w.edges.filter(x=>x.id!==id);});selected=null;render();},0);
 });
-mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},selectEdge(id){selected=`edge:${id}`;render();},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect(c){change(w=>setConnection(w,c.source,c.target,required(c.targetHandle)));},valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
+mountCanvas($('#canvas'),{describe:describeNode,ready(api){flow=api;render();setTimeout(()=>flow!.fit(),80);},selectEdge(id){selected=`edge:${id}`;render();},select(id){selected=id;$('#node-search').value='';if(revealResultFor(id))renderResults();markLinkedTabs();render();$('#node-library [aria-current="true"]')?.scrollIntoView({block:'nearest',behavior:'smooth'});},clear(){selected=null;markLinkedTabs();render();},move(id,p){change(w=>Object.assign(required(w.nodes.find(n=>n.id===id)),{x:p.x,y:p.y}),{spatial:false});},connect:connectOnCanvas,valid:validConnection,remove:removeNodes,removeEdges(ids){change(w=>w.edges=w.edges.filter(e=>!ids.includes(e.id)));},zoom(z){$('#zoom-value').textContent=`${Math.round(z*100)}%`;}});
 // Delegated, because the canvas redraws its nodes whenever anything changes and a listener bound
 // to a button would go with them.
 $('#canvas').addEventListener('click',event=>{
@@ -5024,7 +5086,7 @@ function renderWidgetsView():void{
   const rows=projectWidgets(docs,order);
   const view=$('#widgets-view');
   view.innerHTML=projectWidgetsMarkup(project?.name??workflow.name??'this workflow',rows,docs.length,
-    type=>({title:TYPES[type as NodeType]?.title??type,icon:TYPES[type as NodeType]?.icon??'',manual:hasManual(type)}),esc);
+    type=>({title:TYPES[type as NodeType]?.title??type,icon:iconMarkup(type,TYPES[type as NodeType]?.icon??''),manual:hasManual(type)}),esc);
   view.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>{b.disabled=busy;if(busy)b.title='Wait for the run to finish';});
   view.querySelectorAll<HTMLButtonElement>('[data-open-workflow]').forEach(b=>b.addEventListener('click',async()=>{
     const key=b.dataset.openWorkflow!;

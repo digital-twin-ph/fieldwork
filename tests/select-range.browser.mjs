@@ -24,6 +24,9 @@ const wire=async(page,from,to,port)=>{
   const a=await source.boundingBox(),b=await target.boundingBox();
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
   await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
+  // ASKED WHICH INPUT, where the kind fits more than one (0.204.0): answered with the port this step means.
+  if(await page.locator('dialog.choose-input').waitFor({timeout:600}).then(()=>true,()=>false))
+    await page.locator(`dialog.choose-input button[data-port="${port}"]`).click();
   await expect.poll(async()=>(await saved(page)).edges.some(e=>e.from===from&&e.to===to)).toBe(true);
 };
 const node=async(page,id)=>(await saved(page)).nodes.find(n=>n.id===id);

@@ -95,6 +95,15 @@ test('high contrast is black on white, kept, and taken by Match device on a ligh
     await p.goto('/?example=blank');
     await expect(p.locator('#theme-select')).toHaveValue('device');
     expect((await resolved(p)).surface,`${scheme} device asking for more contrast`).toBe(expected);
+    // THE PALETTE'S TONES TOO (PR 6's review, 2026-11-26): Street network's icon stayed blue on a tint, at 3.64:1.
+    if(scheme==='light'){
+      const icon=async()=>p.locator('.palette-node.blue .palette-icon').first().evaluate(e=>{const s=getComputedStyle(e);return [s.color,s.backgroundColor];});
+      await expect(p.locator('.palette-node.blue .palette-icon').first()).toBeAttached();
+      const matched=await icon();
+      await p.locator('#theme-select').selectOption('contrast');
+      expect(matched,'Match device colours a palette icon as High contrast does').toEqual(await icon());
+      expect(matched[1]).toBe(WHITE);
+    }
     await asks.close();
   }
 });

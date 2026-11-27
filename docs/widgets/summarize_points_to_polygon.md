@@ -46,6 +46,13 @@ polygons, release 0.2.0.
 
 ## History
 
+### 2026-11-26 · Map shades the polygons by what was counted (0.7.0)
+
+Each polygon carries the total of the chosen field, or the count of points where none is chosen, and Map shades and
+keys the polygons by it, as **Total** and the field's name, or **Points inside**. Before, Map drew each unit in a
+colour of its own, keyed by its name. Show me how ends on the same classes, colours and ranges Map draws for its
+made-up output, and its labels stay inside the drawing, measured once drawn.
+
 ### 2026-11-26 · Show me how ends on the scale (0.6.0)
 
 The last step shaded North and South by how dark one green was, and nothing said what a shade meant. Now each unit

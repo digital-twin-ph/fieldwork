@@ -29,6 +29,22 @@ shown in a local build is not a claim that it has been published.
 - **The last inline Inspectors out of `app.ts`** (Chart 0.25.3, Measure distance 0.7.1, Point data 0.19.1), each into
   its own module, with nothing a practitioner sees changed. Chart's handlers for controls drawn only in Configure…
   were removed from `app.ts`; Configure… wires its own draft.
+- **Commentary off the screen, first pass.** The practitioner: *"Commentary text about design belongs in design
+  documents not the UI."* Removed: the project bar's tagline, shown before a workflow opened; the N3 & evidence tab's
+  "Generated facts → explicit rules → local inference"; the Notes tab's paragraph on where each kind of note comes from;
+  "GeoJSON → N3" on a drawn Study area's card. Stale, rewritten: the empty Results panel named the retired visual
+  output nodes and a Bar chart choice; Play back the build's tooltip named the reveal rule. The Inspector's subtitle
+  showed the step's internal id (Claude Design's Inspector finding 1) and now shows its group only.
+- **Map shades what Summarize and H3 counted** (Summarize points to polygons 0.7.0, Aggregate points to H3 cells 0.7.0,
+  Map 0.50.0). From pull request 6's review: Show me how ended on a scale it called Map's, while Map drew Summarize's
+  polygons one colour per unit and every H3 cell one blue. Each polygon now carries its total or count, and Map shades
+  and keys by it; the walkthrough takes its scale from the same functions, and a test compares the two.
+- **Show me how's labels measured, not estimated.** An estimate moved a long label, such as one naming "Confirmed case
+  count", off the drawing when it fitted on the right. Each is now measured once drawn: right of its point, else left,
+  else as near as the drawing allows.
+- **Match device's high contrast** now takes the palette's colours as High contrast does: Street network's icon stayed
+  blue on a tint at 3.64:1.
+- **"Research workspace" out of the header**, on the practitioner's word. The PROTOTYPE tag stays.
 
 ## 0.201.0 — In development
 

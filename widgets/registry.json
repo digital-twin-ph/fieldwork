@@ -59,7 +59,7 @@
   {
    "id": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
    "nodeType": "aggregate_points_to_h3_cell",
-   "currentVersion": "0.6.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -95,6 +95,11 @@
      "version": "0.6.0",
      "path": "widgets/releases/aggregate_points_to_h3_cell/0.6.0.json",
      "sha256": "fe74474ec8bdc666c643fffa0fc63d87bcf0cf81aa8e64d6af6e79f13d3ab8b3"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/aggregate_points_to_h3_cell/0.7.0.json",
+     "sha256": "ac06d9f141abb8ec5875c99c82f29b9e115bd770ab894db4e40e089c1814b09a"
     }
    ],
    "previousNodeTypes": [
@@ -1234,7 +1239,7 @@
   {
    "id": "urn:fieldwork:widget:map_output",
    "nodeType": "map_output",
-   "currentVersion": "0.49.0",
+   "currentVersion": "0.50.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -1615,6 +1620,11 @@
      "version": "0.49.0",
      "path": "widgets/releases/map_output/0.49.0.json",
      "sha256": "073b6bdb5a9db0164966805217cf46ca86324b39d988f11e6dcf1d3568297196"
+    },
+    {
+     "version": "0.50.0",
+     "path": "widgets/releases/map_output/0.50.0.json",
+     "sha256": "cc68a457d69194350349fdbb71c624716b56e753159a6fc4b15c09ec76ec56b1"
     }
    ]
   },
@@ -2946,7 +2956,7 @@
   {
    "id": "urn:fieldwork:widget:summarize_points_to_polygon",
    "nodeType": "summarize_points_to_polygon",
-   "currentVersion": "0.6.0",
+   "currentVersion": "0.7.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -2977,6 +2987,11 @@
      "version": "0.6.0",
      "path": "widgets/releases/summarize_points_to_polygon/0.6.0.json",
      "sha256": "e7198dd50f0be789b61987cdab1bb6d0d0aeafffed52a6d413247b99bb29cf3e"
+    },
+    {
+     "version": "0.7.0",
+     "path": "widgets/releases/summarize_points_to_polygon/0.7.0.json",
+     "sha256": "b9661e07047ebec3fa08a4d2cc84b7ff2269b7857a1e6384b0dfac4b4dadfd52"
     }
    ],
    "previousNodeTypes": [

@@ -15,7 +15,7 @@ import {sampleRaster,cellAt} from './sample-raster.js';
 import {totalOver} from './raster-areas.js';
 import {pointRelation} from './spatial-predicates.js';
 import type {RasterGrid} from './raster.js';
-import {classifyValues,classRanges} from './presentation.js';
+import {polygonShading,shadedValues,classRanges} from './presentation.js';
 import type {AreaUnit} from './types.js';
 import {joinTableToAreas} from './area-join.js';
 import {convexHull} from './convex-hull.js';
@@ -29,13 +29,14 @@ interface Shape {kind:Kind;rings?:Position[][][];point?:Position;label?:string;a
   /** A made shape's colour on the scale `classedScale` gives, as Map would shade it. */
   fill?:string}
 /** THE SCALE A RESULT IS SHADED ON (the practitioner, 2026-11-26, on Summarize's last step: "shouldn't the goal be in
- *  summarization to render a shading corresponding to the resulting scale?"). Map's own classes, colours and ranges for
- *  these values, so the walkthrough ends on the picture Map draws, keyed by each class's range. */
-export function classedScale(values:readonly number[]):{fill:(v:number)=>string;scale:{label:string;color:string}[]}|null{
-  const classed=classifyValues([...values]);
+ *  summarization to render a shading corresponding to the resulting scale?"). Read off the step's own output by the
+ *  functions Map shades and keys a polygon layer with (`polygonShading`, `classRanges` over `shadedValues`), so the
+ *  walkthrough ends on the picture Map draws of the same polygons: the same value, classes, colours and ranges. */
+export function classedScale(features:Polygons['features']):{fill:(f:Polygons['features'][number])=>string;scale:{label:string;color:string}[]}|null{
+  const {classed}=polygonShading(features);
   if(!classed)return null;
-  const ranges=classRanges(values,classed.breaks);
-  return {fill:v=>classed.colours[classed.classOf(v)??0]!,scale:ranges.map((label,i)=>({label,color:classed.colours[i]!}))};
+  const ranges=classRanges(shadedValues(features),classed.breaks);
+  return {fill:f=>classed.colours[classed.classOf(f.value)??0]!,scale:ranges.map((label,i)=>({label,color:classed.colours[i]!}))};
 }
 type Scale={title:string;entries:{label:string;color:string}[]};
 const KEY_SCALED='Filled: what the step makes, coloured by the scale below, as Map shades it';
@@ -53,13 +54,13 @@ function draw(shapes:Shape[],label:string,shading?:Scale):{svg:string;key:string
   const x=(lon:number)=>20+(lon-w)*scale+(260-(e-w)*scale)/2,y=(lat:number)=>40+(n-lat)*scale+(180-(n-south)*scale)/2;
   const path=(rings:Position[][][])=>rings.map(poly=>poly.map(r=>'M'+r.map(p=>`${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('L')+'Z').join(' ')).join(' ');
   const body=shapes.map(s=>s.rings
-    ?`<path class="walk-shape walk-shape-${s.kind}" d="${path(s.rings)}" fill-rule="evenodd"${s.fill?` style="fill:${s.fill};fill-opacity:1"`:''}/>`
+    ?`<path class="walk-shape walk-shape-${s.kind}" d="${path(s.rings)}" fill-rule="evenodd"${s.fill?` style="fill:${s.fill};fill-opacity:.78"`:''}/>`
     :s.point?`<circle class="walk-shape walk-shape-${s.kind} walk-point" cx="${x(s.point[0]).toFixed(1)}" cy="${y(s.point[1]).toFixed(1)}" r="5"/>`:'').join('')
     +shapes.filter(s=>s.label).map(s=>{const at=s.at??s.point??s.rings![0]![0]![0]!;
-      // A LABEL STAYS IN THE DRAWING (2026-11-26: "House 6: outside" was cut to "House 6: o"): one that would run past
-      // the right edge is drawn to the left of its point instead. Widths are estimated at 9 units a character, bold 14 px.
-      const lx=x(at[0]),room=360-(lx+8),wide=s.label!.length*9>room;
-      return `<text class="walk-shape-label" x="${(wide?lx-8:lx+8).toFixed(1)}" y="${(y(at[1])-8).toFixed(1)}"${wide?' text-anchor="end"':''}>${escapeHtml(s.label!)}</text>`;}).join('');
+      // A LABEL STAYS IN THE DRAWING (2026-11-26): drawn to the right of its point, and kept inside by the player, which
+      // measures it once drawn (fitLabels in table-walkthrough.ts). An estimate of its width flipped labels that fit.
+      const lx=x(at[0]);
+      return `<text class="walk-shape-label" data-at="${lx.toFixed(1)}" x="${(lx+8).toFixed(1)}" y="${(y(at[1])-8).toFixed(1)}">${escapeHtml(s.label!)}</text>`;}).join('');
   const kinds=[...new Set(shapes.map(s=>s.kind))];
   return {svg:`<svg class="walk-drawing" viewBox="0 0 360 240" role="img" aria-label="${label}">${body}</svg>`,
     key:kinds.map(k=>k==='result'&&shading?KEY_SCALED:KEY[k]),...(shading?{scale:shading}:{})};
@@ -267,13 +268,14 @@ export function summarizePointsWalkthrough(boundary:'include'|'exclude',valueFie
     properties:{name:p.name,...(p.v===null?{}:{[field]:p.v})},geometry:{type:'Point',coordinates:p.at}}))};
   const made=summarizePolygons(input,points,{label:'Walk',boundary,valueField:field});
   const unit=(name:string)=>made.features.find(f=>(f.properties as {name?:string}).name===name) as unknown as {count:number;total:number;missingValues:number};
-  const n=unit('North'),s=unit('South'),scaled=classedScale([n.total,s.total])!;
+  const n=unit('North'),s=unit('South'),scaled=classedScale(made.features)!;
+  const shade=(name:string)=>scaled.fill(made.features.find(f=>(f.properties as {name?:string}).name===name)!);
   const houses=(k:number)=>`${k} house${k===1?'':'s'}`;
   // THE UNITS, named; at the end each with what it carries, coloured by its total on Map's scale (the practitioner,
   // 2026-11-22: "two rectangles not having any difference at the end"; 2026-11-26: the shading should follow the scale).
   const units=(kind:Kind,end=false):Shape[]=>[
-    {kind,rings:ring(NORTH),label:end?`North: ${houses(n.count)}, ${field} ${n.total}`:'North',at:[30.001,-1.001],...(end?{fill:scaled.fill(n.total)}:{})},
-    {kind,rings:ring(SOUTH),label:end?`South: ${houses(s.count)}, ${field} ${s.total}`:'South',at:[30.001,-1.0293],...(end?{fill:scaled.fill(s.total)}:{})}];
+    {kind,rings:ring(NORTH),label:end?`North: ${houses(n.count)}, ${field} ${n.total}`:'North',at:[30.001,-1.001],...(end?{fill:shade('North')}:{})},
+    {kind,rings:ring(SOUTH),label:end?`South: ${houses(s.count)}, ${field} ${s.total}`:'South',at:[30.001,-1.0293],...(end?{fill:shade('South')}:{})}];
   const pt=(kind:Kind,name:string,said?:string):Shape=>{const p=P.find(x=>x.name===name)!;
     return {kind,point:p.at,label:said??`${p.house}: ${p.v===null?'no value':p.v}`};};
   // A HOUSE SET ASIDE IS DRAWN WITHOUT ITS LABEL (2026-11-26): six labels on every step crowded the one the step is
@@ -285,7 +287,7 @@ export function summarizePointsWalkthrough(boundary:'include'|'exclude',valueFie
   const table={label:'The houses, one row each',columns:['House',field,'Inside'],rows:P.map(p=>[p.house,p.v===null?'':String(p.v),where(p.name)])};
   const row=(name:string)=>P.findIndex(p=>p.name===name);
   const mark=(name:string,state:'matched'|'unmatched'|'several',word:string)=>({table:0,row:row(name),state,word});
-  return {title:'Summarize points to polygons, step by step',tables:[table],resultColumns:[],steps:[
+  return {title:'Summarize points to polygons, step by step',made,tables:[table],resultColumns:[],steps:[
     step(`Two made-up units, North and South, sharing an edge, and six houses, each with its ${field}. House 5 has none recorded.`,
       [...units('input'),...P.map(p=>pt('input',p.name))]),
     step(`North counts the houses inside it, 1 and 2, and adds their ${field}: 3 + 1.`,
@@ -472,8 +474,8 @@ export function h3Walkthrough(resolution:number,minOccupancy:number):Walkthrough
   const homes=(kind:Kind):Shape[]=>H.map(h=>({kind,point:h.at}));
   const counts=[middle,side!,other!].map(c=>({cell:c,count:H.filter(h=>h.cell===c).length}));
   const dropped=counts.filter(c=>c.count<least);
-  const cellCount=(f:unknown)=>Number((f as {count?:number}).count??0),scaled=classedScale(made.features.map(cellCount));
-  return {title:'Aggregate points to H3 cells, step by step',tables:[],resultColumns:[],steps:[
+  const scaled=classedScale(made.features);
+  return {title:'Aggregate points to H3 cells, step by step',made,tables:[],resultColumns:[],steps:[
     step('Six made-up homes.',homes('input')),
     step(`Each falls in one H3 cell at resolution ${r}${r===resolution?'':' (shown at 9, as the resolution set is not one the step accepts)'}: three in one cell, one in the cell beside it, two in another.`,
       [...counts.map(c=>({kind:'look' as const,rings:cellRing(c.cell),label:String(c.count),at:cellToBoundary(c.cell,true)[0] as Position})),...homes('input')]),
@@ -483,6 +485,6 @@ export function h3Walkthrough(resolution:number,minOccupancy:number):Walkthrough
     step(`What the step passes on: ${!made.features.length?`no cell, as each holds fewer than ${least} homes`:made.features.length===1?'1 cell, with its count of homes':`${made.features.length} cells, each with its count of homes`}; the homes themselves are not passed on. `
       +'It counts locations, not what they carry, and it protects nobody on its own.',
       [...made.features.map(f=>({kind:'result' as const,rings:partsOf(f.geometry),label:String((f as {count?:number}).count),
-        at:(f.geometry.coordinates as Position[][])[0]![0]!,...(scaled?{fill:scaled.fill(cellCount(f))}:{})})),...homes('gone')],true,[],
-      scaled?{title:'Homes in the cell',entries:scaled.scale}:undefined)]};
+        at:(f.geometry.coordinates as Position[][])[0]![0]!,...(scaled?{fill:scaled.fill(f)}:{})})),...homes('gone')],true,[],
+      scaled?{title:made.valueName??'Points in the cell',entries:scaled.scale}:undefined)]};
 }

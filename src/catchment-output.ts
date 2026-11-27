@@ -115,7 +115,7 @@ export function polygonFrame(p:Polygons,area?:Boundary|null,box?:readonly [numbe
   const over:[number,number,number,number]=box?[box[0],box[1],box[2],box[3]]:[west,south,east,north];
   const frame=plotFrame(over,{width:790,margin:60});
   return {bounds:[west,south,east,north],scale:frame.scale,
-    height:frame.height+(p.kind==='hexbin'?KEY_BAND:keyBand(p.features)),project:frame.project};
+    height:frame.height+keyBand(p.features),project:frame.project};
 }
 /** THE KEY'S OWN BAND, under the map rather than over it (2026-11-15): drawn in the frame's last 45 px, Salmonella's
  *  ramp and its labels lay on Switzerland's tiles and place names and could not be read. The figure is this much
@@ -163,8 +163,14 @@ export function polygonSvg(p:Polygons,esc:Escape,area?:Boundary|null,
       if(c[1]<south)south=c[1];if(c[1]>north)north=c[1];
     }
     const framed=plotFrame(over?.box?[...over.box] as [number,number,number,number]:[west,south,east,north],{width:790,margin:60});
-    const project=framed.project,height=framed.height+(over?.withKey===false?0:KEY_BAND);
-    return `<rect width="850" height="${height}" fill="#f7faf8"/>`+lineLayersSvg(over?.lines??[],project,over?.markScale??1,over?.lineArrows)+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="#3686a8" fill-opacity=".25" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')+'<text x="20" y="282" font-size="14">H3 aggregate cells · sparse cells omitted</text>';
+    const project=framed.project,height=framed.height+(over?.withKey===false?0:keyBand(p.features));
+    // SHADED BY COUNT (2026-11-26, PR 6's review): one blue for every cell said only that a cell was released. A cell
+    // carries its count as its value, classed as every classed layer is; a layer saved before then keeps the one blue.
+    const {classed}=polygonShading(p.features);
+    const fill=(f:Polygons['features'][number])=>classed&&typeof f.value==='number'?classed.colours[classed.classOf(f.value)??0]!:'#3686a8';
+    return `<rect width="850" height="${height}" fill="#f7faf8"/>`+lineLayersSvg(over?.lines??[],project,over?.markScale??1,over?.lineArrows)+p.features.map(f=>`<path data-hex-cell="${esc(f.id)}" d="M${(f.geometry.type==='Polygon'?f.geometry.coordinates[0]:f.geometry.coordinates[0][0]).map(c=>project(c).join(',')).join('L')}Z" fill="${fill(f)}" fill-opacity="${classed?'.78':'.25'}" stroke="#19617c" stroke-width="1"><title>${esc(f.id)} · ${f.count} locations</title></path>`).join('')
+      +(over?.withKey===false?'':classed?plotKey({...p,sites:[],layerName:'H3 cells, sparse cells omitted'},classed,esc,null,height)
+        :'<text x="20" y="282" font-size="14">H3 aggregate cells · sparse cells omitted</text>');
   }
   const rings=p.features.flatMap(f=>f.geometry.type==='Polygon'?f.geometry.coordinates:f.geometry.coordinates.flat()),coords=[...rings.flat(),...contextRings(area).flat(),...p.sites.flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...(p.observations?.features||[]).flatMap(f=>f.geometry?[f.geometry.coordinates]:[]),...lineVerticesOf(over?.lines??[])];if(!coords.length)return '<text x="30" y="40">No intersecting polygons or located points</text>';
   const [west,south,east,north]=coords.reduce(([w,s,e,n],c)=>[Math.min(w,c[0]),Math.min(s,c[1]),Math.max(e,c[0]),Math.max(n,c[1])],[Infinity,Infinity,-Infinity,-Infinity]);

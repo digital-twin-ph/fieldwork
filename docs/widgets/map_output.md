@@ -384,6 +384,12 @@ Methods as a limitation, by itself. Natural Earth is bundled and writes no such 
 
 ## History
 
+### 2026-11-26 · H3 cells and Summarize's polygons shaded by class (0.50.0)
+
+H3 cells carrying a count are shaded by class and keyed by range, on the figure and on the key beside the interactive
+map. Polygons from Summarize points to polygons are shaded by the total or count they now carry. A layer saved before
+keeps its old colours until the workflow is run again.
+
 ### 2026-11-24 · Lines are a layer, and they show which way they run (0.49.0)
 
 Hand-drawn routes showed on the interactive map and on no figure — not in Results, not in Notes, not in a download.

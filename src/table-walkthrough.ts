@@ -27,7 +27,8 @@ export interface WalkStep {
     /** The scale a result is coloured on, each class's range beside its colour, as Map's key gives it. */
     scale?:{title:string;entries:{label:string;color:string}[]}};
 }
-export interface Walkthrough {title:string; tables:WalkTable[]; resultColumns:string[]; steps:WalkStep[]}
+export interface Walkthrough {title:string; tables:WalkTable[]; resultColumns:string[]; steps:WalkStep[];
+  /** What the step's own function made of the made-up input, where a check compares it with another surface's drawing. */ made?:unknown}
 
 const SHAPE:Record<MarkState,string>={looking:'›',matched:'✓',unmatched:'✕',kept:'+',several:'≡',stopped:'■',unused:'–'};
 
@@ -98,7 +99,7 @@ export function openWalkthrough(walk:Walkthrough,esc:Escape,from?:HTMLElement):v
       +`<div class="walk-controls"><button class="button" data-walk-back${at===0?' disabled':''}>Back</button>`
       +`<button class="button primary" data-walk-step${at===walk.steps.length-1?' disabled':''}>Step</button>`
       +`<button class="button" data-walk-play aria-pressed="${timer?'true':'false'}"${at===walk.steps.length-1?' disabled':''}>${timer?'Pause':'Play'}</button>`
-      +`<button class="button" data-walk-start${at===0?' disabled':''}>Start again</button></div></div>`;};
+      +`<button class="button" data-walk-start${at===0?' disabled':''}>Start again</button></div></div>`;fitLabels(box);};
   const go=(to:number)=>{at=Math.max(0,Math.min(walk.steps.length-1,to));if(at===walk.steps.length-1)stop();draw();};
   const close=()=>{stop();if(box.open)box.close();box.remove();back?.focus();};
   box.addEventListener('click',event=>{
@@ -113,8 +114,24 @@ export function openWalkthrough(walk:Walkthrough,esc:Escape,from?:HTMLElement):v
     }
   });
   box.addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation();close();});
-  document.body.append(box);draw();box.showModal();
+  document.body.append(box);draw();box.showModal();fitLabels(box);
   box.querySelector<HTMLElement>('[data-walk-step]')?.focus();
+}
+
+/** A DRAWING'S LABELS KEPT INSIDE ITS 360-WIDE BOX, measured once drawn (PR 6's review, 2026-11-26: an estimate of 9
+ *  units a character moved "North: 3 houses, Confirmed case count 8" to the left, off the box, when it fitted on the
+ *  right). Right of its point where it fits; else left of it where that fits; else as near its point as the box
+ *  allows; and a label wider than the box is drawn to the box's width. Nothing is measured before the dialog is open. */
+export function fitLabels(root:ParentNode,width=360,edge=4):void{
+  root.querySelectorAll<SVGTextElement>('svg.walk-drawing text[data-at]').forEach(t=>{
+    const at=Number(t.dataset.at),wide=t.getComputedTextLength();
+    if(!wide)return;
+    t.removeAttribute('text-anchor');t.removeAttribute('textLength');t.removeAttribute('lengthAdjust');
+    if(at+8+wide<=width-edge){t.setAttribute('x',(at+8).toFixed(1));return;}
+    if(at-8-wide>=edge){t.setAttribute('x',(at-8).toFixed(1));t.setAttribute('text-anchor','end');return;}
+    if(wide>width-2*edge){t.setAttribute('x',String(edge));t.setAttribute('textLength',String(width-2*edge));t.setAttribute('lengthAdjust','spacingAndGlyphs');return;}
+    t.setAttribute('x',Math.min(Math.max(edge,at+8),width-edge-wide).toFixed(1));
+  });
 }
 
 /** THE BUTTON EVERY CONFIGURE… OFFERS, and what it opens: the walkthrough made from the draft as it stands when pressed. */

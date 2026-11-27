@@ -72,6 +72,9 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 2026-11-25 and 2026-11-26
 
+- **A cooperative, turn-based training mission** ([233](docs/experiments/233-a-cooperative-turn-based-training-mission.md)):
+  a research proposal written in a ChatGPT session, given 2026-11-26 to be written up and reviewed later. Nothing
+  built. For review: it meets Dive Deeper's deferral and would add Supabase as an outside service.
 - **The code review** ([audit](docs/audits/code-review-2026-11-23.md)): acted on in 0.200.0, and the four live widgets
   it found drawn inline in `app.ts` moved out since (Apply ruleset in 0.201.0, the other three in 0.202.0). **Left:** the
   nightly WebKit run's time limit (the run of 2026-11-25 was cancelled at 1 h 15 min, [CI audit](docs/audits/ci-verification-audit.md)); widget release records still list `src/core.ts` where the
@@ -88,7 +91,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **0.202.0, from the practitioner's UI order of 2026-11-26** (high-contrast theme first): the theme, and Show me how
   ending on Map's scale for Summarize points to polygons and Aggregate points to H3 cells, with labels kept inside the
   drawing and Voronoi's catchments in one fill; and the last three inline Inspectors (Chart, Point data, Measure
-  distance) out of `app.ts`. **Next in that order:** the commentary sweep, then buttons and ports.
+  distance) out of `app.ts`; and the commentary sweep's first pass (below, Comprehensibility 1). **Next in that order:**
+  the rest of the sweep, then buttons and ports.
 
 ### Threads from 2026-11-22
 
@@ -1722,6 +1726,13 @@ after, in the browser, so a cut is seen rather than claimed.
    need commentary text. Commentary text about design belongs in design documents not the UI. Let's be opportunistic
    with taking them out like when we standardize widgets when we touch them."*): any surface touched loses its design
    commentary and stale text in the same pass, as a widget touched moves to 186's standard.
+   **First pass, 0.202.0 (2026-11-26):** the header-to-Notes surfaces read. Removed as design explanation: the project
+   bar's tagline, the N3 & evidence tab's "facts → rules → inference" line, the Notes tab's paragraph on note kinds,
+   "GeoJSON → N3" on Study area's card; rewritten as stale: the empty Results panel (retired visual output nodes) and
+   Play back the build's tooltip (the reveal rule); the Inspector's subtitle lost the internal id; and "Research
+   workspace" left the header, on the practitioner's word (the name and the PROTOTYPE tag stay). **Left, for the
+   practitioner:** the glossary's own words on screen (*machined*, *derived*, *authored* in the Notes counts and
+   cards; the *N3 & evidence* tab), which the naming review holds; the built-in example captions; and the measure, not yet extended past the Inspector.
 2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
    (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
    the first instance. Measure: buttons whose style does not match their role.

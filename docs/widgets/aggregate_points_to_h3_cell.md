@@ -38,6 +38,11 @@ The lab's [hex notebook](https://digital-twin-ph.github.io/validation-lab/lab/in
 
 ## History
 
+### 2026-11-26 · Map shades the cells by their count (0.7.0)
+
+Each cell carries its count of points, and Map shades and keys the cells by it, as **Points in the cell**, instead of
+drawing every released cell in one blue. Show me how ends on the same classes and ranges.
+
 ### 2026-11-26 · Show me how ends on the scale (0.6.0)
 
 The last step colours each cell by the same classes Map uses for its count of homes, with a key giving each colour's

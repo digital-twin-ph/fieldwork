@@ -52,18 +52,26 @@ const NUMBER=/^-?(\d+\.?\d*|\.\d+)$/;
 export function presentValue(value:unknown,column:string,p:TablePresentation|undefined,esc:Escape,{measure=true}={}):{html:string;number:boolean;absent:boolean}{
   if(value===null||value===undefined||value==='')
     return {absent:true,number:false,html:(p?.absent??'dash')==='blank'?'':(p?.absent??'dash')==='dash'?'<span aria-label="no value">—</span>':'unknown'};
-  const text=String(value).trim(),numeric=typeof value==='number'?Number.isFinite(value):NUMBER.test(text);
-  if(!numeric||!measure)return {html:esc(text),number:numeric,absent:false};
-  const n=Number(text),places=p?.decimals??decimalsOf(text);
-  const grouped=p?.separators!==false&&!YEARS.test(column)&&Math.abs(n)>=1000;
-  return {html:esc(n.toLocaleString('en',{minimumFractionDigits:places,maximumFractionDigits:places,useGrouping:grouped})),number:true,absent:false};
+  // TEXT IS SHOWN AS WRITTEN (PR 10's review): "00123" is an identifier, not 123, and a long code loses digits through
+  // Number. A text that reads as a number is only aligned as one.
+  if(typeof value!=='number'){const text=String(value);return {html:esc(text),number:NUMBER.test(text.trim()),absent:false};}
+  if(!Number.isFinite(value))return {html:esc(String(value)),number:false,absent:false};
+  if(!measure)return {html:esc(String(value)),number:true,absent:false};
+  // A NUMBER KEEPS ITS PRECISION unless decimal places are chosen: 7e-8 is not 0. Separators go into the whole part only.
+  if(p?.decimals===undefined){
+    const said=String(value);
+    if(/e/i.test(said)||p?.separators===false||YEARS.test(column)||Math.abs(value)<1000)return {html:esc(said),number:true,absent:false};
+    const [whole,fraction]=said.split('.');
+    return {html:esc(whole!.replace(/\B(?=(\d{3})+(?!\d))/g,',')+(fraction!==undefined?`.${fraction}`:'')),number:true,absent:false};
+  }
+  const grouped=p.separators!==false&&!YEARS.test(column)&&Math.abs(value)>=1000;
+  return {html:esc(value.toLocaleString('en',{minimumFractionDigits:p.decimals,maximumFractionDigits:p.decimals,useGrouping:grouped})),number:true,absent:false};
 }
 /** One cell, as a <td>. */
 export function presentCell(value:unknown,column:string,p:TablePresentation|undefined,esc:Escape,options:{measure?:boolean}={}):string{
   const v=presentValue(value,column,p,esc,options);
   return `<td${v.absent?' class="absent-cell"':v.number?' class="number"':''}${v.absent&&!v.html?' aria-label="no value"':''}>${v.html}</td>`;
 }
-const decimalsOf=(text:string)=>Math.min(6,(text.split('.')[1]??'').length);
 
 /** The caption above and the notes and source below, around a table's markup. */
 export function presentedTable(p:TablePresentation|undefined,fallbackCaption:string,table:string,esc:Escape):string{

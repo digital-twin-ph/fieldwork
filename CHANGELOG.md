@@ -32,6 +32,11 @@ shown in a local build is not a claim that it has been published.
   on a year), how an absent value is written (a dash read as "no value" by default), shaded rows, notes and source.
   The standards were read from open guidance (APA, ICMJE, STROBE, MMWR, CDC, the UK Analysis Function, ONS, W3C) and
   are in a research note.
+- **PR 10's review, answered.** "As recorded" keeps a value as it is: text as written (00123 stays 00123), a number to
+  its full precision (7e-8 is not 0), separators only in a number's whole part. The blank port never replaces a
+  connection: where the only input that fits is taken, the drop is refused. The preview draws data tables with Results'
+  own renderer, so ticking Show totals shows the totals before Apply. A Supabase check left waiting when the
+  credentials change can be pressed again.
 - **Worked examples audited as teaching material.** Five of twelve catalogue examples have a manual walkthrough, none
   of the eleven built-in ones; the READMEs share no outline. The standard is the practitioner's to set; TODO carries it.
 - **Table 0.15.0: the coverage port is gone.** Nothing makes a coverage check since Check spatial coverage retired on

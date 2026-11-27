@@ -45,7 +45,11 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
  const label=()=>{if(!session.unlocked)return `${CLOSED_PADLOCK}Credentials`;const n=session.list().length;
   return n?`${OPEN_PADLOCK}Credentials: ${n} ${n===1?'key':'keys'} unlocked`:'Credentials: new, empty';};
  const checks=new Map<string,SupabaseCheck|'asking'>();
- const session=new CredentialSession(()=>{button.innerHTML=label();button.classList.toggle('is-unlocked',session.unlocked&&session.list().length>0);if(!session.unlocked){dirty=false;operation++;checks.clear();dialog?.close();}refresh();
+ const session=new CredentialSession(()=>{
+  // A CHECK STILL WAITING WHEN THE CREDENTIALS CHANGE is let go (PR 10's review): its reply is discarded by the generation
+  // guard, and the button it left on "Checking…" must be pressable again.
+  for(const [ref,state] of checks)if(state==='asking')checks.delete(ref);
+  button.innerHTML=label();button.classList.toggle('is-unlocked',session.unlocked&&session.list().length>0);if(!session.unlocked){dirty=false;operation++;checks.clear();dialog?.close();}refresh();
   if(session.unlocked){if(!resuming)void keep('credentials',session.snapshot(),session.lastUsed+session.idleMs);}else void drop('credentials');});
  button.innerHTML=label();
  const refresh=()=>{if(!dialog)return;const status=dialog.querySelector<HTMLElement>('#credential-status')!;// Three states, each naming what to do next rather than reporting a count. An empty

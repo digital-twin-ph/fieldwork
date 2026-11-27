@@ -60,7 +60,8 @@ test('Table draws what is connected and one port to add another, on the canvas a
 test('Configure… previews ten rows, more on request, as the coordinates and the presentation set them',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/?example=snow-geoprivacy');
-  await page.waitForSelector('html[data-ready]');
+  // AFTER THE EXAMPLE'S OWN RUN: an edit applied while a run is in progress is dropped (TODO, found here 2026-11-27).
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
   await page.locator('[data-view="workflow"]').click();
   await page.locator('.react-flow__node[data-id="before-table"]').click();
   await page.locator('#configure-step').click();
@@ -107,6 +108,29 @@ test('a polygon table previews its areas, wide, as Results shows them',async({pa
   await expect(dialog.locator('thead th').first()).toHaveText('id');
   await expect(dialog.locator('thead th').nth(1)).toHaveText('locations');
   await expect(dialog.locator('thead')).toContainText('Broadwick Street');
-  await expect(dialog.locator('tbody tr').first().locator('td').nth(1)).toHaveText('171');
+  // Each area named in a row header, as Results names it; its locations the first value.
+  await expect(dialog.locator('tbody tr').first().locator('th')).toHaveText('pump-250');
+  await expect(dialog.locator('tbody tr').first().locator('td').first()).toHaveText('171');
+  expect(errors).toEqual([]);
+});
+
+/** THE PREVIEW SHOWS THE DRAFT'S TOTALS (PR 10's review): a 2x2 holding 1, 2, 3 and 4, and "Show totals" ticked, previews
+ *  the row and column totals and the grand total of 10 before Apply, drawn by Results' own renderer. */
+test('ticking Show totals adds the totals to the preview before Apply',async({page})=>{
+  const errors=collectPageErrors(page);
+  const rows=[['exposed','ill',1],['exposed','well',2],['unexposed','ill',3],['unexposed','well',4]]
+    .map(([exposure,outcome,value])=>({key:{exposure,outcome},value}));
+  const data={kind:'data-table',keys:['exposure','outcome'],valueField:'count',rows,rowCount:4,missingValueCount:0};
+  await seedWorkflow(page,{nodes:[{id:'cells',type:'table_input',x:20,y:40,params:{label:'Four cells',keys:data.keys,valueField:'count',data}},
+    {id:'table',type:'table_output',x:400,y:40,params:{label:'The 2x2'}}],
+    edges:[{id:'e-table',from:'cells',to:'table',port:'table'}]});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="table"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#table-config');
+  await expect(dialog.locator('table')).not.toContainText('Total');
+  await dialog.locator('#output-totals').check();
+  await expect(dialog.locator('table')).toContainText('Total');
+  await expect(dialog.locator('table tfoot')).toContainText('10');
   expect(errors).toEqual([]);
 });

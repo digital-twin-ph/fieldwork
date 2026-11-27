@@ -10,7 +10,7 @@ import {nodeInputs,portAccepts,outputOf,shownMode} from './core.js';
 import {MAX_POINT_LAYERS} from './point-layers.js';
 import {zoneFields,wireZone,type ZoneAdvice} from './metric-steps-ui.js';
 import {projectFromCRS84} from './reproject.js';
-import {wideFrame} from './data-table-ui.js';
+import {wideFrame,dataTableMarkup} from './data-table-ui.js';
 import type {DataTable} from './data-table.js';
 import {isProjectedReference,type PointCollection,type AnySpatialReference} from './types.js';
 import {presentCell,presentedTable,presentationFields,type TablePresentation} from './table-presentation.js';
@@ -55,7 +55,7 @@ function wirePresentation(root:ParentNode,p:TablePresentation,redraw:()=>void):v
  *  them to review. */
 export const PREVIEW_CHOICES=[10,20] as const;
 function tablePreview(kit:TableOutputKit,node:WorkflowNode<'table_output'>,mode:ReturnType<typeof shownMode>,
-  coord:{metres:boolean;zone:string;hemisphere:'north'|'south'},present:TablePresentation,rowsShown:number|'all'):string{
+  coord:{metres:boolean;zone:string;hemisphere:'north'|'south'},present:TablePresentation,rowsShown:number|'all',totals:boolean):string{
   const esc=kit.esc;
   const choose=(total:number)=>`<div class="field preview-rows"><label class="field-label" for="preview-rows">Rows in the preview</label>`
     +`<select id="preview-rows">${PREVIEW_CHOICES.map(n=>`<option value="${n}"${rowsShown===n?' selected':''}>${n}</option>`).join('')}`
@@ -67,21 +67,15 @@ function tablePreview(kit:TableOutputKit,node:WorkflowNode<'table_output'>,mode:
       +head.map(h=>`<th scope="col"${h.number?' class="number"':''}>${esc(h.label)}</th>`).join('')+`</tr></thead><tbody>`
       +rows.join('')+'</tbody></table></div>',esc);
   const limit=(n:number)=>rowsShown==='all'?n:Math.min(n,rowsShown);
-  // A DATA TABLE READ AS RESULTS READS IT: wide where it widens (a row per subject, a column per variable), its rows as
-  // they stand where it does not.
+  // A DATA TABLE DRAWN BY RESULTS' OWN RENDERER (PR 10's review: "Show totals" changed Results and not the preview), with
+  // the draft's totals, the presentation and the rows asked for, and no pager.
   const dataTablePreview=(t:DataTable)=>{
-    const frame=wideFrame(t);
-    if(frame){
-      const head=[{label:frame.subject,number:false},...frame.attributes.map(a=>({label:a,number:false})),
-        ...frame.columns.map(c=>({label:c,number:frame.rows.some(r=>typeof r.cells[frame.columns.indexOf(c)]==='number')}))];
-      return table(head,frame.rows.slice(0,limit(frame.rows.length)).map(r=>`<tr>${presentCell(r.label,frame.subject,present,esc,{measure:false})}`
-        +r.attributes.map((a,i)=>presentCell(a,frame.attributes[i]!,present,esc,{measure:false})).join('')
-        +r.cells.map((v,i)=>v===undefined?'<td><span class="muted">—</span></td>':presentCell(v,frame.columns[i]!,present,esc)).join('')+'</tr>'),frame.rows.length);
-    }
-    const valueNumeric=t.rows.some(r=>typeof r.value==='number');
-    const head=[...t.keys.map(k=>({label:k,number:false})),...(t.valueField?[{label:t.valueField,number:valueNumeric}]:[])];
-    return table(head,t.rows.slice(0,limit(t.rows.length)).map(r=>`<tr>${t.keys.map(k=>presentCell(r.key[k],k,present,esc,{measure:false})).join('')}`
-      +(t.valueField?presentCell(r.value,t.valueField,present,esc):'')+'</tr>'),t.rows.length);
+    const frame=wideFrame(t),total=frame?frame.rows.length:t.rows.length;
+    const shown=dataTableMarkup(t,esc,{assertTotals:totals,present,limit:limit(total)})
+      .replace(/<table class="/g,'<table class="table-standard ').replace(/<table>/g,'<table class="table-standard">')
+      .replace(/<div class="table-scroll/g,'<div tabindex="0" role="region" aria-label="Preview of the table" class="table-scroll');
+    return choose(total)+presentedTable(present,node.params.label||kit.title('table_output'),
+      shown.includes('table-scroll')?shown:`<div class="table-scroll" tabindex="0" role="region" aria-label="Preview of the table">${shown}</div>`,esc);
   };
   if(mode==='table'){
     const t=kit.tableOn(node.id,'table');
@@ -157,7 +151,7 @@ function openTableConfig(kit:TableOutputKit,nodeId:string){
         +(draft.coord.metres?zoneFields(kit,draft.coord,'output'):'');
       if(!settings)settings='<p class="muted">Nothing to set: what you connect decides how it is shown.</p>';
       return {settings,presentation:presentationFields(draft.present,node.params.label||kit.title('table_output'),esc),
-        preview:tablePreview(kit,node,mode,draft.coord,draft.present,draft.rowsShown)};
+        preview:tablePreview(kit,node,mode,draft.coord,draft.present,draft.rowsShown,draft.totalsAsserted===true)};
     },
     wire:(root,draft,redraw)=>{
       wirePresentation(root,draft.present,redraw);

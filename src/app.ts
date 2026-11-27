@@ -1281,9 +1281,13 @@ function inputFor(w:Workflow,source:WorkflowNode,target:WorkflowNode):{port?:str
   const fits=[...new Set(nodeInputs(target).filter(([,type])=>portAccepts(type,kind)).map(([port])=>shownPort(target.type,port)))];
   if(!fits.length)return {};
   const taken=new Set(w.edges.filter(e=>e.to===target.id).map(e=>shownPort(target.type,e.port)));
-  const free=fits.filter(port=>!taken.has(port)),pool=free.length?free:fits;
-  const oneEach=pool.filter((port,i)=>pool.findIndex(other=>portBase(other)===portBase(port))===i);
-  return oneEach.length>1?{choices:oneEach}:{port:pool[0]};
+  const free=fits.filter(port=>!taken.has(port));
+  // EVERY INPUT THAT FITS IS TAKEN: the blank port refuses rather than replacing one (PR 10's review: a second point layer
+  // dropped on Sample a raster's blank port replaced the first, though it said "Add an input: Raster"). Replacing is
+  // done on the connected row itself. A polygon layer of study areas grows another input instead, as it always has.
+  if(!free.length)return kind==='area'&&target.type==='polygon_input'&&polygonLayerGrows(target)?{port:fits[0]}:{};
+  const oneEach=free.filter((port,i)=>free.findIndex(other=>portBase(other)===portBase(port))===i);
+  return oneEach.length>1?{choices:oneEach}:{port:free[0]};
 }
 /** ASKED, WHEN THE KIND ALONE CANNOT SAY: Cases dropped on Measure distance is the From or the To. */
 function chooseInput(source:WorkflowNode,target:WorkflowNode,choices:string[],chosen:(port:string)=>void){
@@ -4588,7 +4592,7 @@ function validConnection(c:Connection|Edge){const a=workflow.nodes.find(n=>n.id=
   if(c.targetHandle==='layer'&&(b.type==='map_output'||b.type==='table_output'))
     return nodeInputs(b).some(([,type])=>type===outputOf(a))||(b.type==='table_output'&&portAccepts('table',outputOf(a)));
   // EVERY OTHER WIDGET'S BLANK PORT takes whatever one of its inputs takes (0.204.0).
-  if(c.targetHandle==='layer')return nodeInputs(b).some(([,type])=>portAccepts(type,outputOf(a)));
+  if(c.targetHandle==='layer'){const bound=inputFor(workflow,a,b);return !!bound.port||!!bound.choices;}
   return portAccepts(nodeInputs(b).find(([p])=>p===c.targetHandle)?.[1],outputOf(a));}
 // DELETE REMOVES THE SELECTED CONNECTION, by the application (0.155.0 CI, Chromium; one run in five by hand at four
 // workers): the connection was selected and said so in the Inspector, and the canvas library, whose own selection did not

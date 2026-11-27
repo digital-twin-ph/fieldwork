@@ -8,11 +8,18 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
  *  year, an absent value a dash unless the table says otherwise, numbers marked to be right-aligned. */
 test('values are written to the presentation',()=>{
   assert.deepEqual(presentValue(1234.5,'cases',{decimals:1},esc),{html:'1,234.5',number:true,absent:false});
-  assert.equal(presentValue('1234','cases',{},esc).html,'1,234');
+  // PR 10's review: "As recorded" keeps the value. Text is shown as written; a number keeps its precision.
+  assert.equal(presentValue('1234','cases',{},esc).html,'1234','text is shown as written');
+  assert.equal(presentValue('00123','code',{},esc).html,'00123');
+  assert.equal(presentValue('12345678901234567890','id',{},esc).html,'12345678901234567890');
+  assert.equal(presentValue(7e-8,'rate',{},esc).html,'7e-8');
+  assert.equal(presentValue(0.123456789,'rate',{},esc).html,'0.123456789');
+  assert.equal(presentValue(1234567.891,'cases',{},esc).html,'1,234,567.891');
   assert.equal(presentValue(2026,'year',{},esc).html,'2026','a year has no separator');
   assert.equal(presentValue(1234,'cases',{separators:false},esc).html,'1234');
   assert.equal(presentValue(3,'cases',{decimals:2},esc).html,'3.00');
   assert.equal(presentValue('A12','id',{},esc).number,false);
+  assert.equal(presentValue('42','id',{},esc).number,true,'text reading as a number is aligned as one');
   assert.equal(presentValue(1234,'id',{},esc,{measure:false}).html,'1234','an identifier keeps its digits');
 });
 test('an absent value is a dash read as "no value" unless the table says otherwise',()=>{

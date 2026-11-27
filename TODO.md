@@ -93,6 +93,10 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   settle with the practitioner: what every example carries and in what order a learner meets it (the question and
   what it teaches, a manual for each workflow, a README to one outline, the widgets it teaches, where its numbers are
   checked, what to try next), and whether built-in examples get manuals. Measure: examples with each surface.
+- **An edit applied during a run is dropped without a word** (found 2026-11-27, fixing PR 10's review). `change()` returns
+  false while a run is in progress, and a configuration dialog's Apply closes as if it had applied: Table's Presentation,
+  set while Snow's geoprivacy example ran its first pass, was lost in 2 of 3 tries. Older than 0.204.0, and every dialog
+  that applies through `change()` meets it. To decide: keep the dialog open and say to wait, or queue the edit.
 - **Widgets added from the library land on top of one another** (found 2026-11-27, writing the blank-port test): three
   added in a row overlapped, and a notice covered the third's port. A placement finding for the canvas.
 - **A cooperative, turn-based training mission** ([233](docs/experiments/233-a-cooperative-turn-based-training-mission.md)):

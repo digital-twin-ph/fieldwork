@@ -38,12 +38,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "aggregate_points_to_h3_cell": {
-   "version": "0.5.0",
-   "released": "2026-11-25",
+   "version": "0.6.0",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "added",
-     "description": "A PREVIEW, where the section held only Show me how it works. It runs `aggregateHex` on the points connected and says how many cells would be shown, how many points they hold, and HOW MANY ARE LEFT OUT by the minimum occupancy. That last number is the disclosure control's cost, and it belongs before applying it, not after."
+     "kind": "changed",
+     "description": "Show me how ends on the scale Map shades the cells with: each cell coloured by Map's classes of its count of homes, keyed below the drawing by range, where it was shaded by opacity with no key."
     }
    ],
    "breaking": false,
@@ -854,12 +854,12 @@
    "migrationFrom": []
   },
   "summarize_points_to_polygon": {
-   "version": "0.5.0",
-   "released": "2026-11-25",
+   "version": "0.6.0",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "fixed",
-     "description": "The same as Clip polygons: its preview could not see a polygon layer an upstream step computed, so it waited for a run that had already happened. Both read `result.computed` now."
+     "kind": "changed",
+     "description": "Show me how ends on the scale Map shades the result with. The practitioner: \"At the end shouldn't the goal be in summarization to render a shading corresponding to the resulting scale?\" The last step shaded the two units by opacity alone, 95% against 76% of one green, with no key to read a total from. Now each unit takes its colour from Map's own classes of the totals, keyed below the drawing by range (\"6\", \"7 to 8\"). Houses a step sets aside are drawn without their labels, and House 6 sits above North, so its label stays inside the drawing and is not read as inside South."
     }
    ],
    "breaking": false,
@@ -956,12 +956,12 @@
    "migrationFrom": []
   },
   "voronoi": {
-   "version": "0.5.0",
-   "released": "2026-11-25",
+   "version": "0.6.0",
+   "released": "2026-11-26",
    "changes": [
     {
      "kind": "changed",
-     "description": "Show me how builds the division up instead of showing it finished. The practitioner: \"the show me how it works does not really make sense from a step by step perspective.\" It did not: one step followed a single house to its nearest pump, and the next showed every dividing line and every cell at once, so the construction happened between two steps and was described rather than drawn. Now two pumps and the one line between them, then the third added and the lines meeting. Both drawn by `voronoi` itself, on two pumps and then three."
+     "description": "Show me how no longer shades the catchments from light to dark. The cells carry no value, so the ramp ranked what has no order, and the key said \"darker for a larger total\" of a total there is none of. They are now one fill, told apart by the lines between them."
     }
    ],
    "breaking": false,

@@ -9,11 +9,13 @@ test('a preference resolves against what the device asks for', () => {
   assert.equal(resolveTheme('dark',true),'dark');
   assert.equal(resolveTheme('device',true),'dark');
   assert.equal(resolveTheme('device',false),'light');
+  assert.equal(resolveTheme('contrast',true),'light','high contrast is drawn on a light ground, whatever the device');
+  assert.equal(resolveTheme('contrast',false),'light');
 });
 
-test('only the three known preferences are accepted', () => {
+test('only the four known preferences are accepted', () => {
   for(const value of THEME_PREFERENCES) assert.ok(isThemePreference(value),`${value} is a preference`);
-  for(const value of ['Dark','auto','system','',null,undefined,0,{}]) assert.equal(isThemePreference(value),false);
+  for(const value of ['Dark','auto','system','high-contrast','',null,undefined,0,{}]) assert.equal(isThemePreference(value),false);
 });
 
 test('every preference has a label, and the device is the first offered', () => {

@@ -74,3 +74,27 @@ test('a storage failure still applies the theme for this session',async({browser
   await expect(page.locator('.toast')).toContainText('would not store the theme');
   await context.close();
 });
+
+/** HIGH CONTRAST (2026-11-26): black on white whatever the device, kept across a reload; Match device takes it on a light
+ *  device asking for more contrast, and a dark device asking for more keeps Dark. */
+test('high contrast is black on white, kept, and taken by Match device on a light device asking for more contrast',async({browser})=>{
+  const WHITE='rgb(255, 255, 255)',BLACK='rgb(0, 0, 0)';
+  const context=await browser.newContext({colorScheme:'dark'});
+  const page=await context.newPage();
+  await page.goto('/?example=blank');
+  await expect(page.locator('#theme-select option[value="contrast"]')).toHaveText('High contrast');
+  await page.locator('#theme-select').selectOption('contrast');
+  expect(await resolved(page)).toEqual({attribute:'contrast',surface:WHITE,text:BLACK});
+  await page.reload();
+  await expect(page.locator('#theme-select')).toHaveValue('contrast');
+  expect((await resolved(page)).surface,'a dark device does not take over an explicit choice').toBe(WHITE);
+  await context.close();
+  for(const [scheme,expected] of [['light',WHITE],['dark',DARK_SURFACE]]){
+    const asks=await browser.newContext({colorScheme:scheme,contrast:'more'});
+    const p=await asks.newPage();
+    await p.goto('/?example=blank');
+    await expect(p.locator('#theme-select')).toHaveValue('device');
+    expect((await resolved(p)).surface,`${scheme} device asking for more contrast`).toBe(expected);
+    await asks.close();
+  }
+});

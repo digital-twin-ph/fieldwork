@@ -38,6 +38,11 @@ The lab's [hex notebook](https://digital-twin-ph.github.io/validation-lab/lab/in
 
 ## History
 
+### 2026-11-26 · Show me how ends on the scale (0.6.0)
+
+The last step colours each cell by the same classes Map uses for its count of homes, with a key giving each colour's
+range, where it was shaded with no key.
+
 ### 2026-11-23 · Show me how (0.4.0)
 
 **Configure…** offers **Show me how it works**: six made-up homes in three H3 cells at the resolution set: the cells left out for holding too few, and the cells the step makes with their counts.

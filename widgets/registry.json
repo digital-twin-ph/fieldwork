@@ -59,7 +59,7 @@
   {
    "id": "urn:fieldwork:widget:aggregate_points_to_h3_cell",
    "nodeType": "aggregate_points_to_h3_cell",
-   "currentVersion": "0.5.0",
+   "currentVersion": "0.6.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -90,6 +90,11 @@
      "version": "0.5.0",
      "path": "widgets/releases/aggregate_points_to_h3_cell/0.5.0.json",
      "sha256": "0079f54fce45a5238e82f1eb9fa97ab0697a4c8688210628b59de3fcd8674630"
+    },
+    {
+     "version": "0.6.0",
+     "path": "widgets/releases/aggregate_points_to_h3_cell/0.6.0.json",
+     "sha256": "fe74474ec8bdc666c643fffa0fc63d87bcf0cf81aa8e64d6af6e79f13d3ab8b3"
     }
    ],
    "previousNodeTypes": [
@@ -2926,7 +2931,7 @@
   {
    "id": "urn:fieldwork:widget:summarize_points_to_polygon",
    "nodeType": "summarize_points_to_polygon",
-   "currentVersion": "0.5.0",
+   "currentVersion": "0.6.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -2952,6 +2957,11 @@
      "version": "0.5.0",
      "path": "widgets/releases/summarize_points_to_polygon/0.5.0.json",
      "sha256": "a3c5627b5304b57463c755ea0aa0d55e5a69d0d6fa05220cdbc19a5f8345511f"
+    },
+    {
+     "version": "0.6.0",
+     "path": "widgets/releases/summarize_points_to_polygon/0.6.0.json",
+     "sha256": "e7198dd50f0be789b61987cdab1bb6d0d0aeafffed52a6d413247b99bb29cf3e"
     }
    ],
    "previousNodeTypes": [
@@ -3388,7 +3398,7 @@
   {
    "id": "urn:fieldwork:widget:voronoi",
    "nodeType": "voronoi",
-   "currentVersion": "0.5.0",
+   "currentVersion": "0.6.0",
    "releases": [
     {
      "version": "0.1.0",
@@ -3414,6 +3424,11 @@
      "version": "0.5.0",
      "path": "widgets/releases/voronoi/0.5.0.json",
      "sha256": "c4a297560c6d2acfb0da1fcd4b1e56ab5c3c604956ede0c454d3ec21eeff647b"
+    },
+    {
+     "version": "0.6.0",
+     "path": "widgets/releases/voronoi/0.6.0.json",
+     "sha256": "f6162cd9fde2bc619fc6e812624336e911d4ec08984f5c549d49d1a517bbfdd6"
     }
    ]
   },

@@ -20,11 +20,12 @@ const EXAMPLES=['snow-isochrone','hagelloch','snow-voronoi','snow-curve','hagell
 const NOT_PRESSED=/delete|remove|run|clear|reset|download|export|save|discard|unlink|forget|undo|redo|copy|duplicate|apply|fetch/i;
 
 const found=[];
-const scanner=(page,info)=>async(surface,theme,scope)=>{
+const scanner=(page,info,aaa=false)=>async(surface,theme,scope)=>{
   // THE TOAST IS MEASURED ON ITS OWN (2026-11-17): its timer can start a fade while axe is reading the page, which no wait
   // beforehand prevents (1.79 on the Widgets tab, dark, gate 199). tests/toast-contrast.browser.mjs holds every tone in
   // both themes, after its fade.
-  let b=new AxeBuilder({page}).withTags(['wcag2a','wcag2aa']).exclude('#toast');
+  // HIGH CONTRAST IS HELD TO AAA'S 7:1 (2026-11-26): axe's color-contrast-enhanced, on its own, beside the A and AA scan.
+  let b=(aaa?new AxeBuilder({page}).withRules(['color-contrast-enhanced']):new AxeBuilder({page}).withTags(['wcag2a','wcag2aa'])).exclude('#toast');
   if(scope)b=b.include(scope);
   // SETTLED BEFORE IT IS MEASURED (found on WebKit's CI run of 2026-11-16): a toast caught mid-fade in the dark theme
   // read as contrast 1.41, its colours halfway through the transition. Running animations finish before the scan.
@@ -74,6 +75,32 @@ test('every view and the main dialogs, both themes, against WCAG 2.0 A and AA',a
   expect(report(info,'views')).toEqual([]);
 });
 
+/** THE HIGH-CONTRAST THEME (2026-11-26; TODO, Comprehensibility 0a): every view and the main dialogs, chosen in the
+ *  theme menu, against WCAG 2.0 A and AA and against AAA's 7:1 for text. */
+test('every view and the main dialogs in high contrast, against AA and against 7:1',async({page},info)=>{
+  for(const aaa of [false,true]){
+    const scan=scanner(page,info,aaa),theme=aaa?'contrast (7:1)':'contrast';
+    await page.goto('/');await page.evaluate(()=>{localStorage.clear();localStorage.setItem('fieldwork.theme.v1','contrast');});
+    await page.goto('/?example=snow-isochrone');
+    await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
+    await expect(page.locator('html')).toHaveAttribute('data-theme','contrast');
+    for(const view of VIEWS){
+      const tab=page.locator(`[data-view="${view}"]`).first();
+      if(!await tab.isVisible())continue;
+      await tab.click();await page.waitForTimeout(400);
+      await scan(`view:${view}`,theme);
+    }
+    await page.locator('[data-view="project"]').first().click();
+    for(const tab of ['#project-new','#project-tab-examples-button']){await page.locator(tab).click();await scan(`project tab:${tab}`,theme);}
+    for(const d of DIALOGS){
+      await d.open(page);await page.waitForTimeout(300);
+      await scan(`dialog:${d.name}`,theme,'dialog[open]');
+      await page.keyboard.press('Escape');await page.waitForTimeout(200);
+    }
+  }
+  expect(report(info,'contrast')).toEqual([]);
+});
+
 // A worked example's write-up is read-only; the note dialog is scanned in a project of the practitioner's own.
 test('the note dialog, both themes',async({page},info)=>{
   const scan=scanner(page,info);
@@ -97,10 +124,11 @@ test('the note dialog, both themes',async({page},info)=>{
  *  WebKit about 4.5 minutes, enough to stop CI's WebKit run at its 75-minute limit. WebKit still scans the views and dialogs. */
 for(const example of EXAMPLES)test(`${example}: each widget's Inspector, the dialogs it opens, and the Results`,async({page,browserName},info)=>{
   test.skip(browserName==='webkit','Inspector markup is scanned on Chromium; WebKit runs out of CI time');
-  const scan=scanner(page,info);
-  for(const theme of example==='snow-isochrone'?['light','dark']:['light']){
-    await page.emulateMedia({colorScheme:theme});
-    await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  for(const theme of example==='snow-isochrone'?['light','dark','contrast']:['light']){
+    // High contrast is chosen in the menu, and held to 7:1 (2026-11-26).
+    const scan=scanner(page,info,theme==='contrast');
+    await page.emulateMedia({colorScheme:theme==='dark'?'dark':'light'});
+    await page.goto('/');await page.evaluate(t=>{localStorage.clear();if(t==='contrast')localStorage.setItem('fieldwork.theme.v1','contrast');},theme);
     await page.goto(`/?example=${example}`);
     await expect(page.locator('html[data-ready="true"]')).toHaveCount(1,{timeout:30000});
     await expect(page.locator('#workflow-state')).toContainText(/Run complete|Not ready|Ready/,{timeout:180000});

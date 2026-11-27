@@ -39,6 +39,8 @@ const CASES=[
   ['mean_center',4,'one point, each house counted by its deaths'],
   ['donut_geomask',4,'the point moved 57 m, in the direction and by the distance seed 42 picks inside the ring'],
   ['aggregate_points_to_h3_cell',4,'2 cells, each with its count of homes']];
+// The steps whose result carries a value, and the scale each ends on: Map's classes of the made-up totals.
+const SCALED={summarize_points_to_polygon:['Total deaths',['6','7 to 8']],aggregate_points_to_h3_cell:['Homes in the cell',['2','3']]};
 for(const [id,steps,last] of CASES)test(`${id}: Show me how ends on what the step makes`,async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/?example=blank');await page.waitForSelector('html[data-ready]');
@@ -58,7 +60,22 @@ for(const [id,steps,last] of CASES)test(`${id}: Show me how ends on what the ste
   await expect(walk.locator('.walk-made-up')).toHaveText('Made-up example');
   await expect(walk.locator('.walk-say')).toContainText(`Step 1 of ${steps}.`);
   await expect(walk.locator('svg.walk-drawing')).toBeVisible();
-  for(let i=1;i<steps;i++)await walk.locator('[data-walk-step]').click();
+  // EVERY LABEL INSIDE THE DRAWING at every step (2026-11-26: "House 6: outside" was cut to "House 6: o").
+  const outside=()=>walk.locator('svg.walk-drawing text').evaluateAll(texts=>texts.map(t=>{const b=t.getBBox();
+    return b.x<0||b.x+b.width>360?`${t.textContent} (${Math.round(b.x)} to ${Math.round(b.x+b.width)})`:null;}).filter(Boolean));
+  expect(await outside()).toEqual([]);
+  for(let i=1;i<steps;i++){await walk.locator('[data-walk-step]').click();expect(await outside(),`step ${i+1}`).toEqual([]);}
   await expect(walk.locator('.walk-say')).toContainText(last);
+  // A RESULT CARRYING A VALUE ENDS ON MAP'S SCALE (2026-11-26): each shape filled with a colour the scale keys.
+  if(SCALED[id]){
+    const [title,ranges]=SCALED[id];
+    await expect(walk.locator('.walk-scale-title')).toHaveText(title);
+    await expect(walk.locator('.walk-scale li')).toHaveText(ranges);
+    const keyed=await walk.locator('.walk-swatch').evaluateAll(s=>s.map(e=>getComputedStyle(e).backgroundColor));
+    const filled=await walk.locator('svg.walk-drawing .walk-shape-result:not(.walk-point)').evaluateAll(s=>s.map(e=>getComputedStyle(e).fill));
+    expect(filled.length).toBeGreaterThan(0);
+    for(const f of filled)expect(keyed).toContain(f);
+    expect(new Set(filled).size).toBe(ranges.length);
+  }else await expect(walk.locator('.walk-scale')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

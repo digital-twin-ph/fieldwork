@@ -23,7 +23,9 @@ export interface WalkStep {
   willStop?:boolean;
   /** A SPATIAL STEP'S DRAWING (2026-11-20), in place of the result table and beside the input tables: made here from fixed shapes, never from a person's data.
    *  `key` says in words what each kind of line in it is, so nothing is told by colour alone. */
-  figure?:{svg:string;key:string[]};
+  figure?:{svg:string;key:string[];
+    /** The scale a result is coloured on, each class's range beside its colour, as Map's key gives it. */
+    scale?:{title:string;entries:{label:string;color:string}[]}};
 }
 export interface Walkthrough {title:string; tables:WalkTable[]; resultColumns:string[]; steps:WalkStep[]}
 
@@ -42,7 +44,10 @@ export function walkthroughMarkup(walk:Walkthrough,at:number,esc:Escape):string{
   // table joined to it, so which row went where could not be seen).
   if(step.figure)return `<p class="walk-made-up">Made-up example</p><div class="walk-tables walk-with-figure">${walk.tables.map(tableHtml).join('')}`
     +`<figure class="walk-figure">${step.figure.svg}`
-    +`<figcaption><ul class="walk-key">${step.figure.key.map(k=>`<li>${esc(k)}</li>`).join('')}</ul></figcaption></figure></div>`
+    +`<figcaption><ul class="walk-key">${step.figure.key.map(k=>`<li>${esc(k)}</li>`).join('')}</ul>`
+    +(step.figure.scale?`<div class="walk-scale"><p class="walk-scale-title">${esc(step.figure.scale.title)}</p><ul>`
+      +step.figure.scale.entries.map(e=>`<li><span class="walk-swatch" style="background:${esc(e.color)}" aria-hidden="true"></span>${esc(e.label)}</li>`).join('')
+      +'</ul></div>':'')+'</figcaption></figure></div>'
     +`<p class="walk-say" aria-live="polite"><span class="walk-count">Step ${at+1} of ${walk.steps.length}.</span> ${esc(step.text)}</p>`;
   // THE RESULT SO FAR: every row the steps up to this one added, the newest marked; the final step replaces them with the step's own table.
   const final=walk.steps.slice(0,at+1).reverse().find(s=>s.final&&s.result);

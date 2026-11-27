@@ -3,6 +3,30 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.202.0 — In development
+
+- **A high-contrast theme.** The practitioner: *"We should also have a high contrast theme … I actually switch themes
+  depending on the job to be done."* **High contrast** joins Match device, Light and Dark in the theme menu: black on
+  white, no tinted surface behind text, strong outlines and a thick focus ring. Match device takes it when a light
+  device asks for more contrast; a dark device keeps Dark. Measured: words under WCAG AAA's 7:1 on the Workflow tab, the
+  Notes tab and the note dialog were 138, 412 and 342 in Light, and none in High contrast. axe's 7:1 rule passes on
+  every view, the main dialogs, and the Snow isochrone example's Inspectors and the dialogs they open. Maps and charts
+  draw as in Light.
+- **Show me how ends on the scale Map shades with** (Summarize points to polygons 0.6.0, Aggregate points to H3 cells
+  0.6.0). The practitioner: *"At the end shouldn't the goal be in summarization to render a shading corresponding to
+  the resulting scale?"* The last step shaded each result by opacity alone, with no key: North's 8 deaths and South's 6
+  were 95% and 76% of one green. Each shape now takes its colour from Map's own classes, keyed below the drawing by
+  range.
+- **A label stays inside the drawing.** "House 6: outside" was cut to "House 6: o". A label that would run past the
+  right edge is drawn to the left of its point; in Summarize the houses a step sets aside lose their labels, and House
+  6 sits above North so its label is not read as inside South. The test checks every label at every step of every
+  spatial walkthrough.
+- **Voronoi catchments' cells are one fill** (0.6.0). They were shaded light to dark, keyed "darker for a larger
+  total", but a catchment carries no total.
+- **The Claude Design findings are in TODO**: the palette's eight, the Inspector's six, the canvas's six, and the
+  outputs on screen audit's eleven (`docs/audits/outputs-on-screen-audit.md`). Written on 2026-11-26 on a branch based on
+  0.168.0 and never merged, they are copied as written, with a line saying which still hold in 0.202.0.
+
 ## 0.201.0 — In development
 
 - **The syndromic example on NSSP's definitions** ([228](docs/experiments/228-detect-unusual-counts.md)). Four

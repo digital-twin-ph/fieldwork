@@ -1,7 +1,8 @@
 /** TEXT SIZE AND CONTRAST ON THREE SCREENS (TODO item 7, experiment 184). A measurement, run on demand:
  *  TEXT_AUDIT=1 npx playwright test tests/text-audit.browser.mjs --project=chromium
  *  Counts visible controls, words, words below 14 px and words whose colour against the nearest solid background is under WCAG's 4.5:1.
- *  Approximate: transparency is ignored. */
+ *  Approximate: transparency is ignored. TEXT_AUDIT_THEME=contrast (or light, dark) measures that theme; aaaWords counts
+ *  words under 7:1, the bar the high-contrast theme is held to (2026-11-26). */
 import {test,expect} from './fixtures.mjs';
 import {readFileSync,writeFileSync} from 'node:fs';
 test.use({serviceWorkers:'block',viewport:{width:1280,height:900}});
@@ -14,16 +15,17 @@ const audit=page=>page.evaluate(()=>{
     const r=el.getBoundingClientRect();if(!r.width||!r.height||r.bottom<0||r.top>innerHeight*3)continue;const st=getComputedStyle(el);if(st.visibility==='hidden')continue;
     seen.add(el);const fg=lum(st.color),bg=lum(bgOf(el));
     const ratio=fg==null||bg==null?null:(Math.max(fg,bg)+0.05)/(Math.min(fg,bg)+0.05);
-    rows.push({px:parseFloat(st.fontSize),ratio,words:txt.split(/\s+/).length,op:Number(st.opacity)});}
-  const w=a=>a.reduce((s,r)=>s+r.words,0);const small=rows.filter(r=>r.px<14),faint=rows.filter(r=>r.ratio!=null&&r.ratio<4.5);
+    rows.push({px:parseFloat(st.fontSize),ratio,words:txt.split(/\s+/).length,op:Number(st.opacity),
+      what:`${el.tagName.toLowerCase()}.${[...el.classList].join('.')} ${st.color} on ${bgOf(el)}: ${txt.slice(0,40)}`});}
+  const w=a=>a.reduce((s,r)=>s+r.words,0);const small=rows.filter(r=>r.px<14),faint=rows.filter(r=>r.ratio!=null&&r.ratio<4.5),aaa=rows.filter(r=>r.ratio!=null&&r.ratio<7);
   const controls=[...document.querySelectorAll('button,select,input:not([type=hidden]),textarea,a[href],summary')].filter(e=>{const b=e.getBoundingClientRect();return b.width&&b.height&&getComputedStyle(e).visibility!=='hidden';}).length;
-  return {controls,words:w(rows),smallWords:w(small),faintWords:w(faint),minPx:Math.min(...rows.map(r=>r.px)),sizes:[...new Set(rows.map(r=>r.px))].sort((a,b)=>a-b)};
+  return {controls,words:w(rows),smallWords:w(small),faintWords:w(faint),aaaWords:w(aaa),aaaSamples:[...new Set(aaa.map(r=>`${r.ratio.toFixed(1)} ${r.what}`))].slice(0,60),minPx:Math.min(...rows.map(r=>r.px)),sizes:[...new Set(rows.map(r=>r.px))].sort((a,b)=>a-b)};
 });
 test.skip(!process.env.TEXT_AUDIT,'run with TEXT_AUDIT=1: a measurement, not a regression test');
 test('text audit',async({page})=>{
   test.setTimeout(120000);const out={};const save=()=>writeFileSync(process.env.TEXT_AUDIT_OUT||'test-results/text-audit.json',JSON.stringify(out,null,1));
   await page.route(/raw\.githubusercontent\.com/,route=>route.fulfill({status:200,body:bundle}));
-  await page.goto('/');await page.evaluate(()=>localStorage.clear());
+  await page.goto('/');await page.evaluate(theme=>{localStorage.clear();if(theme)localStorage.setItem('fieldwork.theme.v1',theme);},process.env.TEXT_AUDIT_THEME??'');
   await page.goto('/?example=blank');await page.waitForTimeout(1500);
   out.workflowTab=await audit(page);save();
   await page.locator('[data-view="project"]').click();

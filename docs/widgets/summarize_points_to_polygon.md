@@ -46,6 +46,12 @@ polygons, release 0.2.0.
 
 ## History
 
+### 2026-11-26 · Show me how ends on the scale (0.6.0)
+
+The last step shaded North and South by how dark one green was, and nothing said what a shade meant. Now each unit
+takes its colour from the same classes Map uses for the totals, and a key below the drawing gives each colour's
+range. A house the step has set aside is drawn without its label, so the house the step is about can be read.
+
 ### 2026-11-22 · On the standard, with Show me how (0.3.0)
 
 Its settings moved into **Configure…**, with the arriving points' numeric columns offered for the total, and **Show me

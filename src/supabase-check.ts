@@ -46,6 +46,6 @@ export async function checkSupabase(origin:string,key:string,fetchFn:typeof fetc
     return {ok:true,said:`Supabase answered ${response.status}: the project is running and accepted this key${about}.${legacy}`};
   }
   if(response.status===401||response.status===403)
-    return {ok:false,said:`Supabase answered ${response.status}: it refused this key. Copy the publishable key again from the project's API Keys page.`};
+    return {ok:false,said:`Supabase answered ${response.status}: it refused this key. Copy the publishable key again from the project's Settings, API Keys.`};
   return {ok:false,said:`Supabase answered ${response.status}. A free project pauses after a week without use: open it in Supabase's dashboard and restore it, then check again.`};
 }

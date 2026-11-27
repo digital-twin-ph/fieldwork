@@ -197,7 +197,10 @@ it said for a deliberately wrong key.
 
 The three unknowns the documentation left are answered: what the route returns, what a wrong key gets, and that a
 browser page may call it from another site (CORS), from `127.0.0.1` at least. Not yet tried from the published site,
-nor on a paused project. Whether the manual's steps 2 and 3 matched Supabase's screens is the practitioner's to say.
+nor on a paused project. **The manual, as followed by the practitioner:** steps 1 to 3 matched Supabase's screens. Step 4 did not: *"The
+Connect button did not have the API variables I need. They were under the Settings panel specifically 'General' and
+'API Keys'."* The Project ID is under **Settings**, **General**, and the address is built from it; the publishable key
+is under **Settings**, **API Keys**. The manual was corrected the same day.
 
 ## Precedents and patterns, researched 2026-11-27
 

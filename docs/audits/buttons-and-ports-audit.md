@@ -10,7 +10,8 @@ the worked examples.* Read from the code at 0.203.0 (branch `sweep-second-pass`,
 changed for this audit.
 
 **Decided by the practitioner, 2026-11-27:** the four button roles, applied to every button in one release; and
-ports by model A, the connected ports and one free port of each kind, each named on the node in words.
+ports by the practitioner's model, below (it replaces model A, chosen earlier the same day on the first, wrong
+counts).
 
 ## Buttons
 
@@ -108,6 +109,28 @@ drawn handles in Chromium; the first count here took the declared ports for the 
   learned by hovering. More honest about what a step can take, and taller nodes.
 
 Either way the port's name on the canvas becomes its name in words, the one the Inspector already shows.
+
+**The practitioner's model, 2026-11-27, after the corrected counts:** *"I want nodes to not present too many ports
+that confuses users which port to connect to. Nodes should automatically detect the shape of the incoming input on
+an unconnected input port and once connected should display in words what came in. Then it adds a blank port to
+accommodate another input if it's configured to receive more."*
+
+What it means for the code, read at 0.203.0:
+
+- **One blank port, any kind.** A node with an input still free draws one open port, which takes any kind the step
+  can use. Map and Table already have it (the `layer` handle, bound by `layerPortFor` in `src/app.ts` from what the
+  source emits, `outputOf`). It becomes the model for every widget with inputs.
+- **Once connected, the row says what came in**, in words: what kind it is and where it came from (a points layer
+  from *Health facilities*), not the port's id.
+- **A further blank port appears only while the step can take more:** a declared port still free, or a counted one
+  that can grow (`pointInputCount` and the like). A node whose inputs are all connected draws none.
+- **Where two free ports take the same kind for different roles**, the shape alone cannot choose: Measure distance
+  (from, to), Travel time over ground (start from, places), Relate tables, Compare point sets, sea-level site
+  assignment. Proposed: fill them in the order the step declares, name the role on the row, and let the Inspector's
+  Inputs list swap them. Ports of one kind with one role (Append rows, Deduplicate points, a border's two areas) fill
+  in order with nothing to choose.
+- **Unchanged underneath:** the declared ports stay what saved workflows, receipts and port contracts are written
+  in, as Map's eight already do; and the Inspector's Inputs list stays the way in by keyboard.
 
 ## What this does not establish
 

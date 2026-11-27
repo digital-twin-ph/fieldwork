@@ -72,6 +72,13 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 2026-11-25 and 2026-11-26
 
+- **Next batch: WebKit's offline reload** (the hand-started verify on `72f1ed62`, 2026-11-26: 632 passed, 2 failed).
+  `tests/outputs.browser.mjs` fails because WebKit reports a request cut off by the test's offline reload ("... due to
+  access control checks": a tile in CI, `build/reasoning-worker.js` locally) as a page error. Locally in WebKit it failed
+  1 time in 3 before the 0.202.0 merge and 5 in 5 after; Chromium passes. First find whether the reasoning worker loads
+  from the offline cache in WebKit: if it does, the test ignores requests its own reload cut off; if not, it is an
+  offline defect in Safari. The other failure, Cases by period's preview (`settings-previews.browser.mjs:112`), passed
+  3 in 3 locally: a starved runner.
 - **A cooperative, turn-based training mission** ([233](docs/experiments/233-a-cooperative-turn-based-training-mission.md)):
   a research proposal written in a ChatGPT session, given 2026-11-26 to be written up and reviewed later. Nothing
   built. It is one more kind of teaching material, loosely coupled to Dive Deeper. For review: it would add

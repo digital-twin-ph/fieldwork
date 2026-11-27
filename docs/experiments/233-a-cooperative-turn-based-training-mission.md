@@ -2,8 +2,10 @@
 
 _Created 2026-11-26 · Updated 2026-11-26_
 
-**Status:** asked. A research proposal, kept for review. Nothing is built: no game, no hosted session, no learner
-trial. Every design choice below is the proposal's, and none has been settled by the practitioner.
+**Status:** tried, one spike. A research proposal, kept for review. The first piece is tried: a Supabase key made by
+the practitioner and checked from Fieldwork's Credentials dialog (2026-11-27, below). Nothing else is built: no game,
+no hosted session, no learner trial. Every other design choice below is the proposal's, and none has been settled by
+the practitioner.
 
 ## The question
 
@@ -155,6 +157,35 @@ Recorded so the review starts from them. None is settled here.
   points must follow evidence and milestones, not clicks, and must never be stored on the workflow. This proposal
   scores a team's decisions, kept in the session record, which is consistent with that. Whether to score at all is
   still open.
+
+## Spike 1: a Supabase key, checked on the spot (2026-11-27)
+
+The practitioner: *"For 233, can we do a spike on Supabase? How about a manual entry for it in the credentials dialog
+so I can follow it and create my API key and test it on the spot with an API status check?"*
+
+**What was built, for 0.204.0:**
+
+| Part | Where |
+| --- | --- |
+| How to make a Supabase project and copy its publishable key, and the form for it | The manual's Credentials page, *Make a Supabase project and its publishable key* |
+| **Check** beside each `supabase` key in the Credentials list: one request to the project's Auth health route (`/auth/v1/health`, the key on the `apikey` header), and what came back in words | `src/supabase-check.ts`, `src/credentials-ui.ts` |
+| A secret key (`sb_secret_`, or the legacy `service_role`) is refused as it is added and never sent | the same; seven unit tests in `tests/supabase-check.test.mjs` |
+
+**Read from Supabase's documentation, 2026-11-27:** a project has a publishable key, safe in a browser, and secret
+keys for servers only, which Supabase answers with 401 from a browser. The legacy `anon` and `service_role` keys are
+to be retired in early 2027. The free plan allows two active projects and pauses one after a week without use. The
+docs name `/auth/v1/health` as the route to check a publishable key, but do not say what it returns, what a wrong key
+gets, or whether a browser may call it from another site (CORS).
+
+**What the spike is for:** those three unknowns, and whether the manual's steps match Supabase's screens. Steps 2 and
+3 of the manual were written without a reader having followed them.
+
+**Observation to make, written before it is known:** does the practitioner reach *the project is running and
+accepted this key* by following the manual alone? Record each place a screen differed, what **Check** said, and what
+it said for a deliberately wrong key.
+
+**Validation record:** seven unit tests pass against a stubbed network (Node, no browser). Nothing has been sent to
+Supabase from Fieldwork yet.
 
 ## What this does not establish
 

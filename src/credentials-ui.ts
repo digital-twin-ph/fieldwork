@@ -3,6 +3,7 @@ import {CredentialSession,decryptCredentials,encryptCredentials} from './credent
 import {credentialsFileName,openIdentity} from './identity-ui.js';
 import {keep,restore,extend,drop} from './session-keep.js';
 import {openManual} from './manual.js';
+import {checkSupabase,supabaseKeyProblem,SUPABASE_PROVIDER,type SupabaseCheck} from './supabase-check.js';
 export interface CredentialAccess {
  /** Resolve one secret, or throw. Never returns the collection. */
  resolve(ref:string,provider:string,origin:string):string;
@@ -39,7 +40,8 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
  // file; "Start a new collection" opens an empty one). An empty collection holds nothing to protect, and says so.
  const label=()=>{if(!session.unlocked)return 'Credentials';const n=session.list().length;
   return n?`${OPEN_PADLOCK}Credentials: ${n} ${n===1?'key':'keys'} unlocked`:'Credentials: new, empty';};
- const session=new CredentialSession(()=>{button.innerHTML=label();button.classList.toggle('is-unlocked',session.unlocked&&session.list().length>0);if(!session.unlocked){dirty=false;operation++;dialog?.close();}refresh();
+ const checks=new Map<string,SupabaseCheck|'asking'>();
+ const session=new CredentialSession(()=>{button.innerHTML=label();button.classList.toggle('is-unlocked',session.unlocked&&session.list().length>0);if(!session.unlocked){dirty=false;operation++;checks.clear();dialog?.close();}refresh();
   if(session.unlocked){if(!resuming)void keep('credentials',session.snapshot(),session.lastUsed+session.idleMs);}else void drop('credentials');});
  const refresh=()=>{if(!dialog)return;const status=dialog.querySelector<HTMLElement>('#credential-status')!;// Three states, each naming what to do next rather than reporting a count. An empty
  // collection is ready for entries, not a failure, and said so badly before.
@@ -49,7 +51,18 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
   :count===0
    ?'New collection, empty and active in this tab. Add a credential below, then download an encrypted file to keep it.'
    :`${count} credential${count===1?'':'s'} active in this tab. ${dirty?'Not yet saved to a file \u2014 download to keep them.':'Download again after editing.'}`;
-  const list=dialog.querySelector<HTMLElement>('#credential-list')!;list.replaceChildren();for(const entry of session.list()){const row=document.createElement('div'),text=document.createElement('span'),remove=document.createElement('button');text.textContent=`${entry.label} (${entry.ref}) · ${entry.provider} · ${entry.origin}${entry.repository?` · for ${entry.repository}`:''} `;remove.type='button';remove.className='button small';remove.textContent='Delete';remove.setAttribute('aria-label',`Delete ${entry.ref}`);remove.onclick=()=>{session.replace(session.snapshot().filter(v=>v.ref!==entry.ref));dirty=true;refresh();};row.append(text,remove);list.append(row);}
+  const list=dialog.querySelector<HTMLElement>('#credential-list')!;list.replaceChildren();for(const entry of session.list()){const row=document.createElement('div'),text=document.createElement('span'),remove=document.createElement('button');text.textContent=`${entry.label} (${entry.ref}) · ${entry.provider} · ${entry.origin}${entry.repository?` · for ${entry.repository}`:''} `;remove.type='button';remove.className='button small';remove.textContent='Delete';remove.setAttribute('aria-label',`Delete ${entry.ref}`);remove.onclick=()=>{session.replace(session.snapshot().filter(v=>v.ref!==entry.ref));dirty=true;refresh();};row.append(text,remove);
+   // A SUPABASE KEY IS CHECKED HERE, ON THE SPOT (experiment 233's spike): one request to the project, and what came
+   // back in words beneath the row.
+   if(entry.provider===SUPABASE_PROVIDER){const check=document.createElement('button'),said=checks.get(entry.ref);
+    check.type='button';check.className='button small';check.textContent=said==='asking'?'Checking…':'Check';check.disabled=said==='asking';
+    check.setAttribute('aria-label',`Check ${entry.ref} with Supabase`);
+    check.onclick=()=>{const generation=session.generation;checks.set(entry.ref,'asking');refresh();
+     void checkSupabase(entry.origin,session.resolve(entry.ref,entry.provider,entry.origin)).then(result=>{
+      if(generation!==session.generation)return;checks.set(entry.ref,result);refresh();});};
+    row.insertBefore(check,remove);
+    if(said&&said!=='asking'){const line=document.createElement('p');line.className=`field-check ${said.ok?'is-good':'is-bad'}`;line.setAttribute('role','status');line.textContent=said.said;row.append(line);}}
+   list.append(row);}
   dialog.querySelector<HTMLFieldSetElement>('#credential-edit')!.disabled=!session.unlocked;dialog.querySelector<HTMLButtonElement>('#credential-download')!.disabled=!session.unlocked;
  // Confirmation guards against a typo that would make a NEW file permanently unopenable.
  // Unlocking an existing file needs none: a wrong passphrase fails and can simply be retried.
@@ -79,7 +92,9 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
   const fail=(e:unknown)=>{error.textContent=e instanceof Error?e.message:'Credential operation failed.';error.hidden=false;error.scrollIntoView({block:'nearest'});};
   const action=(name:string,fn:()=>void)=>{d.querySelector<HTMLButtonElement>('#credential-'+name)!.onclick=()=>{error.hidden=true;try{fn();}catch(e){fail(e);}};};
   action('close',()=>d.close());action('lock',()=>session.lock());action('new',()=>{if(busy)return;session.replace([]);dirty=true;refresh();});
-  action('add',()=>{if(busy)return;const entry={ref:input('ref').value.trim(),provider:input('provider').value.trim(),label:input('label').value.trim()||input('ref').value.trim(),origin:input('origin').value.trim(),secret:input('secret').value,...(input('repository').value.trim()?{repository:input('repository').value.trim()}:{})};session.replace([...session.snapshot().filter(v=>v.ref!==entry.ref),entry]);input('secret').value='';dirty=true;refresh();});
+  action('add',()=>{if(busy)return;const entry={ref:input('ref').value.trim(),provider:input('provider').value.trim(),label:input('label').value.trim()||input('ref').value.trim(),origin:input('origin').value.trim(),secret:input('secret').value,...(input('repository').value.trim()?{repository:input('repository').value.trim()}:{})};
+   // A SECRET KEY NEVER ENTERS THE FILE: it is refused here, whatever provider it is entered under.
+   const problem=supabaseKeyProblem(entry.secret);if(problem){input('secret').value='';throw new Error(problem);}checks.delete(entry.ref);session.replace([...session.snapshot().filter(v=>v.ref!==entry.ref),entry]);input('secret').value='';dirty=true;refresh();});
   /** WHO THIS TOKEN BELONGS TO, asked once at unlock and never again until the next one.
    *
    *  Failure here is NOT an unlock failure and must not be shown as one: the credentials are

@@ -1,6 +1,6 @@
 # Audit — verification on CI
 
-_Created 2026-11-24 · Updated 2026-11-25_
+_Created 2026-11-24 · Updated 2026-11-26_
 
 Written after four releases went out in one afternoon and the run for each was reported to the practitioner. The
 third report noted that `verify` had been cancelled rather than failed, which prompted counting how often it reaches

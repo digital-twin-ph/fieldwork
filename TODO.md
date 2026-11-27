@@ -72,13 +72,14 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 2026-11-25 and 2026-11-26
 
-- **Next batch: WebKit's offline reload** (the hand-started verify on `72f1ed62`, 2026-11-26: 632 passed, 2 failed).
-  `tests/outputs.browser.mjs` fails because WebKit reports a request cut off by the test's offline reload ("... due to
-  access control checks": a tile in CI, `build/reasoning-worker.js` locally) as a page error. Locally in WebKit it failed
-  1 time in 3 before the 0.202.0 merge and 5 in 5 after; Chromium passes. First find whether the reasoning worker loads
-  from the offline cache in WebKit: if it does, the test ignores requests its own reload cut off; if not, it is an
-  offline defect in Safari. The other failure, Cases by period's preview (`settings-previews.browser.mjs:112`), passed
-  3 in 3 locally: a starved runner.
+- **WebKit's offline reload: answered in 0.204.0.** The reasoning worker loads from the offline cache in WebKit: the run
+  after the offline reload completed in 5 of 5 local runs. What failed `tests/outputs.browser.mjs` (2 of 5) was
+  WebKit reporting OpenStreetMap tiles cut off by the offline reload as page errors. The test now sets aside only
+  cross-origin tile requests made while it holds the browser offline: 5 of 5 in WebKit, locally. Earlier local failures
+  named `build/reasoning-worker.js`; that did not recur in five runs, and the service worker's refusal of it in other
+  WebKit tests (below) is still open.
+- **Widgets added from the library land on top of one another** (found 2026-11-27, writing the blank-port test): three
+  added in a row overlapped, and a notice covered the third's port. A placement finding for the canvas.
 - **A cooperative, turn-based training mission** ([233](docs/experiments/233-a-cooperative-turn-based-training-mission.md)):
   a research proposal written in a ChatGPT session, given 2026-11-26 to be written up and reviewed later. Nothing
   built. It is one more kind of teaching material, loosely coupled to Dive Deeper. For review: it would add
@@ -89,7 +90,7 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   step now lives in a `run-*.ts` module.
 - **The Validation Lab** ([audit](docs/audits/validation-lab-audit.md)): items 1 to 5 acted on in 0.200.0, the lab's
   CI green again on 2026-11-26. **Left:**
-  - item 6: every notebook in plain language, drafted and under review (validation-lab PR 1);
+  - item 6: every notebook in plain language, drafted and merged (validation-lab PR 1, 2026-11-26);
   - item 7: 12 widgets owe a check (Keep points inside the area, Compare point sets, Move points in a donut, Network isochrone, Measure
     distance, Point grid, Polygon layer, Rate with a denominator, Tabular data, Transmission chains, Line layer, Travel time over ground),
     and Find health facilities is blocked on a frozen response;
@@ -100,7 +101,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   ending on Map's scale for Summarize points to polygons and Aggregate points to H3 cells, with labels kept inside the
   drawing and Voronoi's catchments in one fill; and the last three inline Inspectors (Chart, Point data, Measure
   distance) out of `app.ts`; and the commentary sweep's first pass (below, Comprehensibility 1). **0.203.0:** the sweep's
-  second pass, measured. **Next in that order:** buttons and ports, and WebKit's offline reload.
+  second pass, measured. **0.204.0:** buttons by role, ports by
+  one blank port with kinds as symbols, WebKit's offline reload, and experiment 233's first spike (Supabase).
 
 ### Threads from 2026-11-22
 
@@ -1751,6 +1753,8 @@ after, in the browser, so a cut is seen rather than claimed.
 2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
    (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
    the first instance. Measure: buttons whose style does not match their role.
+   **Done in 0.204.0** ([audit](docs/audits/buttons-and-ports-audit.md)): four roles applied; `npm run measure:buttons`
+   and a unit test hold labels in more than one role, and Primary buttons that do not commit, at zero.
 3. **One standard Inspector; what a widget does goes in its configuration dialog.** The practitioner, 2026-11-07:
    *"The more predictable Inspector looks and behaves the less cognitive overload and dissonance we have."* And:
    *"There are Inspector configuration items that should simply be standard and the function specific ones go in the
@@ -1770,7 +1774,8 @@ after, in the browser, so a cut is seen rather than claimed.
    ports a step can use. Measure: ports drawn and ports connected, per widget, in the worked examples.
    **Settled 2026-10-15** (Map's one configurable port; [116](docs/experiments/116-model-builder-sideways.md): bind
    when one port fits, ask when more than one does, extend to every widget), restated 2026-11-27; left to build is in
-   the [audit](docs/audits/buttons-and-ports-audit.md). For 0.204.0, tried on a local server first.
+   the [audit](docs/audits/buttons-and-ports-audit.md). **Built in 0.204.0:** one blank port on every
+   widget, kinds as symbols, and the canvas asks when more than one input fits.
 5. **Spatial steps as black boxes.** A spatial operation shows what it changed, before and after, as table steps do:
    inputs, the operation's outline, what was kept or cut, animated where it helps. Start with Clip polygons. Measure:
    widgets that show what they changed, of those that change something.

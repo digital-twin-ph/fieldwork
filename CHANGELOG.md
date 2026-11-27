@@ -3,6 +3,35 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.204.0 — In development
+
+- **One blank port, bound by what arrives** (settled 2026-10-15 for the Map, by experiment 116 for every widget; the
+  practitioner, 2026-11-27: *"Nodes should automatically detect the shape of the incoming input on an unconnected input
+  port and once connected should display in words what came in."*). Every widget with inputs draws what is connected
+  and one blank port, **+ Add an input**, while it can take more. Drop a result on it and it goes to the input its kind
+  fits; where two inputs of one kind do different jobs, the canvas asks which (Measure distance: **From** or **To**).
+  A step whose inputs are all connected draws no blank port. Saved workflows open unchanged: the inputs underneath
+  are the same.
+- **Kinds as symbols.** A connected input shows its kind's symbol and the name of the step it came from, cut short with
+  "…" where it does not fit and named in full on hover; "Points from Health facilities" was too long for a node. Nine
+  symbols, chosen by the practitioner from a sheet of mock nodes and kept in the buttons-and-ports audit. Source widgets
+  take the symbol of what they send as their icon: Point data and Raster input both drew ▦.
+- **Table 0.15.0: the coverage port is gone.** Nothing makes a coverage check since Check spatial coverage retired on
+  2026-10-21, and a workflow saved with one already opens with Keep points inside the area feeding the points port.
+- **Buttons by role.** Primary only where a button commits (Apply, Save, Run, Configure…); Close, Next, Done and Step
+  are Secondary; Remove is Danger everywhere; Manual and other ways somewhere are links. At the audit 20 labels were
+  drawn in more than one style and 6 Primary labels did not commit; `npm run measure:buttons` now counts 0 and 0, and a
+  unit test holds both there. The walkthroughs' **Start again** reads **Back to step 1**, and the note card's
+  **open** reads **Open the note**.
+- **A Supabase key, made from the manual and checked on the spot** (experiment 233's first spike). The Credentials page
+  says how to make a Supabase project and copy its publishable key; **Check** beside the key asks the project once and
+  says what came back. A secret key is refused as it is added and never sent. Not yet tried against a real project.
+- **Experiment 233 gains its precedents**: staged case studies, real-time outbreak simulations, matrix games and
+  simulation exercises, the patterns cooperative games use, and the evidence against. Nothing found combines turns, a
+  hidden model and analysis in real tools, and the evidence of learning across the field is weak.
+- **WebKit's offline reload answered.** The reasoning worker loads from the offline cache in WebKit (5 of 5 local
+  runs); the failures were map tiles cut off by going offline, which the test now sets aside only while offline.
+
 ## 0.203.0 — In development
 
 - **Commentary off the screen, second pass.** An empty canvas now says the other widgets appear once a source is on it.

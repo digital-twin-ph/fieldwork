@@ -72,10 +72,9 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 2026-11-25 and 2026-11-26
 
-- **The code review** ([audit](docs/audits/code-review-2026-11-23.md)): acted on in 0.200.0. **Left:** four live
-  widgets still drawn inline in `app.ts` (Chart, Point data, Apply ruleset, Measure distance), which is widget work
-  for the practitioner to order; the nightly WebKit run's time limit (the run of 2026-11-25 was cancelled at 1 h 15
-  min, [CI audit](docs/audits/ci-verification-audit.md)); widget release records still list `src/core.ts` where the
+- **The code review** ([audit](docs/audits/code-review-2026-11-23.md)): acted on in 0.200.0, and the four live widgets
+  it found drawn inline in `app.ts` moved out since (Apply ruleset in 0.201.0, the other three in 0.202.0). **Left:** the
+  nightly WebKit run's time limit (the run of 2026-11-25 was cancelled at 1 h 15 min, [CI audit](docs/audits/ci-verification-audit.md)); widget release records still list `src/core.ts` where the
   step now lives in a `run-*.ts` module.
 - **The Validation Lab** ([audit](docs/audits/validation-lab-audit.md)): items 1 to 5 acted on in 0.200.0, the lab's
   CI green again on 2026-11-26. **Left:**
@@ -88,8 +87,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **0.200.0** merged (pull request 4). **0.201.0**, NSSP's definitions, is pull request 5; its review is answered.
 - **0.202.0, from the practitioner's UI order of 2026-11-26** (high-contrast theme first): the theme, and Show me how
   ending on Map's scale for Summarize points to polygons and Aggregate points to H3 cells, with labels kept inside the
-  drawing and Voronoi's catchments in one fill. **Next in that order:** the last three inline Inspectors (Chart, Point
-  data, Measure distance), then the commentary sweep, then buttons and ports.
+  drawing and Voronoi's catchments in one fill; and the last three inline Inspectors (Chart, Point data, Measure
+  distance) out of `app.ts`. **Next in that order:** the commentary sweep, then buttons and ports.
 
 ### Threads from 2026-11-22
 

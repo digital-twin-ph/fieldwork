@@ -26,6 +26,9 @@ shown in a local build is not a claim that it has been published.
 - **The Claude Design findings are in TODO**: the palette's eight, the Inspector's six, the canvas's six, and the
   outputs on screen audit's eleven (`docs/audits/outputs-on-screen-audit.md`). Written on 2026-11-26 on a branch based on
   0.168.0 and never merged, they are copied as written, with a line saying which still hold in 0.202.0.
+- **The last inline Inspectors out of `app.ts`** (Chart 0.25.3, Measure distance 0.7.1, Point data 0.19.1), each into
+  its own module, with nothing a practitioner sees changed. Chart's handlers for controls drawn only in Configure…
+  were removed from `app.ts`; Configure… wires its own draft.
 
 ## 0.201.0 — In development
 

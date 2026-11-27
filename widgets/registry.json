@@ -391,7 +391,7 @@
   {
    "id": "urn:fieldwork:widget:chart_output",
    "nodeType": "chart_output",
-   "currentVersion": "0.25.2",
+   "currentVersion": "0.25.3",
    "releases": [
     {
      "version": "0.1.0",
@@ -577,6 +577,11 @@
      "version": "0.25.2",
      "path": "widgets/releases/chart_output/0.25.2.json",
      "sha256": "a13f88b9568a4c773eb6fcdd1da3fc424e7fecd60975c49aa12857598184de3b"
+    },
+    {
+     "version": "0.25.3",
+     "path": "widgets/releases/chart_output/0.25.3.json",
+     "sha256": "60f3200d516e5d9f3dceed76bf6c1209620ba55054a66353c1b32152d9913462"
     }
    ]
   },
@@ -1670,7 +1675,7 @@
   {
    "id": "urn:fieldwork:widget:measure_distance",
    "nodeType": "measure_distance",
-   "currentVersion": "0.7.0",
+   "currentVersion": "0.7.1",
    "releases": [
     {
      "version": "0.1.0",
@@ -1701,6 +1706,11 @@
      "version": "0.7.0",
      "path": "widgets/releases/measure_distance/0.7.0.json",
      "sha256": "55c702e07f485aad87e255aa65009bd298afe7870815846a638eb2f466f41b7a"
+    },
+    {
+     "version": "0.7.1",
+     "path": "widgets/releases/measure_distance/0.7.1.json",
+     "sha256": "46733b768f4dba76e01878ae5687eb7e6de6489c66e093949f0461fbc74e5952"
     }
    ],
    "previousNodeTypes": [
@@ -1893,7 +1903,7 @@
   {
    "id": "urn:fieldwork:widget:point_input",
    "nodeType": "point_input",
-   "currentVersion": "0.19.0",
+   "currentVersion": "0.19.1",
    "releases": [
     {
      "version": "0.1.0",
@@ -1999,6 +2009,11 @@
      "version": "0.19.0",
      "path": "widgets/releases/point_input/0.19.0.json",
      "sha256": "497e86d604aa9bb14ae299696f4c2475132dbc1338bdb1388aa458782bd12ef6"
+    },
+    {
+     "version": "0.19.1",
+     "path": "widgets/releases/point_input/0.19.1.json",
+     "sha256": "aa11049889b8f62675f44f9d29eaaff6314c6d6e09b5d8d61633add623c17a81"
     }
    ],
    "previousNodeTypes": [

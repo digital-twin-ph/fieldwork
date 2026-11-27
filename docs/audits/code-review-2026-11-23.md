@@ -129,7 +129,9 @@ of a workflow goes through them: the measure is by name, as stated below.
 - **"44 node types still drawn inline" counted routes, not Inspectors.** Most branches call a module's own Inspector.
   Drawn inline are four live widgets, Chart, Point data, Apply ruleset and Measure distance, and the seven retired
   types now removed. Moving the four means standardising their Inspectors, manual pages and walkthroughs, which is widget
-  work for the practitioner to order.
+  work for the practitioner to order. **Since:** Apply ruleset moved to `src/ruleset-ui.ts` in 0.201.0; Chart
+  (`src/chart-ui.ts`), Measure distance (`src/distance-ui.ts`) and Point data (`src/point-data-ui.ts`) in 0.202.0, with
+  nothing a practitioner sees changed.
 - **The weaker escapes were not defects where they stood.** No template places a value in a single-quoted attribute.
   The one real fault found among them was elsewhere: the wide reader looked a column up by its escaped name. It was
   masked by the pass that follows, and a browser test written for it passed on the old code too, so it was not kept.

@@ -154,12 +154,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.25.2",
-   "released": "2026-11-23",
+   "version": "0.25.3",
+   "released": "2026-11-26",
    "changes": [
     {
      "kind": "patch",
-     "description": "A panel's value axis drops trailing zeros: a panel of zeros was labelled 0.000000."
+     "description": "Its Inspector moved out of app.ts into src/chart-ui.ts, beside its Configure…, unchanged in what it does. The handlers app.ts still held for controls drawn only in Configure… (enhancement, mark, orientation, bar order, log scale, the line at 1, panels, shading, category column, titles, legend) were removed; Configure… wires each to its own draft, written by Apply."
     }
    ],
    "breaking": false,
@@ -476,12 +476,12 @@
    "migrationFrom": []
   },
   "measure_distance": {
-   "version": "0.7.0",
-   "released": "2026-11-25",
+   "version": "0.7.1",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The Preview counts the candidates a condition keeps, and the distances they give. It restated `distanceSentence(draft)`, which NAMES the conditions being edited and never said what they kept -- so the one number a condition exists to change was available only by running the workflow and reading the receipt. Now `nearestPlaces`, the function the run calls: the eligible count moves as a condition is typed, with the nearest, median and furthest distance, and the points left with no distance at all."
+     "kind": "patch",
+     "description": "Its Inspector, its sentence and its Configure… moved out of app.ts into src/distance-ui.ts, unchanged in what they do."
     }
    ],
    "breaking": false,
@@ -555,12 +555,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.19.0",
-   "released": "2026-11-23",
+   "version": "0.19.1",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A magnifier over the pin editor's map: a glass following the cursor that shows the basemap enlarged without moving the map, so siting a pin no longer means zooming in and out to read which river, which road, which workings. It takes no pointer events, so a click under it still places a pin, and it stops at the depth the provider's tiles go to rather than magnifying blur. Raster basemaps only, which is all the pin editor offers: a vector style is drawn by MapLibre GL inside Leaflet and magnifying one would mean a second WebGL context. With the basemap off the control says there are no tiles to magnify."
+     "kind": "patch",
+     "description": "Its Inspector, its sentence and the dialog naming a table’s longitude and latitude columns moved out of app.ts into src/point-data-ui.ts, unchanged in what they do. The records panel and the Input data editor stay with the application, which other steps share."
     }
    ],
    "breaking": false,

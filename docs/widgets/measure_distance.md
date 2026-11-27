@@ -50,6 +50,10 @@ The sea-level example (each facility's nearest tide gauge).
 
 ## History
 
+### 2026-11-26 · Its code out of app.ts (0.7.1)
+
+The Inspector, its sentence and Configure… moved into `src/distance-ui.ts`. Nothing they show or do changed.
+
 ### 2026-11-25 · The Preview counts the candidates a condition keeps (0.7.0)
 
 The conditions are the setting on the screen, and the one number they exist to change — how many candidates survive

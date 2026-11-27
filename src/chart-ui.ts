@@ -3,7 +3,7 @@
  *  ids the panels held. What it reads of the application comes through ChartKit. */
 import type {WorkflowNode} from './types.js';
 import {escapeHtml as esc} from './html-escape.js';
-import type {StepKit} from './inspector-kit.js';
+import type {StepKit,OwnInspector} from './inspector-kit.js';
 import type {WorkflowRun} from './results.js';
 import type {BarOrder} from './results.js';
 import {openConfigDialog} from './config-dialog.js';
@@ -382,3 +382,21 @@ function seriesControls(kit:ChartKit,n:WorkflowNode<'chart_output'>,curve:boolea
     +'<small>A signal from Detect unusual counts is 1 on the days it signals.</small></fieldset>';
   return out;
 }
+
+/** CHART'S INSPECTOR, out of app.ts (2026-11-26): the name, which is the Results tab's, and its place in the write-up;
+ *  its inputs; one sentence and Configure…, which holds every setting; and what the last run drew. */
+export const chartInspector:OwnInspector<'chart_output'>={
+  markup:(n,kitIn)=>{
+    const kit=kitIn as ChartKit,label=n.params.label||'Chart';
+    const drawn=kit.result()?.outputs.find(o=>o.nodeId===n.id),why=kit.unfinished(n.id);
+    return kit.section('Name',kit.labelForm('chart-label','Results tab name',label)+kit.writeUpSelect(n))
+      +kit.section('Inputs',kit.standardInputs(n,{decisions:'Reasoning result'}))
+      +kit.section('Settings',`<p class="standard-sentence">${esc(chartSentence(kit,n))}</p>`
+        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>')
+      +kit.section('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
+        :drawn?`Shown in Results, under "${label}".`:'Not run yet.')}</p>`);
+  },
+  wire:(n,kitIn,root)=>{
+    root.querySelector('#configure-step')?.addEventListener('click',()=>openChartConfig(kitIn as ChartKit,n.id));
+  },
+};

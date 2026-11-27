@@ -1,6 +1,6 @@
 {
   "name": "fieldwork-semantic-gis",
-  "version": "0.202.0",
+  "version": "0.203.0",
   "private": true,
   "license": "Apache-2.0",
   "type": "module",
@@ -55,6 +55,7 @@
     "validate:directions": "node scripts/validate-directions.mjs",
     "validate:ruleset-sources": "node scripts/validate-ruleset-sources.mjs",
     "validate:inspector-prose": "node scripts/validate-inspector-prose.mjs",
+    "measure:prose": "node scripts/measure-surface-prose.mjs",
     "validate:caps": "node scripts/validate-caps.mjs",
     "notes:extracts": "node scripts/geofabrik-catalogue.mjs --write",
     "validate:extracts": "node scripts/geofabrik-catalogue.mjs",

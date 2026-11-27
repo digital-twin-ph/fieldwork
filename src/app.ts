@@ -42,7 +42,7 @@ import {PROJECT_ROLES,PROJECT_ROLE_LABEL,REPOSITORY_ROLES,proposedProjectRole,ro
 import {readProjectAt,projectDocumentFromFiles,fileDigests,changedPaths,headCommit,recentDiscussions,listCollaborators,discussionTargets,tokenRepositories,namedRepository,mergeLatest,type Merge} from './shared-project.js';
 import {checkRepository,postDiscussion,repositoryName,GITHUB_API,type RepositoryCheck} from './repository-check.js';
 import type {CredentialAccess} from './credentials-ui.js';
-import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_RULESET} from './palette.js';
+import {addableTypes,PALETTE_GROUPS,ADDABLE_VIA_RULESET,INPUT_STAGE} from './palette.js';
 import {tidyLayout,alreadyTidy} from './layout.js';
 import {openStepViewer,openTableViewer,shapeChange,stepLabels,tableViewOf,type TableView} from './table-viewer.js';
 import {relateInspector,type RelateKit} from './relate-ui.js';
@@ -1902,6 +1902,11 @@ function writeUpSelect(n:WorkflowNode<'map_output'|'table_output'|'chart_output'
 
 function renderLibrary(search=''){
   const allowed=addableTypes({workflowTypes:workflow.nodes.map(n=>n.type)});
+  // THE REST OF THE PALETTE IS ON ITS WAY (found 2026-10-26, Claude Design's canvas finding 2026-11-26): an empty canvas
+  // offers only the sources, and read as a palette that failed to load.
+  const help=optionalElement('.library-help');
+  if(help)help.textContent=workflow.nodes.some(n=>INPUT_STAGE.has(n.type))?'Click to add. Connect matching ports.'
+    :'Click to add. Start with a source: the other widgets appear once one is on the canvas.';
   // What progressive reveal would offer at this step. Dimmed rather than removed: a hidden
   // widget can make a practitioner conclude the application cannot do something it can.
   const revealed=playbackStep===null?null:revealedTypes(playbackPlaced());
@@ -2840,7 +2845,7 @@ function renderResults(){
   if(output?.kind==='point-table')$('#result-metrics').innerHTML=`<span class="metric"><b>${rows.length}</b> records</span><span class="metric"><b>${rows.filter(r=>!r.coordinates).length}</b> missing coordinates</span><span class="metric">CRS84 · longitude, latitude</span>`;
   const table=output?.pointTable?{head:'',body:''}:output?.kind==='spatial-map'?{head:'<th>Record</th><th>Spatial relation</th>',body:rows.map(r=>`<tr data-place="${esc(r.id)}"><td>${esc(r.name)}</td><td>${esc(relationLabel(r.relation!))}</td></tr>`).join('')}:{head:'',body:''};$('#result-head').innerHTML=table.head;$('#result-rows').innerHTML=table.body;
   $('#result-search').value='';tablePage=0;tableAttributePage=0;tableSort=undefined;
-  $('#result-search').placeholder=output?.pointTable?'Search all records and attributes…':'Name, evidence, or service…';
+  $('#result-search').placeholder=output?.pointTable?'Search all records and attributes…':'Search the rows…';
   $('#point-table-controls').hidden=!output?.pointTable;
   $('#table-panel').classList.toggle('point-table',!!output?.pointTable);
   if(output?.pointTable)renderPointTable();
@@ -2888,7 +2893,7 @@ function renderResults(){
     }catch(error){toast(errorMessage(error),{tone:'failure'});}
     finally{button.disabled=false;}
   };
-  $('#facility-legend').textContent=output?.kind?'Qualifying facility':'Cooling center';$('#map-note').textContent=output?.kind==='facility-evidence'?'Historical facilities · evidence tiers':output?.kind==='access'?`${output.locationSource?.kind==='input-points'?'Input locations':'Generated samples'} \u00b7 source boundary`:'Local locations · no external map tiles';
+  $('#facility-legend').textContent=output?.kind?'Qualifying facility':'Location';$('#map-note').textContent=output?.kind==='facility-evidence'?'Historical facilities · evidence tiers':output?.kind==='access'?`${output.locationSource?.kind==='input-points'?'Input locations':'Generated samples'} \u00b7 source boundary`:'Local locations · no external map tiles';
   $('#review-legend').textContent=output?.kind==='facility-evidence'?'Contextual / inferential':'Review';$('#clear-legend').textContent=output?.kind==='facility-evidence'?'Direct':'No flag';$('#unknown-legend').textContent=output?.kind==='facility-evidence'?'No evidence':'Unknown';$('#facility-legend').parentElement!.hidden=output?.kind==='facility-evidence';
   $('.map-legend').hidden=output?.kind==='study-area';
   if(output?.kind==='spatial-coverage'){$('#review-legend').textContent='Needs review';$('#clear-legend').textContent='Inside / boundary';$('#unknown-legend').textContent='Excluded';$('#facility-legend').parentElement!.hidden=true;$('#map-note').textContent='Missing coordinates appear in the review table';}

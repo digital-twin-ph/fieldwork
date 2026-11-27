@@ -12,9 +12,12 @@ test('every palette entry can be added to a blank canvas as a draft',async({page
   // what the rule asks of a practitioner, and then every entry on offer must be addable -- which
   // is what this test is about.
   await page.locator('[data-view="workflow"]').click();
+  // AND SAYS SO (2026-11-27): four entries alone read as a palette that failed to load (found 2026-10-26).
+  await expect(page.locator('.library-help')).toHaveText('Click to add. Start with a source: the other widgets appear once one is on the canvas.');
   await page.locator('#node-library [data-add="study_area"]').click();
   await page.locator('[data-view="workflow"]').click();
   await expect.poll(()=>page.locator('.react-flow__node').count()).toBe(1);
+  await expect(page.locator('.library-help')).toHaveText('Click to add. Connect matching ports.');
   const types=await page.locator('#node-library [data-add]').evaluateAll(
     els=>els.map(e=>e.dataset.add));
   expect(types.length).toBeGreaterThan(5);

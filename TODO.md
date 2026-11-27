@@ -99,8 +99,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **0.202.0, from the practitioner's UI order of 2026-11-26** (high-contrast theme first): the theme, and Show me how
   ending on Map's scale for Summarize points to polygons and Aggregate points to H3 cells, with labels kept inside the
   drawing and Voronoi's catchments in one fill; and the last three inline Inspectors (Chart, Point data, Measure
-  distance) out of `app.ts`; and the commentary sweep's first pass (below, Comprehensibility 1). **Next in that order:**
-  the rest of the sweep, then buttons and ports.
+  distance) out of `app.ts`; and the commentary sweep's first pass (below, Comprehensibility 1). **0.203.0:** the sweep's
+  second pass, measured. **Next in that order:** buttons and ports, and WebKit's offline reload.
 
 ### Threads from 2026-11-22
 
@@ -1740,7 +1740,14 @@ after, in the browser, so a cut is seen rather than claimed.
    Play back the build's tooltip (the reveal rule); the Inspector's subtitle lost the internal id; and "Research
    workspace" left the header, on the practitioner's word (the name and the PROTOTYPE tag stay). **Left, for the
    practitioner:** the glossary's own words on screen (*machined*, *derived*, *authored* in the Notes counts and
-   cards; the *N3 & evidence* tab), which the naming review holds; the built-in example captions; and the measure, not yet extended past the Inspector.
+   cards; the *N3 & evidence* tab), which the naming review holds; and the built-in example captions, already gone (removed
+   2026-11-11, `src/app.ts`), so nothing was left to read there. **Second pass, 0.203.0 (2026-11-27):** the empty
+   canvas says the other widgets appear once a source is on it; the table filter, the map legend's default, the
+   new-project notice and the Ontology link's tooltip rewritten. **Measured** by `npm run measure:prose`, a report, not a
+   gate: design-vocabulary strings 3 (42 words) at 0.201.0, 2 (21) at 0.202.0, 1 (10) now, the Ontology link's name.
+   A source scan of index.html, the Notes tab and app.ts, code fragments set aside (so the Notes tab's assembled note
+   kinds go uncounted); the Inspector stays with `validate-inspector-prose`. Measuring rendered text, per state, in a
+   browser is the stronger form, not built.
 2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
    (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
    the first instance. Measure: buttons whose style does not match their role.
@@ -1761,6 +1768,9 @@ after, in the browser, so a cut is seen rather than claimed.
 4. **Input ports.** Four port models today (fixed list, inferred from the wiring, switched by a setting, counted); the
    Map's eight always-drawn ports are the clutter case. Choose one model, or two with a stated rule, and draw only the
    ports a step can use. Measure: ports drawn and ports connected, per widget, in the worked examples.
+   **Settled 2026-10-15** (Map's one configurable port; [116](docs/experiments/116-model-builder-sideways.md): bind
+   when one port fits, ask when more than one does, extend to every widget), restated 2026-11-27; left to build is in
+   the [audit](docs/audits/buttons-and-ports-audit.md). For 0.204.0, tried on a local server first.
 5. **Spatial steps as black boxes.** A spatial operation shows what it changed, before and after, as table steps do:
    inputs, the operation's outline, what was kept or cut, animated where it helps. Start with Clip polygons. Measure:
    widgets that show what they changed, of those that change something.

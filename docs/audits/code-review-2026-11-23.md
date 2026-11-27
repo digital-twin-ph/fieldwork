@@ -1,6 +1,6 @@
 # Audit — code and framework quality
 
-_Created 2026-11-23 · Updated 2026-11-23_
+_Created 2026-11-23 · Updated 2026-11-25_
 
 Asked by the practitioner on 2026-11-23: a high-level review of the repository for code and framework quality, with
 an eye to reducing technical debt and finding hotspots and high-risk areas. Read at 0.168.0 (commit 36baa48e).
@@ -91,6 +91,56 @@ Items 3 and 4 were taken the same day, at 0.184.0.
   nothing could unit-test it -- an instance of this review's own "67 modules named by no test", and the reason the
   count is a floor rather than a measure.
 
+## Re-read 2026-11-25, at 0.199.0
+
+Asked by the practitioner on 2026-11-25. The same counts were taken again on 0.199.0 (commit 20d36049), 50 commits
+and 31 releases after the first reading, with the same greps. The sections above stand as the record of 0.168.0.
+
+| Measure | 0.168.0 | 0.199.0 |
+| --- | --- | --- |
+| Source (`src/`) | 293 files, 66,160 lines | 307 files, 70,881 lines |
+| Tests | 261 unit, 250 browser, 51,403 lines | 274 unit, 272 browser, 54,839 lines |
+| Steps in `npm run check` | 36 | 33 |
+| Widgets in the registry | 73 | 76 |
+| `src/app.ts` | 9,333 lines, 197 imports, 31 top-level `let` | 8,893 lines, 179 imports, 27 top-level `let` |
+| `renderInspector` | 1,198 lines | 764 lines, 44 node types still rendered inline |
+| `src/core.ts` | 3,061 lines | 3,280 lines |
+| `executeWorkflow` | 1,688 lines, 52 `case` arms | 1,827 lines, 54 `case` arms |
+| `as unknown as` | 275, of which 124 in core.ts | 294, of which 139 in core.ts |
+| Non-null `!.` | 680; app.ts 83, core.ts 49 | 739; app.ts 79, core.ts 50; 31 `find(...)!` inside `executeWorkflow` |
+| `innerHTML` / `textContent` | 265 / 449 | 273 / 458 |
+| Modules named by no test | 67 of 293 | 74 of 307 |
+| Kernel | 264 `unsafe`, 56 tests, `scan.rs` 0 | 294 `unsafe`, 60 tests, `scan.rs` 0 |
+| Dependencies behind | 19, none vulnerable | 23, none vulnerable |
+
+**What closed.** Item 1: the Inspector move finished in 0.172.0, batches A to D done and E dropped with the sea-level
+steps' retirement. app.ts lost 440 lines and `renderInspector` 434, so hotspot 1 is smaller but not gone: 44 node
+types are still drawn inside it. Item 3 closed at 0.185.0. Item 4 is as the 2026-11-23 entry left it: one
+`escapeHtml` with five importers, and the weaker rules still in place, nine modules on five characters, seven places
+on four, two on three (`map-inset.ts`, `ruleset-json.ts`).
+
+**What grew.** core.ts took the weight app.ts lost. `executeWorkflow` is 139 lines and two arms longer, and the
+casts moved with it: 139 of 294 are now in that file, up from 124 of 275. The direction of the Inspector move was
+right, and it moved rendering, not execution. Item 2 is now the largest single piece of debt in the tree.
+
+**The gate changed shape.** `verify` moved off every push and onto a nightly run in its own workflow at 0.192.0
+([CI verification audit](ci-verification-audit.md)): it had reached a verdict four times in fourteen under the
+cancellation rule, and the first nightly run took 59 minutes with 3 failed of 620. The local gate stays Chromium only,
+so WebKit is exercised once a day and nowhere else; 0.199.0 found two new test files red on WebKit for that reason.
+Conditional gating was replayed on 2026-11-22 over 24 releases and declined again: at most 2.1 minutes saved in a
+gate, because app.ts was in every release ([gating audit](gating-audit.md)).
+
+**Revised order of return.**
+
+1. Break `executeWorkflow` into a dispatch table, one module per arm. Takes the 139 casts and the 31 `find(...)!`
+   with it. Needs a fresh chat with room to run a gate.
+2. The 44 node types still drawn inside `renderInspector`, onto the standard Inspector, as the move's last batch.
+3. The two three-character escapes, then the seven four-character ones, each with a check first.
+4. A Rust unit test in `scan.rs`. Unchanged since 0.168.0.
+5. A storage module over the five `indexedDB.open` calls. Unchanged.
+6. The nightly WebKit run's margin: 59 minutes against a 75-minute bound, with the suite growing by 22 browser files
+   in two days. The CI audit records it; nothing here adds to that.
+
 ## Acted on, 2026-11-25, at 0.200.0
 
 Asked by the practitioner on 2026-11-25: *"Let's address the remaining issues."* All six items of the revised order
@@ -148,4 +198,5 @@ a change to a run module as a change to its widget. `drawn`, the executor's pain
 
 Structure, counts and samples were read. The gate was not run, no widget's data flow was traced, and the kernel's
 numerics were not reviewed. The `innerHTML` finding is a grep, not a proof of absence. The untested-module list is by
-name match, so a module exercised only through the page appears as untested.
+name match, so a module exercised only through the page appears as untested. The 2026-11-25 re-read repeated the
+same greps and inherits the same limits; the two readings are comparable with each other and with nothing else.

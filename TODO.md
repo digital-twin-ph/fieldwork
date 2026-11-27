@@ -93,6 +93,13 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   settle with the practitioner: what every example carries and in what order a learner meets it (the question and
   what it teaches, a manual for each workflow, a README to one outline, the widgets it teaches, where its numbers are
   checked, what to try next), and whether built-in examples get manuals. Measure: examples with each surface.
+- **Next batch, agreed 2026-11-27, in order:** (1) an edit applied during a run: the dialog stays open, Apply waits and
+  says so (the practitioner chose this); (2) the write-up's and the export's tables to the table standard; (3) the
+  cooperative game's data model drafted in [233](docs/experiments/233-a-cooperative-turn-based-training-mission.md) as a
+  second spike: schema, each role's read rules as testable checks, the turn-ending function, every move timestamped
+  and attributed, provenance; nothing created in Supabase until the practitioner agrees it; (4)
+  `find_literature_for_terms` from [232](docs/experiments/232-terms-looked-up-and-appraised.md)'s design, its two
+  syntaxes read against their current documentation first.
 - **An edit applied during a run is dropped without a word** (found 2026-11-27, fixing PR 10's review). `change()` returns
   false while a run is in progress, and a configuration dialog's Apply closes as if it had applied: Table's Presentation,
   set while Snow's geoprivacy example ran its first pass, was lost in 2 of 3 tries. Older than 0.204.0, and every dialog

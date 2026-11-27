@@ -1,6 +1,6 @@
 # Open science inventory
 
-_Created 2026-11-16 · Updated 2026-11-26_
+_Created 2026-11-16 · Updated 2026-11-27_
 
 A running list of the open science features a Fieldwork project needs, and where each stands. The practitioner,
 2026-11-16: *"So by now we have begun to address a few Open Science items - ORCID, ROR. We can keep a running

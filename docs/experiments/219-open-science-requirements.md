@@ -1,6 +1,6 @@
 # 219 · What open science asks of a Fieldwork project
 
-_Created 2026-11-16 · Updated 2026-11-21_
+_Created 2026-11-16 · Updated 2026-11-27_
 
 **Status:** asked. Nothing built under this record itself; it goes on through identity and credentials
 ([218](218-an-identity-you-carry.md)), the Notes tab ([202](202-one-record-several-products.md)) and provenance (the

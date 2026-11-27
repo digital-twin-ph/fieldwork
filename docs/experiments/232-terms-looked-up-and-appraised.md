@@ -1,6 +1,6 @@
 # 232 · Terms looked up in a published source, and appraised
 
-_Created 2026-11-24 · Updated 2026-11-24_
+_Created 2026-11-24 · Updated 2026-11-27_
 
 **Status:** asked. The three questions are settled (2026-11-27, below); the literature search is designed, not built.
 One slice is **tried**: looking a term up in Wikidata and keeping the entity a person chose is built, unit-tested and

@@ -1,5 +1,10 @@
 # Fieldwork
 
+> **Fieldwork has moved to [fieldwork-app/fieldwork](https://github.com/fieldwork-app/fieldwork), and its site to
+> [fieldwork-app.github.io/fieldwork](https://fieldwork-app.github.io/fieldwork/), on 27 November 2026.** This
+> repository is archived and read-only. Saved work stays at this site's address: use **Back up** here, then **Import**
+> at the new address.
+
 _Created 2026-10-05 · Updated 2026-11-27_
 
 A browser prototype for semantic visual GIS workflows in public health. Build a

@@ -297,10 +297,7 @@ export function notesPanel(notes:readonly Note[],
     // THE PUBLICATION (experiment 202): the same notes laid out as a paper, to print or save as PDF.
     +(extent.notes?(drafts.length?drafts.map(d=>`<button class="button small" data-publication data-publication-open="${esc(d.kind)}">Draft: ${esc(d.label)}</button>`).join(' ')
       :`<button class="button small" data-publication>Draft</button>`):'')
-    +(drafts.length?` <button class="button small" data-notes-audit>Notes audit</button>`:'')+`</div>`
-    +`<p class="description">What survives into the write-up, in the order a reader meets it. `
-    +`Quoted and authored notes belong to the investigation; derived and machined ones come from `
-    +`the last run of each workflow in this project.</p>`;
+    +(drafts.length?` <button class="button small" data-notes-audit>Notes audit</button>`:'')+`</div>`;
 
   // THE MARKERS A NOTE'S WORKS GET, numbered as References lists them, so a work cited by two notes
   // carries one number in both. Placed at the end of the note's last paragraph.

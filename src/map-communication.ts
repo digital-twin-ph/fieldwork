@@ -81,7 +81,7 @@ export function mapPresentation(node:WorkflowNode<'map_output'>,output:Output,wo
   const R=FIGURE_ROLE;
   let items:MapPresentation['items']=[];
   if(output.polygons){
-    items=output.polygons.kind==='hexbin'?[{label:'Released H3 cell',color:R.primary},{label:'Sparse cells omitted',color:R.background}]:output.polygons.features.some(f=>f.minutes!==undefined)?[
+    items=output.polygons.kind==='hexbin'&&!polygonShading(output.polygons.features).classed?[{label:'Released H3 cell',color:R.primary},{label:'Sparse cells omitted',color:R.background}]:output.polygons.features.some(f=>f.minutes!==undefined)?[
       {label:'Cumulative travel-time region',color:R.primary},
       {label:'Observations',color:R.secondary},
       {label:'Sites / context',color:R.site,shape:'square'}

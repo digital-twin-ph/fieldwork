@@ -52,6 +52,11 @@ to this widget's.
 
 ## History
 
+### 2026-11-26 · Catchments in one fill (0.6.0)
+
+The last step shaded the catchments from light to dark, as if one were more than another. They carry no value, so they
+are now one fill, told apart by the lines between them.
+
 ### 2026-11-25 · Show me how builds the division up (0.5.0)
 
 It used to follow one house to its nearest pump, and then show every dividing line and every finished cell at once —

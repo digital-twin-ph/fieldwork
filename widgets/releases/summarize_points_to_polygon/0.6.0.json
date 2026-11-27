@@ -1,0 +1,71 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:summarize_points_to_polygon",
+ "nodeType": "summarize_points_to_polygon",
+ "version": "0.6.0",
+ "title": "Summarize points to polygons",
+ "released": "2026-11-26",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['summarize_points_to_polygon']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "validationStatus": "application-only",
+  "shaclShapes": []
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "polygons",
+    "type": "polygons"
+   },
+   {
+    "name": "points",
+    "type": "points"
+   }
+  ],
+  "output": "polygons"
+ },
+ "ontology": {
+  "status": "partial",
+  "mappings": [
+   {
+    "role": "activity",
+    "iri": "urn:fieldwork:PolygonPointSummary",
+    "file": "ontology/fieldwork.ttl"
+   }
+  ],
+  "note": "GeoSPARQL geometry, PROV activity and QUDT buffer units. Configuration SHACL is future work.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/catchments.ts",
+   "src/street-network.ts",
+   "src/core.ts",
+   "src/area-steps-ui.ts",
+   "src/spatial-walkthroughs.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "changed",
+   "description": "Show me how ends on the scale Map shades the result with. The practitioner: \"At the end shouldn't the goal be in summarization to render a shading corresponding to the resulting scale?\" The last step shaded the two units by opacity alone, 95% against 76% of one green, with no key to read a total from. Now each unit takes its colour from Map's own classes of the totals, keyed below the drawing by range (\"6\", \"7 to 8\"). Houses a step sets aside are drawn without their labels, and House 6 sits above North, so its label stays inside the drawing and is not read as inside South."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Synthetic numerical contracts and pinned source regression cases; no independent scientific certification. 0.4.0: three points against two overlapping polygons, one in each, one in both and one in neither, with the overlap named. Chromium, 2026-11-23: tests/area-step-previews.browser.mjs.\n\nTHE COMPUTED LAYER (2026-11-25). Browser tested on Chromium.\n\nSHOWN ON THE SCALE (2026-11-26). Browser tested on Chromium: tests/spatial-walkthroughs.browser.mjs checks that the last step keys the scale by class range and fills each shape with a colour the key holds, and that no label runs outside the drawing at any step."
+ }
+}

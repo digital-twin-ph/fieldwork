@@ -46,6 +46,19 @@ polygons, release 0.2.0.
 
 ## History
 
+### 2026-11-26 · Map shades the polygons by what was counted (0.7.0)
+
+Each polygon carries the total of the chosen field, or the count of points where none is chosen, and Map shades and
+keys the polygons by it, as **Total** and the field's name, or **Points inside**. Before, Map drew each unit in a
+colour of its own, keyed by its name. Show me how ends on the same classes, colours and ranges Map draws for its
+made-up output, and its labels stay inside the drawing, measured once drawn.
+
+### 2026-11-26 · Show me how ends on the scale (0.6.0)
+
+The last step shaded North and South by how dark one green was, and nothing said what a shade meant. Now each unit
+takes its colour from the same classes Map uses for the totals, and a key below the drawing gives each colour's
+range. A house the step has set aside is drawn without its label, so the house the step is about can be read.
+
 ### 2026-11-22 · On the standard, with Show me how (0.3.0)
 
 Its settings moved into **Configure…**, with the arriving points' numeric columns offered for the total, and **Show me

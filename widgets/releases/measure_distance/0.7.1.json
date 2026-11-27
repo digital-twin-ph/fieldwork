@@ -1,0 +1,64 @@
+{
+ "schema": "fieldwork/widget-release/1",
+ "id": "urn:fieldwork:widget:measure_distance",
+ "version": "0.7.1",
+ "nodeType": "measure_distance",
+ "title": "Measure distance",
+ "released": "2026-11-26",
+ "implementationStatus": "implemented",
+ "standardization": "shared",
+ "configuration": {
+  "typescriptFile": "src/types.ts",
+  "typescriptType": "ParamsByType['measure_distance']",
+  "planClass": "http://www.w3.org/ns/prov#Plan",
+  "shaclShapes": [],
+  "validationStatus": "application-only"
+ },
+ "ports": {
+  "inputs": [
+   {
+    "name": "points",
+    "type": "points"
+   },
+   {
+    "name": "candidates",
+    "type": "points"
+   }
+  ],
+  "output": "distances",
+  "dynamicInputs": null
+ },
+ "ontology": {
+  "status": "gap",
+  "mappings": [],
+  "note": "Dedicated semantic contract is not yet registered; do not infer one from the widget title.",
+  "emits": {
+   "classes": [],
+   "properties": []
+  }
+ },
+ "implementation": {
+  "files": [
+   "src/core.ts",
+   "src/app.ts",
+   "src/distance-ui.ts"
+  ],
+  "definition": "src/core.ts#TYPES"
+ },
+ "compatibility": {
+  "workflowSchema": "fieldwork/workflow/1",
+  "versionPersistence": "not-yet-persisted",
+  "migrationFrom": [],
+  "replacementCandidate": null
+ },
+ "changes": [
+  {
+   "kind": "patch",
+   "description": "Its Inspector, its sentence and its Configure… moved out of app.ts into src/distance-ui.ts, unchanged in what they do."
+  }
+ ],
+ "evidence": {
+  "status": "not-individually-certified",
+  "note": "Repository regression coverage exists; this release entry does not certify a widget independently. 0.6.0: tests/distances-as-table.test.mjs checks the table and that a table port takes a distances result; tests/sea-level-from-scratch.browser.mjs builds both sea-level workflows on it (Chromium).\n\nTHE PREVIEW (2026-11-25). Browser tested on Chromium: tests/measure-distance-preview.browser.mjs drives four candidates to two and then to none, and asserts that every point then reports no distance. NOT established: that the preview's distances equal the run's to the last digit, which would need a test holding both. 0.7.1: the Chromium gate, 2026-11-26, with the browser tests that open its Inspector and Configure…; nothing it shows or does was meant to change. NOT established: WebKit, which CI runs."
+ }
+}

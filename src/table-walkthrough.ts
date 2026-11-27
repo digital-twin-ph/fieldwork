@@ -23,9 +23,12 @@ export interface WalkStep {
   willStop?:boolean;
   /** A SPATIAL STEP'S DRAWING (2026-11-20), in place of the result table and beside the input tables: made here from fixed shapes, never from a person's data.
    *  `key` says in words what each kind of line in it is, so nothing is told by colour alone. */
-  figure?:{svg:string;key:string[]};
+  figure?:{svg:string;key:string[];
+    /** The scale a result is coloured on, each class's range beside its colour, as Map's key gives it. */
+    scale?:{title:string;entries:{label:string;color:string}[]}};
 }
-export interface Walkthrough {title:string; tables:WalkTable[]; resultColumns:string[]; steps:WalkStep[]}
+export interface Walkthrough {title:string; tables:WalkTable[]; resultColumns:string[]; steps:WalkStep[];
+  /** What the step's own function made of the made-up input, where a check compares it with another surface's drawing. */ made?:unknown}
 
 const SHAPE:Record<MarkState,string>={looking:'›',matched:'✓',unmatched:'✕',kept:'+',several:'≡',stopped:'■',unused:'–'};
 
@@ -42,7 +45,10 @@ export function walkthroughMarkup(walk:Walkthrough,at:number,esc:Escape):string{
   // table joined to it, so which row went where could not be seen).
   if(step.figure)return `<p class="walk-made-up">Made-up example</p><div class="walk-tables walk-with-figure">${walk.tables.map(tableHtml).join('')}`
     +`<figure class="walk-figure">${step.figure.svg}`
-    +`<figcaption><ul class="walk-key">${step.figure.key.map(k=>`<li>${esc(k)}</li>`).join('')}</ul></figcaption></figure></div>`
+    +`<figcaption><ul class="walk-key">${step.figure.key.map(k=>`<li>${esc(k)}</li>`).join('')}</ul>`
+    +(step.figure.scale?`<div class="walk-scale"><p class="walk-scale-title">${esc(step.figure.scale.title)}</p><ul>`
+      +step.figure.scale.entries.map(e=>`<li><span class="walk-swatch" style="background:${esc(e.color)}" aria-hidden="true"></span>${esc(e.label)}</li>`).join('')
+      +'</ul></div>':'')+'</figcaption></figure></div>'
     +`<p class="walk-say" aria-live="polite"><span class="walk-count">Step ${at+1} of ${walk.steps.length}.</span> ${esc(step.text)}</p>`;
   // THE RESULT SO FAR: every row the steps up to this one added, the newest marked; the final step replaces them with the step's own table.
   const final=walk.steps.slice(0,at+1).reverse().find(s=>s.final&&s.result);
@@ -93,7 +99,7 @@ export function openWalkthrough(walk:Walkthrough,esc:Escape,from?:HTMLElement):v
       +`<div class="walk-controls"><button class="button" data-walk-back${at===0?' disabled':''}>Back</button>`
       +`<button class="button primary" data-walk-step${at===walk.steps.length-1?' disabled':''}>Step</button>`
       +`<button class="button" data-walk-play aria-pressed="${timer?'true':'false'}"${at===walk.steps.length-1?' disabled':''}>${timer?'Pause':'Play'}</button>`
-      +`<button class="button" data-walk-start${at===0?' disabled':''}>Start again</button></div></div>`;};
+      +`<button class="button" data-walk-start${at===0?' disabled':''}>Start again</button></div></div>`;fitLabels(box);};
   const go=(to:number)=>{at=Math.max(0,Math.min(walk.steps.length-1,to));if(at===walk.steps.length-1)stop();draw();};
   const close=()=>{stop();if(box.open)box.close();box.remove();back?.focus();};
   box.addEventListener('click',event=>{
@@ -108,8 +114,24 @@ export function openWalkthrough(walk:Walkthrough,esc:Escape,from?:HTMLElement):v
     }
   });
   box.addEventListener('cancel',event=>{event.preventDefault();event.stopPropagation();close();});
-  document.body.append(box);draw();box.showModal();
+  document.body.append(box);draw();box.showModal();fitLabels(box);
   box.querySelector<HTMLElement>('[data-walk-step]')?.focus();
+}
+
+/** A DRAWING'S LABELS KEPT INSIDE ITS 360-WIDE BOX, measured once drawn (PR 6's review, 2026-11-26: an estimate of 9
+ *  units a character moved "North: 3 houses, Confirmed case count 8" to the left, off the box, when it fitted on the
+ *  right). Right of its point where it fits; else left of it where that fits; else as near its point as the box
+ *  allows; and a label wider than the box is drawn to the box's width. Nothing is measured before the dialog is open. */
+export function fitLabels(root:ParentNode,width=360,edge=4):void{
+  root.querySelectorAll<SVGTextElement>('svg.walk-drawing text[data-at]').forEach(t=>{
+    const at=Number(t.dataset.at),wide=t.getComputedTextLength();
+    if(!wide)return;
+    t.removeAttribute('text-anchor');t.removeAttribute('textLength');t.removeAttribute('lengthAdjust');
+    if(at+8+wide<=width-edge){t.setAttribute('x',(at+8).toFixed(1));return;}
+    if(at-8-wide>=edge){t.setAttribute('x',(at-8).toFixed(1));t.setAttribute('text-anchor','end');return;}
+    if(wide>width-2*edge){t.setAttribute('x',String(edge));t.setAttribute('textLength',String(width-2*edge));t.setAttribute('lengthAdjust','spacingAndGlyphs');return;}
+    t.setAttribute('x',Math.min(Math.max(edge,at+8),width-edge-wide).toFixed(1));
+  });
 }
 
 /** THE BUTTON EVERY CONFIGURE… OFFERS, and what it opens: the walkthrough made from the draft as it stands when pressed. */

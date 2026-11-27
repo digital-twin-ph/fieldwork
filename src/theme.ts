@@ -1,16 +1,18 @@
-/** Colour theme: an explicit light or dark choice, or following the device.
- *  The device option is the default, so a first visit matches the operating system. */
-export type ThemePreference='light'|'dark'|'device';
+/** Colour theme: an explicit light, dark or high-contrast choice, or following the device.
+ *  The device option is the default, so a first visit matches the operating system. High contrast (2026-11-26, the
+ *  practitioner: "We should also have a high contrast theme … I actually switch themes depending on the job to be
+ *  done") is black on white, and Match device takes it when a light device asks for more contrast. */
+export type ThemePreference='light'|'dark'|'contrast'|'device';
 export type ResolvedTheme='light'|'dark';
 export const THEME_KEY='fieldwork.theme.v1';
-export const THEME_PREFERENCES:readonly ThemePreference[]=['device','light','dark'];
-export const THEME_LABELS:Readonly<Record<ThemePreference,string>>={device:'Match device',light:'Light',dark:'Dark'};
+export const THEME_PREFERENCES:readonly ThemePreference[]=['device','light','dark','contrast'];
+export const THEME_LABELS:Readonly<Record<ThemePreference,string>>={device:'Match device',light:'Light',dark:'Dark',contrast:'High contrast'};
 export const isThemePreference=(value:unknown):value is ThemePreference=>
   typeof value==='string'&&(THEME_PREFERENCES as readonly string[]).includes(value);
-/** What a preference resolves to, given what the device asks for. Pure, so it is testable
- *  without a browser and cannot drift from the CSS selectors it mirrors. */
+/** What a preference resolves to for anything drawn in canvas or SVG, given what the device asks for: light or dark
+ *  ground. High contrast is drawn on a light ground. Pure, so it is testable without a browser. */
 export const resolveTheme=(preference:ThemePreference,devicePrefersDark:boolean):ResolvedTheme=>
-  preference==='device'?(devicePrefersDark?'dark':'light'):preference;
+  preference==='device'?(devicePrefersDark?'dark':'light'):preference==='contrast'?'light':preference;
 /** An unreadable or unrecognised stored value falls back to the device, never to an error. */
 export function readThemePreference():ThemePreference{
   try{const stored=localStorage.getItem(THEME_KEY);return isThemePreference(stored)?stored:'device';}

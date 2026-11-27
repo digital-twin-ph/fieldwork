@@ -72,10 +72,12 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 
 ### Threads from 2026-11-25 and 2026-11-26
 
-- **The code review** ([audit](docs/audits/code-review-2026-11-23.md)): acted on in 0.200.0. **Left:** four live
-  widgets still drawn inline in `app.ts` (Chart, Point data, Apply ruleset, Measure distance), which is widget work
-  for the practitioner to order; the nightly WebKit run's time limit (the run of 2026-11-25 was cancelled at 1 h 15
-  min, [CI audit](docs/audits/ci-verification-audit.md)); widget release records still list `src/core.ts` where the
+- **A cooperative, turn-based training mission** ([233](docs/experiments/233-a-cooperative-turn-based-training-mission.md)):
+  a research proposal written in a ChatGPT session, given 2026-11-26 to be written up and reviewed later. Nothing
+  built. For review: it meets Dive Deeper's deferral and would add Supabase as an outside service.
+- **The code review** ([audit](docs/audits/code-review-2026-11-23.md)): acted on in 0.200.0, and the four live widgets
+  it found drawn inline in `app.ts` moved out since (Apply ruleset in 0.201.0, the other three in 0.202.0). **Left:** the
+  nightly WebKit run's time limit (the run of 2026-11-25 was cancelled at 1 h 15 min, [CI audit](docs/audits/ci-verification-audit.md)); widget release records still list `src/core.ts` where the
   step now lives in a `run-*.ts` module.
 - **The Validation Lab** ([audit](docs/audits/validation-lab-audit.md)): items 1 to 5 acted on in 0.200.0, the lab's
   CI green again on 2026-11-26. **Left:**
@@ -85,7 +87,12 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
     and Find health facilities is blocked on a frozen response;
   - the ruleset extract-contract has no check; checks 23 and 25 record rulesets that are retired; check 50 needs its
     rasters laid out as the exporter expects.
-- **0.200.0** is pull request 4, open.
+- **0.200.0** merged (pull request 4). **0.201.0**, NSSP's definitions, is pull request 5; its review is answered.
+- **0.202.0, from the practitioner's UI order of 2026-11-26** (high-contrast theme first): the theme, and Show me how
+  ending on Map's scale for Summarize points to polygons and Aggregate points to H3 cells, with labels kept inside the
+  drawing and Voronoi's catchments in one fill; and the last three inline Inspectors (Chart, Point data, Measure
+  distance) out of `app.ts`; and the commentary sweep's first pass (below, Comprehensibility 1). **Next in that order:**
+  the rest of the sweep, then buttons and ports.
 
 ### Threads from 2026-11-22
 
@@ -1676,7 +1683,7 @@ The practitioner's overall sense of the interface, recorded in
 actionable."* So these are work, not candidates waiting on the rating. Each closes on a measurement taken before and
 after, in the browser, so a cut is seen rather than claimed.
 
-0. **Text too small and too faint to read — first, because it is every word.** The practitioner: *"much of the text
+0. **Done in 0.45.0** (every word 14 px or more, AA contrast; figures in 0.20.1 of Chart and 0.27.2 of Map). **Text too small and too faint to read — first, because it is every word.** The practitioner: *"much of the text
    especially those that look like fine print I hardly read because I have poor eyesight … too verbose and unreadable,
    often in technical prose not plain language."* Then: *"no need to wait for evaluation for things that are staring at
    us in the face."* Measured 2026-11-07 with `tests/text-audit.browser.mjs` (`TEXT_AUDIT=1`, Chromium): words below
@@ -1684,7 +1691,10 @@ after, in the browser, so a cut is seen rather than claimed.
    open, down to 8 px; words under WCAG's 4.5:1 contrast were 215, 505 and 427. Floor 14 px, body 16 px, WCAG AA
    contrast, no meaning carried only in small grey text, sizes that follow the browser's zoom. Measure: the same audit,
    after.
-0a. **A high-contrast theme.** The practitioner, 2026-11-07: *"We should also have a high contrast theme - add this
+0a. **Done in 0.202.0** (2026-11-26): High contrast in the theme menu, and Match device takes it on a light device
+   asking for more contrast. Measured with the text audit: words under 7:1 on the Workflow tab, the Notes tab and the
+   note dialog, 138, 412 and 342 in Light, none in High contrast; axe's 7:1 rule passes on every view, the main
+   dialogs, and the Snow isochrone example's Inspectors and their dialogs. **A high-contrast theme.** The practitioner, 2026-11-07: *"We should also have a high contrast theme - add this
    to TODO. I actually switch themes depending on the job to be done."* A third choice beside Light and Dark in the
    theme menu, kept per device like the others: near-black on white (or the reverse), no tinted surfaces behind text,
    borders and focus rings strong enough to find every control, and colour never the only signal. Aim at WCAG AAA
@@ -1716,6 +1726,13 @@ after, in the browser, so a cut is seen rather than claimed.
    need commentary text. Commentary text about design belongs in design documents not the UI. Let's be opportunistic
    with taking them out like when we standardize widgets when we touch them."*): any surface touched loses its design
    commentary and stale text in the same pass, as a widget touched moves to 186's standard.
+   **First pass, 0.202.0 (2026-11-26):** the header-to-Notes surfaces read. Removed as design explanation: the project
+   bar's tagline, the N3 & evidence tab's "facts → rules → inference" line, the Notes tab's paragraph on note kinds,
+   "GeoJSON → N3" on Study area's card; rewritten as stale: the empty Results panel (retired visual output nodes) and
+   Play back the build's tooltip (the reveal rule); the Inspector's subtitle lost the internal id; and "Research
+   workspace" left the header, on the practitioner's word (the name and the PROTOTYPE tag stay). **Left, for the
+   practitioner:** the glossary's own words on screen (*machined*, *derived*, *authored* in the Notes counts and
+   cards; the *N3 & evidence* tab), which the naming review holds; the built-in example captions; and the measure, not yet extended past the Inspector.
 2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
    (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
    the first instance. Measure: buttons whose style does not match their role.
@@ -1751,6 +1768,111 @@ after, in the browser, so a cut is seen rather than claimed.
    "Show me" replays that widget's steps from a worked example; today the example manuals exercise 16 of 70 widgets.
    Measure: widgets whose next step can be named from declarations alone, of 70. A widget that cannot be declared
    cleanly is a port or Inspector problem (items 3 and 4).
+
+### From Claude Design, 2026-11-26: the palette, the Inspector, the canvas and the outputs
+
+The four sections below were written on 2026-11-26 in a Claude Design session, on the branch
+`equations-and-the-projects-write-up`, which is based on 0.168.0 and was never merged. They are copied here as written,
+on the practitioner's word the same day: *"Yes do that instead of merge"*; the audit they point to is copied to
+[docs/audits/outputs-on-screen-audit.md](docs/audits/outputs-on-screen-audit.md). They belong with
+[Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07) and are ordered with it.
+
+**Checked against 0.202.0 the same day, from the code:** still so: the Inspector's subtitle prints `n.id`, Study
+design is not in `STANDARD_INSPECTOR`, the canvas stops at 510 px tall, every table's filter reads "Name, evidence, or
+service…", the map legend's defaults include "Cooling center", the palette hides search below 530 px, and the empty
+canvas still reads only "Click to add. Connect matching ports." Changed since: `STANDARD_INSPECTOR` now holds 45
+widgets, not 33, so the Inspector's finding 2 counts are out of date.
+
+
+#### The palette, read from the code (2026-11-26), not yet ordered
+
+Eight findings, from drawing the Node library on a Design canvas at its real width and order. **Read from the code,
+not observed:** whether any of them gets in a practitioner's way is not known. Belongs under
+[Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07).
+
+1. **Long names wrap.** The column is 205 px, 175 px below 1,150 px of window, 155 px below 850 px (`styles.css`,
+   `.studio`). "Sample a raster at points or over areas" and "Relate a column from another table" take two or three
+   lines.
+2. **Order within a group is the order the code was written in.** `renderLibrary` sorts by group only, so `TYPES`'
+   order decides the rest. Study area is 9th of 10 in Sources and Point data last; Spatial operations opens with Mean
+   center and Compare point sets; Epidemiology opens with Regression and ends with Cases by period.
+3. **Uneven groups.** Spatial operations holds 20 of 51; Comparisons and checks and Semantic reasoning one each;
+   Micro-workflows none, so it never shows. The planned retirements (51 to about 41, under [Urgent](#urgent)) change
+   these counts.
+4. **Shared icons.** 51 widgets use 33 icons, and 30 share theirs with at least one other. ▦ is Point data, Raster
+   input, Georeferenced map image, Point grid, Reachable corridor and Cases by period; ⋈ is Apply ruleset and both table
+   joins.
+5. **Colour carries little.** 34 of 51 are teal. Blue marks sources and also Reproject points, in Spatial operations.
+   Deduplicate records and Apply ruleset share purple across two groups. Amber is only Space-time scan.
+6. **Three words for one item.** "Node library" and "Find a node…" (`index.html`), "Selected primitive"
+   (`study-area.css`), "Widget catalog". AGENTS.md: a widget is the contract, a node one instance of it; the palette
+   lists widgets. A naming finding, so it waits on the naming review ([rule audit](docs/audits/rule-audit.md): nine
+   findings, no renames, on purpose).
+7. **No search and no groups at phone width.** Below 530 px the search box and group headings are hidden and all 51
+   entries sit in one sideways-scrolling row.
+8. **Search matches text that is not shown.** The filter reads title and description; only the title is displayed, so
+   a match on the description lists a widget with no visible reason.
+
+Still open from 2026-10-26, and drawn on the same canvas: the empty canvas says nothing about more widgets appearing
+once an input is placed (under [Urgent](#urgent), *"The input-stage palette looks like a palette that failed to
+load"*). `index.html` still reads only "Click to add. Connect matching ports."
+
+#### The Inspector, read from the code (2026-11-26), not yet ordered
+
+Six findings, from drawing Rate with a denominator's Inspector on the same Design canvas at its real width. **Read from
+the code, not checked in the running app or with a practitioner.**
+
+1. **The subtitle shows an internal id.** `title()` prints the group and `n.id`, and a node added from the palette is
+   given `` `${type}-${Date.now()}` ``, so the panel reads "Epidemiology / rate-1764150000000".
+2. **Two panel shapes.** 33 of 51 live widgets are in `STANDARD_INSPECTOR` (Name, Inputs, Settings, Result, Learn and
+   record); 18 draw their own, among them Mean center, Reproject points, Street network, Polygon layer, Voronoi
+   catchments and Point grid. The [Inspector move](#urgent)'s batches C to E reduce the 18.
+3. **Standard panels leave out the line saying what the step does.** `renderInspector`'s comment says every panel opens
+   with the title, one line on what the step does, then the way in for a learner; for a standard step the description
+   and learn block are skipped there, and the Manual link moves to Learn and record at the bottom.
+4. **Study design is not in `STANDARD_INSPECTOR`.** The Inspector move (under [Urgent](#urgent)) says it moved to the
+   standard Inspector in 0.165.0. Read from the code, it therefore also gets the older description and learning links
+   at the top and the older evidence and version blocks at the bottom. Not seen in the app; check there first.
+5. **One field, three names.** Section "Name", field "Name", button "Apply label" (`labelForm`); on Chart, Map and Table
+   the same field is "Results tab name".
+6. **Narrow, and below 850 px it leaves the canvas.** 292 px, 253 px below 1,150 px of window, 320 px above 1,600 px
+   (`styles.css`, `.studio`); below 850 px it moves under the canvas at full width, away from the node being edited.
+
+Missed when this section was written, found drawing the canvas: Duplicate and Remove node sit at the foot of every
+Inspector, below Learn and record (`#duplicate-node`, `#delete-node`). See the next section's finding 6.
+
+#### The workflow canvas and its menus, read from the code (2026-11-26), not yet ordered
+
+Six findings, from drawing the workbench at 1,440 px on the same Design canvas. The canvas has no right-click menu and
+no menu on a node; its menus are the four bars above it and the zoom controls on it. **Read from the code, not checked
+in the running app or with a practitioner.** Findings 1 and 2 belong with
+[Comprehensibility](#comprehensibility-five-known-problems-actionable-now-2026-11-07), which already records that the
+tabs and header wrap.
+
+1. **28 controls above the canvas.** 5 in the header, 4 in the project bar, 9 in the project and workflow bar
+   (`.example-bar`), 10 in the canvas toolbar. Estimated from the CSS, not measured: the canvas starts about 270 px
+   down the window.
+2. **One bar switches, creates and deletes.** `.example-bar` holds both selects, Reset example, New project, Add
+   workflow, Delete workflow, From a template…, New empty canvas and Play back the build; Delete workflow sits between
+   two create buttons. A project can also be started from the Project tab (`#project-new`) and the blank canvas
+   (`#blank-project`).
+3. **Run is far from what it runs.** `#run-button` is in the project bar beside Import, Credentials and Back up; the
+   canvas's state, "Ready to run" (`#workflow-state`), is in the canvas toolbar.
+4. **The canvas does not grow with the window.** `.canvas-view` has `max-height: 510px` (650 px above 1,600 px); at
+   1,440 px wide that is 943 × 510 px.
+5. **On 44 of 51 widgets the ports are unnamed until hovered.** Only the seven in `spatialPorts` (`src/canvas.tsx`:
+   Map, Table, Chart, Raster input, Clip raster, Sample a raster, Join a table to the study area) draw a named row per
+   input. On the rest a port is a dot whose `.handle-name` is at opacity 0 until hover (`build/canvas.css`), and shows
+   the raw id, such as "records".
+6. **A node's actions are not on the node.** Duplicate and Remove node are at the foot of the Inspector. On the canvas
+   a selected node is removed by Backspace or Delete (`deleteKeyCode`), and nothing on screen says so.
+
+#### Maps, charts and tables on screen (2026-11-26), not yet ordered
+
+Eleven findings (O1 to O11) and a proposed figure frame shared by all three, in the
+[outputs on screen audit](docs/audits/outputs-on-screen-audit.md), which also audits the proposal against itself.
+Read from the code, not run or shown to a practitioner. **First to try, if any:** *What was counted* beside each
+figure, the one new part. The audit writes three practitioner observations before the result. O5, O6 and O11
 
 ### Plain checks on a note, before any model (agreed 2026-11-07)
 

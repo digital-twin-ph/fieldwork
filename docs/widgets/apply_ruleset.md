@@ -132,7 +132,7 @@ matched. The first 50 records are drawn; the counts are of all of them.
 The four comparisons of size, >, ≥, < and ≤, are offered for numbers, and for the days between two dates; *is* and
 *is not* for categories and for true or false too; *contains any of*, *contains none of* and the two *item* comparisons
 for text, the words separated by commas. A word matches inside a longer one: *diarrh* finds *diarrhea* and *diarrhoea*.
-Put a word in double quotes to keep its spaces: *" flu "* finds *stomach flu* and not *influenza*. A record whose column is not recorded matches none of the first
+Put a word in double quotes to keep its spaces: *" flu "* finds *stomach flu today* and not *influenza*. The start and end of the text are not spaces, so *" flu "* does not find *stomach flu* alone. A starting word for the two *item* comparisons holds no spaces, `;`, `/` or `&`, since those separate the items. A record whose column is not recorded matches none of the first
 six: it is neither more nor less than 7. Ask *is not recorded* for it.
 
 ## The rules as JSON
@@ -209,8 +209,9 @@ Visits whose complaint holds *vomit*, *diarrh* or *n/v* are gastrointestinal; ev
 | `startsWith` | has an item starting with any of the words: each part of the text between `;`, `/`, `&` or spaces is an item, such as each code in a list of diagnoses | text |
 | `notStartsWith` | has no item starting with any of the words | text |
 
-A word in double quotes keeps its spaces. `" flu "` finds *stomach flu* and not *influenza*, which holds *flu* with no
-space either side.
+A word in double quotes keeps its spaces. `" flu "` finds *stomach flu today* and not *influenza*, which holds *flu* with no
+space either side. The start and end of the text are not spaces: `" flu "` does not find *stomach flu* alone. A starting word
+for `startsWith` and `notStartsWith` holds no spaces, `;`, `/` or `&`: those separate the items, so it could start none.
 
 ### Codes in a list
 

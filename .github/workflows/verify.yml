@@ -175,6 +175,16 @@ jobs:
           ref: ${{ steps.salmonella.outputs.commit }}
           fetch-depth: 0
           path: example-salmonella-checkout
+      # The syndromic example feeds validation fixtures nssp-syndromes-001 and detect-unusual-counts-001; without
+      # this checkout the fixture gate reads its absence as a skip and passes without running them (PR #5 review).
+      - id: syndromic
+        run: echo "commit=$(jq -r '.examples[] | select(.repository|endswith("/example-2026-syndromic-surveillance")) | .commit' widgets/examples.json)" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          repository: digital-twin-ph/example-2026-syndromic-surveillance
+          ref: ${{ steps.syndromic.outputs.commit }}
+          fetch-depth: 0
+          path: example-syndromic-checkout
       # LONDON IS NOT IN THE CATALOGUE YET, so widgets/examples.json has no commit to read. Validation fixture
       # select-range-london-001 reads its Stata file, and CI failed on 2026-11-04 without it. Pinned here
       # until London becomes a catalogue entry; then read it from examples.json like the others.
@@ -227,6 +237,7 @@ jobs:
           mv example-salmonella-checkout ../example-2021-salmonella-germany
           mv example-nyc-checkout ../example-2025-nyc-ozone
           mv example-london-checkout ../example-2002-london-ozone
+          mv example-syndromic-checkout ../example-2026-syndromic-surveillance
       - name: Type check, build and run regression tests
         run: npm run check
       # A FAILURE THAT REPRODUCES ONLY HERE needs its screenshot and trace. On 2026-11-04 the Nigeria playback test

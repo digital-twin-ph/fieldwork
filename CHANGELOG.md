@@ -3,6 +3,49 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.202.0 — In development
+
+- **A high-contrast theme.** The practitioner: *"We should also have a high contrast theme … I actually switch themes
+  depending on the job to be done."* **High contrast** joins Match device, Light and Dark in the theme menu: black on
+  white, no tinted surface behind text, strong outlines and a thick focus ring. Match device takes it when a light
+  device asks for more contrast; a dark device keeps Dark. Measured: words under WCAG AAA's 7:1 on the Workflow tab, the
+  Notes tab and the note dialog were 138, 412 and 342 in Light, and none in High contrast. axe's 7:1 rule passes on
+  every view, the main dialogs, and the Snow isochrone example's Inspectors and the dialogs they open. Maps and charts
+  draw as in Light.
+- **Show me how ends on the scale Map shades with** (Summarize points to polygons 0.6.0, Aggregate points to H3 cells
+  0.6.0). The practitioner: *"At the end shouldn't the goal be in summarization to render a shading corresponding to
+  the resulting scale?"* The last step shaded each result by opacity alone, with no key: North's 8 deaths and South's 6
+  were 95% and 76% of one green. Each shape now takes its colour from Map's own classes, keyed below the drawing by
+  range.
+- **A label stays inside the drawing.** "House 6: outside" was cut to "House 6: o". A label that would run past the
+  right edge is drawn to the left of its point; in Summarize the houses a step sets aside lose their labels, and House
+  6 sits above North so its label is not read as inside South. The test checks every label at every step of every
+  spatial walkthrough.
+- **Voronoi catchments' cells are one fill** (0.6.0). They were shaded light to dark, keyed "darker for a larger
+  total", but a catchment carries no total.
+- **The Claude Design findings are in TODO**: the palette's eight, the Inspector's six, the canvas's six, and the
+  outputs on screen audit's eleven (`docs/audits/outputs-on-screen-audit.md`). Written on 2026-11-26 on a branch based on
+  0.168.0 and never merged, they are copied as written, with a line saying which still hold in 0.202.0.
+- **The last inline Inspectors out of `app.ts`** (Chart 0.25.3, Measure distance 0.7.1, Point data 0.19.1), each into
+  its own module, with nothing a practitioner sees changed. Chart's handlers for controls drawn only in Configure…
+  were removed from `app.ts`; Configure… wires its own draft.
+- **Commentary off the screen, first pass.** The practitioner: *"Commentary text about design belongs in design
+  documents not the UI."* Removed: the project bar's tagline, shown before a workflow opened; the N3 & evidence tab's
+  "Generated facts → explicit rules → local inference"; the Notes tab's paragraph on where each kind of note comes from;
+  "GeoJSON → N3" on a drawn Study area's card. Stale, rewritten: the empty Results panel named the retired visual
+  output nodes and a Bar chart choice; Play back the build's tooltip named the reveal rule. The Inspector's subtitle
+  showed the step's internal id (Claude Design's Inspector finding 1) and now shows its group only.
+- **Map shades what Summarize and H3 counted** (Summarize points to polygons 0.7.0, Aggregate points to H3 cells 0.7.0,
+  Map 0.50.0). From pull request 6's review: Show me how ended on a scale it called Map's, while Map drew Summarize's
+  polygons one colour per unit and every H3 cell one blue. Each polygon now carries its total or count, and Map shades
+  and keys by it; the walkthrough takes its scale from the same functions, and a test compares the two.
+- **Show me how's labels measured, not estimated.** An estimate moved a long label, such as one naming "Confirmed case
+  count", off the drawing when it fitted on the right. Each is now measured once drawn: right of its point, else left,
+  else as near as the drawing allows.
+- **Match device's high contrast** now takes the palette's colours as High contrast does: Street network's icon stayed
+  blue on a tint at 3.64:1.
+- **"Research workspace" out of the header**, on the practitioner's word. The PROTOTYPE tag stays.
+
 ## 0.201.0 — In development
 
 - **The syndromic example on NSSP's definitions** ([228](docs/experiments/228-detect-unusual-counts.md)). Four
@@ -21,6 +64,10 @@ shown in a local build is not a claim that it has been published.
   8,406.
 - **Lab check 54** runs NSSP's own queries directly, as ESSENCE would, and finds the same visits as Fieldwork for every
   definition, with ICD-10 and with ICD-11. Pinned at validation-lab 64fcee7.
+- **From the pull request's review.** A starting word holding a space, `;`, `/` or `&` is now refused with its own
+  message: it could start no item, so it matched nothing, and its opposite everything. The manual's `" flu "` example is
+  "stomach flu today": the end of the text is not a space. The hosted verify now checks out the syndromic example at its
+  pin, so fixtures nssp-syndromes-001 and detect-unusual-counts-001 are built there and not skipped.
 
 ## 0.200.0 — In development
 

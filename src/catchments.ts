@@ -690,7 +690,11 @@ export function summarizePolygons(input:Polygons,points:PointCollection,params:W
   const features=input.features.map(f=>({...structuredClone(f),count:0,total:0,missingValues:0}));let matched=0,unmatched=0,missingLocation=0,multiple=0;
   for(const p of points.features){if(!p.geometry){missingLocation++;continue;}const hits=features.filter(f=>{const r=pointRelation(p.geometry!.coordinates,f.geometry);return r==='Inside'||params.boundary==='include'&&r==='Boundary';});if(!hits.length){unmatched++;continue;}matched++;if(hits.length>1)multiple++;for(const f of hits){f.count++;if(params.valueField){const value=p.properties[params.valueField];if(typeof value==='number'&&Number.isFinite(value))f.total+=value;else f.missingValues++;}}}
   if(features.some(f=>!Number.isFinite(f.total)))throw new Error('Numeric total overflow; review the input values.');
-  return {...structuredClone(input),features,observations:structuredClone(points),summary:{records:points.features.length,matched,unmatched,missingLocation,multiple,valueField:params.valueField},notes:[...input.notes,`Boundary: ${params.boundary}. All memberships retained; ${multiple} locations have multiple memberships. Do not add overlapping catchment counts as a unique total.`]};
+  // THE VALUE MAP SHADES (2026-11-26, PR 6's review): the total of the field where one is chosen, else the count. Map
+  // shades a polygon by `value` alone, so a summary that carried only count and total was drawn one hue per unit, keyed
+  // by name, and Show me how's scale was a claim about a figure Map never drew.
+  for(const f of features)(f as {value?:number}).value=params.valueField?f.total:f.count;
+  return {...structuredClone(input),features,valueName:params.valueField?`Total ${params.valueField}`:'Points inside',observations:structuredClone(points),summary:{records:points.features.length,matched,unmatched,missingLocation,multiple,valueField:params.valueField},notes:[...input.notes,`Boundary: ${params.boundary}. All memberships retained; ${multiple} locations have multiple memberships. Do not add overlapping catchment counts as a unique total.`]};
 }
 export function catchmentReceipt(node:WorkflowNode,value:Polygons|Network,runId:string,sources:string[]):Receipt{
   // `fw:metricCRS` means a PROJECTED CRS a computation used; clip and summarize project nothing,

@@ -15,6 +15,7 @@ import {sampleRaster,cellAt} from './sample-raster.js';
 import {totalOver} from './raster-areas.js';
 import {pointRelation} from './spatial-predicates.js';
 import type {RasterGrid} from './raster.js';
+import {polygonShading,shadedValues,classRanges} from './presentation.js';
 import type {AreaUnit} from './types.js';
 import {joinTableToAreas} from './area-join.js';
 import {convexHull} from './convex-hull.js';
@@ -25,13 +26,25 @@ import {latLngToCell,cellToLatLng,cellToBoundary,gridDisk,getHexagonEdgeLengthAv
 
 type Kind='input'|'area'|'look'|'result'|'gone';
 interface Shape {kind:Kind;rings?:Position[][][];point?:Position;label?:string;at?:Position;
-  /** How dark a made shape is drawn, 0 to 1: units shaded by their totals, so two results look different. */
-  shade?:number}
+  /** A made shape's colour on the scale `classedScale` gives, as Map would shade it. */
+  fill?:string}
+/** THE SCALE A RESULT IS SHADED ON (the practitioner, 2026-11-26, on Summarize's last step: "shouldn't the goal be in
+ *  summarization to render a shading corresponding to the resulting scale?"). Read off the step's own output by the
+ *  functions Map shades and keys a polygon layer with (`polygonShading`, `classRanges` over `shadedValues`), so the
+ *  walkthrough ends on the picture Map draws of the same polygons: the same value, classes, colours and ranges. */
+export function classedScale(features:Polygons['features']):{fill:(f:Polygons['features'][number])=>string;scale:{label:string;color:string}[]}|null{
+  const {classed}=polygonShading(features);
+  if(!classed)return null;
+  const ranges=classRanges(shadedValues(features),classed.breaks);
+  return {fill:f=>classed.colours[classed.classOf(f.value)??0]!,scale:ranges.map((label,i)=>({label,color:classed.colours[i]!}))};
+}
+type Scale={title:string;entries:{label:string;color:string}[]};
+const KEY_SCALED='Filled: what the step makes, coloured by the scale below, as Map shades it';
 const KEY:Record<Kind,string>={input:'Grey outline: what the step is given',area:'Dashed outline: the area it works within',
-  look:'Thick outline: what this step looks at',result:'Filled: what the step makes, darker for a larger total',gone:'Faint: left out'};
+  look:'Thick outline: what this step looks at',result:'Filled: what the step makes',gone:'Faint: left out'};
 
 /** The shapes drawn in a 360 by 240 box, longitude across and latitude up, at the scale of the widest shape. */
-function draw(shapes:Shape[],label:string):{svg:string;key:string[]}{
+function draw(shapes:Shape[],label:string,shading?:Scale):{svg:string;key:string[];scale?:Scale}{
   const all=shapes.flatMap(s=>[...(s.rings??[]).flat(2),...(s.point?[s.point]:[])]);
   const xs=all.map(p=>p[0]),ys=all.map(p=>p[1]);
   const w=Math.min(...xs),e=Math.max(...xs),south=Math.min(...ys),n=Math.max(...ys);
@@ -41,16 +54,20 @@ function draw(shapes:Shape[],label:string):{svg:string;key:string[]}{
   const x=(lon:number)=>20+(lon-w)*scale+(260-(e-w)*scale)/2,y=(lat:number)=>40+(n-lat)*scale+(180-(n-south)*scale)/2;
   const path=(rings:Position[][][])=>rings.map(poly=>poly.map(r=>'M'+r.map(p=>`${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`).join('L')+'Z').join(' ')).join(' ');
   const body=shapes.map(s=>s.rings
-    ?`<path class="walk-shape walk-shape-${s.kind}" d="${path(s.rings)}" fill-rule="evenodd"${s.shade!==undefined?` style="fill-opacity:${(0.2+0.75*s.shade).toFixed(2)}"`:''}/>`
+    ?`<path class="walk-shape walk-shape-${s.kind}" d="${path(s.rings)}" fill-rule="evenodd"${s.fill?` style="fill:${s.fill};fill-opacity:.78"`:''}/>`
     :s.point?`<circle class="walk-shape walk-shape-${s.kind} walk-point" cx="${x(s.point[0]).toFixed(1)}" cy="${y(s.point[1]).toFixed(1)}" r="5"/>`:'').join('')
     +shapes.filter(s=>s.label).map(s=>{const at=s.at??s.point??s.rings![0]![0]![0]!;
-      return `<text class="walk-shape-label" x="${(x(at[0])+8).toFixed(1)}" y="${(y(at[1])-8).toFixed(1)}">${escapeHtml(s.label)}</text>`;}).join('');
+      // A LABEL STAYS IN THE DRAWING (2026-11-26): drawn to the right of its point, and kept inside by the player, which
+      // measures it once drawn (fitLabels in table-walkthrough.ts). An estimate of its width flipped labels that fit.
+      const lx=x(at[0]);
+      return `<text class="walk-shape-label" data-at="${lx.toFixed(1)}" x="${(lx+8).toFixed(1)}" y="${(y(at[1])-8).toFixed(1)}">${escapeHtml(s.label!)}</text>`;}).join('');
   const kinds=[...new Set(shapes.map(s=>s.kind))];
-  return {svg:`<svg class="walk-drawing" viewBox="0 0 360 240" role="img" aria-label="${label}">${body}</svg>`,key:kinds.map(k=>KEY[k])};
+  return {svg:`<svg class="walk-drawing" viewBox="0 0 360 240" role="img" aria-label="${label}">${body}</svg>`,
+    key:kinds.map(k=>k==='result'&&shading?KEY_SCALED:KEY[k]),...(shading?{scale:shading}:{})};
 }
 const ring=(points:Position[]):Position[][][]=>[[[...points,points[0]!]]];
 const partsOf=(g:Boundary):Position[][][]=>g.type==='MultiPolygon'?g.coordinates as Position[][][]:[g.coordinates as Position[][]];
-const step=(text:string,shapes:Shape[],final=false,marks:WalkStep['marks']=[]):WalkStep=>({text,marks,figure:draw(shapes,text),...(final?{final:true}:{})});
+const step=(text:string,shapes:Shape[],final=false,marks:WalkStep['marks']=[],scale?:Scale):WalkStep=>({text,marks,figure:draw(shapes,text,scale),...(final?{final:true}:{})});
 const metres=(m:number)=>`${m.toLocaleString('en')} m`;
 /** The dialog's distance, or 500 m where it is not one a step accepts, said in the walkthrough. */
 const usable=(m:number,max:number)=>Number.isFinite(m)&&m>0&&m<=max?m:500;
@@ -244,48 +261,52 @@ export function summarizePointsWalkthrough(boundary:'include'|'exclude',valueFie
   const field=valueField.trim()||'deaths';
   const P:{name:string;house:string;at:Position;v:number|null}[]=[{name:'H1',house:'House 1',at:[30.01,-1.006],v:3},{name:'H2',house:'House 2',at:[30.028,-1.009],v:1},
     {name:'H3',house:'House 3',at:[30.015,-1.023],v:2},{name:'H4',house:'House 4',at:[30.025,-1.015],v:4},{name:'H5',house:'House 5',at:[30.032,-1.024],v:null},
-    {name:'H6',house:'House 6',at:[30.05,-1.02],v:5}];
+    {name:'H6',house:'House 6',at:[30.03,-0.996],v:5}];
   const input={features:[{type:'Feature',properties:{name:'North'},geometry:{type:'Polygon',coordinates:ring(NORTH)[0]!}},
     {type:'Feature',properties:{name:'South'},geometry:{type:'Polygon',coordinates:ring(SOUTH)[0]!}}],sites:[],method:'',crs:'CRS84',notes:[]} as unknown as Polygons;
   const points:PointCollection={type:'FeatureCollection',features:P.map(p=>({type:'Feature',id:p.name,
     properties:{name:p.name,...(p.v===null?{}:{[field]:p.v})},geometry:{type:'Point',coordinates:p.at}}))};
   const made=summarizePolygons(input,points,{label:'Walk',boundary,valueField:field});
   const unit=(name:string)=>made.features.find(f=>(f.properties as {name?:string}).name===name) as unknown as {count:number;total:number;missingValues:number};
-  const n=unit('North'),s=unit('South'),top=Math.max(n.total,s.total)||1;
+  const n=unit('North'),s=unit('South'),scaled=classedScale(made.features)!;
+  const shade=(name:string)=>scaled.fill(made.features.find(f=>(f.properties as {name?:string}).name===name)!);
   const houses=(k:number)=>`${k} house${k===1?'':'s'}`;
-  // THE UNITS, named; at the end each with what it carries, shaded by its total so the two look different (the
-  // practitioner, 2026-11-22: "two rectangles not having any difference at the end").
+  // THE UNITS, named; at the end each with what it carries, coloured by its total on Map's scale (the practitioner,
+  // 2026-11-22: "two rectangles not having any difference at the end"; 2026-11-26: the shading should follow the scale).
   const units=(kind:Kind,end=false):Shape[]=>[
-    {kind,rings:ring(NORTH),label:end?`North: ${houses(n.count)}, ${field} ${n.total}`:'North',at:[30.001,-1.001],...(end?{shade:n.total/top}:{})},
-    {kind,rings:ring(SOUTH),label:end?`South: ${houses(s.count)}, ${field} ${s.total}`:'South',at:[30.001,-1.028],...(end?{shade:s.total/top}:{})}];
+    {kind,rings:ring(NORTH),label:end?`North: ${houses(n.count)}, ${field} ${n.total}`:'North',at:[30.001,-1.001],...(end?{fill:shade('North')}:{})},
+    {kind,rings:ring(SOUTH),label:end?`South: ${houses(s.count)}, ${field} ${s.total}`:'South',at:[30.001,-1.0293],...(end?{fill:shade('South')}:{})}];
   const pt=(kind:Kind,name:string,said?:string):Shape=>{const p=P.find(x=>x.name===name)!;
     return {kind,point:p.at,label:said??`${p.house}: ${p.v===null?'no value':p.v}`};};
+  // A HOUSE SET ASIDE IS DRAWN WITHOUT ITS LABEL (2026-11-26): six labels on every step crowded the one the step is
+  // about, and the table beside the drawing names every house.
+  const quiet=(name:string):Shape=>({...pt('gone',name),label:undefined});
   const onEdge=boundary==='include';
   // THE HOUSES AS A TABLE beside the drawing, each marked as the step counts it.
   const where=(name:string)=>name==='H4'?(onEdge?'North and South':'neither'):name==='H6'?'neither':['H1','H2'].includes(name)?'North':'South';
   const table={label:'The houses, one row each',columns:['House',field,'Inside'],rows:P.map(p=>[p.house,p.v===null?'':String(p.v),where(p.name)])};
   const row=(name:string)=>P.findIndex(p=>p.name===name);
   const mark=(name:string,state:'matched'|'unmatched'|'several',word:string)=>({table:0,row:row(name),state,word});
-  return {title:'Summarize points to polygons, step by step',tables:[table],resultColumns:[],steps:[
+  return {title:'Summarize points to polygons, step by step',made,tables:[table],resultColumns:[],steps:[
     step(`Two made-up units, North and South, sharing an edge, and six houses, each with its ${field}. House 5 has none recorded.`,
       [...units('input'),...P.map(p=>pt('input',p.name))]),
     step(`North counts the houses inside it, 1 and 2, and adds their ${field}: 3 + 1.`,
-      [...units('input'),pt('look','H1'),pt('look','H2'),...['H3','H4','H5','H6'].map(x=>pt('gone',x))],false,
+      [...units('input'),pt('look','H1'),pt('look','H2'),...['H3','H4','H5','H6'].map(x=>quiet(x))],false,
       [mark('H1','matched','in North'),mark('H2','matched','in North')]),
     step(`South counts houses 3 and 5. House 5 has no ${field}: it is counted as a house, and its missing value is counted apart, never as 0.`,
-      [...units('input'),pt('look','H3'),pt('look','H5'),...['H1','H2','H4','H6'].map(x=>pt('gone',x))],false,
+      [...units('input'),pt('look','H3'),pt('look','H5'),...['H1','H2','H4','H6'].map(x=>quiet(x))],false,
       [mark('H3','matched','in South'),mark('H5','matched',`in South, no ${field}`)]),
     step(onEdge?`House 4 sits on the edge both units share. As set, a house on an edge is counted in every unit it touches: in North and in South. So it is counted twice, and the step says so.`
       :`House 4 sits on the edge both units share. As set, a house on an edge is counted in neither.`,
-      [...units('input'),pt(onEdge?'look':'gone','H4',onEdge?'House 4: 4, in both':'House 4: 4, in neither'),...['H1','H2','H3','H5','H6'].map(x=>pt('gone',x))],false,
+      [...units('input'),pt(onEdge?'look':'gone','H4',onEdge?'House 4: 4, in both':'House 4: 4, in neither'),...['H1','H2','H3','H5','H6'].map(x=>quiet(x))],false,
       [mark('H4',onEdge?'several':'unmatched',onEdge?'in both':'in neither')]),
     step('House 6 lies in neither unit: it is counted as outside every unit, and adds to neither.',
-      [...units('input'),pt('gone','H6','House 6: outside'),...['H1','H2','H3','H4','H5'].map(x=>pt('gone',x))],false,
+      [...units('input'),pt('gone','H6','House 6: outside'),...['H1','H2','H3','H4','H5'].map(x=>quiet(x))],false,
       [mark('H6','unmatched','outside')]),
     step(`What the step passes on: the two units, each carrying its count of houses and its total ${field}. North: ${houses(n.count)}, ${field} ${n.total}; `
       +`South: ${houses(s.count)}, ${field} ${s.total}${s.missingValues?`, with ${s.missingValues} house whose ${field} is not recorded`:''}.`
       +(onEdge?' House 4 is in both, so the two counts add up to one more than the houses inside.':''),
-      [...units('result',true),...P.map(p=>({...pt('gone',p.name),label:undefined}))],true)]};
+      [...units('result',true),...P.map(p=>quiet(p.name))],true,[],{title:`Total ${field}`,entries:scaled.scale})]};
 }
 
 /** THE SIX STEPS PUT ON THE STANDARD IN 0.169.0 (2026-11-23): Convex hull, Voronoi catchments, Network isochrone, Mean
@@ -345,7 +366,7 @@ export function voronoiWalkthrough():Walkthrough{
       [{kind:'area',rings:ring(AREA)},...made.features.map(f=>({kind:'look' as const,rings:partsOf(f.geometry)})),...pumps('input')]),
     step(`What the step passes on: ${made.features.length} cells, each the ground nearer its pump than any other, measured in UTM zone 36S. `
       +'They fill the box around the area; Clip polygons cuts them to its outline. Nearest in a straight line is not the way anyone walks.',
-      [...made.features.map((f,i)=>({kind:'result' as const,rings:partsOf(f.geometry),shade:i/Math.max(1,made.features.length-1)})),{kind:'area',rings:ring(AREA)},...pumps('input')],true)]};
+      [...made.features.map(f=>({kind:'result' as const,rings:partsOf(f.geometry)})),{kind:'area',rings:ring(AREA)},...pumps('input')],true)]};
 }
 
 /** A made-up street grid, seven junctions each way, every street both ways, the spacing a round number of metres. */
@@ -453,8 +474,8 @@ export function h3Walkthrough(resolution:number,minOccupancy:number):Walkthrough
   const homes=(kind:Kind):Shape[]=>H.map(h=>({kind,point:h.at}));
   const counts=[middle,side!,other!].map(c=>({cell:c,count:H.filter(h=>h.cell===c).length}));
   const dropped=counts.filter(c=>c.count<least);
-  const top=Math.max(...made.features.map(f=>Number((f as {count?:number}).count??0)),1);
-  return {title:'Aggregate points to H3 cells, step by step',tables:[],resultColumns:[],steps:[
+  const scaled=classedScale(made.features);
+  return {title:'Aggregate points to H3 cells, step by step',made,tables:[],resultColumns:[],steps:[
     step('Six made-up homes.',homes('input')),
     step(`Each falls in one H3 cell at resolution ${r}${r===resolution?'':' (shown at 9, as the resolution set is not one the step accepts)'}: three in one cell, one in the cell beside it, two in another.`,
       [...counts.map(c=>({kind:'look' as const,rings:cellRing(c.cell),label:String(c.count),at:cellToBoundary(c.cell,true)[0] as Position})),...homes('input')]),
@@ -464,5 +485,6 @@ export function h3Walkthrough(resolution:number,minOccupancy:number):Walkthrough
     step(`What the step passes on: ${!made.features.length?`no cell, as each holds fewer than ${least} homes`:made.features.length===1?'1 cell, with its count of homes':`${made.features.length} cells, each with its count of homes`}; the homes themselves are not passed on. `
       +'It counts locations, not what they carry, and it protects nobody on its own.',
       [...made.features.map(f=>({kind:'result' as const,rings:partsOf(f.geometry),label:String((f as {count?:number}).count),
-        at:(f.geometry.coordinates as Position[][])[0]![0]!,shade:Number((f as {count?:number}).count??0)/top})),...homes('gone')],true)]};
+        at:(f.geometry.coordinates as Position[][])[0]![0]!,...(scaled?{fill:scaled.fill(f)}:{})})),...homes('gone')],true,[],
+      scaled?{title:made.valueName??'Points in the cell',entries:scaled.scale}:undefined)]};
 }

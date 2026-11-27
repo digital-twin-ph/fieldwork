@@ -38,12 +38,12 @@
    "replacementCandidate": "urn:fieldwork:widget:apply_ruleset"
   },
   "aggregate_points_to_h3_cell": {
-   "version": "0.5.0",
-   "released": "2026-11-25",
+   "version": "0.7.0",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "added",
-     "description": "A PREVIEW, where the section held only Show me how it works. It runs `aggregateHex` on the points connected and says how many cells would be shown, how many points they hold, and HOW MANY ARE LEFT OUT by the minimum occupancy. That last number is the disclosure control's cost, and it belongs before applying it, not after."
+     "kind": "minor",
+     "description": "Each cell carries its count of points as the value Map shades it by, named Points in the cell; Map shades the cells by class instead of one blue, and keys them by range. Show me how ends on the same classes and ranges. Raised in pull request 6's review."
     }
    ],
    "breaking": false,
@@ -154,12 +154,12 @@
    "replacementCandidate": "urn:fieldwork:widget:observations"
   },
   "chart_output": {
-   "version": "0.25.2",
-   "released": "2026-11-23",
+   "version": "0.25.3",
+   "released": "2026-11-26",
    "changes": [
     {
      "kind": "patch",
-     "description": "A panel's value axis drops trailing zeros: a panel of zeros was labelled 0.000000."
+     "description": "Its Inspector moved out of app.ts into src/chart-ui.ts, beside its Configure…, unchanged in what it does. The handlers app.ts still held for controls drawn only in Configure… (enhancement, mark, orientation, bar order, log scale, the line at 1, panels, shading, category column, titles, legend) were removed; Configure… wires each to its own draft, written by Apply."
     }
    ],
    "breaking": false,
@@ -422,24 +422,12 @@
    "migrationFrom": []
   },
   "map_output": {
-   "version": "0.49.0",
-   "released": "2026-11-24",
+   "version": "0.50.0",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "fixed",
-     "description": "A map carrying polygons drew no line layer. The polygon renderer is chosen whenever polygons are present and returns before the lines are drawn, so hand-drawn routes appeared on the interactive preview and on no static figure -- not in Results, not in Notes, not in a download. Both renderers now draw the lines from one function, over the areas and under the points, and both frames span them, so a route running past the polygons' own extent is no longer clipped away."
-    },
-    {
-     "kind": "fixed",
-     "description": "A line layer could not be managed. The lines port was absent from the table the layer list is built from, so Manage layers listed everything else and not the lines: they could not be renamed, reordered, grouped or switched off, and no receipt recorded that the map had drawn any. A line layer is now a layer of its own kind, drawn over the street network and under the points, and the switch is honoured by the figure."
-    },
-    {
-     "kind": "changed",
-     "description": "Where lines are drawn over polygons built from the study areas, the polygons lose their hue per feature and are drawn in one wash, exactly as they already did under points. A route across two study areas is what the map is about; the areas it crosses are the ground it crosses, and a colour each asserts two categories against the reading the line already gives. A layer read from a file, and a layer carrying a value, are untouched."
-    },
-    {
-     "kind": "added",
-     "description": "DIRECTION, SHOWN WHERE SOMEBODY CHOSE IT. A LineString is an ordered sequence, so the direction is already in the data and an arrowhead only shows it -- which matters because a flow drawn from a camp to a clinic is not the same as one drawn the other way. A layer DRAWN BY HAND is marked by default, because the order its positions were clicked in is a decision a person made and the Line layer editor already shows it; hiding it on the map would hide their work. A layer read from a GPX, or taken as the border two areas share, is left unmarked, because the order of positions in a published track or a computed border is an artefact of the file and an arrowhead would assert a direction nobody chose. Configure... offers the three ways -- where the lines were drawn by hand, always, never -- and the last two win over the source. The interactive map, the static figure and the Line layer editor draw one head from one definition of which way a line runs."
+     "kind": "minor",
+     "description": "H3 cells that carry a count are shaded by class and keyed by range, on the figure and on the key beside the interactive map; a layer saved before keeps one blue. Polygons from Summarize points to polygons are shaded by their total or count, which they now carry."
     }
    ],
    "breaking": false,
@@ -476,12 +464,12 @@
    "migrationFrom": []
   },
   "measure_distance": {
-   "version": "0.7.0",
-   "released": "2026-11-25",
+   "version": "0.7.1",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "changed",
-     "description": "The Preview counts the candidates a condition keeps, and the distances they give. It restated `distanceSentence(draft)`, which NAMES the conditions being edited and never said what they kept -- so the one number a condition exists to change was available only by running the workflow and reading the receipt. Now `nearestPlaces`, the function the run calls: the eligible count moves as a condition is typed, with the nearest, median and furthest distance, and the points left with no distance at all."
+     "kind": "patch",
+     "description": "Its Inspector, its sentence and its Configure… moved out of app.ts into src/distance-ui.ts, unchanged in what they do."
     }
    ],
    "breaking": false,
@@ -555,12 +543,12 @@
    "migrationFrom": []
   },
   "point_input": {
-   "version": "0.19.0",
-   "released": "2026-11-23",
+   "version": "0.19.1",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "minor",
-     "description": "A magnifier over the pin editor's map: a glass following the cursor that shows the basemap enlarged without moving the map, so siting a pin no longer means zooming in and out to read which river, which road, which workings. It takes no pointer events, so a click under it still places a pin, and it stops at the depth the provider's tiles go to rather than magnifying blur. Raster basemaps only, which is all the pin editor offers: a vector style is drawn by MapLibre GL inside Leaflet and magnifying one would mean a second WebGL context. With the basemap off the control says there are no tiles to magnify."
+     "kind": "patch",
+     "description": "Its Inspector, its sentence and the dialog naming a table’s longitude and latitude columns moved out of app.ts into src/point-data-ui.ts, unchanged in what they do. The records panel and the Input data editor stay with the application, which other steps share."
     }
    ],
    "breaking": false,
@@ -854,12 +842,12 @@
    "migrationFrom": []
   },
   "summarize_points_to_polygon": {
-   "version": "0.5.0",
-   "released": "2026-11-25",
+   "version": "0.7.0",
+   "released": "2026-11-26",
    "changes": [
     {
-     "kind": "fixed",
-     "description": "The same as Clip polygons: its preview could not see a polygon layer an upstream step computed, so it waited for a run that had already happened. Both read `result.computed` now."
+     "kind": "minor",
+     "description": "Each polygon carries the value Map shades it by: the total of the chosen field, or the count of points where no field is chosen, named on the key as Total <field> or Points inside. Map had drawn Summarize's polygons one colour per unit, keyed by name. Show me how ends on the same classes, colours and ranges Map draws for its made-up output, and its labels are measured and kept inside the drawing, on the right of their point where they fit. Raised in pull request 6's review."
     }
    ],
    "breaking": false,
@@ -956,12 +944,12 @@
    "migrationFrom": []
   },
   "voronoi": {
-   "version": "0.5.0",
-   "released": "2026-11-25",
+   "version": "0.6.0",
+   "released": "2026-11-26",
    "changes": [
     {
      "kind": "changed",
-     "description": "Show me how builds the division up instead of showing it finished. The practitioner: \"the show me how it works does not really make sense from a step by step perspective.\" It did not: one step followed a single house to its nearest pump, and the next showed every dividing line and every cell at once, so the construction happened between two steps and was described rather than drawn. Now two pumps and the one line between them, then the third added and the lines meeting. Both drawn by `voronoi` itself, on two pumps and then three."
+     "description": "Show me how no longer shades the catchments from light to dark. The cells carry no value, so the ramp ranked what has no order, and the key said \"darker for a larger total\" of a total there is none of. They are now one fill, told apart by the lines between them."
     }
    ],
    "breaking": false,

@@ -32,9 +32,12 @@ Use **Hide node library**, at the left end of the bar of tabs, to collapse the n
 
 ## Choosing a colour theme
 
-**Theme** in the header offers **Match device**, **Light** and **Dark**. Matching
-the device is the default, so a first visit follows the operating system, and a
-later change there is picked up without reloading. An explicit choice overrides
+**Theme** in the header offers **Match device**, **Light**, **Dark** and **High
+contrast**. Matching the device is the default, so a first visit follows the
+operating system, and a later change there is picked up without reloading.
+**High contrast** is black on white, with strong outlines and a thick ring
+around the control that has focus. Match device uses it when the operating
+system asks for more contrast on a light screen; on a dark screen it stays Dark. An explicit choice overrides
 the device and is saved on this device; if the browser will not store it, the
 choice still applies for the session and the interface says so. On a narrow
 screen the label is hidden and the control stays.

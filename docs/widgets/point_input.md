@@ -150,6 +150,11 @@ events is something your labels and your weights have to say.
 
 ## History
 
+### 2026-11-26 · Its code out of app.ts (0.19.1)
+
+The Inspector, its sentence and the dialog naming a table's longitude and latitude columns moved into
+`src/point-data-ui.ts`. Nothing they show or do changed.
+
 ### 2026-11-23 · An Excel workbook (0.16.0)
 
 **Import Excel** reads a workbook's first sheet carrying a header row, exactly as a CSV is read, and proposes the

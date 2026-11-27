@@ -17,7 +17,9 @@ import {projectWidgets,projectWidgetsMarkup} from './project-widgets.js';
 import {appendInspector} from './append-ui.js';
 import {detectInspector} from './detect-ui.js';
 import {lineInspector,type LineKit} from './line-input-ui.js';
-import {chartSentence,openChartConfig,type ChartKit} from './chart-ui.js';
+import {chartInspector,type ChartKit} from './chart-ui.js';
+import {distanceInspector,type DistanceKit} from './distance-ui.js';
+import {pointInspector,type PointKit} from './point-data-ui.js';
 ﻿import widgetRegistry from '../widgets/registry.json';
 import {setupLabEvaluation} from './lab-evaluation-ui.js';
 import {canvasN3} from './canvas-semantics.js';
@@ -182,7 +184,6 @@ import {pointPort,markedPoints,layerOrigins} from './point-layers.js';
 import {twoByTwoMarkup} from './two-by-two-view.js';
 import {exposureColumnsOffered} from './two-by-two-mapping.js';
 import {repositoryFiles} from './project-repository.js';
-import type {BarOrder} from './results.js';
 import {ZipWriter,BlobWriter,TextReader} from '@zip.js/zip.js';
 import {designChecklist} from './study-design-checklist.js';
 import type {TwoByTwoResult} from './two-by-two.js';
@@ -1582,7 +1583,7 @@ function render(){
   if(!workflow.nodes.length)$('#workflow-state').textContent='Add Study area to begin';
   renderN3();
 }
-function describeNode(n:WorkflowNode,status?:string):NodeDescription{const d=describe(n,status);if(n.type==='isochrone'){d.subtitle=(n.params.thresholds?.length?n.params.thresholds.join(', '):n.params.minutes)+' min / '+n.params.speedMPerMin+' m per min';d.detail=n.params.direction+' / '+n.params.bufferM+' m corridor';}if(n.type==='mean_center'){d.subtitle='Unweighted center of point locations';d.detail='UTM zone '+n.params.zone+(n.params.hemisphere==='north'?'N':'S')+' → CRS84';}if(n.type==='compare_point_sets'){d.subtitle='Original + moved + two centers + pumps';d.detail=`UTM zone ${n.params.zone}${n.params.hemisphere==='north'?'N':'S'} · metres`;}if(n.type==='comparison_map'){d.subtitle='Side-by-side maps · shared extent';d.detail='Private evaluation view';}if(['map_output','table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){d.subtitle='Display polygon geometry and existing summaries';d.detail='Creates a Results tab';}if(n.type==='map_output'&&n.params.inputMode==='raster'){d.subtitle='Native raster cells and clipping boundary';d.detail='GeoTIFF download';}if(n.type==='table_input'){d.subtitle=n.params.keys.length?`${n.params.keys.length} key columns -> ${n.params.valueField}`:'Choose key and value columns';d.detail=n.params.data.rows.length?`${n.params.data.rowCount} rows`:'Import a long-format CSV';}if(n.type==='raster_input')d.detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Choose a GeoTIFF in Configure\u2026';if(n.type==='study_area'&&n.params.source==='drawn'){d.subtitle=n.params.geometry?`${n.params.selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometryVertices(n.params.geometry)} vertices`:'Choose a boundary on the map';d.detail=n.params.geometry?'GeoJSON → N3 · CRS84':'Not configured';}if(n.type==='measure_area'){d.subtitle='Study area → study area + area';d.detail=`${AREA_UNITS[n.params.unit].symbol} · spherical calculation`;}return d;}
+function describeNode(n:WorkflowNode,status?:string):NodeDescription{const d=describe(n,status);if(n.type==='isochrone'){d.subtitle=(n.params.thresholds?.length?n.params.thresholds.join(', '):n.params.minutes)+' min / '+n.params.speedMPerMin+' m per min';d.detail=n.params.direction+' / '+n.params.bufferM+' m corridor';}if(n.type==='mean_center'){d.subtitle='Unweighted center of point locations';d.detail='UTM zone '+n.params.zone+(n.params.hemisphere==='north'?'N':'S')+' → CRS84';}if(n.type==='compare_point_sets'){d.subtitle='Original + moved + two centers + pumps';d.detail=`UTM zone ${n.params.zone}${n.params.hemisphere==='north'?'N':'S'} · metres`;}if(n.type==='comparison_map'){d.subtitle='Side-by-side maps · shared extent';d.detail='Private evaluation view';}if(['map_output','table_output','chart_output'].includes(n.type)&&'inputMode' in n.params&&n.params.inputMode==='polygons'){d.subtitle='Display polygon geometry and existing summaries';d.detail='Creates a Results tab';}if(n.type==='map_output'&&n.params.inputMode==='raster'){d.subtitle='Native raster cells and clipping boundary';d.detail='GeoTIFF download';}if(n.type==='table_input'){d.subtitle=n.params.keys.length?`${n.params.keys.length} key columns -> ${n.params.valueField}`:'Choose key and value columns';d.detail=n.params.data.rows.length?`${n.params.data.rowCount} rows`:'Import a long-format CSV';}if(n.type==='raster_input')d.detail=n.params.asset?`${n.params.asset.metadata.width} x ${n.params.asset.metadata.height} retained cells`:'Choose a GeoTIFF in Configure\u2026';if(n.type==='study_area'&&n.params.source==='drawn'){d.subtitle=n.params.geometry?`${n.params.selectionMode==='bbox'?'Bounding box':'Polygon'} · ${geometryVertices(n.params.geometry)} vertices`:'Choose a boundary on the map';d.detail=n.params.geometry?'CRS84':'Not configured';}if(n.type==='measure_area'){d.subtitle='Study area → study area + area';d.detail=`${AREA_UNITS[n.params.unit].symbol} · spherical calculation`;}return d;}
 function runEvidenceText(){return result?result.receipts.map(receiptText).join('\n\n')+(result.provenanceN3?'\n\n# WORKFLOW, WIDGET AND REFERENCE PROVENANCE (recorded metadata, not rule premises)\n'+result.provenanceN3:''):'';}
 // A DECLARATION NODE STATES FACTS AND INFERS NOTHING, which is a third kind and not a rule with
 // an empty conclusion list. Added 2026-10-31 with `study_design`: without it a declaration fell
@@ -1866,141 +1867,6 @@ function editWideCell(nodeId:string,edit:CellEdit,frame:ReturnType<typeof wideFr
 }
 
 
-/** WHAT MEASURE DISTANCE MEASURES, in one sentence. */
-function distanceSentence(n:WorkflowNode<'measure_distance'>):string{
-  const from=(port:string)=>{const e=workflow.edges.find(x=>x.to===n.id&&x.port===port);const up=e&&workflow.nodes.find(m=>m.id===e.from);
-    return up?(up.params.label||TYPES[up.type].title):'';};
-  const narrowed=(n.params.candidateFilter??[]).filter(c=>c.field.trim())
-    .map(c=>`whose ${c.field} is ${c.comparator==='in'?'':'not '}one of ${c.values.join(', ')||'nothing yet'}`).join(' and ');
-  return `For each point of ${from('points')||'the points connected'}, the straight-line distance to the nearest of `
-    +`${from('candidates')||'the candidates connected'}${narrowed?`, among those ${narrowed}`:''}, in ${n.params.unit}.`;
-}
-
-/** WHAT MEASURE DISTANCE WOULD MEASURE, over the points and candidates connected (2026-11-25).
- *
- *  Its Preview restated `distanceSentence(draft)`, which is built from the node's params: it named the conditions
- *  being edited and never said what they kept. The whole point of a condition is how many candidates survive it, and
- *  that number was available only by running the workflow and reading the receipt.
- *
- *  This runs `nearestPlaces`, the function the run calls, so the eligible count moves as a condition is typed. The
- *  sentence stays above it, because it says what the step is FOR, which a column of numbers does not. */
-function distancePreview(node:WorkflowNode<'measure_distance'>,draft:WorkflowNode<'measure_distance'>['params']):string{
-  const said=`<p class="muted">${esc(distanceSentence({...node,params:draft}))}</p>`;
-  const points=layerOnPort(node.id,'points'),candidates=layerOnPort(node.id,'candidates');
-  if(!points||!candidates)return said+`<p class="muted">Connect `
-    +`${!points&&!candidates?'the points and the candidates':!points?'the points':'the candidates'}`
-    +', and what this step would measure is counted here.</p>';
-  const {rows,candidateCount,eligibleCount}=nearestPlaces(points,candidates,draft.unit,draft.candidateFilter);
-  const measured=(rows as {distance:number|null}[]).filter(r=>typeof r.distance==='number')
-    .map(r=>r.distance as number).sort((a:number,b:number)=>a-b);
-  const n=(v:number)=>v.toLocaleString('en-US');
-  const d=(v:number)=>`${v.toLocaleString('en-US',{maximumFractionDigits:v<10?2:0})} ${draft.unit==='metres'?'m':'km'}`;
-  // THE CONDITIONS' OWN NUMBER FIRST, because it is the setting on the screen. Stated even where nothing is
-  // narrowed, so adding the first condition changes a number already in view rather than making one appear.
-  return said
-    +`<p class="standard-result"><strong>${n(eligibleCount)}</strong> of ${n(candidateCount)} `
-    +`candidate${candidateCount===1?'':'s'} eligible`
-    +(eligibleCount===candidateCount?' (no condition narrows them)':'')+'.</p>'
-    +(measured.length
-      ?`<p class="standard-result">Nearest <strong>${esc(d(measured[0]!))}</strong>, `
-        +`median ${esc(d(measured[Math.floor(measured.length/2)]!))}, `
-        +`furthest ${esc(d(measured[measured.length-1]!))}, over ${n(measured.length)} point`
-        +`${measured.length===1?'':'s'}.</p>`
-      :'')
-    // A POINT WITH NO DISTANCE IS THE FINDING: no coordinates of its own, or no eligible candidate left to measure
-    // to -- which a condition can cause, and which a table of distances shows only as a gap.
-    +(rows.length>measured.length
-      ?`<p class="profile-flag">${n(rows.length-measured.length)} of ${n(rows.length)} points get no distance: `
-        +`${esc(eligibleCount?'no coordinates of their own':'no candidate is eligible')}.</p>`
-      :'');
-}
-
-/** MEASURE DISTANCE'S CONFIGURATION DIALOG (experiment 186): the unit, and the conditions a candidate must meet, on a
- *  draft written by Apply. A condition names the candidate's own attribute and the values to match. */
-function openDistanceConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'measure_distance');
-  type Draft=WorkflowNode<'measure_distance'>['params'];
-  openConfigDialog<Draft>({
-    id:'distance-config',widget:'Measure distance',step:node.params.label||TYPES.measure_distance.title,draft:structuredClone(node.params),
-    sections:draft=>{
-      const conditions=draft.candidateFilter??[];
-      const settings=`<div class="field"><label class="field-label" for="distance-unit">Distances in</label><select id="distance-unit">`
-        +(['kilometres','metres'] as const).map(u=>`<option value="${u}"${draft.unit===u?' selected':''}>${u}</option>`).join('')+'</select></div>'
-        +'<h4 class="field-label">Eligible candidates</h4>'
-        +(conditions.length?'<p class="description">An attribute of the candidates, then the values to match, separated by commas. A candidate without that attribute does not match.</p>'
-          :'<p class="description">Every candidate is eligible. Add a condition to narrow the search by the candidates\u2019 own attributes.</p>')
-        +conditions.map((c,i)=>`<div class="field"><label class="field-label" for="filter-field-${i}">Condition ${i+1}: attribute</label>`
-          +`<input id="filter-field-${i}" data-filter-field="${i}" value="${esc(c.field)}">`
-          +`<label class="field-label" for="filter-comparator-${i}">Keep candidates whose value</label><select id="filter-comparator-${i}" data-filter-comparator="${i}">`
-          +`<option value="in"${c.comparator==='in'?' selected':''}>is one of</option><option value="notIn"${c.comparator==='notIn'?' selected':''}>is not one of</option></select>`
-          +`<label class="field-label" for="filter-values-${i}">Values, separated by commas</label><input id="filter-values-${i}" data-filter-values="${i}" value="${esc(c.values.map(String).join(', '))}">`
-          +`<button type="button" class="button small" data-filter-remove="${i}">Remove condition</button></div>`).join('')
-        +'<button type="button" id="filter-add" class="button small">Add a condition</button>';
-      return {settings,preview:distancePreview(node,draft)};
-    },
-    wire:(root,draft,redraw)=>{
-      const list=()=>draft.candidateFilter??(draft.candidateFilter=[]);
-      root.querySelector<HTMLSelectElement>('#distance-unit')?.addEventListener('change',e=>{draft.unit=(e.target as HTMLSelectElement).value as Draft['unit'];redraw();});
-      root.querySelector('#filter-add')?.addEventListener('click',()=>{list().push({field:'',comparator:'in',values:[]});redraw();});
-      root.querySelectorAll<HTMLButtonElement>('[data-filter-remove]').forEach(b=>b.addEventListener('click',()=>{
-        list().splice(Number(b.dataset.filterRemove),1);if(!list().length)delete draft.candidateFilter;redraw();}));
-      root.querySelectorAll<HTMLInputElement>('[data-filter-field]').forEach(el=>el.addEventListener('change',()=>{list()[Number(el.dataset.filterField)]!.field=el.value.trim();redraw();}));
-      root.querySelectorAll<HTMLSelectElement>('[data-filter-comparator]').forEach(el=>el.addEventListener('change',()=>{list()[Number(el.dataset.filterComparator)]!.comparator=el.value as 'in'|'notIn';redraw();}));
-      root.querySelectorAll<HTMLInputElement>('[data-filter-values]').forEach(el=>el.addEventListener('change',()=>{
-        list()[Number(el.dataset.filterValues)]!.values=el.value.split(',').map(v=>v.trim()).filter(Boolean);redraw();}));
-    },
-    apply:draft=>{change(w=>{getNode(w,nodeId,'measure_distance').params=draft;});},
-  },esc);
-}
-
-/** WHAT POINT DATA HOLDS, in one sentence. */
-function pointSentence(n:WorkflowNode<'point_input'>):string{
-  const edge=workflow.edges.find(e=>e.to===n.id&&e.port==='records');
-  if(edge){const m=n.params.fromTable;
-    return m?.x&&m?.y?`One point per row of ${portSourceName(workflow,n.id,'records','the table')}, at ${m.x} (longitude) and ${m.y} (latitude), in WGS 84 degrees.`
-      :`Reads points from ${portSourceName(workflow,n.id,'records','the table')}. Name its longitude and latitude columns in Configure\u2026`;}
-  const count=n.params.data.features.length;
-  return count?`${count} points, ${n.params.sourceInfo?.format||'entered here'}.`
-    :'No points yet. Generate, import or place them in Configure\u2026';
-}
-
-/** POINTS FROM A TABLE, CONFIGURED (experiments 178, 186, 200): x (longitude) and y (latitude), named and never guessed,
- *  as geopandas' points_from_xy reads them; an id and a label, optional. The columns are the table's as last run, or as
- *  declared upstream. */
-function openPointsFromTableConfig(nodeId:string){
-  const node=getNode(workflow,nodeId,'point_input');
-  const edge=workflow.edges.find(e=>e.to===nodeId&&e.port==='records');
-  const ran=edge?result?.tables?.[edge.from] as import('./data-table.js').DataTable|undefined:undefined;
-  const declared=Object.keys(upstreamKeyValues(node)??{});
-  const columns=[...new Set([...(ran?.keys??[]),...(ran?.valueField?[ran.valueField]:[]),...declared])];
-  type Draft={x:string;y:string;id?:string;name?:string};
-  // PROPOSED BY NAME, AS THE CSV IMPORT PROPOSES (2026-11-23): shown in the selects, where it can be seen and changed.
-  // The mapping a run reads is still the one stored here, so `tablePoints` names its columns and never guesses.
-  const proposed:Draft={x:columnFor('longitude',columns)??'',y:columnFor('latitude',columns)??'',
-    ...(columnFor('id',columns)?{id:columnFor('id',columns)}:{}),...(columnFor('name',columns)?{name:columnFor('name',columns)}:{})};
-  openConfigDialog<Draft>({
-    id:'points-config',widget:'Point data',step:node.params.label||TYPES.point_input.title,
-    draft:{...proposed,...(node.params.fromTable??{})},
-    sections:draft=>{
-      const pick=(id:string,key:keyof Draft,label:string,optional:boolean)=>
-        `<div class="field"><label class="field-label" for="${id}">${label}</label>`
-        +`<select id="${id}" data-from-table="${key}"><option value="">${optional?'Generate automatically':'Choose a column\u2026'}</option>`
-        +columns.map(c=>`<option value="${esc(c)}" ${draft[key]===c?'selected':''}>${esc(c)}</option>`).join('')+`</select></div>`;
-      const settings=(columns.length?'':'<p class="notice">Run the workflow once to list the table\u2019s columns.</p>')
-        +pick('from-table-x','x','x (longitude)',false)+pick('from-table-y','y','y (latitude)',false)
-        +pick('from-table-id','id','Record ID',true)+pick('from-table-name','name','Label',true);
-      return {settings,preview:'<p class="muted">One point per row, in WGS 84 degrees, every column with it. A row without a usable '
-        +'position is kept and counted, never dropped.</p>'};
-    },
-    wire:(root,draft,redraw)=>{
-      root.querySelectorAll<HTMLSelectElement>('[data-from-table]').forEach(el=>el.addEventListener('change',()=>{
-        const key=el.dataset.fromTable as keyof Draft;
-        if(el.value)draft[key]=el.value;else if(key==='id'||key==='name')delete draft[key];else draft[key]='';
-        redraw();}));
-    },
-    apply:draft=>{change(w=>{getNode(w,nodeId,'point_input').params.fromTable={...draft};});},
-  },esc);
-}
 
 
 /** THE POLYGON LAYER, CONFIGURED (experiment 186, 2026-11-11). Where the features come from, the study area to read
@@ -2129,7 +1995,7 @@ function renderLibrary(search=''){
     const didAdd=change(w=>{const source=['measure_area','raster_input'].includes(type)?w.nodes.find(n=>n.type==='study_area'):type==='clip_raster'?w.nodes.find(n=>n.type==='raster_input'):null;const added={...required(sample),id,x:source?source.x+310:180+(w.nodes.length%4)*80,y:source?source.y:90+(w.nodes.length%3)*80};if(added.type==='output')added.params={view:'bars',label:`Bar chart ${w.nodes.filter(n=>n.type==='output').length+1}`};w.nodes.push(added);if(added.type==='raster_input'||added.type==='clip_raster'){const area=w.nodes.find(n=>n.type==='study_area');if(area)setConnection(w,area.id,id,'area');}selected=id;});if(didAdd===false)return;flow?.fit();toast(type==='study_area'?'Study area added. Select its boundary in the Inspector.':`${TYPES[type].title} added. Connect its ports to the workflow.`);
   });
 }
-function title(n:WorkflowNode){const t=TYPES[n.type];return `<div class="inspector-title ${t.color}"><span class="node-icon">${t.icon}</span><div><h2>${esc(n.params.label||t.title)}</h2><p>${esc(t.group)} / ${esc(n.id)}</p></div></div>`;}
+function title(n:WorkflowNode){const t=TYPES[n.type];return `<div class="inspector-title ${t.color}"><span class="node-icon">${t.icon}</span><div><h2>${esc(n.params.label||t.title)}</h2><p>${esc(t.group)}</p></div></div>`;}
 /** How a practitioner is looking at one input's records, per node and per session.
  *
  *  Deliberately NOT part of the workflow. Which view somebody prefers and how many rows they
@@ -2151,17 +2017,6 @@ const ROW_CHOICES=[10,25,50,200];
  *  field a rule can read, and the two line up with the bindings underneath. As JSON because a
  *  rule reads what is actually there -- a null, a number written as text, a key nobody expected
  *  -- and a table quietly tidies all three away. */
-/** What Point data's columns mean, counted, and the buttons to describe them and view the dictionary (experiment 211). */
-function pointMeaning(p:WorkflowNode<'point_input'>['params']):string{
-  const columns=[...new Set((p.data.features??[]).flatMap(f=>Object.keys(f.properties??{})))];
-  if(!columns.length)return '';
-  const described=columns.filter(c=>isDescribed(p.columns?.[c])).length,proposed=columns.filter(c=>p.columns?.[c]&&!p.columns[c]!.confirmed).length;
-  return `<p class="standard-state" data-table-meaning>What the columns mean: ${described} of ${columns.length} described`
-    +(proposed?`, ${proposed} proposed and not yet accepted`:'')+'.</p>'
-    +(p.dictionary?`<p class="standard-state" data-table-dictionary>Data dictionary: ${esc(p.dictionary.name)}, ${p.dictionary.sheets[0]?.rows.length??0} variables.</p>`:'')
-    +'<div class="inspector-actions"><button id="describe-columns" class="button">Describe columns\u2026</button>'
-    +(p.dictionary?'<button id="view-dictionary" class="button">View the data dictionary</button>':'')+'</div>';
-}
 function recordsPanel(nodeId:string,data:{features:{id?:string|number;properties?:Record<string,unknown>;geometry?:unknown}[]}){
   const view=dataViews.get(nodeId)??{mode:'table' as const,rows:10};
   const features=data.features??[];
@@ -2325,18 +2180,7 @@ function renderInspector(){
   }else if(n.type==='map_output'){
     content+=mapInspector.markup(n,mapKit());
   }else if(n.type==='chart_output'){
-    // THE STANDARD INSPECTOR (experiment 186), touched 2026-11-09 for the transmission tree: the name, which is the
-    // Results tab's, and its place in the write-up; its inputs; one sentence and Configure…, which holds every setting
-    // the three old panels held, under the same ids; and what the last run drew.
-    content+=standardSection('Name',labelForm('chart-label','Results tab name',n.params.label||'Chart')
-      +writeUpSelect(n));
-    content+=standardSection('Inputs',standardInputs(n,{decisions:'Reasoning result'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(chartSentence(chartKit(),n))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const drawn=result?.outputs.find(o=>o.nodeId===n.id);
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :drawn?`Shown in Results, under "${n.params.label||'Chart'}".`:'Not run yet.')}</p>`);
+    content+=chartInspector.markup(n,chartKit());
   }else if(n.type==='table_output'){
     content+=tableOutputInspector.markup(n,tableOutputKit());
   }else if(n.type==='polygon_input'){
@@ -2384,36 +2228,11 @@ function renderInspector(){
   }else if(n.type==='find_satellite_products'){
     content+=findProductsInspector.markup(n,inspectorKit());
   }else if(n.type==='point_input'){
-    // POINT DATA ON THE STANDARD INSPECTOR (experiments 186, 200): name, inputs, one sentence and Configure…, and the
-    // records it holds. Configure… opens the Input data editor for points held here, or, for points read from a table,
-    // the dialog where the longitude and latitude columns are named. The ids of the controls are kept, so a manual
-    // that named them still finds them.
-    if(n.sourceMigration)content+=`<p class="notice">${n.sourceMigration.fromType==='output'
-      ?`Replaced the retired <strong>Visual output</strong> widget; name and connections retained.`
-      :`Now uses the shared Input data editor; label, records and connections retained.`}</p>`;
-    content+=standardSection('Name',labelForm('source-label','Name',n.params.label||'Point data'));
-    content+=standardSection('Inputs',standardInputs(n,{records:'A table with longitude and latitude columns, optional',area:'The area to generate points in, optional'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(pointSentence(n))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const fromTable=workflow.edges.some(e=>e.to===n.id&&e.port==='records');
-    content+=standardSection('Result',fromTable
-      ?'<p class="standard-result">Run the workflow to place the table\u2019s rows. A row with no usable position is kept and counted, never dropped.</p>'
-      :`<p class="standard-result">${n.params.data.features.length} point records · ${n.params.data.features.filter(f=>!f.geometry).length} without a location</p>`
-        +pointMeaning(n.params)+recordsPanel(n.id,n.params.data));
+    content+=pointInspector.markup(n,pointKit());
   }else if(n.type==='apply_ruleset'){
     content+=rulesetInspector.markup(n,rulesetKit());
   }else if(n.type==='measure_distance'){
-    // THE STANDARD INSPECTOR (experiment 186). Touched when it replaced Assign projection site (experiment 197): its
-    // result is now read as a table by Relate, Select rows and Table. Touched widgets move to the standard, always.
-    content+=standardSection('Name',`<div class="field"><label class="field-label" for="distance-label">Name</label><input id="distance-label" maxlength="60" value="${esc(n.params.label||TYPES.measure_distance.title)}"></div>`);
-    content+=standardSection('Inputs',standardInputs(n,{points:'Points to measure from',candidates:'Candidates, the nearest of which is found'}));
-    content+=standardSection('Settings',`<p class="standard-sentence">${esc(distanceSentence(n))}</p>`
-      +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure\u2026</button></div>');
-    const measured=result?.tables?.[n.id];
-    const why=result?.unfinished?.find(u=>u.nodeId===n.id)?.message;
-    content+=standardSection('Result',`<p class="standard-result${why?' standard-result-warning':''}">${esc(why?`The last run could not compute this step: ${why}`
-      :measured?`${measured.rowCount.toLocaleString()} point${measured.rowCount===1?'':'s'} measured; ${measured.missingValueCount.toLocaleString()} with no nearest candidate. A table step after it reads point_id, nearest_id and each candidate's attributes as nearest_<attribute>.`:'Not run yet.')}</p>`);
-
+    content+=distanceInspector.markup(n,distanceKit());
   }
   if(['study_area','point_input','measure_area','map_output','table_output'].includes(n.type))content+='<div class="source-card" data-spatial-reference><span class="inspector-section">Coordinate reference system</span><h3>WGS84 · EPSG:4326</h3><p>Stored coordinates: longitude, latitude in degrees (OGC:CRS84). A source reads degrees or a UTM zone and converts on import; Table output can show points in metres, in a UTM zone.</p></div>';
   // A map can always take another point layer: there is no mode in which it cannot draw points.
@@ -2558,20 +2377,6 @@ function renderInspector(){
       if(slot)slot.append(block);else if(first)first.after(block);else anchor.prepend(block);
     }
   }
-  optionalElement('#chart-log-scale')?.addEventListener('change',event=>{
-    const on=(event.target as HTMLInputElement).checked,id=selected;if(!id)return;
-    change(w=>{const node=getNode(w,id,'chart_output');if(on)delete node.params.ratioScale;else node.params.ratioScale='linear';},{spatial:false});
-  });
-  optionalElement('#chart-reference-line')?.addEventListener('change',event=>{
-    const on=(event.target as HTMLInputElement).checked,id=selected;if(!id)return;
-    change(w=>{const node=getNode(w,id,'chart_output');if(on)delete node.params.referenceLine;else node.params.referenceLine=false;},{spatial:false});
-  });
-  optionalElement('#chart-bar-order')?.addEventListener('change',event=>{
-    const order=(event.target as HTMLSelectElement).value as BarOrder;
-    const id=selected;
-    if(!id)return;
-    change(w=>{getNode(w,id,'chart_output').params.barOrder=order;},{spatial:false});
-  });
   if(n.type==='deduplicate_points')dedupInspector.wire(n,dedupKit(),document);
   if(Object.hasOwn(OUTBREAK_STEP_INSPECTORS,n.type))(OUTBREAK_STEP_INSPECTORS[n.type as keyof typeof OUTBREAK_STEP_INSPECTORS] as OwnInspector<NodeType>).wire(n as never,outbreakKit(),document);
   if(n.type==='search_satellite_catalog')searchCatalogInspector.wire(n,inspectorKit(),document);
@@ -2683,7 +2488,7 @@ function renderInspector(){
   if(n.type==='sample_raster')sampleInspector.wire(n,sampleKit(),document);
   if(n.type==='travel_over_ground')travelInspector.wire(n,stepKit(),document);
   if(n.type==='map_terms_to_vocabulary')vocabularyInspector.wire(n,vocabularyKit(),document);
-  if(n.type==='chart_output')optionalElement('#configure-step')?.addEventListener('click',()=>openChartConfig(chartKit(),n.id));
+  if(n.type==='chart_output')chartInspector.wire(n,chartKit(),document);
   if(n.type==='polygon_input')polygonInspector.wire(n,polygonKit(),document);
   if(n.type==='map_image_input')mapImageStep.wire(n,mapImageKit(),document);
   // RELATE'S CONFIGURATION DIALOG (experiment 186). Given the columns each table declares and, where they resolve, the
@@ -2694,28 +2499,6 @@ function renderInspector(){
   optionalElement('#remove-point-input')?.addEventListener('click',()=>change(w=>{const node=required(w.nodes.find(x=>x.id===n.id)) as WorkflowNode<'map_output'|'table_output'>,count=node.params.pointInputCount??1;if(count>1){w.edges=w.edges.filter(e=>!(e.to===n.id&&e.port===pointPort(count-1)));node.params.pointInputCount=count-1;}}));
   document.querySelectorAll<HTMLInputElement>('#map-label,#table-label').forEach(el=>el.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title)));
   if(n.type==='compare_point_sets')compareInspector.wire(n,compareKit(),document);
-  optionalElement('#chart-panels-by')?.addEventListener('change',e=>change(w=>{
-    const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
-    if(raw===''){delete target.params.panelsBy;delete target.params.panelMarks;delete target.params.shade;}
-    else target.params.panelsBy=raw;
-  }));
-  document.querySelectorAll<HTMLSelectElement>('[data-panel-mark]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const target=getNode(w,n.id,'chart_output'),marks={...target.params.panelMarks};
-    if(el.value)marks[required(el.dataset.panelMark)]=el.value as 'bar'|'line';else delete marks[required(el.dataset.panelMark)];
-    if(Object.keys(marks).length)target.params.panelMarks=marks;else delete target.params.panelMarks;
-  })));
-  document.querySelectorAll<HTMLInputElement>('[data-chart-shade]').forEach(el=>el.addEventListener('change',()=>change(w=>{
-    const target=getNode(w,n.id,'chart_output'),shade={from:'',to:'',...target.params.shade};
-    shade[el.dataset.chartShade as 'from'|'to']=el.value.trim();
-    if(shade.from||shade.to)target.params.shade=shade;else delete target.params.shade;
-  })));
-  optionalElement('#chart-key-column')?.addEventListener('change',e=>change(w=>{
-    const target=getNode(w,n.id,'chart_output'),raw=control(e).value.trim();
-    if(raw==='')delete target.params.keyColumn;else target.params.keyColumn=raw;
-  }));
-  optionalElement('#series-orientation')?.addEventListener('change',e=>change(w=>{
-    getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical';
-  },{spatial:false}));
   optionalElement('#polygon-label')?.addEventListener('change',event=>change(w=>{
     getNode(w,n.id,'polygon_input').params.label=(event.target as HTMLInputElement).value;}));
   // WHICH PROPERTY NAMES A LAYER'S MARKS. Stored per source node, beside the pin class.
@@ -2877,9 +2660,7 @@ function renderInspector(){
   if(n.type==='raster_input'||n.type==='clip_raster')rasterInspector.wire(n as never,rasterKit(),document);
   if(n.type==='study_area')studyAreaInspector.wire(n,studyAreaKit(),document);
   if(n.type==='network_input')networkInspector.wire(n,networkKit(),document);
-  if(n.type==='point_input'&&workflow.edges.some(e=>e.to===n.id&&e.port==='records'))optionalElement('#configure-step')?.addEventListener('click',()=>openPointsFromTableConfig(n.id));
-  else if(n.type==='point_input')optionalElement('#configure-step')?.addEventListener('click',()=>openInputDataEditor(getNode(workflow,n.id,'point_input'),generationAreas(n.id),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,n.id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;},
-    {read:sha=>readNoteImagePayload(cachedPayload(noteImageKey(sha))),keep:(sha,payload)=>keepDataset(noteImageKey(sha),payload)}));
+  if(n.type==='point_input')pointInspector.wire(n,pointKit(),document);
   document.querySelectorAll<HTMLSelectElement>('[data-connect-port]').forEach(el=>el.onchange=()=>{const port=el.dataset.connectPort!;change(w=>setConnection(w,el.value||null,n.id,port));});
   // Reading, not editing: these redraw the Inspector and touch nothing that is saved, so they
   // go through renderInspector rather than change().
@@ -2918,11 +2699,7 @@ function renderInspector(){
       renderInspector();
     }));
   if(n.type==='apply_ruleset')rulesetInspector.wire(n,rulesetKit(),document);
-  if(n.type==='measure_distance'){
-    optionalElement('#configure-step')?.addEventListener('click',()=>openDistanceConfig(n.id));
-    optionalElement('#distance-label')?.addEventListener('change',e=>change(w=>{const v=control(e).value.trim();
-      const p=getNode(w,n.id,'measure_distance').params;if(v&&v!==TYPES.measure_distance.title)p.label=v;else delete p.label;}));
-  }
+  if(n.type==='measure_distance')distanceInspector.wire(n,distanceKit(),document);
   optionalElement('#source-label')?.addEventListener('change',e=>change(w=>required(w.nodes.find(x=>x.id===n.id)).params.label=control(e).value.trim()||TYPES[n.type].title));
   optionalElement('#replace-data')?.addEventListener('click',()=>{importNode=n.id;$('#geojson-file').click();});
   // Every label form, one handler. Saving on change stays -- nothing typed is lost by not
@@ -2942,16 +2719,6 @@ function renderInspector(){
       if(label)change(w=>{(required(w.nodes.find(x=>x.id===n.id)).params as unknown as Record<string,unknown>).label=label;});
     });
   });
-  // Switching back to the classic bars drops to a mark that renderer can draw, and touches nothing
-  // else. It used to force orientation to horizontal as well, which was already wrong for a case
-  // series -- it left the shipped Snow curve with no columns -- and became wrong for every chart
-  // once vertical was made the default: a reset that overrides the default is not a reset.
-  optionalElement('#chart-renderer')?.addEventListener('change',e=>change(w=>{const params=getNode(w,n.id,'chart_output').params;params.renderer=control(e).value as 'html'|'vega-lite';if(params.renderer==='html')params.mark='bar';}));
-  optionalElement('#chart-mark')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.mark=control(e).value as 'bar'|'point'|'line'));
-  optionalElement('#chart-orientation')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.orientation=control(e).value as 'horizontal'|'vertical'));
-  for(const [selector,key] of [['#chart-title','chartTitle'],['#chart-subtitle','subtitle'],['#chart-x-axis','xAxisTitle'],['#chart-y-axis','yAxisTitle'],['#chart-source-note','sourceNote']] as const)
-    document.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector)?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'chart_output').params[key]=control(e).value.trim();}));
-  document.querySelector<HTMLInputElement>('#chart-legend')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'chart_output').params.colorByCategory=(e.currentTarget as HTMLInputElement).checked));
   for(const [selector,key] of [['#map-title','mapTitle'],['#map-subtitle','mapSubtitle'],['#map-source-note','mapSourceNote']] as const)
     document.querySelector<HTMLInputElement|HTMLTextAreaElement>(selector)?.addEventListener('change',e=>change(w=>{getNode(w,n.id,'map_output').params[key]=control(e).value.trim();}));
   document.querySelector<HTMLInputElement>('#map-legend-toggle')?.addEventListener('change',e=>change(w=>getNode(w,n.id,'map_output').params.showLegend=(e.currentTarget as HTMLInputElement).checked));
@@ -4320,6 +4087,22 @@ function chartKit():ChartKit{
   return {...stepKit(),result:()=>result??undefined,tableKeyColumns:node=>[...tableKeyColumns(node)],
     upstreamKeyValues:(node,seen,port)=>upstreamKeyValues(node,seen??new Set(),port),writeUpSelect:n=>writeUpSelect(n as never),
     labelForm:(id,label,value)=>labelForm(id,label,value),standardInputs:(n,labels)=>standardInputs(n,labels)};
+}
+/** MEASURE DISTANCE'S KIT (distance-ui.ts): the step kit, with the points on its ports and the table its last run made. */
+function distanceKit():DistanceKit{
+  return {...stepKit(),layerOn:(id,port)=>layerOnPort(id,port),made:id=>result?.tables?.[id]};
+}
+/** POINT DATA'S KIT (point-data-ui.ts): the step kit, with the columns of the table it reads, the records panel, and the
+ *  Input data editor for points held on the step. */
+function pointKit():PointKit{
+  return {...stepKit(),
+    tableColumns:id=>{const node=getNode(workflow,id,'point_input'),edge=workflow.edges.find(e=>e.to===id&&e.port==='records');
+      const ran=edge?result?.tables?.[edge.from] as import('./data-table.js').DataTable|undefined:undefined;
+      const declared=Object.keys(upstreamKeyValues(node)??{});
+      return [...new Set([...(ran?.keys??[]),...(ran?.valueField?[ran.valueField]:[]),...declared])];},
+    records:(id,data)=>recordsPanel(id,data),
+    openEditor:id=>openInputDataEditor(getNode(workflow,id,'point_input'),generationAreas(id),data=>validateGeoJSON(data,{attributes:true}),params=>{const persisted=change(w=>getNode(w,id,'point_input').params=params,{requirePersistence:true});if(persisted)toast('Input edits saved on this device. Rerun the workflow to update results.');return persisted;},
+      {read:sha=>readNoteImagePayload(cachedPayload(noteImageKey(sha))),keep:(sha,payload)=>keepDataset(noteImageKey(sha),payload)})};
 }
 /** THE OUTBREAK STEPS' KIT (outbreak-steps-ui.ts): the step kit, with the columns of the cases arriving, the values a
  *  table's keys hold, and the study design's checklist of what the workflow has declared. */

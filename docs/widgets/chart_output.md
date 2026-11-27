@@ -247,6 +247,10 @@ it.
 
 ## History
 
+### 2026-11-26 · Its code out of app.ts (0.25.3)
+
+The Inspector moved into `src/chart-ui.ts`, beside Configure…. Nothing it shows or does changed.
+
 ### 2026-11-23 · No trailing zeros on a panel's axis (0.25.2)
 
 A panel whose values were all 0 labelled its axis 0.000000. It now reads 0.

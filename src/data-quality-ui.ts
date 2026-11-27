@@ -286,7 +286,7 @@ export function openDataQuality(first:QualityView,esc:Escape):void{
   };
   const render=()=>{
     dialog.innerHTML=`<div class="manual-head"><h2 id="data-quality-title">${esc(view.title)}</h2>`
-      +`<div><button class="button primary" id="data-quality-close">Close</button></div></div>`
+      +`<div><button class="button" id="data-quality-close">Close</button></div></div>`
       +`<div class="result-switch quality-tabs" role="tablist">`
       +([...(view.findings?.length?[['findings',`Findings (${view.findings.length})`]] as const:[]),
         ['columns','Columns'],['shapes','Shapes and gaps'],
@@ -319,7 +319,7 @@ export function openDataQuality(first:QualityView,esc:Escape):void{
          +`holds is exactly what was imported, so removing one restores the original values.</p>`
          +`<ul>`+view.repairs!.map((r,index)=>`<li><code>${esc(r.column)}</code> read as ${esc(r.to)}s — `
            +`${r.cast} cast${r.unreadable.length?`, ${r.unreadable.length} left unreadable`:''}`
-           +` <button class="button small" data-remove-repair="${index}">Remove</button></li>`).join('')
+           +` <button class="button small danger" data-remove-repair="${index}">Remove</button></li>`).join('')
          +`</ul></section>`
         :'')
       +profiles.map(p=>`<section class="quality-column">`

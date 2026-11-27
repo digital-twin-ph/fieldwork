@@ -41,7 +41,7 @@ test('Table draws what is connected and one port to add another, on the canvas a
     edges:[{id:'e-table',from:'deaths',to:'table',port:'table'}]});
   await page.locator('[data-view="workflow"]').click();
   const node=page.locator('.react-flow__node[data-id="table"]');
-  await expect(node.locator('.node-port-row')).toHaveText(['Tabular data','+ Add an input']);
+  await expect(node.locator('.node-port-row')).toHaveText(['Deaths by company','+ Add an input']);
   await node.click();
   const inspector=page.locator('#inspector-content');
   await expect(inspector.locator('select[data-map-port]')).toHaveCount(1);
@@ -49,7 +49,88 @@ test('Table draws what is connected and one port to add another, on the canvas a
   await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).edges
     .filter(e=>e.to==='table').map(e=>`${e.from}:${e.port}`).sort())).toEqual(['deaths:table','pumps:points']);
   // Both results on this canvas are connected, so there is nothing left to add, and the add port goes, as Map's does.
-  await expect(node.locator('.node-port-row')).toHaveText(['Points','Tabular data']);
+  await expect(node.locator('.node-port-row')).toHaveText(['Deaths by company','Pumps']);
   await expect(inspector.locator('#table-add-input')).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
+
+/** THE TABLE ITSELF IN ITS DIALOG (the practitioner, 2026-11-27: "Table output config dialog should have a preview of the
+ *  table"; then "limited to 10-20 rows (option to display, for review purpose)"): ten rows unless more are asked for,
+ *  the coordinates as the dialog sets them, and the Presentation section's title and notes, before Apply. */
+test('Configure… previews ten rows, more on request, as the coordinates and the presentation set them',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/?example=snow-geoprivacy');
+  // AFTER THE EXAMPLE'S OWN RUN: an edit applied while a run is in progress is dropped (TODO, found here 2026-11-27).
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="before-table"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#table-config');
+  await expect(dialog.locator('thead th')).toHaveText(['Record','Longitude (°)','Latitude (°)','DEATHS','FID']);
+  await expect(dialog).toContainText('250 rows, the first 10 shown.');
+  await expect(dialog.locator('tbody tr')).toHaveCount(10);
+  await dialog.locator('#preview-rows').selectOption('all');
+  await expect(dialog.locator('tbody tr')).toHaveCount(250);
+  await dialog.locator('#preview-rows').selectOption('20');
+  await expect(dialog.locator('tbody tr')).toHaveCount(20);
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(1)).toHaveText('-0.137930');
+  // Numbers right-aligned under right-aligned headings.
+  await expect(dialog.locator('thead th').nth(3)).toHaveCSS('text-align','right');
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(3)).toHaveCSS('text-align','right');
+  await dialog.locator('#output-coordinates').selectOption('metres');
+  await expect(dialog.locator('thead th')).toHaveText(['Record','Easting (m)','Northing (m)','DEATHS','FID']);
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(1)).toHaveText('698587.2');
+  await dialog.locator('#output-coordinates').selectOption('degrees');
+  // THE PRESENTATION, shown in the preview and kept by Apply: a title above, notes below.
+  await dialog.locator('#present-caption').fill('Deaths by house, Soho, 1854');await dialog.locator('#present-caption').press('Tab');
+  await dialog.locator('#present-notes').fill('One row per house.');await dialog.locator('#present-notes').press('Tab');
+  await dialog.locator('#present-decimals').selectOption('1');
+  await expect(dialog.locator('.table-caption')).toHaveText('Deaths by house, Soho, 1854');
+  await expect(dialog.locator('.table-notes')).toHaveText('One row per house.');
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(3)).toHaveText('3.0');
+  await dialog.locator('#config-apply').click();
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes
+    .find(n=>n.id==='before-table').params.presentation)).toEqual({caption:'Deaths by house, Soho, 1854',notes:'One row per house.',decimals:1});
+  expect(errors).toEqual([]);
+});
+
+/** A POLYGON TABLE PREVIEWS ITS AREAS (the practitioner, 2026-11-27, on Snow's Catchment counts and deaths: "Table output
+ *  still has no preview"): the rows the last run showed, read wide as Results reads them. */
+test('a polygon table previews its areas, wide, as Results shows them',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/?example=snow-voronoi');
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="table"]').click();
+  await page.locator('#inspector-content button',{hasText:'Configure'}).click();
+  const dialog=page.locator('#table-config');
+  await expect(dialog.locator('tbody tr')).toHaveCount(8);
+  await expect(dialog.locator('thead th').first()).toHaveText('id');
+  await expect(dialog.locator('thead th').nth(1)).toHaveText('locations');
+  await expect(dialog.locator('thead')).toContainText('Broadwick Street');
+  // Each area named in a row header, as Results names it; its locations the first value.
+  await expect(dialog.locator('tbody tr').first().locator('th')).toHaveText('pump-250');
+  await expect(dialog.locator('tbody tr').first().locator('td').first()).toHaveText('171');
+  expect(errors).toEqual([]);
+});
+
+/** THE PREVIEW SHOWS THE DRAFT'S TOTALS (PR 10's review): a 2x2 holding 1, 2, 3 and 4, and "Show totals" ticked, previews
+ *  the row and column totals and the grand total of 10 before Apply, drawn by Results' own renderer. */
+test('ticking Show totals adds the totals to the preview before Apply',async({page})=>{
+  const errors=collectPageErrors(page);
+  const rows=[['exposed','ill',1],['exposed','well',2],['unexposed','ill',3],['unexposed','well',4]]
+    .map(([exposure,outcome,value])=>({key:{exposure,outcome},value}));
+  const data={kind:'data-table',keys:['exposure','outcome'],valueField:'count',rows,rowCount:4,missingValueCount:0};
+  await seedWorkflow(page,{nodes:[{id:'cells',type:'table_input',x:20,y:40,params:{label:'Four cells',keys:data.keys,valueField:'count',data}},
+    {id:'table',type:'table_output',x:400,y:40,params:{label:'The 2x2'}}],
+    edges:[{id:'e-table',from:'cells',to:'table',port:'table'}]});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="table"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#table-config');
+  await expect(dialog.locator('table')).not.toContainText('Total');
+  await dialog.locator('#output-totals').check();
+  await expect(dialog.locator('table')).toContainText('Total');
+  await expect(dialog.locator('table tfoot')).toContainText('10');
   expect(errors).toEqual([]);
 });

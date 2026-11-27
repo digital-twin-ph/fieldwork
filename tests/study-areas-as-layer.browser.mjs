@@ -74,8 +74,9 @@ test('study areas dropped on a polygon layer each take an input of their own',as
   // THE TOAST DISMISSED BEFORE EVERY DRAG (0.165.0 CI, WebKit): loading slowly, the canvas raised "Nothing here displays a
   // result" after the dismissal above; it covered Uganda's handle, and the third drag began on the toast's text.
   const drag=async from=>{await page.evaluate(()=>document.querySelector('#toast button')?.click());return dragConnection(page,page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`),
-    page.locator('.react-flow__node[data-id="parts"] [data-handleid="area"]'),async()=>(await saved()).edges.some(e=>e.from===from&&e.to==='parts'));};
-  // Each drop lands before the next starts: the canvas redraws the node's inputs after a connection.
+    page.locator('.react-flow__node[data-id="parts"] [data-handleid="layer"]'),async()=>(await saved()).edges.some(e=>e.from===from&&e.to==='parts'));};
+  // Each drop lands on the blank port (0.204.0), before the next starts: the canvas redraws the node's inputs after a
+  // connection.
   for(const [i,id] of ['drc','ssd','uga'].entries()){await drag(id);
     await expect.poll(async()=>(await saved()).edges.filter(e=>e.to==='parts').length).toBe(i+1);}
   await expect.poll(async()=>(await saved()).edges.filter(e=>e.to==='parts').map(e=>`${e.from}:${e.port}`).sort())

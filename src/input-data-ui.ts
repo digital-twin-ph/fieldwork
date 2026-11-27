@@ -360,7 +360,7 @@ export function openInputDataEditor(node:WorkflowNode<'point_input'>,areas:{id:s
     const items=list.map((p,i)=>{const payload=photoData(p.sha256);
       return `<li class="pin-photo"><figure>${payload?`<img src="${esc(payload.data)}" alt="${esc(p.caption||`Photo ${i+1} of ${esc(f.properties.name)}`)}" loading="lazy">`
         :`<p class="muted">Not on this device (sha256 ${esc(p.sha256.slice(0,12))}…).</p>`}<figcaption><label>Caption<input data-photo-caption="${i}" maxlength="300" value="${esc(p.caption??'')}"></label>`
-        +`<button type="button" class="text-button" data-photo-remove="${i}">Remove photo</button></figcaption></figure></li>`;}).join('');
+        +`<button type="button" class="button small danger" data-photo-remove="${i}">Remove photo</button></figcaption></figure></li>`;}).join('');
     $('#pin-save').insertAdjacentHTML('beforebegin',`<fieldset class="pin-photos"><legend>Photos (${list.length} of ${MAX_PIN_PHOTOS})</legend>`
       +(items?`<ul class="pin-photo-list">${items}</ul>`:'')
       +(list.length<MAX_PIN_PHOTOS?`<label class="button small pin-photo-add">Add photos<input id="pin-photo-input" type="file" accept="image/*" multiple hidden></label>`:'')

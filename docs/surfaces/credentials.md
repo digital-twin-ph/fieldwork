@@ -1,6 +1,6 @@
 # Credentials
 
-_Created 2026-11-17 · Updated 2026-11-20_
+_Created 2026-11-17 · Updated 2026-11-27_
 
 ## What it does
 
@@ -208,6 +208,49 @@ instead.
 
 Then press **Add and activate**, and **Download encrypted credentials** to keep it.
 
+## Make a Supabase project and its publishable key
+
+Supabase is a hosted database with sign-in, which a shared training session could keep its moves in (experiment 233,
+a spike: nothing in Fieldwork uses it yet beyond the check below). Put no real patient data in it.
+
+The free plan allows two active projects. **A free project pauses after a week without use**; restore it from the
+dashboard before a session.
+
+1. Go to [supabase.com/dashboard](https://supabase.com/dashboard) and sign up, or sign in.
+2. Create an organization if asked, on the **Free** plan.
+3. **New project**: choose the organization, give the project a name such as `fieldwork-training`, and a database
+   password. Keep the password in your password manager: Fieldwork never needs it. Choose the region nearest the
+   people who will use it. **Create new project**, and wait while it is set up.
+4. Open the project's **Settings**: the gear at the bottom of the left column. Not **Connect** at the top: it does not
+   show what Fieldwork needs. Under **Configuration**:
+   - **General**: copy the **Project ID**. The project's address is `https://`, then the Project ID, then
+     `.supabase.co`: for the ID `abcdefghijklmnopqrst`, `https://abcdefghijklmnopqrst.supabase.co`.
+   - **API Keys**: copy the **publishable key**, which starts `sb_publishable_`.
+
+**Never copy a secret key** (it starts `sb_secret_`, or is the legacy `service_role` key). A secret key gets past
+every protection on the project's data and must never be in a browser. Fieldwork refuses one.
+
+These are Supabase's screens as followed on 2026-11-27. If they change, follow Supabase's names and tell us, so this
+page can be corrected.
+
+## Fill in the form for a Supabase key
+
+| Field | What to type | Example |
+| --- | --- | --- |
+| **Reference** | A short name of your own, unique in this file. | `supabase-training` |
+| **Provider identifier** | Exactly `supabase`, lower case. | `supabase` |
+| **Label** | Optional: what you will recognise in a list. | `Training sessions` |
+| **Allowed HTTPS origin** | `https://`, then the **Project ID** from **Settings**, **General**, then `.supabase.co`, with no slash at the end. | `https://abcdefghijklmnopqrst.supabase.co` |
+| **Repository it is for** | Leave empty. | |
+| **API key** | Paste the publishable key. | (starts `sb_publishable_`) |
+
+Then:
+
+1. Press **Add and activate**.
+2. Press **Check** beside it in the list. Fieldwork asks the project once and says what came back: *the project is
+   running and accepted this key*, or why not.
+3. Press **Download encrypted credentials** to keep it.
+
 ## When something does not work
 
 - **"No repositories found" when choosing the repository on GitHub's token page**: the **Resource owner** at the top of
@@ -223,5 +266,12 @@ Then press **Add and activate**, and **Download encrypted credentials** to keep 
 - **DHIS2 says it could not be reached**: the server does not list this page's address in its CORS allowlist. Ask its
   administrator, or export a table from DHIS2 and read it under Your file.
 - **DHIS2 refuses the token**: it may have expired or been revoked. Make a new one in your DHIS2 profile.
+- **Fieldwork says "This is a Supabase secret key"**: you copied the secret key. Copy the publishable key instead,
+  which starts `sb_publishable_`.
+- **Supabase refused the key (401)**: copy the publishable key again from **Settings**, **API Keys**. It may have been
+  deleted or replaced there.
+- **Supabase answered with another number, or could not be reached**: a free project pauses after a week without use.
+  Open it in Supabase's dashboard and restore it. Check too that **Allowed HTTPS origin** is `https://`, the Project
+  ID and `.supabase.co`, exactly.
 - **A lost laptop**: on GitHub, **Fine-grained tokens**, delete that laptop's token. The file on the laptop is then
   useless even to someone who learns its passphrase.

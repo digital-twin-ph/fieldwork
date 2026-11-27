@@ -35,3 +35,16 @@ export function groupFor(type:NodeType,dropped:string,accepts:(port:string)=>boo
 /** The group a port is shown in, or the port itself. */
 export const shownPort=(type:NodeType,port:string):string=>
   Object.entries(PORT_GROUPS[type]??{}).find(([,ports])=>ports.includes(port))?.[0]??port;
+/** A PORT'S ROLE, where a step takes two inputs of one kind for different jobs, shown before the source's name on the
+ *  canvas ("From Cases", "To Health facilities") and offered by name when a drop fits more than one (experiment 116, 2026-
+ *  10-15: bind when one port fits, ask when more than one does). Ports of one kind with one job (Append rows' tables,
+ *  Deduplicate's point layers, a Map's point layers) have no role: they fill in order. */
+export const PORT_ROLES:Partial<Record<NodeType,Record<string,string>>>={
+  measure_distance:{points:'From',candidates:'To'},
+  relate_table:{records:'Main',related:'Related'},
+  compare_point_sets:{original:'Original',moved:'Moved',pumps:'Reference'},
+  travel_over_ground:{origins:'From',places:'To'},
+  map_output:{context:'Context'},
+};
+/** The port a numbered one belongs to: points_2 and points are one kind of slot; area2 and area too. */
+export const portBase=(port:string):string=>port.replace(/_?\d+$/,'');

@@ -278,8 +278,6 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
 /* A map declares every layer port it can draw; the ones it is not drawing are still drop targets
    and do not get a labelled row, so the node stays the size of its layers rather than the size of
    its contract. 2026-10-15. */
-.node-spare-port{opacity:.35;width:8px;height:8px}
-.node-spare-port:hover{opacity:1}
 /* Rules written in the workflow, read as a list rather than as N3. The reader is a practitioner
    deciding whether the rules say what they meant, not someone debugging a reasoner. 2026-10-15. */
 .authored-rules{margin:0 0 14px;padding-left:18px;font-size:14px;line-height:1.8;color:var(--ink)}
@@ -682,7 +680,7 @@ body.playing-back #node-library{border-left:2px solid var(--accent-muted-1)}
    stands out without reading as the dialog's own action. */
 .manual-button{display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:700;padding:10px 16px;
   border:2px solid var(--green);background:var(--accent-wash,rgba(23,107,89,.08));color:var(--green);border-radius:8px}
-.manual-button:hover,.manual-button:focus-visible{background:var(--green);color:var(--accent-contrast,#fff)}
+.manual-button:hover,.manual-button:focus-visible{text-decoration:underline}
 .manual-button span{font-size:18px}
 
 /* The extracts that cover this study area: a link each, because the download is the browser's
@@ -1874,3 +1872,6 @@ tr.detect-signal-row td{font-weight:700}
 :root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) :focus-visible{outline:3px solid #000 !important;outline-offset:2px !important;box-shadow:0 0 0 5px #fff !important}
 :root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) :is(.blue,.teal,.purple,.amber,.green){--tint:#ffffff}
 :root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .blue{--tone:#0a3a57}:root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .teal{--tone:#00473a}:root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .purple{--tone:#4b2770}:root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .amber{--tone:#5c3a00}:root:not([data-theme="light"]):not([data-theme="dark"]):not([data-theme="contrast"]) .green{--tone:#1f4a12}}
+.port-symbol{flex-shrink:0;margin-right:7px}.port-symbol .f{fill:currentColor}.port-symbol .s{fill:none;stroke:currentColor}.node-icon .port-symbol,.palette-icon .port-symbol{margin:0}
+.react-flow__handle.node-output .node-output-tip{display:none;position:absolute;left:18px;top:50%;transform:translateY(-50%);white-space:nowrap;align-items:center;gap:6px;padding:5px 9px;font-size:14px;color:var(--ink);background:var(--surface-raised-1);border:1px solid var(--line);border-radius:6px;box-shadow:0 2px 6px var(--shadow-3);pointer-events:none;z-index:20}.react-flow__handle.node-output:hover .node-output-tip{display:flex}.node-output-tip .port-symbol{margin:0}
+#table-panel table,.table-standard{border-collapse:collapse;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink)}#table-panel th,.table-standard th{background:var(--surface-raised-1);color:var(--ink);font-weight:650;border-bottom:1.5px solid var(--ink);padding:9px 12px;vertical-align:bottom}#table-panel td,.table-standard td{color:var(--ink);padding:9px 12px;border-bottom:1px solid var(--surface-tint-8)}#table-panel tbody tr:last-child td,.table-standard tbody tr:last-child td{border-bottom:0}#table-panel td[data-number],#table-panel th.number,.table-standard td.number,.table-standard th.number{text-align:right;font-variant-numeric:tabular-nums}#table-panel th.number .column-sort{justify-content:flex-end;width:100%}#table-panel td.absent-cell,.table-standard td.absent-cell{color:var(--muted)}#table-panel tfoot td,#table-panel tfoot th{border-top:1.5px solid var(--ink);font-weight:650}#table-panel.table-shaded tbody tr:nth-child(even) td,.table-shaded .table-standard tbody tr:nth-child(even) td{background:var(--surface-tint-9)}.table-caption{font-size:16px;font-weight:650;color:var(--ink);margin:4px 0 10px}.table-notes{font-size:14px;color:var(--muted);margin:8px 0 0;line-height:1.5}

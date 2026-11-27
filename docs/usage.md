@@ -1,6 +1,6 @@
 # Using Fieldwork
 
-_Created 2026-10-08 · Updated 2026-11-22_
+_Created 2026-10-08 · Updated 2026-11-27_
 
 The practitioner detail that used to live in the README. The
 [README](../README.md) keeps the overview, the published links and the current
@@ -26,9 +26,9 @@ encrypted the same way, with a plain ZIP as its other button. Browser storage st
 
 Projects now keep a manifest alongside their workflow. Edits update its inventory of nodes, connections, embedded records, fields and references. Export/import validate this inventory and required PDF/raster contents; incomplete packages are rejected. Older workflows acquire a manifest when saved. Reference-only JSON imports require their PDF/raster assets to be available locally—use a complete bundle to move projects between devices.
 
-On desktop, drag the dividers beside the Node library and Inspector, or between Workflow/N3 and Results, to resize the panels. Sizes are saved on this device. Focus a divider and use arrow keys for keyboard resizing; double-click it or choose **Reset layout** to restore defaults. Narrow screens keep the stacked layout. See the [panel-layout design record](experiments/23-resizable-panels.md).
+On desktop, drag the dividers beside the Widget library and Inspector, or between Workflow/N3 and Results, to resize the panels. Sizes are saved on this device. Focus a divider and use arrow keys for keyboard resizing; double-click it or choose **Reset layout** to restore defaults. Narrow screens keep the stacked layout. See the [panel-layout design record](experiments/23-resizable-panels.md).
 
-Use **Hide node library**, at the left end of the bar of tabs, to collapse the node library on the left. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
+Use **Hide widget library**, at the left end of the bar of tabs, to collapse the widget library on the left. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
 
 ## Choosing a colour theme
 
@@ -54,7 +54,7 @@ The local [John Snow worked examples](examples/john-snow.md) translate pump catc
 
 The local in-development workspace 07 uses those 250 death locations for a [geoprivacy design experiment](experiments/35-cholera-geoprivacy-workflow.md). It branches from the private source to **Move points in a donut** and **Aggregate points in hexagons**, each with before/after map and table tabs. A **Mean center** widget runs on each point branch. **Compare point sets** takes both centers, their corresponding point sets and eight pump locations; its Comparison map shows the two maps side by side on one extent with projected mean centers, center shift and nearest-pump distances. The UTM projection is visible as a computation parameter and in N3 evidence. The after tabs offer a demo GeoJSON download containing derived geometry only. The editable project, before tabs, comparison map, N3 view and run receipt retain source coordinates and must be treated as private. The seeded movement is predictable, cell occupancy is not an anonymity guarantee, and neither method is cleared for real sensitive data. Contextual **Hide data** and calibrated encrypt/decrypt/evaluate operations remain TODO; the widget notes link to the [geoprivacy notebooks](https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library).
 
-**Widget catalog ›**, beside the node library, lists the widgets you can use, grouped as the palette
+**Widget catalog ›**, beside the widget library, lists the widgets you can use, grouped as the palette
 groups them, and for each one the worked examples that use it, linked to their repositories. Retired
 widgets are not listed. A step's version, release digest and independent check are in its Inspector,
 under Definition. `?catalog=1` opens the catalog directly.
@@ -70,11 +70,14 @@ When a table will later be joined to administrative boundaries, key it on an off
 
 To begin from nothing, open `http://127.0.0.1:4173/?example=blank` or choose **New empty canvas**. Add **Study area**, open **Select area on map**, draw a bounding box or polygon, and apply it. Inspect **N3 & evidence**, then run to see the geometry preview and inferred readiness. The [study-area experiment record](experiments/01-study-area.md) documents each task, architectural decision, standards mapping, and evidence to collect. Readiness means the geometry meets the widget's input contract, not that the selected area is scientifically appropriate.
 
-Select nodes to edit their settings. Add nodes from the library and connect compatible ports. All visual output branches execute together, and shared upstream nodes execute once.
+Select nodes to edit their settings. Add nodes from the library and connect them: drag from a step's output to the
+next step's blank port, **+ Add an input**. The step takes it as the input its kind fits, and asks which when more than
+one does (Measure distance's From and To). Each connected input then shows its kind's symbol and the name of the step
+it came from, and another blank port appears while the step can take more. All visual output branches execute together, and shared upstream nodes execute once.
 
 Add **Map** under Outputs to display a study polygon and point layers. Connect the Study area (or Calculate area) and Input data. Map and Table offer **Add point input** for multiple datasets with one boundary. Map highlights outside points, lists records without coordinates and lets you toggle layers. See the [map/layer exercise](experiments/04-map-layers-and-attribute-contracts.md).
 
-Add **Table** under Outputs to display point coordinates and attributes in a named Results tab. Connect Input data to **Points 1**. Direct point input needs no study area. Tables support multiple layers, search, row/attribute paging, record inspection, saved workflows and offline use. See the [point-table exercise](experiments/08-point-table-output.md).
+Add **Table** under Outputs to display point coordinates and attributes in a named Results tab. Connect Point data to its blank port. Direct point input needs no study area. Tables support multiple layers, search, row/attribute paging, record inspection, saved workflows and offline use. See the [point-table exercise](experiments/08-point-table-output.md).
 
 Selecting an output node on the canvas opens its result. The Results panel switches to that node's
 tab and marks it, so the two panels agree about what you are looking at; a node that produced two

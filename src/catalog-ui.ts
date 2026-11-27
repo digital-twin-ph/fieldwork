@@ -1,3 +1,4 @@
+import {iconMarkup} from './port-symbols.js';
 import {PALETTE_GROUPS} from './palette.js';
 import registry from '../widgets/registry.json';
 import parityRecord from '../widgets/parity.json';
@@ -92,7 +93,7 @@ export function openCatalogDialog(esc:Escape):void{
   // The palette's ordering, not a second copy of it: two lists that must agree will not.
   const rows=(group:string)=>active.filter(type=>TYPES[type].group===group).map(type=>{
     const examples=usedBy(type);
-    return `<tr data-widget="${esc(type)}"><th scope="row">${TYPES[type].icon} ${esc(TYPES[type].title)}</th>`
+    return `<tr data-widget="${esc(type)}"><th scope="row">${iconMarkup(type,TYPES[type].icon)} ${esc(TYPES[type].title)}</th>`
       +`<td data-examples="${examples.length}">${examples.length
         ?examples.map(example=>example.builtIn
           ?`<a href="${esc(example.repository)}">${esc(example.title)}</a> <span class="muted">· built in</span>`
@@ -103,7 +104,7 @@ export function openCatalogDialog(esc:Escape):void{
   dialog.innerHTML=`<h2 id="catalog-title">Widget catalog</h2>
     <p>${active.length} widgets you can use. ${used} of them are used in at least one of the ${EXAMPLES.length} worked examples, ${EXAMPLES.filter(e=>e.builtIn).length} of them built in.</p>
     ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Used in worked examples</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}
-    <div class="package-actions"><button id="catalog-close" class="button primary">Close</button></div>`;
+    <div class="package-actions"><button id="catalog-close" class="button">Close</button></div>`;
   document.body.append(dialog);
   dialog.querySelector<HTMLButtonElement>('#catalog-close')!.onclick=()=>dialog.close();
   dialog.onclose=()=>dialog.remove();

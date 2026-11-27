@@ -161,7 +161,7 @@ export const mapFigurePlaceholder=(nodeId:string,esc:Escape):string=>
   `<figure class="notes-figure is-absent" data-figure="map">`
   +`<p class="muted">This step published a map, and nothing in its last run could be drawn as `
   +`one.</p>`
-  +`<button class="chip flowlink" data-open-node="${esc(nodeId)}">Open the map</button>`
+  +`<button class="text-button flowlink" data-open-node="${esc(nodeId)}">Open the map</button>`
   +`</figure>`;
 
 /** The figure for the artifact a description note speaks for, or null where there is none to

@@ -1,6 +1,6 @@
 # Table
 
-_Created 2026-10-27 · Updated 2026-11-22_
+_Created 2026-10-27 · Updated 2026-11-27_
 
 ## What it does
 
@@ -23,7 +23,7 @@ the map. Where coordinates for a polygon are wanted, a step that says what it co
 
 The node shows what is connected to it and one port, **+ Add an input**, as Map does. Drop any result a table can
 show on it, or choose one under **Inputs › Add an input**, and it is connected to the port its kind belongs to. There
-is nothing to choose first.
+is nothing to choose first. Each connected input then shows its kind's symbol and the name of the step it came from.
 
 Connect a step's output and the table shows it. If you wire more than one,
 the more specific wins: a keyed table before polygons, and the point path is the general one.
@@ -46,6 +46,21 @@ Nothing is required. A table with nothing connected is **unfinished**, not broke
 
 A column that holds a number, such as a projection Relate brought beside each row, is always drawn as a column with
 its own heading, even where every row holds the same number.
+
+### Presentation
+
+Every table follows the rules the table standards agree on: numbers right-aligned under right-aligned headings, in
+equal-width digits; a rule above, one under the headings and one below, none down the side; totals set off by a rule.
+In **Configure…**, under **Presentation**:
+
+- **Title**: what, where and when, shown above the table. The Table's name when left empty.
+- **Decimal places for the values**: the same in every row. Names, identifiers and coordinates keep their own.
+- **Thousands separators** (1,234), never on a column read as years.
+- **An absent value is written**: a dash, read aloud as "no value"; the word *unknown*; or left blank.
+- **Shade every other row**, to follow a row across a wide table.
+- **Notes** and **Source**, shown below the table.
+
+The **Preview** shows ten rows, or twenty, or all of them to review, as these settings write them.
 
 ### It states its own shape in the write-up
 
@@ -100,6 +115,21 @@ inherited and is recorded as open in
 [experiment 21](../experiments/21-shared-result-outputs.md).
 
 ## History
+
+### 2026-11-27 · One blank port; the coverage port removed; a preview in Configure… (0.15.0)
+
+**Configure…** shows the table itself: ten rows, or twenty, or all of them to review, with the coordinates as the dialog
+sets them, before Apply. A polygon table shows its areas from the last run, wide, as Results does.
+
+**Presentation**, a new section of Configure…: a title, decimal places, thousands separators, how an absent value is
+written, shading every other row, notes and source. Every table now follows the rules the standards agree on, read from the open
+guidance in [the research note](../research/table-presentation-standards-2026-11-27.md). An absent value is a dash by
+default, not a word a reader could take for data (2026-10-21). Coordinates show to one precision down their column.
+
+The node shows each connected input as its kind's symbol and the name of the step it came from, and one blank port,
+**+ Add an input**, while something on the canvas could add another. The **Or: Coverage result** port is gone: nothing
+makes a coverage check since Check spatial coverage retired on 2026-10-21, and a workflow saved with one opens with
+Keep points inside the area feeding the points port instead.
 
 ### 2026-11-22 · Coordinates in metres (0.14.0)
 

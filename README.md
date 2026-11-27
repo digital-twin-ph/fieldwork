@@ -1,6 +1,6 @@
 # Fieldwork
 
-_Created 2026-10-05 · Updated 2026-11-11_
+_Created 2026-10-05 · Updated 2026-11-27_
 
 A browser prototype for semantic visual GIS workflows in public health. Build a
 workflow from typed widgets, compute spatial facts locally, and evaluate
@@ -29,7 +29,7 @@ The version beside the header mark is the released application version; see the
 | Component | What you can do now |
 | --- | --- |
 | Workflow canvas | Connect typed ports, edit nodes, undo/redo, save separate examples and import/export workflows. |
-| Widget catalog | **▤ Catalog** in the header, or **Widget catalog ›** beside the node library, lists every definition in this build with its version, release digest, declared ports and whether an external implementation has independently recomputed it. `?catalog=1` opens it directly. The selected node shows the same identity in its inspector. |
+| Widget catalog | **▤ Catalog** in the header, or **Widget catalog ›** beside the widget library, lists every definition in this build with its version, release digest, declared ports and whether an external implementation has independently recomputed it. `?catalog=1` opens it directly. The selected node shows the same identity in its inspector. |
 | Colour theme | Choose light, dark, or follow the device from the header. The choice is saved on this device; exported SVG and GeoTIFF artifacts stay light whichever theme is shown. |
 | Panel layout | Drag the library/inspector dividers and Workflow/N3–Results split on desktop. Sizes stay on this device. Keyboard arrows resize; Reset layout restores defaults. |
 | Study area | Draw and label a bounding box or simple polygon; inspect its GeoSPARQL representation. |

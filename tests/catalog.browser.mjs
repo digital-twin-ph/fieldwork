@@ -7,7 +7,7 @@ const kinds=JSON.parse(readFileSync(new URL('../widgets/classification.json',imp
 const examples=JSON.parse(readFileSync(new URL('../widgets/examples.json',import.meta.url),'utf8')).examples;
 
 // "The widget catalog is linked in two places. It only needs to show active widgets and the worked example
-// utilization." -- the practitioner, 2026-11-09. One way in, beside the node library; a row per widget that can be used;
+// utilization." -- the practitioner, 2026-11-09. One way in, beside the widget library; a row per widget that can be used;
 // for each, the worked examples that use it, read from widgets/examples.json.
 const retired=new Set(kinds.widgets.filter(w=>w.retired).map(w=>w.nodeType));
 const active=kinds.widgets.filter(w=>!w.retired).map(w=>w.nodeType);

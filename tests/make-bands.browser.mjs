@@ -8,8 +8,10 @@ const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-w
 const wire=async(page,from,to,port)=>{
   // MEASURED ONCE THE CANVAS HAS STOPPED MOVING: Tidy moves the nodes and fits the view, and a handle measured mid-move is
   // missed by the drag (gate 127 and CI, 2026-11-12: one run in three under load, never alone).
+  // AN INPUT NOT YET CONNECTED IS THE BLANK PORT (0.204.0): a drop there is bound by what arrives.
+  const handle=await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).count()?port:'layer';
   const box=async()=>JSON.stringify([await page.locator(`.react-flow__node[data-id="${from}"] [data-handleid="out"]`).boundingBox(),
-    await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${port}"]`).boundingBox()]);
+    await page.locator(`.react-flow__node[data-id="${to}"] [data-handleid="${handle}"]`).boundingBox()]);
   let before='';await expect.poll(async()=>{const now=await box(),still=now===before;before=now;return still;},{intervals:[150]}).toBe(true);
   const [a,b]=JSON.parse(before);
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();

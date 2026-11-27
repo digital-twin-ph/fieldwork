@@ -1,6 +1,6 @@
 # Summarize points to polygons
 
-_Created 2026-11-22 · Updated 2026-11-22_
+_Created 2026-11-22 · Updated 2026-11-26_
 
 **A summary.** It takes polygons and points, and gives back the same polygons, each carrying how many of the points
 fall in it and, where you name one, the total of a number they carry.

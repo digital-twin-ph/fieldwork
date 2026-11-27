@@ -1,3 +1,4 @@
+import {validatePresentation} from './table-presentation.js';
 import {readPinPhotos} from './pin-photos.js';
 import {staticMapFrame} from './static-map.js';
 import {lineLayersOf} from './map-lines.js';
@@ -283,7 +284,7 @@ export const TYPES:Record<NodeType,NodeDefinition> = {
   // `clip_points_to_area` on open. It is in the retired list, so the palette never offers it.
   coverage_check:{title:'Check spatial coverage',group:'Comparisons and checks',icon:'◎',color:'purple',description:'Retired — use Keep points inside the area',inputs:[['area','area'],['points','points']],output:'coverage-check'},
   map_output:{title:'Map',group:'Outputs',icon:'◈',color:'green',description:'Display the study polygon and points, including outside records',inputs:[['area','area'],['points','points'],['polygons','polygons'],['context','points'],['raster','raster'],['ground','ground'],['network','network'],['lines','lines']],output:null},
-  table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Show what is connected as a table',inputs:[['points','points'],['coverage','coverage-check'],['table','table'],['polygons','polygons']],output:null},
+  table_output:{title:'Table',group:'Outputs',icon:'☷',color:'green',description:'Show what is connected as a table',inputs:[['points','points'],['table','table'],['polygons','polygons']],output:null},
   chart_output:{title:'Chart',group:'Outputs',icon:'▥',color:'green',description:'Draw a table or a case series as bars or a curve, or who infected whom as a tree',inputs:[['records','table'],['polygons','polygons']],output:null},
   output: {title:'Visual output', group:'Outputs', icon:'◈', color:'green', description:'Display results as a map, table, or bar chart', inputs:[['decisions','decisions']], output:null}
 };
@@ -412,7 +413,7 @@ export function outputOf(node:WorkflowNode):PortType|null{
  *  scripts/port-contracts.mjs had to restate it to publish the same answer -- one contract written
  *  twice, in two files, with nothing holding the copies together. Now the generator imports this,
  *  so the published declaration cannot disagree with the behaviour it describes. Experiment 112. */
-export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:boolean}):[string,PortType][]{
+export function requiredInputs(node:WorkflowNode):[string,PortType][]{
   const all=nodeInputs(node);
   // A country can name the scope instead, so the area is optional rather than absent.
   // `polygon_input` joins it for the same reason and one more: it may simply READ a published
@@ -457,11 +458,6 @@ export function requiredInputs(node:WorkflowNode,options?:{coverageConnected?:bo
   // given, and declaring three ports while requiring them all turned one unconnected node into
   // "Chart needs its records input connected" on every workflow that charts a decision.
   if(!['map_output','table_output','chart_output'].includes(node.type))return all;
-  // A view fed by a coverage check takes THAT and nothing else: the check already carries the
-  // points and the area it was run over, so insisting on them again would ask for the same data
-  // twice. Graph-dependent rather than node-dependent, which is why it is a parameter -- a node
-  // alone cannot say whether anything is connected to it.
-  if(options?.coverageConnected)return all.filter(([port])=>port==='coverage');
   // NEITHER A MAP NOR A TABLE INSISTS ON ANYTHING: each shows what it is given, and which ports
   // those are is the practitioner's business. The map stopped insisting on an area and a points
   // layer on 2026-10-14 -- that insistence is why a map of a raster had to be told it was a
@@ -599,7 +595,7 @@ export function nodeInputs(node:WorkflowNode):[string,PortType][]{
   // until the practitioner has answered a question about the shape before having the shape.
   if(node.type==='table_output')return [
     ...Array.from({length:node.params.pointInputCount??1},(_,i)=>[pointPort(i),'points'] as [string,PortType]),
-    ['coverage','coverage-check'],['table','table'],['polygons','polygons']];
+    ['table','table'],['polygons','polygons']];
   return TYPES[node.type].inputs;
 }
 /** STEPS WHOSE NEXT RUN READS EVERY SATELLITE FILE AGAIN, asked for in Sample satellite's dialog. Once: the run that
@@ -1060,6 +1056,7 @@ export function validateWorkflow(raw:unknown):Workflow {
           throw new Error('Invalid map line settings.');
       }
     }
+    if(n.type==='table_output'&&n.params.presentation!==undefined)validatePresentation(n.params.presentation);
     if((n.type==='map_output'||n.type==='table_output'||n.type==='chart_output')&&(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>60))throw new Error(`${TYPES[n.type].title} names must be text of 1–60 characters.`);
   }
   const edgeIds=new Set(), ports=new Set();
@@ -1103,8 +1100,7 @@ export function openEnds(w:Workflow,planned:readonly WorkflowNode[]):WorkflowNod
     const closure:WorkflowNode[]=[],seen=new Set<string>();let complete=true;
     const visit=(node:WorkflowNode)=>{
       if(seen.has(node.id)||have.has(node.id)||!complete)return;seen.add(node.id);
-      const covered=w.edges.some(e=>e.to===node.id&&e.port==='coverage');
-      for(const [port] of requiredInputs(node,{coverageConnected:covered})){
+      for(const [port] of requiredInputs(node)){
         if(node.type==='network_input'&&port==='area')continue;
         if(!w.edges.some(e=>e.to===node.id&&e.port===port)){complete=false;return;}
       }
@@ -1162,7 +1158,7 @@ export function executionPlan(workflow:Workflow) {
   for(const n of w.nodes)if(n.type==='apply_ruleset'&&!n.params.ruleset)
     throw new IncompleteWorkflow(`Choose a ruleset for "${n.params.label||n.id}" before running. It decides what the step classifies and which inputs it takes.`);
   const result:WorkflowNode[]=[], done=new Set<string>();
-  function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=requiredInputs(node,{coverageConnected:w.edges.some(e=>e.to===node.id&&e.port==='coverage')});for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
+  function visit(node:WorkflowNode) {if(done.has(node.id))return;const inputs=requiredInputs(node);for(const [port] of inputs){if(node.type==='network_input'&&port==='area'&&!w.edges.some(e=>e.to===node.id&&e.port==='area'))continue;
       // The area is optional here: a country names the scope instead. Required only when the
       // practitioner has asked for the study area to bound the request.
       const e=w.edges.find(e=>e.to===node.id && e.port===port);if(!e)throw new IncompleteWorkflow(`${node.params.label&&node.params.label!==TYPES[node.type].title?`"${node.params.label}" (${TYPES[node.type].title})`:TYPES[node.type].title} needs its ${portWords(node,port)} connected.`,node.id);visit(required(w.nodes.find(n=>n.id===e.from)));}

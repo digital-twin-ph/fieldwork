@@ -15,6 +15,8 @@ export interface ConfigMessage {tone:'warning'|'refusal'; text:string}
 export interface ConfigSections {
   /** What the step uses: its choices. */
   settings:string;
+  /** How the result is presented: a title, precision, notes. Between Settings and Preview, so the preview shows it. */
+  presentation?:string;
   /** What it will do, with these settings, to this data. */
   preview?:string;
   /** Anything the step will not decide for the person. */
@@ -91,7 +93,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     +`<button class="config-close" id="${CONFIG_CLOSE}" aria-label="Close">×</button></header>`
     +'<div class="config-body"></div><div class="config-message-slot"></div>'
     +(spec.readOnly
-      ?`<footer class="config-foot"><button class="button primary" id="${CONFIG_CANCEL}">Close</button>`
+      ?`<footer class="config-foot"><button class="button" id="${CONFIG_CANCEL}">Close</button>`
         +`<button class="button primary" id="${CONFIG_APPLY}" hidden>Apply</button></footer>`
       :`<footer class="config-foot"><button class="button" id="${CONFIG_CANCEL}">Cancel</button>`
         +`<button class="button primary" id="${CONFIG_APPLY}">Apply</button></footer>`);
@@ -141,7 +143,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     const rebuild=!(spec.bodyOnce&&built);built=true;
     if(rebuild)spec.beforeRedraw?.();
     if(rebuild)body.innerHTML=spec.report?`<section class="config-section" data-config-section="report">${parts.settings}</section>`
-      :section('Settings',parts.settings)+section('Preview',parts.preview)+section('Decisions',parts.decisions);
+      :section('Settings',parts.settings)+section('Presentation',parts.presentation)+section('Preview',parts.preview)+section('Decisions',parts.decisions);
     slot.innerHTML=confirming
       ?`<div class="config-message config-message-warning" role="alert"><p>These changes are not applied. Discard them?</p>`
         +`<div class="config-message-actions"><button class="button" id="config-keep-editing">Keep editing</button>`

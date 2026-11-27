@@ -88,7 +88,7 @@ export function stepSentence(step:ManualStep,types:Record<string,string>,title:(
   const sentence=(text:string)=>tab?tab+text.charAt(0).toLowerCase()+text.slice(1):text;
   // THE LIBRARY'S SEARCH, named in every add: the practitioner, 2026-11-04, *"so users while building by hand and
   // following the manual can zero in on the right widgets right away."* Named as the box reads.
-  if('add' in step)return `Add ${bold(title(step.add),esc)}: type its name in ${bold('Find a node…',esc)} above the `
+  if('add' in step)return `Add ${bold(title(step.add),esc)}: type its name in ${bold('Find a widget…',esc)} above the `
     +'library, then click it.';
   if('reuse' in step)return `Under ${bold('From this project',esc)} in the library, add the ${bold(title(step.reuse),esc)} `
     +`of “${esc(step.from)}”. It keeps that workflow's table and settings, so nothing is fetched or set up again.`;

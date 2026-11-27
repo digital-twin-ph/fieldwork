@@ -9,6 +9,11 @@ import {openConfigDialog} from './config-dialog.js';
 import {nodeInputs,portAccepts,outputOf,shownMode} from './core.js';
 import {MAX_POINT_LAYERS} from './point-layers.js';
 import {zoneFields,wireZone,type ZoneAdvice} from './metric-steps-ui.js';
+import {projectFromCRS84} from './reproject.js';
+import {shownRows,dataTableMarkup} from './data-table-ui.js';
+import type {DataTable} from './data-table.js';
+import {isProjectedReference,type PointCollection,type AnySpatialReference} from './types.js';
+import {presentCell,presentedTable,presentationFields,type TablePresentation} from './table-presentation.js';
 
 export interface TableOutputKit extends StepKit {
   /** The unit the table's rows state, where they state one, so the totals claim is not offered over it. */
@@ -23,6 +28,92 @@ export interface TableOutputKit extends StepKit {
   shown:(nodeId:string)=>boolean;
   /** The UTM zone the workflow's coordinates suggest, for coordinates shown in metres. */
   zoneAdvice:ZoneAdvice;
+  /** The point records on one of the table's ports: held by Point data, or made by a run that still matches. */
+  layerOn:(nodeId:string,port:string)=>PointCollection|undefined;
+  /** What this table's last run showed, where it ran. */
+  ranOutput:(nodeId:string)=>{kind?:string}|undefined;
+}
+
+/** Connects the Presentation section's controls to the draft. */
+function wirePresentation(root:ParentNode,p:TablePresentation,redraw:()=>void):void{
+  const text=(id:string,key:'caption'|'notes'|'source')=>root.querySelector<HTMLInputElement|HTMLTextAreaElement>(`#${id}`)
+    ?.addEventListener('change',e=>{const v=(e.target as HTMLInputElement).value.trim();if(v)p[key]=v;else delete p[key];redraw();});
+  text('present-caption','caption');text('present-notes','notes');text('present-source','source');
+  root.querySelector<HTMLSelectElement>('#present-decimals')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;
+    if(v==='')delete p.decimals;else p.decimals=Number(v);redraw();});
+  root.querySelector<HTMLInputElement>('#present-separators')?.addEventListener('change',e=>{
+    if((e.target as HTMLInputElement).checked)delete p.separators;else p.separators=false;redraw();});
+  root.querySelector<HTMLSelectElement>('#present-absent')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value as NonNullable<TablePresentation['absent']>;
+    if(v==='dash')delete p.absent;else p.absent=v;redraw();});
+  root.querySelector<HTMLInputElement>('#present-shade')?.addEventListener('change',e=>{
+    if((e.target as HTMLInputElement).checked)p.shade=true;else delete p.shade;redraw();});
+}
+
+/** THE TABLE ITSELF, IN THE DIALOG (the practitioner, 2026-11-27: "Table output config dialog should have a preview of the
+ *  table", and: "preview should be limited to 10-20 rows (option to display, for review purpose)"): the rows Results will
+ *  show, as the Presentation section and the coordinates now set them, before Apply. Ten rows, or twenty, or all of
+ *  them to review. */
+export const PREVIEW_CHOICES=[10,20] as const;
+function tablePreview(kit:TableOutputKit,node:WorkflowNode<'table_output'>,mode:ReturnType<typeof shownMode>,
+  coord:{metres:boolean;zone:string;hemisphere:'north'|'south'},present:TablePresentation,rowsShown:number|'all',totals:boolean):string{
+  const esc=kit.esc;
+  const choose=(total:number)=>`<div class="field preview-rows"><label class="field-label" for="preview-rows">Rows in the preview</label>`
+    +`<select id="preview-rows">${PREVIEW_CHOICES.map(n=>`<option value="${n}"${rowsShown===n?' selected':''}>${n}</option>`).join('')}`
+    +`<option value="all"${rowsShown==='all'?' selected':''}>All ${total.toLocaleString('en')}, to review</option></select></div>`;
+  const table=(head:{label:string;number:boolean}[],rows:string[],total:number)=>
+    choose(total)+`<p class="muted">${total.toLocaleString('en')} ${total===1?'row':'rows'}${total>rows.length?`, the first ${rows.length.toLocaleString('en')} shown`:''}.</p>`
+    +presentedTable(present,node.params.label||kit.title('table_output'),
+      `<div class="table-scroll" tabindex="0" role="region" aria-label="Preview of the table"><table class="table-standard"><thead><tr>`
+      +head.map(h=>`<th scope="col"${h.number?' class="number"':''}>${esc(h.label)}</th>`).join('')+`</tr></thead><tbody>`
+      +rows.join('')+'</tbody></table></div>',esc);
+  const limit=(n:number)=>rowsShown==='all'?n:Math.min(n,rowsShown);
+  // A DATA TABLE DRAWN BY RESULTS' OWN RENDERER (PR 10's review: "Show totals" changed Results and not the preview), with
+  // the draft's totals, the presentation and the rows asked for, and no pager.
+  const dataTablePreview=(t:DataTable)=>{
+    const total=shownRows(t,totals);
+    const shown=dataTableMarkup(t,esc,{assertTotals:totals,present,limit:limit(total)})
+      .replace(/<table class="/g,'<table class="table-standard ').replace(/<table>/g,'<table class="table-standard">')
+      .replace(/<div class="table-scroll/g,'<div tabindex="0" role="region" aria-label="Preview of the table" class="table-scroll');
+    return choose(total)+presentedTable(present,node.params.label||kit.title('table_output'),
+      shown.includes('table-scroll')?shown:`<div class="table-scroll" tabindex="0" role="region" aria-label="Preview of the table">${shown}</div>`,esc);
+  };
+  if(mode==='table'){
+    const t=kit.tableOn(node.id,'table');
+    if(!t?.rows.length)return '<p class="muted">Nothing to show yet: the table connected has no rows. Run the workflow if a step makes it.</p>';
+    return dataTablePreview(t);
+  }
+  // A POLYGON TABLE'S ROWS ARE THE RUN'S: each area with what was summarized over it, as the last run left them.
+  if(mode==='polygons'){
+    const ran=kit.ranOutput(node.id);
+    if(ran?.kind==='data-table')return dataTablePreview(ran as unknown as DataTable);
+    const rows=(ran as {rows?:{name:string;attributes?:Record<string,unknown>}[]}|undefined)?.rows;
+    if(!rows?.length)return '<p class="muted">Each polygon layer connected, one row per area, with its summaries. Run the workflow to see them here.</p>';
+    const attributes=[...new Set(rows.flatMap(r=>Object.keys(r.attributes??{})))].filter(k=>k!=='name');
+    const head=[{label:'Area',number:false},...attributes.map(k=>({label:k,number:rows.some(r=>typeof r.attributes?.[k]==='number')}))];
+    return table(head,rows.slice(0,limit(rows.length)).map(r=>`<tr>${presentCell(r.name,'Area',present,esc,{measure:false})}`
+      +attributes.map(k=>presentCell(r.attributes?.[k],k,present,esc)).join('')+'</tr>'),rows.length);
+  }
+  const layers=nodeInputs(node).filter(([,type])=>type==='points').map(([port])=>kit.layerOn(node.id,port)).filter((c):c is PointCollection=>!!c);
+  if(!layers.length)return '<p class="muted">Nothing to show yet: connect point records, or run the workflow if a step makes them.</p>';
+  const zone=Number(coord.zone);
+  if(coord.metres&&(!Number.isInteger(zone)||zone<1||zone>60))return '<p class="muted">Choose a UTM zone from 1 to 60 to see the coordinates in metres.</p>';
+  // A run's layer can arrive already in metres, read from a UTM file; a saved one is always longitude and latitude.
+  const projected=(c:PointCollection)=>isProjectedReference((c as {spatialReference?:AnySpatialReference}).spatialReference);
+  let shown:PointCollection[];
+  try{shown=layers.map(c=>coord.metres&&!projected(c)&&c.features.length?projectFromCRS84(c,zone,coord.hemisphere).collection:c);}
+  catch(e){return `<p class="muted">${esc(e instanceof Error?e.message:'These records cannot be shown in metres.')}</p>`;}
+  const inMetres=(c:PointCollection)=>coord.metres||projected(c);
+  const features=shown.flatMap(c=>c.features.map(f=>({f,metres:inMetres(c)})));
+  const attributes=[...new Set(features.flatMap(({f})=>Object.keys(f.properties??{})))].filter(k=>k!=='name');
+  const anyMetres=features.some(x=>x.metres);
+  const numericAttribute=(k:string)=>features.some(({f})=>typeof f.properties?.[k]==='number');
+  const head=[{label:'Record',number:false},{label:anyMetres?'Easting (m)':'Longitude (°)',number:true},{label:anyMetres?'Northing (m)':'Latitude (°)',number:true},
+    ...attributes.map(k=>({label:k,number:numericAttribute(k)}))];
+  const rows=features.slice(0,limit(features.length)).map(({f,metres})=>{const at=f.geometry?.coordinates as [number,number]|undefined;
+    const coordinate=(v:number|undefined)=>v===undefined?presentCell(null,'',present,esc):`<td class="number">${(metres?v.toFixed(1):v.toFixed(6))}</td>`;
+    return `<tr>${presentCell((f.properties as {name?:unknown}|null)?.name??f.id??'','Record',present,esc,{measure:false})}`
+      +coordinate(at?.[0])+coordinate(at?.[1])+attributes.map(k=>presentCell(f.properties?.[k],k,present,esc)).join('')+'</tr>';});
+  return table(head,rows,features.length);
 }
 
 /** WHAT A TABLE OUTPUT SHOWS, in one sentence, from what is wired. */
@@ -40,12 +131,12 @@ export function tableOutputSentence(kit:TableOutputKit,n:WorkflowNode<'table_out
  *  written by Apply. Turning a reasoning table into a map or a chart changes the step itself. */
 function openTableConfig(kit:TableOutputKit,nodeId:string){
   const esc=kit.esc,workflow=kit.workflow(),node=workflow.nodes.find(x=>x.id===nodeId) as WorkflowNode<'table_output'>|undefined;if(!node)return;
-  type Draft=WorkflowNode<'table_output'>['params']&{view?:'map'|'table'|'bars';coord:{metres:boolean;zone:string;hemisphere:'north'|'south'}};
+  type Draft=WorkflowNode<'table_output'>['params']&{view?:'map'|'table'|'bars';coord:{metres:boolean;zone:string;hemisphere:'north'|'south'};present:TablePresentation;rowsShown:number|'all'};
   const mode=shownMode(node,workflow.edges);
   const points=mode!=='table'&&mode!=='polygons';
   const held=node.params.coordinates,suggested=kit.zoneAdvice(30,'north');
   openConfigDialog<Draft>({
-    id:'table-config',widget:'Table',step:node.params.label||kit.title('table_output'),draft:{...structuredClone(node.params),coord:{metres:!!held,zone:String(held?.zone??suggested?.zone??30),hemisphere:held?.hemisphere??suggested?.hemisphere??'north'}},
+    id:'table-config',widget:'Table',step:node.params.label||kit.title('table_output'),draft:{...structuredClone(node.params),present:structuredClone(node.params.presentation??{}),rowsShown:10,coord:{metres:!!held,zone:String(held?.zone??suggested?.zone??30),hemisphere:held?.hemisphere??suggested?.hemisphere??'north'}},
     sections:draft=>{
       let settings='';
       // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them (2026-10-26). Offered only for a table,
@@ -59,18 +150,21 @@ function openTableConfig(kit:TableOutputKit,nodeId:string){
         +`<option value="metres"${draft.coord.metres?' selected':''}>In metres: easting and northing in a UTM zone</option></select></div>`
         +(draft.coord.metres?zoneFields(kit,draft.coord,'output'):'');
       if(!settings)settings='<p class="muted">Nothing to set: what you connect decides how it is shown.</p>';
-      const shows={table:'Rows are shown as imported, an absent value as unknown.',
-        other:`Every point with its ${draft.coord.metres?'easting and northing in metres':'longitude and latitude'} and attributes, missing ones included.`};
-      return {settings,preview:`<p class="muted">${mode==='table'?shows.table:shows.other}</p>`};
+      return {settings,presentation:presentationFields(draft.present,node.params.label||kit.title('table_output'),esc),
+        preview:tablePreview(kit,node,mode,draft.coord,draft.present,draft.rowsShown,draft.totalsAsserted===true)};
     },
     wire:(root,draft,redraw)=>{
+      wirePresentation(root,draft.present,redraw);
+      root.querySelector<HTMLSelectElement>('#preview-rows')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;
+        draft.rowsShown=v==='all'?'all':Number(v);redraw();});
       root.querySelector<HTMLSelectElement>('#output-coordinates')?.addEventListener('change',e=>{draft.coord.metres=(e.target as HTMLSelectElement).value==='metres';redraw();});
       if(draft.coord.metres)wireZone(root,draft.coord,redraw,'output');
       root.querySelector<HTMLInputElement>('#output-totals')?.addEventListener('change',e=>{
         if((e.target as HTMLInputElement).checked)draft.totalsAsserted=true;else delete draft.totalsAsserted;redraw();});
     },
     apply:draft=>{
-      const {view,coord,...params}=draft;
+      const {view,coord,present,rowsShown:_shown,...params}=draft;
+      if(Object.keys(present).length)params.presentation=present;else delete params.presentation;
       if(coord.metres)params.coordinates={zone:Number(coord.zone),hemisphere:coord.hemisphere};else delete params.coordinates;
       if(view&&view!=='table'){kit.change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
         w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}
@@ -88,7 +182,7 @@ export const tableOutputInspector:OwnInspector<'table_output'>={
     const mode=shownMode(n,workflow.edges);
     content+=kit.section('Name',`<div class="field"><label class="field-label" for="table-label">Results tab name</label><input id="table-label" maxlength="60" value="${esc(n.params.label)}"></div>`
       +kit.writeUpSelect(n));
-    const portName=(port:string)=>({area:'Study area',coverage:'Or: spatial coverage check',decisions:'Reasoning result',table:'Tabular data',raster:'Or: Raster',network:'Street network',polygons:'Polygons'} as Record<string,string>)[port]
+    const portName=(port:string)=>({area:'Study area',decisions:'Reasoning result',table:'Tabular data',raster:'Or: Raster',network:'Street network',polygons:'Polygons'} as Record<string,string>)[port]
       ||'Point data '+(port==='points'?1:port.split('_')[1]);
     // WHAT IS CONNECTED, and one picker to connect more (2026-11-09, the practitioner: *"streamline its input ports like
     // map output"*). A select for each of five ports, most never used, was the Inspector's half of the clutter.

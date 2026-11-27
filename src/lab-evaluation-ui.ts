@@ -55,7 +55,7 @@ export function openEvaluation(ctx:EvaluationContext):void{
     +`<label>What happens<textarea data-f="happens" rows="2">${esc(f.happens)}</textarea></label>`
     +`<label>What it costs<textarea data-f="costs" rows="2">${esc(f.costs)}</textarea></label>`
     +`<label>Text<select data-f="textKind"><option value="">—</option>${TEXT_KINDS.map(k=>`<option${f.textKind===k?' selected':''}>${k}</option>`).join('')}</select></label>`
-    +`<button type="button" class="chip" data-remove="${i}">Remove</button>`
+    +`<button type="button" class="button small danger" data-remove="${i}">Remove</button>`
     +`<a class="button small" data-issue="${i}" href="#" target="_blank" rel="noopener noreferrer">Open as GitHub issue</a></div>`;
   const draw=()=>{
     d.innerHTML=`<div class="manual-head"><h2 id="lab-evaluation-title">Evaluate: ${esc(pass.screen)}</h2>`
@@ -69,7 +69,7 @@ export function openEvaluation(ctx:EvaluationContext):void{
         return `<details class="lab-heuristic" data-h="${h.id}"${mine.length?' open':''}><summary><strong>${h.id}</strong> ${esc(h.name)}`
           +`${mine.length?` <span class="muted">(${mine.length})</span>`:''}</summary><p class="muted">${esc(h.ask)}</p>`
           +mine.map(([f,i])=>findingHTML(f,i)).join('')
-          +`<button type="button" class="chip" data-add="${h.id}">Add a problem</button></details>`;}).join('')
+          +`<button type="button" class="button small" data-add="${h.id}">Add a problem</button></details>`;}).join('')
       +`<label class="lab-works">What works<textarea id="lab-works" rows="2">${esc(pass.works)}</textarea></label>`
       +`<div class="lab-actions"><span id="lab-status" class="muted" role="status"></span>`
       +`<button class="button primary" id="lab-save">Save to laptop</button></div>`;

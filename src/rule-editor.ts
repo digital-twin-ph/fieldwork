@@ -324,7 +324,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +`</select>`
         // Nothing to compare against when the question is whether there was anything to compare.
         +(presence?'':valueControl(kind,where,condition))
-        +`<button class="button small" ${where} data-part="drop-condition" aria-label="Remove this condition">Remove</button>`
+        +`<button class="button small danger" ${where} data-part="drop-condition" aria-label="Remove this condition">Remove</button>`
         +`</div>`;
     };
 
@@ -398,7 +398,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +`<span class="rule-is">is</span>`
         +`<input data-setting="${i}" data-setting-part="value" aria-label="Setting value" inputmode="decimal" value="${esc(values[setting.name]===undefined?'':String(values[setting.name]))}" placeholder="38">`
         +`<input data-setting="${i}" data-setting-part="unit" aria-label="Setting unit" value="${esc(setting.unitLabel??'')}" placeholder="degrees Celsius">`
-        +`<button class="button small" data-setting="${i}" data-setting-part="drop" aria-label="Remove setting ${esc(setting.name)}">Remove</button></div>`).join('')
+        +`<button class="button small danger" data-setting="${i}" data-setting-part="drop" aria-label="Remove setting ${esc(setting.name)}">Remove</button></div>`).join('')
       +`<button class="button small" id="rule-editor-add-setting">+ Add a setting</button></section>`;
     const orderMarkup=()=>{
       const columns=sortColumns();
@@ -537,7 +537,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         :`<input data-rule="${r}" data-then="${t}" data-part="predicate" aria-label="Conclusion name" value="${esc(shownName(conclusion.predicate))}" placeholder="band">`
           +`<span class="rule-is">is</span>`
           +`<input data-rule="${r}" data-then="${t}" data-part="conclusion" aria-label="Conclusion value" value="${esc(shownTerm(conclusion.value??''))}" placeholder="Short">`)
-      +(rule.then.length>1?`<button class="button small" data-rule="${r}" data-then="${t}" data-part="drop-then">Remove</button>`:'')
+      +(rule.then.length>1?`<button class="button small danger" data-rule="${r}" data-then="${t}" data-part="drop-then">Remove</button>`:'')
       +`</div>`;
     const ruleCard=(rule:Authored['rules'][number],r:number)=>`<section class="rule-card"><header><h3>Rule ${r+1}`
       +`${evaluation?` · ${evaluation.matchedByRule[r]!.toLocaleString('en')} record${evaluation.matchedByRule[r]===1?'':'s'}`:''}</h3>`
@@ -564,7 +564,7 @@ export function openRuleEditor(authored:Authored,esc:Escape,options?:EditorOptio
         +[...new Set([...concludedColumns(),o.predicate].filter(Boolean))].map(c=>`<option value="${esc(c)}" ${c===o.predicate?'selected':''}>${esc(localName(c))}</option>`).join('')
         +`</select><span class="rule-is">is</span>`
         +`<input data-otherwise="${i}" data-otherwise-part="value" aria-label="Value where no rule gave one" value="${esc(localName(o.value).replace(/_/g,' '))}" placeholder="Cannot be classified">`
-        +`<button class="button small" data-otherwise="${i}" data-part="drop-otherwise" aria-label="Remove this otherwise">Remove</button>`
+        +`<button class="button small danger" data-otherwise="${i}" data-part="drop-otherwise" aria-label="Remove this otherwise">Remove</button>`
         +(evaluation?.defaultedByColumn?.[localName(o.predicate)]!==undefined
           ?`<span class="rule-block-count">${evaluation.defaultedByColumn[localName(o.predicate)]!.toLocaleString('en')} record${evaluation.defaultedByColumn[localName(o.predicate)]===1?'':'s'}</span>`:'')
         +`</div></div>`).join('')

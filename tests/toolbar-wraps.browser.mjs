@@ -18,7 +18,7 @@ for(const width of [1280,1440,1920]){
     }
     const state=await page.locator('#workflow-state').boundingBox();
     expect(state.height).toBeLessThan(30);
-    await expect(page.locator('#toggle-library')).toHaveText('Hide node library');
+    await expect(page.locator('#toggle-library')).toHaveText('Hide widget library');
     // Next to the panel it hides: left of every tab, and within a few pixels of the panel's edge.
     const toggle=await page.locator('#toggle-library').boundingBox(),first=await page.locator('.tab[data-view="project"]').boundingBox();
     const panel=await page.locator('.library').boundingBox();

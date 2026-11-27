@@ -97,9 +97,9 @@ export function openWalkthrough(walk:Walkthrough,esc:Escape,from?:HTMLElement):v
       +`<button class="button" data-walk-close>Close</button></div>`
       +`<div class="walk-body">${walkthroughMarkup(walk,at,esc)}</div>`
       +`<div class="walk-controls"><button class="button" data-walk-back${at===0?' disabled':''}>Back</button>`
-      +`<button class="button primary" data-walk-step${at===walk.steps.length-1?' disabled':''}>Step</button>`
+      +`<button class="button" data-walk-step${at===walk.steps.length-1?' disabled':''}>Step</button>`
       +`<button class="button" data-walk-play aria-pressed="${timer?'true':'false'}"${at===walk.steps.length-1?' disabled':''}>${timer?'Pause':'Play'}</button>`
-      +`<button class="button" data-walk-start${at===0?' disabled':''}>Start again</button></div></div>`;fitLabels(box);};
+      +`<button class="button" data-walk-start${at===0?' disabled':''}>Back to step 1</button></div></div>`;fitLabels(box);};
   const go=(to:number)=>{at=Math.max(0,Math.min(walk.steps.length-1,to));if(at===walk.steps.length-1)stop();draw();};
   const close=()=>{stop();if(box.open)box.close();box.remove();back?.focus();};
   box.addEventListener('click',event=>{

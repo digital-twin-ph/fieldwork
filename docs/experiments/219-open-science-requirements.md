@@ -1,6 +1,6 @@
 # 219 · What open science asks of a Fieldwork project
 
-_Created 2026-11-16 · Updated 2026-11-21_
+_Created 2026-11-16 · Updated 2026-11-27_
 
 **Status:** asked. Nothing built under this record itself; it goes on through identity and credentials
 ([218](218-an-identity-you-carry.md)), the Notes tab ([202](202-one-record-several-products.md)) and provenance (the
@@ -189,6 +189,24 @@ restricted record, so that neither the public nor Zenodo's staff can read it; it
 
 **Open:** whether a deposit from Fieldwork is needed at all, when Zenodo's GitHub link archives a project repository's
 releases without one.
+
+## A literature search, reproducible and attributed, 2026-11-27
+
+Decided by the practitioner for **Find literature for each term** ([232](232-terms-looked-up-and-appraised.md)), and
+recorded here because each is an open-science requirement, not only a widget's behaviour: *"We need the results to be
+reproducible and the query to be part of provenance, ontology tracked"*; *"Make sure searches are also timestamped"*;
+*"timestamped and user recorded as the one who did the search"*.
+
+| Requirement | How the widget meets it |
+| --- | --- |
+| The search can be repeated, and its answer is the one reported | One query, translated for OpenAlex and Semantic Scholar, both strings kept verbatim; the result saved with the step by digest, so a run reads it rather than searching again; **Search again** keeps every earlier result and says what changed |
+| When | Each search's start and end in UTC; each result's retrieval time; each include or exclude timed |
+| Who | The person who ran each search, and who made each decision, from their open identity ([218](218-an-identity-you-carry.md)) |
+| Provenance, in the ontology | The query a `prov:Plan`, each search an activity, its result an entity, the appraisal the person's activity; the terms through the admission review and versioned in `fieldwork-ontology` |
+| A reportable method | PRISMA-S counts from the record: found, after duplicates, screened, excluded by reason, included |
+| Open evidence | Each work's open-access status beside it when it is judged |
+
+Built: nothing yet. The row is in the [open science inventory](../audits/open-science-inventory.md).
 
 ## Open questions
 

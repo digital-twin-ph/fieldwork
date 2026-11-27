@@ -15,11 +15,11 @@ test('Table executes point data without a study area or invented review decision
   assert.deepEqual(w,before);assert.equal(table.rows[0].attributes.count,0);assert.equal(table.rows[0].attributes.confirmed,false);
   assert.equal(table.spatialReference.geometryCRS,'OGC:CRS84');
   assert.match(result.receipts[0].facts,/fw:TableView/);assert.match(result.receipts[0].facts,/geo:wktLiteral/);
-  // EVERY PORT A TABLE CAN SHOW, ON EVERY TABLE. They used to appear and disappear with an
+  // EVERY PORT A TABLE CAN SHOW, ON EVERY TABLE. The coverage port went in 0.204.0: nothing live made a coverage
+  // check, and a saved one opens as a clip feeding the points port (below). They used to appear and disappear with an
   // `inputMode` parameter, so the port a connection needed might not exist on the node.
   assert.deepEqual(nodeInputs(w.nodes[1]),
-    [['points','points'],['coverage','coverage-check'],['table','table'],
-     ['polygons','polygons']]);
+    [['points','points'],['table','table'],['polygons','polygons']]);
   // And it insists on none of them: a view with nothing wired is unfinished, not failed, which
   // is what `incomplete-workflow` reports. It used to throw "needs its points input connected",
   // which with every port declared would have demanded four unrelated inputs at once.
@@ -68,7 +68,7 @@ test('Table paging and search include off-page rows and attributes and escape us
   const output={kind:'point-table',rows},first=pointTableMarkup(output,esc);
   assert.equal((first.body.match(/data-place=/g)||[]).length,100);assert.match(first.controls,/1–100 of 105/);assert.doesNotMatch(first.head,/field14/);
   const next=pointTableMarkup(output,esc,{page:1,attributePage:1});assert.equal((next.body.match(/data-place=/g)||[]).length,5);
-  assert.match(next.head,/field14/);assert.match(next.body,/&lt;script&gt;/);assert.match(next.body,/<td>false<\/td>/);assert.match(next.body,/<td>0<\/td>/);
+  assert.match(next.head,/field14/);assert.match(next.body,/&lt;script&gt;/);assert.match(next.body,/<td>false<\/td>/);assert.match(next.body,/<td data-number>0<\/td>/);
   // `false` and `0` are VALUES and are drawn; an absent cell is not, and says which kind of
   // absence it is. It used to read "Not supplied", which a reader could not tell from data.
   assert.doesNotMatch(next.body,/Not supplied/);
@@ -113,7 +113,7 @@ test('the renderer is read from what is wired, and the stored mode only as a fal
 test('a table port and a points port coexist, so neither excludes the other',()=>{
   const node={...newTableOutput(),id:'t',x:0,y:0};
   const ports=nodeInputs(node).map(([port])=>port);
-  for(const port of ['points','coverage','table','polygons'])
+  for(const port of ['points','table','polygons'])
     assert.ok(ports.includes(port),`${port} is always offered`);
   // Specificity decides which renderer runs when more than one is wired.
   assert.equal(shownMode(node,[{to:'t',port:'points'},{to:'t',port:'table'}]),'table');

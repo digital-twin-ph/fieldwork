@@ -184,7 +184,7 @@ function openRegressionConfig(kit:TableStepKit,nodeId:string){
         +`<span class="inspector-section">Adjusted for</span>`
         +(p.adjust.length?p.adjust.map(term=>`<div class="reg-term"><label class="field-label" for="reg-kind-${esc(term.column)}">${esc(term.column)} as</label>`
             +`<select id="reg-kind-${esc(term.column)}" data-reg-adjust-kind="${esc(term.column)}">${kinds(term.as)}</select>`
-            +`<button type="button" class="button small" data-reg-adjust-remove="${esc(term.column)}">Remove</button></div>`
+            +`<button type="button" class="button small danger" data-reg-adjust-remove="${esc(term.column)}">Remove</button></div>`
             // AN ADJUSTMENT THAT FOLLOWS THE SHIFT (experiment 185): with several models, model k may be adjusted for its
             // own column, the rain at its own lag beside the temperature at that lag. One choice per model, in view.
             +((p.exposureColumns?.length??0)>1

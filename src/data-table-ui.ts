@@ -2,6 +2,7 @@ import {editedTitle,type EditedCells} from './cell-edits.js';
 import type {Escape,Workflow,WorkflowNode} from './types.js';
 import {PREVIEW_ROWS,scrollLongTables} from './long-tables.js';
 import {escapeHtml} from './html-escape.js';
+import {presentValue,type TablePresentation} from './table-presentation.js';
 import {type OwnInspector,type StepKit} from './inspector-kit.js';
 import {describableColumns,isDescribed,dictionaryKeyOf} from './column-metadata.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
@@ -128,7 +129,7 @@ function columnTools(box:HTMLFieldSetElement,prefix:string,title:string,changed:
     +`<button type="button" class="button small" id="${prefix}-none">Untick all</button>`
     +`<label class="check"><input type="checkbox" id="${prefix}-ticked"> Ticked only</label></div>`
     +`<p class="muted" id="${prefix}-count" role="status"></p><div class="column-dialog-list"></div>`
-    +`<div class="package-actions"><button type="button" class="button primary" id="${prefix}-done">Done</button></div>`;
+    +`<div class="package-actions"><button type="button" class="button" id="${prefix}-done">Done</button></div>`;
   dialog.querySelector('.column-dialog-list')!.append(box);
   const tools=dialog,say=tools.querySelector<HTMLElement>(`#${prefix}-count`)!;
   const count=()=>{say.textContent=`${ticked().length} of ${boxes().length} ticked.`;summarise();};
@@ -733,7 +734,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     if(!/^https:\/\//.test(url)){fail(new Error('Give an https address.'));return;}
     // PROGRESS AND A STOP, not a time limit: a slow source is still a working one (2026-11-05, Zenodo at 5 KB/s).
     const stop=new AbortController();
-    status.innerHTML=`<span data-fetch-progress>Fetching ${esc(url)}…</span> <button type="button" class="text-button" data-fetch-stop>Stop</button>`;
+    status.innerHTML=`<span data-fetch-progress>Fetching ${esc(url)}…</span> <button type="button" class="button small" data-fetch-stop>Stop</button>`;
     error.hidden=true;
     status.querySelector<HTMLButtonElement>('[data-fetch-stop]')!.onclick=()=>stop.abort();
     const progress=status.querySelector('[data-fetch-progress]')!;
@@ -1346,11 +1347,24 @@ const pager=(page:number,pages:number)=>pages>1?`<div class="table-page-group"><
  *  elements on the page, and ticking a key column in the Tabular data dialog took 8 s at 150,000 rows and over half an
  *  hour at 250,000, almost all of it the browser walking them. A table of up to this many rows looks as it did. */
 export const FRAME_PAGE_ROWS=200;
-export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false,roles}:
-  {query?:string;page?:number;pageSize?:number;assertTotals?:boolean;roles?:ColumnRoles}={}){
+/** HOW MANY ROWS `dataTableMarkup` DRAWS for a table, by the same choice it makes: a cross-tab where the shape allows,
+ *  else the wide frame, else the rows as stored (PR 10's review: a preview counted from the frame offered "All 2" over a
+ *  cross-tab of 12). */
+export function shownRows(table:DataTable,assertTotals=false):number{
+  const grid=crossTab(table,{assertCommensurable:assertTotals});
+  if(grid)return grid.rows.length;
+  return wideFrame(table)?.rows.length??table.rows.length;
+}
+export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false,roles,present,limit}:
+  {query?:string;page?:number;pageSize?:number;assertTotals?:boolean;roles?:ColumnRoles;present?:TablePresentation;
+   /** A preview's rows: the first this many, with no pager (Table's Configure…, PR 10's review). */ limit?:number}={}){
+  // A VALUE AS THE TABLE'S PRESENTATION WRITES IT (Table 0.15.0): its precision and separators, an absent one in the
+  // table's words, a number right-aligned. A cell the shape does not have at all keeps its dash.
+  const value=(v:string|number|null,column:string,attributes:string)=>{const shown=presentValue(v,column,present,esc);
+    return `<td${attributes}${shown.number?' data-number':''}${shown.absent?' data-absent':''}>${shown.html}</td>`;};
   headingLabels=table.columns;
   const matching=query?table.rows.filter(row=>Object.values(row.key).some(v=>String(v).toLowerCase().includes(query.toLowerCase()))):table.rows;
-  const pages=Math.max(1,Math.ceil(matching.length/pageSize)),shown=matching.slice(page*pageSize,page*pageSize+pageSize);
+  const pages=Math.max(1,Math.ceil(matching.length/pageSize)),shown=limit!==undefined?matching.slice(0,limit):matching.slice(page*pageSize,page*pageSize+pageSize);
   const unit=table.unit?esc(table.unit):'<span class="muted">unit unstated</span>';
   // The grid, where the shape allows one and nothing is being searched -- a filter is about
   // finding a row, and a matrix has no rows to page through in the same sense.
@@ -1362,7 +1376,8 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
   // least read it in.
   const frame=grid||query?null:wideFrame(table);
   const framePages=(n:number)=>Math.max(1,Math.ceil(n/FRAME_PAGE_ROWS)),framePage=(n:number)=>Math.min(page,framePages(n)-1);
-  const onPage=<T,>(rows:readonly T[])=>{const at=framePage(rows.length);return rows.slice(at*FRAME_PAGE_ROWS,(at+1)*FRAME_PAGE_ROWS);};
+  const onPage=<T,>(rows:readonly T[])=>{if(limit!==undefined)return rows.slice(0,limit);const at=framePage(rows.length);return rows.slice(at*FRAME_PAGE_ROWS,(at+1)*FRAME_PAGE_ROWS);};
+  const pages_=(at:number,n:number)=>limit!==undefined?'':pager(at,n);
   if(frame)
     return `<div class="table-meta muted">${frame.rows.length} rows \u00b7 `
       +`${esc(frame.subject)}${frame.attributes.length?' with '+frame.attributes.map(esc).join(', '):''}`
@@ -1376,10 +1391,10 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       +'</tr></thead><tbody>'
       +onPage(frame.rows).map(r=>`<tr><th scope="row"${roleAttr(roles,frame.subject)}>${esc(r.label)}</th>`
         +r.attributes.map((a,i)=>`<td${roleAttr(roles,frame.attributes[i]!,'frame-attribute')}>${esc(a)}</td>`).join('')
-        +r.cells.map((v,i)=>`<td${roleAttr(roles,frame.columns[i]!)}>${v===undefined?'<span class="muted">\u2014</span>'
-          :v===null?'<span class="muted">unknown</span>':esc(v)}</td>`).join('')
+        +r.cells.map((v,i)=>v===undefined?`<td${roleAttr(roles,frame.columns[i]!)}><span class="muted">\u2014</span></td>`
+          :value(v,frame.columns[i]!,roleAttr(roles,frame.columns[i]!))).join('')
         +'</tr>').join('')
-      +'</tbody></table></div>'+pager(framePage(frame.rows.length),framePages(frame.rows.length));
+      +'</tbody></table></div>'+pages_(framePage(frame.rows.length),framePages(frame.rows.length));
   if(grid)
     return `<div class="table-meta muted">${table.rowCount} cells · ${esc(grid.rowKey)} by ${esc(grid.colKey)}`
       +` · value in ${unit}</div>`
@@ -1389,16 +1404,15 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       +`</tr></thead><tbody>`
       // A ROW'S MEANING BESIDE ITS NAME, where the table carries one (a regression's terms, experiment 172).
       +onPage(grid.rows).map(r=>`<tr><th scope="row">${esc(r.label)}${table.meanings?.[r.label]?`<span class="meaning"> · ${esc(table.meanings[r.label]!)}</span>`:''}</th>`
-        +r.cells.map(v=>`<td>${v===undefined?'<span class="muted">—</span>'
-          :v===null?'<span class="muted">unknown</span>':esc(v)}</td>`).join('')
-        +(r.total===null?'':`<td class="crosstab-total">${esc(r.total)}</td>`)
+        +r.cells.map((v,i)=>v===undefined?'<td><span class="muted">—</span></td>':value(v,grid.columns[i]??'','')).join('')
+        +(r.total===null?'':value(r.total,'Total',' class="crosstab-total"'))
         +'</tr>').join('')
       +`</tbody>`
       // The fourth row, where a reader looks for N.
       +(grid.grandTotal===null?'':`<tfoot><tr><th scope="row">Total</th>`
-        +grid.columnTotals.map(v=>`<td class="crosstab-total">${v===null?'<span class="muted">—</span>':esc(v)}</td>`).join('')
-        +`<td class="crosstab-total">${esc(grid.grandTotal)}</td></tr></tfoot>`)
-      +`</table>`+pager(framePage(grid.rows.length),framePages(grid.rows.length))
+        +grid.columnTotals.map(v=>v===null?'<td class="crosstab-total"><span class="muted">—</span></td>':value(v,'Total',' class="crosstab-total"')).join('')
+        +value(grid.grandTotal,'Total',' class="crosstab-total"')+'</tr></tfoot>')
+      +`</table>`+pages_(framePage(grid.rows.length),framePages(grid.rows.length))
       // WHO SAID THESE COULD BE ADDED. A reader checking a margin is entitled to know whether
       // the table claimed its values count the same thing or a person did, because the two carry
       // different weight -- and because the person can be wrong in a way the file cannot.
@@ -1412,8 +1426,8 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
     // A CELL EDITED BY HAND IS MARKED, with what it was on hover (experiment 214).
     +shown.map(row=>{const edited=(row as {edited?:EditedCells}).edited;
       const cell=(c:string)=>roleAttr(roles,c,edited?.[c]?'cell-edited':'')+(edited?.[c]?` data-cell-edited title="${esc(editedTitle(edited[c]!))}"`:'');
-      return `<tr>${table.keys.map(k=>`<td${cell(k)}>${esc(row.key[k])}</td>`).join('')}${valued?`<td${cell(table.valueField)}>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td>`:''}</tr>`;}).join('')
-    +`</tbody></table>`+pager(page,pages);
+      return `<tr>${table.keys.map(k=>`<td${cell(k)}>${esc(row.key[k])}</td>`).join('')}${valued?value(row.value,table.valueField,cell(table.valueField)):''}</tr>`;}).join('')
+    +`</tbody></table>`+(limit!==undefined?'':pager(page,pages));
 }
 
 /** THE TABLE A REMOTE SPEC DESCRIBES, re-read from its fetched file with the settings it was first read with: the

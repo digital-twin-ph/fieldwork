@@ -754,7 +754,8 @@ export interface ParamsByType {
     partLabel?:string;
     /** What a frame is, written by the practitioner: "Birth cohort". The frame's own name is the data's. */
     frameCaption?:string;
-    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';/** How many map images the map draws as ground, each its own port (TODO 35). */ groundInputCount?:number;presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean;
+    inputMode?:'spatial'|'decisions'|'raster'|'polygons'|'network';/** How many map images the map draws as ground, each its own port (TODO 35). */ groundInputCount?:number;presentation?:'plot'|'interactive';contextPoints?:boolean;mapTitle?:string;mapSubtitle?:string;mapSourceNote?:string;showLegend?:boolean;basemap?:BasemapChoice}; table_output:{label:string; section?:import('./notes.js').FigureSection|'none'; pointInputCount?:number;
+    /** How the table is presented: its title, precision, absent values, notes and source (Table 0.15.0). */ presentation?:import('./table-presentation.js').TablePresentation; inputMode?:'spatial'|'decisions'|'polygons'|'table'; totalsAsserted?:boolean;
     /** POINTS' COORDINATES IN METRES, in this UTM zone, where set; longitude and latitude as recorded otherwise. What
      *  Reproject points did as a step until it retired into this choice (0.169.0, docs/audits/reproject-retired.md). */
     coordinates?:{zone:number;hemisphere:'north'|'south'}};

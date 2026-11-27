@@ -3,6 +3,63 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.204.0 — In development
+
+- **One blank port, bound by what arrives** (settled 2026-10-15 for the Map, by experiment 116 for every widget; the
+  practitioner, 2026-11-27: *"Nodes should automatically detect the shape of the incoming input on an unconnected input
+  port and once connected should display in words what came in."*). Every widget with inputs draws what is connected
+  and one blank port, **+ Add an input**, while it can take more. Drop a result on it and it goes to the input its kind
+  fits; where two inputs of one kind do different jobs, the canvas asks which (Measure distance: **From** or **To**).
+  A step whose inputs are all connected draws no blank port. Saved workflows open unchanged: the inputs underneath
+  are the same.
+- **Kinds as symbols.** A connected input shows its kind's symbol and the name of the step it came from, cut short with
+  "…" where it does not fit and named in full on hover; "Points from Health facilities" was too long for a node. Nine
+  symbols, chosen by the practitioner from a sheet of mock nodes and kept in the buttons-and-ports audit. Source widgets
+  take the symbol of what they send as their icon: Point data and Raster input both drew ▦.
+- **One output connector per node**, on its right edge with no row of its own; hovering it shows the kind's symbol and
+  name (the practitioner: *"I am also able to hover each one and see what shape is coming out. I do that a lot."*).
+- **Shorter nodes, and no example opens with one node over another.** A widget's own description, the same on every
+  node of its kind, shows on the selected node only; a subtitle about the node itself stays. Overlapping node pairs in
+  the eleven built-in examples: 13 at 0.203.0, 27 with the port rows, 0 now, with seven nodes moved in the Snow and
+  geoprivacy examples. A test holds every built-in example at none.
+- **Table 0.15.0 previews itself in Configure…** (the practitioner: *"Table output config dialog should have a preview of
+  the table"*): ten rows, twenty, or all to review, as Results will show them, with the coordinates as the dialog sets
+  them; a polygon table shows its areas from the last run, wide.
+- **Tables presented to a standard** (the practitioner: *"We want tables to really look pretty but also vision impaired
+  friendly"*). Every table follows the rules the standards agree on: numbers right-aligned in equal-width digits under
+  right-aligned headings, one rule above, one under the headings and one below, none vertical, coordinates to one
+  precision a column. Configure… gains a **Presentation** section: title, decimal places, thousands separators (never
+  on a year), how an absent value is written (a dash read as "no value" by default), shaded rows, notes and source.
+  The standards were read from open guidance (APA, ICMJE, STROBE, MMWR, CDC, the UK Analysis Function, ONS, W3C) and
+  are in a research note.
+- **PR 10's review, answered.** "As recorded" keeps a value as it is: text as written (00123 stays 00123), a number to
+  its full precision (7e-8 is not 0), separators only in a number's whole part. The blank port never replaces a
+  connection: where the only input that fits is taken, the drop is refused. The preview draws data tables with Results'
+  own renderer, so ticking Show totals shows the totals before Apply, and offers "All" by the rows that renderer draws.
+  Every Supabase check result is let go when the credentials change, waiting or finished, so a different key under the
+  same name is never shown as accepted.
+- **Worked examples audited as teaching material.** Five of twelve catalogue examples have a manual walkthrough, none
+  of the eleven built-in ones; the READMEs share no outline. The standard is the practitioner's to set; TODO carries it.
+- **Table 0.15.0: the coverage port is gone.** Nothing makes a coverage check since Check spatial coverage retired on
+  2026-10-21, and a workflow saved with one already opens with Keep points inside the area feeding the points port.
+- **Buttons by role.** Primary only where a button commits (Apply, Save, Run, Configure…); Close, Next, Done and Step
+  are Secondary; Remove is Danger everywhere; Manual and other ways somewhere are links. At the audit 20 labels were
+  drawn in more than one style and 6 Primary labels did not commit; `npm run measure:buttons` now counts 0 and 0, and a
+  unit test holds both there. The walkthroughs' **Start again** reads **Back to step 1**, and the note card's
+  **open** reads **Open the note**.
+- **A Supabase key, made from the manual and checked on the spot** (experiment 233's first spike). The Credentials page
+  says how to make a Supabase project and copy its publishable key; **Check** beside the key asks the project once and
+  says what came back. A secret key is refused as it is added and never sent. Not yet tried against a real project.
+- **Experiment 233 gains its precedents**: staged case studies, real-time outbreak simulations, matrix games and
+  simulation exercises, the patterns cooperative games use, and the evidence against. Nothing found combines turns, a
+  hidden model and analysis in real tools, and the evidence of learning across the field is weak.
+- **One word for each: a widget is the kind, a node one placed on the canvas** (the practitioner: *"we call them
+  widgets as classes and nodes as instances"*). The library lists widgets, so it is the **Widget library**, searched by
+  **Find a widget…**; the canvas still says node.
+- **Credentials carries a padlock**, closed while locked, as Import and Back up carry their arrows.
+- **WebKit's offline reload answered.** The reasoning worker loads from the offline cache in WebKit (5 of 5 local
+  runs); the failures were map tiles cut off by going offline, which the test now sets aside only while offline.
+
 ## 0.203.0 — In development
 
 - **Commentary off the screen, second pass.** An empty canvas now says the other widgets appear once a source is on it.

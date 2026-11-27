@@ -1,9 +1,11 @@
 # 233 · A cooperative, turn-based training mission
 
-_Created 2026-11-26 · Updated 2026-11-26_
+_Created 2026-11-26 · Updated 2026-11-27_
 
-**Status:** asked. A research proposal, kept for review. Nothing is built: no game, no hosted session, no learner
-trial. Every design choice below is the proposal's, and none has been settled by the practitioner.
+**Status:** tried, one spike. A research proposal, kept for review. The first piece is tried: a Supabase key made by
+the practitioner and checked from Fieldwork's Credentials dialog, which Supabase accepted (2026-11-27, below). Nothing else is built: no game,
+no hosted session, no learner trial. Every other design choice below is the proposal's, and none has been settled by
+the practitioner.
 
 ## The question
 
@@ -155,6 +157,118 @@ Recorded so the review starts from them. None is settled here.
   points must follow evidence and milestones, not clicks, and must never be stored on the workflow. This proposal
   scores a team's decisions, kept in the session record, which is consistent with that. Whether to score at all is
   still open.
+
+## Spike 1: a Supabase key, checked on the spot (2026-11-27)
+
+The practitioner: *"For 233, can we do a spike on Supabase? How about a manual entry for it in the credentials dialog
+so I can follow it and create my API key and test it on the spot with an API status check?"*
+
+**What was built, for 0.204.0:**
+
+| Part | Where |
+| --- | --- |
+| How to make a Supabase project and copy its publishable key, and the form for it | The manual's Credentials page, *Make a Supabase project and its publishable key* |
+| **Check** beside each `supabase` key in the Credentials list: one request to the project's Auth health route (`/auth/v1/health`, the key on the `apikey` header), and what came back in words | `src/supabase-check.ts`, `src/credentials-ui.ts` |
+| A secret key (`sb_secret_`, or the legacy `service_role`) is refused as it is added and never sent | the same; seven unit tests in `tests/supabase-check.test.mjs` |
+
+**Read from Supabase's documentation, 2026-11-27:** a project has a publishable key, safe in a browser, and secret
+keys for servers only, which Supabase answers with 401 from a browser. The legacy `anon` and `service_role` keys are
+to be retired in early 2027. The free plan allows two active projects and pauses one after a week without use. The
+docs name `/auth/v1/health` as the route to check a publishable key, but do not say what it returns, what a wrong key
+gets, or whether a browser may call it from another site (CORS).
+
+**What the spike is for:** those three unknowns, and whether the manual's steps match Supabase's screens. Steps 2 and
+3 of the manual were written without a reader having followed them.
+
+**Observation to make, written before it is known:** does the practitioner reach *the project is running and
+accepted this key* by following the manual alone? Record each place a screen differed, what **Check** said, and what
+it said for a deliberately wrong key.
+
+**Validation record:** seven unit tests pass against a stubbed network (Node, no browser).
+
+**Tried, 2026-11-27, against the practitioner's own project**, from Fieldwork on a local server (Chromium,
+`http://127.0.0.1:4199`), the key unlocked from the practitioner's credentials file:
+
+| Request to `/auth/v1/health` | Supabase answered |
+| --- | --- |
+| The publishable key, by **Check** | 200, `{"name":"GoTrue","version":"v2.199.0",…}`; Check said *the project is running and accepted this key (GoTrue v2.199.0)* |
+| A made-up publishable key, sent by hand | 401, *Invalid API key* |
+| No key | 401, *No API key found in request* |
+
+The three unknowns the documentation left are answered: what the route returns, what a wrong key gets, and that a
+browser page may call it from another site (CORS), from `127.0.0.1` at least. Not yet tried from the published site,
+nor on a paused project. **The manual, as followed by the practitioner:** steps 1 to 3 matched Supabase's screens. Step 4 did not: *"The
+Connect button did not have the API variables I need. They were under the Settings panel specifically 'General' and
+'API Keys'."* The Project ID is under **Settings**, **General**, and the address is built from it; the publishable key
+is under **Settings**, **API Keys**. The manual was corrected the same day.
+
+## Precedents and patterns, researched 2026-11-27
+
+The practitioner: *"research whether this game has precedents in epidemiology or any related field and whether there
+are patterns in collaborative games that we can learn from."* Read from web pages and open abstracts; no file was
+downloaded and no PDF opened. Open copies are linked; a source marked **closed** was read as an abstract only and
+nothing below rests on its detail.
+
+**In short:** nothing found combines all of this proposal: turns, a hidden agent-based model, synthetic snapshots
+analysed in real tools, and a team move with its evidence. The nearest pair staged or live data with team analysis.
+Across the field the evidence of learning is weak and mostly self-reported. Two failures are documented: learners game
+whatever is scored, and an exercise's lessons are often never acted on.
+
+### The nearest precedents
+
+| Precedent | What it is | Cooperative | Evidence of learning |
+| --- | --- | --- | --- |
+| [CDC's Case Studies in Applied Epidemiology](https://archive.cdc.gov/www_cdc_gov/eis/request-services/casestudies.html) (EIS, since 1951) | A real investigation in parts: learners work one question before the next part is released; the instructor's guide is held back | Group work, unscored | None found |
+| [Real-time outbreak simulation, MMED at AIMS](https://europepmc.org/article/PMC/PMC3317897) (Bellan, Pulliam et al., 2012) | Participants act out a stochastic outbreak; the data are reported as it runs, then analysed | Group | The authors observed gains; no measure reported |
+| [EpiGames, Murdoch University](https://www.murdoch.edu.au/schools/medical-molecular-and-forensic-sciences/about/news/innovative-outbreak-simulation-brings-real-world-epidemiology-to-life-for-midsc-students) (2026) | 126 people spread a virtual pathogen by phone; response teams analyse the live, incomplete data, false positives included, and write situation reports against the clock | Teams | None; a news report |
+| ["Pangea 2030" matrix game](https://europepmc.org/article/PMC/PMC7063729) (Smith et al., 2020) | Six teams, four rounds; the gamemaster rewrites news injects between rounds from the players' moves; each move is an argument others can challenge | Shared goal, mixed interests | 14 of 18 replied; most found it useful, nearly a third did not feel they knew more; 7 of 24 actions used the gender lens that was its aim |
+| [Pandemic board game, interprofessional](https://jdc.jefferson.edu/jcipe/vol7/iss2/4) (McCave, 2017) | Teams of four professions, each role needed to win | Fully | Pre and post teamwork scales; results not on the page read |
+| ["Disease detective cards"](https://europepmc.org/article/PMC/PMC6924897) (Burckhardt and Kissling, 2020) | Learners play outbreak participants; the facilitator gathers their card data as the investigation unfolds | Group | Not evaluated |
+| [WHO simulation exercises](https://www.who.int/emergencies/operations/simulation-exercises), [ECDC's handbook](https://ecdc.europa.eu/en/publications-data/handbook-simulation-exercises-eu-public-health-settings) | Tabletop to full-scale exercises run on a list of injects, with an after-action review | Responders together | Of 117 WHO-supported exercises, 56 had a report available ([Copper et al., 2020](https://europepmc.org/article/PMC/PMC7705853)) |
+| [Operation Outbreak](https://europepmc.org/article/PMC/PMC7467071), [Solve the Outbreak](https://doi.org/10.1007/s44217-024-00137-3), [Outbreak at Watersedge](https://mclph.umn.edu/watersedge/teachers_guide.html) | A phone-to-phone outbreak in schools; CDC's solo multiple-choice app; a solo e-learning investigation | Community; solo; solo | Solve the Outbreak: 16 students enjoyed it, and found ways to cheat its answers (Seitz et al., 2024) |
+| Dark Winter, Clade X, Event 201 ([Johns Hopkins](https://www.centerforhealthsecurity.org/our-work/exercises)); Crimson Contagion; Exercise Cygnus | Senior leaders, one team against a scenario, facilitated | One team | No learning evaluation found |
+
+Reviews: a scoping review of 86 studies (Skryabina et al., 2017; open CC-BY copy, PDF not opened) found exercises
+improve knowledge, confidence and understanding of roles, and few studies looked at transfer to real response.
+[Mahdi et al., 2023](https://europepmc.org/article/PMC/PMC10206538), 29 disaster-exercise studies, calls for more
+rigorous evaluation. Krishnamoorthy et al., 2025, 12 studies of gamified outbreak training, **closed**.
+
+### Patterns to learn from
+
+| Pattern | The problem it meets | What it would mean here |
+| --- | --- | --- |
+| **Staged release** (the CDC case studies' parts; WHO and ECDC's injects) | Deciding under uncertainty, not with hindsight | One snapshot a turn is the established form. Whether a snapshot answers the team's last move, as Pangea's did, is a choice to make on purpose |
+| **A facilitator who adjudicates** (free Kriegsspiel, 1876; matrix games) | Rules cannot foresee every move | The facilitator fits; give them a written basis for judging, so judgement does not drift with rank or mood |
+| **A move is an argument**: action, expected result, reasons, open to challenge (matrix games; Pangea) | Rewards reasoning over a lucky right answer | "Decisions plus their evidence" already has this shape: assess the reasoning and the evidence cited, not agreement with the answer |
+| **Against one player steering the team**: partial information per player ([Hanabi](https://arxiv.org/abs/1902.00506)), roles all needed (Pandemic), actions without team consent | Quieter members stop learning | Role-specific views of a snapshot (one holds laboratory results, another field reports), each role signing its part of the move. No peer-reviewed test of which counter works was found |
+| **Cooperative design lessons** (Zagal, Rick and Hsi, 2006; journal **closed**, author's copy a PDF not opened, read through a summary) | One player decides everything; outcomes cannot be traced to decisions; no change on replay | A hidden model gives little feedback: let the team see at the debrief which decision changed what |
+| **The debrief is where learning happens** | Play alone does not teach | Well-run debriefs improved performance by about a fifth in a meta-analysis (Tannenbaum and Cerasoli, 2013, **closed**); [debrief quality did not predict team learning](https://europepmc.org/article/PMC/PMC8936698) in another study. After turn 3, show the hidden run against the team's moves |
+| **No single score** | A score is gamed, and leaderboards demotivate all but the strongest | If anything is scored, it is the quality of each move's evidence and reasoning |
+| **Low fidelity is enough** ([Ratwatte, Skryabina et al., 2025](https://jphe.amegroups.org/article/view/10289/html)) | Full-scale exercises are costly | Three turns and one facilitator is a defensible scale |
+
+### Against, and failures
+
+- **The evidence is weak.** Most evaluations are self-reported satisfaction or confidence with no comparison group, and
+  transfer to real response is mostly unmeasured. This literature cannot support a claim that the mission teaches.
+- **The aim can be lost to the win.** Pangea's players set aside the lens the game existed for and turned competitive
+  when interests were unclear. A team may chase the visible win and skip the analysis the mission is meant to train.
+- **A scored game is gamed** (Solve the Outbreak).
+- **The model teaches its assumptions.** Experts said Plague Inc. oversells border closures
+  ([JMIR Serious Games survey, 2021](https://games.jmir.org/2021/2/e26216)). A hidden agent-based model with unrealistic
+  parameters teaches those parameters.
+- **Lessons not acted on.** Crimson Contagion (2019) and Cygnus (2016) found gaps that recurred in COVID-19 (their
+  reports are PDFs, not opened); [Reddin et al., 2021](https://europepmc.org/article/PMC/PMC8020603) conclude a
+  simulation helps only if its lessons are acted on quickly.
+- **An exercise is not a forecast** ([RAND, 2020](https://www.rand.org/pubs/commentary/2020/05/how-can-wargaming-improve-government-response-to-catastrophic.html)).
+  The proposal already says it forecasts no real outbreak.
+
+### Not found, and not opened
+
+Not found: a controlled evaluation of any cooperative outbreak game; a tested counter to one player steering; an
+evaluation of tabletop exercises within field epidemiology training; outcome data for EpiGames, Operation Outbreak or
+Outbreak at Watersedge. PDFs not opened include WHO's simulation exercise manual, ECDC's handbooks, the Zagal
+author's copy and the Skryabina review. Nothing here shows that a cooperative turn-based mission teaches analysis
+better than a staged case study: that comparison has not been made in anything found.
 
 ## What this does not establish
 

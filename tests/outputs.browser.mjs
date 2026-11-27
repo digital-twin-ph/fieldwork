@@ -29,10 +29,17 @@ const run=async()=>{await page.locator('#run-button').click();await done();await
   await expect(page.getByRole('tablist',{name:'Workflow outputs'}).getByRole('tab',{name:'Every case, as recorded'})).toHaveCount(0);
 
   await expect(page.locator('#offline-status')).toHaveAttribute('data-state','ready',{timeout:45000});
+  // OFFLINE, A MAP TILE CANNOT LOAD, and WebKit reports each one cut off as a page error, "/tile.openstreetmap.org/…
+  // due to access control checks." (0.204.0: 2 of 5 runs locally; a tile in CI before). The map degrades as it should
+  // and the run completes from the offline cache, reasoning worker included, in all five. So only cross-origin tile
+  // requests, only while this test holds the browser offline, are set aside; anything else still fails it.
+  const before=errors.length;
   await context.setOffline(true);await page.reload();await done();
   await page.locator('[data-view="results"]').click();
   await expect(page.getByRole('tablist',{name:'Workflow outputs'}).getByRole('tab')).toHaveCount(3);
   await context.setOffline(false);
+  const TILE_OFFLINE=/^\/(?:tile\.openstreetmap\.org|[a-z]\.tile\.openstreetmap\.org|basemaps\.cartocdn\.com)\/\d+\/\d+\/\d+\.png due to access control checks\.$/;
+  errors.splice(before,errors.length-before,...errors.slice(before).filter(e=>!TILE_OFFLINE.test(e)));
   page.once('dialog',d=>d.accept());await page.locator('#reset-example').click();await run();
   await expect(page.getByRole('tablist',{name:'Workflow outputs'}).getByRole('tab')).toHaveCount(4);
   await mkdir('test-results',{recursive:true});

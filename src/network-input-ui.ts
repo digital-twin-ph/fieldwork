@@ -123,7 +123,7 @@ export const networkInspector:OwnInspector<'network_input'>={
       +kit.section('Inputs',kit.inputs(n,{area:'Study area'}))
       +kit.section('Settings',`<p class="standard-sentence">${esc(networkSentence(p,area?.boundaryID))}</p>`
         +acquisition(n,k,area)
-        +'<div class="inspector-actions"><button id="configure-step" class="button">Configure…</button></div>')
+        +'<div class="inspector-actions"><button id="configure-step" class="button primary">Configure…</button></div>')
       +kit.section('Result',(why?`<p class="standard-result standard-result-warning">${esc(`The last run could not use this network: ${why}`)}</p>`:'')
         +(p.data.nodes.length
           ?`<p class="standard-result">${esc(`${p.data.nodes.length.toLocaleString('en')} junctions and ${p.data.edges.length.toLocaleString('en')} directed streets, saved on this step${methodOf(p)==='osm'?'. A download replaces it only when it finishes':''}.`)}</p>`

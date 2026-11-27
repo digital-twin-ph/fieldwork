@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 // handle per declared input, unlabelled, because `spatialPorts` was a hardcoded list the step was not on. The
 // practitioner, the same afternoon: *"Geometry buffer won't accept a point (mines pushpin)"* -- three dots had
 // appeared and only the first one took points.
-test('the buffer step shows one named port, and a points source binds to it',async({page})=>{
+test('the buffer step shows one blank port, and a points source binds to it',async({page})=>{
   await page.goto('/?example=blank');
   await page.waitForSelector('html[data-ready]');
   await page.locator('#node-library [data-add="point_input"]').click();
@@ -17,8 +17,9 @@ test('the buffer step shows one named port, and a points source binds to it',asy
   const drawn=await node.evaluate(el=>({
     handles:[...el.querySelectorAll('.react-flow__handle-left')].map(h=>h.getAttribute('data-handleid')),
     rows:[...el.querySelectorAll('.node-port-row span')].map(s=>s.textContent.trim())}));
-  assert.deepEqual(drawn.handles,['around'],'one drop target, not one per underlying port');
-  assert.ok(drawn.rows.includes('Points, lines or polygons'),`named, not bare: ${drawn.rows.join(' | ')}`);
+  // 0.204.0: one blank port, as every widget draws it until something is connected.
+  assert.deepEqual(drawn.handles,['layer'],'one drop target, not one per underlying port');
+  assert.ok(drawn.rows.includes('+ Add an input'),`a blank port: ${drawn.rows.join(' | ')}`);
 
   // CONNECTED THROUGH THE INSPECTOR, which is the keyboard path and the one a screen reader has.
   await node.click();

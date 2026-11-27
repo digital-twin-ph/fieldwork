@@ -31,6 +31,9 @@ const connect=async(page,from,to,port)=>{
   const a=await source.boundingBox(),b=await target.boundingBox();
   await page.mouse.move(a.x+a.width/2,a.y+a.height/2);await page.mouse.down();
   await page.mouse.move(b.x+b.width/2,b.y+b.height/2,{steps:20});await page.mouse.up();
+  // ASKED WHICH INPUT, where the kind fits more than one (0.204.0): answered with the port this step means.
+  if(await page.locator('dialog.choose-input').waitFor({timeout:600}).then(()=>true,()=>false))
+    await page.locator(`dialog.choose-input button[data-port="${port}"]`).click();
 };
 const tidy=async page=>{await page.locator('#tidy-button').click();await page.waitForTimeout(250);};
 const wired=async(page,from,to)=>(await saved(page)).edges.some(e=>e.from===from&&e.to===to);

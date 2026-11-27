@@ -285,7 +285,7 @@ export function openRelateConfig(view:RelateConfigView,esc:Escape):void{
         +'<div id="relate-shifts">'
         +draft.shifts.map((s,i)=>`<div class="config-list-row"><label class="field-label" for="relate-shift-${i}">Shift ${i+1}</label>`
           +`<input id="relate-shift-${i}" data-shift="${i}" inputmode="numeric" value="${esc(s)}">`
-          +`<button class="button small" data-drop-shift="${i}" aria-label="Remove shift ${i+1}">Remove</button></div>`).join('')
+          +`<button class="button small danger" data-drop-shift="${i}" aria-label="Remove shift ${i+1}">Remove</button></div>`).join('')
         +`<button class="button small" id="relate-shift-add">+ Add a shift</button></div>`;
 
       if(!draft.on||!draft.bring)

@@ -37,7 +37,7 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
 
   // Changing the declared kind of date changes what the chart says it is, not just a label.
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
+  await page.locator('.react-flow__node[data-id="series"]').click();
   // The settings are in Configure… since 2026-11-12 (experiment 186); the Inspector says them in one sentence.
   await expect(page.locator('.inspector .standard-sentence')).toContainText('a date of death');
   // The caveat left the Inspector on 2026-11-11 (design explanation belongs in documents, not the UI); the manual says it.
@@ -48,7 +48,7 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel')).toContainText('Cases by day of date of onset');
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
+  await page.locator('.react-flow__node[data-id="series"]').click();
   await setSeries(page,'#series-kind','death');
 
   // A week is a different series of the same data, and empty periods survive aggregation.
@@ -61,7 +61,7 @@ test('Snow’s 1855 table draws an epidemic curve that states which date it is o
   await page.locator('[data-view="results"]').click();
   await expect(page.locator('#bars-panel .bar-column').filter({hasText:'1854-08-28'})).toContainText('279');
   await page.locator('[data-view="workflow"]').click();
-  await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
+  await page.locator('.react-flow__node[data-id="series"]').click();
   await setSeries(page,'#series-period','day');
   await run(page);
 
@@ -174,7 +174,7 @@ test('Cases by period previews what it would count, from the records connected, 
   await page.goto('/?example=blank');
   await expect(page.locator('#node-library')).toBeVisible({timeout:45000});
   await upload(page,fixture);
-  await page.locator('.react-flow__node').filter({hasText:'Deaths by day'}).click();
+  await page.locator('.react-flow__node[data-id="series"]').click();
   await page.locator('#configure-step').click();
   const preview=page.locator('#series-config [data-config-section="preview"]');
   await expect(preview).toBeVisible();

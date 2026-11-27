@@ -3,6 +3,21 @@
 The application version follows the policy in [AGENTS.md](AGENTS.md). A version
 shown in a local build is not a claim that it has been published.
 
+## 0.203.0 — In development
+
+- **Commentary off the screen, second pass.** An empty canvas now says the other widgets appear once a source is on it.
+  Four widgets alone had read as a palette that failed to load (found 2026-10-26, and again in Claude Design's canvas
+  findings). Every table's filter said "Name, evidence, or service…" whatever the table held; it now reads "Search the
+  rows…". The map legend's default said "Cooling center", from the retired heat example; it now says "Location". The
+  new-project dialog's notice pointed to experiment 122, and the Ontology link's tooltip named SHACL shapes and
+  OntoInk; both now say only what a reader needs.
+- **The sweep measured.** `npm run measure:prose` counts the strings each surface shows and the words in sentences
+  using design or project vocabulary. It reports and never fails the gate. Before the sweep (0.201.0): 5 strings,
+  84 words. After the first pass (0.202.0): 3 strings, 38 words. Now: 2 strings, 24 words, both held on purpose (the
+  Ontology link's own name, and the note kinds the naming review holds).
+- **The code review's re-read at 0.199.0**, written 2026-11-25 and left unsaved in a worktree, is in its audit, before
+  the acted-on section that corrects four of its readings.
+
 ## 0.202.0 — In development
 
 - **A high-contrast theme.** The practitioner: *"We should also have a high contrast theme … I actually switch themes

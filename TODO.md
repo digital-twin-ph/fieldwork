@@ -99,8 +99,8 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
 - **0.202.0, from the practitioner's UI order of 2026-11-26** (high-contrast theme first): the theme, and Show me how
   ending on Map's scale for Summarize points to polygons and Aggregate points to H3 cells, with labels kept inside the
   drawing and Voronoi's catchments in one fill; and the last three inline Inspectors (Chart, Point data, Measure
-  distance) out of `app.ts`; and the commentary sweep's first pass (below, Comprehensibility 1). **Next in that order:**
-  the rest of the sweep, then buttons and ports.
+  distance) out of `app.ts`; and the commentary sweep's first pass (below, Comprehensibility 1). **0.203.0:** the sweep's
+  second pass, measured. **Next in that order:** buttons and ports, and WebKit's offline reload.
 
 ### Threads from 2026-11-22
 
@@ -1740,7 +1740,12 @@ after, in the browser, so a cut is seen rather than claimed.
    Play back the build's tooltip (the reveal rule); the Inspector's subtitle lost the internal id; and "Research
    workspace" left the header, on the practitioner's word (the name and the PROTOTYPE tag stay). **Left, for the
    practitioner:** the glossary's own words on screen (*machined*, *derived*, *authored* in the Notes counts and
-   cards; the *N3 & evidence* tab), which the naming review holds; the built-in example captions; and the measure, not yet extended past the Inspector.
+   cards; the *N3 & evidence* tab), which the naming review holds; and the built-in example captions, already gone (removed
+   2026-11-11, `src/app.ts`), so nothing was left to read there. **Second pass, 0.203.0 (2026-11-27):** the empty
+   canvas says the other widgets appear once a source is on it; the table filter, the map legend's default, the
+   new-project notice and the Ontology link's tooltip rewritten. **Measured** by `npm run measure:prose`, a report, not a
+   gate: design-vocabulary strings 5 (84 words) at 0.201.0, 3 (38) at 0.202.0, 2 (24) now, both held on purpose. The
+   measure reads index.html, the Notes tab and app.ts; the Inspector stays with `validate-inspector-prose`.
 2. **Controls without a pattern.** Inventory every button on each surface: label, style, position. One style per role
    (primary action, secondary, link-like, label), one place for a step's primary action. The note card's "open" chip is
    the first instance. Measure: buttons whose style does not match their role.

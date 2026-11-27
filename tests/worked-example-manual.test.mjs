@@ -21,7 +21,7 @@ const manual=()=>({schema:MANUAL_SCHEMA,example:'urn:test',workflows:[{name:'Fir
 
 test('a step reads as a sentence that names what is on screen',()=>{
   const types={daily:'table_input',days:'select_rows'};
-  assert.match(stepSentence({add:'select_rows',as:'days'},types,title,esc),/Add <strong>Select rows by value<\/strong>: type its name in <strong>Find a node…<\/strong>/);
+  assert.match(stepSentence({add:'select_rows',as:'days'},types,title,esc),/Add <strong>Select rows by value<\/strong>: type its name in <strong>Find a widget…<\/strong>/);
   assert.equal(stepSentence({connect:{from:'daily',to:'days',port:'records'}},types,title,esc),
     'Connect the output of <strong>Tabular data</strong> to the <em>records</em> input of <strong>Select rows by value</strong>.');
   assert.match(stepSentence({fill:'select-from',label:'From',value:'2023-06-01'},types,title,esc),

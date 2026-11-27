@@ -101,7 +101,10 @@ inherited and is recorded as open in
 
 ## History
 
-### 2026-11-27 · One blank port; the coverage port removed (0.15.0)
+### 2026-11-27 · One blank port; the coverage port removed; a preview in Configure… (0.15.0)
+
+**Configure…** shows the table itself: the rows Results will show, with the coordinates as the dialog sets them,
+before Apply.
 
 The node shows each connected input as its kind's symbol and the name of the step it came from, and one blank port,
 **+ Add an input**, while something on the canvas could add another. The **Or: Coverage result** port is gone: nothing

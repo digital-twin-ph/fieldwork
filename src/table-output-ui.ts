@@ -9,6 +9,9 @@ import {openConfigDialog} from './config-dialog.js';
 import {nodeInputs,portAccepts,outputOf,shownMode} from './core.js';
 import {MAX_POINT_LAYERS} from './point-layers.js';
 import {zoneFields,wireZone,type ZoneAdvice} from './metric-steps-ui.js';
+import {projectFromCRS84} from './reproject.js';
+import {isProjectedReference,type PointCollection,type AnySpatialReference} from './types.js';
+import {PREVIEW_ROWS} from './long-tables.js';
 
 export interface TableOutputKit extends StepKit {
   /** The unit the table's rows state, where they state one, so the totals claim is not offered over it. */
@@ -23,6 +26,48 @@ export interface TableOutputKit extends StepKit {
   shown:(nodeId:string)=>boolean;
   /** The UTM zone the workflow's coordinates suggest, for coordinates shown in metres. */
   zoneAdvice:ZoneAdvice;
+  /** The point records on one of the table's ports: held by Point data, or made by a run that still matches. */
+  layerOn:(nodeId:string,port:string)=>PointCollection|undefined;
+}
+
+/** THE TABLE ITSELF, IN THE DIALOG (the practitioner, 2026-11-27: "Table output config dialog should have a preview of the
+ *  table"): the rows the Results tab will show, with the coordinates as the dialog now sets them, before Apply. A table
+ *  shows its rows as they stand; point records show their name, coordinates and attributes. Longer than 20 rows, it
+ *  scrolls, as every dialog's table does. */
+function tablePreview(kit:TableOutputKit,node:WorkflowNode<'table_output'>,mode:ReturnType<typeof shownMode>,
+  coord:{metres:boolean;zone:string;hemisphere:'north'|'south'}):string{
+  const esc=kit.esc;
+  const table=(head:string[],rows:string[][],total:number)=>
+    `<p class="muted">${total.toLocaleString('en')} ${total===1?'row':'rows'}${total>rows.length?`, the first ${rows.length.toLocaleString('en')} shown`:''}.</p>`
+    +`<div class="table-scroll"><table><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>`
+    +rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')+'</tbody></table></div>';
+  if(mode==='table'){
+    const t=kit.tableOn(node.id,'table');
+    if(!t?.rows.length)return '<p class="muted">Nothing to show yet: the table connected has no rows. Run the workflow if a step makes it.</p>';
+    const head=[...t.keys,...(t.valueField?[t.valueField]:[])];
+    return table(head,t.rows.slice(0,PREVIEW_ROWS).map(r=>[...t.keys.map(k=>String(r.key[k]??'')),
+      ...(t.valueField?[r.value===null||r.value===undefined?'unknown':String(r.value)]:[])]),t.rows.length);
+  }
+  if(mode==='polygons')return '<p class="muted">Each polygon layer connected, one row per area, with its summaries.</p>';
+  const layers=nodeInputs(node).filter(([,type])=>type==='points').map(([port])=>kit.layerOn(node.id,port)).filter((c):c is PointCollection=>!!c);
+  if(!layers.length)return '<p class="muted">Nothing to show yet: connect point records, or run the workflow if a step makes them.</p>';
+  const zone=Number(coord.zone);
+  if(coord.metres&&(!Number.isInteger(zone)||zone<1||zone>60))return '<p class="muted">Choose a UTM zone from 1 to 60 to see the coordinates in metres.</p>';
+  // A run's layer can arrive already in metres, read from a UTM file; a saved one is always longitude and latitude.
+  const projected=(c:PointCollection)=>isProjectedReference((c as {spatialReference?:AnySpatialReference}).spatialReference);
+  let shown:PointCollection[];
+  try{shown=layers.map(c=>coord.metres&&!projected(c)&&c.features.length?projectFromCRS84(c,zone,coord.hemisphere).collection:c);}
+  catch(e){return `<p class="muted">${esc(e instanceof Error?e.message:'These records cannot be shown in metres.')}</p>`;}
+  const inMetres=(c:PointCollection)=>coord.metres||projected(c);
+  const features=shown.flatMap(c=>c.features.map(f=>({f,metres:inMetres(c)})));
+  const attributes=[...new Set(features.flatMap(({f})=>Object.keys(f.properties??{})))].filter(k=>k!=='name');
+  const anyMetres=features.some(x=>x.metres),round=(v:number,metres:boolean)=>metres?v.toFixed(1):v.toFixed(6);
+  const head=['Record',anyMetres?'Easting (m)':'Longitude',anyMetres?'Northing (m)':'Latitude',...attributes];
+  const said=(v:unknown)=>v===null||v===undefined||v===''?'unknown':typeof v==='object'?JSON.stringify(v):String(v);
+  const rows=features.slice(0,PREVIEW_ROWS).map(({f,metres})=>{const at=f.geometry?.coordinates as [number,number]|undefined;
+    return [String((f.properties as {name?:unknown}|null)?.name??f.id??''),at?round(at[0],metres):'missing',at?round(at[1],metres):'missing',
+      ...attributes.map(k=>said(f.properties?.[k]))];});
+  return table(head,rows,features.length);
 }
 
 /** WHAT A TABLE OUTPUT SHOWS, in one sentence, from what is wired. */
@@ -59,9 +104,7 @@ function openTableConfig(kit:TableOutputKit,nodeId:string){
         +`<option value="metres"${draft.coord.metres?' selected':''}>In metres: easting and northing in a UTM zone</option></select></div>`
         +(draft.coord.metres?zoneFields(kit,draft.coord,'output'):'');
       if(!settings)settings='<p class="muted">Nothing to set: what you connect decides how it is shown.</p>';
-      const shows={table:'Rows are shown as imported, an absent value as unknown.',
-        other:`Every point with its ${draft.coord.metres?'easting and northing in metres':'longitude and latitude'} and attributes, missing ones included.`};
-      return {settings,preview:`<p class="muted">${mode==='table'?shows.table:shows.other}</p>`};
+      return {settings,preview:tablePreview(kit,node,mode,draft.coord)};
     },
     wire:(root,draft,redraw)=>{
       root.querySelector<HTMLSelectElement>('#output-coordinates')?.addEventListener('change',e=>{draft.coord.metres=(e.target as HTMLSelectElement).value==='metres';redraw();});

@@ -26,9 +26,9 @@ encrypted the same way, with a plain ZIP as its other button. Browser storage st
 
 Projects now keep a manifest alongside their workflow. Edits update its inventory of nodes, connections, embedded records, fields and references. Export/import validate this inventory and required PDF/raster contents; incomplete packages are rejected. Older workflows acquire a manifest when saved. Reference-only JSON imports require their PDF/raster assets to be available locally—use a complete bundle to move projects between devices.
 
-On desktop, drag the dividers beside the Node library and Inspector, or between Workflow/N3 and Results, to resize the panels. Sizes are saved on this device. Focus a divider and use arrow keys for keyboard resizing; double-click it or choose **Reset layout** to restore defaults. Narrow screens keep the stacked layout. See the [panel-layout design record](experiments/23-resizable-panels.md).
+On desktop, drag the dividers beside the Widget library and Inspector, or between Workflow/N3 and Results, to resize the panels. Sizes are saved on this device. Focus a divider and use arrow keys for keyboard resizing; double-click it or choose **Reset layout** to restore defaults. Narrow screens keep the stacked layout. See the [panel-layout design record](experiments/23-resizable-panels.md).
 
-Use **Hide node library**, at the left end of the bar of tabs, to collapse the node library on the left. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
+Use **Hide widget library**, at the left end of the bar of tabs, to collapse the widget library on the left. The workbench and Results each have a **Full screen** control; press Escape or the same control to return to the normal layout.
 
 ## Choosing a colour theme
 
@@ -54,7 +54,7 @@ The local [John Snow worked examples](examples/john-snow.md) translate pump catc
 
 The local in-development workspace 07 uses those 250 death locations for a [geoprivacy design experiment](experiments/35-cholera-geoprivacy-workflow.md). It branches from the private source to **Move points in a donut** and **Aggregate points in hexagons**, each with before/after map and table tabs. A **Mean center** widget runs on each point branch. **Compare point sets** takes both centers, their corresponding point sets and eight pump locations; its Comparison map shows the two maps side by side on one extent with projected mean centers, center shift and nearest-pump distances. The UTM projection is visible as a computation parameter and in N3 evidence. The after tabs offer a demo GeoJSON download containing derived geometry only. The editable project, before tabs, comparison map, N3 view and run receipt retain source coordinates and must be treated as private. The seeded movement is predictable, cell occupancy is not an anonymity guarantee, and neither method is cleared for real sensitive data. Contextual **Hide data** and calibrated encrypt/decrypt/evaluate operations remain TODO; the widget notes link to the [geoprivacy notebooks](https://git.cdc.gov/jupyterlite/2026-Map-Encryption-Library).
 
-**Widget catalog ›**, beside the node library, lists the widgets you can use, grouped as the palette
+**Widget catalog ›**, beside the widget library, lists the widgets you can use, grouped as the palette
 groups them, and for each one the worked examples that use it, linked to their repositories. Retired
 widgets are not listed. A step's version, release digest and independent check are in its Inspector,
 under Definition. `?catalog=1` opens the catalog directly.

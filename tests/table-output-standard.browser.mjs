@@ -53,3 +53,23 @@ test('Table draws what is connected and one port to add another, on the canvas a
   await expect(inspector.locator('#table-add-input')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+/** THE TABLE ITSELF IN ITS DIALOG (the practitioner, 2026-11-27: "Table output config dialog should have a preview of the
+ *  table"): the rows Results will show, with the coordinates as the dialog sets them, before Apply. */
+test('Configure… previews the table, and the coordinates follow the choice before Apply',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/?example=snow-geoprivacy');
+  await page.waitForSelector('html[data-ready]');
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="before-table"]').click();
+  await page.locator('#configure-step').click();
+  const dialog=page.locator('#table-config');
+  await expect(dialog.locator('thead th')).toHaveText(['Record','Longitude','Latitude','DEATHS','FID']);
+  await expect(dialog).toContainText('250 rows.');
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(1)).toHaveText('-0.137930');
+  await dialog.locator('#output-coordinates').selectOption('metres');
+  await expect(dialog.locator('thead th')).toHaveText(['Record','Easting (m)','Northing (m)','DEATHS','FID']);
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(1)).toHaveText('698587.2');
+  await dialog.locator('#config-cancel, button:has-text("Cancel")').first().click();
+  expect(errors).toEqual([]);
+});

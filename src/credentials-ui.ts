@@ -32,17 +32,22 @@ const GITHUB_ORIGIN='https://api.github.com';
  *  unlocked file is not mistaken for a locked one. The words say it too; the icon is decoration. */
 const OPEN_PADLOCK='<svg class="padlock" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="currentColor"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
+/** LOCKED, A CLOSED PADLOCK (the practitioner, 2026-11-27: "Credentials needs an icon"): Import and Back up beside it
+ *  carry theirs, and the button showed one only once unlocked. */
+const CLOSED_PADLOCK='<svg class="padlock" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><rect x="3" y="7" width="10" height="8" rx="1.5" fill="currentColor"/><path d="M5.5 7V4.5a2.5 2.5 0 0 1 5 0V7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
+
 export function installCredentials(button:HTMLButtonElement,identify?:Identify):CredentialAccess{
  let dialog:HTMLDialogElement|undefined,dirty=false,operation=0,lastInteraction=Date.now();
  // KEPT THROUGH A RELOAD while unlocked (2026-11-16, `session-keep.ts`), encrypted; dropped the moment it locks.
  let resuming=false,extendedAt=0;
  // HOW MANY KEYS ARE OPEN, not only that the session is (2026-11-18: the practitioner saw "unlocked" having opened no
  // file; "Start a new collection" opens an empty one). An empty collection holds nothing to protect, and says so.
- const label=()=>{if(!session.unlocked)return 'Credentials';const n=session.list().length;
+ const label=()=>{if(!session.unlocked)return `${CLOSED_PADLOCK}Credentials`;const n=session.list().length;
   return n?`${OPEN_PADLOCK}Credentials: ${n} ${n===1?'key':'keys'} unlocked`:'Credentials: new, empty';};
  const checks=new Map<string,SupabaseCheck|'asking'>();
  const session=new CredentialSession(()=>{button.innerHTML=label();button.classList.toggle('is-unlocked',session.unlocked&&session.list().length>0);if(!session.unlocked){dirty=false;operation++;checks.clear();dialog?.close();}refresh();
   if(session.unlocked){if(!resuming)void keep('credentials',session.snapshot(),session.lastUsed+session.idleMs);}else void drop('credentials');});
+ button.innerHTML=label();
  const refresh=()=>{if(!dialog)return;const status=dialog.querySelector<HTMLElement>('#credential-status')!;// Three states, each naming what to do next rather than reporting a count. An empty
  // collection is ready for entries, not a failure, and said so badly before.
  const count=session.list().length;

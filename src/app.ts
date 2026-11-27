@@ -4185,7 +4185,7 @@ function polygonKit():PolygonKit{
 function tableOutputKit():TableOutputKit{
   return {...stepKit(),unitFor:n=>tableUnitFor(n),writeUpSelect:n=>writeUpSelect(n),
     presentation:edit=>{change(edit,{spatial:false});},renderResults:()=>renderResults(),
-    shown:id=>!!result?.outputs.some(o=>o.nodeId===id),zoneAdvice};
+    shown:id=>!!result?.outputs.some(o=>o.nodeId===id),zoneAdvice,layerOn:(id,port)=>layerOnPort(id,port)};
 }
 /** DEDUPLICATE RECORDS' KIT (deduplicate-step-ui.ts): the step kit, with what its last run found and the keys arriving. */
 function dedupKit():DedupKit{
@@ -7269,7 +7269,7 @@ $('#new-workflow').onclick=()=>{if(busy)return;loadExample('blank');change(w=>{r
 $('#result-search').oninput=e=>{if(activeOutput()?.pointTable){tablePage=0;renderPointTable();return;}$('#result-rows').querySelectorAll('tr').forEach(row=>row.hidden=!row.textContent.toLowerCase().includes(control(e).value.toLowerCase()));};
 const libraryToggle=$('#toggle-library'),library=$('.library');
 library.id='layout-library';
-libraryToggle.onclick=()=>{const collapsed=$('.studio').classList.toggle('library-collapsed');libraryToggle.textContent=collapsed?'Show node library':'Hide node library';libraryToggle.setAttribute('aria-expanded',String(!collapsed));};
+libraryToggle.onclick=()=>{const collapsed=$('.studio').classList.toggle('library-collapsed');libraryToggle.textContent=collapsed?'Show widget library':'Hide widget library';libraryToggle.setAttribute('aria-expanded',String(!collapsed));};
 /** ONE FULL-SCREEN CONTROL, because there is one view on screen. There were two -- fill the
  *  screen with the workbench, fill it with the results -- which made sense while both were on
  *  screen at once and the question was which half won. With the tab, the second was a button

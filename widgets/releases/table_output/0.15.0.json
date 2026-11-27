@@ -92,6 +92,10 @@
   {
    "kind": "changed",
    "description": "On the canvas, Table draws what is connected, each with its kind's symbol and the source's name, and one blank port to add another (the buttons-and-ports audit, 2026-11-27)."
+  },
+  {
+   "kind": "added",
+   "description": "Configure… shows the table itself: the rows Results will show, with the coordinates as the dialog sets them, before Apply."
   }
  ],
  "evidence": {

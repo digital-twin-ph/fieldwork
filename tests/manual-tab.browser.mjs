@@ -37,7 +37,7 @@ test('a worked example with a manual has a Manual tab, and a workflow without on
   await expect(view.locator('[data-manual-workflow]').first()).toHaveClass(/open/);
   // Steps read as sentences, the library search named, the range as two dates.
   const smoke=view.locator('[data-manual-workflow="What happened during the June 2023 smoke?"]');
-  await expect(smoke).toContainText('type its name in Find a node…');
+  await expect(smoke).toContainText('type its name in Find a widget…');
   await expect(smoke).toContainText('Set From to 2023-06-01');
   await expect(smoke).toContainText('Connect the output of Tabular data to the records input of Select rows by value.');
   await expect(smoke).toContainText('In Project, set This workflow’s name');
@@ -187,7 +187,7 @@ test('the manual’s steps play back one at a time, the canvas growing with them
   // Next until the first widget is added: its step names the library search, and one node is placed.
   for(let i=0;i<20&&await page.locator('.react-flow__node').count()<1;i++)await panel.locator('#manual-playback-next').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(1);
-  await expect(panel.locator('[data-playback-step]')).toContainText('Find a node…');
+  await expect(panel.locator('[data-playback-step]')).toContainText('Find a widget…');
   // And a second; the canvas grows with the steps and never past the workflow.
   for(let i=0;i<20&&await page.locator('.react-flow__node').count()<2;i++)await panel.locator('#manual-playback-next').click();
   await expect(page.locator('.react-flow__node')).toHaveCount(2);

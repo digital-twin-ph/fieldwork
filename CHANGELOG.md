@@ -22,6 +22,8 @@ shown in a local build is not a claim that it has been published.
   node of its kind, shows on the selected node only; a subtitle about the node itself stays. Overlapping node pairs in
   the eleven built-in examples: 13 at 0.203.0, 27 with the port rows, 0 now, with seven nodes moved in the Snow and
   geoprivacy examples. A test holds every built-in example at none.
+- **Table 0.15.0 previews itself in Configure…** (the practitioner: *"Table output config dialog should have a preview of
+  the table"*): the rows Results will show, with the coordinates as the dialog sets them, before Apply.
 - **Table 0.15.0: the coverage port is gone.** Nothing makes a coverage check since Check spatial coverage retired on
   2026-10-21, and a workflow saved with one already opens with Keep points inside the area feeding the points port.
 - **Buttons by role.** Primary only where a button commits (Apply, Save, Run, Configure…); Close, Next, Done and Step
@@ -35,6 +37,10 @@ shown in a local build is not a claim that it has been published.
 - **Experiment 233 gains its precedents**: staged case studies, real-time outbreak simulations, matrix games and
   simulation exercises, the patterns cooperative games use, and the evidence against. Nothing found combines turns, a
   hidden model and analysis in real tools, and the evidence of learning across the field is weak.
+- **One word for each: a widget is the kind, a node one placed on the canvas** (the practitioner: *"we call them
+  widgets as classes and nodes as instances"*). The library lists widgets, so it is the **Widget library**, searched by
+  **Find a widget…**; the canvas still says node.
+- **Credentials carries a padlock**, closed while locked, as Import and Back up carry their arrows.
 - **WebKit's offline reload answered.** The reasoning worker loads from the offline cache in WebKit (5 of 5 local
   runs); the failures were map tiles cut off by going offline, which the test now sets aside only while offline.
 

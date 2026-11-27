@@ -10,8 +10,8 @@ the worked examples.* Read from the code at 0.203.0 (branch `sweep-second-pass`,
 changed for this audit.
 
 **Decided by the practitioner, 2026-11-27:** the four button roles, applied to every button in one release; and
-ports by the practitioner's model, below (it replaces model A, chosen earlier the same day on the first, wrong
-counts).
+ports by the model already settled on 2026-10-15, below. This audit first put the question again as models A
+and B; it was not open.
 
 ## Buttons
 
@@ -100,37 +100,30 @@ drawn handles in Chromium; the first count here took the declared ports for the 
 **Measure, today:** 164 input handles drawn and 95 connected in the eleven worked examples, so 69 drawn and unused;
 260 declared.
 
-**The two models put to the practitioner; A was chosen, 2026-11-27:**
+**The model, settled 2026-10-15 and not reopened.** The practitioner, of Map: *"Instead of cluttering the side of
+the map widget with input ports, the Inspector UI should offer 1 configurable port but also enable addition of more
+input ports"* (quoted in `src/canvas.tsx`; built the same day, `docs/todo-history.md`, *A map has layers, not
+modes*). Experiment [116](../experiments/116-model-builder-sideways.md), the same day, set the rule for when the
+shape is not enough: *bind silently when one port fits, ask when more than one does*, and extend the configurable
+port from the Map to every widget. Join a table to the study area (2026-11-20) and Geometry buffer (2026-11-23) were
+brought to it one at a time, through `PORT_GROUPS`, when the practitioner met each in the running app.
 
-- **A. Draw what is connected, and one free port of each kind.** Map and Table nearly do this already; Point data and
-  Chart would draw their optional ports only as one free port, or behind the Inspector's Inputs list. One model for
-  every widget with optional or counted ports; the others are unchanged, since they use every port they draw.
-- **B. Keep every port, and name each one on the node in words**, as the nine widgets with named rows do, so nothing is
-  learned by hovering. More honest about what a step can take, and taller nodes.
-
-Either way the port's name on the canvas becomes its name in words, the one the Inspector already shows.
-
-**The practitioner's model, 2026-11-27, after the corrected counts:** *"I want nodes to not present too many ports
-that confuses users which port to connect to. Nodes should automatically detect the shape of the incoming input on
+The practitioner restated it on 2026-11-27: *"Nodes should automatically detect the shape of the incoming input on
 an unconnected input port and once connected should display in words what came in. Then it adds a blank port to
 accommodate another input if it's configured to receive more."*
 
-What it means for the code, read at 0.203.0:
+**What is left to build, read at 0.203.0:**
 
-- **One blank port, any kind.** A node with an input still free draws one open port, which takes any kind the step
-  can use. Map and Table already have it (the `layer` handle, bound by `layerPortFor` in `src/app.ts` from what the
-  source emits, `outputOf`). It becomes the model for every widget with inputs.
-- **Once connected, the row says what came in**, in words: what kind it is and where it came from (a points layer
-  from *Health facilities*), not the port's id.
-- **A further blank port appears only while the step can take more:** a declared port still free, or a counted one
-  that can grow (`pointInputCount` and the like). A node whose inputs are all connected draws none.
-- **Where two free ports take the same kind for different roles**, the shape alone cannot choose: Measure distance
-  (from, to), Travel time over ground (start from, places), Relate tables, Compare point sets, sea-level site
-  assignment. Proposed: fill them in the order the step declares, name the role on the row, and let the Inspector's
-  Inputs list swap them. Ports of one kind with one role (Append rows, Deduplicate points, a border's two areas) fill
-  in order with nothing to choose.
+- **The one configurable port on every widget with inputs**, not only Map and Table (the `layer` handle, bound by
+  `layerPortFor` in `src/app.ts` from what the source emits, `outputOf`). 44 widgets still draw a dot per port.
+- **A connected row says in words what came in**, its kind and where it came from, not the port's id.
+- **Another blank port only while the step can take more**: a declared port still free, or a counted one that can
+  grow (`pointInputCount` and the like).
+- **Where more than one free port fits the shape, the canvas asks which** (116): Measure distance (from, to), Travel
+  time over ground (start from, places), Relate tables, Compare point sets, sea-level site assignment. Ports of one
+  kind with one role (Append rows, Deduplicate points, a border's two areas) fill in order, as Map's point layers do.
 - **Unchanged underneath:** the declared ports stay what saved workflows, receipts and port contracts are written
-  in, as Map's eight already do; and the Inspector's Inputs list stays the way in by keyboard.
+  in; the Inspector's Inputs list stays the way in by keyboard.
 
 ## What this does not establish
 

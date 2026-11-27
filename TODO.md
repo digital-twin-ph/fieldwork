@@ -1768,9 +1768,9 @@ after, in the browser, so a cut is seen rather than claimed.
 4. **Input ports.** Four port models today (fixed list, inferred from the wiring, switched by a setting, counted); the
    Map's eight always-drawn ports are the clutter case. Choose one model, or two with a stated rule, and draw only the
    ports a step can use. Measure: ports drawn and ports connected, per widget, in the worked examples.
-   **Decided 2026-11-27** ([audit](docs/audits/buttons-and-ports-audit.md)): one blank port that takes any kind and
-   binds by what arrives, as Map's and Table's *Add a layer* do; once connected, the row says in words what came in;
-   another blank port only while the step can take more. For 0.204.0, tried on a local server first.
+   **Settled 2026-10-15** (Map's one configurable port; [116](docs/experiments/116-model-builder-sideways.md): bind
+   when one port fits, ask when more than one does, extend to every widget), restated 2026-11-27; left to build is in
+   the [audit](docs/audits/buttons-and-ports-audit.md). For 0.204.0, tried on a local server first.
 5. **Spatial steps as black boxes.** A spatial operation shows what it changed, before and after, as table steps do:
    inputs, the operation's outline, what was kept or cut, animated where it helps. Start with Clip polygons. Measure:
    widgets that show what they changed, of those that change something.

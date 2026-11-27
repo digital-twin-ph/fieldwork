@@ -125,6 +125,35 @@ accommodate another input if it's configured to receive more."*
 - **Unchanged underneath:** the declared ports stay what saved workflows, receipts and port contracts are written
   in; the Inspector's Inputs list stays the way in by keyboard.
 
+## The port symbols, chosen 2026-11-27
+
+The practitioner, of a connected row reading "Points from Health facilities": *"too long. ... Since we have a finite
+set of input types ... can we make them recognizable symbols so the name of the type can be displayed with it?"* A
+connected row shows the kind's symbol and the source's name (**symbol** Health facilities), cut with "…" where it
+does not fit; the full wording is on hover and in the Inspector's Inputs list. Where two free ports take the same
+kind for different roles, the role comes first in muted text (From Cases, To Health facilities).
+
+Chosen from a sheet of mock nodes in light, dark and high contrast, at the canvas's size and twice it. Each symbol is
+drawn in the text colour, so it has the contrast of the words beside it; it never stands without the name. The
+files are in [port-symbols/](port-symbols/); the code takes them in 0.204.0.
+
+| Symbol | Kind | Carries |
+| --- | --- | --- |
+| <img src="port-symbols/points.svg" width="48" height="48" alt="Points"> | Points | Points; a mean centre |
+| <img src="port-symbols/lines.svg" width="48" height="48" alt="Lines"> | Lines | Lines |
+| <img src="port-symbols/polygons.svg" width="48" height="48" alt="Polygons"> | Polygons | Polygons |
+| <img src="port-symbols/area.svg" width="48" height="48" alt="Study area"> | Study area | Study area |
+| <img src="port-symbols/table.svg" width="48" height="48" alt="Table"> | Table | Tables; Measure distance's distances; an Apply ruleset result (all three shipped rulesets declare a table) |
+| <img src="port-symbols/raster.svg" width="48" height="48" alt="Raster"> | Raster | Rasters; satellite files and products |
+| <img src="port-symbols/network.svg" width="48" height="48" alt="Street network"> | Street network | Street network |
+| <img src="port-symbols/ground.svg" width="48" height="48" alt="Map image (ground)"> | Map image (ground) | A georeferenced map image |
+| <img src="port-symbols/design.svg" width="48" height="48" alt="Study design"> | Study design | Study design, into Two-by-two, Regression and Rate ratio |
+
+Thirteen kinds reach a live widget's port; the nine symbols cover them. The reasoning result and the coverage check
+have no live source: every widget that produced either is retired, so neither has a symbol, and Table's *Or:
+Coverage result* port, the one live port that still takes a coverage check, goes in 0.204.0. Point data and Raster
+input share the node icon ▦; each source widget's icon becomes the symbol of the kind it sends.
+
 ## What this does not establish
 
 That any of these get in a practitioner's way: they are read from the code and counted, not observed. Labels built

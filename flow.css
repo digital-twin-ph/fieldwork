@@ -7,4 +7,4 @@
 .react-flow .react-flow__handle.source{--port-color:var(--danger-8)}
 .react-flow .react-flow__handle{background:var(--port-color);box-shadow:0 0 0 1px var(--port-color)}
 .react-flow .react-flow__handle:hover,.react-flow .react-flow__handle.valid{background:var(--port-color);box-shadow:0 0 0 3px var(--port-color)}
-.node-port-row .port-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.port-role{color:var(--muted)}.node-output-row .port-symbol{margin-left:auto}
+.node-port-row .port-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}.port-role{color:var(--muted)}

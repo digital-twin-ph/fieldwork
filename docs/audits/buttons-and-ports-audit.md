@@ -157,6 +157,11 @@ port is bound by what arrives; where more than one input fits, the canvas asks, 
 and **To**, Travel time over ground's **From** and **To**, Relate tables' **Main** and **Related**, Compare point sets'
 **Original**, **Moved** and **Reference**. Tested in `tests/one-blank-port.browser.mjs`, Chromium only.
 
+**One output connector per node** (the practitioner, the same day): on the node's right edge, with no row; hovering it
+shows the kind's symbol and its name. **Nodes got shorter to make room:** a widget's description, the same on every
+node of its kind, shows on the selected node only. Overlapping node pairs in the eleven built-in examples went from
+13 at 0.203.0, to 27 with the port rows, to 0 (`tests/examples-do-not-overlap.browser.mjs`).
+
 **On screen, polygons are "Areas"**, as the Map's and Table's outputs and the Inspector already said them; the key
 below calls the kind "Polygons". The words on the screen were kept, so as not to give one kind two names there.
 

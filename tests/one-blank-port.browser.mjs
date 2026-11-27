@@ -11,7 +11,7 @@ import {dragConnection} from './canvas-drag.mjs';
 const saved=page=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')));
 const drawn=node=>node.evaluate(el=>({
   handles:[...el.querySelectorAll('.react-flow__handle-left')].map(h=>h.getAttribute('data-handleid')),
-  rows:[...el.querySelectorAll('.node-port-row:not(.node-output-row)')].map(r=>r.textContent.trim())}));
+  rows:[...el.querySelectorAll('.node-port-row')].map(r=>r.textContent.trim())}));
 
 test('a step taking two point layers asks which the first is, binds the second, then draws no blank port',async({page})=>{
   await page.goto('/?example=blank');

@@ -42,7 +42,9 @@ test('a raster is totalled over a study area: the cells whose centre is inside, 
   // TWO PORTS, EACH NAMED FOR WHAT IS CONNECTED (since 0.204.0 the source's own name), and the output (the practitioner, 2026-11-12: "Sample a raster has not
   // standardized its ports yet"; 2026-11-13: "Raster still shows multiple input ports"). Over areas, it gives areas.
   await expect(page.locator('.react-flow__node[data-id="sample"] .node-port-row'))
-    .toHaveText(['People per cell','A square','Areas →']);
+    .toHaveText(['People per cell','A square']);
+  // One output connector, named on hover (0.204.0).
+  await expect(page.locator('.react-flow__node[data-id="sample"] .node-output-tip')).toHaveText('Areas');
   // The step says what it does over areas, before it runs.
   await page.locator('.react-flow__node[data-id="sample"]').click();
   await expect(page.locator('.standard-sentence')).toContainText('Totals people');

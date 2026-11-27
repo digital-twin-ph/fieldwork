@@ -46,7 +46,8 @@ test('Configure says what the raster holds, fills its stated units, and offers t
   await dialog.locator('[data-sample-over-area="area"]').click();
   await expect(arrivals).toContainText('Read at: the study area A square.');
   // The second port is named for what now fills it.
-  await expect(page.locator('.react-flow__node[data-id="sample"] .node-port-row')).toHaveText(['People per cell','A square','Areas →']);
+  await expect(page.locator('.react-flow__node[data-id="sample"] .node-port-row')).toHaveText(['People per cell','A square']);
+  await expect(page.locator('.react-flow__node[data-id="sample"] .node-output-tip')).toHaveText('Areas');
   await expect(dialog).toContainText('Reading over areas');
   await dialog.locator('#sample-attribute').fill('people');await dialog.locator('#sample-attribute').press('Tab');
   await dialog.locator('#config-apply').click();

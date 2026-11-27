@@ -16,6 +16,12 @@ shown in a local build is not a claim that it has been published.
   "…" where it does not fit and named in full on hover; "Points from Health facilities" was too long for a node. Nine
   symbols, chosen by the practitioner from a sheet of mock nodes and kept in the buttons-and-ports audit. Source widgets
   take the symbol of what they send as their icon: Point data and Raster input both drew ▦.
+- **One output connector per node**, on its right edge with no row of its own; hovering it shows the kind's symbol and
+  name (the practitioner: *"I am also able to hover each one and see what shape is coming out. I do that a lot."*).
+- **Shorter nodes, and no example opens with one node over another.** A widget's own description, the same on every
+  node of its kind, shows on the selected node only; a subtitle about the node itself stays. Overlapping node pairs in
+  the eleven built-in examples: 13 at 0.203.0, 27 with the port rows, 0 now, with seven nodes moved in the Snow and
+  geoprivacy examples. A test holds every built-in example at none.
 - **Table 0.15.0: the coverage port is gone.** Nothing makes a coverage check since Check spatial coverage retired on
   2026-10-21, and a workflow saved with one already opens with Keep points inside the area feeding the points port.
 - **Buttons by role.** Primary only where a button commits (Apply, Save, Run, Configure…); Close, Next, Done and Step

@@ -47,8 +47,11 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
   // keyboard or screen reader is the Inspector's list for each input (the Section 508 audit, 2026-11-16).
   return <div data-node-role={role} className={`node ${t.color} ${selected?'selected':''} ${data.status==='running'?'running':''} ${data.status==='failed'?'failed':''} ${data.glow?'just-finished':''} ${data.flagged??data.alert?'alerting':''}`}>
     <div className="node-heading">{sourceSymbol(type)?<span className="node-icon"><Symbol symbol={sourceSymbol(type)!}/></span>:<span className="node-icon">{t.icon}</span>}<div><strong>{data.label}</strong><span className="node-id">{t.group}</span></div></div>
-    <div className="node-subtitle">{data.subtitle}</div>
-    {(t.inputs.length>0||t.output)&&<div className="node-ports">
+    {/* THE WIDGET'S OWN DESCRIPTION, THE SAME ON EVERY NODE OF ITS KIND, ON THE SELECTED NODE ONLY (the practitioner,
+        2026-11-27): Point data's ran four lines on every Point data node, and the port rows of 0.204.0 made nodes tall
+        enough to overlap in nine of eleven examples. A subtitle that says something about this node stays. */}
+    {(selected||data.subtitle!==t.description)&&<div className="node-subtitle">{data.subtitle}</div>}
+    {t.inputs.length>0&&<div className="node-ports">
       {inputsIn.map(({port,kind,from})=>{const symbol=symbolOf(kind),role=roleOf(port);
         return <div className="node-port-row" key={port} title={`${role?`${role}: `:''}${SYMBOL_WORDS[symbol]} from ${from}`}>
           <Handle aria-hidden="true" type="target" position={Position.Left} id={shownPort(type,port)} style={{top:'50%'}}/>
@@ -59,11 +62,13 @@ function OperationNode({id,data,selected}:NodeProps<OperationFlowNode>) {
         <Handle aria-hidden="true" type="target" position={Position.Left} id="layer" style={{top:'50%'}}/>
         <span>{addLabel}</span>
       </div>}
-      {t.output&&outputSymbol&&<div className="node-port-row node-output-row" title={`${outputLabel} output`}>
-        <Symbol symbol={outputSymbol}/><span>{outputLabel} →</span>
-        <Handle aria-hidden="true" type="source" position={Position.Right} id="out" style={{top:'50%'}}/>
-      </div>}
     </div>}
+    {/* ONE OUTPUT CONNECTOR PER NODE, on its right edge, with no row of its own (the practitioner, 2026-11-27: "make
+        them one connector per node … I am also able to hover each one and see what shape is coming out. I do that a
+        lot."). Hovering shows the kind's symbol and its name. */}
+    {t.output&&outputSymbol&&<Handle aria-hidden="true" type="source" position={Position.Right} id="out" className="node-output">
+      <span className="node-output-tip"><Symbol symbol={outputSymbol}/>{outputLabel}</span>
+    </Handle>}
     {data.alert&&<div className="node-alert" role="alert">
       <span title={data.alert}>⚠ {data.alert}</span>
       {/* Dismissible, because a badge that cannot be closed covers the node it is about and the

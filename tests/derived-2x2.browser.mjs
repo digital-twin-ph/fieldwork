@@ -41,9 +41,10 @@ test('the water-company 2x2 is derived from Table IX rather than imported as an 
 
   // A grid, because both axes are categories: three suppliers against two outcomes.
   const grid=page.getByRole('table').filter({hasText:'houses without a death'});
-  await expect(grid).toContainText('1263');
-  await expect(grid).toContainText('38783');  // 40,046 houses less 1,263 deaths
-  await expect(grid).toContainText('26009');  // 26,107 less 98
+  // Written with its thousands separator, as every table writes a number from Table 0.15.0.
+  await expect(grid).toContainText('1,263');
+  await expect(grid).toContainText('38,783');  // 40,046 houses less 1,263 deaths
+  await expect(grid).toContainText('26,009');  // 26,107 less 98
   // `houses` was the total the pair partitions, and selecting the two outcomes dropped it as a
   // COLUMN -- 40,046 reappears below as a row total, which is the arithmetic working.
   // supplier | deaths | houses without a death | Total -- and no bare `houses` column.
@@ -53,8 +54,8 @@ test('the water-company 2x2 is derived from Table IX rather than imported as an 
   // imported it mixes houses with deaths -- so the output carries the claim that these two
   // measures count the same thing, and the figure says underneath that somebody asserted it.
   await expect(grid).toContainText('Total');
-  await expect(grid).toContainText('40046');  // 1,263 + 38,783, the published house count
-  await expect(grid).toContainText('26107');  // 98 + 26,009
+  await expect(grid).toContainText('40,046');  // 1,263 + 38,783, the published house count
+  await expect(grid).toContainText('26,107');  // 98 + 26,009
   await expect(page.locator('#data-table-view'))
     .toContainText('told these values count the same thing');
   expect(errors).toEqual([]);

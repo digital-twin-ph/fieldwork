@@ -47,7 +47,7 @@ test('measles in Sierra Leone, built by following the manual',async({page})=>{te
   const main=page.locator('main').first();
   await expect(main).toContainText('3 of 3 rows');
   for(const sex of ['Male','Female'])
-    await expect(main.locator('tr',{has:page.locator('th,td',{hasText:new RegExp(`^${sex}$`)})}).first()).toContainText(String(bySex[sex]));
+    await expect(main.locator('tr',{has:page.locator('th,td',{hasText:new RegExp(`^${sex}$`)})}).first()).toContainText(bySex[sex].toLocaleString('en'));
   const band=a=>a===''?'':a<1?'0':a<5?'1 to 4':a<10?'5 to 9':a<15?'10 to 14':'15 and over';
   const byBand=tally(c=>band(c[ageAt]===''?'':Number(c[ageAt])));
   expect([byBand['0'],byBand['1 to 4'],byBand['5 to 9'],byBand['10 to 14'],byBand['15 and over']]).toEqual([546,1329,458,102,164]);

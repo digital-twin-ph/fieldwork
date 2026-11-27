@@ -107,7 +107,7 @@ export function openDeduplicateReview(view:DeduplicateReviewView,esc:Escape):voi
     if(candidate?.differs){drawRows(candidate);return;}
     if(!candidate){dialog.innerHTML=`<h2 id="dedup-review-title">Nothing left to review</h2>`
       +`<p>Every pair this run offered has been decided. Run the workflow again to act on them.</p>`
-      +`<div class="dialog-actions"><button id="dedup-review-close" class="button primary">Close</button></div>`;
+      +`<div class="dialog-actions"><button id="dedup-review-close" class="button">Close</button></div>`;
       dialog.querySelector<HTMLButtonElement>('#dedup-review-close')!.onclick=close;return;}
     const already=view.decided.get(candidate.key);
     const rows=fields(candidate.a,candidate.b);

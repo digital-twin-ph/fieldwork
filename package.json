@@ -56,6 +56,7 @@
     "validate:ruleset-sources": "node scripts/validate-ruleset-sources.mjs",
     "validate:inspector-prose": "node scripts/validate-inspector-prose.mjs",
     "measure:prose": "node scripts/measure-surface-prose.mjs",
+    "measure:buttons": "node scripts/measure-buttons.mjs --list",
     "validate:caps": "node scripts/validate-caps.mjs",
     "notes:extracts": "node scripts/geofabrik-catalogue.mjs --write",
     "validate:extracts": "node scripts/geofabrik-catalogue.mjs",

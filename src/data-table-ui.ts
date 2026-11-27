@@ -128,7 +128,7 @@ function columnTools(box:HTMLFieldSetElement,prefix:string,title:string,changed:
     +`<button type="button" class="button small" id="${prefix}-none">Untick all</button>`
     +`<label class="check"><input type="checkbox" id="${prefix}-ticked"> Ticked only</label></div>`
     +`<p class="muted" id="${prefix}-count" role="status"></p><div class="column-dialog-list"></div>`
-    +`<div class="package-actions"><button type="button" class="button primary" id="${prefix}-done">Done</button></div>`;
+    +`<div class="package-actions"><button type="button" class="button" id="${prefix}-done">Done</button></div>`;
   dialog.querySelector('.column-dialog-list')!.append(box);
   const tools=dialog,say=tools.querySelector<HTMLElement>(`#${prefix}-count`)!;
   const count=()=>{say.textContent=`${ticked().length} of ${boxes().length} ticked.`;summarise();};
@@ -733,7 +733,7 @@ export function openTableEditor(onSave:(result:TableImport)=>boolean|Promise<boo
     if(!/^https:\/\//.test(url)){fail(new Error('Give an https address.'));return;}
     // PROGRESS AND A STOP, not a time limit: a slow source is still a working one (2026-11-05, Zenodo at 5 KB/s).
     const stop=new AbortController();
-    status.innerHTML=`<span data-fetch-progress>Fetching ${esc(url)}…</span> <button type="button" class="text-button" data-fetch-stop>Stop</button>`;
+    status.innerHTML=`<span data-fetch-progress>Fetching ${esc(url)}…</span> <button type="button" class="button small" data-fetch-stop>Stop</button>`;
     error.hidden=true;
     status.querySelector<HTMLButtonElement>('[data-fetch-stop]')!.onclick=()=>stop.abort();
     const progress=status.querySelector('[data-fetch-progress]')!;

@@ -251,10 +251,10 @@ export function openMapImageConfig(o:{step:string;initial:MapImageDraft;esc:Esca
           +(['x','y','lon','lat'] as const).map((f,j)=>{const v=j<2?p.pixel[j]:p.lonlat[j-2];
             return `<td><input data-geo-field="${f}" inputmode="decimal" value="${Number.isFinite(v)?round(v!,j<2?1:6):''}" aria-label="${f}"></td>`;}).join('')
           +`<td>${r?round(r.metres,0):''}</td><td>${lo!==null?round(lo,0):''}${doubt?' · check this pair':''}</td>`
-          +`<td><button type="button" class="button small" data-geo-remove="${i}" aria-label="Remove point ${i+1}">Remove</button></td></tr>`;
+          +`<td><button type="button" class="button small danger" data-geo-remove="${i}" aria-label="Remove point ${i+1}">Remove</button></td></tr>`;
       }).join('')+`</tbody></table>`
       +`<div class="inspector-actions"><button type="button" class="button" id="geo-add-point">+ Add a point</button>`
-      +(d.points.length?`<button type="button" class="button" id="geo-reset">Start again</button>`:'')+`</div>`
+      +(d.points.length?`<button type="button" class="button danger" id="geo-reset">Start again</button>`:'')+`</div>`
       +(confirmingReset?`<div class="config-message config-message-warning" role="alert" id="geo-reset-confirm"><p>Remove every pair and return `
         +`today's map to where it opens? The image stays.</p><div class="config-message-actions">`
         +`<button type="button" class="button" id="geo-reset-keep">Keep the pairs</button>`

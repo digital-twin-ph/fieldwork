@@ -94,7 +94,7 @@ export function openSatelliteCatalogDialog(product:SatelliteProduct|null,area:BB
     const missing=!product?'Connect Find satellite products and choose a product first.'
       :!area&&'problem' in check?check.problem:'';
     dialog.innerHTML=`<div class="manual-head"><h2 id="satellite-catalog-title">Search a satellite catalog</h2>`
-      +`<div><button class="button primary" id="cat-close">Done</button></div></div>`
+      +`<div><button class="button" id="cat-close">Done</button></div></div>`
       +(!product?`<p class="notice">${esc(missing)}</p>`:'')
       +`<div class="satellite-columns">`
       // 01 · Connect & discover

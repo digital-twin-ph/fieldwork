@@ -100,7 +100,7 @@ function markedDatesControls(kit:ChartKit,nodeId:string,draft:WorkflowNode<'char
       +`<input id="chart-mark-date-${i}" type="date" data-mark-date="${i}" value="${esc(m.date)}"${bounds}>`
       +`<label class="field-label" for="chart-mark-label-${i}">Label, in your words</label>`
       +`<input id="chart-mark-label-${i}" data-mark-label="${i}" maxlength="80" value="${esc(m.label)}" placeholder="for example Pump handle removed">`
-      +`<button type="button" class="button small" data-mark-remove="${i}">Remove</button></div>`).join('')
+      +`<button type="button" class="button small danger" data-mark-remove="${i}">Remove</button></div>`).join('')
     +`<button type="button" class="button small" id="chart-mark-add">+ Add a date</button>`
     +`<small>A line at each date, with its label, over the chart and in its figure, as the enhanced renderer draws it; the classic bars do not.${range==='later'?' The dates the chart covers are known after a run.':''}</small></div>`;
 }

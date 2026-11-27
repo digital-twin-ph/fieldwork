@@ -2387,7 +2387,7 @@ function renderInspector(){
           :`<strong>This workflow's data is in UTM zone ${name(advice.choice)}</strong>, not ${name(chosen)}.`)
         +` Measured over ${advice.positions} configured coordinate${advice.positions===1?'':'s'}, this zone stretches ground distance by up to <strong>${((worst-1)*100).toFixed(3)}%</strong>.`
         +(advice.straddles.length?` The data spans zones ${advice.straddles.join(' and ')}, so no single zone is right and this is a choice about which side to keep whole.`:'')
-        +(matches?'':` <button class="text-button" data-use-suggested-zone="${advice.choice.zone}:${advice.choice.hemisphere}">Use zone ${name(advice.choice)}</button>`)
+        +(matches?'':` <button class="button small" data-use-suggested-zone="${advice.choice.zone}:${advice.choice.hemisphere}">Use zone ${name(advice.choice)}</button>`)
         +`</div>`;
     }
   }
@@ -2643,7 +2643,7 @@ function renderInspector(){
     // PROGRESS AND A STOP, not a time limit: a slow source is still a working one (2026-11-05, Zenodo at 5 KB/s).
     const host=new URL(params.remote.url).hostname,stop=new AbortController();
     button.disabled=true;say.innerHTML=` <span data-fetch-progress>Fetching from ${esc(host)}…</span> `
-      +'<button type="button" class="text-button" data-fetch-stop>Stop</button>';
+      +'<button type="button" class="button small" data-fetch-stop>Stop</button>';
     say.querySelector<HTMLButtonElement>('[data-fetch-stop]')!.onclick=()=>stop.abort();
     const progress=say.querySelector('[data-fetch-progress]')!;
     try{
@@ -6099,7 +6099,7 @@ function renderProjectStorage():void{
     +(()=>{const loose=unreferencedPayloads();
       return loose.digests.length
         ?`<p class="notice">${loose.digests.length.toLocaleString('en')}, ${size(loose.bytes)}, referred to by no workflow. `
-          +`<button class="button small" id="drop-unreferenced">Remove ${size(loose.bytes)}</button></p>`
+          +`<button class="button small danger" id="drop-unreferenced">Remove ${size(loose.bytes)}</button></p>`
         :'';})()
     +(siteEstimate
       ?`<p class="muted">The browser reports this site using ${size(siteEstimate.usage)} of about `
@@ -6405,7 +6405,7 @@ function renderManualPlayback():void{
     +`<p class="muted" data-playback-at>${'note' in step?'A note':`Step ${at} of ${counted}`}</p>`
     +`<p class="manual-playback-step" data-playback-step>${stepSentence(step,types,t=>TYPES[t as NodeType]?.title??t,esc)}</p>`
     +`<div class="inspector-actions"><button class="button" id="manual-playback-back" ${index?'':'disabled'}>Previous</button>`
-    +`<button class="button primary" id="manual-playback-next" ${index<steps.length-1?'':'disabled'}>Next</button></div>`
+    +`<button class="button" id="manual-playback-next" ${index<steps.length-1?'':'disabled'}>Next</button></div>`
     +`<p class="muted">The canvas holds what is placed by this step. Nothing is changed; Close puts it back.</p>`;
   document.body.append(panel);
   const go=(to:number)=>{if(!manualPlayback)return;manualPlayback.index=Math.max(0,Math.min(steps.length-1,to));renderManualPlayback();render();};
@@ -7425,7 +7425,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
   sharedSignature=signature;
   const repository=repositoryOf(project);
   if(!repository){
-    box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`+`<p><button type="button" class="button manual-button" data-shared-manual><span aria-hidden="true">\u25a4</span> Read the manual for Shared through GitHub</button></p>`
+    box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`+`<p><button type="button" class="text-button manual-button" data-shared-manual><span aria-hidden="true">\u25a4</span> Read the manual for Shared through GitHub</button></p>`
       +`<p class="muted">Not shared. To share it, make a repository from the project template, and a token for it in Credentials.</p>`
       +`<div id="share-recent"></div><label class="field-label" for="share-name">Repository</label><input id="share-name" maxlength="200" autocomplete="off" spellcheck="false">`
       +`<label class="field-label" for="share-credential">GitHub token</label><select id="share-credential">${credentialOptions()}</select>`
@@ -7451,7 +7451,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
     return;
   }
   const r=project.repository!;
-  box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`+`<p><button type="button" class="button manual-button" data-shared-manual><span aria-hidden="true">\u25a4</span> Read the manual for Shared through GitHub</button></p>`
+  box.innerHTML=`<h3 id="project-shared-title">Shared through GitHub</h3>`+`<p><button type="button" class="text-button manual-button" data-shared-manual><span aria-hidden="true">\u25a4</span> Read the manual for Shared through GitHub</button></p>`
     +`<p>Shared with <a href="https://github.com/${esc(repository)}" target="_blank" rel="noopener">${esc(repository)}</a>.`
     +` ${r.syncedAt?`Last read or saved here ${esc(new Date(r.syncedAt).toLocaleString('en-GB',{dateStyle:'medium',timeStyle:'short'}))}.`:'Not yet saved to it.'}</p>`
     +`<ul id="shared-state" class="repo-check-result" aria-live="polite"></ul>`
@@ -7803,7 +7803,7 @@ function renderSharedProject(project:Project|undefined,builtIn:boolean){
    const text=soon.length?`${soon.map(([who])=>who).join(' and ')} will lock in under a minute without use.`:'';
    if(text===shown)return;shown=text;
    warning.hidden=!text;
-   if(text){warning.innerHTML=`<span>${esc(text)}</span><button type="button" class="button primary" id="lock-keep">Keep them open</button>`;
+   if(text){warning.innerHTML=`<span>${esc(text)}</span><button type="button" class="button" id="lock-keep">Keep them open</button>`;
      ($('#lock-keep') as HTMLButtonElement).onclick=()=>{credentials?.keepOpen();identityKeepOpen();warning.hidden=true;shown='';};}};
  setInterval(tick,5_000);}
 

@@ -19,7 +19,7 @@ export function openCountriesConfig(o:{step:string;countries:string[];geometry:{
     sections:d=>{
       const listed=d.countries.length
         ?`<ul class="area-countries" id="area-countries-list">`+d.countries.map(c=>`<li><span>${esc(countryName(c))} (${esc(c)})</span> `
-          +`<button type="button" class="button small" data-remove-country="${esc(c)}" aria-label="Remove ${esc(countryName(c))}">Remove</button></li>`).join('')+`</ul>`
+          +`<button type="button" class="button small danger" data-remove-country="${esc(c)}" aria-label="Remove ${esc(countryName(c))}">Remove</button></li>`).join('')+`</ul>`
         :`<p class="muted" id="area-countries-list">None stated yet.</p>`;
       const found=d.finding?`<p id="area-countries-found" role="status">Finding the countries and measuring the shares…</p>`
         :d.error?`<p id="area-countries-found" role="alert">${esc(d.error)}</p>`

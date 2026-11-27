@@ -64,6 +64,31 @@ zoom controls, Leaflet's) are not counted.
 Chips stay for labels and filters, not actions; a chip that acts (the note card's *Open*, TODO's first instance)
 becomes a link or a button.
 
+**Applied in 0.204.0, 2026-11-27.** `npm run measure:buttons` counts every button by the four roles, and
+`tests/buttons-by-role.test.mjs` holds both counts at zero:
+
+| Measure | At the audit (by hand) | After |
+| --- | --- | --- |
+| Labels drawn in more than one role | 20 | 0 |
+| Primary buttons that do not commit | 6 | 0 |
+
+The script counts roles, not sizes, so a button small in a toolbar and regular in a dialog is one role. Its first count,
+at 0.203.0, found 9 labels in more than one role and 51 Primary buttons whose label is not a committing verb. What changed:
+
+- **Close, Next, Done, Step and Keep them open** are Secondary.
+- **Configure…** is Primary on every Inspector, Street network's included (finding 5). It opens the dialog where the
+  step's settings are committed, so it is the one main action and is counted as committing; so is Deduplicate's
+  **Review…**.
+- **Open** stays Primary in the identity and sealed-file dialogs, where opening the file with its passphrase is what
+  the dialog does. This corrects finding 2, which listed it among those that do not commit.
+- **Remove** is Danger everywhere it was drawn (twelve places), and the first **Start again** in georeferencing,
+  which leads to the confirmation that discards the pairs. The walkthroughs' **Start again**, which discards nothing,
+  reads **Back to step 1**.
+- **Use zone**, **Stop** and **Edit** act, so they are Secondary, not links.
+- **Manual**, the note card's **Open the note** (it read *open*) and a write-up's **Open the map** lead somewhere, so
+  they are links. The lab's **Add a problem** and the note's **Evaluate** act, so they are buttons. Chips stay for
+  the note editor's formatting and for filters.
+
 ## Input ports
 
 **How it was counted.** Each worked example's workflow as it ships (`EXAMPLE_TEMPLATES`, the eleven keys other than
@@ -124,6 +149,16 @@ accommodate another input if it's configured to receive more."*
   kind with one role (Append rows, Deduplicate points, a border's two areas) fill in order, as Map's point layers do.
 - **Unchanged underneath:** the declared ports stay what saved workflows, receipts and port contracts are written
   in; the Inspector's Inputs list stays the way in by keyboard.
+
+**Built in 0.204.0, 2026-11-27.** Every widget with inputs draws the inputs connected, each with its kind's symbol
+and the source's name, and one blank port, **+ Add an input**, while it can take more (Map: **+ Add a layer**, while
+something on the canvas could add one; a polygon layer of study areas, while it can take another). A drop on the blank
+port is bound by what arrives; where more than one input fits, the canvas asks, by role: Measure distance's **From**
+and **To**, Travel time over ground's **From** and **To**, Relate tables' **Main** and **Related**, Compare point sets'
+**Original**, **Moved** and **Reference**. Tested in `tests/one-blank-port.browser.mjs`, Chromium only.
+
+**On screen, polygons are "Areas"**, as the Map's and Table's outputs and the Inspector already said them; the key
+below calls the kind "Polygons". The words on the screen were kept, so as not to give one kind two names there.
 
 ## The port symbols, chosen 2026-11-27
 

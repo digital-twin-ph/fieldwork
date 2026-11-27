@@ -375,7 +375,7 @@ export function notesPanel(notes:readonly Note[],
               ?` by ${esc(note.forkedFrom.widget.title)}`:''}`
               +`${forkHasDrifted(note,fromRun as MachinedNote[])
                 ?' · the run has moved since':''}</span>`:'')
-          +`<button class="chip notes-open" data-note-open="${esc(id)}">open</button>`
+          +`<button class="text-button notes-open" data-note-open="${esc(id)}">Open the note</button>`
           +`</div>`
           // THE FIGURE ABOVE THE WORDS, because a reader of a Results section meets the table and
           // then reads about it, and because the sentence under it was machined to be the
@@ -410,7 +410,7 @@ export function notesPanel(notes:readonly Note[],
 export {noteKey};
 
 const DIALOG=`<dialog id="note-dialog" aria-labelledby="note-dialog-title">
-<div class="dlg"><div class="dlg-head"><h3 id="note-dialog-title">Note</h3><button type="button" class="chip lab-only" id="note-evaluate">Evaluate</button>
+<div class="dlg"><div class="dlg-head"><h3 id="note-dialog-title">Note</h3><button type="button" class="button small lab-only" id="note-evaluate">Evaluate</button>
 <div id="note-coords" class="coords"></div><p id="note-gloss" class="gloss"></p></div>
 <div class="dlg-body"><div id="note-body" class="readonly"></div>
 <div id="note-toolbar" class="note-toolbar" role="toolbar" aria-label="Formatting" hidden>
@@ -532,7 +532,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
     // it is the author's own, and nothing will rewrite it on the next run.
     +`<span class="fixed">${from?esc(producedBy(note,context.labelOf(from)||from))
       :'written here — no workflow'}${widget?` <span class="muted">${esc(widget.type)} ${esc(widget.version)}</span>`
-        +(hasManual(widget.type)?` <button class="chip" id="note-widget-manual">Manual</button>`:''):''}</span></span>`;
+        +(hasManual(widget.type)?` <button class="text-button" id="note-widget-manual">Manual</button>`:''):''}</span></span>`;
   const manual=dialog.querySelector<HTMLButtonElement>('#note-widget-manual');
   const examples=dialog.querySelector<HTMLButtonElement>('#note-form-examples');
   if(examples)examples.onclick=()=>openManual('surface:notes','Notes',esc);
@@ -607,7 +607,7 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       itemsPanel.innerHTML='<h4>Objectives, one per item</h4><ol>'+items.map((it,i)=>`<li><label class="sr-only" for="note-item-${i}">Objective ${i+1}</label>`
         +`<input id="note-item-${i}" data-item="${i}" value="${esc(it.text)}" spellcheck="true">`
         +`<button type="button" class="chip" data-item-up="${i}"${i?'':' disabled'} aria-label="Move objective ${i+1} up">↑</button>`
-        +`<button type="button" class="chip" data-item-remove="${i}" aria-label="Remove objective ${i+1}">Remove</button></li>`).join('')
+        +`<button type="button" class="button small danger" data-item-remove="${i}" aria-label="Remove objective ${i+1}">Remove</button></li>`).join('')
         +'</ol><button type="button" class="button small" id="note-item-add">Add an objective</button>';
       itemsPanel.querySelectorAll<HTMLInputElement>('[data-item]').forEach(el=>el.oninput=()=>{items[Number(el.dataset.item)]!.text=el.value;});
       itemsPanel.querySelectorAll<HTMLButtonElement>('[data-item-remove]').forEach(b=>b.onclick=()=>{items.splice(Number(b.dataset.itemRemove),1);drawItems();});
@@ -755,8 +755,8 @@ export function openNoteDialog(note:Note,context:NoteContext,esc:Escape){
       ...(w.url?{url:w.url}:{}),...(w.retrieved?{retrieved:w.retrieved}:{})});
     const drawCitations=()=>{
       panel.innerHTML=(works.length?`<ol class="note-works">${works.map((w,i)=>`<li>${esc(renderCitation(asProvenance(w),METHOD_CITATION_STYLE)||w.citation.title)}`
-          +` <button type="button" class="text-button" data-edit-work="${i}">Edit</button>`
-          +` <button type="button" class="text-button" data-remove-work="${i}">Remove</button></li>`).join('')}</ol>`
+          +` <button type="button" class="button small" data-edit-work="${i}">Edit</button>`
+          +` <button type="button" class="button small danger" data-remove-work="${i}">Remove</button></li>`).join('')}</ol>`
           :'<p class="muted">No works cited. A work added here is marked on the note and listed in References.</p>')
         +`<div class="note-cite-form"><label class="field-label" for="cite-type">Kind of work</label><select id="cite-type">`
         +CITATION_TYPES.map(t=>`<option value="${t}">${t}</option>`).join('')+`</select>`

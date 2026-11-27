@@ -91,7 +91,7 @@ export function openConfigDialog<D>(spec:ConfigDialog<D>,esc:Escape):void{
     +`<button class="config-close" id="${CONFIG_CLOSE}" aria-label="Close">×</button></header>`
     +'<div class="config-body"></div><div class="config-message-slot"></div>'
     +(spec.readOnly
-      ?`<footer class="config-foot"><button class="button primary" id="${CONFIG_CANCEL}">Close</button>`
+      ?`<footer class="config-foot"><button class="button" id="${CONFIG_CANCEL}">Close</button>`
         +`<button class="button primary" id="${CONFIG_APPLY}" hidden>Apply</button></footer>`
       :`<footer class="config-foot"><button class="button" id="${CONFIG_CANCEL}">Cancel</button>`
         +`<button class="button primary" id="${CONFIG_APPLY}">Apply</button></footer>`);

@@ -104,7 +104,7 @@ export function openCatalogDialog(esc:Escape):void{
   dialog.innerHTML=`<h2 id="catalog-title">Widget catalog</h2>
     <p>${active.length} widgets you can use. ${used} of them are used in at least one of the ${EXAMPLES.length} worked examples, ${EXAMPLES.filter(e=>e.builtIn).length} of them built in.</p>
     ${groups.map(group=>`<h3>${esc(group)}</h3><table class="catalog-table"><thead><tr><th scope="col">Widget</th><th scope="col">Used in worked examples</th></tr></thead><tbody>${rows(group)}</tbody></table>`).join('')}
-    <div class="package-actions"><button id="catalog-close" class="button primary">Close</button></div>`;
+    <div class="package-actions"><button id="catalog-close" class="button">Close</button></div>`;
   document.body.append(dialog);
   dialog.querySelector<HTMLButtonElement>('#catalog-close')!.onclick=()=>dialog.close();
   dialog.onclose=()=>dialog.remove();

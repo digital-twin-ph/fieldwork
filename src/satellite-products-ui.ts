@@ -70,7 +70,7 @@ export function openProductsDialog(initial:{question?:string;route?:string},esc:
   let question=initial.question??'',chosen=initial.route;
   const close=()=>{dialog.close();dialog.remove();};
   dialog.innerHTML=`<div class="manual-head"><h2 id="satellite-products-title">Find satellite products</h2>`
-    +`<div><button class="button primary" id="sat-close">Done</button></div></div>`
+    +`<div><button class="button" id="sat-close">Done</button></div></div>`
     +`<p class="muted">Start with a research question: which satellites and products measure it, and what each one `
     +`measures. Products needing no sign-in come first. Nothing is downloaded here.</p>`
     +`<div class="field"><label class="field-label" for="sat-question">Research topic or measurement</label>`

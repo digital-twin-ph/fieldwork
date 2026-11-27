@@ -145,7 +145,7 @@ export function openTableViewer(view:TableView,esc:Escape):void{
   const render=()=>{
     const rows=matching(),shown=rows.slice(0,RENDER_CEILING);
     dialog.innerHTML=`<div class="manual-head"><h2 id="table-viewer-title">${esc(view.title)}</h2>`
-      +`<div><button class="button primary" id="table-viewer-close">Close</button></div></div>`
+      +`<div><button class="button" id="table-viewer-close">Close</button></div></div>`
       +`<div class="table-viewer-body">`
       +(view.steps?`<div class="table-viewer-steps" role="group" aria-label="Before and after this step">`
         +view.steps.labels.map((label,i)=>`<button class="button small${i===view.steps!.at?' primary':''}" `

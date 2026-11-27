@@ -1,3 +1,4 @@
+import {presentValue,type TablePresentation} from './table-presentation.js';
 import {crsIRIFromName} from './metric-crs.js';
 import type {NodeSpec,WorkflowNode,PointInput,Escape,Scalar} from './types.js';
 import type {CoverageValue,TableValue,PointRow,CoverageRow,Receipt} from './results.js';
@@ -55,9 +56,8 @@ export function tableOutput(node:WorkflowNode<'table_output'>,inputs:TableInputs
  *  empty value and we supplied that value as a replacement? The data quality implications are
  *  enormous even if the table were an output. It's also a provenance issue."*
  *
- *  The cell is now empty, marked for a screen reader and for the stylesheet. How many are absent
- *  is a property of the COLUMN and belongs in the quality report, not repeated in every cell. */
-const ABSENT='<span class="absent-cell" aria-label="no value">—</span>';
+ *  The cell is a dash, read aloud as "no value" and drawn apart from the data, unless the table's presentation says
+ *  otherwise (Table 0.15.0). How many are absent is a property of the COLUMN and belongs in the quality report. */
 const display=(v:unknown)=>v===null||v===undefined||v===''?null:String(v);
 const action=(r:Partial<CoverageRow>)=>r.excluded?'Excluded':r.decision==='Review'?'Review required':r.decision==='Accept'?'Included':'';
 export const TABLE_PAGE_SIZE=100,ATTRIBUTE_PAGE_SIZE=12;
@@ -127,8 +127,9 @@ export function pointTableColumns(output:TableValue|CoverageValue,{attributePage
       .map(k=>({key:`attribute:${k}`,label:k,read:(r:PointRow & Partial<CoverageRow>)=>r.attributes[k]})),
   ]};
 }
-export function pointTableMarkup(output:TableValue|CoverageValue,esc:Escape,{query='',page=0,attributePage=0,sort}:{query?:string;page?:number;attributePage?:number;sort?:TableSort}={}){
+export function pointTableMarkup(output:TableValue|CoverageValue,esc:Escape,{query='',page=0,attributePage=0,sort,present}:{query?:string;page?:number;attributePage?:number;sort?:TableSort;present?:TablePresentation}={}){
   const {columns,attributeKeys}=pointTableColumns(output,{attributePage});
+  const metres=(output.spatialReference as {units?:string}|undefined)?.units==='metre';
   const needle=query.trim().toLowerCase(),filtered=output.rows.filter((r:PointRow & Partial<CoverageRow>)=>!needle||[r.name,r.recordId,r.layerLabel,r.sourceNodeId,...(r.coordinates||[]),r.relation?relationLabel(r.relation):'',action(r),r.exclusionReason||'',...Object.values(r.attributes).map(display)].join(' ').toLowerCase().includes(needle));
   const sorted=sort&&columns.some(c=>c.key===sort.column)?sortRows(filtered,columns.find(c=>c.key===sort.column)!.read,sort.direction):null;
   const ordered=sorted?sorted.sorted:filtered;
@@ -139,14 +140,22 @@ export function pointTableMarkup(output:TableValue|CoverageValue,esc:Escape,{que
     head:columns.map(c=>{
       const active=sort&&sort.column===c.key?sort.direction:'none';
       const next=active==='ascending'?'descending':'ascending';
-      return `<th scope="col" aria-sort="${active}"><button type="button" class="column-sort" data-table-sort="${esc(c.key)}" data-table-direction="${next}">${esc(c.label)}<span aria-hidden="true" class="sort-mark">${active==='ascending'?'▲':active==='descending'?'▼':''}</span></button></th>`;
+      // A COLUMN OF NUMBERS IS HEADED ON THE RIGHT, over its numbers (Table 0.15.0).
+      const numbers=shown.some(r=>{const v=c.read(r);return typeof v==='number';});
+      return `<th scope="col" aria-sort="${active}"${numbers?' class="number"':''}><button type="button" class="column-sort" data-table-sort="${esc(c.key)}" data-table-direction="${next}">${esc(c.label)}<span aria-hidden="true" class="sort-mark">${active==='ascending'?'▲':active==='descending'?'▼':''}</span></button></th>`;
     }).join(''),
     body:shown.length?shown.map((r:PointRow & Partial<CoverageRow>)=>`<tr tabindex="0" data-place="${esc(r.id)}">${columns.map(c=>{
       const shownValue=display(c.read(r));
       // `data-absent` says WHICH kind of absence, because they call for different work: a field
       // the record does not have at all, and a field it has and left empty.
       const absence=c.read(r)===undefined?'missing':'empty';
-      return shownValue===null?`<td data-absent="${absence}">${ABSENT}</td>`:`<td>${esc(shownValue)}</td>`;
+      // WRITTEN AS THE TABLE'S PRESENTATION SAYS (Table 0.15.0): an attribute's precision and separators; a name, an
+      // identifier or a coordinate keeps its own digits and only aligns as a number.
+      // A COORDINATE TO ONE PRECISION DOWN ITS COLUMN: six places in degrees (about 0.1 m), one in metres.
+      const raw=c.read(r),coordinate=(c.key==='longitude'||c.key==='latitude')&&typeof raw==='number';
+      const v=coordinate?{html:esc((raw as number).toFixed(metres?1:6)),number:true,absent:false}
+        :presentValue(shownValue,c.label,present,esc,{measure:c.key.startsWith('attribute:')});
+      return v.absent?`<td data-absent="${absence}" class="absent-cell">${v.html}</td>`:`<td${v.number?' data-number':''}>${v.html}</td>`;
     }).join('')}</tr>`).join(''):`<tr><td colspan="${columns.length}">${output.rows.length?'No matching records.':'No point records in this input.'}</td></tr>`,
     controls:`<div class="table-page-group"><button class="button small" data-table-page="${page-1}" ${page===0?'disabled':''}>Previous rows</button><span role="status">${ordered.length?`${page*TABLE_PAGE_SIZE+1}–${Math.min((page+1)*TABLE_PAGE_SIZE,ordered.length)}`:'0'} of ${ordered.length} records</span><button class="button small" data-table-page="${page+1}" ${page+1>=pages?'disabled':''}>Next rows</button></div>`
       +(sorted&&sortedColumn?`<p class="muted" role="status">Ordered by ${esc(sortedColumn.label)}, ${sort!.direction==='ascending'?'lowest':'highest'} first${sorted.unknownCount?`. ${sorted.unknownCount} record${sorted.unknownCount===1?'':'s'} with no value for this column held at the end, in either direction.`:'.'}</p>`:'')

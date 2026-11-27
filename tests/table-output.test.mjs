@@ -68,7 +68,7 @@ test('Table paging and search include off-page rows and attributes and escape us
   const output={kind:'point-table',rows},first=pointTableMarkup(output,esc);
   assert.equal((first.body.match(/data-place=/g)||[]).length,100);assert.match(first.controls,/1–100 of 105/);assert.doesNotMatch(first.head,/field14/);
   const next=pointTableMarkup(output,esc,{page:1,attributePage:1});assert.equal((next.body.match(/data-place=/g)||[]).length,5);
-  assert.match(next.head,/field14/);assert.match(next.body,/&lt;script&gt;/);assert.match(next.body,/<td>false<\/td>/);assert.match(next.body,/<td>0<\/td>/);
+  assert.match(next.head,/field14/);assert.match(next.body,/&lt;script&gt;/);assert.match(next.body,/<td>false<\/td>/);assert.match(next.body,/<td data-number>0<\/td>/);
   // `false` and `0` are VALUES and are drawn; an absent cell is not, and says which kind of
   // absence it is. It used to read "Not supplied", which a reader could not tell from data.
   assert.doesNotMatch(next.body,/Not supplied/);

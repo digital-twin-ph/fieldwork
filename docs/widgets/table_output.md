@@ -47,6 +47,21 @@ Nothing is required. A table with nothing connected is **unfinished**, not broke
 A column that holds a number, such as a projection Relate brought beside each row, is always drawn as a column with
 its own heading, even where every row holds the same number.
 
+### Presentation
+
+Every table follows the rules the table standards agree on: numbers right-aligned under right-aligned headings, in
+equal-width digits; a rule above, one under the headings and one below, none down the side; totals set off by a rule.
+In **Configure…**, under **Presentation**:
+
+- **Title**: what, where and when, shown above the table. The Table's name when left empty.
+- **Decimal places for the values**: the same in every row. Names, identifiers and coordinates keep their own.
+- **Thousands separators** (1,234), never on a column read as years.
+- **An absent value is written**: a dash, read aloud as "no value"; the word *unknown*; or left blank.
+- **Shade every other row**, to follow a row across a wide table.
+- **Notes** and **Source**, shown below the table.
+
+The **Preview** shows ten rows, or twenty, or all of them to review, as these settings write them.
+
 ### It states its own shape in the write-up
 
 Every run machines a note into **Results** on the Notes tab stating what this table is made of. It names the columns as the table spells them, says how many rows, reports empty cells as unknown rather than zero, and names the source file and digest where the table came in as a file. Not for the point and decision views, which are not published tables.
@@ -103,8 +118,13 @@ inherited and is recorded as open in
 
 ### 2026-11-27 · One blank port; the coverage port removed; a preview in Configure… (0.15.0)
 
-**Configure…** shows the table itself: the rows Results will show, with the coordinates as the dialog sets them,
-before Apply.
+**Configure…** shows the table itself: ten rows, or twenty, or all of them to review, with the coordinates as the dialog
+sets them, before Apply. A polygon table shows its areas from the last run, wide, as Results does.
+
+**Presentation**, a new section of Configure…: a title, decimal places, thousands separators, how an absent value is
+written, shading every other row, notes and source. Every table now follows the rules the standards agree on, read from the open
+guidance in [the research note](../research/table-presentation-standards-2026-11-27.md). An absent value is a dash by
+default, not a word a reader could take for data (2026-10-21). Coordinates show to one precision down their column.
 
 The node shows each connected input as its kind's symbol and the name of the step it came from, and one blank port,
 **+ Add an input**, while something on the canvas could add another. The **Or: Coverage result** port is gone: nothing

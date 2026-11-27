@@ -95,7 +95,11 @@
   },
   {
    "kind": "added",
-   "description": "Configure… shows the table itself: the rows Results will show, with the coordinates as the dialog sets them, before Apply."
+   "description": "Configure… previews the table: ten rows, twenty, or all to review, as Results will show them; a polygon table shows its areas from the last run."
+  },
+  {
+   "kind": "added",
+   "description": "A Presentation section in Configure…: title, decimal places, thousands separators, how an absent value is written, shaded rows, notes and source. Every table follows the rules the table standards agree on: numbers right-aligned in equal-width digits, three horizontal rules and none vertical. An absent value is a dash read as \"no value\" by default."
   }
  ],
  "evidence": {

@@ -2,6 +2,7 @@ import {editedTitle,type EditedCells} from './cell-edits.js';
 import type {Escape,Workflow,WorkflowNode} from './types.js';
 import {PREVIEW_ROWS,scrollLongTables} from './long-tables.js';
 import {escapeHtml} from './html-escape.js';
+import {presentValue,type TablePresentation} from './table-presentation.js';
 import {type OwnInspector,type StepKit} from './inspector-kit.js';
 import {describableColumns,isDescribed,dictionaryKeyOf} from './column-metadata.js';
 import type {DataTable,DataTableSource,TableSelection} from './data-table.js';
@@ -1346,8 +1347,12 @@ const pager=(page:number,pages:number)=>pages>1?`<div class="table-page-group"><
  *  elements on the page, and ticking a key column in the Tabular data dialog took 8 s at 150,000 rows and over half an
  *  hour at 250,000, almost all of it the browser walking them. A table of up to this many rows looks as it did. */
 export const FRAME_PAGE_ROWS=200;
-export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false,roles}:
-  {query?:string;page?:number;pageSize?:number;assertTotals?:boolean;roles?:ColumnRoles}={}){
+export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false,roles,present}:
+  {query?:string;page?:number;pageSize?:number;assertTotals?:boolean;roles?:ColumnRoles;present?:TablePresentation}={}){
+  // A VALUE AS THE TABLE'S PRESENTATION WRITES IT (Table 0.15.0): its precision and separators, an absent one in the
+  // table's words, a number right-aligned. A cell the shape does not have at all keeps its dash.
+  const value=(v:string|number|null,column:string,attributes:string)=>{const shown=presentValue(v,column,present,esc);
+    return `<td${attributes}${shown.number?' data-number':''}${shown.absent?' data-absent':''}>${shown.html}</td>`;};
   headingLabels=table.columns;
   const matching=query?table.rows.filter(row=>Object.values(row.key).some(v=>String(v).toLowerCase().includes(query.toLowerCase()))):table.rows;
   const pages=Math.max(1,Math.ceil(matching.length/pageSize)),shown=matching.slice(page*pageSize,page*pageSize+pageSize);
@@ -1376,8 +1381,8 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       +'</tr></thead><tbody>'
       +onPage(frame.rows).map(r=>`<tr><th scope="row"${roleAttr(roles,frame.subject)}>${esc(r.label)}</th>`
         +r.attributes.map((a,i)=>`<td${roleAttr(roles,frame.attributes[i]!,'frame-attribute')}>${esc(a)}</td>`).join('')
-        +r.cells.map((v,i)=>`<td${roleAttr(roles,frame.columns[i]!)}>${v===undefined?'<span class="muted">\u2014</span>'
-          :v===null?'<span class="muted">unknown</span>':esc(v)}</td>`).join('')
+        +r.cells.map((v,i)=>v===undefined?`<td${roleAttr(roles,frame.columns[i]!)}><span class="muted">\u2014</span></td>`
+          :value(v,frame.columns[i]!,roleAttr(roles,frame.columns[i]!))).join('')
         +'</tr>').join('')
       +'</tbody></table></div>'+pager(framePage(frame.rows.length),framePages(frame.rows.length));
   if(grid)
@@ -1389,15 +1394,14 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
       +`</tr></thead><tbody>`
       // A ROW'S MEANING BESIDE ITS NAME, where the table carries one (a regression's terms, experiment 172).
       +onPage(grid.rows).map(r=>`<tr><th scope="row">${esc(r.label)}${table.meanings?.[r.label]?`<span class="meaning"> · ${esc(table.meanings[r.label]!)}</span>`:''}</th>`
-        +r.cells.map(v=>`<td>${v===undefined?'<span class="muted">—</span>'
-          :v===null?'<span class="muted">unknown</span>':esc(v)}</td>`).join('')
-        +(r.total===null?'':`<td class="crosstab-total">${esc(r.total)}</td>`)
+        +r.cells.map((v,i)=>v===undefined?'<td><span class="muted">—</span></td>':value(v,grid.columns[i]??'','')).join('')
+        +(r.total===null?'':value(r.total,'Total',' class="crosstab-total"'))
         +'</tr>').join('')
       +`</tbody>`
       // The fourth row, where a reader looks for N.
       +(grid.grandTotal===null?'':`<tfoot><tr><th scope="row">Total</th>`
-        +grid.columnTotals.map(v=>`<td class="crosstab-total">${v===null?'<span class="muted">—</span>':esc(v)}</td>`).join('')
-        +`<td class="crosstab-total">${esc(grid.grandTotal)}</td></tr></tfoot>`)
+        +grid.columnTotals.map(v=>v===null?'<td class="crosstab-total"><span class="muted">—</span></td>':value(v,'Total',' class="crosstab-total"')).join('')
+        +value(grid.grandTotal,'Total',' class="crosstab-total"')+'</tr></tfoot>')
       +`</table>`+pager(framePage(grid.rows.length),framePages(grid.rows.length))
       // WHO SAID THESE COULD BE ADDED. A reader checking a margin is entitled to know whether
       // the table claimed its values count the same thing or a person did, because the two carry
@@ -1412,7 +1416,7 @@ export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,page
     // A CELL EDITED BY HAND IS MARKED, with what it was on hover (experiment 214).
     +shown.map(row=>{const edited=(row as {edited?:EditedCells}).edited;
       const cell=(c:string)=>roleAttr(roles,c,edited?.[c]?'cell-edited':'')+(edited?.[c]?` data-cell-edited title="${esc(editedTitle(edited[c]!))}"`:'');
-      return `<tr>${table.keys.map(k=>`<td${cell(k)}>${esc(row.key[k])}</td>`).join('')}${valued?`<td${cell(table.valueField)}>${row.value===null?'<span class="muted">unknown</span>':esc(row.value)}</td>`:''}</tr>`;}).join('')
+      return `<tr>${table.keys.map(k=>`<td${cell(k)}>${esc(row.key[k])}</td>`).join('')}${valued?value(row.value,table.valueField,cell(table.valueField)):''}</tr>`;}).join('')
     +`</tbody></table>`+pager(page,pages);
 }
 

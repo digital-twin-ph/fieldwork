@@ -3035,6 +3035,15 @@ function validCells(values:ArrayLike<number|null>):number{let n=0;for(let i=0;i<
 function renderPointTable(){
   const active=required(activeOutput()) as {kind?:string};
   const dataView=$('#data-table-view');
+  // THE TABLE AS ITS PRESENTATION SAYS (Table 0.15.0): a title above where it says more than the tab's name, its notes and
+  // source below, every other row shaded where asked.
+  const presenter=workflow.nodes.find(n=>n.id===activeOutputId);
+  const present=presenter?.type==='table_output'?presenter.params.presentation:undefined;
+  const caption=$('#table-caption'),notes=$('#table-notes');
+  caption.textContent=present?.caption??'';caption.hidden=!present?.caption;
+  notes.innerHTML=(present?.notes?`<p class="table-notes">${esc(present.notes)}</p>`:'')+(present?.source?`<p class="table-notes">Source: ${esc(present.source)}</p>`:'');
+  notes.hidden=!present?.notes&&!present?.source;
+  $('#table-panel').classList.toggle('table-shaded',!!present?.shade);
   if(active.kind==='data-table'){
     // Rendered in its own container: the point-table grid and its controls stay in the DOM,
     // because a later point-table tab reads #result-head and #result-rows directly.
@@ -3043,12 +3052,12 @@ function renderPointTable(){
     // somebody is composing, and the same table may be totalled in one figure and not another.
     const owner=workflow.nodes.find(n=>n.id===activeOutputId);
     const asserted=owner?.type==='table_output'&&owner.params.totalsAsserted===true;
-    dataView.innerHTML=dataTableMarkup(active as unknown as import('./data-table.js').DataTable,esc,{query:$('#result-search').value,page:tablePage,assertTotals:asserted});
+    dataView.innerHTML=dataTableMarkup(active as unknown as import('./data-table.js').DataTable,esc,{query:$('#result-search').value,page:tablePage,assertTotals:asserted,present});
     dataView.querySelectorAll<HTMLButtonElement>('[data-table-page]').forEach(b=>b.onclick=()=>{tablePage=Number(b.dataset.tablePage);renderPointTable();});
     return;
   }
   dataView.hidden=true;dataView.innerHTML='';$('#point-table-grid').hidden=false;
-  const table=pointTableMarkup(required(activeOutput()) as unknown as TableValue|CoverageValue,esc,{query:$('#result-search').value,page:tablePage,attributePage:tableAttributePage,sort:tableSort});
+  const table=pointTableMarkup(required(activeOutput()) as unknown as TableValue|CoverageValue,esc,{query:$('#result-search').value,page:tablePage,attributePage:tableAttributePage,sort:tableSort,present});
   $('#result-head').innerHTML=table.head;$('#result-rows').innerHTML=table.body;$('#point-table-controls').innerHTML=table.controls;
   $('#point-table-controls').querySelectorAll<HTMLButtonElement>('[data-table-page]').forEach(b=>b.onclick=()=>{tablePage=Number(b.dataset.tablePage);renderPointTable();});
   $('#point-table-controls').querySelectorAll<HTMLButtonElement>('[data-table-fields]').forEach(b=>b.onclick=()=>{tableAttributePage=Number(b.dataset.tableFields);renderPointTable();});
@@ -4185,7 +4194,8 @@ function polygonKit():PolygonKit{
 function tableOutputKit():TableOutputKit{
   return {...stepKit(),unitFor:n=>tableUnitFor(n),writeUpSelect:n=>writeUpSelect(n),
     presentation:edit=>{change(edit,{spatial:false});},renderResults:()=>renderResults(),
-    shown:id=>!!result?.outputs.some(o=>o.nodeId===id),zoneAdvice,layerOn:(id,port)=>layerOnPort(id,port)};
+    shown:id=>!!result?.outputs.some(o=>o.nodeId===id),zoneAdvice,layerOn:(id,port)=>layerOnPort(id,port),
+    ranOutput:id=>result?.outputs.find(o=>o.nodeId===id) as {kind?:string}|undefined};
 }
 /** DEDUPLICATE RECORDS' KIT (deduplicate-step-ui.ts): the step kit, with what its last run found and the keys arriving. */
 function dedupKit():DedupKit{

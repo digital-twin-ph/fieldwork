@@ -1,3 +1,4 @@
+import {validatePresentation} from './table-presentation.js';
 import {readPinPhotos} from './pin-photos.js';
 import {staticMapFrame} from './static-map.js';
 import {lineLayersOf} from './map-lines.js';
@@ -1055,6 +1056,7 @@ export function validateWorkflow(raw:unknown):Workflow {
           throw new Error('Invalid map line settings.');
       }
     }
+    if(n.type==='table_output'&&n.params.presentation!==undefined)validatePresentation(n.params.presentation);
     if((n.type==='map_output'||n.type==='table_output'||n.type==='chart_output')&&(typeof n.params.label!=='string'||!n.params.label.trim()||n.params.label.length>60))throw new Error(`${TYPES[n.type].title} names must be text of 1–60 characters.`);
   }
   const edgeIds=new Set(), ports=new Set();

@@ -95,8 +95,9 @@ test('Tabular data imports a long-format extract, displays it and replays offlin
   await expect(grid.locator('thead')).toContainText('psgc_code');
   await expect(grid.locator('thead')).toContainText('value_m');
   await expect(grid.locator('tbody tr')).toHaveCount(6);
-  // The absent value is shown as unknown in its own cell, never as zero.
-  await expect(grid.locator('tbody tr').last().locator('td').last()).toHaveText('unknown');
+  // The absent value is shown in its own cell, never as zero: a dash read aloud as "no value", the Table's default since
+  // 0.15.0 (an absent value is not written as words a reader could take for data).
+  await expect(grid.locator('tbody tr').last().locator('td').last()).toHaveText('—');
   await expect(grid.locator('tbody tr').nth(0).locator('td').last()).toHaveText('0.21');
 
   await page.locator('[data-view="results"]').click();

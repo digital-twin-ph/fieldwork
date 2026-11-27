@@ -55,8 +55,9 @@ test('Table draws what is connected and one port to add another, on the canvas a
 });
 
 /** THE TABLE ITSELF IN ITS DIALOG (the practitioner, 2026-11-27: "Table output config dialog should have a preview of the
- *  table"): the rows Results will show, with the coordinates as the dialog sets them, before Apply. */
-test('Configure… previews the table, and the coordinates follow the choice before Apply',async({page})=>{
+ *  table"; then "limited to 10-20 rows (option to display, for review purpose)"): ten rows unless more are asked for,
+ *  the coordinates as the dialog sets them, and the Presentation section's title and notes, before Apply. */
+test('Configure… previews ten rows, more on request, as the coordinates and the presentation set them',async({page})=>{
   const errors=collectPageErrors(page);
   await page.goto('/?example=snow-geoprivacy');
   await page.waitForSelector('html[data-ready]');
@@ -64,12 +65,48 @@ test('Configure… previews the table, and the coordinates follow the choice bef
   await page.locator('.react-flow__node[data-id="before-table"]').click();
   await page.locator('#configure-step').click();
   const dialog=page.locator('#table-config');
-  await expect(dialog.locator('thead th')).toHaveText(['Record','Longitude','Latitude','DEATHS','FID']);
-  await expect(dialog).toContainText('250 rows.');
+  await expect(dialog.locator('thead th')).toHaveText(['Record','Longitude (°)','Latitude (°)','DEATHS','FID']);
+  await expect(dialog).toContainText('250 rows, the first 10 shown.');
+  await expect(dialog.locator('tbody tr')).toHaveCount(10);
+  await dialog.locator('#preview-rows').selectOption('all');
+  await expect(dialog.locator('tbody tr')).toHaveCount(250);
+  await dialog.locator('#preview-rows').selectOption('20');
+  await expect(dialog.locator('tbody tr')).toHaveCount(20);
   await expect(dialog.locator('tbody tr').first().locator('td').nth(1)).toHaveText('-0.137930');
+  // Numbers right-aligned under right-aligned headings.
+  await expect(dialog.locator('thead th').nth(3)).toHaveCSS('text-align','right');
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(3)).toHaveCSS('text-align','right');
   await dialog.locator('#output-coordinates').selectOption('metres');
   await expect(dialog.locator('thead th')).toHaveText(['Record','Easting (m)','Northing (m)','DEATHS','FID']);
   await expect(dialog.locator('tbody tr').first().locator('td').nth(1)).toHaveText('698587.2');
-  await dialog.locator('#config-cancel, button:has-text("Cancel")').first().click();
+  await dialog.locator('#output-coordinates').selectOption('degrees');
+  // THE PRESENTATION, shown in the preview and kept by Apply: a title above, notes below.
+  await dialog.locator('#present-caption').fill('Deaths by house, Soho, 1854');await dialog.locator('#present-caption').press('Tab');
+  await dialog.locator('#present-notes').fill('One row per house.');await dialog.locator('#present-notes').press('Tab');
+  await dialog.locator('#present-decimals').selectOption('1');
+  await expect(dialog.locator('.table-caption')).toHaveText('Deaths by house, Soho, 1854');
+  await expect(dialog.locator('.table-notes')).toHaveText('One row per house.');
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(3)).toHaveText('3.0');
+  await dialog.locator('#config-apply').click();
+  await expect.poll(()=>page.evaluate(()=>JSON.parse(localStorage.getItem('fieldwork-workflow-v1')).nodes
+    .find(n=>n.id==='before-table').params.presentation)).toEqual({caption:'Deaths by house, Soho, 1854',notes:'One row per house.',decimals:1});
+  expect(errors).toEqual([]);
+});
+
+/** A POLYGON TABLE PREVIEWS ITS AREAS (the practitioner, 2026-11-27, on Snow's Catchment counts and deaths: "Table output
+ *  still has no preview"): the rows the last run showed, read wide as Results reads them. */
+test('a polygon table previews its areas, wide, as Results shows them',async({page})=>{
+  const errors=collectPageErrors(page);
+  await page.goto('/?example=snow-voronoi');
+  await expect(page.locator('#workflow-state')).toHaveText('✓ Run complete',{timeout:60000});
+  await page.locator('[data-view="workflow"]').click();
+  await page.locator('.react-flow__node[data-id="table"]').click();
+  await page.locator('#inspector-content button',{hasText:'Configure'}).click();
+  const dialog=page.locator('#table-config');
+  await expect(dialog.locator('tbody tr')).toHaveCount(8);
+  await expect(dialog.locator('thead th').first()).toHaveText('id');
+  await expect(dialog.locator('thead th').nth(1)).toHaveText('locations');
+  await expect(dialog.locator('thead')).toContainText('Broadwick Street');
+  await expect(dialog.locator('tbody tr').first().locator('td').nth(1)).toHaveText('171');
   expect(errors).toEqual([]);
 });

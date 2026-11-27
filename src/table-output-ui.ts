@@ -10,8 +10,10 @@ import {nodeInputs,portAccepts,outputOf,shownMode} from './core.js';
 import {MAX_POINT_LAYERS} from './point-layers.js';
 import {zoneFields,wireZone,type ZoneAdvice} from './metric-steps-ui.js';
 import {projectFromCRS84} from './reproject.js';
+import {wideFrame} from './data-table-ui.js';
+import type {DataTable} from './data-table.js';
 import {isProjectedReference,type PointCollection,type AnySpatialReference} from './types.js';
-import {PREVIEW_ROWS} from './long-tables.js';
+import {presentCell,presentedTable,presentationFields,type TablePresentation} from './table-presentation.js';
 
 export interface TableOutputKit extends StepKit {
   /** The unit the table's rows state, where they state one, so the totals claim is not offered over it. */
@@ -28,27 +30,75 @@ export interface TableOutputKit extends StepKit {
   zoneAdvice:ZoneAdvice;
   /** The point records on one of the table's ports: held by Point data, or made by a run that still matches. */
   layerOn:(nodeId:string,port:string)=>PointCollection|undefined;
+  /** What this table's last run showed, where it ran. */
+  ranOutput:(nodeId:string)=>{kind?:string}|undefined;
+}
+
+/** Connects the Presentation section's controls to the draft. */
+function wirePresentation(root:ParentNode,p:TablePresentation,redraw:()=>void):void{
+  const text=(id:string,key:'caption'|'notes'|'source')=>root.querySelector<HTMLInputElement|HTMLTextAreaElement>(`#${id}`)
+    ?.addEventListener('change',e=>{const v=(e.target as HTMLInputElement).value.trim();if(v)p[key]=v;else delete p[key];redraw();});
+  text('present-caption','caption');text('present-notes','notes');text('present-source','source');
+  root.querySelector<HTMLSelectElement>('#present-decimals')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;
+    if(v==='')delete p.decimals;else p.decimals=Number(v);redraw();});
+  root.querySelector<HTMLInputElement>('#present-separators')?.addEventListener('change',e=>{
+    if((e.target as HTMLInputElement).checked)delete p.separators;else p.separators=false;redraw();});
+  root.querySelector<HTMLSelectElement>('#present-absent')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value as NonNullable<TablePresentation['absent']>;
+    if(v==='dash')delete p.absent;else p.absent=v;redraw();});
+  root.querySelector<HTMLInputElement>('#present-shade')?.addEventListener('change',e=>{
+    if((e.target as HTMLInputElement).checked)p.shade=true;else delete p.shade;redraw();});
 }
 
 /** THE TABLE ITSELF, IN THE DIALOG (the practitioner, 2026-11-27: "Table output config dialog should have a preview of the
- *  table"): the rows the Results tab will show, with the coordinates as the dialog now sets them, before Apply. A table
- *  shows its rows as they stand; point records show their name, coordinates and attributes. Longer than 20 rows, it
- *  scrolls, as every dialog's table does. */
+ *  table", and: "preview should be limited to 10-20 rows (option to display, for review purpose)"): the rows Results will
+ *  show, as the Presentation section and the coordinates now set them, before Apply. Ten rows, or twenty, or all of
+ *  them to review. */
+export const PREVIEW_CHOICES=[10,20] as const;
 function tablePreview(kit:TableOutputKit,node:WorkflowNode<'table_output'>,mode:ReturnType<typeof shownMode>,
-  coord:{metres:boolean;zone:string;hemisphere:'north'|'south'}):string{
+  coord:{metres:boolean;zone:string;hemisphere:'north'|'south'},present:TablePresentation,rowsShown:number|'all'):string{
   const esc=kit.esc;
-  const table=(head:string[],rows:string[][],total:number)=>
-    `<p class="muted">${total.toLocaleString('en')} ${total===1?'row':'rows'}${total>rows.length?`, the first ${rows.length.toLocaleString('en')} shown`:''}.</p>`
-    +`<div class="table-scroll"><table><thead><tr>${head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>`
-    +rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')+'</tbody></table></div>';
+  const choose=(total:number)=>`<div class="field preview-rows"><label class="field-label" for="preview-rows">Rows in the preview</label>`
+    +`<select id="preview-rows">${PREVIEW_CHOICES.map(n=>`<option value="${n}"${rowsShown===n?' selected':''}>${n}</option>`).join('')}`
+    +`<option value="all"${rowsShown==='all'?' selected':''}>All ${total.toLocaleString('en')}, to review</option></select></div>`;
+  const table=(head:{label:string;number:boolean}[],rows:string[],total:number)=>
+    choose(total)+`<p class="muted">${total.toLocaleString('en')} ${total===1?'row':'rows'}${total>rows.length?`, the first ${rows.length.toLocaleString('en')} shown`:''}.</p>`
+    +presentedTable(present,node.params.label||kit.title('table_output'),
+      `<div class="table-scroll" tabindex="0" role="region" aria-label="Preview of the table"><table class="table-standard"><thead><tr>`
+      +head.map(h=>`<th scope="col"${h.number?' class="number"':''}>${esc(h.label)}</th>`).join('')+`</tr></thead><tbody>`
+      +rows.join('')+'</tbody></table></div>',esc);
+  const limit=(n:number)=>rowsShown==='all'?n:Math.min(n,rowsShown);
+  // A DATA TABLE READ AS RESULTS READS IT: wide where it widens (a row per subject, a column per variable), its rows as
+  // they stand where it does not.
+  const dataTablePreview=(t:DataTable)=>{
+    const frame=wideFrame(t);
+    if(frame){
+      const head=[{label:frame.subject,number:false},...frame.attributes.map(a=>({label:a,number:false})),
+        ...frame.columns.map(c=>({label:c,number:frame.rows.some(r=>typeof r.cells[frame.columns.indexOf(c)]==='number')}))];
+      return table(head,frame.rows.slice(0,limit(frame.rows.length)).map(r=>`<tr>${presentCell(r.label,frame.subject,present,esc,{measure:false})}`
+        +r.attributes.map((a,i)=>presentCell(a,frame.attributes[i]!,present,esc,{measure:false})).join('')
+        +r.cells.map((v,i)=>v===undefined?'<td><span class="muted">—</span></td>':presentCell(v,frame.columns[i]!,present,esc)).join('')+'</tr>'),frame.rows.length);
+    }
+    const valueNumeric=t.rows.some(r=>typeof r.value==='number');
+    const head=[...t.keys.map(k=>({label:k,number:false})),...(t.valueField?[{label:t.valueField,number:valueNumeric}]:[])];
+    return table(head,t.rows.slice(0,limit(t.rows.length)).map(r=>`<tr>${t.keys.map(k=>presentCell(r.key[k],k,present,esc,{measure:false})).join('')}`
+      +(t.valueField?presentCell(r.value,t.valueField,present,esc):'')+'</tr>'),t.rows.length);
+  };
   if(mode==='table'){
     const t=kit.tableOn(node.id,'table');
     if(!t?.rows.length)return '<p class="muted">Nothing to show yet: the table connected has no rows. Run the workflow if a step makes it.</p>';
-    const head=[...t.keys,...(t.valueField?[t.valueField]:[])];
-    return table(head,t.rows.slice(0,PREVIEW_ROWS).map(r=>[...t.keys.map(k=>String(r.key[k]??'')),
-      ...(t.valueField?[r.value===null||r.value===undefined?'unknown':String(r.value)]:[])]),t.rows.length);
+    return dataTablePreview(t);
   }
-  if(mode==='polygons')return '<p class="muted">Each polygon layer connected, one row per area, with its summaries.</p>';
+  // A POLYGON TABLE'S ROWS ARE THE RUN'S: each area with what was summarized over it, as the last run left them.
+  if(mode==='polygons'){
+    const ran=kit.ranOutput(node.id);
+    if(ran?.kind==='data-table')return dataTablePreview(ran as unknown as DataTable);
+    const rows=(ran as {rows?:{name:string;attributes?:Record<string,unknown>}[]}|undefined)?.rows;
+    if(!rows?.length)return '<p class="muted">Each polygon layer connected, one row per area, with its summaries. Run the workflow to see them here.</p>';
+    const attributes=[...new Set(rows.flatMap(r=>Object.keys(r.attributes??{})))].filter(k=>k!=='name');
+    const head=[{label:'Area',number:false},...attributes.map(k=>({label:k,number:rows.some(r=>typeof r.attributes?.[k]==='number')}))];
+    return table(head,rows.slice(0,limit(rows.length)).map(r=>`<tr>${presentCell(r.name,'Area',present,esc,{measure:false})}`
+      +attributes.map(k=>presentCell(r.attributes?.[k],k,present,esc)).join('')+'</tr>'),rows.length);
+  }
   const layers=nodeInputs(node).filter(([,type])=>type==='points').map(([port])=>kit.layerOn(node.id,port)).filter((c):c is PointCollection=>!!c);
   if(!layers.length)return '<p class="muted">Nothing to show yet: connect point records, or run the workflow if a step makes them.</p>';
   const zone=Number(coord.zone);
@@ -61,12 +111,14 @@ function tablePreview(kit:TableOutputKit,node:WorkflowNode<'table_output'>,mode:
   const inMetres=(c:PointCollection)=>coord.metres||projected(c);
   const features=shown.flatMap(c=>c.features.map(f=>({f,metres:inMetres(c)})));
   const attributes=[...new Set(features.flatMap(({f})=>Object.keys(f.properties??{})))].filter(k=>k!=='name');
-  const anyMetres=features.some(x=>x.metres),round=(v:number,metres:boolean)=>metres?v.toFixed(1):v.toFixed(6);
-  const head=['Record',anyMetres?'Easting (m)':'Longitude',anyMetres?'Northing (m)':'Latitude',...attributes];
-  const said=(v:unknown)=>v===null||v===undefined||v===''?'unknown':typeof v==='object'?JSON.stringify(v):String(v);
-  const rows=features.slice(0,PREVIEW_ROWS).map(({f,metres})=>{const at=f.geometry?.coordinates as [number,number]|undefined;
-    return [String((f.properties as {name?:unknown}|null)?.name??f.id??''),at?round(at[0],metres):'missing',at?round(at[1],metres):'missing',
-      ...attributes.map(k=>said(f.properties?.[k]))];});
+  const anyMetres=features.some(x=>x.metres);
+  const numericAttribute=(k:string)=>features.some(({f})=>typeof f.properties?.[k]==='number');
+  const head=[{label:'Record',number:false},{label:anyMetres?'Easting (m)':'Longitude (°)',number:true},{label:anyMetres?'Northing (m)':'Latitude (°)',number:true},
+    ...attributes.map(k=>({label:k,number:numericAttribute(k)}))];
+  const rows=features.slice(0,limit(features.length)).map(({f,metres})=>{const at=f.geometry?.coordinates as [number,number]|undefined;
+    const coordinate=(v:number|undefined)=>v===undefined?presentCell(null,'',present,esc):`<td class="number">${(metres?v.toFixed(1):v.toFixed(6))}</td>`;
+    return `<tr>${presentCell((f.properties as {name?:unknown}|null)?.name??f.id??'','Record',present,esc,{measure:false})}`
+      +coordinate(at?.[0])+coordinate(at?.[1])+attributes.map(k=>presentCell(f.properties?.[k],k,present,esc)).join('')+'</tr>';});
   return table(head,rows,features.length);
 }
 
@@ -85,12 +137,12 @@ export function tableOutputSentence(kit:TableOutputKit,n:WorkflowNode<'table_out
  *  written by Apply. Turning a reasoning table into a map or a chart changes the step itself. */
 function openTableConfig(kit:TableOutputKit,nodeId:string){
   const esc=kit.esc,workflow=kit.workflow(),node=workflow.nodes.find(x=>x.id===nodeId) as WorkflowNode<'table_output'>|undefined;if(!node)return;
-  type Draft=WorkflowNode<'table_output'>['params']&{view?:'map'|'table'|'bars';coord:{metres:boolean;zone:string;hemisphere:'north'|'south'}};
+  type Draft=WorkflowNode<'table_output'>['params']&{view?:'map'|'table'|'bars';coord:{metres:boolean;zone:string;hemisphere:'north'|'south'};present:TablePresentation;rowsShown:number|'all'};
   const mode=shownMode(node,workflow.edges);
   const points=mode!=='table'&&mode!=='polygons';
   const held=node.params.coordinates,suggested=kit.zoneAdvice(30,'north');
   openConfigDialog<Draft>({
-    id:'table-config',widget:'Table',step:node.params.label||kit.title('table_output'),draft:{...structuredClone(node.params),coord:{metres:!!held,zone:String(held?.zone??suggested?.zone??30),hemisphere:held?.hemisphere??suggested?.hemisphere??'north'}},
+    id:'table-config',widget:'Table',step:node.params.label||kit.title('table_output'),draft:{...structuredClone(node.params),present:structuredClone(node.params.presentation??{}),rowsShown:10,coord:{metres:!!held,zone:String(held?.zone??suggested?.zone??30),hemisphere:held?.hemisphere??suggested?.hemisphere??'north'}},
     sections:draft=>{
       let settings='';
       // THE MARGINS AN EPIDEMIOLOGIST READS FIRST, and the claim that earns them (2026-10-26). Offered only for a table,
@@ -104,16 +156,21 @@ function openTableConfig(kit:TableOutputKit,nodeId:string){
         +`<option value="metres"${draft.coord.metres?' selected':''}>In metres: easting and northing in a UTM zone</option></select></div>`
         +(draft.coord.metres?zoneFields(kit,draft.coord,'output'):'');
       if(!settings)settings='<p class="muted">Nothing to set: what you connect decides how it is shown.</p>';
-      return {settings,preview:tablePreview(kit,node,mode,draft.coord)};
+      return {settings,presentation:presentationFields(draft.present,node.params.label||kit.title('table_output'),esc),
+        preview:tablePreview(kit,node,mode,draft.coord,draft.present,draft.rowsShown)};
     },
     wire:(root,draft,redraw)=>{
+      wirePresentation(root,draft.present,redraw);
+      root.querySelector<HTMLSelectElement>('#preview-rows')?.addEventListener('change',e=>{const v=(e.target as HTMLSelectElement).value;
+        draft.rowsShown=v==='all'?'all':Number(v);redraw();});
       root.querySelector<HTMLSelectElement>('#output-coordinates')?.addEventListener('change',e=>{draft.coord.metres=(e.target as HTMLSelectElement).value==='metres';redraw();});
       if(draft.coord.metres)wireZone(root,draft.coord,redraw,'output');
       root.querySelector<HTMLInputElement>('#output-totals')?.addEventListener('change',e=>{
         if((e.target as HTMLInputElement).checked)draft.totalsAsserted=true;else delete draft.totalsAsserted;redraw();});
     },
     apply:draft=>{
-      const {view,coord,...params}=draft;
+      const {view,coord,present,rowsShown:_shown,...params}=draft;
+      if(Object.keys(present).length)params.presentation=present;else delete params.presentation;
       if(coord.metres)params.coordinates={zone:Number(coord.zone),hemisphere:coord.hemisphere};else delete params.coordinates;
       if(view&&view!=='table'){kit.change(w=>{const index=w.nodes.findIndex(x=>x.id===nodeId);
         w.nodes[index]={...w.nodes[index]!,type:'output',params:{label:params.label,view}} as never;});return;}

@@ -78,6 +78,21 @@ Finished and declined items are in [docs/todo-history.md](docs/todo-history.md).
   cross-origin tile requests made while it holds the browser offline: 5 of 5 in WebKit, locally. Earlier local failures
   named `build/reasoning-worker.js`; that did not recur in five runs, and the service worker's refusal of it in other
   WebKit tests (below) is still open.
+- **Table presented to a standard** (the practitioner, 2026-11-27: *"Since table outputs are render facing, we should be
+  able to style them according to established table presentation standards"*; *"really look pretty but also vision
+  impaired friendly"*. A widget enhancement; [the research](docs/research/table-presentation-standards-2026-11-27.md)).
+  **Built in Table 0.15.0:** the agreed rules on every table in Results and in Configure…'s preview, and a Presentation
+  section (title, decimal places, separators, absent values, shaded rows, notes, source). **Left:** decimal places per
+  column; footnote markers; a small-cell threshold and what it means; units and denominators in the headings; the
+  write-up's and the export's tables, not yet checked against the same rules; a count and its percentage in one cell
+  or two. Measure: tables with a title, columns of numbers not right-aligned, columns mixing decimal places.
+- **Worked examples as teaching material** ([audit](docs/audits/worked-example-standards-audit.md); the practitioner,
+  2026-11-27: *"develop worked example standards or enhance what we have developed already to optimize the
+  pedagogical value of worked examples"*). Today 5 of 12 catalogue examples have a manual walkthrough and its playback,
+  none of the 11 built-in ones; the READMEs share no outline; no example says what a learner can do after it. To
+  settle with the practitioner: what every example carries and in what order a learner meets it (the question and
+  what it teaches, a manual for each workflow, a README to one outline, the widgets it teaches, where its numbers are
+  checked, what to try next), and whether built-in examples get manuals. Measure: examples with each surface.
 - **Widgets added from the library land on top of one another** (found 2026-11-27, writing the blank-port test): three
   added in a row overlapped, and a notice covered the third's port. A placement finding for the canvas.
 - **A cooperative, turn-based training mission** ([233](docs/experiments/233-a-cooperative-turn-based-training-mission.md)):

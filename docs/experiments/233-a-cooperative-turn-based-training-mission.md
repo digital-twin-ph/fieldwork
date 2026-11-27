@@ -3,7 +3,7 @@
 _Created 2026-11-26 · Updated 2026-11-27_
 
 **Status:** tried, one spike. A research proposal, kept for review. The first piece is tried: a Supabase key made by
-the practitioner and checked from Fieldwork's Credentials dialog (2026-11-27, below). Nothing else is built: no game,
+the practitioner and checked from Fieldwork's Credentials dialog, which Supabase accepted (2026-11-27, below). Nothing else is built: no game,
 no hosted session, no learner trial. Every other design choice below is the proposal's, and none has been settled by
 the practitioner.
 
@@ -184,8 +184,20 @@ gets, or whether a browser may call it from another site (CORS).
 accepted this key* by following the manual alone? Record each place a screen differed, what **Check** said, and what
 it said for a deliberately wrong key.
 
-**Validation record:** seven unit tests pass against a stubbed network (Node, no browser). Nothing has been sent to
-Supabase from Fieldwork yet.
+**Validation record:** seven unit tests pass against a stubbed network (Node, no browser).
+
+**Tried, 2026-11-27, against the practitioner's own project**, from Fieldwork on a local server (Chromium,
+`http://127.0.0.1:4199`), the key unlocked from the practitioner's credentials file:
+
+| Request to `/auth/v1/health` | Supabase answered |
+| --- | --- |
+| The publishable key, by **Check** | 200, `{"name":"GoTrue","version":"v2.199.0",…}`; Check said *the project is running and accepted this key (GoTrue v2.199.0)* |
+| A made-up publishable key, sent by hand | 401, *Invalid API key* |
+| No key | 401, *No API key found in request* |
+
+The three unknowns the documentation left are answered: what the route returns, what a wrong key gets, and that a
+browser page may call it from another site (CORS), from `127.0.0.1` at least. Not yet tried from the published site,
+nor on a paused project. Whether the manual's steps 2 and 3 matched Supabase's screens is the practitioner's to say.
 
 ## Precedents and patterns, researched 2026-11-27
 

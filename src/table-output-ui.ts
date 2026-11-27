@@ -10,7 +10,7 @@ import {nodeInputs,portAccepts,outputOf,shownMode} from './core.js';
 import {MAX_POINT_LAYERS} from './point-layers.js';
 import {zoneFields,wireZone,type ZoneAdvice} from './metric-steps-ui.js';
 import {projectFromCRS84} from './reproject.js';
-import {wideFrame,dataTableMarkup} from './data-table-ui.js';
+import {shownRows,dataTableMarkup} from './data-table-ui.js';
 import type {DataTable} from './data-table.js';
 import {isProjectedReference,type PointCollection,type AnySpatialReference} from './types.js';
 import {presentCell,presentedTable,presentationFields,type TablePresentation} from './table-presentation.js';
@@ -70,7 +70,7 @@ function tablePreview(kit:TableOutputKit,node:WorkflowNode<'table_output'>,mode:
   // A DATA TABLE DRAWN BY RESULTS' OWN RENDERER (PR 10's review: "Show totals" changed Results and not the preview), with
   // the draft's totals, the presentation and the rows asked for, and no pager.
   const dataTablePreview=(t:DataTable)=>{
-    const frame=wideFrame(t),total=frame?frame.rows.length:t.rows.length;
+    const total=shownRows(t,totals);
     const shown=dataTableMarkup(t,esc,{assertTotals:totals,present,limit:limit(total)})
       .replace(/<table class="/g,'<table class="table-standard ').replace(/<table>/g,'<table class="table-standard">')
       .replace(/<div class="table-scroll/g,'<div tabindex="0" role="region" aria-label="Preview of the table" class="table-scroll');

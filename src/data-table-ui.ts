@@ -1347,6 +1347,14 @@ const pager=(page:number,pages:number)=>pages>1?`<div class="table-page-group"><
  *  elements on the page, and ticking a key column in the Tabular data dialog took 8 s at 150,000 rows and over half an
  *  hour at 250,000, almost all of it the browser walking them. A table of up to this many rows looks as it did. */
 export const FRAME_PAGE_ROWS=200;
+/** HOW MANY ROWS `dataTableMarkup` DRAWS for a table, by the same choice it makes: a cross-tab where the shape allows,
+ *  else the wide frame, else the rows as stored (PR 10's review: a preview counted from the frame offered "All 2" over a
+ *  cross-tab of 12). */
+export function shownRows(table:DataTable,assertTotals=false):number{
+  const grid=crossTab(table,{assertCommensurable:assertTotals});
+  if(grid)return grid.rows.length;
+  return wideFrame(table)?.rows.length??table.rows.length;
+}
 export function dataTableMarkup(table:DataTable,esc:Escape,{query='',page=0,pageSize=40,assertTotals=false,roles,present,limit}:
   {query?:string;page?:number;pageSize?:number;assertTotals?:boolean;roles?:ColumnRoles;present?:TablePresentation;
    /** A preview's rows: the first this many, with no pager (Table's Configure…, PR 10's review). */ limit?:number}={}){

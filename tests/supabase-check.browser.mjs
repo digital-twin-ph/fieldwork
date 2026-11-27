@@ -32,3 +32,28 @@ test('a Supabase check pending when the credentials change can be pressed again'
   await check.click();
   await expect(page.locator('#credential-list .field-check')).toContainText('Supabase answered 200');
 });
+
+/** A FINISHED CHECK IS ABOUT THE KEY IT WAS MADE WITH (PR 10's review): a key checked as accepted, then a different key
+ *  under the same reference, showed "accepted this key" without asking. The result goes with the change; checking the
+ *  new key asks again. */
+test('a different key under the same reference does not inherit the earlier result',async({page})=>{
+  const ORIGIN='https://abcdefghijklmnopqrst.supabase.co';
+  await page.route(`${ORIGIN}/auth/v1/health`,route=>route.request().headers()['apikey']==='sb_publishable_first'
+    ?route.fulfill({status:200,contentType:'application/json',body:'{"name":"GoTrue","version":"v-test"}'})
+    :route.fulfill({status:401,contentType:'application/json',body:'{"message":"Invalid API key"}'}));
+  await page.goto('/?example=blank');
+  await page.locator('#credentials-button').click();
+  const add=async secret=>{await page.locator('#credential-new').click();
+    await page.locator('#credential-ref').fill('training');await page.locator('#credential-provider').fill('supabase');
+    await page.locator('#credential-origin').fill(ORIGIN);await page.locator('#credential-secret').fill(secret);
+    await page.locator('#credential-add').click();};
+  await add('sb_publishable_first');
+  const check=page.locator('#credential-list button',{hasText:/^Check/}),said=page.locator('#credential-list .field-check');
+  await check.click();
+  await expect(said).toContainText('Supabase answered 200');
+  // A new collection holding a different key under the same reference.
+  await add('sb_publishable_second');
+  await expect(said).toHaveCount(0);
+  await check.click();
+  await expect(said).toContainText('Supabase answered 401');
+});

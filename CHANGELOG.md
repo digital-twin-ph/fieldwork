@@ -35,8 +35,9 @@ shown in a local build is not a claim that it has been published.
 - **PR 10's review, answered.** "As recorded" keeps a value as it is: text as written (00123 stays 00123), a number to
   its full precision (7e-8 is not 0), separators only in a number's whole part. The blank port never replaces a
   connection: where the only input that fits is taken, the drop is refused. The preview draws data tables with Results'
-  own renderer, so ticking Show totals shows the totals before Apply. A Supabase check left waiting when the
-  credentials change can be pressed again.
+  own renderer, so ticking Show totals shows the totals before Apply, and offers "All" by the rows that renderer draws.
+  Every Supabase check result is let go when the credentials change, waiting or finished, so a different key under the
+  same name is never shown as accepted.
 - **Worked examples audited as teaching material.** Five of twelve catalogue examples have a manual walkthrough, none
   of the eleven built-in ones; the READMEs share no outline. The standard is the practitioner's to set; TODO carries it.
 - **Table 0.15.0: the coverage port is gone.** Nothing makes a coverage check since Check spatial coverage retired on

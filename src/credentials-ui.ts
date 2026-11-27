@@ -46,9 +46,10 @@ export function installCredentials(button:HTMLButtonElement,identify?:Identify):
   return n?`${OPEN_PADLOCK}Credentials: ${n} ${n===1?'key':'keys'} unlocked`:'Credentials: new, empty';};
  const checks=new Map<string,SupabaseCheck|'asking'>();
  const session=new CredentialSession(()=>{
-  // A CHECK STILL WAITING WHEN THE CREDENTIALS CHANGE is let go (PR 10's review): its reply is discarded by the generation
-  // guard, and the button it left on "Checking…" must be pressable again.
-  for(const [ref,state] of checks)if(state==='asking')checks.delete(ref);
+  // EVERY CHECK IS LET GO WHEN THE CREDENTIALS CHANGE (PR 10's review, twice). One still waiting: its reply is discarded
+  // by the generation guard, and its button must be pressable again. One finished: it is about the key it was made with,
+  // and a key added, replaced or unlocked under the same reference must not inherit "accepted this key".
+  checks.clear();
   button.innerHTML=label();button.classList.toggle('is-unlocked',session.unlocked&&session.list().length>0);if(!session.unlocked){dirty=false;operation++;checks.clear();dialog?.close();}refresh();
   if(session.unlocked){if(!resuming)void keep('credentials',session.snapshot(),session.lastUsed+session.idleMs);}else void drop('credentials');});
  button.innerHTML=label();
